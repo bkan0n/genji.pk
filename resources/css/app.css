@@ -1,0 +1,214 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
+
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer utilities {
+  @keyframes diagDrift {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 140% 140%;
+    }
+  }
+
+  @keyframes softDrift {
+    0% {
+      transform: translate3d(0, 0, 0) rotate(0.2deg);
+    }
+    50% {
+      transform: translate3d(2%, -1%, 0) rotate(-0.2deg);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0.2deg);
+    }
+  }
+
+  @keyframes shimmerX {
+    0% {
+      transform: translateX(-65%);
+    }
+    50% {
+      transform: translateX(65%);
+    }
+    100% {
+      transform: translateX(-65%);
+    }
+  }
+
+  @keyframes grainBreath {
+    0%,
+    100% {
+      opacity: 0.1;
+    }
+    50% {
+      opacity: 0.16;
+    }
+  }
+
+  @keyframes lineDriftSlow {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 -180px;
+    }
+  }
+  @keyframes lineDriftAlt {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 -240px;
+    }
+  }
+
+  @keyframes glowPulse {
+    0%,
+    100% {
+      opacity: 0.55;
+      filter: blur(28px);
+    }
+    50% {
+      opacity: 0.9;
+      filter: blur(36px);
+    }
+  }
+  @keyframes conicSpin {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
+    }
+  }
+  @keyframes ringBreath {
+    0% {
+      transform: scale(0.96);
+      opacity: 0.85;
+    }
+    50% {
+      transform: scale(1.06);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.96);
+      opacity: 0.85;
+    }
+  }
+  @keyframes starFloatA {
+    0% {
+      background-position:
+        0 0,
+        0 0;
+    }
+    50% {
+      background-position:
+        8px -12px,
+        -10px 14px;
+    }
+    100% {
+      background-position:
+        0 0,
+        0 0;
+    }
+  }
+  @keyframes starFloatB {
+    0% {
+      background-position:
+        0 0,
+        0 0;
+    }
+    50% {
+      background-position:
+        -6px 10px,
+        12px -8px;
+    }
+    100% {
+      background-position:
+        0 0,
+        0 0;
+    }
+  }
+  @keyframes streakSheen {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes flicker {
+    0%,
+    19%,
+    22%,
+    63%,
+    64%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    21%,
+    65%,
+    69% {
+      opacity: 0.84;
+    }
+    66% {
+      opacity: 0.7;
+    }
+  }
+
+  /* ===========================
+     UTILS
+     =========================== */
+  .u-soft-drift {
+    animation: softDrift 32s ease-in-out infinite;
+  }
+  .u-shimmer-x {
+    animation: shimmerX 40s linear infinite;
+  }
+  .u-grain-breath {
+    animation: grainBreath 8s ease-in-out infinite;
+  }
+
+  .u-line-slow {
+    animation: lineDriftSlow 26s linear infinite;
+  }
+  .u-line-alt {
+    animation: lineDriftAlt 34s linear infinite;
+  }
+
+  .u-glow-pulse {
+    animation: glowPulse 10s ease-in-out infinite;
+  }
+  .u-ring-breath {
+    animation: ringBreath 9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .u-conic-spin {
+    animation: conicSpin 70s linear infinite;
+  }
+  .u-flicker {
+    animation: flicker 7s steps(28, end) infinite;
+  }
+}

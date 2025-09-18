@@ -1,0 +1,53 @@
+<?php
+
+// config/gp.php
+
+return [
+    'default' => 'en',
+    'translations_path' => resource_path('lang/'),
+
+    'languages' => [
+        'en' => [
+            'name' => 'EN',
+            'flag' => 'flag-united-states',
+            'translated' => true,
+            'modalMessage' => "The translation for this language isn't available yet. If you want to contribute, please contact <strong>.aiapaec</strong> on Discord.",
+            'closeButtonText' => 'Close',
+        ],
+        'fr' => [
+            'name' => 'FR',
+            'flag' => 'flag-france',
+            'translated' => false,
+            'modalMessage' => "La traduction pour cette langue n'est pas encore disponible. Si vous souhaitez contribuer, contactez <strong>.aiapaec</strong> sur Discord.",
+            'closeButtonText' => 'Fermer',
+        ],
+        'de' => [
+            'name' => 'DE',
+            'flag' => 'flag-germany',
+            'translated' => false,
+            'modalMessage' => 'Die Übersetzung für diese Sprache ist noch nicht verfügbar. Wenn Sie mithelfen möchten, kontaktieren Sie bitte <strong>.aiapaec</strong> auf Discord.',
+            'closeButtonText' => 'Schließen',
+        ],
+        'ru' => [
+            'name' => 'RU',
+            'flag' => 'flag-russia',
+            'translated' => false,
+            'modalMessage' => 'Перевод для этого языка еще не доступен. Если вы хотите помочь с переводом, свяжитесь с <strong>.aiapaec</strong> в Discord.',
+            'closeButtonText' => 'Закрыть',
+        ],
+        'cn' => [
+            'name' => 'CN',
+            'flag' => 'flag-china',
+            'translated' => false,
+            'modalMessage' => '此语言的翻译尚不可用。如果您想协助翻译，请通过 Discord 联系 <strong>.aiapaec</strong>。',
+            'closeButtonText' => '关闭',
+        ],
+        'jp' => [
+            'name' => 'JP',
+            'flag' => 'flag-japan',
+            'translated' => true,
+            'modalMessage' => 'この言語の翻訳はまだ利用できません。翻訳に協力したい場合は、Discord で <strong>.aiapaec</strong> に連絡してください。',
+            'closeButtonText' => '閉じる',
+        ],
+    ],
+];

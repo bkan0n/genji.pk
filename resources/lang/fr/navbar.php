@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'home' => 'Accueil',
+    'leaderboard' => 'Classement',
+    'search' => 'Recherche',
+    'maps' => 'Cartes',
+    'guides' => 'Guides',
+    'completions' => 'Completions',
+    'community' => 'Communauté',
+    'news' => 'Actualités',
+    'newsfeed' => 'Fil d’actualité',
+    'announcements' => 'Annonces',
+    'tutorial' => 'Tutoriels',
+    'statistics' => 'Statistiques',
+    'login' => 'Connexion',
+    'logout' => 'Déconnexion',
+    'lootbox' => 'Lootbox',
+    'profile' => 'Profil',
+    'language' => 'Langue',
+    'rank_card' => 'Carte de rang',
+    'dashboard' => 'Tableau de bord',
+    'settings' => 'Paramètres',
+    'submit' => 'Soumettre',
+    'brand_title' => 'GENJI PARKOUR',
+    'brand_tagline' => 'communauté & outils',
+];

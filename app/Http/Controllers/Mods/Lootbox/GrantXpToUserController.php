@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers\Mods\Lootbox;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+class GrantXpToUserController extends Controller
+{
+    public function __invoke(Request $request, int $user_id)
+    {
+        $data = $request->validate([
+            'amount' => ['required', 'integer'],
+        ]);
+
+        $cfg = Config::get('services.genji_api', []);
+        $apiKey = (string) ($cfg['key'] ?? '');
+        $apiRoot = (string) ($cfg['root'] ?? '');
+        $verify = filter_var($cfg['verify'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+        if ($apiKey === '' || $apiRoot === '') {
+            return response()->json(['error' => 'Configuration API manquante'], 500);
+        }
+
+        $url = rtrim($apiRoot, '/') . "/api/v3/lootbox/users/{$user_id}/xp";
+
+        try {
+            $resp = Http::withOptions(['verify' => $verify, 'timeout' => 15])
+                ->withHeaders([
+                    'X-API-KEY' => $apiKey,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($url, ['amount' => $data['amount']]);
+
+            return response()->json($resp->json() ?: [], $resp->status());
+        } catch (Throwable $e) {
+            Log::error('mods.lootbox.grant-xp', [
+                'user_id' => $user_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+}

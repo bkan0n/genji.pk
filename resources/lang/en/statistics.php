@@ -1,0 +1,51 @@
+<?php
+
+return [
+    'graphs' => 'Graphs',
+    'graphsAndInsights' => 'Graphs & Insights',
+    'subtitle' => 'player tiers · map difficulty · popularity · quality',
+
+    'mapDifficultyDistribution' => 'Maps per Difficulty',
+    'popularCreators' => 'Popular Creators',
+    'topMapsFor' => 'Most Played Maps',
+    'difficulty' => 'Difficulty',
+
+    'totalMapCounts' => 'Total Map Counts',
+    'top25' => 'Top 25',
+
+    'timePlayedPerDifficulty' => 'Time Played per Difficulty',
+
+    'rankDistribution' => 'Distribution of community ranks / skill tiers',
+    'mapRankDistribution' => 'Ranks distribution',
+    'skillRank' => 'Skill tiers',
+    'tierRank' => 'Community ranks',
+
+    'amountOfMaps' => 'Amount of maps',
+    'difficultyLevel' => 'Difficulty level',
+    'mapAmountLogScale' => 'Amount of maps (Log Scale)',
+    'averageQuality' => 'Average quality',
+    'mapCodes' => 'Map codes',
+    'completions' => 'Completions',
+    'rank' => 'Rank',
+    'playersIn' => 'Players in {tier}',
+    'map' => 'Maps',
+    'quality' => 'Quality',
+    'completionsTooltip' => '{map}: {completions} Completions, Quality: {quality}',
+    'playersInTier' => '{amount} players in {tier}',
+    'tooltipLabel' => '{creator} - Maps : {mapCount}, Quality : {quality}',
+    'easy' => 'Easy',
+    'medium' => 'Medium',
+    'hard' => 'Hard',
+    'very hard' => 'Very Hard',
+    'extreme' => 'Extreme',
+    'hell' => 'Hell',
+    'mapsTooltip' => '{count} maps',
+    'record_progression_time' => 'Record progression over time',
+    'user_record_progression' => 'Your progression',
+    'average_time' => 'Average time',
+    'min_time' => 'Minimum time',
+    'max_time' => 'Maximum time',
+    'amount' => 'Amount',
+    'quantity' => 'Quantity',
+    'total_amount_time' => 'Total in hours',
+];
