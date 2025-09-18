@@ -1,3 +1,6 @@
+/* =========================
+   CONFIG & UTILS
+   ========================= */
 const DEBUG_MODE = true;
 let isEditMode = false;
 let currentDataModel = null;
@@ -120,7 +123,9 @@ const TRANSLATION_FILES = [
   'actions.json',
 ];
 
-/*----- Multilang ------*/
+/* =========================
+   I18N
+   ========================= */
 function t(path, params = {}) {
   const parts = path.split('.');
   let result = translations;
@@ -128,519 +133,14 @@ function t(path, params = {}) {
     result = result?.[part];
     if (!result) break;
   }
-  if (typeof result !== 'string') return path; // fallback lisible
+  if (typeof result !== 'string') return path;
   for (const k in params) result = result.replace(`{${k}}`, params[k]);
   return result;
 }
-/*----- Check translations------*/
-async function translationExists(jsonName) {
-  try {
-    const res = await fetch(`translations/${jsonName}`, { method: 'GET', cache: 'no-cache' });
-    return res.ok;
-  } catch (_) {
-    return false;
-  }
-}
 
-function extractBeginJsonBlock(tsText) {
-  const marker = '//begin-json';
-  const start = tsText.indexOf(marker);
-  if (start < 0) return null;
-
-  let i = tsText.indexOf('{', start);
-  if (i < 0) return null;
-
-  let depth = 0,
-    inS = false,
-    inD = false,
-    inB = false,
-    esc = false,
-    j = i;
-  for (; j < tsText.length; j++) {
-    const ch = tsText[j];
-    if (esc) {
-      esc = false;
-      continue;
-    }
-    if (ch === '\\') {
-      esc = true;
-      continue;
-    }
-    if (!inS && !inD && !inB) {
-      if (ch === "'") inS = true;
-      else if (ch === '"') inD = true;
-      else if (ch === '`') inB = true;
-      else if (ch === '{') depth++;
-      else if (ch === '}') {
-        depth--;
-        if (depth === 0) break;
-      }
-    } else {
-      if (inS && ch === "'") inS = false;
-      else if (inD && ch === '"') inD = false;
-      else if (inB && ch === '`') inB = false;
-    }
-  }
-  if (depth !== 0) return null;
-
-  const jsonText = tsText.slice(i, j + 1);
-  return jsonText;
-}
-
-// Écrit un fichier côté serveur via ton endpoint déjà utilisé ailleurs
-async function saveTranslationFile(jsonName, jsonString) {
-  try {
-    const res = await fetch(`/api/compile?file=${encodeURIComponent('translations/' + jsonName)}`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': CSRF,
-      },
-      body: JSON.stringify({ module: jsonString }),
-    });
-    return res.ok;
-  } catch (_) {
-    return false;
-  }
-}
-
-// Récupère le .ts source sur le CDN
-async function fetchTsSource(tsName) {
-  const url = TS_BASE + tsName;
-  const res = await fetch(url, { cache: 'no-cache' });
-  if (!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
-  return await res.text();
-}
-
-function extractExportExpression(tsText) {
-  // 1) retirer les commentaires /* ... */ et // ...
-  const noComments = tsText.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^\:])\/\/.*$/gm, '$1');
-
-  // 2) localiser le début de l'expression exportée
-  let startExpr = -1;
-
-  // a) export default { ... } / [ ... ]
-  const mDefault = noComments.match(/export\s+default\s*/);
-  if (mDefault) {
-    startExpr = mDefault.index + mDefault[0].length;
-  } else {
-    // b) export const NAME [: type] = ...
-    //    (autorise une annotation de type facultative avant le "=")
-    const mConst = noComments.match(/export\s+const\s+[A-Za-z0-9_$]+(?:\s*:\s*[^=;]+)?\s*=\s*/);
-    if (!mConst) {
-      throw new Error('Export introuvable');
-    }
-    startExpr = mConst.index + mConst[0].length;
-  }
-
-  // 3) sauter les espaces
-  while (/\s/.test(noComments[startExpr])) startExpr++;
-
-  // 4) déterminer le délimiteur (objet/array)
-  const open = noComments[startExpr];
-  const pairs = { '{': '}', '[': ']' };
-  const close = pairs[open];
-  if (!close) throw new Error("Expression exportée inattendue (pas d'objet/array)");
-
-  // 5) parcours naïf avec gestion des chaînes pour trouver la fermeture
-  let i = startExpr,
-    depth = 0,
-    inS = false,
-    inD = false,
-    inB = false,
-    esc = false;
-  for (; i < noComments.length; i++) {
-    const ch = noComments[i];
-    if (esc) {
-      esc = false;
-      continue;
-    }
-    if (ch === '\\') {
-      esc = true;
-      continue;
-    }
-    if (!inS && !inD && !inB) {
-      if (ch === "'") inS = true;
-      else if (ch === '"') inD = true;
-      else if (ch === '`') inB = true;
-      else if (ch === open) depth++;
-      else if (ch === close) {
-        depth--;
-        if (depth === 0) break;
-      }
-    } else {
-      if (inS && ch === "'") inS = false;
-      else if (inD && ch === '"') inD = false;
-      else if (inB && ch === '`') inB = false;
-    }
-  }
-  if (depth !== 0) throw new Error('Accolades non appariées');
-
-  // 6) extraire juste le littéral { … } ou [ … ]
-  return noComments.slice(startExpr, i + 1).trim();
-}
-
-// Convertit l’expression JS en valeur (objet/array) SANS dépendances
-function evalExportExpressionToValue(expr) {
-  // eslint-disable-next-line no-new-func
-  const fn = new Function(`"use strict"; return (${expr});`);
-  return fn();
-}
-
-// Construit le JSON à partir du .ts
-async function compileTsToJson(tsName) {
-  const tsText = await fetchTsSource(tsName);
-
-  // 1) chemin “normal” (export default / export const … = …)
-  try {
-    const expr = extractExportExpression(tsText);
-    const value = evalExportExpressionToValue(expr);
-    return JSON.stringify(value, null, 2) + '\n';
-  } catch (e) {
-    // 2) fallback pour localizedStrings.ts (ou tout fichier avec //begin-json)
-    if (tsName === 'localizedStrings.ts' || tsText.includes('//begin-json')) {
-      const raw = extractBeginJsonBlock(tsText);
-      if (!raw) throw e;
-
-      // certaines versions peuvent avoir des virgules trainantes → on tente un parse “strict”, puis un nettoyage doux
-      let obj;
-      try {
-        obj = JSON.parse(raw);
-      } catch {
-        const noTrailing = raw.replace(/,(\s*[}\]])/g, '$1');
-        obj = JSON.parse(noTrailing);
-      }
-      return JSON.stringify(obj, null, 2) + '\n';
-    }
-    throw e;
-  }
-}
-
-// Procédure principale : vérifie tout et compile ce qui manque
-async function ensureTranslationsPresent() {
-  const missing = [];
-  for (const jsonName of TRANSLATION_FILES) {
-    const ok = await translationExists(jsonName);
-    if (!ok) missing.push(jsonName);
-  }
-  if (!missing.length) return;
-
-  // compile et sauvegarde ce qui manque
-  for (const jsonName of missing) {
-    const tsName = jsonName.replace(/\.json$/i, '.ts');
-    try {
-      const jsonString = await compileTsToJson(tsName);
-      const saved = await saveTranslationFile(jsonName, jsonString);
-      if (!saved) {
-        console.warn(
-          `[translations] Échec écriture ${jsonName} ; le JSON a été compilé mais non sauvegardé.`
-        );
-      } else {
-        console.debug(`[translations] ${jsonName} créé à partir de ${tsName}.`);
-      }
-    } catch (e) {
-      console.error(`[translations] Échec compilation ${tsName} → ${jsonName}:`, e);
-    }
-  }
-}
-
-// Lance la vérification/compilation très tôt au chargement
-document.addEventListener('DOMContentLoaded', () => {
-  ensureTranslationsPresent().catch(console.error);
-});
-
-/*----- Copy ------*/
-async function copyToClipboard(text) {
-  // API moderne (HTTPS/localhost)
-  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-    try {
-      await navigator.clipboard.writeText(text ?? '');
-      return true;
-    } catch (_) {
-      /* on tentera le fallback */
-    }
-  }
-
-  // Fallback execCommand
-  const ta = document.createElement('textarea');
-  ta.value = text ?? '';
-  ta.setAttribute('readonly', '');
-  ta.style.position = 'fixed';
-  ta.style.top = '-9999px';
-  ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-
-  const sel = document.getSelection();
-  const savedRange = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
-
-  ta.focus();
-  ta.select();
-  ta.setSelectionRange(0, ta.value.length);
-
-  let ok = false;
-  try {
-    ok = document.execCommand('copy');
-  } catch (_) {
-    ok = false;
-  }
-
-  document.body.removeChild(ta);
-  if (savedRange && sel) {
-    sel.removeAllRanges();
-    sel.addRange(savedRange);
-  }
-  return ok;
-}
-
-// --- Toasts ---
-function showToast(message, ok = true) {
-  const el = document.createElement('div');
-  el.setAttribute('role', 'status');
-  el.setAttribute('aria-live', 'polite');
-  el.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-2xl border
-    transition-all duration-300 opacity-0 translate-y-2
-    ${ok ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-rose-500/20 text-rose-200 border-rose-400/30'}`;
-  el.textContent = message;
-  document.body.appendChild(el);
-
-  requestAnimationFrame(() => {
-    el.classList.remove('opacity-0', 'translate-y-2');
-  });
-
-  setTimeout(() => {
-    el.classList.add('opacity-0', 'translate-y-2');
-    el.addEventListener('transitionend', () => el.remove(), { once: true });
-  }, 1400);
-}
-function showConfirmationMessage(m) {
-  showToast(m, true);
-}
-function showErrorMessage(m) {
-  showToast(m, false);
-}
-
-/*----- selectSection ------*/
-function debug(data) {
-  if (DEBUG_MODE) {
-    console.debug('DEBUG: ' + data);
-  }
-}
-
-function selectSection(id) {
-  document.querySelectorAll('#mainTabs button').forEach((btn) => btn.classList.remove('active'));
-  document.querySelectorAll('.convert-map-layout').forEach((sec) => {
-    if (sec) {
-      sec.style.display = 'none';
-      sec.classList.remove('active');
-    }
-  });
-  document.querySelectorAll('.content').forEach((c) => {
-    if (c) c.style.display = 'none';
-  });
-
-  const section = document.getElementById(id);
-  const button = document.getElementById(id + 'Btn');
-
-  if (!section || !button) {
-    console.warn('[selectSection] section/button introuvable:', { id, section, button });
-    return;
-  }
-  section.style.display = 'block';
-  section.classList.add('active');
-  button.classList.add('active');
-}
-
-window.selectSection = (id) => {
-  try {
-    return selectSection(id);
-  } catch (e) {
-    console.error('[selectSection] failed:', e);
-  }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  const bind = (btnId, sectionId) => {
-    const btn = document.getElementById(btnId);
-    if (btn) btn.addEventListener('click', () => selectSection(sectionId));
-  };
-  bind('convertMapBtn', 'convertMap');
-  bind('helpBtn', 'help');
-  bind('mapSettingsBtn', 'mapSettings');
-
-  const defaultSection = document.getElementById('convertMap') ? 'convertMap' : null;
-  if (defaultSection) selectSection(defaultSection);
-});
-
-function initMainTabs() {
-  const btns = {
-    convert: document.getElementById('convertMapBtn'),
-    help: document.getElementById('helpBtn'),
-    settings: document.getElementById('mapSettingsBtn'),
-  };
-
-  const panels = {
-    convert: document.getElementById('convertMap'),
-    help: document.getElementById('help'),
-    settings: document.getElementById('mapSettings'),
-  };
-
-  const ACTIVE = ['bg-white', 'text-zinc-900'];
-  const INACTIVE = ['text-white', 'hover:bg-white/10'];
-
-  // normalise classes
-  Object.values(btns).forEach((b) => {
-    b.classList.add('tab-btn', 'transition-colors', 'duration-300');
-    // on met tous inactifs par défaut, l’actif sera posé plus bas
-    b.classList.remove(...ACTIVE);
-    if (!INACTIVE.every((c) => b.classList.contains(c))) b.classList.add(...INACTIVE);
-  });
-
-  // applique les classes actives/inactives sur les boutons
-  function setActiveButton(key) {
-    Object.entries(btns).forEach(([k, b]) => {
-      if (k === key) {
-        b.classList.add(...ACTIVE);
-        b.classList.remove(...INACTIVE);
-      } else {
-        b.classList.remove(...ACTIVE);
-        INACTIVE.forEach((c) => {
-          if (!b.classList.contains(c)) b.classList.add(c);
-        });
-      }
-    });
-  }
-
-  // petite animation d’apparition sur les panneaux
-  function showPanel(key) {
-    Object.entries(panels).forEach(([k, p]) => {
-      if (k === key) {
-        p.classList.remove('hidden');
-        p.classList.add('tab-panel-enter');
-        // force reflow pour lancer la transition
-        void p.offsetWidth;
-        p.classList.add('tab-panel-enter-active');
-        p.addEventListener(
-          'transitionend',
-          () => {
-            p.classList.remove('tab-panel-enter', 'tab-panel-enter-active');
-          },
-          { once: true }
-        );
-      } else {
-        p.classList.add('hidden');
-        p.classList.remove('tab-panel-enter', 'tab-panel-enter-active');
-      }
-    });
-  }
-
-  // fonction publique de switch
-  function switchTab(key) {
-    setActiveButton(key);
-    showPanel(key);
-  }
-
-  // listeners
-  btns.convert.addEventListener('click', () => switchTab('convert'));
-  btns.help.addEventListener('click', () => switchTab('help'));
-  btns.settings.addEventListener('click', () => switchTab('settings'));
-
-  // état initial (ton HTML démarre déjà sur Convert map)
-  switchTab('convert');
-}
-
-// init quand le DOM est prêt
-document.addEventListener('DOMContentLoaded', initMainTabs);
-
-/* -------------- Boutons Convert & Copy -------------- */
-document.addEventListener('DOMContentLoaded', async () => {
-  selectSection('convertMap');
-
-  const btnConvert = document.getElementById('convert-btn');
-  const btnTranslate = document.getElementById('translate-btn');
-  const btnCopy = document.querySelector('.copy-btn');
-  const textarea = document.querySelector('.mapdata');
-  const langEl = document.getElementById('lang');
-  const targetEl = document.getElementById('targetLang');
-
-  btnConvert.addEventListener('click', async () => {
-    isEditMode = false;
-    const editModeBtn = document.getElementById('editModeBtn');
-    if (editModeBtn) editModeBtn.textContent = t('map_data.edit_mode');
-    document
-      .querySelectorAll('.checkpoint-card')
-      .forEach((card) => card.classList.remove('editable'));
-
-    showLoader();
-    btnConvert.disabled = true;
-    btnConvert.textContent = 'Processing…';
-    try {
-      const lang = langEl.value || 'en-US';
-      const fullText = textarea.value;
-
-      const resultTpl = await doConvert(fullText, lang);
-
-      textarea.value = resultTpl;
-      renderMapSettings(fullText);
-    } catch (err) {
-      console.error(err);
-      showErrorMessage('Error: ' + err.message);
-    } finally {
-      hideLoader();
-      btnConvert.disabled = false;
-      btnConvert.textContent = t('map_data.convert_data');
-      await checkForDiff();
-    }
-  });
-
-  btnTranslate.addEventListener('click', async () => {
-    isEditMode = false;
-    const editModeBtn = document.getElementById('editModeBtn');
-    if (editModeBtn) editModeBtn.textContent = t('map_data.edit_mode');
-    document
-      .querySelectorAll('.checkpoint-card')
-      .forEach((card) => card.classList.remove('editable'));
-
-    const clientLang = langEl.value || 'en-US';
-    const targetLang = targetEl.value || 'en-US';
-    const fullText = textarea.value;
-
-    const tpl = await doTranslate(fullText, clientLang, targetLang);
-
-    textarea.value = tpl;
-    renderMapSettings(fullText);
-    await checkForDiff();
-  });
-
-  btnCopy.addEventListener('click', async () => {
-    const text = textarea?.value ?? '';
-
-    const ok = await copyToClipboard(text);
-
-    if (ok) {
-      // Succès
-      showConfirmationMessage(t('newsfeed.copy_clipboard') || 'Copié dans le presse-papiers');
-    } else {
-      // Échec
-      showErrorMessage(t('newsfeed.copy_clipboard_error') || 'Échec de la copie');
-    }
-  });
-
-  if (btnConvert) {
-    btnConvert.addEventListener('click', () => {
-      setTimeout(addGlobalSettingsButton, 100);
-    });
-  }
-  if (btnTranslate) {
-    btnTranslate.addEventListener('click', () => {
-      setTimeout(addGlobalSettingsButton, 100);
-    });
-  }
-});
-
-/* ------- Translations framework ------- */
+/* =========================
+   FRAMEWORK TRANSLATIONS
+   ========================= */
 async function loadMapNameTranslations() {
   if (mapNamesTranslations) return mapNamesTranslations;
 
@@ -661,11 +161,9 @@ async function loadMapNameTranslations() {
 }
 
 function buildUnifiedKeywordTranslations(bundle) {
-  // Lang keys style "en", "en-US", "pt-BR", etc.
   const LANG_KEY_RE = /^[a-z]{2}(?:-[A-Z]{2})?$/;
   const unified = {};
 
-  // Tous les dictionnaires textuels (on exclut "icons" qui a un format à part)
   const SOURCES = [
     'actions',
     'constants',
@@ -684,7 +182,6 @@ function buildUnifiedKeywordTranslations(bundle) {
     for (const [engKey, entry] of Object.entries(obj)) {
       if (!entry || typeof entry !== 'object') continue;
 
-      // Si l'objet courant ressemble à un enregistrement de traductions (lang -> string)
       const langKeys = Object.keys(entry).filter(
         (k) => LANG_KEY_RE.test(k) && typeof entry[k] === 'string'
       );
@@ -694,13 +191,11 @@ function buildUnifiedKeywordTranslations(bundle) {
           const val = entry[lang];
           if (typeof val !== 'string') continue;
           if (!unified[lang]) unified[lang] = {};
-          // ne remplace pas si déjà défini (évite écrasements imprévisibles)
           if (unified[lang][engKey] == null) {
             unified[lang][engKey] = val;
           }
         }
       } else {
-        // Sinon, on descend (cas des structures imbriquées comme localizedStrings/customGameSettings)
         walkDict(entry);
       }
     }
@@ -747,10 +242,8 @@ async function loadAllTranslations(force = false) {
 }
 
 function getActiveOutputLang() {
-  // Si l'utilisateur est passé par doTranslate, on force l'écriture dans la langue cible
   if (__lastTranslateCtx.used && __lastTranslateCtx.targetLang)
     return __lastTranslateCtx.targetLang;
-  // Sinon on retombe sur la langue du sélecteur (comportement d'avant)
   const langEl = document.getElementById('lang');
   return (langEl && langEl.value) || CURRENT_LANG || 'en-US';
 }
@@ -761,28 +254,22 @@ function translateWorkshopValuesOnly(block, sourceLang, targetLang) {
   const lines = block.split(/\r?\n/);
 
   const out = lines.map((raw) => {
-    // on préserve les lignes vides / décoratives telles quelles
     if (!raw.trim()) return raw;
 
-    // cherche le DERNIER ":" ou "：" sur la ligne (au cas où il y en ait dans l'intitulé)
     let lastColon = Math.max(raw.lastIndexOf(':'), raw.lastIndexOf('：'));
-    if (lastColon === -1) return raw; // pas de séparateur -> on ne touche pas
+    if (lastColon === -1) return raw;
 
-    const left = raw.slice(0, lastColon + 1); // incluant le séparateur
-    const right = raw.slice(lastColon + 1); // la valeur à traduire
+    const left = raw.slice(0, lastColon + 1);
+    const right = raw.slice(lastColon + 1);
 
-    // séparer valeur et éventuel commentaire inline (on garde tout ce qu'il y a après)
-    // ex: " ON   // note" -> value=" ON  ", tail="// note"
     const m = right.match(/^(\s*)(.*?)(\s*(?:\/\/.*)?)\s*$/);
     if (!m) {
-      // cas bizarre: on traduit tout right
       return left + translateFromTo(right, sourceLang, targetLang);
     }
     const leading = m[1] || '';
     const core = m[2] || '';
     const tail = m[3] || '';
 
-    // traduit UNIQUEMENT la valeur "core"
     const translatedCore = core ? translateFromTo(core, sourceLang, targetLang) : core;
 
     return left + leading + translatedCore + tail;
@@ -912,15 +399,496 @@ function translateIconNames(text, sourceLang, targetLang, iconsDict) {
   });
 }
 
-// --- helpers normalisation ---
+async function translationExists(jsonName) {
+  try {
+    const res = await fetch(`translations/${jsonName}`, { method: 'GET', cache: 'no-cache' });
+    return res.ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+function extractBeginJsonBlock(tsText) {
+  const marker = '//begin-json';
+  const start = tsText.indexOf(marker);
+  if (start < 0) return null;
+
+  let i = tsText.indexOf('{', start);
+  if (i < 0) return null;
+
+  let depth = 0,
+    inS = false,
+    inD = false,
+    inB = false,
+    esc = false,
+    j = i;
+  for (; j < tsText.length; j++) {
+    const ch = tsText[j];
+    if (esc) {
+      esc = false;
+      continue;
+    }
+    if (ch === '\\') {
+      esc = true;
+      continue;
+    }
+    if (!inS && !inD && !inB) {
+      if (ch === "'") inS = true;
+      else if (ch === '"') inD = true;
+      else if (ch === '`') inB = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) break;
+      }
+    } else {
+      if (inS && ch === "'") inS = false;
+      else if (inD && ch === '"') inD = false;
+      else if (inB && ch === '`') inB = false;
+    }
+  }
+  if (depth !== 0) return null;
+
+  const jsonText = tsText.slice(i, j + 1);
+  return jsonText;
+}
+
+async function saveTranslationFile(jsonName, jsonString) {
+  try {
+    const res = await fetch(`/api/compile?file=${encodeURIComponent('translations/' + jsonName)}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': CSRF,
+      },
+      body: JSON.stringify({ module: jsonString }),
+    });
+    return res.ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function fetchTsSource(tsName) {
+  const url = TS_BASE + tsName;
+  const res = await fetch(url, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
+  return await res.text();
+}
+
+function extractExportExpression(tsText) {
+  const noComments = tsText.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^\:])\/\/.*$/gm, '$1');
+
+  let startExpr = -1;
+
+  const mDefault = noComments.match(/export\s+default\s*/);
+  if (mDefault) {
+    startExpr = mDefault.index + mDefault[0].length;
+  } else {
+    const mConst = noComments.match(/export\s+const\s+[A-Za-z0-9_$]+(?:\s*:\s*[^=;]+)?\s*=\s*/);
+    if (!mConst) {
+      throw new Error('Export introuvable');
+    }
+    startExpr = mConst.index + mConst[0].length;
+  }
+
+  while (/\s/.test(noComments[startExpr])) startExpr++;
+
+  const open = noComments[startExpr];
+  const pairs = { '{': '}', '[': ']' };
+  const close = pairs[open];
+  if (!close) throw new Error("Expression exportée inattendue (pas d'objet/array)");
+
+  let i = startExpr,
+    depth = 0,
+    inS = false,
+    inD = false,
+    inB = false,
+    esc = false;
+  for (; i < noComments.length; i++) {
+    const ch = noComments[i];
+    if (esc) {
+      esc = false;
+      continue;
+    }
+    if (ch === '\\') {
+      esc = true;
+      continue;
+    }
+    if (!inS && !inD && !inB) {
+      if (ch === "'") inS = true;
+      else if (ch === '"') inD = true;
+      else if (ch === '`') inB = true;
+      else if (ch === open) depth++;
+      else if (ch === close) {
+        depth--;
+        if (depth === 0) break;
+      }
+    } else {
+      if (inS && ch === "'") inS = false;
+      else if (inD && ch === '"') inD = false;
+      else if (inB && ch === '`') inB = false;
+    }
+  }
+  if (depth !== 0) throw new Error('Accolades non appariées');
+
+  return noComments.slice(startExpr, i + 1).trim();
+}
+
+function evalExportExpressionToValue(expr) {
+  const fn = new Function(`"use strict"; return (${expr});`);
+  return fn();
+}
+
+async function compileTsToJson(tsName) {
+  const tsText = await fetchTsSource(tsName);
+
+  try {
+    const expr = extractExportExpression(tsText);
+    const value = evalExportExpressionToValue(expr);
+    return JSON.stringify(value, null, 2) + '\n';
+  } catch (e) {
+    if (tsName === 'localizedStrings.ts' || tsText.includes('//begin-json')) {
+      const raw = extractBeginJsonBlock(tsText);
+      if (!raw) throw e;
+
+      let obj;
+      try {
+        obj = JSON.parse(raw);
+      } catch {
+        const noTrailing = raw.replace(/,(\s*[}\]])/g, '$1');
+        obj = JSON.parse(noTrailing);
+      }
+      return JSON.stringify(obj, null, 2) + '\n';
+    }
+    throw e;
+  }
+}
+
+async function ensureTranslationsPresent() {
+  const missing = [];
+  for (const jsonName of TRANSLATION_FILES) {
+    const ok = await translationExists(jsonName);
+    if (!ok) missing.push(jsonName);
+  }
+  if (!missing.length) return;
+
+  for (const jsonName of missing) {
+    const tsName = jsonName.replace(/\.json$/i, '.ts');
+    try {
+      const jsonString = await compileTsToJson(tsName);
+      const saved = await saveTranslationFile(jsonName, jsonString);
+      if (!saved) {
+        console.warn(
+          `[translations] Échec écriture ${jsonName} ; le JSON a été compilé mais non sauvegardé.`
+        );
+      } else {
+        console.debug(`[translations] ${jsonName} créé à partir de ${tsName}.`);
+      }
+    } catch (e) {
+      console.error(`[translations] Échec compilation ${tsName} → ${jsonName}:`, e);
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  ensureTranslationsPresent().catch(console.error);
+});
+
+/* =========================
+   HELPERS COPY & TOASTS
+   ========================= */
+async function copyToClipboard(text) {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      await navigator.clipboard.writeText(text ?? '');
+      return true;
+    } catch (_) {
+    }
+  }
+
+  const ta = document.createElement('textarea');
+  ta.value = text ?? '';
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.top = '-9999px';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+
+  const sel = document.getSelection();
+  const savedRange = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, ta.value.length);
+
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch (_) {
+    ok = false;
+  }
+
+  document.body.removeChild(ta);
+  if (savedRange && sel) {
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+  return ok;
+}
+
+// --- Toasts ---
+function showToast(message, ok = true) {
+  const el = document.createElement('div');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-2xl border
+    transition-all duration-300 opacity-0 translate-y-2
+    ${ok ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-rose-500/20 text-rose-200 border-rose-400/30'}`;
+  el.textContent = message;
+  document.body.appendChild(el);
+
+  requestAnimationFrame(() => {
+    el.classList.remove('opacity-0', 'translate-y-2');
+  });
+
+  setTimeout(() => {
+    el.classList.add('opacity-0', 'translate-y-2');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+  }, 1400);
+}
+function showConfirmationMessage(m) {
+  showToast(m, true);
+}
+function showErrorMessage(m) {
+  showToast(m, false);
+}
+
+/* =========================
+   TAB SYSTEM
+   ========================= */
+function debug(data) {
+  if (DEBUG_MODE) {
+    console.debug('DEBUG: ' + data);
+  }
+}
+
+function selectSection(id) {
+  document.querySelectorAll('#mainTabs button').forEach((btn) => btn.classList.remove('active'));
+  document.querySelectorAll('.convert-map-layout').forEach((sec) => {
+    if (sec) {
+      sec.style.display = 'none';
+      sec.classList.remove('active');
+    }
+  });
+  document.querySelectorAll('.content').forEach((c) => {
+    if (c) c.style.display = 'none';
+  });
+
+  const section = document.getElementById(id);
+  const button = document.getElementById(id + 'Btn');
+
+  if (!section || !button) {
+    console.warn('[selectSection] section/button introuvable:', { id, section, button });
+    return;
+  }
+  section.style.display = 'block';
+  section.classList.add('active');
+  button.classList.add('active');
+}
+
+window.selectSection = (id) => {
+  try {
+    return selectSection(id);
+  } catch (e) {
+    console.error('[selectSection] failed:', e);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const bind = (btnId, sectionId) => {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.addEventListener('click', () => selectSection(sectionId));
+  };
+  bind('convertMapBtn', 'convertMap');
+  bind('helpBtn', 'help');
+  bind('mapSettingsBtn', 'mapSettings');
+
+  const defaultSection = document.getElementById('convertMap') ? 'convertMap' : null;
+  if (defaultSection) selectSection(defaultSection);
+});
+
+function initMainTabs() {
+  const btns = {
+    convert: document.getElementById('convertMapBtn'),
+    help: document.getElementById('helpBtn'),
+    settings: document.getElementById('mapSettingsBtn'),
+  };
+
+  const panels = {
+    convert: document.getElementById('convertMap'),
+    help: document.getElementById('help'),
+    settings: document.getElementById('mapSettings'),
+  };
+
+  const ACTIVE = ['bg-white', 'text-zinc-900'];
+  const INACTIVE = ['text-white', 'hover:bg-white/10'];
+
+  Object.values(btns).forEach((b) => {
+    b.classList.add('tab-btn', 'transition-colors', 'duration-300');
+    b.classList.remove(...ACTIVE);
+    if (!INACTIVE.every((c) => b.classList.contains(c))) b.classList.add(...INACTIVE);
+  });
+
+  function setActiveButton(key) {
+    Object.entries(btns).forEach(([k, b]) => {
+      if (k === key) {
+        b.classList.add(...ACTIVE);
+        b.classList.remove(...INACTIVE);
+      } else {
+        b.classList.remove(...ACTIVE);
+        INACTIVE.forEach((c) => {
+          if (!b.classList.contains(c)) b.classList.add(c);
+        });
+      }
+    });
+  }
+
+  function showPanel(key) {
+    Object.entries(panels).forEach(([k, p]) => {
+      if (k === key) {
+        p.classList.remove('hidden');
+        p.classList.add('tab-panel-enter');
+        void p.offsetWidth;
+        p.classList.add('tab-panel-enter-active');
+        p.addEventListener(
+          'transitionend',
+          () => {
+            p.classList.remove('tab-panel-enter', 'tab-panel-enter-active');
+          },
+          { once: true }
+        );
+      } else {
+        p.classList.add('hidden');
+        p.classList.remove('tab-panel-enter', 'tab-panel-enter-active');
+      }
+    });
+  }
+
+  function switchTab(key) {
+    setActiveButton(key);
+    showPanel(key);
+  }
+
+  btns.convert.addEventListener('click', () => switchTab('convert'));
+  btns.help.addEventListener('click', () => switchTab('help'));
+  btns.settings.addEventListener('click', () => switchTab('settings'));
+
+  switchTab('convert');
+}
+
+document.addEventListener('DOMContentLoaded', initMainTabs);
+
+/* =========================
+   DOTRANSLATE & DOCONVERT
+   ========================= */
+document.addEventListener('DOMContentLoaded', async () => {
+  selectSection('convertMap');
+
+  const btnConvert = document.getElementById('convert-btn');
+  const btnTranslate = document.getElementById('translate-btn');
+  const btnCopy = document.querySelector('.copy-btn');
+  const textarea = document.querySelector('.mapdata');
+  const langEl = document.getElementById('lang');
+  const targetEl = document.getElementById('targetLang');
+
+  btnConvert.addEventListener('click', async () => {
+    isEditMode = false;
+    const editModeBtn = document.getElementById('editModeBtn');
+    if (editModeBtn) editModeBtn.textContent = t('map_data.edit_mode');
+    document
+      .querySelectorAll('.checkpoint-card')
+      .forEach((card) => card.classList.remove('editable'));
+
+    showLoader();
+    btnConvert.disabled = true;
+    btnConvert.textContent = 'Processing…';
+    try {
+      const lang = langEl.value || 'en-US';
+      const fullText = textarea.value;
+
+      const resultTpl = await doConvert(fullText, lang);
+
+      textarea.value = resultTpl;
+      renderMapSettings(fullText);
+    } catch (err) {
+      console.error(err);
+      showErrorMessage('Error: ' + err.message);
+    } finally {
+      hideLoader();
+      btnConvert.disabled = false;
+      btnConvert.textContent = t('map_data.convert_data');
+      await checkForDiff();
+    }
+  });
+
+  btnTranslate.addEventListener('click', async () => {
+    isEditMode = false;
+    const editModeBtn = document.getElementById('editModeBtn');
+    if (editModeBtn) editModeBtn.textContent = t('map_data.edit_mode');
+    document
+      .querySelectorAll('.checkpoint-card')
+      .forEach((card) => card.classList.remove('editable'));
+
+    const clientLang = langEl.value || 'en-US';
+    const targetLang = targetEl.value || 'en-US';
+    const fullText = textarea.value;
+
+    const tpl = await doTranslate(fullText, clientLang, targetLang);
+
+    textarea.value = tpl;
+    renderMapSettings(fullText);
+    await checkForDiff();
+  });
+
+  btnCopy.addEventListener('click', async () => {
+    const text = textarea?.value ?? '';
+
+    const ok = await copyToClipboard(text);
+
+    if (ok) {
+      showConfirmationMessage(t('newsfeed.copy_clipboard') || 'Copié dans le presse-papiers');
+    } else {
+      showErrorMessage(t('newsfeed.copy_clipboard_error') || 'Échec de la copie');
+    }
+  });
+
+  if (btnConvert) {
+    btnConvert.addEventListener('click', () => {
+      setTimeout(addGlobalSettingsButton, 100);
+    });
+  }
+  if (btnTranslate) {
+    btnTranslate.addEventListener('click', () => {
+      setTimeout(addGlobalSettingsButton, 100);
+    });
+  }
+});
+
+/* =========================
+   HELPERS
+   ========================= */
 function _stripMarkup(s) {
   return String(s || '')
-    .replace(/<[^>]+>/g, '') // <tx...> <fg...> etc.
-    .replace(/\[[^\]]*?\]/g, (m) => m); // garder [..] s'il y en a (au cas où)
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[[^\]]*?\]/g, (m) => m);
 }
 function _normalizeLabel(s) {
   return _stripMarkup(s)
-    .replace(/\u00A0/g, ' ') // nbsp
+    .replace(/\u00A0/g, ' ')
     .replace(/[“”„‟]/g, '"')
     .replace(/[’‘]/g, "'")
     .replace(/[：]/g, ':')
@@ -932,7 +900,6 @@ function _isLangKey(k) {
   return /^[a-z]{2}(?:-[A-Z]{2})?$/.test(k);
 }
 
-// index inversés pour le fallback global : "libellé localisé" -> "clé anglaise"
 function _buildReverseKeywordIndex(unified, lang) {
   const src = (unified && unified[lang]) || {};
   const rev = new Map();
@@ -942,7 +909,6 @@ function _buildReverseKeywordIndex(unified, lang) {
   return rev;
 }
 
-// --- helpers pour labels paramétrés et jeux de valeurs partagés ---
 function stripPlaceholder(label) {
   return _normalizeLabel(
     String(label || '')
@@ -952,7 +918,7 @@ function stripPlaceholder(label) {
 }
 function detectTeamIndexFromKey(rawKey) {
   const m = /([12])/.exec(rawKey);
-  return m ? m[1] : null; // "1" ou "2"
+  return m ? m[1] : null;
 }
 function targetTeamName(idx, targetLang) {
   const kwT = (keywordTranslations && keywordTranslations[targetLang]) || {};
@@ -982,20 +948,19 @@ function findValueIdByAnyLang(valuesObj, rawVal) {
   return null;
 }
 
-/* --- CG-only helpers (lobby) --- */
 function resolveValuesObjectFor_CGOnly(settingEntry, cgRoot) {
   if (!settingEntry) return null;
   const ref = settingEntry.values;
   if (!ref) return null;
-  if (typeof ref === 'object') return ref; // inline values
-  if (typeof ref === 'string') return cgRoot[ref] || null; // référencé dans CG
+  if (typeof ref === 'object') return ref;
+  if (typeof ref === 'string') return cgRoot[ref] || null;
   return null;
 }
 
 function _indexCustomGameSettings_CGOnly(cg) {
-  const settingByLabel = new Map(); // libellé normalisé -> id
-  const valuesBySetting = new Map(); // id -> Map(libellé normalisé -> valueId)
-  const entryById = new Map(); // id -> entrée CG
+  const settingByLabel = new Map();
+  const valuesBySetting = new Map();
+  const entryById = new Map();
 
   function visit(node, idHint = null) {
     if (!node || typeof node !== 'object') return;
@@ -1027,13 +992,11 @@ function _indexCustomGameSettings_CGOnly(cg) {
       }
     }
 
-    // enfants dans values
     if (node && node.values && typeof node.values === 'object') {
       for (const [k, v] of Object.entries(node.values)) {
         if (v && typeof v === 'object') visit(v, k);
       }
     }
-    // autres sous-objets
     for (const [k, v] of Object.entries(node)) {
       if (k === 'values' || k === 'guid') continue;
       if (v && typeof v === 'object' && !Array.isArray(v)) visit(v, null);
@@ -1051,7 +1014,6 @@ function teamNameFromOther(idx, lang) {
   return (entry && (entry[lang] || entry['en-US'])) || key;
 }
 
-/* Détecte Team1/Team2 pour un libellé concret, en comparant aux libellés CG + other.json */
 function detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg) {
   const norm = (s) => _normalizeLabel(s || '');
 
@@ -1061,7 +1023,6 @@ function detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg) {
   const sTeam1 = teamNameFromOther('1', sourceLang);
   const sTeam2 = teamNameFromOther('2', sourceLang);
 
-  // Concrétise les libellés en remplaçant %1$s par le nom d’équipe localisé
   const concretize = (tmpl, teamName) =>
     typeof tmpl === 'string' ? tmpl.replace(/%1\s*\$?s/gi, teamName) : null;
 
@@ -1072,14 +1033,12 @@ function detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg) {
   if (t1Concrete && norm(t1Concrete) === keyN) return '1';
   if (t2Concrete && norm(t2Concrete) === keyN) return '2';
 
-  // fallback doux : si la clé “sans placeholder” commence comme le gabarit CG “sans placeholder”
   const keyNoParam = stripPlaceholder(rawKey);
   const t1Base = t1Label ? stripPlaceholder(t1Label) : null;
   const t2Base = t2Label ? stripPlaceholder(t2Label) : null;
   if (t1Base && norm(keyNoParam).startsWith(norm(t1Base))) return '1';
   if (t2Base && norm(keyNoParam).startsWith(norm(t2Base))) return '2';
 
-  // dernier filet: chiffre «1|2» dans la clé
   const m = /(^|\D)([12])(\D|$)/.exec(rawKey);
   return m ? m[2] : null;
 }
@@ -1089,7 +1048,7 @@ const __otherRevCache = Object.create(null);
 function _revOtherLabels(lang) {
   if (__otherRevCache[lang]) return __otherRevCache[lang];
   const other = (allTranslations && allTranslations.other) || {};
-  const rev = new Map(); // norm(label) -> Set(keys)
+  const rev = new Map();
   const isLangKey = (k) => /^[a-z]{2}(?:-[A-Z]{2})?$/.test(k);
 
   for (const [key, entry] of Object.entries(other)) {
@@ -1119,14 +1078,12 @@ function _isEnableContext(rawKey) {
 }
 
 function _disambiguateOtherKey(candidates, rawKey) {
-  // candidates = Set<string> par ex. {"__off__", "__no__"}
   const enableCtx = _isEnableContext(rawKey);
   const prefEnable = ['__on__', '__off__', '__yes__', '__no__'];
   const prefGeneric = ['__yes__', '__no__', '__on__', '__off__'];
   const order = enableCtx ? prefEnable : prefGeneric;
 
   for (const k of order) if (candidates.has(k)) return k;
-  // sinon, premier arbitraire
   for (const k of candidates) return k;
   return null;
 }
@@ -1148,91 +1105,9 @@ function translateValueUsingOther(rawValue, rawKey, sourceLang, targetLang) {
   return entry[targetLang] || entry['en-US'] || null;
 }
 
-/* --- LOBBY BLOCK --- */
-function translateLobbyBlock(lobbyText, sourceLang, targetLang) {
-  if (!lobbyText) return '';
-
-  const cg = (allTranslations && allTranslations.customGameSettings) || {};
-  const { settingByLabel, valuesBySetting, entryById } = _indexCustomGameSettings_CGOnly(cg);
-
-  const lines = lobbyText
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-
-  const keyValRe = /^(.+?)\s*[:：]\s*(.+)$/;
-
-  return lines
-    .map((line) => {
-      const m = line.match(keyValRe);
-      if (!m) return line;
-
-      const rawKey = m[1].trim();
-      const rawValue = m[2].trim();
-
-      const normKey = _normalizeLabel(rawKey);
-
-      // 1) identifier le réglage (clé)
-      let settingId = settingByLabel.get(normKey) || null;
-      let teamIdx = null;
-
-      // Cas particulier : team slots où le libellé concret contient le nom d’équipe
-      if (!settingId) {
-        teamIdx = detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg);
-        if (teamIdx === '1') settingId = 'team1Slots';
-        else if (teamIdx === '2') settingId = 'team2Slots';
-      }
-
-      // 2) traduction de la clé via CG (avec substitution %1$s par other.json)
-      let newKey = rawKey;
-      if (settingId) {
-        const entry = entryById.get(settingId);
-        if (entry) {
-          newKey = entry[targetLang] || entry['en-US'] || rawKey;
-
-          if (/%1\s*\$?s/i.test(newKey)) {
-            if (!teamIdx) teamIdx = detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg) || '1';
-            const teamNameTgt = teamNameFromOther(teamIdx, targetLang);
-            newKey = newKey.replace(/%1\s*\$?s/gi, teamNameTgt);
-          }
-        }
-      }
-
-      // 3) traduction de la valeur
-      let newValue = rawValue;
-      let translatedViaCG = false;
-
-      if (settingId) {
-        const entry = entryById.get(settingId);
-        if (entry) {
-          const vmap = valuesBySetting.get(settingId);
-          let valId = vmap ? vmap.get(_normalizeLabel(rawValue)) : null;
-
-          const valuesObj = resolveValuesObjectFor_CGOnly(entry, cg);
-          if (!valId && valuesObj) {
-            // correspondance “par n’importe quelle langue” mais toujours dans CG
-            valId = findValueIdByAnyLang(valuesObj, rawValue);
-          }
-
-          if (valId && valuesObj && valuesObj[valId]) {
-            newValue = valuesObj[valId][targetLang] || valuesObj[valId]['en-US'] || rawValue;
-            translatedViaCG = true;
-          }
-        }
-      }
-
-      // 3bis) fallback other.json (si CG n’a pas pu traduire la valeur)
-      if (!translatedViaCG) {
-        const viaOther = translateValueUsingOther(rawValue, rawKey, sourceLang, targetLang);
-        if (viaOther) newValue = viaOther;
-      }
-
-      return `${newKey}: ${newValue}`;
-    })
-    .join('\n');
-}
-
-/* ------- Cache, overpy  ------- */
+/* =========================
+   CACHE & OVERPY
+   ========================= */
 function getCacheURL(lang) {
   return new URL(`../framework-templates/framework-template_${lang}.js`, import.meta.url).href;
 }
@@ -1374,16 +1249,13 @@ function expandImportHeroToInclude(src) {
 }
 
 async function loadTemplate(lang) {
-  // On pointe directement vers /public/framework-templates/
   const cacheUrl = `/framework-templates/framework-template_${lang}.js`;
 
-  // 1) Tenter d'utiliser le cache déjà généré côté serveur
   try {
     const probe = await fetch(cacheUrl, { method: 'GET', cache: 'no-cache' });
     if (probe.ok) {
       debug(`Loading from cache for ${lang} [${cacheUrl}]`);
       try {
-        // @vite-ignore évite la réécriture par le bundler, ?v=... bust le cache ESM
         const mod = await import(/* @vite-ignore */ `${cacheUrl}?v=${Date.now()}`);
         if (mod && typeof mod.frameworkTemplate === 'string') {
           return mod.frameworkTemplate;
@@ -1402,7 +1274,6 @@ async function loadTemplate(lang) {
     console.debug(`[loadTemplate] Probe cacheUrl échouée, on compile :`, e);
   }
 
-  // 2) Compiler et sauvegarder
   debug(`Compiling new template for ${lang}`);
   const overpy = window.window || window.OverPy || window.Overpy;
   if (!overpy) throw new Error('OverPy UMD not found');
@@ -1414,7 +1285,6 @@ async function loadTemplate(lang) {
   if (!resp.ok) throw new Error(`HTTP ${resp.status} on ${entryFile}`);
   let src = await resp.text();
 
-  // Pré-traitements identiques à ta version
   src = expandImportHeroToInclude(src);
   src = await inlineIncludes(src, rawBase);
   src = cleanSourceG(src);
@@ -1456,7 +1326,6 @@ async function loadTemplate(lang) {
   const { result } = await overpy.compile(src, lang, rawBase, entryFile);
   const tpl = result;
 
-  // Sauvegarde du module ESM côté serveur (Laravel doit écrire dans /public/framework-templates/)
   const esc = tpl.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
   const moduleText =
     `// framework-template_${lang}.js (auto)\n` +
@@ -1487,7 +1356,212 @@ async function loadTemplate(lang) {
   return tpl;
 }
 
-/* ------- MAP DATA RULE ------- */
+/* =========================
+   LOBBY BLOCK
+   ========================= */
+function translateLobbyBlock(lobbyText, sourceLang, targetLang) {
+  if (!lobbyText) return '';
+
+  const cg = (allTranslations && allTranslations.customGameSettings) || {};
+  const { settingByLabel, valuesBySetting, entryById } = _indexCustomGameSettings_CGOnly(cg);
+
+  const lines = lobbyText
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const keyValRe = /^(.+?)\s*[:：]\s*(.+)$/;
+
+  return lines
+    .map((line) => {
+      const m = line.match(keyValRe);
+      if (!m) return line;
+
+      const rawKey = m[1].trim();
+      const rawValue = m[2].trim();
+
+      const normKey = _normalizeLabel(rawKey);
+
+      let settingId = settingByLabel.get(normKey) || null;
+      let teamIdx = null;
+
+      if (!settingId) {
+        teamIdx = detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg);
+        if (teamIdx === '1') settingId = 'team1Slots';
+        else if (teamIdx === '2') settingId = 'team2Slots';
+      }
+
+      let newKey = rawKey;
+      if (settingId) {
+        const entry = entryById.get(settingId);
+        if (entry) {
+          newKey = entry[targetLang] || entry['en-US'] || rawKey;
+
+          if (/%1\s*\$?s/i.test(newKey)) {
+            if (!teamIdx) teamIdx = detectTeamIdxUsingCgAndOther(rawKey, sourceLang, cg) || '1';
+            const teamNameTgt = teamNameFromOther(teamIdx, targetLang);
+            newKey = newKey.replace(/%1\s*\$?s/gi, teamNameTgt);
+          }
+        }
+      }
+
+      let newValue = rawValue;
+      let translatedViaCG = false;
+
+      if (settingId) {
+        const entry = entryById.get(settingId);
+        if (entry) {
+          const vmap = valuesBySetting.get(settingId);
+          let valId = vmap ? vmap.get(_normalizeLabel(rawValue)) : null;
+
+          const valuesObj = resolveValuesObjectFor_CGOnly(entry, cg);
+          if (!valId && valuesObj) {
+            valId = findValueIdByAnyLang(valuesObj, rawValue);
+          }
+
+          if (valId && valuesObj && valuesObj[valId]) {
+            newValue = valuesObj[valId][targetLang] || valuesObj[valId]['en-US'] || rawValue;
+            translatedViaCG = true;
+          }
+        }
+      }
+
+      if (!translatedViaCG) {
+        const viaOther = translateValueUsingOther(rawValue, rawKey, sourceLang, targetLang);
+        if (viaOther) newValue = viaOther;
+      }
+
+      return `${newKey}: ${newValue}`;
+    })
+    .join('\n');
+}
+
+function extractLobbyBlock(fullText, lang) {
+  let keyword;
+  switch (lang) {
+    case 'es-MX':
+      keyword = 'sala de espera';
+      break;
+    case 'de-DE':
+      keyword = 'Lobby';
+      break;
+    case 'ja-JP':
+      keyword = 'ロビー';
+      break;
+    case 'ko-KR':
+      keyword = 'lobby';
+      break;
+    case 'ru-RU':
+      keyword = 'lobby';
+      break;
+    case 'zh-CN':
+      keyword = '大厅';
+      break;
+    case 'pt-BR':
+      keyword = 'lobby';
+      break;
+    default:
+      keyword = 'lobby';
+      break;
+  }
+
+  const regexHeader = new RegExp(`^\\s*${keyword}\\s*\\{`, 'im');
+  const matchHeader = fullText.match(regexHeader);
+  if (!matchHeader) return '';
+
+  const startIdx = fullText.indexOf('{', matchHeader.index);
+  if (startIdx < 0) return '';
+
+  let level = 1,
+    i = startIdx + 1;
+  for (; i < fullText.length; i++) {
+    if (fullText[i] === '{') level++;
+    else if (fullText[i] === '}') {
+      level--;
+      if (level === 0) break;
+    }
+  }
+  if (level !== 0) return '';
+
+  const inside = fullText.slice(startIdx + 1, i);
+  return inside.trim();
+}
+
+function insertLobbyIntoTemplate(tpl, lobbyContent, lang = getActiveOutputLang()) {
+  let keyword;
+  switch (lang) {
+    case 'es-MX':
+      keyword = 'sala de espera';
+      break;
+    case 'de-DE':
+      keyword = 'Lobby';
+      break;
+    case 'ja-JP':
+      keyword = 'ロビー';
+      break;
+    case 'ko-KR':
+      keyword = 'lobby';
+      break;
+    case 'ru-RU':
+      keyword = 'lobby';
+      break;
+    case 'zh-CN':
+      keyword = '大厅';
+      break;
+    case 'pt-BR':
+      keyword = 'lobby';
+      break;
+    default:
+      keyword = 'lobby';
+  }
+
+  const regexHeader = new RegExp(`^\\s*${keyword}\\s*\\{`, 'm');
+  const m = tpl.match(regexHeader);
+  if (!m) return tpl;
+
+  const startBrIdx = tpl.indexOf('{', m.index);
+  if (startBrIdx < 0) return tpl;
+
+  let level = 1,
+    i = startBrIdx + 1;
+  for (; i < tpl.length; i++) {
+    if (tpl[i] === '{') level++;
+    else if (tpl[i] === '}') {
+      level--;
+      if (level === 0) break;
+    }
+  }
+  if (level !== 0) return tpl;
+  const endBrIdx = i;
+
+  const lines = lobbyContent.split('\n');
+  const indent = '    ';
+  const indented = lines.map((l) => indent + l).join('\n');
+
+  return tpl.slice(0, startBrIdx + 1) + '\n' + indented + '\n' + tpl.slice(endBrIdx);
+}
+
+function sanitizeMapDataAssignments(text) {
+  if (!text) return text;
+
+  const reSetGlobalVar = new RegExp(
+    String.raw`^[ \t]*Set\s+Global\s+Variable\s*\(\s*(?:DashExploitToggle|HudStoreEdit)\s*,[\s\S]*?\)\s*;?[ \t]*\r?\n?`,
+    'gmi'
+  );
+  text = text.replace(reSetGlobalVar, '');
+
+  const reDotAssign = new RegExp(
+    String.raw`^[ \t]*(?:Global|全局|グローバル)\.(?:DashExploitToggle|HudStoreEdit)\s*=\s*[^\r\n;]+;?[ \t]*\r?\n?`,
+    'gmi'
+  );
+  text = text.replace(reDotAssign, '');
+
+  return text;
+}
+
+/* =========================
+   MAP DATA BLOCK
+   ========================= */
 function buildRule(mapdata, lang) {
   const NEW_TITLE = 'Ø Map Data - 数据录入 <---- INSERT HERE / 在这输入';
   const body = (mapdata || '')
@@ -1666,131 +1740,190 @@ function extractMapDataBlock(fullText, lang) {
   return actionsMatch[1].trim();
 }
 
-/* ------- LOBBY BLOCK ------- */
-function extractLobbyBlock(fullText, lang) {
-  let keyword;
-  switch (lang) {
-    case 'es-MX':
-      keyword = 'sala de espera';
-      break;
-    case 'de-DE':
-      keyword = 'Lobby';
-      break;
-    case 'ja-JP':
-      keyword = 'ロビー';
-      break;
-    case 'ko-KR':
-      keyword = 'lobby';
-      break;
-    case 'ru-RU':
-      keyword = 'lobby';
-      break;
-    case 'zh-CN':
-      keyword = '大厅';
-      break;
-    case 'pt-BR':
-      keyword = 'lobby';
-      break;
-    default:
-      keyword = 'lobby';
-      break;
+function parseGlobalACheckpoints(fullText) {
+  const checkpoints = [];
+  const teleportMap = {};
+
+  const regexGlobalA = /(?:Global|全局|グローバル)\.A\s*=\s*(?:Array|Matriz|数组|配列)\s*\(\s*/;
+  const matchGA = fullText.match(regexGlobalA);
+  if (!matchGA) {
+    return { checkpoints, teleportMap };
   }
 
-  const regexHeader = new RegExp(`^\\s*${keyword}\\s*\\{`, 'im');
-  const matchHeader = fullText.match(regexHeader);
-  if (!matchHeader) return '';
-
-  const startIdx = fullText.indexOf('{', matchHeader.index);
-  if (startIdx < 0) return '';
-
-  let level = 1,
-    i = startIdx + 1;
+  let level = 1;
+  let i = matchGA.index + matchGA[0].length;
   for (; i < fullText.length; i++) {
-    if (fullText[i] === '{') level++;
-    else if (fullText[i] === '}') {
+    if (fullText[i] === '(') level++;
+    else if (fullText[i] === ')') {
       level--;
       if (level === 0) break;
     }
   }
-  if (level !== 0) return '';
+  const inside = fullText.slice(matchGA.index + matchGA[0].length, i);
 
-  const inside = fullText.slice(startIdx + 1, i);
-  return inside.trim();
+  const elements = [];
+  let current = '',
+    depth = 0;
+  for (const c of inside) {
+    if (c === '(') {
+      depth++;
+      current += c;
+    } else if (c === ')') {
+      depth--;
+      current += c;
+    } else if (c === ',' && depth === 0) {
+      elements.push(current.trim());
+      current = '';
+    } else {
+      current += c;
+    }
+  }
+  if (current.trim()) elements.push(current.trim());
+
+  const vectorRegex =
+    /^(?:Vector|矢量|ベクトル|Vetor)\s*\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)$/;
+  const tpRegex = new RegExp(
+    `^(?:Array|Matriz|数组|配列)\\s*\\(\\s*` +
+      `(Vector\\([^)]*\\))` +
+      `\\s*,\\s*` +
+      `(Vector\\([^)]*\\))` +
+      `\\s*\\)$`
+  );
+
+  elements.forEach((elem) => {
+    let m = elem.match(vectorRegex);
+    if (m) {
+      checkpoints.push({
+        x: parseFloat(m[1]),
+        y: parseFloat(m[2]),
+        z: parseFloat(m[3]),
+      });
+      return;
+    }
+
+    const mt = elem.match(tpRegex);
+    if (mt) {
+      const parseV = (vStr) => {
+        const mm = vStr.match(vectorRegex);
+        return {
+          x: parseFloat(mm[1]),
+          y: parseFloat(mm[2]),
+          z: parseFloat(mm[3]),
+        };
+      };
+      const start = parseV(mt[1]);
+      const end = parseV(mt[2]);
+      const idx = checkpoints.length;
+
+      checkpoints.push(start);
+      teleportMap[idx] = { start, end };
+      return;
+    }
+  });
+
+  return { checkpoints, teleportMap };
 }
 
-function insertLobbyIntoTemplate(tpl, lobbyContent, lang = getActiveOutputLang()) {
-  let keyword;
-  switch (lang) {
-    case 'es-MX':
-      keyword = 'sala de espera';
-      break;
-    case 'de-DE':
-      keyword = 'Lobby';
-      break;
-    case 'ja-JP':
-      keyword = 'ロビー';
-      break;
-    case 'ko-KR':
-      keyword = 'lobby';
-      break;
-    case 'ru-RU':
-      keyword = 'lobby';
-      break;
-    case 'zh-CN':
-      keyword = '大厅';
-      break;
-    case 'pt-BR':
-      keyword = 'lobby';
-      break;
-    default:
-      keyword = 'lobby';
-  }
+function parseGlobalArrayNumbers(fullText, varName) {
+  const regex = new RegExp(
+    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
+  );
+  const match = fullText.match(regex);
+  if (!match) return [];
 
-  const regexHeader = new RegExp(`^\\s*${keyword}\\s*\\{`, 'm');
-  const m = tpl.match(regexHeader);
-  if (!m) return tpl;
-
-  const startBrIdx = tpl.indexOf('{', m.index);
-  if (startBrIdx < 0) return tpl;
-
-  let level = 1,
-    i = startBrIdx + 1;
-  for (; i < tpl.length; i++) {
-    if (tpl[i] === '{') level++;
-    else if (tpl[i] === '}') {
+  const startIdx = match.index + match[0].length;
+  let level = 1;
+  let i = startIdx;
+  for (; i < fullText.length; i++) {
+    if (fullText[i] === '(') level++;
+    else if (fullText[i] === ')') {
       level--;
       if (level === 0) break;
     }
   }
-  if (level !== 0) return tpl;
-  const endBrIdx = i;
+  if (level !== 0) return [];
+  const endIdx = i;
 
-  const lines = lobbyContent.split('\n');
-  const indent = '    ';
-  const indented = lines.map((l) => indent + l).join('\n');
-
-  return tpl.slice(0, startBrIdx + 1) + '\n' + indented + '\n' + tpl.slice(endBrIdx);
+  const inside = fullText.slice(startIdx, endIdx);
+  return inside
+    .split(',')
+    .map((s) => parseFloat(s.trim()))
+    .filter((n) => !isNaN(n));
 }
 
-function sanitizeMapDataAssignments(text) {
-  if (!text) return text;
-
-  const reSetGlobalVar = new RegExp(
-    String.raw`^[ \t]*Set\s+Global\s+Variable\s*\(\s*(?:DashExploitToggle|HudStoreEdit)\s*,[\s\S]*?\)\s*;?[ \t]*\r?\n?`,
-    'gmi'
+function parseGlobalArrayVectors(fullText, varName) {
+  const results = [];
+  const regex = new RegExp(
+    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
   );
-  text = text.replace(reSetGlobalVar, '');
+  const match = fullText.match(regex);
+  if (!match) return results;
 
-  const reDotAssign = new RegExp(
-    String.raw`^[ \t]*(?:Global|全局|グローバル)\.(?:DashExploitToggle|HudStoreEdit)\s*=\s*[^\r\n;]+;?[ \t]*\r?\n?`,
-    'gmi'
-  );
-  text = text.replace(reDotAssign, '');
+  const startIdx = match.index + match[0].length;
+  let level = 1;
+  let i = startIdx;
+  for (; i < fullText.length; i++) {
+    if (fullText[i] === '(') level++;
+    else if (fullText[i] === ')') {
+      level--;
+      if (level === 0) break;
+    }
+  }
+  if (level !== 0) return results;
+  const endIdx = i;
 
-  return text;
+  const inside = fullText.slice(startIdx, endIdx);
+  const regexVector =
+    /(?:Vector|矢量|ベクトル|Vetor)\s*\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/g;
+  let m;
+  while ((m = regexVector.exec(inside)) !== null) {
+    const x = parseFloat(m[1]);
+    const y = parseFloat(m[2]);
+    const z = parseFloat(m[3]);
+    if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+      results.push({ x, y, z });
+    }
+  }
+  return results;
 }
 
-/* ------- Extract & insert difficulty ------- */
+function parseGlobalArrayBooleans(fullText, varName) {
+  const results = [];
+  const regex = new RegExp(
+    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
+  );
+  const match = fullText.match(regex);
+  if (!match) return results;
+
+  const startIdx = match.index + match[0].length;
+  let level = 1;
+  let i = startIdx;
+  for (; i < fullText.length; i++) {
+    if (fullText[i] === '(') level++;
+    else if (fullText[i] === ')') {
+      level--;
+      if (level === 0) break;
+    }
+  }
+  if (level !== 0) return results;
+  const endIdx = i;
+
+  const inside = fullText.slice(startIdx, endIdx);
+  inside.split(',').forEach((token) => {
+    const t = token.trim();
+    const lower = t.toLowerCase();
+    if (lower === 'true' || lower === '真') results.push(true);
+    else if (lower === 'false' || lower === '假') results.push(false);
+    else if (lower === 'verdadeiro' || lower === 'falso') {
+      results.push(lower === 'verdadeiro');
+    }
+  });
+  return results;
+}
+
+/* =========================
+   DIFFICULTY BLOCK HELPERS
+   ========================= */
 function logDiff(...args) {
   //try { console.log("[DIFF]", ...args); } catch (_) {}
 }
@@ -1825,7 +1958,9 @@ function normalizeLine(s) {
   return normalizeDigits(normalizeBrackets(normalizeSpaces(s)));
 }
 
-/* ----------------- Utilitaires de parsing ----------------- */
+/* =========================
+   DIFFICULTY BLOCK
+   ========================= */
 function findMatchingParen(text, openIdx) {
   let depth = 1,
     inQ = false;
@@ -2594,7 +2729,9 @@ function applyDifficultyValue(fullText, lang, wanted) {
   return text;
 }
 
-/* ------- MODE MAP NAME BLOCK ------- */
+/* =========================
+   MODE MAP NAME BLOCK
+   ========================= */
 function extractModeMapNames(fullText) {
   const result = {};
   const mainRegex = /^\s*(?:modes|modos|模式|モード|modi)\s*\{/im;
@@ -2741,9 +2878,10 @@ function insertMapNameIntoTemplate(tpl, modeName, fullMapEntry, lang) {
   return tpl.slice(0, braceEnabledOpen + 1) + newInside + tpl.slice(braceEnabledClose);
 }
 
-/* ------- CREDITS AND COLORS RULE ------- */
+/* =========================
+   CREDITS AND COLORS BLOCK
+   ========================= */
 function extractMapCredits(fullText, lang) {
-  // Titres possibles (nouveau + historiques)
   const TITLE_CANDIDATES = [
     '☞ Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入',
     '<tx0C00000000044B55><fg0FFFFFFF> Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入',
@@ -2752,7 +2890,6 @@ function extractMapCredits(fullText, lang) {
     'Credits here - 作者名字 <---- INSERT HERE / 在这输入',
   ];
 
-  // Mots-clés “rule” + “disabled” localisés
   const RULE_WORDS = ['rule', '规则', 'ルール', 'regla', 'regra', 'regel'];
   const DISABLED_WORDS = [
     'disabled',
@@ -2776,7 +2913,6 @@ function extractMapCredits(fullText, lang) {
   const mRule = fullText.match(ruleStartRe);
   if (!mRule) throw new Error('Crédits: règle introuvable');
 
-  // Trouver la fin de la règle
   const openIdx = fullText.indexOf('{', mRule.index);
   if (openIdx < 0) throw new Error('Crédits: accolade ouvrante introuvable');
   let level = 1,
@@ -2791,7 +2927,6 @@ function extractMapCredits(fullText, lang) {
   if (level !== 0) throw new Error('Crédits: accolade fermante introuvable');
   const ruleBody = fullText.slice(openIdx + 1, i);
 
-  // Terme “actions” localisé
   let actionsWord;
   switch (lang) {
     case 'zh-CN':
@@ -3128,7 +3263,9 @@ function insertMapCreditsIntoTemplate(tpl, creditsBlock, lang = getActiveOutputL
   return tpl;
 }
 
-/* ------ ADDONS RULES (WIP) ------ */
+/* =========================
+   ADDONS BLOCK (WIP)
+   ========================= */
 async function injectTranslatedAddons(tpl, fullText, sourceLang, targetLang) {
   for (const title of ADDON_RULE_TITLES) {
     const sourceBlock = extractEnabledBlock(fullText, title);
@@ -3271,7 +3408,9 @@ function removeAllBlocks(tplStr, title) {
   return result;
 }
 
-/* ------- WORKSHOP SETTINGS BLOCK ------- */
+/* =========================
+   WORKSHOP SETTINGS BLOCK
+   ========================= */
 function parseGlobalWorkshopBans(fullText) {
   const set = new Set();
 
@@ -3397,7 +3536,6 @@ function insertWorkshopSettings(tpl, workshopSettingsBlock, lang = getActiveOutp
     return tpl.slice(0, insertPos) + workshopBlock + tpl.slice(insertPos);
   }
 
-  // Si pas de bloc fourni : ne rien faire ici (les Bans sont gérés ailleurs)
   return tpl;
 }
 
@@ -3445,7 +3583,9 @@ function parseWorkshopSettings(fullText) {
   return result;
 }
 
-/* ------- MAP VALIDATOR RULE------- */
+/* =========================
+   MAP VALIDATOR BLOCK
+   ========================= */
 function parseBasicMapValidator(tplStr) {
   const disabledPrefixes = [
     'disabled',
@@ -3542,7 +3682,9 @@ function insertBasicMapValidator(tplStr, clientLang, shouldDisable) {
   }
 }
 
-/* ------- Loader ------- */
+/* =========================
+   HELPERS LOADER
+   ========================= */
 function showLoader() {
   let o = document.getElementById('convert-loader');
   if (!o) {
@@ -3569,195 +3711,9 @@ function hideLoader() {
   if (o) o.remove();
 }
 
-/* ------- MAP DATA SETTINGS ------- */
-function parseGlobalACheckpoints(fullText) {
-  const checkpoints = [];
-  const teleportMap = {};
-
-  const regexGlobalA = /(?:Global|全局|グローバル)\.A\s*=\s*(?:Array|Matriz|数组|配列)\s*\(\s*/;
-  const matchGA = fullText.match(regexGlobalA);
-  if (!matchGA) {
-    return { checkpoints, teleportMap };
-  }
-
-  let level = 1;
-  let i = matchGA.index + matchGA[0].length;
-  for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
-      level--;
-      if (level === 0) break;
-    }
-  }
-  const inside = fullText.slice(matchGA.index + matchGA[0].length, i);
-
-  const elements = [];
-  let current = '',
-    depth = 0;
-  for (const c of inside) {
-    if (c === '(') {
-      depth++;
-      current += c;
-    } else if (c === ')') {
-      depth--;
-      current += c;
-    } else if (c === ',' && depth === 0) {
-      elements.push(current.trim());
-      current = '';
-    } else {
-      current += c;
-    }
-  }
-  if (current.trim()) elements.push(current.trim());
-
-  const vectorRegex =
-    /^(?:Vector|矢量|ベクトル|Vetor)\s*\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)$/;
-  const tpRegex = new RegExp(
-    `^(?:Array|Matriz|数组|配列)\\s*\\(\\s*` +
-      `(Vector\\([^)]*\\))` +
-      `\\s*,\\s*` +
-      `(Vector\\([^)]*\\))` +
-      `\\s*\\)$`
-  );
-
-  elements.forEach((elem) => {
-    let m = elem.match(vectorRegex);
-    if (m) {
-      checkpoints.push({
-        x: parseFloat(m[1]),
-        y: parseFloat(m[2]),
-        z: parseFloat(m[3]),
-      });
-      return;
-    }
-
-    const mt = elem.match(tpRegex);
-    if (mt) {
-      const parseV = (vStr) => {
-        const mm = vStr.match(vectorRegex);
-        return {
-          x: parseFloat(mm[1]),
-          y: parseFloat(mm[2]),
-          z: parseFloat(mm[3]),
-        };
-      };
-      const start = parseV(mt[1]);
-      const end = parseV(mt[2]);
-      const idx = checkpoints.length;
-
-      checkpoints.push(start);
-      teleportMap[idx] = { start, end };
-      return;
-    }
-  });
-
-  return { checkpoints, teleportMap };
-}
-
-function parseGlobalArrayNumbers(fullText, varName) {
-  const regex = new RegExp(
-    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
-  );
-  const match = fullText.match(regex);
-  if (!match) return [];
-
-  const startIdx = match.index + match[0].length;
-  let level = 1;
-  let i = startIdx;
-  for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
-      level--;
-      if (level === 0) break;
-    }
-  }
-  if (level !== 0) return [];
-  const endIdx = i;
-
-  const inside = fullText.slice(startIdx, endIdx);
-  return inside
-    .split(',')
-    .map((s) => parseFloat(s.trim()))
-    .filter((n) => !isNaN(n));
-}
-
-function parseGlobalArrayVectors(fullText, varName) {
-  const results = [];
-  const regex = new RegExp(
-    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
-  );
-  const match = fullText.match(regex);
-  if (!match) return results;
-
-  const startIdx = match.index + match[0].length;
-  let level = 1;
-  let i = startIdx;
-  for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
-      level--;
-      if (level === 0) break;
-    }
-  }
-  if (level !== 0) return results;
-  const endIdx = i;
-
-  const inside = fullText.slice(startIdx, endIdx);
-  const regexVector =
-    /(?:Vector|矢量|ベクトル|Vetor)\s*\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/g;
-  let m;
-  while ((m = regexVector.exec(inside)) !== null) {
-    const x = parseFloat(m[1]);
-    const y = parseFloat(m[2]);
-    const z = parseFloat(m[3]);
-    if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
-      results.push({ x, y, z });
-    }
-  }
-  return results;
-}
-
-function parseGlobalArrayBooleans(fullText, varName) {
-  const results = [];
-  const regex = new RegExp(
-    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
-  );
-  const match = fullText.match(regex);
-  if (!match) return results;
-
-  const startIdx = match.index + match[0].length;
-  let level = 1;
-  let i = startIdx;
-  for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
-      level--;
-      if (level === 0) break;
-    }
-  }
-  if (level !== 0) return results;
-  const endIdx = i;
-
-  const inside = fullText.slice(startIdx, endIdx);
-  inside.split(',').forEach((token) => {
-    const t = token.trim();
-    const lower = t.toLowerCase();
-    if (lower === 'true' || lower === '真') results.push(true);
-    else if (lower === 'false' || lower === '假') results.push(false);
-    else if (lower === 'verdadeiro' || lower === 'falso') {
-      results.push(lower === 'verdadeiro');
-    }
-  });
-  return results;
-}
-
-/* ------ REORDER CPS ------*/
-container.addEventListener('dragover', (e) => {
-  if (!isEditMode) return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-});
-
+/* =========================
+   REORDER CPS ON CARD
+   ========================= */
 function updateCardNumbers() {
   const cards = Array.from(container.querySelectorAll('.checkpoint-card'));
   cards.forEach((card, idx) => {
@@ -3817,7 +3773,9 @@ function swapDataModelEntries(i, j) {
   [m.originalIndices[i], m.originalIndices[j]] = [m.originalIndices[j], m.originalIndices[i]];
 }
 
-/* ------- MAP DATA PARAMETERS ------- */
+/* =========================
+   RENDER DATA PARAMETERS
+   ========================= */
 function renderGlobalBans(fullText) {
   const globalBans = parseGlobalWorkshopBans(fullText);
   if (globalBans.length === 0) return null;
@@ -3967,7 +3925,6 @@ function createCheckpointCard(idx, coords, data) {
   card.draggable = true;
   card.dataset.original = originalIndex;
 
-  // Header
   const header = document.createElement('div');
   header.className = 'checkpoint-header flex items-start sm:items-center justify-between gap-4';
 
@@ -4415,9 +4372,10 @@ function temporaryReplace(text) {
   return text.replace(/(设置不可见\(\s*事件玩家\s*,\s*)无(\s*\);)/g, '$1全部禁用$2');
 }
 
-/* ------- Convertor ------- */
+/* =========================
+   DO CONVERT
+   ========================= */
 async function doConvert(fullText, lang) {
-  // Reset du contexte de traduction (les modals réécriront alors dans la langue “courante”)
   __lastTranslateCtx = { used: false, sourceLang: null, targetLang: null };
 
   const lobbyBlock = extractLobbyBlock(fullText, lang);
@@ -4470,10 +4428,11 @@ async function doConvert(fullText, lang) {
   return tpl;
 }
 
-/* ------- TRANSLATOR ------- */
+/* =========================
+   DO TRANSLATE
+   ========================= */
 async function doTranslate(fullText, clientLang, targetLang) {
   try {
-    // Contexte : les réécritures depuis les modals devront se faire dans targetLang
     __lastTranslateCtx = { used: true, sourceLang: clientLang, targetLang };
 
     lastParsedWorkshopSettings = parseWorkshopSettings(fullText);
@@ -4490,11 +4449,10 @@ async function doTranslate(fullText, clientLang, targetLang) {
       creditsBlock = extractMapCredits(fullText, clientLang);
     } catch (_) {}
 
-    // Traductions “ciblées”
     lobbyBlock = translateLobbyBlock(lobbyBlock, clientLang, targetLang);
     mapDataBlock = translateFromTo(mapDataBlock, clientLang, targetLang);
     mapDataBlock = sanitizeMapDataAssignments(mapDataBlock);
-    creditsBlock = translateFromTo(creditsBlock, clientLang, targetLang); // <-- bug corrigé (pas de 2e appel foireux)
+    creditsBlock = translateFromTo(creditsBlock, clientLang, targetLang);
     workshopSettingsBlock = translateWorkshopValuesOnly(
       workshopSettingsBlock,
       clientLang,
@@ -4565,7 +4523,9 @@ async function doTranslate(fullText, clientLang, targetLang) {
   }
 }
 
-/* ------- Modal Global Settings ------- */
+/* =========================
+   GLOBAL SETTINGS MODAL
+   ========================= */
 function buildGlobalSettingsFormFields() {
   const form = document.getElementById('globalSettingsForm');
   if (!form) return;
@@ -4685,8 +4645,7 @@ async function openGlobalSettingsModal() {
 
   buildGlobalSettingsFormFields();
 
-  // Place le modal un peu plus bas et aligne le contenu en haut-gauche
-  modal.classList.add('items-start', 'pt-16', 'px-4'); // ↓ offset
+  modal.classList.add('items-start', 'pt-16', 'px-4');
   const panel =
     [...modal.children].find((el) => el.tagName !== 'SCRIPT') || modal.firstElementChild;
   if (panel) {
@@ -4703,7 +4662,7 @@ async function openGlobalSettingsModal() {
       'w-full',
       'max-w-2xl'
     );
-    // Titre h3 en haut à gauche
+
     const title = panel.querySelector('h3, .modal-title');
     if (title) {
       title.classList.add('text-left', 'sticky', 'top-0', 'z-10', 'bg-zinc-900/95', 'pb-3', 'mb-3');
@@ -4903,7 +4862,9 @@ function closeGlobalSettingsModal() {
   }
 }
 
-/* ------- Save Global Settings ------- */
+/* =========================
+   GLOBAL SETTINGS SAVE
+   ========================= */
 function getNewActiveBans() {
   const checkboxes = document.querySelectorAll('.global-ban-checkbox');
   return Array.from(checkboxes)
@@ -5205,7 +5166,7 @@ function applyWorkshopBansUpdate(text, clientLang, newActiveBans, localized) {
 function saveEditorSettings() {
   const ta = document.querySelector('#convertMap textarea.mapdata');
   if (!ta) return;
-  const lang = getActiveOutputLang(); // <-- use context-aware lang
+  const lang = getActiveOutputLang();
   const raw = ta.value;
 
   const mapdata = updateMapDataRule(currentDataModel, lang);
@@ -5217,7 +5178,7 @@ function saveEditorSettings() {
 }
 
 async function saveGlobalSettings() {
-  const clientLang = getActiveOutputLang(); // <-- use context-aware lang
+  const clientLang = getActiveOutputLang();
   const textarea = document.querySelector('.mapdata');
   const originalText = textarea.value;
 
@@ -5247,7 +5208,9 @@ async function saveGlobalSettings() {
   showConfirmationMessage('Settings have been saved');
 }
 
-/* ------- Modal editor mode ------- */
+/* =========================
+   EDITOR MODE MODAL
+   ========================= */
 function openEditModal(idx) {
   editIndex = idx;
   const modal = document.getElementById('editModal');
@@ -5255,8 +5218,7 @@ function openEditModal(idx) {
   fieldsContainer.innerHTML = '';
   fieldsContainer.className = 'space-y-4';
 
-  // Place le modal un peu plus bas
-  modal.classList.add('items-start', 'pt-16', 'px-4'); // ↓ offset
+  modal.classList.add('items-start', 'pt-16', 'px-4');
   const panel =
     [...modal.children].find((el) => el.tagName !== 'SCRIPT') || modal.firstElementChild;
   if (panel) {
@@ -5335,7 +5297,6 @@ function openEditModal(idx) {
     wrapper.appendChild(title);
 
     if (tp) {
-      // 5 ou 6 inputs + bouton "-" dans la même ligne
       const row = document.createElement('div');
       row.className =
         'orb-row mt-2 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))_2rem] gap-2 items-center';
@@ -5563,7 +5524,7 @@ function openEditModal(idx) {
     fieldsContainer.appendChild(wrapper);
   }
 
-  // Abilities + Bans (inchangé visuellement)
+  // Abilities + Bans
   {
     const wrapper = document.createElement('div');
     const title = document.createElement('div');
@@ -5616,7 +5577,7 @@ function openEditModal(idx) {
     fieldsContainer.appendChild(wrapper);
   }
 
-  // Bouton "Save" du modal d'édition en vert
+  // Save btn
   const saveBtn = document.getElementById('saveEditorChangesBtn');
   if (saveBtn) {
     saveBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'rounded-xl');
@@ -5857,7 +5818,9 @@ function renderMapSettingsWithModel(dataModel) {
   }
 }
 
-/* ------- Save & delete editor mode ------- */
+/* =========================
+   EDITOR MODE SAVE
+   ========================= */
 function updateMapDataRule(dataModel, lang) {
   const dicts = {
     default: { G: 'Global', A: 'Array', V: 'Vector', T: 'True', F: 'False' },
@@ -6027,7 +5990,9 @@ function deleteCheckpoint(idx) {
   renderMapSettingsWithModel(currentDataModel);
 }
 
-/* ------- Diffchecker ------- */
+/* =========================
+   DIFFCHECKER
+   ========================= */
 let lastDefaultTemplate = '';
 async function ensureDefaultTemplate(lang) {
   if (!lastDefaultTemplate) {
