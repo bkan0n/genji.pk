@@ -17,18 +17,19 @@ class DiscordAuthController extends Controller
 {
     public function redirect(Request $request)
     {
-        $redirectUri =
-          (string) (env('DISCORD_REDIRECT_URI') ?:
-          config('services.discord.redirect') ?:
-          route('discord.callback'));
+        $redirectUri = (string) (
+            env('DISCORD_REDIRECT_URI')
+            ?: config('services.discord.redirect')
+            ?: route('discord.callback')
+        );
 
-        $scopeStr = (string) config('services.discord.scope', 'identify');
-        $scopes = preg_split('/[\s,]+/', trim($scopeStr), -1, PREG_SPLIT_NO_EMPTY) ?: ['identify'];
+        $scopeStr = (string) config('services.discord.scope', 'identify guilds.members.read');
+        $scopes = $this->normalizeScopes($scopeStr);
 
         abort_if(
             (string) config('services.discord.client_id') === '' || $redirectUri === '',
             500,
-            'Discord OAuth is not configured',
+            'Discord OAuth is not configured'
         );
 
         return $this->makeDiscordProvider($scopes, $redirectUri)->redirect();
@@ -36,25 +37,21 @@ class DiscordAuthController extends Controller
 
     public function callback(Request $request)
     {
-        $redirectUri =
-          (string) (env('DISCORD_REDIRECT_URI') ?:
-          config('services.discord.redirect') ?:
-          route('discord.callback'));
+        $redirectUri = (string) (
+            env('DISCORD_REDIRECT_URI')
+            ?: config('services.discord.redirect')
+            ?: route('discord.callback')
+        );
 
-        $scopeStr = (string) config('services.discord.scope', 'identify');
-        $scopes = preg_split('/[\s,]+/', trim($scopeStr), -1, PREG_SPLIT_NO_EMPTY) ?: ['identify'];
+        $scopeStr = (string) config('services.discord.scope', 'identify guilds.members.read');
+        $scopes = $this->normalizeScopes($scopeStr);
 
         try {
             $d = $this->makeDiscordProvider($scopes, $redirectUri)->user();
         } catch (InvalidStateException $e) {
-            if (filter_var(env('OAUTH_STATELESS_FALLBACK', true), FILTER_VALIDATE_BOOLEAN)) {
-                Log::warning('Discord OAuth state invalid, falling back to stateless mode.');
-                $d = $this->makeDiscordProvider($scopes, $redirectUri)->stateless()->user();
-            } else {
-                Log::error('Discord OAuth state invalid', ['error' => $e->getMessage()]);
+            Log::warning('Discord OAuth state invalid', ['error' => $e->getMessage()]);
 
-                return redirect('/')->with('error', 'Discord login failed (state).');
-            }
+            return redirect('/')->with('error', 'Discord login failed (state).');
         } catch (Throwable $e) {
             Log::error('Discord Socialite callback failed', ['error' => $e->getMessage()]);
 
@@ -86,12 +83,11 @@ class DiscordAuthController extends Controller
 
         $allowGif = (bool) config('services.discord.allow_gif_avatars', true);
         $defaultExt = (string) config('services.discord.avatar_default_extension', 'png');
-        $ext =
-          $avatarHash && Str::startsWith((string) $avatarHash, 'a_') && $allowGif ? 'gif' : $defaultExt;
+        $ext = $avatarHash && Str::startsWith((string) $avatarHash, 'a_') && $allowGif ? 'gif' : $defaultExt;
 
         $avatarUrl = $avatarHash
-          ? "https://cdn.discordapp.com/avatars/{$id}/{$avatarHash}.{$ext}"
-          : 'https://cdn.discordapp.com/embed/avatars/' . ((int) ($id % 5)) . '.png';
+            ? "https://cdn.discordapp.com/avatars/{$id}/{$avatarHash}.{$ext}"
+            : 'https://cdn.discordapp.com/embed/avatars/' . ((int) ($id % 5)) . '.png';
 
         $tag = $discriminator !== '0' ? "{$username}#{$discriminator}" : $username;
 
@@ -121,10 +117,10 @@ class DiscordAuthController extends Controller
 
         $guildId = (string) config('services.discord.guild_id');
         $roleIds = (array) config('services.discord.mod_roles', []);
-        $verify = filter_var(env('X_API_VERIFY', true), FILTER_VALIDATE_BOOLEAN);
+        $verify = $this->httpVerify();
 
         $canModerate = false;
-        if ($guildId && ! empty($roleIds)) {
+        if ($guildId && !empty($roleIds)) {
             try {
                 $memberResp = Http::withToken($accessToken)
                     ->acceptJson()
@@ -137,7 +133,7 @@ class DiscordAuthController extends Controller
                 } else {
                     Log::debug('Discord member check non-OK', [
                         'status' => $memberResp->status(),
-                        'body' => $memberResp->json() ?: $memberResp->body(),
+                        'body'   => $memberResp->json() ?: $memberResp->body(),
                     ]);
                 }
             } catch (Throwable $e) {
@@ -151,28 +147,42 @@ class DiscordAuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request
-            ->session()
-            ->forget([
-                'user_id',
-                'username',
-                'discord_username',
-                'discord_global_name',
-                'discord_discriminator',
-                'discord_tag',
-                'user_avatar',
-                'discord_avatar_url',
-                'user_banner',
-                'discord_banner',
-                'user_flags',
-                'discord_public_flags',
-                'user_premium',
-                'discord_premium_type',
-                'discord_access_token',
-                'discord_refresh_token',
-                'discord_token_expires',
-                'can_moderate',
-            ]);
+        try {
+            $verify = $this->httpVerify();
+            $accessToken  = (string) $request->session()->get('discord_access_token', '');
+            if ($accessToken !== '') {
+                Http::asForm()
+                    ->withOptions(['verify' => $verify, 'timeout' => 10])
+                    ->post('https://discord.com/api/oauth2/token/revoke', [
+                        'client_id'     => (string) config('services.discord.client_id'),
+                        'client_secret' => (string) config('services.discord.client_secret'),
+                        'token'         => $accessToken,
+                    ]);
+            }
+        } catch (Throwable $e) {
+            Log::debug('Discord revoke failed', ['e' => $e->getMessage()]);
+        }
+
+        $request->session()->forget([
+            'user_id',
+            'username',
+            'discord_username',
+            'discord_global_name',
+            'discord_discriminator',
+            'discord_tag',
+            'user_avatar',
+            'discord_avatar_url',
+            'user_banner',
+            'discord_banner',
+            'user_flags',
+            'discord_public_flags',
+            'user_premium',
+            'discord_premium_type',
+            'discord_access_token',
+            'discord_refresh_token',
+            'discord_token_expires',
+            'can_moderate',
+        ]);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -186,17 +196,23 @@ class DiscordAuthController extends Controller
             'user_id' => ['required', 'regex:/^\d+$/', 'max:32'],
         ]);
 
-        $userId = $request->query('user_id');
+        $userId = (string) $request->query('user_id');
 
-        $cfg = Config::get('services.genji_api', []);
-        $apiKey = $cfg['key'] ?? '';
-        $apiRoot = $cfg['root'] ?? '';
-        $verify = filter_var($cfg['verify'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        if ((string) $request->session()->get('user_id', '') !== $userId) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
 
-        if (! $apiKey || ! $apiRoot) {
+        $cfg    = Config::get('services.genji_api', []);
+        $apiKey = (string) ($cfg['key']  ?? '');
+        $apiRoot= (string) ($cfg['root'] ?? '');
+        $verify = app()->isLocal()
+            ? (bool) filter_var($cfg['verify'] ?? true, FILTER_VALIDATE_BOOLEAN)
+            : true;
+
+        if (!$apiKey || !$apiRoot) {
             return response()->json(
                 ['error' => 'Configuration API manquante (X_API_KEY / X_API_ROOT)'],
-                500,
+                500
             );
         }
 
@@ -206,24 +222,21 @@ class DiscordAuthController extends Controller
             $resp = Http::withOptions(['verify' => $verify])
                 ->timeout(10)
                 ->withHeaders([
-                    'X-API-KEY' => $apiKey,
-                    'Content-Type' => 'application/json',
+                    'X-API-KEY'   => $apiKey,
+                    'Content-Type'=> 'application/json',
                 ])
                 ->acceptJson()
                 ->get($url);
 
-            if (! $resp->ok()) {
+            if (!$resp->ok()) {
                 return response()->json(
-                    [
-                        'error' => 'Upstream error',
-                        'status' => $resp->status(),
-                    ],
-                    502,
+                    ['error' => 'Upstream error', 'status' => $resp->status()],
+                    502
                 );
             }
 
             $payload = $resp->json();
-            if (! is_array($payload)) {
+            if (!is_array($payload)) {
                 return response()->json(['error' => 'Invalid upstream JSON'], 502);
             }
 
@@ -237,9 +250,9 @@ class DiscordAuthController extends Controller
 
             return response()->json(['error' => 'Bad request syntax or unsupported method'], 400);
         } catch (Throwable $e) {
-            \Log::error('discord.globalName failed', [
+            Log::error('discord.globalName failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
 
             return response()->json(['error' => 'Internal server error'], 500);
@@ -249,13 +262,12 @@ class DiscordAuthController extends Controller
     public function rankCardPage(Request $request)
     {
         $user_id = (string) $request->session()->get('user_id');
-        $username =
-          (string) ($request->session()->get('discord_global_name') ?:
-          $request->session()->get('username', 'Guest'));
-        $avatar_url =
-          $request->session()->get('discord_avatar_url') ?: asset('assets/img/default-avatar.jpg');
-
-        $selectedLang = (string) $request->session()->get('selected_lang', app()->getLocale());
+        $username = (string) (
+            $request->session()->get('discord_global_name')
+            ?: $request->session()->get('username', 'Guest')
+        );
+        $avatar_url = $request->session()->get('discord_avatar_url')
+            ?: asset('assets/img/default-avatar.jpg');
 
         return view('rank_card', compact('username', 'avatar_url', 'user_id'));
     }
@@ -267,15 +279,37 @@ class DiscordAuthController extends Controller
             ->scopes($scopes)
             ->with(['prompt' => 'consent']);
 
-        $verify = filter_var(env('X_API_VERIFY', true), FILTER_VALIDATE_BOOLEAN);
+        $verify = $this->httpVerify();
 
         $provider->setHttpClient(
             new Client([
-                'verify' => $verify,
+                'verify'  => $verify,
                 'timeout' => (int) env('X_API_TIMEOUT', 10),
-            ]),
+            ])
         );
 
         return $provider;
+    }
+
+    private function normalizeScopes(string $scopeStr): array
+    {
+        $parts = preg_split('/[\s,]+/', trim($scopeStr), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $parts = array_map('strval', $parts);
+
+        if (!in_array('identify', $parts, true)) {
+            $parts[] = 'identify';
+        }
+        if (!in_array('guilds.members.read', $parts, true)) {
+            $parts[] = 'guilds.members.read';
+        }
+
+        return array_values(array_unique($parts));
+    }
+
+    private function httpVerify(): bool
+    {
+        return app()->isLocal()
+            ? (bool) filter_var(env('X_API_VERIFY', true), FILTER_VALIDATE_BOOLEAN)
+            : true;
     }
 }

@@ -221,7 +221,7 @@ Route::get('settings/user-avatar', [UserAvatarController::class, 'show'])->name(
 
 /* ================== MODERATION ================== */
 Route::prefix('mods')
-    ->middleware(['web', 'discord.moderator'])
+    ->middleware(['web', \App\Http\Middleware\RequireDiscordModerator::class])
     ->group(function () {
         // USERS (get)
         Route::get('users/{user_id}', GetUserController::class)
