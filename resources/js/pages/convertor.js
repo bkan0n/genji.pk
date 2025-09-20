@@ -1332,19 +1332,33 @@ async function loadTemplate(lang) {
     `export const frameworkTemplate = \`${esc}\n\`;\n`;
 
   try {
+    const tokenMeta = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const xsrfFromCookie = document.cookie
+      .split('; ')
+      .find((c) => c.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
+
     const saveRes = await fetch(
       `/api/compile?file=framework-templates/framework-template_${lang}.js`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          ...(tokenMeta ? { 'X-CSRF-TOKEN': tokenMeta } : {}),
+          ...(xsrfFromCookie ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfFromCookie) } : {}),
+        },
         body: JSON.stringify({ module: moduleText }),
       }
     );
+
     if (!saveRes.ok) {
       console.warn(
         "[loadTemplate] Échec d'écriture du cache:",
         saveRes.status,
-        await saveRes.text()
+        await saveRes.text().catch(() => '')
       );
     } else {
       debug(`Cache saved as framework-template_${lang}.js`);
