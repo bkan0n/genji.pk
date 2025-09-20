@@ -529,6 +529,8 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'maps-search') initSearchPanel();
         if (name === 'maps-update') initUpdatePanel();
         if (name === 'mod-quality') initModQualityPanel();
+        if (name === 'dev-overpy-commit') initOverpyCommitPanel();
+        if (name === 'dev-framework-version') initFrameworkVersionPanel();
         if (name === 'verif-pending') {
           ensureVerifResultsContainer();
           handleGetPendingVerifs();
@@ -859,6 +861,18 @@ $$('form[data-action]').forEach((form) => {
           return handleVerifyCompletion(form);
         default:
           toast(`Unknown action: ${action}`, 'err');
+
+        // DEVS (API_MODS)
+        case 'clear-frameworks-cache':
+          return handleClearFrameworksCache(form);
+        case 'clear-avatars-cache':
+          return handleClearAvatarsCache(form);
+        case 'clear-translations-cache':
+          return handleClearTranslationsCache(form);
+        case 'set-overpy-commit':
+          return handleSetOverpyCommit(form);
+        case 'set-framework-version':
+          return handleSetFrameworkVersion(form);
       }
     } catch (err) {
       toast('Unexpected error', 'err');
@@ -3177,4 +3191,269 @@ function syncDdLabel(ddOrChild) {
     checked?.value ||
     '';
   if (labelEl && txt) labelEl.textContent = txt;
+}
+
+// ———————————————————————————————————————————————————————————————
+// Devs only
+const TRANSLATION_FILES = [
+  'gamemodes.json',
+  'heroes.json',
+  'values.json',
+  'other.json',
+  'maps.json',
+  'localizedStrings.json',
+  'customGameSettings.json',
+  'constants.json',
+  'actions.json',
+];
+
+async function handleClearFrameworksCache(form) {
+  if (!form.confirm?.checked) {
+    toast('Please tick the confirmation box', 'warn');
+    return;
+  }
+
+  const okGo = await showConfirmDanger({
+    title: 'Clear framework cache',
+    message: 'This will delete the contents of public/framework-templates. Continue?',
+    confirm: 'Yes, delete',
+    cancel: 'Cancel',
+  });
+  if (!okGo) return;
+
+  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/cache/framework`);
+  logActivity({ title: 'Clear cache – framework', method: 'DELETE', url, ok, status, data });
+  toast(ok ? 'Framework cache cleared' : 'Deletion failed', ok ? 'ok' : 'err');
+}
+
+async function handleClearAvatarsCache(form) {
+  if (!form.confirm?.checked) {
+    toast('Please tick the confirmation box', 'warn');
+    return;
+  }
+
+  const okGo = await showConfirmDanger({
+    title: 'Clear avatar cache',
+    message: 'This will delete the contents of storage/app/private/cache. Continue?',
+    confirm: 'Yes, delete',
+    cancel: 'Cancel',
+  });
+  if (!okGo) return;
+
+  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/cache/avatars`);
+  logActivity({ title: 'Clear cache – avatars', method: 'DELETE', url, ok, status, data });
+  toast(ok ? 'Avatar cache cleared' : 'Deletion failed', ok ? 'ok' : 'err');
+}
+
+async function handleClearTranslationsCache(form) {
+  if (!form.confirm?.checked) {
+    toast('Please tick the confirmation box', 'warn');
+    return;
+  }
+
+  const okGo = await showConfirmDanger({
+    title: 'Clear translations cache',
+    message: `This will delete these files in public/translations:\n${TRANSLATION_FILES.join(', ')}\nContinue?`,
+    confirm: 'Yes, delete',
+    cancel: 'Cancel',
+  });
+  if (!okGo) return;
+
+  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/cache/translations`, {
+    body: { files: TRANSLATION_FILES },
+  });
+  logActivity({ title: 'Clear cache – translations', method: 'DELETE', url, ok, status, data });
+  toast(ok ? 'Translations cache cleared' : 'Deletion failed', ok ? 'ok' : 'err');
+}
+
+
+function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confirm = 'Confirm', cancel = 'Cancel' } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
+    overlay.innerHTML = `
+      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
+        <div class="px-4 py-3 border-b border-white/10">
+          <h3 class="font-semibold text-sm">${title}</h3>
+        </div>
+        <div class="p-4 space-y-4">
+          <p class="text-sm text-zinc-200 whitespace-pre-wrap">${message}</p>
+          <div class="flex justify-end gap-2">
+            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">${confirm}</button>
+            <button class="btn-cancel cursor-pointer rounded-lg bg-zinc-700 text-white px-3 py-1.5 text-sm font-semibold hover:bg-zinc-600">${cancel}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const close = (val) => { overlay.remove(); resolve(val); };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => close(false));
+    overlay.querySelector('.btn-confirm')?.addEventListener('click', () => close(true));
+    document.addEventListener('keydown', function onKey(ev) {
+      if (ev.key === 'Escape') { close(false); document.removeEventListener('keydown', onKey); }
+      if (ev.key === 'Enter') { close(true); document.removeEventListener('keydown', onKey); }
+    }, { once: true });
+  });
+}
+
+async function handleSetOverpyCommit(form) {
+  const commit = (form.commit.value || '').trim();
+  const checked = !!form.confirm?.checked;
+
+  if (!/^[0-9a-f]{7,40}$/i.test(commit)) {
+    toast('Invalid commit: use a 7–40 hex SHA', 'warn');
+    return;
+  }
+  if (!checked) {
+    toast('Please confirm the change', 'warn');
+    return;
+  }
+
+  const currentEl = document.querySelector('#overpyCommitCurrent');
+  const current = currentEl?.textContent?.trim() || 'unknown';
+
+  const okGo = await showConfirmDanger({
+    title: 'Set Overpy commit',
+    message:
+      `Current: ${current}\nNew:     ${commit}\n\n` +
+      `This will update OVERPY_COMMIT in convertor.js.\nContinue?`,
+    confirm: 'Yes, update',
+    cancel: 'Cancel',
+  });
+  if (!okGo) return;
+
+  const { ok, status, url, data } = await http('PATCH', `${API_MODS}/overpy-commit`, {
+    body: {
+      commit,
+      confirm: true,
+    },
+  });
+
+  logActivity({ title: 'Set Overpy commit', method: 'PATCH', url, ok, status, data });
+  if (ok) {
+    if (currentEl) currentEl.textContent = commit;
+    toast('Overpy commit updated', 'ok');
+  } else {
+    toast('Update failed', 'err');
+  }
+}
+
+async function fetchCurrentOverpyCommit() {
+  const { ok, status, url, data } = await http('GET', `${API_MODS}/overpy-commit`);
+  logActivity({ title: 'Get Overpy commit', method: 'GET', url, ok, status, data });
+  if (!ok || !data?.commit) {
+    toast('Failed to load current commit', 'err');
+    return null;
+  }
+  return String(data.commit);
+}
+
+async function initOverpyCommitPanel() {
+  const panel = document.querySelector('[data-subpanel="dev-overpy-commit"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  const currentEl = panel.querySelector('#overpyCommitCurrent');
+  if (currentEl) {
+    const cur = await fetchCurrentOverpyCommit();
+    if (cur) currentEl.textContent = cur;
+  }
+}
+
+async function initFrameworkVersionPanel() {
+  const panel = document.querySelector('[data-subpanel="dev-framework-version"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  const currentEl = panel.querySelector('#frameworkVersionCurrent');
+  if (currentEl) {
+    const cur = await fetchCurrentFrameworkVersion();
+    if (cur) currentEl.textContent = cur;
+  }
+
+  const form = panel.querySelector('#formSetFrameworkVersion');
+  const btn  = panel.querySelector('#btnSetFrameworkVersion');
+  if (!form || !btn) return;
+
+  form.setAttribute('novalidate', '');
+  form.addEventListener('invalid', (e) => e.preventDefault(), true);
+
+  const versionInput = form.querySelector('input[name="version"]');
+  if (versionInput) {
+    versionInput.removeAttribute('pattern');
+    versionInput.removeAttribute('required');
+
+    versionInput.addEventListener('input', () => versionInput.setCustomValidity(''));
+
+    versionInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
+    });
+  }
+
+  btn.addEventListener('click', () => handleSetFrameworkVersion(form));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleSetFrameworkVersion(form);
+  });
+}
+
+async function fetchCurrentFrameworkVersion() {
+  const { ok, status, url, data } = await http('GET', `${API_MODS}/framework-version`);
+  logActivity({ title: 'Get framework version', method: 'GET', url, ok, status, data });
+  if (!ok || !data?.version) {
+    toast('Failed to load current framework version', 'err');
+    return null;
+  }
+  return String(data.version);
+}
+
+async function handleSetFrameworkVersion(form) {
+  const input = form.version;
+  const version = (input.value || '').trim().toUpperCase();
+  const checked = !!form.confirm?.checked;
+
+  const VERSION_RE = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:[A-Z][0-9A-Z]*)?$/;
+
+  input.setCustomValidity('');
+
+  if (!VERSION_RE.test(version)) {
+    const msg = 'Invalid version. Use X.Y.Z with an optional UPPERCASE suffix (e.g. 1.10.4, 1.10.4A, 1.10.4RC1).';
+    input.setCustomValidity(msg);
+    input.reportValidity();
+    toast(msg, 'warn');
+    return;
+  }
+  if (!checked) {
+    toast('Please tick the confirmation box.', 'warn');
+    return;
+  }
+
+  const currentEl = document.querySelector('#frameworkVersionCurrent');
+  const current = currentEl?.textContent?.trim() || 'unknown';
+
+  const okGo = await showConfirmDanger({
+    title: 'Set framework version',
+    message:
+      `Current: ${current}\nNew:     ${version}\n\n` +
+      `This will update the CDN URL used by convertor.js.\nContinue?`,
+    confirm: 'Yes, update',
+    cancel: 'Cancel',
+  });
+  if (!okGo) return;
+
+  const { ok, status, url, data } = await http('PATCH', `${API_MODS}/framework-version`, {
+    body: { version, confirm: true },
+  });
+
+  logActivity({ title: 'Set framework version', method: 'PATCH', url, ok, status, data });
+  if (ok) {
+    if (currentEl) currentEl.textContent = version;
+    toast('Framework version updated', 'ok');
+    form.confirm.checked = false;
+  } else {
+    const msg = data?.message || 'Update failed';
+    toast(msg, 'err');
+  }
 }

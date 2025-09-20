@@ -44,6 +44,9 @@ use App\Http\Controllers\Mods\Users\UpdateUserNamesController;
 use App\Http\Controllers\Mods\Verifications\CompletionSubmissionController;
 use App\Http\Controllers\Mods\Verifications\PendingVerificationsController;
 use App\Http\Controllers\Mods\Verifications\VerifyCompletionController;
+use App\Http\Controllers\Mods\Devs\CacheController;
+use App\Http\Controllers\Mods\Devs\OverpyCommitController;
+use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
 use App\Http\Controllers\Newsfeed\ChangelogsController;
 use App\Http\Controllers\Newsfeed\EmojiController;
 use App\Http\Controllers\Newsfeed\GifController;
@@ -284,7 +287,18 @@ Route::prefix('mods')
             VerifyCompletionController::class,
             'update',
         ])->whereNumber('record_id');
-    });
+
+        // DEVS
+        Route::prefix('cache')->group(function () {
+            Route::delete('framework',    [CacheController::class, 'clearFramework'])->name('mods.cache.framework.clear');
+            Route::delete('translations', [CacheController::class, 'clearTranslations'])->name('mods.cache.translations.clear');
+            Route::delete('avatars',      [CacheController::class, 'clearAvatars'])->name('mods.cache.avatars.clear');
+        });
+        Route::get('overpy-commit',  [OverpyCommitController::class, 'show'])->name('mods.overpy.commit.show');
+        Route::patch('overpy-commit',[OverpyCommitController::class, 'update'])->name('mods.overpy.commit.update');
+        Route::get('/framework-version',  [FrameworkVersionController::class, 'show']);
+        Route::patch('/framework-version', [FrameworkVersionController::class, 'update']);
+});
 
 /* ================== SENTRY ================== */
 Route::post('_/e', function (Request $request) {

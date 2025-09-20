@@ -83,6 +83,7 @@ return [
                 'https://fonts.gstatic.com',
                 'https://analytics.bkan0n.com',
                 'https://glitchtip.genji.pk',
+                'https://cdn.jsdelivr.net',
                 'data:',
             ],
         ],
