@@ -27,7 +27,7 @@
       rel="stylesheet"
     />
 
-    @vite(['resources/js/app.js'], null, ['nonce' => $nonce])
+    @vite(['resources/js/app.js', 'resources/js/pages/prism.js'])
 
     @stack('head')
 
@@ -43,34 +43,8 @@
 
     <main class="relative overflow-hidden">
       @yield('content')
-      <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div class="bg-zinc-930 absolute inset-0"></div>
-        <div
-          class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_65%)]"
-        ></div>
-        <div
-          class="motion-safe:u-soft-drift absolute -inset-28 opacity-70 mix-blend-screen blur-3xl [background:radial-gradient(60%_40%_at_20%_25%,rgba(57,255,20,.18),transparent_62%),radial-gradient(50%_45%_at_78%_30%,rgba(57,255,20,.14),transparent_64%),radial-gradient(55%_60%_at_60%_80%,rgba(57,255,20,.16),transparent_66%)]"
-        ></div>
-        <div class="absolute inset-0">
-          <div
-            class="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.055)_0,rgba(255,255,255,0.055)_0.5px,transparent_0.5px,transparent_22px)] [background-size:160%_160%] opacity-35 motion-safe:animate-[diagDrift_80s_linear_infinite]"
-          ></div>
-          <div
-            class="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.05)_0,rgba(255,255,255,0.05)_0.5px,transparent_0.5px,transparent_18px)] [mask-image:radial-gradient(120%_90%_at_28%_55%,#000_42%,#0000_68%),radial-gradient(120%_90%_at_78%_35%,#000_40%,#0000_66%)] [background-size:180%_180%] [background-position:20%_25%] opacity-24 motion-safe:animate-[diagDrift_100s_linear_infinite_reverse]"
-          ></div>
-          <div
-            class="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.04)_0,rgba(255,255,255,0.04)_0.4px,transparent_0.4px,transparent_26px)] [background-size:200%_200%] [background-position:80%_40%] opacity-16 motion-safe:animate-[diagDrift_120s_linear_infinite]"
-          ></div>
-        </div>
-        <div
-          class="motion-safe:u-shimmer-x absolute inset-x-[-25%] top-1/3 h-20 opacity-45 mix-blend-screen blur-2xl [background:linear-gradient(90deg,transparent,rgba(57,255,20,.22),transparent)]"
-        ></div>
-        <div
-          class="motion-safe:u-grain-breath absolute inset-0 bg-[radial-gradient(rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:3px_3px] opacity-12 mix-blend-overlay"
-        ></div>
-        <div
-          class="absolute inset-0 [mask-image:radial-gradient(120%_90%_at_50%_60%,black_58%,#0000_88%)] ring-1 ring-white/5 ring-inset"
-        ></div>
+      <div class="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
+        <div id="prism" class="relative h-full w-full"></div>
       </div>
     </main>
 
@@ -97,5 +71,4 @@
       window.currentLang = @json($lang);
       const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
     </script>
-  </body>
 </html>

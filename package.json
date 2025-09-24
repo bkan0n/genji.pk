@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@sentry/browser": "^10.11.0",
-    "@sentry/replay": "^7.116.0"
+    "@sentry/replay": "^7.116.0",
+    "ogl": "^1.0.11"
   }
 }
