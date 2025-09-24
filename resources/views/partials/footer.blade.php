@@ -1,5 +1,5 @@
 <!-- Footer -->
-<footer class="border-t border-white/10 py-10">
+<footer class="border-t py-10 border-white/10 bg-zinc-900/90 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/70">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
       <div>
