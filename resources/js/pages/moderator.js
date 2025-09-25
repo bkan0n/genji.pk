@@ -222,7 +222,7 @@ async function copyText(text = '') {
   roots.forEach(remember);
 })();
 
-// --- Modal (pour grandes réponses) ---
+// --- Modal ---
 function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
   const overlay = document.createElement('div');
   overlay.className =
@@ -2838,12 +2838,17 @@ function renderSubmissionCard(item) {
   const rid = String(item?.id ?? '');
   const verId = item?.verification_id == null ? '' : String(item.verification_id);
   const shot = item?.screenshot ? String(item.screenshot) : '';
+  const timeVal = item?.time == null ? '' : String(item.time);
+  const codeVal = item?.code == null ? '' : String(item.code);
 
   const wrap = document.createElement('article');
   wrap.className =
     'rounded-2xl border border-white/10 bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16';
   wrap.dataset.recordId = rid;
   wrap.dataset.verificationId = verId;
+  wrap.dataset.screenshot = shot;
+  wrap.dataset.time = timeVal;
+  wrap.dataset.code = codeVal;
 
   const imgHtml = shot
     ? `
@@ -2903,6 +2908,9 @@ function renderSubmissionCard(item) {
     <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
       <button class="btn-verify cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 font-semibold hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
         Verify
+      </button>
+      <button class="btn-auto-verify cursor-pointer rounded-lg bg-emerald-700 text-white px-3 py-1.5 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/40">
+        Auto verify
       </button>
       <button class="btn-deny cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">
         Deny
@@ -2999,12 +3007,19 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
 }
 
 document.addEventListener('click', async (e) => {
+  const btnAuto = e.target.closest('.btn-auto-verify');
   const btnVerify = e.target.closest('.btn-verify');
   const btnDeny = e.target.closest('.btn-deny');
-  if (!btnVerify && !btnDeny) return;
+  if (!btnVerify && !btnDeny && !btnAuto) return;
 
   const card = e.target.closest('[data-record-id]');
   if (!card) return;
+
+  // --- Auto verify via worker ---
+  if (btnAuto) {
+    e.preventDefault();
+    return void autoVerifyCard(card);
+  }
 
   const record_id = card.dataset.recordId;
   const verified = !!btnVerify;
@@ -3053,6 +3068,123 @@ document.addEventListener('click', async (e) => {
     toast('Action failed', 'err');
   }
 });
+
+// ———————————————————————————————————————————————————————————————
+// Auto Verify
+const AUTO_VERIFY_USER_ID = "1120786151452717106";
+import AutoVerifyWorkerUrl from "../components/auto-verify.worker.js?worker&url";
+
+let _autoVerifyWorker = null;
+function getAutoVerifyWorker() {
+  if (_autoVerifyWorker) return _autoVerifyWorker;
+  _autoVerifyWorker = new Worker(AutoVerifyWorkerUrl, { type: "module" });
+  return _autoVerifyWorker;
+}
+
+function parseSec(v) {
+  if (v == null) return null;
+  const n = Number(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+async function autoVerifyCard(card) {
+  const record_id = card?.dataset?.recordId;
+  const code = card?.dataset?.code || "";
+  const time = parseSec(card?.dataset?.time);
+  const screenshot = card?.dataset?.screenshot || "";
+
+  if (!record_id) return toast("Missing record_id", "warn");
+  if (!screenshot) return toast("No screenshot to verify", "warn");
+  if (!code || time == null) return toast("Missing code/time on card", "warn");
+
+  const btn = card.querySelector(".btn-auto-verify");
+  const original = btn?.textContent;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Auto verifying…";
+    btn.classList.add("opacity-70", "cursor-wait");
+  }
+
+  const w = getAutoVerifyWorker();
+  const jobId = `${record_id}:${Date.now()}`;
+
+  const result = await new Promise((resolve) => {
+    const onMsg = (e) => {
+      const { op, id, result, error } = e.data || {};
+      if (op !== "RESULT" || id !== jobId) return;
+      w.removeEventListener("message", onMsg);
+      resolve({ result, error });
+    };
+    w.addEventListener("message", onMsg);
+    w.postMessage({
+      op: "VERIFY",
+      id: jobId,
+      payload: { screenshotUrl: screenshot, code, time },
+    });
+  });
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = original || "Auto verify";
+    btn.classList.remove("opacity-70", "cursor-wait");
+  }
+
+  if (result.error) {
+    logActivity({
+      title: `Auto verify OCR (error) #${record_id}`,
+      method: "WORKER",
+      url: "auto-verify.worker",
+      ok: false,
+      status: "-",
+      data: { error: result.error },
+    });
+    toast("Auto verify failed (load/OCR error)", "err");
+    return;
+  }
+
+  const { verified, extracted, reasons } = result.result || {};
+  logActivity({
+    title: `Auto verify OCR #${record_id}`,
+    method: "WORKER",
+    url: "auto-verify.worker",
+    ok: !!verified,
+    status: verified ? "OK" : "NOK",
+    data: { extracted, reasons },
+  });
+
+  if (!verified) {
+    toast("Auto verify: mismatch", "warn");
+    return;
+  }
+
+  const body = {
+    verified: true,
+    verified_by: AUTO_VERIFY_USER_ID,
+    reason: "auto verify matched code & time",
+  };
+
+  const { ok, status, url, data } = await http(
+    "PUT",
+    `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
+    { body }
+  );
+
+  logActivity({
+    title: "Verify completion (auto)",
+    method: "PUT",
+    url,
+    ok,
+    status,
+    data,
+  });
+
+  if (ok) {
+    toast("Verified (auto)", "ok");
+    removeCardFromVerifList(card);
+  } else {
+    toast("Auto verify: API failed", "err");
+  }
+}
 
 // ———————————————————————————————————————————————————————————————
 // LOOTBOX
