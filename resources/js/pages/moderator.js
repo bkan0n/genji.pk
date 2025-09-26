@@ -972,6 +972,23 @@ function setupArchiveMapsUI() {
   if (singleInput) attachMapCodeAutocomplete(singleInput);
 }
 
+(function syncDdRadiosToSelect() {
+  document.addEventListener('change', (e) => {
+    const radio = e.target.closest('[data-dd-list] input[type="radio"][name$="_ui"]');
+    if (!radio) return;
+
+    const dd = radio.closest('[data-dd-select]');
+    if (!dd) return;
+
+    const baseName = radio.name.replace(/_ui$/, '');
+    const sel = dd.querySelector(`select[name="${CSS.escape(baseName)}"]`);
+    if (!sel) return;
+
+    if (sel.value !== radio.value) sel.value = radio.value;
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }, { passive: true });
+})();
+
 // ============== HANDLERS ==============
 // USERS
 async function handleCreateFake(form) {

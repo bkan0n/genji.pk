@@ -1732,14 +1732,11 @@
                               />
                             </svg>
                           </button>
-
                           <div
                             data-dd-list
                             class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
                           >
-                            <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
-                            >
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5">
                               <input
                                 type="radio"
                                 name="mode_ui"
@@ -1747,20 +1744,17 @@
                                 class="accent-emerald-500"
                                 checked
                                 data-label="Single"
-                                onchange="const s=this.closest('[data-dd-select]').querySelector('select[name=&quot;mode&quot;]'); if(s){ s.value=this.value; s.dispatchEvent(new Event('change',{bubbles:true})); }"
                               />
                               <span>Single</span>
                             </label>
-                            <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
-                            >
+
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5">
                               <input
                                 type="radio"
                                 name="mode_ui"
                                 value="bulk"
                                 class="accent-emerald-500"
                                 data-label="Bulk"
-                                onchange="const s=this.closest('[data-dd-select]').querySelector('select[name=&quot;mode&quot;]'); if(s){ s.value=this.value; s.dispatchEvent(new Event('change',{bubbles:true})); }"
                               />
                               <span>Bulk</span>
                             </label>
