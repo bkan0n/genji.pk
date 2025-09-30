@@ -6,16 +6,8 @@
 
 @push('head')
   @php($nonce = csp_nonce())
-  <script
-    nonce="{{ $nonce }}"
-    src="https://cdn.jsdelivr.net/gh/Zezombye/overpy@master/out/overpy_standalone.js"
-    defer
-  ></script>
-  <script
-    nonce="{{ $nonce }}"
-    src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"
-    defer
-  ></script>
+  <script nonce="{{ $nonce }}" src="https://cdn.jsdelivr.net/gh/Zezombye/overpy@master/out/overpy_standalone.js" defer></script>
+  <script nonce="{{ $nonce }}" src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js" defer></script>
 @endpush
 
 @section('content')
@@ -24,19 +16,13 @@
     <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <div class="grid items-start gap-10 lg:grid-cols-12">
         <div class="space-y-4 lg:col-span-8">
-          <span
-            class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300"
-          >
+          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
             <span class="bg-brand-400 inline-block h-2 w-2 rounded-full"></span>
             {{ __('convertor.badge_tools') }}
           </span>
-          <h1
-            class="text-4xl leading-[1.15] font-black tracking-tight sm:text-5xl sm:leading-[1.12]"
-          >
+          <h1 class="text-4xl leading-[1.15] font-black tracking-tight sm:text-5xl sm:leading-[1.12]">
             {{ __('convertor.hero_title_top') }}
-            <span
-              class="from-brand-300 block bg-gradient-to-r via-emerald-200 to-white bg-clip-text pb-1 text-transparent sm:pb-1.5"
-            >
+            <span class="from-brand-300 block bg-gradient-to-r via-emerald-200 to-white bg-clip-text pb-1 text-transparent sm:pb-1.5">
               {{ __('convertor.hero_title_bottom') }}
             </span>
           </h1>
@@ -64,45 +50,28 @@
       <!-- Tabs -->
       <div class="mt-10">
         <div id="mainTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
-          <button
-            id="convertMapBtn"
-            class="active cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
-          >
+          <button id="convertMapBtn" class="active cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900">
             {{ __('convertor.convert_map') }}
           </button>
-          <button
-            id="helpBtn"
-            class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-          >
+          <button id="helpBtn" class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {{ __('convertor.help') }}
           </button>
-          <button
-            id="mapSettingsBtn"
-            class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-          >
+          <button id="mapSettingsBtn" class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {{ __('convertor.edit_map_data') }}
           </button>
         </div>
       </div>
 
       <!-- Convertor card -->
-      <div
-        id="convertMap"
-        class="convert-map-layout mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
-      >
+      <div id="convertMap" class="convert-map-layout mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
         <div class="flex items-center justify-between gap-3">
           <p class="text-sm text-zinc-300">
-            {{ __('convertor.description_line_1') }}
-            <br />
-            {{ __('convertor.description_line_2') }}
-            <br />
-            {{ __('convertor.description_line_3') }}
-            <br />
+            {{ __('convertor.description_line_1') }}<br />
+            {{ __('convertor.description_line_2') }}<br />
+            {{ __('convertor.description_line_3') }}<br />
             {{ __('convertor.description_line_4') }}
           </p>
-          <button
-            class="copy-btn inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
-          >
+          <button class="copy-btn inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">
             {{ __('convertor.copy_to_clipboard') }}
           </button>
         </div>
@@ -141,8 +110,43 @@
         <!-- Controls -->
         <div class="convert-controls mt-6 flex flex-wrap items-center gap-3 text-sm">
           <label for="lang" class="text-zinc-300">{{ __('convertor.pasta_language') }}:</label>
-          <select id="lang" class="cursor-pointer rounded-lg border border-white/10 px-3 py-2">
-            <option value="en-US">English</option>
+
+          <!-- Dropdown LANG (HTML pur avec classes de drapeaux en dur) -->
+          <div class="relative" id="langDd">
+            <button id="langDdBtn" type="button"
+              class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 hover:bg-white/5"
+              aria-expanded="false" aria-controls="langDdMenu">
+              <i class="flag flag-us"></i>
+              <span class="text-sm text-zinc-200" data-label>English</span>
+              <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" fill="currentColor"/>
+              </svg>
+            </button>
+            <ul id="langDdMenu"
+              class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+              role="listbox">
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="en-US" data-flag="flag-us"><i class="flag flag-us"></i><span>English</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="zh-CN" data-flag="flag-china"><i class="flag flag-china"></i><span>简体中文</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="ja-JP" data-flag="flag-japan"><i class="flag flag-japan"></i><span>日本語</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="ko-KR" data-flag="flag-south-korea"><i class="flag flag-south-korea"></i><span>한국어</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="ru-RU" data-flag="flag-russia"><i class="flag flag-russia"></i><span>Русский</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="es-MX" data-flag="flag-mexico"><i class="flag flag-mexico"></i><span>Español</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="pt-BR" data-flag="flag-brazil"><i class="flag flag-brazil"></i><span>Português</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="de-DE" data-flag="flag-germany"><i class="flag flag-germany"></i><span>Deutsch</span></button></li>
+            </ul>
+          </div>
+
+          <!-- Select natif caché (pour le code existant) -->
+          <select id="lang" class="hidden">
+            <option value="en-US" selected>English</option>
             <option value="zh-CN">简体中文</option>
             <option value="ja-JP">日本語</option>
             <option value="ko-KR">한국어</option>
@@ -152,18 +156,48 @@
             <option value="de-DE">Deutsch</option>
           </select>
 
-          <button
-            id="convert-btn"
-            class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 hover:bg-white/5"
-          >
+          <button id="convert-btn" class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 hover:bg-white/5">
             {{ __('convertor.convert_data') }}
           </button>
 
-          <label for="targetLang" class="ml-2 text-zinc-300">
-            {{ __('convertor.target_language') }}:
-          </label>
-          <select id="targetLang" class="rounded-lg border border-white/10 px-3 py-2">
-            <option value="en-US">English</option>
+          <label for="targetLang" class="ml-2 text-zinc-300">{{ __('convertor.target_language') }}:</label>
+
+          <!-- Dropdown TARGET LANG (HTML pur) -->
+          <div class="relative" id="targetLangDd">
+            <button id="targetLangDdBtn" type="button"
+              class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 hover:bg-white/5"
+              aria-expanded="false" aria-controls="targetLangDdMenu">
+              <i class="flag flag-us"></i>
+              <span class="text-sm text-zinc-200" data-label>English</span>
+              <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" fill="currentColor"/>
+              </svg>
+            </button>
+            <ul id="targetLangDdMenu"
+              class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+              role="listbox">
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="en-US" data-flag="flag-us"><i class="flag flag-us"></i><span>English</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="zh-CN" data-flag="flag-china"><i class="flag flag-china"></i><span>简体中文</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="ja-JP" data-flag="flag-japan"><i class="flag flag-japan"></i><span>日本語</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="ko-KR" data-flag="flag-south-korea"><i class="flag flag-south-korea"></i><span>한국어</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="ru-RU" data-flag="flag-russia"><i class="flag flag-russia"></i><span>Русский</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="es-MX" data-flag="flag-mexico"><i class="flag flag-mexico"></i><span>Español</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="pt-BR" data-flag="flag-brazil"><i class="flag flag-brazil"></i><span>Português</span></button></li>
+              <li><button type="button" class="dd-opt cursor-pointer flex w-full items-center gap-2 px-4 py-2 hover:bg-white/10"
+                  data-code="de-DE" data-flag="flag-germany"><i class="flag flag-germany"></i><span>Deutsch</span></button></li>
+            </ul>
+          </div>
+
+          <!-- Select natif caché -->
+          <select id="targetLang" class="hidden">
+            <option value="en-US" selected>English</option>
             <option value="zh-CN">简体中文</option>
             <option value="ja-JP">日本語</option>
             <option value="ko-KR">한국어</option>
@@ -173,26 +207,18 @@
             <option value="de-DE">Deutsch</option>
           </select>
 
-          <button
-            id="translate-btn"
-            class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 hover:bg-white/5"
-          >
+          <button id="translate-btn" class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 hover:bg-white/5">
             {{ __('convertor.translate_data') }}
           </button>
 
-          <button
-            id="diff-btn"
-            class="diff-btn hidden cursor-pointer rounded-lg border border-white/10 px-4 py-2 hover:bg-white/5"
-          >
+          <button id="diff-btn" class="diff-btn hidden cursor-pointer rounded-lg border border-white/10 px-4 py-2 hover:bg-white/5">
             {{ __('convertor.diffchecker') }}
           </button>
         </div>
 
         <!-- Textarea -->
-        <textarea
-          class="mapdata mt-4 h-80 w-full resize-y rounded-xl border border-white/10 bg-zinc-900/80 p-4 font-mono text-sm text-zinc-100 placeholder:text-zinc-500"
-          placeholder="{{ __('convertor.map_placeholder') }}"
-        ></textarea>
+        <textarea class="mapdata mt-4 h-80 w-full resize-y rounded-xl border border-white/10 bg-zinc-900/80 p-4 font-mono text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+          placeholder="{{ __('convertor.map_placeholder') }}"></textarea>
 
         <!-- Footer info -->
         <div class="footer mt-3 flex items-center justify-between text-xs text-zinc-400">
@@ -208,98 +234,58 @@
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step1') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step1_text') }}</p>
-              <img
-                class="rounded-lg ring-1 ring-white/10"
-                src="{{ asset('assets/abilities/copy-settings.webp') }}"
-                alt="Copy settings"
-              />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/copy-settings.webp') }}" alt="Copy settings" />
             </div>
-
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step2') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step2_text') }}</p>
-              <img
-                class="rounded-lg ring-1 ring-white/10"
-                src="{{ asset('assets/abilities/text-area.webp') }}"
-                alt="Text area"
-              />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/text-area.webp') }}" alt="Text area" />
             </div>
-
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step3') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step3_text') }}</p>
               <div class="text-xs text-zinc-300">
-                <code class="rounded bg-white/10 px-1.5 py-0.5">
-                  {{ __('convertor.step3_convert') }}
-                </code>
-                ,
-                <code class="rounded bg-white/10 px-1.5 py-0.5">
-                  {{ __('convertor.step3_translate') }}
-                </code>
+                <code class="rounded bg-white/10 px-1.5 py-0.5">{{ __('convertor.step3_convert') }}</code>,
+                <code class="rounded bg-white/10 px-1.5 py-0.5">{{ __('convertor.step3_translate') }}</code>
               </div>
-              <img
-                class="rounded-lg ring-1 ring-white/10"
-                src="{{ asset('assets/abilities/pasta-language.webp') }}"
-                alt="Language settings"
-              />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/pasta-language.webp') }}" alt="Language settings" />
             </div>
-
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step4') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step4_text') }}</p>
-              <img
-                class="rounded-lg ring-1 ring-white/10"
-                src="{{ asset('assets/abilities/edit-map-data.webp') }}"
-                alt="Edit map data"
-              />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/edit-map-data.webp') }}" alt="Edit map data" />
             </div>
-
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step5') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step5_text') }}</p>
-              <img
-                class="rounded-lg ring-1 ring-white/10"
-                src="{{ asset('assets/abilities/pasta-settings.webp') }}"
-                alt="Paste settings"
-              />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/pasta-settings.webp') }}" alt="Paste settings" />
             </div>
           </div>
         </div>
       </div>
 
       <!-- Map settings -->
-      <div
-        id="mapSettings"
-        class="convert-map-layout mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
-      >
+      <div id="mapSettings" class="convert-map-layout mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
         <div class="global-infos mb-3 flex flex-wrap items-center justify-between gap-3">
           <div class="global-bans text-sm text-zinc-300"></div>
           <div class="settings-buttons flex items-center gap-2">
-            <button
-              id="globalSettingsBtn"
-              class="global-edit-mode-btn cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
-            >
+            <button id="globalSettingsBtn" class="global-edit-mode-btn cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5">
               {{ __('convertor.global_settings') }}
             </button>
-            <button
-              id="editModeBtn"
-              class="edit-mode-btn cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
-            >
+            <button id="editModeBtn" class="edit-mode-btn cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5">
               {{ __('convertor.edit_mode') }}
             </button>
           </div>
         </div>
 
-        <div
-          class="empty-message rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-zinc-300"
-        >
+        <div class="empty-message rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
           {{ __('convertor.please_use_converter') }}
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Modals -->
+    <!-- Modals -->
   <!-- Edit checkpoint -->
   <div
     id="editModal"
@@ -324,14 +310,14 @@
           <button
             type="button"
             id="saveEditorChangesBtn"
-            class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-500"
+            class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-500"
           >
             {{ __('convertor.map_data.save') }}
           </button>
           <button
             type="button"
             id="cancelEditorChangesBtn"
-            class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+            class="rounded-lg cursor-pointer border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
           >
             {{ __('convertor.map_data.cancel') }}
           </button>
@@ -364,14 +350,14 @@
           <button
             type="button"
             id="saveGlobalChangesBtn"
-            class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-500"
+            class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-500"
           >
             {{ __('convertor.map_data.save') }}
           </button>
           <button
             type="button"
             id="cancelGlobalChangesBtn"
-            class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+            class="rounded-lg cursor-pointer border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
           >
             {{ __('convertor.map_data.cancel') }}
           </button>

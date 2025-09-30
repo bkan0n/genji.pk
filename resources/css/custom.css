@@ -2007,6 +2007,29 @@ select.modal-select2:focus {
   opacity: 1;
 }
 
+.modal-overlay {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .22s ease, visibility 0s linear .22s;
+}
+
+.modal-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .22s ease;
+}
+
+.modal-panel {
+  transform: translateY(8px) scale(.98);
+  opacity: 0;
+  transition: transform .22s ease, opacity .22s ease;
+}
+
+.modal-overlay.is-open .modal-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
 /* ================= MODERATOR ================= */
 .fade-in {
   animation: fade-in 160ms ease-out both;
@@ -2036,3 +2059,7 @@ select.modal-select2:focus {
 .mod-subtab:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* ================= BACKGROUND ================= */
+.prism-host { position: relative; width: 100%; height: 600px; }
+.prism-canvas { position: absolute; inset: 0; display: block; }
