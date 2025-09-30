@@ -155,6 +155,7 @@ async function initRankCard() {
     rankCardContent.dataset.loadedFor = '';
     badgeMasteryContent.dataset.loadedFor = '';
 
+    renderRankCardSkeleton();
     showLoadingBar();
     try {
       if (isBadgesTabActive) {
@@ -201,6 +202,7 @@ async function initRankCard() {
     badgeMasteryContent.innerHTML = '';
     badgeMasteryContent.dataset.loadedFor = '';
 
+    renderRankCardSkeleton();
     showLoadingBar();
 
     if (wasBadgesTab) {
@@ -232,7 +234,8 @@ async function initRankCard() {
     updateButtonContainerVisibility();
     hideLoadingBar();
   });
-
+  
+  renderRankCardSkeleton();
   showLoadingBar();
   const me = getCurrentUserId();
   if (me) {
@@ -2297,4 +2300,120 @@ function closeDropdown(el) {
     el.removeEventListener('transitionend', done);
   };
   el.addEventListener('transitionend', done, { once: true });
+}
+
+/* =========================
+   SKELETON (RANK CARD)
+   ========================= */
+function rankCardSkeletonHTML() {
+  return `
+    <div class="rank-card-container relative">
+      <div class="relative overflow-hidden rounded-2xl ring-1 ring-white/10">
+        <!-- BG (même wrapper .background que le rendu réel) -->
+        <div class="background absolute inset-0">
+          <div class="h-full w-full bg-white/10"></div>
+        </div>
+
+        <!-- Overlay gradient identique -->
+        <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
+
+          <!-- Titre joueur (mêmes classes/typo) -->
+          <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight">
+            <div class="mx-auto h-[1.2em] w-56 sm:w-72 rounded bg-white/10 animate-pulse"></div>
+          </div>
+
+          <!-- Grille identique -->
+          <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[minmax(0,1fr)_180px] items-start">
+
+            <!-- Colonne gauche -->
+            <div class="rank-details-container md:col-start-1 md:row-start-1 space-y-4">
+              <div class="rank-section-container h-[410px] rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col overflow-hidden">
+
+                <!-- En-têtes médailles (même grille) -->
+                <div class="rank-section space-y-3">
+                  <div class="medals-header grid items-center text-sm text-white/80 gap-2
+                              grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                    <span class="col-start-1 col-end-2"></span>
+                    <span class="col-start-2 col-end-3"></span>
+                    <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
+                    <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
+                    <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
+                  </div>
+
+                  <!-- Lignes difficultés (6 pour coller à easy…hell) -->
+                  ${Array.from({ length: 6 }).map(() => `
+                    <div class="rank-row grid items-center gap-2
+                                grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                      <span class="h-4 w-24 rounded bg-white/10 animate-pulse"></span>
+                      <div class="relative group w-full">
+                        <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/10 ring-1 ring-white/10">
+                          <div class="absolute left-0 top-0 h-full w-1/3 bg-white/20 animate-pulse"></div>
+                        </div>
+                      </div>
+                      <span class="mx-auto h-4 w-6 rounded bg-white/10 animate-pulse"></span>
+                      <span class="mx-auto h-4 w-6 rounded bg-white/10 animate-pulse"></span>
+                      <span class="mx-auto h-4 w-6 rounded bg-white/10 animate-pulse"></span>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- Stats inline (même structure/classes) -->
+                <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
+                  ${Array.from({ length: 3 }).map(() => `
+                    <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
+                      <div class="mx-auto h-3 w-16 rounded bg-white/10 animate-pulse"></div>
+                      <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/10 animate-pulse"></div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- Bas: badges + mini stats (même DOM & classes) -->
+                <div class="combined-container mt-3 grid gap-4 md:grid-cols-2 items-stretch">
+                  <div class="badges-container rounded-xl bg-white/5 p-2 ring-1 ring-white/10 min-w-0 overflow-hidden">
+                    <div class="badges-grid grid grid-cols-[repeat(auto-fit,minmax(2.5rem,1fr))] gap-2 sm:gap-3 place-items-center">
+                      ${Array.from({ length: 8 }).map(() => `
+                        <div class="badge h-10 w-10 rounded-full bg-white/10 animate-pulse"></div>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <div class="stats-section grid grid-cols-3 gap-2 rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
+                    ${Array.from({ length: 3 }).map(() => `
+                      <div class="stat-item text-center">
+                        <div class="mx-auto h-3 w-16 rounded bg-white/10 animate-pulse"></div>
+                        <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/10 animate-pulse"></div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="player-info h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
+              <div class="inline-flex items-center gap-2">
+                <div class="h-4 w-28 rounded bg-white/10 animate-pulse"></div>
+                <div class="h-5 w-5 rounded bg-white/10 animate-pulse"></div>
+              </div>
+
+              <!-- boîte avatar : un peu moins large et plus haute -->
+              <div class="player-avatar mt-4 w-full max-w-[220px]">
+                <div class="w-full rounded-lg bg-white/10 animate-pulse aspect-[3/4] sm:aspect-[2/3]"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRankCardSkeleton() {
+  const el = byId('rankCardContent');
+  if (!el) return;
+  el.innerHTML = rankCardSkeletonHTML();
+  if (el.classList.contains('hidden')) {
+    revealRankCardContainer();
+  }
 }
