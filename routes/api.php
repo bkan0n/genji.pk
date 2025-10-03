@@ -47,6 +47,12 @@ use App\Http\Controllers\Mods\Verifications\VerifyCompletionController;
 use App\Http\Controllers\Mods\Devs\CacheController;
 use App\Http\Controllers\Mods\Devs\OverpyCommitController;
 use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
+use App\Http\Controllers\Mods\Playtests\ApprovePlaytestController;
+use App\Http\Controllers\Mods\Playtests\ForceAcceptPlaytestController;
+use App\Http\Controllers\Mods\Playtests\ForceDenyPlaytestController;
+use App\Http\Controllers\Mods\Playtests\ResetPlaytestController;
+use App\Http\Controllers\Mods\Playtests\DeleteAllPlaytestVotesController;
+use App\Http\Controllers\Mods\Playtests\DeletePlaytestVoteController;
 use App\Http\Controllers\Newsfeed\ChangelogsController;
 use App\Http\Controllers\Newsfeed\EmojiController;
 use App\Http\Controllers\Newsfeed\GifController;
@@ -298,6 +304,16 @@ Route::prefix('mods')
         Route::patch('overpy-commit',[OverpyCommitController::class, 'update'])->name('mods.overpy.commit.update');
         Route::get('/framework-version',  [FrameworkVersionController::class, 'show']);
         Route::patch('/framework-version', [FrameworkVersionController::class, 'update']);
+
+        // PLAYTESTS
+        Route::prefix('playtests')->group(function () {
+            Route::post('{thread_id}/approve', [ApprovePlaytestController::class, 'store'])->whereNumber('thread_id')->name('mods.playtests.approve');
+            Route::post('{thread_id}/force_accept',[ForceAcceptPlaytestController::class, 'store'])->whereNumber('thread_id') ->name('mods.playtests.force_accept');
+            Route::post('{thread_id}/force_deny', [ForceDenyPlaytestController::class, 'store'])->whereNumber('thread_id') ->name('mods.playtests.force_deny');
+            Route::post('{thread_id}/reset', [ResetPlaytestController::class, 'store'])->whereNumber('thread_id') ->name('mods.playtests.reset');
+            Route::delete('{thread_id}/vote',[DeleteAllPlaytestVotesController::class, 'destroy'])->whereNumber('thread_id')->name('mods.playtests.votes.delete_all');
+            Route::delete('{thread_id}/vote/{user_id}', [DeletePlaytestVoteController::class, 'destroy'])->whereNumber('thread_id')->whereNumber('user_id')->name('mods.playtests.votes.delete_one');
+        });
 });
 
 /* ================== SENTRY ================== */
