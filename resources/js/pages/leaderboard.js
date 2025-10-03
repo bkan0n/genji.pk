@@ -235,12 +235,16 @@ async function updateLeaderboard(extra = {}) {
     page_size: pageSize,
   };
 
-  const data = await fetchLeaderboard(activeFilters);
+  const cached = readPageCache(activeFilters);
+  if (!cached) {
+    ensureThead();
+    renderSkeletonRows(pageSize);
+    table?.setAttribute('aria-busy', 'true');
+  }
 
-  const total =
-    Array.isArray(data) && data[0] && data[0].total_results ? +data[0].total_results : 0;
+  const { rows: rawRows, total } = await getPageData(activeFilters, { allowCache: true });
 
-  let rows = data || [];
+  let rows = rawRows || [];
   if (activeFilters.sort_column === 'skill_rank') {
     rows = sortBySkillRankClient(rows, activeFilters.sort_direction);
   }
@@ -254,7 +258,13 @@ async function updateLeaderboard(extra = {}) {
   cascadeRows();
   renderPagination(total, activeFilters.page_number, activeFilters.page_size);
 
+  table?.removeAttribute('aria-busy');
   hideLoadingBar();
+
+  prefetchNextPageIfAny(
+    { total, pageNumber: activeFilters.page_number, pageSize: activeFilters.page_size },
+    activeFilters
+  );
 }
 
 function debounce(fn, ms = 250) {
@@ -690,6 +700,39 @@ function changePage(n) {
   updateLeaderboard({ page_number: currentPage });
 }
 
+async function getPageData(params, { allowCache = true } = {}) {
+  const keyParams = { ...params };
+  if (allowCache) {
+    const cached = readPageCache(keyParams);
+    if (cached) return cached;
+  }
+
+  const raw = await fetchLeaderboard(keyParams);
+  const total = (Array.isArray(raw) && raw[0] && raw[0].total_results) ? +raw[0].total_results : 0;
+  const rows = raw || [];
+
+  writePageCache(keyParams, rows, total);
+  return { rows, total };
+}
+
+async function prefetchNextPageIfAny({ total, pageNumber, pageSize }, baseFilters) {
+  const totalPagesLocal = Math.ceil((+total || 0) / (+pageSize || 1));
+  const next = pageNumber + 1;
+  if (next > totalPagesLocal) return;
+
+  const nextFilters = { ...baseFilters, page_number: next, page_size: pageSize };
+  const cached = readPageCache(nextFilters);
+  if (cached) {
+    const ids = [...new Set((cached.rows || []).map(extractDiscordId).filter(Boolean))];
+    if (ids.length) await resolveDiscordAvatars(ids);
+    return;
+  }
+
+  const { rows } = await getPageData(nextFilters, { allowCache: false });
+  const ids = [...new Set(rows.map(extractDiscordId).filter(Boolean))];
+  if (ids.length) await resolveDiscordAvatars(ids);
+}
+
 /* =========================
    TABLE FILTERS
    ========================= */
@@ -861,6 +904,119 @@ function smoothRevealFilters(root = document) {
       el.classList.remove('f-reveal');
     });
   });
+}
+
+/* =========================
+   SKELETON + PAGE CACHE
+   ========================= */
+const PAGE_CACHE_TTL = 60 * 1000;
+const pageCache = new Map();
+
+function cacheKey(params) {
+  const {
+    name = '', sort_column = 'xp_amount', sort_direction = 'desc',
+    skill_rank = '', page_number = 1, page_size = pageSize
+  } = params || {};
+  return JSON.stringify({ name, sort_column, sort_direction, skill_rank, page_number, page_size });
+}
+
+function readPageCache(params) {
+  const k = cacheKey(params);
+  const v = pageCache.get(k);
+  if (v && Date.now() - v.ts < PAGE_CACHE_TTL) return v;
+  return null;
+}
+function writePageCache(params, rows, total) {
+  const k = cacheKey(params);
+  pageCache.set(k, { rows, total, ts: Date.now() });
+}
+
+function __addKeyframes(name, body) {
+  try { __sheet.insertRule(`@keyframes ${name}{${body}}`, __sheet.cssRules.length); } catch {}
+}
+(function ensureSkeletonCSS() {
+  __addKeyframes('skelShimmer', '0%{background-position:-200% 0}100%{background-position:200% 0}');
+  __addRule('.skel', [
+    'display:inline-block',
+    'border-radius:0.5rem',
+    'height:0.875rem',
+    'background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06))',
+    'background-size:200% 100%',
+    'animation:skelShimmer 1.1s linear infinite',
+  ].join(';'));
+  __addRule('.skel-circle','border-radius:9999px;height:2rem;width:2rem');
+  __addRule('.skel-sm','height:0.75rem');
+  __addRule('.skel-md','height:0.9rem');
+  __addRule('.skel-lg','height:1rem');
+  __addRule('.skel-w-8','width:1.2rem');
+  __addRule('.skel-w-12','width:3rem');
+  __addRule('.skel-w-20','width:5rem');
+  __addRule('.skel-w-28','width:7rem');
+  __addRule('.skel-w-36','width:9rem');
+})();
+
+/* =========================
+   RENDER SKELETON
+   ========================= */
+function renderSkeletonRows(count = pageSize) {
+  ensureThead();
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const haloClass = `
+    relative
+    after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5
+    after:rounded-lg after:ring-2 after:pointer-events-none after:ring-zinc-200/30
+    bg-zinc-900/40 hover:bg-white/5 transition gp-reveal-show
+  `.replace(/\s+/g, ' ').trim();
+
+  for (let i = 0; i < count; i++) {
+    const tr = document.createElement('tr');
+    tr.className = `${haloClass} ${__clsAnimDelay(__clamp(i * 30, 0, 250))} tr-sf-enter`;
+
+    tr.innerHTML = `
+      <td class="col-idx px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-8"></span>
+      </td>
+
+      <td class="col-nickname px-4 py-3 align-middle">
+        <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5">
+          <span class="skel skel-circle h-8 w-8 rounded-full ring-1 ring-white/10"></span>
+          <span class="skel skel-md skel-w-36"></span>
+        </div>
+      </td>
+
+      <td class="col-xp px-4 py-3 font-semibold align-middle">
+        <span class="skel skel-sm skel-w-20"></span>
+      </td>
+
+      <td class="col-tier px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-20"></span>
+      </td>
+
+      <td class="col-skill-rank px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-20"></span>
+      </td>
+
+      <td class="col-wr px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-12"></span>
+      </td>
+
+      <td class="col-maps px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-12"></span>
+      </td>
+
+      <td class="col-playtest px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-12"></span>
+      </td>
+
+      <td class="col-discord px-4 py-3 align-middle">
+        <span class="skel skel-sm skel-w-28"></span>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  }
 }
 
 /* =========================
