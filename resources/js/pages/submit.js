@@ -147,41 +147,6 @@ function __exit(el, done) {
   }, 220);
 }
 
-__addRule(
-  '#submitRecordSection .hidden, #playtestSection .hidden, #submitMapSection .hidden',
-  'display:none'
-);
-__addRule(
-  '.x-anim',
-  'transition:opacity .22s ease, transform .22s ease; will-change:opacity,transform'
-);
-__addRule('.x-enter', 'opacity:0; transform:translateY(8px) scale(.992)');
-__addRule('.x-enter-active', 'opacity:1; transform:translateY(0) scale(1)');
-__addRule('.x-exit', 'opacity:1; transform:translateY(0) scale(1)');
-__addRule('.x-exit-active', 'opacity:0; transform:translateY(8px) scale(.98)');
-
-__addRule(
-  '.pt-card-anim',
-  'opacity:0; transform:translateY(14px) scale(.98); transition:transform 550ms cubic-bezier(.22,.68,0,1), opacity 500ms ease'
-);
-__addRule('.pt-card-anim.pt-in', 'opacity:1; transform:translateY(0) scale(1)');
-
-__addRule(
-  '.toolbar-anim',
-  'opacity:0; transform:translateY(8px) scale(.992); transition:opacity .22s ease, transform .22s cubic-bezier(.22,.68,0,1)'
-);
-__addRule('.toolbar-anim.in', 'opacity:1; transform:translateY(0) scale(1)');
-
-__addRule(
-  '.pt-toolbar-button:hover',
-  'transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.22)'
-);
-
-__addRule('.dropdown-list', 'max-height:260px; overflow-y:auto; overscroll-behavior:contain');
-__addRule('.rotate-180', 'transform:rotate(180deg)');
-
-__addRule('.cursor-pointer', 'cursor:pointer');
-
 /* =========================
    I18N
    ========================= */
@@ -674,10 +639,8 @@ function animatePlaytestCardsAndSplitflap() {
 
 const _origApplyFilters = typeof applyFilters === 'function' ? applyFilters : null;
 async function applyFiltersWithAnimation(page = 1) {
-  if (_origApplyFilters) {
-    await _origApplyFilters(page);
-    animatePlaytestCardsAndSplitflap();
-  }
+  if (typeof renderPlaytestSkeletonCards === 'function') { renderPlaytestSkeletonCards(itemsPerPage); }
+  if (_origApplyFilters) { await _origApplyFilters(page); animatePlaytestCardsAndSplitflap(); }
 }
 
 const loadingEl = document.getElementById('loadingContainer');
@@ -1038,13 +1001,11 @@ function attachRecordAutocompletes() {
     setupAutocomplete(mapCodeInput, {
       kind: 'map-codes',
       containerId: 'srMapCodeSuggestions',
-      onPick: ({ label /*, raw */ }) => {
+      onPick: ({ label, raw }) => {
         mapCodeInput.value = label;
+        if (raw != null) mapCodeInput.setAttribute('data-raw-value', String(raw));
         hideAllSuggestions();
         mapCodeInput.blur();
-        try {
-          showConfirmationMessage?.(t('popup.filter_applied', { filterId: 'code', value: label }));
-        } catch {}
       },
     });
   }
@@ -1123,16 +1084,35 @@ function _ensureBtnLabelSpan(btn, placeholderText) {
   return labelSpan;
 }
 function _hideList(list) {
-  if (list) list.style.display = 'none';
+  if (!list) return;
+
+  if (list.classList.contains('dd-anim')) {
+    list.classList.remove('dd-in');
+    list.classList.add('dd-out');
+    setTimeout(() => {
+      list.classList.add('hidden');
+      list.classList.remove('dd-out');
+      list.style.display = 'none';
+    }, 180);
+  } else {
+    list.classList.add('hidden');
+    list.style.display = 'none';
+  }
 }
 
 function _showList(list) {
   if (!list) return;
+
+  list.classList.remove('hidden', 'dd-out');
   list.style.display = 'block';
   list.style.maxHeight = '260px';
   list.style.overflowY = 'auto';
   list.style.overflowX = 'hidden';
   list.style.webkitOverflowScrolling = 'touch';
+
+  if (list.classList.contains('dd-anim')) {
+    requestAnimationFrame(() => list.classList.add('dd-in'));
+  }
 }
 
 function _closeAllOtherDropdowns(currentContainer) {
@@ -1140,7 +1120,7 @@ function _closeAllOtherDropdowns(currentContainer) {
     if (cont === currentContainer) return;
     const l = getDropdownListEl(cont);
     if (!l) return;
-    l.classList.add('hidden');
+    _hideList(l);
     cont.removeAttribute('data-open');
   });
 }
@@ -1241,23 +1221,23 @@ function setupFakeSelect(id, placeholderText = 'Select...') {
   if (!btn || !list) return;
 
   if (container.dataset.fakeSelectMounted === '1') {
-    list.classList.add('hidden');
+    _hideList(list);
     return;
   }
   container.dataset.fakeSelectMounted = '1';
 
   if (!btn.getAttribute('data-placeholder')) btn.setAttribute('data-placeholder', placeholderText);
   const labelSpan = _ensureBtnLabelSpan(btn, placeholderText);
-  list.classList.add('hidden');
+  _hideList(list);
   btn.classList.add('cursor-pointer');
-  list.classList.add('dropdown-list');
+  list.classList.add('dropdown-list', 'dd-anim');
 
   const open = () => {
     const ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) ae.blur();
     hideAllSuggestions();
     _closeAllOtherDropdowns(container);
-    list.classList.remove('hidden');
+    _showList(list);
     container.setAttribute('data-open', '1');
 
     const outside = (ev) => {
@@ -1271,7 +1251,7 @@ function setupFakeSelect(id, placeholderText = 'Select...') {
   };
 
   const close = () => {
-    list.classList.add('hidden');
+    _hideList(list);
     hideAllSuggestions();
     container.removeAttribute('data-open');
   };
@@ -1344,6 +1324,7 @@ function setupForms() {
   const submitRecordForm = document.getElementById('submitRecordForm');
   if (submitRecordForm && submitRecordForm.dataset.bound !== '1') {
     submitRecordForm.dataset.bound = '1';
+    disableBrowserAutocompleteInSubmitRecord();
 
     submitRecordForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1411,7 +1392,8 @@ function setupForms() {
         );
         return;
       }
-      if (!validateSubmitMapForm(e)) return;
+      const ok = await validateSubmitMapForm(e);
+      if (!ok) return;
       try {
         const result = await sendMapToApi();
         if (result?.error) {
@@ -1566,22 +1548,72 @@ function setupBannerDropzone() {
 
   const pick = () => input.click();
 
-  const setPreview = (file) => {
-    const url = URL.createObjectURL(file);
+  const readAsDataURL = (file) =>
+    new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+  const setPreview = async (file) => {
     drop.innerHTML = `
-      <img id="bannerPreview" alt="Banner preview" class="absolute inset-0 h-full w-full object-cover select-none pointer-events-none" src="${url}">
+      <div class="absolute inset-0">
+        <!-- l'image est injectée via JS pour pouvoir gérer load/error -->
+      </div>
       <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
         <span class="text-xs text-white/90 truncate px-1">${file.name}</span>
-        <button type="button" id="bannerRemoveBtn" class="rounded-md border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
-          ${t('submit.remove') || 'Remove'}
+        <button type="button" id="bannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+          ${t('map.remove')}
         </button>
       </div>
     `;
+
+    const imgHost = drop.firstElementChild;
+    const img = new Image();
+    img.id = 'bannerPreview';
+    img.alt = '';
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.draggable = false;
+    img.className = 'absolute inset-0 h-full w-full object-cover select-none pointer-events-none';
+
+    let blobUrl = null;
+    try {
+      blobUrl = URL.createObjectURL(file);
+      img.src = blobUrl;
+
+      img.onerror = async () => {
+        try {
+          const dataUrl = await readAsDataURL(file);
+          img.src = dataUrl;
+        } catch {
+          showErrorMessage(t('errors.upload_failed') || 'Preview failed.');
+        } finally {
+          if (blobUrl) URL.revokeObjectURL(blobUrl);
+        }
+      };
+
+      img.onload = () => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+      };
+    } catch {
+      try {
+        const dataUrl = await readAsDataURL(file);
+        img.src = dataUrl;
+      } catch {
+        showErrorMessage(t('errors.upload_failed') || 'Preview failed.');
+      }
+    }
+
+    imgHost.appendChild(img);
+
     document.getElementById('bannerRemoveBtn')?.addEventListener('click', resetBannerDropzone);
   };
 
   const acceptFile = (file) => {
     if (!file) return;
+
     if (!BANNER_ALLOWED_MIME.includes(file.type)) {
       showErrorMessage(t('errors.image_type') || 'Invalid image type.');
       return;
@@ -1590,6 +1622,7 @@ function setupBannerDropzone() {
       showErrorMessage(t('errors.image_too_large') || 'Image too large (max 8MB).');
       return;
     }
+
     window.customBannerFile = file;
     setPreview(file);
     startBannerUpload(file);
@@ -2025,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSecondaryCreators();
 });
 
-function validateSubmitMapForm(event) {
+async function validateSubmitMapForm(event) {
   const form = document.getElementById('submitMapForm');
   let valid = true;
 
@@ -2040,6 +2073,16 @@ function validateSubmitMapForm(event) {
   if (!codeLabel || !codeLabel.textContent.trim() || codeLabel.textContent.trim() === 'N/A') {
     showErrorMessage(t('map.val.map_code'));
     valid = false;
+    return false;
+  }
+
+  const enteredCode = codeLabel.textContent.trim();
+  const alreadyExists = await checkMapCodeAlreadyExists(enteredCode);
+  if (alreadyExists) {
+    showErrorMessage(t('map.val.map_code_already_exist'));
+    try {
+      if (typeof editInline === 'function') editInline('metaCode');
+    } catch {}
     return false;
   }
 
@@ -2101,6 +2144,32 @@ function validateSubmitMapForm(event) {
     return false;
   }
   return true;
+}
+
+function normalizeMapCode(v) {
+  return String(v || '').replace(/[\s\-_]/g, '').toUpperCase();
+}
+
+async function checkMapCodeAlreadyExists(inputCode) {
+  const q = (inputCode || '').trim();
+  if (!q) return false;
+
+  const url = _buildAutoUrl('map-codes', { value: q, pageSize: 15 });
+  try {
+    const r = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!r.ok) return false;
+
+    const data = await r.json();
+    const normalizedInput = normalizeMapCode(q);
+
+    const list = (Array.isArray(data) ? data : [])
+      .map((it) => normalizeSuggestionItem(it, 'map-codes'))
+      .filter(Boolean);
+
+    return list.some((s) => normalizeMapCode(s?.raw || s?.label) === normalizedInput);
+  } catch {
+    return false;
+  }
 }
 
 /* =========================
@@ -2429,11 +2498,11 @@ function renderSubmitMapSection() {
             <div class="text-[11px] text-zinc-400">${t('map.meta.name')}</div>
             <div class="flex items-center gap-2">
               <div id="metaMap" class="text-sm text-zinc-200">N/A</div>
-            </div>
-            <div class="mt-2">
-              <input id="mapNameInput" type="text" autocomplete="off"
-                     class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                     placeholder="${t('map.meta.search_map_name') || 'Search a map name…'}">
+              <button type="button"
+                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                      data-edit-target="metaMap">
+                ${t('map.meta.edit')}
+              </button>
             </div>
           </div>
 
@@ -2467,7 +2536,7 @@ function renderSubmitMapSection() {
                 ${t('map.dropdown.select_difficulty')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
 
@@ -2481,7 +2550,7 @@ function renderSubmitMapSection() {
                 ${t('map.dropdown.select_category')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
 
@@ -2495,7 +2564,7 @@ function renderSubmitMapSection() {
                 ${t('map.dropdown.select_mechanics')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
 
@@ -2509,7 +2578,7 @@ function renderSubmitMapSection() {
                 ${t('map.dropdown.select_restrictions')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
         </div>
@@ -2517,7 +2586,7 @@ function renderSubmitMapSection() {
 
       <!-- OPTIONAL CARD -->
       <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
-        <h3 class="text-sm font-semibold text-zinc-2 00">${t('map.optional_title')}</h3>
+        <h3 class="text-sm font-semibold text-zinc-200">${t('map.optional_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <!-- Title -->
@@ -2635,11 +2704,11 @@ function renderSubmitMapSection() {
       <!-- ACTION BAR -->
       <div class="flex items-center gap-2">
         <button type="submit"
-                class="inline-flex items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
+                class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
           ${t('map.submit_label')}
         </button>
         <button type="button"
-                class="cancel-btn inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
+                class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
                 form="submitMapForm">
           ${t('record.cancel')}
         </button>
@@ -2725,6 +2794,19 @@ function getVideoUrl() {
   return v;
 }
 
+function disableBrowserAutocompleteInSubmitRecord() {
+  const form = document.getElementById('submitRecordForm') || document.querySelector('#submitRecordSection form');
+  if (!form) return;
+
+  form.setAttribute('autocomplete', 'off');
+  form.querySelectorAll('input, textarea').forEach((el) => {
+    el.setAttribute('autocomplete', 'off');
+    el.setAttribute('autocorrect', 'off');
+    el.setAttribute('autocapitalize', 'off');
+    el.setAttribute('spellcheck', 'false');
+  });
+}
+
 /* =========================
    SEND COMPLETION FORM
    ========================= */
@@ -2791,48 +2873,102 @@ function dragAndDrop() {
   if (!dropzone || !input) return;
 
   dropzone.replaceWith(dropzone.cloneNode(true));
-  const newDropzone = document.getElementById('screenshotDrop');
-  const newInput = newDropzone.querySelector('#screenshotInput');
+  const dz = document.getElementById('screenshotDrop');
+  const fi = dz.querySelector('#screenshotInput');
 
-  newDropzone.onclick = function (e) {
-    if (e.target === newInput) return;
-    newInput.click();
-  };
+  const readAsDataURL = (file) =>
+    new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
 
-  newDropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    newDropzone.classList.add('dragover');
-  });
-  newDropzone.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    newDropzone.classList.remove('dragover');
-  });
-  newDropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    newDropzone.classList.remove('dragover');
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      window.screenshotFile = e.dataTransfer.files[0];
-      showScreenshotPreview(window.screenshotFile);
-      autoUploadScreenshot(window.screenshotFile);
-    }
-  });
-
-  newInput.addEventListener('change', () => {
-    if (newInput.files && newInput.files[0]) {
-      window.screenshotFile = newInput.files[0];
-      showScreenshotPreview(window.screenshotFile);
-      autoUploadScreenshot(window.screenshotFile);
-    }
-  });
-
-  function showScreenshotPreview(file) {
-    if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      newDropzone.innerHTML = `<img src="${e.target.result}" alt="Screenshot preview">`;
-    };
-    reader.readAsDataURL(file);
+  function resetScreenshotDropzone() {
+    dz.innerHTML = `
+      <input type="file" id="screenshotInput" name="screenshot" accept="image/*" class="hidden">
+      <div id="screenshotPlaceholder" class="screenshot-placeholder">
+        <span>${t('record.drag_and_drop')}</span>
+      </div>
+    `;
+    window.screenshotFile = null;
+    window.screenshotUrl = null;
+    dragAndDrop();
   }
+
+  async function setPreview(file) {
+    dz.innerHTML = `
+      <div class="absolute inset-0"></div>
+      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
+        <span class="text-xs text-white/90 truncate px-1">${file.name}</span>
+        <button type="button" id="screenshotRemoveBtn"
+                class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+          ${t('map.remove')}
+        </button>
+      </div>
+    `;
+
+    const host = dz.firstElementChild;
+    const img = new Image();
+    img.alt = '';
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.draggable = false;
+    img.className = 'absolute inset-0 h-full w-full object-cover select-none pointer-events-none';
+
+    let blobUrl = null;
+    try {
+      blobUrl = URL.createObjectURL(file);
+      img.src = blobUrl;
+      img.onerror = async () => {
+        try { img.src = await readAsDataURL(file); }
+        catch { showErrorMessage(t('errors.upload_failed') || 'Preview failed.'); }
+        finally { if (blobUrl) URL.revokeObjectURL(blobUrl); }
+      };
+      img.onload = () => { if (blobUrl) URL.revokeObjectURL(blobUrl); };
+    } catch {
+      try { img.src = await readAsDataURL(file); }
+      catch { showErrorMessage(t('errors.upload_failed') || 'Preview failed.'); }
+    }
+
+    host.appendChild(img);
+    dz.querySelector('#screenshotRemoveBtn')?.addEventListener('click', resetScreenshotDropzone);
+  }
+
+  function acceptFile(file) {
+    if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) {
+      showErrorMessage(t('errors.image_type') || 'Invalid image type.');
+      return;
+    }
+    window.screenshotFile = file;
+    setPreview(file);
+    try { autoUploadScreenshot(file); } catch {}
+  }
+
+  dz.addEventListener('click', (e) => {
+    if (e.target.id === 'screenshotRemoveBtn') return;
+    const inputEl = dz.querySelector('#screenshotInput');
+    if (inputEl) inputEl.click();
+  });
+
+  dz.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dz.classList.add('dragover', 'ring-2', 'ring-emerald-500/60');
+  });
+  dz.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dz.classList.remove('dragover', 'ring-2', 'ring-emerald-500/60');
+  });
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dz.classList.remove('dragover', 'ring-2', 'ring-emerald-500/60');
+    if (e.dataTransfer?.files?.[0]) acceptFile(e.dataTransfer.files[0]);
+  });
+
+  fi.addEventListener('change', () => {
+    if (fi.files?.[0]) acceptFile(fi.files[0]);
+  });
 }
 
 function qualityDropdown() {
@@ -2870,7 +3006,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function validateSubmitRecordForm(event) {
   const mapCodeInput = document.getElementById('mapCodeInput');
   if (!mapCodeInput || !mapCodeInput.value.trim()) {
-    showErrorMessage(t('submit.map_code'));
+    showErrorMessage(t('record.code_invalid'));
     return false;
   }
 
@@ -2878,14 +3014,14 @@ function validateSubmitRecordForm(event) {
   const timeValue = inputTime ? inputTime.value.trim() : '';
 
   if (!TIME_REGEX.test(timeValue)) {
-    showErrorMessage(t('submit.time_format_digits'));
+    showErrorMessage(t('record.time_invalid'));
     if (inputTime) inputTime.focus();
     return false;
   }
 
   const numericTime = Number(timeValue);
   if (!Number.isFinite(numericTime) || numericTime <= 0) {
-    showErrorMessage(t('submit.time'));
+    showErrorMessage(t('record.time_invalid'));
     return false;
   }
 
@@ -2901,19 +3037,19 @@ function validateSubmitRecordForm(event) {
       qualityBtn && qualityBtn.textContent && qualityBtn.textContent.trim() !== 'Select...';
   }
   if (!hasQuality) {
-    showErrorMessage(t('submit.quality'));
+    showErrorMessage(t('record.quality_required'));
     return false;
   }
 
   if (!window.screenshotUrl) {
-    showErrorMessage(t('submit.screenshot_confirm'));
+    showErrorMessage(t('record.screenshot_required'));
     return false;
   }
 
   const videoEl = document.getElementById('inputVideo');
   const v = (videoEl?.value || '').trim();
   if (v && !/^(https?:\/\/)?[^\s]+$/i.test(v)) {
-    showErrorMessage(t('submit.video_invalid') || 'Lien vidéo invalide.');
+    showErrorMessage(t('record.video_invalid'));
     if (videoEl) videoEl.focus();
     return false;
   }
@@ -3614,6 +3750,20 @@ function setupRatingDropdown() {
   }
 }
 
+document.addEventListener('mousedown', (e) => {
+  const box = document.getElementById('pt-srMapCodeSuggestions');
+  const input = document.getElementById('mapCodeInput');
+  if (!box) return;
+
+  const clickedInsideBox = box.contains(e.target);
+  const clickedInput = input && (input === e.target || input.contains(e.target));
+
+  if (!clickedInsideBox && !clickedInput) {
+    box.style.display = 'none';
+    box.classList.add('hidden');
+  }
+}, true);
+
 async function appendVoterToModal(userId) {
   const modal = document.getElementById('playtestModalInner');
   const mount = modal?.querySelector('#votersMount');
@@ -3742,7 +3892,7 @@ async function preloadVoters(voterIds = []) {
 function buildVotersGridHTML(preloaded, voterIds) {
   const esc = (s) => String(s ?? '');
   if (!voterIds?.length) {
-    return `<div class="mt-2 text-xs text-zinc-400">No votes yet.</div>`;
+    return `<div class="mt-2 text-xs text-zinc-400">"${t('playtest.no_votes')}"</div>`;
   }
   return `
     <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3">
@@ -3752,10 +3902,31 @@ function buildVotersGridHTML(preloaded, voterIds) {
           const avatar = preloaded[key]?.avatar || 'assets/profile/default-avatar.png';
           const name = preloaded[key]?.name || '—';
           return `
-          <div class="flex flex-col items-center text-center" data-voter-row data-user-id="${esc(key)}">
-            <img src="${esc(avatar)}" alt="${esc(name)}" class="h-12 w-12 rounded-full object-cover ring-1 ring-white/10" loading="lazy">
-            <span class="mt-1 text-sm text-zinc-200 font-medium truncate max-w-[120px]" title="${esc(name)}">${esc(name)}</span>
-            <span class="text-[11px] text-zinc-500 truncate max-w-[120px]" title="${esc(key)}">${esc(key)}</span>
+          <div class="voter-card flex flex-col items-center text-center" data-voter-row data-user-id="${esc(key)}">
+            <img
+              src="${esc(avatar)}"
+              alt="${esc(name)}"
+              class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+              data-user-id="${esc(key)}"
+              loading="lazy"
+            >
+            <button
+              type="button"
+              class="open-rank-card mt-1 max-w-[120px] truncate text-sm text-zinc-200 font-medium cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+              data-user-id="${esc(key)}"
+              title="${esc(name)}"
+            >
+              ${esc(name)}
+            </button>
+            <button
+              type="button"
+              class="copy-user-id mt-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-mono text-emerald-200 hover:text-emerald-100 max-w-[120px] truncate cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+              data-user-id="${esc(key)}"
+              title="${esc(key)}"
+              aria-label="Copy user id ${esc(key)}"
+            >
+              ${esc(key)}
+            </button>
           </div>
         `;
         })
@@ -3825,6 +3996,188 @@ function hidePlaytestModal() {
   modal.classList.add('hidden');
   modalInner.innerHTML = '';
   closeGlobalDropdown();
+}
+
+
+function copyUserId(userId) {
+  const msgOk = t('popup.user_id_copied', { id: userId });
+  const msgKo = t('popup.copy_failed');
+  copyTextToClipboard(String(userId)).then((ok) => {
+    if (ok) showConfirmationMessage(msgOk);
+    else showToast(msgKo, false);
+  });
+}
+
+function registerVoterIdCopyTargets(root = document) {
+  const nodes = root.querySelectorAll(
+    '#votersMount .copy-user-id, #votersMount [data-copy-user-id], #votersMount [data-action="copy-id"]'
+  );
+  nodes.forEach((el) => {
+    if (el.dataset.copyBound === '1') return;
+    el.dataset.copyBound = '1';
+    el.classList.add('cursor-pointer');
+
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+
+    const getId = () =>
+      el.getAttribute('data-user-id') ||
+      el.getAttribute('data-copy-user-id') ||
+      (el.textContent || '').trim();
+
+    const handle = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const uid = getId();
+      if (uid) copyUserId(uid);
+    };
+
+    el.addEventListener('click', handle);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') handle(e);
+    });
+  });
+}
+
+function openRankCard(userId, newTab = false) {
+  const url = `/rank_card?user_id=${encodeURIComponent(userId)}`;
+  if (newTab) window.open(url, '_blank', 'noopener,noreferrer');
+  else window.location.assign(url);
+}
+
+function registerVoterProfileTargets(root = document) {
+  const nodes = root.querySelectorAll(
+    '#votersMount .open-rank-card, #votersMount .voter-avatar, #votersMount .voter-name, #votersMount [data-open-rank-card],' +
+    '.ptmodal-author .open-rank-card, .ptmodal-author [data-open-rank-card]'
+  );
+  nodes.forEach((el) => {
+    if (el.dataset.profileBound === '1') return;
+    el.dataset.profileBound = '1';
+    el.classList.add('cursor-pointer');
+
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'link');
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+
+    const getId = () =>
+      el.getAttribute('data-user-id') ||
+      el.dataset.userId ||
+      el.closest('[data-user-id]')?.getAttribute('data-user-id') ||
+      '';
+
+    const onClick = (e) => {
+      const uid = getId();
+      if (!uid) return;
+      const newTab = e.ctrlKey || e.metaKey || e.button === 1;
+      e.preventDefault();
+      e.stopPropagation();
+      openRankCard(uid, newTab);
+    };
+
+    el.addEventListener('click', onClick);
+    el.addEventListener('auxclick', (e) => { if (e.button === 1) onClick(e); });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openRankCard(getId(), false);
+      }
+    });
+  });
+}
+
+function registerVoterInteractions(root = document) {
+  registerVoterIdCopyTargets(root);
+  registerVoterProfileTargets(root);
+}
+
+async function postJSON(url, body, init = {}) {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
+  const headers = new Headers(init.headers || {});
+  if (!isFormData && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  if (!headers.has('Accept')) headers.set('Accept', 'application/json');
+
+  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || null;
+  if (CSRF_TOKEN && !headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF_TOKEN);
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    credentials: init.credentials || 'same-origin',
+    headers,
+    body: isFormData ? body : JSON.stringify(body ?? {}),
+    ...init,
+  }).catch((err) => {
+    const message = err?.message || 'Network error';
+    return {
+      ok: false,
+      status: 0,
+      statusText: 'NETWORK_ERROR',
+      url,
+      headers: new Headers(),
+      async json() { return { error: message }; },
+      async text() { return message; },
+    };
+  });
+
+  return resp;
+}
+
+function showConfirmDialog({
+  title = 'Confirm action',
+  message = 'Are you sure you want to proceed?',
+  confirmText = 'Confirm',
+  cancelText  = 'Cancel',
+  confirmVariant,
+  cancelVariant = 'rose',
+  danger = false,
+} = {}) {
+  const pick = (v) => {
+    switch (v) {
+      case 'emerald': return 'bg-emerald-500 hover:bg-emerald-400';
+      case 'rose':    return 'bg-rose-500 hover:bg-rose-400';
+      default:        return 'bg-zinc-700 hover:bg-zinc-600';
+    }
+  };
+
+  if (!confirmVariant && danger) confirmVariant = 'rose';
+  if (!confirmVariant) confirmVariant = 'emerald';
+
+  return new Promise((resolve) => {
+    const existing = document.getElementById('__confirmOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = '__confirmOverlay';
+    overlay.className =
+      'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
+    overlay.innerHTML = `
+      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
+        <div class="px-4 py-3 border-b border-white/10">
+          <h3 class="font-semibold text-sm">${title}</h3>
+        </div>
+        <div class="p-4 space-y-4">
+          <p class="text-sm text-zinc-200">${message}</p>
+          <div class="flex justify-end gap-2">
+            <button class="btn-confirm cursor-pointer rounded-lg ${pick(confirmVariant)} text-white px-3 py-1.5 text-sm font-semibold">${confirmText}</button>
+            <button class="btn-cancel cursor-pointer rounded-lg ${pick(cancelVariant)} text-white px-3 py-1.5 text-sm font-semibold">${cancelText}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = (val) => { overlay.remove(); resolve(!!val); };
+
+    document.body.appendChild(overlay);
+    overlay.querySelector('.btn-confirm')?.addEventListener('click', () => close(true));
+    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => close(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+    document.addEventListener('keydown', function onKey(ev) {
+      if (ev.key === 'Escape') { close(false); document.removeEventListener('keydown', onKey); }
+      if (ev.key === 'Enter')  { close(true);  document.removeEventListener('keydown', onKey); }
+    }, { once: true });
+  });
 }
 
 /* =========================
@@ -3971,6 +4324,386 @@ function renderPlaytestCard(data, index) {
   `;
 }
 
+async function hydratePlaytestModalCreatorAvatar(root = document) {
+  try {
+    const img = root.querySelector('#ptModalCreatorAvatar[data-user-id]');
+    if (!img) return;
+    const uid = img.getAttribute('data-user-id') || '';
+    if (!uid) return;
+    const url = await fetchDiscordAvatar(uid);
+    if (url && img.src !== url) img.src = url;
+  } catch { /* fallback */ }
+}
+
+function mountModeratorActions(modalEl, playtest) {
+  if (!window.CAN_MODERATE) return;
+  const threadId = String(playtest?.playtest_thread_id || '').trim();
+  if (!threadId) return;
+
+  const me = (typeof window.user_id !== 'undefined' && window.user_id) ? String(window.user_id) : '';
+
+  // ---------- helpers ----------
+  const dotClass = (label) => {
+    const L = String(label).toLowerCase();
+    if (L.startsWith('easy')) return 'bg-emerald-400';
+    if (L.startsWith('medium')) return 'bg-yellow-400';
+    if (L.startsWith('hard') && !L.startsWith('very')) return 'bg-orange-400';
+    if (L.startsWith('very hard')) return 'bg-orange-500';
+    if (L.startsWith('extreme')) return 'bg-red-500';
+    if (L.startsWith('hell')) return 'bg-rose-500';
+    return 'bg-zinc-400';
+  };
+  const setBusy = (btn, on) => {
+    if (!btn) return;
+    btn.disabled = !!on;
+    btn.classList.toggle('opacity-50', !!on);
+    btn.classList.toggle('pointer-events-none', !!on);
+    btn.setAttribute('aria-busy', on ? 'true' : 'false');
+  };
+
+  async function refreshModal() {
+    try {
+      const modal = document.getElementById('playtestModal');
+      const modalInner = document.getElementById('playtestModalInner');
+      if (!modal || !modalInner) return;
+
+      const code = playtest?.code || '';
+      const fresh = code ? await fetchFreshMapByCode(code) : null;
+      const data = fresh || (typeof normalizePlaytest === 'function' ? normalizePlaytest(playtest) : playtest);
+
+      modalInner.innerHTML = renderPlaytestModal(data);
+      registerMapCodeCopyTargets(modal);
+      setupRatingDropdown();
+      await hydratePlaytestModalCreatorAvatar(modal);
+      registerVoterProfileTargets(modal);
+      mountModeratorActions(modalInner, data);
+
+      try {
+        const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
+        const pre = await preloadVoters(voterIds);
+        injectVotersGrid(modal, pre, voterIds);
+        registerVoterInteractions(modal);
+      } catch {}
+      const initialAvg = (() => {
+        const raw = data.playtest_vote_average ?? data.playtest?.vote_average ?? data.vote_average;
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : null;
+      })();
+      updateDifficultyChartInModal(
+        initialAvg ?? (Number.isFinite(data.difficulty_value) ? data.difficulty_value : null)
+      );
+    } catch (e) {
+      console.error('[PT Modal] refresh failed', e);
+    }
+  }
+
+  let activeOpt = DIFFICULTY_FINE_OPTIONS.find(o => o.value === 'Medium') || DIFFICULTY_FINE_OPTIONS[0];
+
+  const root = document.createElement('section');
+  root.className = 'mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3';
+  root.innerHTML = `
+    <h3 class="mb-2 text-sm font-semibold text-emerald-300">Moderator actions</h3>
+
+    <div class="grid gap-2 sm:grid-cols-2">
+      <!-- Approve -->
+      <button type="button" id="ptModApprove"
+        class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+        Approve (verifier = me)
+      </button>
+
+      <!-- Force Accept -->
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <div id="ptmod-diffbutton"
+            class="ptmod-diffbutton group flex w-[12rem] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
+            role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
+            <div class="inline-flex items-center gap-2">
+              <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20"></span>
+              <span id="ptmod-difflabel">${activeOpt.text()}</span>
+            </div>
+            <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform" viewBox="0 0 22 22" aria-hidden="true">
+              <path fill="currentColor" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
+            </svg>
+          </div>
+
+          <!-- Menu au-dessus -->
+          <div id="ptmod-diffmenu"
+            class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] top-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
+            role="menu" aria-label="Select difficulty">
+            ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
+              <div
+                class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none rounded-lg"
+                data-value="${o.value}" data-raw="${o.raw}" role="menuitem" tabindex="${i === 0 ? 0 : -1}">
+                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-white/20"></span>
+                <span class="truncate">${o.text()}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <button type="button" id="ptModForceAccept"
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          Force Accept
+        </button>
+      </div>
+
+      <!-- Force Deny -->
+      <div class="flex items-center gap-2 sm:col-span-2">
+        <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          class="flex-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+        <button type="button" id="ptModForceDeny"
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          Force Deny
+        </button>
+      </div>
+
+      <!-- Reset -->
+      <div class="flex items-center gap-2 sm:col-span-2">
+        <input id="ptModResetReason" type="text" placeholder="Reset reason…"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          class="flex-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+        <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+          <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
+        </label>
+        <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+          <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
+        </label>
+        <button type="button" id="ptModReset"
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          Reset Playtest
+        </button>
+      </div>
+
+      <!-- Votes -->
+      <div class="flex items-center gap-2 sm:col-span-2">
+        <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          class="flex-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+        <button type="button" id="ptModDeleteVote"
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          Delete user vote
+        </button>
+        <button type="button" id="ptModDeleteAllVotes"
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          Delete all votes
+        </button>
+      </div>
+    </div>
+  `;
+
+  modalEl.appendChild(root);
+
+  // ---------- Dropdown ----------
+  const diffBtn   = root.querySelector('#ptmod-diffbutton');
+  const diffMenu  = root.querySelector('#ptmod-diffmenu');
+  const diffLabel = root.querySelector('#ptmod-difflabel');
+  const chevron   = diffBtn?.querySelector('.chevron-svg');
+
+  const open = () => {
+    diffMenu.classList.remove('hidden');
+    diffBtn.setAttribute('aria-expanded', 'true');
+    if (chevron) chevron.classList.add('rotate-180');
+    diffMenu.querySelector('.ptmod-diffitem')?.focus();
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onEsc);
+  };
+  const close = () => {
+    diffMenu.classList.add('hidden');
+    diffBtn.setAttribute('aria-expanded', 'false');
+    if (chevron) chevron.classList.remove('rotate-180');
+    document.removeEventListener('mousedown', onDocClick);
+    document.removeEventListener('keydown', onEsc);
+    diffBtn.focus();
+  };
+  const toggle = () => (diffMenu.classList.contains('hidden') ? open() : close());
+  const onDocClick = (e) => { if (!diffMenu.contains(e.target) && !diffBtn.contains(e.target)) close(); };
+  const onEsc = (e) => { if (e.key === 'Escape') close(); };
+
+  diffBtn?.addEventListener('click', toggle);
+  diffBtn?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+
+  diffMenu?.addEventListener('click', (e) => {
+    const item = e.target.closest('.ptmod-diffitem');
+    if (!item) return;
+    const val = item.dataset.value;
+    const raw = item.dataset.raw;
+    const opt = DIFFICULTY_FINE_OPTIONS.find(o => o.value === val) || activeOpt;
+    activeOpt = opt;
+    diffLabel.textContent = opt.text();
+    const dot = diffBtn.querySelector('span.rounded-full');
+    if (dot) {
+      dot.className = `inline-block h-2.5 w-2.5 rounded-full ${dotClass(raw)} ring-1 ring-inset ring-white/20`;
+    }
+    close();
+  });
+
+  // ---------- Actions ----------
+  // Approve
+  root.querySelector('#ptModApprove')?.addEventListener('click', async (ev) => {
+    const ok = await showConfirmDialog({
+      title: 'Approve playtest',
+      message: 'Approve this playtest and set yourself as verifier?',
+      confirmText: 'Yes, approve',
+      cancelText: 'Cancel',
+      confirmVariant: 'emerald',
+      cancelVariant: 'rose',
+    });
+    if (!ok) return;
+
+    const btn = ev.currentTarget;
+    try {
+      setBusy(btn, true);
+      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/approve`, {
+        verifier_id: Number(me || '0'),
+      });
+      const j = await (async () => { try { return await r.json(); } catch { return null; } })();
+      if (r.ok) { showConfirmationMessage('Playtest approved.'); await refreshModal(); }
+      else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
+    } catch { showErrorMessage('Network error'); }
+    finally { setBusy(btn, false); }
+  });
+
+  // Force Accept
+  root.querySelector('#ptModForceAccept')?.addEventListener('click', async (ev) => {
+    const ok = await showConfirmDialog({
+      title: 'Force accept',
+      message: `Force-accept with difficulty “${activeOpt?.text?.() || activeOpt?.value || '—'}”?`,
+      confirmText: 'Yes, force accept',
+      cancelText: 'Cancel',
+      confirmVariant: 'emerald',
+      cancelVariant: 'rose',
+    });
+    if (!ok) return;
+
+    const btn = ev.currentTarget;
+    try {
+      setBusy(btn, true);
+      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/force_accept`, {
+        difficulty: activeOpt.value,
+        verifier_id: Number(me || '0'),
+      });
+      const j = await (async () => { try { return await r.json(); } catch { return null; } })();
+      if (r.ok) { showConfirmationMessage('Forced acceptance recorded.'); await refreshModal(); }
+      else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
+    } catch { showErrorMessage('Network error'); }
+    finally { setBusy(btn, false); }
+  });
+
+  // Force Deny
+  root.querySelector('#ptModForceDeny')?.addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget;
+    const reason = root.querySelector('#ptModDenyReason')?.value.trim() || '';
+    if (!reason) return showErrorMessage('Reason is required.');
+
+    const ok = await showConfirmDialog({
+      title: 'Force deny playtest',
+      message: `Force deny with reason: “${reason}”?`,
+      confirmText: 'Yes, deny',
+      cancelText: 'Cancel',
+      confirmVariant: 'emerald',
+      cancelVariant: 'rose',
+    });
+    if (!ok) return;
+
+    try {
+      setBusy(btn, true);
+      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/force_deny`, {
+        reason,
+        verifier_id: Number(me || '0'),
+      });
+      const j = await (async () => { try { return await r.json(); } catch { return null; } })();
+      if (r.ok) { showConfirmationMessage('Playtest denied.'); await refreshModal(); }
+      else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
+    } catch { showErrorMessage('Network error'); }
+    finally { setBusy(btn, false); }
+  });
+
+  // Reset Playtest
+  root.querySelector('#ptModReset')?.addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget;
+    const reason = root.querySelector('#ptModResetReason')?.value.trim() || '';
+    const removeVotes = !!root.querySelector('#ptModResetVotes')?.checked;
+    const removeCompletions = !!root.querySelector('#ptModResetCompletions')?.checked;
+    if (!reason) return showErrorMessage('Reason is required.');
+
+    const ok = await showConfirmDialog({
+      title: 'Reset playtest',
+      message: `Reset this playtest?\nReason: “${reason}”\nRemove votes: ${removeVotes ? 'yes' : 'no'} • Remove completions: ${removeCompletions ? 'yes' : 'no'}`,
+      confirmText: 'Yes, reset',
+      cancelText: 'Cancel',
+      danger: true,
+      cancelVariant: 'rose',
+    });
+    if (!ok) return;
+
+    try {
+      setBusy(btn, true);
+      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/reset`, {
+        reason,
+        remove_votes: removeVotes,
+        remove_completions: removeCompletions,
+        verifier_id: Number(me || '0'),
+      });
+      const j = await (async () => { try { return await r.json(); } catch { return null; } })();
+      if (r.ok) { showConfirmationMessage('Playtest reset.'); await refreshModal(); }
+      else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
+    } catch { showErrorMessage('Network error'); }
+    finally { setBusy(btn, false); }
+  });
+
+  // Delete user vote
+  root.querySelector('#ptModDeleteVote')?.addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget;
+    const uid = (root.querySelector('#ptModDeleteVoteUser')?.value || '').trim();
+    if (!uid) return showErrorMessage('User ID is required.');
+
+    const ok = await showConfirmDialog({
+      title: 'Delete user vote',
+      message: `Delete vote for user ${uid}?`,
+      confirmText: 'Yes, delete',
+      cancelText: 'Cancel',
+      danger: true,
+      cancelVariant: 'rose',
+    });
+    if (!ok) return;
+
+    try {
+      setBusy(btn, true);
+      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/votes/${encodeURIComponent(uid)}/delete`, {});
+      const j = await (async () => { try { return await r.json(); } catch { return null; } })();
+      if (r.ok) { showConfirmationMessage('Vote deleted.'); await refreshModal(); }
+      else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
+    } catch { showErrorMessage('Network error'); }
+    finally { setBusy(btn, false); }
+  });
+
+  // Delete all votes
+  root.querySelector('#ptModDeleteAllVotes')?.addEventListener('click', async (ev) => {
+    const ok = await showConfirmDialog({
+      title: 'Delete all votes',
+      message: 'Are you sure you want to DELETE ALL votes for this playtest? This action cannot be undone.',
+      confirmText: 'Yes, delete all',
+      cancelText: 'Cancel',
+      danger: true,
+      cancelVariant: 'rose',
+    });
+    if (!ok) return;
+
+    const btn = ev.currentTarget;
+    try {
+      setBusy(btn, true);
+      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/votes/delete_all`, {});
+      const j = await (async () => { try { return await r.json(); } catch { return null; } })();
+      if (r.ok) { showConfirmationMessage('All votes deleted.'); await refreshModal(); }
+      else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
+    } catch { showErrorMessage('Network error'); }
+    finally { setBusy(btn, false); }
+  });
+}
+
 /* =========================
    PLAYTEST MODAL
    ========================= */
@@ -4061,7 +4794,7 @@ function renderPlaytestModal(data) {
     data.code && String(data.code).trim() !== ''
       ? `
       <button type="button"
-              class="copy-map-code rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-200 hover:text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/40 transition"
+              class="copy-map-code cursor-pointer rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-200 hover:text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/40 transition"
               data-code="${esc(data.code)}"
               title="${t('popup.click_to_copy_map_code') || 'Click to copy'}"
               aria-label="${t('popup.click_to_copy_map_code') || 'Click to copy'}">
@@ -4071,7 +4804,6 @@ function renderPlaytestModal(data) {
 
   const votersMount = `
       <div id="votersMount" class="mt-3 max-h-[300px] w-full overflow-y-auto overflow-x-hidden pr-1">
-        <!-- wrapper qui limite la hauteur du squelette -->
         <div class="max-h-[160px] overflow-hidden">
           <div class="space-y-2.5" aria-busy="true" aria-live="polite">
             <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>
@@ -4103,11 +4835,23 @@ function renderPlaytestModal(data) {
       </div>
       <div class="relative z-10 p-4 sm:p-5">
         <div class="flex items-start justify-between gap-4">
-          <div class="flex items-center gap-3 min-w-0">
-            <img src="${esc(data.avatar || DEFAULT_AVATAR)}" alt="Creator avatar"
-                 class="h-10 w-10 rounded-full object-cover ring-1 ring-white/10">
+          <div class="flex items-center gap-3 min-w-0 ptmodal-author"
+              data-user-id="${esc(data.primary_creator_id || '')}">
+            <img id="ptModalCreatorAvatar"
+                src="${esc(data.avatar || DEFAULT_AVATAR)}"
+                data-user-id="${esc(data.primary_creator_id || '')}"
+                alt="Creator avatar"
+                class="open-rank-card h-10 w-10 rounded-full object-cover ring-1 ring-white/10"
+                loading="lazy"
+                role="link" tabindex="0">
             <div class="min-w-0">
-              <div class="truncate text-sm font-semibold text-zinc-100">${esc(data.creator_names || '—')}</div>
+              <button type="button"
+                      class="open-rank-card truncate text-sm font-semibold text-zinc-100"
+                      data-user-id="${esc(data.primary_creator_id || '')}"
+                      title="${esc(data.creator_names || '—')}"
+                      role="link" tabindex="0">
+                ${esc(data.creator_names || '—')}
+              </button>
               <div class="text-xs text-zinc-400">${t('playtest.title_suffix')}</div>
             </div>
           </div>
@@ -4131,7 +4875,7 @@ function renderPlaytestModal(data) {
       </div>
     </div>
 
-    <!-- CONTAINER 3 : infos (1) + votes (2) avec hauteurs égales -->
+    <!-- CONTAINER 3 : infos (1) + votes (2) -->
     <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
 
       <!-- CONTAINER 1 : name / checkpoints / mechanics / restrictions -->
@@ -4180,7 +4924,7 @@ function renderPlaytestModal(data) {
         </div>
       </section>
 
-      <!-- CONTAINER 2 : votes (scrollable à l'intérieur) -->
+      <!-- CONTAINER 2 : votes  -->
       <aside class="flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 p-4">
         <div class="flex items-baseline justify-between">
           <div class="text-[11px] uppercase tracking-wide text-zinc-400">${t('playtest.votes') || 'Votes'}</div>
@@ -4188,14 +4932,14 @@ function renderPlaytestModal(data) {
         </div>
         <div id="ptVoteCount" class="mt-1 text-3xl font-semibold tracking-tight text-zinc-100">${voteCount}</div>
 
-        <!-- Scrollport avatars: occupe l’espace restant, ne déborde pas -->
+        <!-- Scrollport avatars -->
         <div class="mt-3 flex-1 min-h-0">
           ${votersMount}
         </div>
       </aside>
     </div>
 
-    <!-- CONTAINER 4 : difficulty rating, placé juste en-dessous du conteneur 3 -->
+    <!-- CONTAINER 4 : difficulty rating -->
     <div class="mt-4 rounded-2xl border border-white/10 bg-white/5">
       <div class="flex items-center justify-between gap-3 border-b border-white/10 p-3">
         <div>
@@ -4206,9 +4950,7 @@ function renderPlaytestModal(data) {
       </div>
 
       <div class="p-3">
-        <!-- container relatif pour superposer le skeleton -->
         <div class="relative rounded-xl border border-white/10 bg-zinc-900/50 p-2">
-          <!-- SKELETON: 6 barres avec bords supérieurs arrondis -->
           <div id="difficultyChartSkeleton"
               class="pointer-events-none absolute inset-0 flex items-end gap-1.5 p-3">
             <div class="h-[36%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
@@ -4229,7 +4971,7 @@ function renderPlaytestModal(data) {
         </div>
       </div>
 
-      <!-- Rate difficulty (amélioré) -->
+      <!-- Rate difficulty -->
       <div class="relative border-t border-white/10 px-3 py-2">
         <div
           class="ptmodal-ratequestion group flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 ${canVote ? 'bg-white/5 cursor-pointer hover:bg-white/10 focus:ring-white/20' : 'bg-white/5 cursor-not-allowed opacity-60'} px-3 py-2 select-none focus:outline-none"
@@ -4302,11 +5044,14 @@ async function initializePlaytestCards(userId) {
 
         registerMapCodeCopyTargets(modal);
         setupRatingDropdown();
+        await hydratePlaytestModalCreatorAvatar(modal);
+        mountModeratorActions(modalInner, data);
 
         try {
           const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
           const pre = await preloadVoters(voterIds);
           injectVotersGrid(modal, pre, voterIds);
+          registerVoterInteractions(modal);
         } catch {}
 
         const initialAvg = (() => {
@@ -4701,7 +5446,6 @@ function createButton(icon) {
 
   button.className = [
     'pt-toolbar-button',
-    'toolbar-button',
     'relative inline-flex items-center gap-2',
     'h-9 cursor-pointer',
     'rounded-lg border border-white/10 bg-zinc-900/60',
@@ -4816,15 +5560,20 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       const el = document.createElement('div');
       el.className =
         'pt-custom-option custom-option cursor-pointer rounded-md px-2 py-1.5 text-sm text-zinc-200 hover:bg-white/10 mx-1 my-0.5';
-      el.textContent = display;
       el.setAttribute('data-raw-value', raw);
+
+      if (rawProp === 'difficulty') {
+        const { dot } = difficultyClasses(raw);
+        el.innerHTML = `<span class="pt-dot ${dot}"></span><span>${display}</span>`;
+      } else {
+        el.textContent = display;
+      }
+
       if (activeFilters[prop] === raw) el.classList.add('bg-white/10');
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        container
-          .querySelectorAll('.custom-option')
-          .forEach((o) => o.classList.remove('bg-white/10'));
+        container.querySelectorAll('.custom-option').forEach((o) => o.classList.remove('bg-white/10'));
         el.classList.add('bg-white/10');
         activeFilters[prop] = raw;
         updateActiveFilters();
@@ -4908,6 +5657,13 @@ function mapFilterKey(rawKey) {
 }
 
 function clearFilters() {
+  const container = document.getElementById('playtestCardContainer');
+  if (typeof renderPlaytestSkeletonCards === 'function') {
+    renderPlaytestSkeletonCards(itemsPerPage);
+  } else if (container) {
+    container.innerHTML = '';
+  }
+
   Object.keys(activeFilters).forEach((k) => delete activeFilters[k]);
   currentPage = 1;
   hidePlaytestModal();
@@ -4929,7 +5685,13 @@ async function applyFilters(page = 1) {
 
   const qs = buildPlaytestParams(extraFilters, currentPage);
   const container = document.getElementById('playtestCardContainer');
-  if (container) container.innerHTML = '';
+  if (container) {
+    if (typeof renderPlaytestSkeletonCards === 'function') {
+      renderPlaytestSkeletonCards(itemsPerPage);
+    } else {
+      container.innerHTML = '';
+    }
+  }
 
   try {
     const resp = await fetch(`/api/maps?${qs}`, { headers: { Accept: 'application/json' } });
@@ -5050,11 +5812,22 @@ function showSuggestions(event, _unused, containerId, propertyName) {
   const scopedId = containerId.startsWith('pt-') ? containerId : `pt-${containerId}`;
   const suggestionsContainer = getSuggestionsContainer(scopedId, input);
 
+  const isSubmitRecordMapCode = !!(
+    input &&
+    input.closest('#submitRecordSection') &&
+    (
+      propertyName === 'map_code' ||
+      input.id === 'mapCodeInput' ||
+      input.name === 'map_code'
+    )
+  );
+
   suggestionsContainer.addEventListener('mousedown', (e) => e.stopPropagation(), { once: true });
 
   function hideSuggestions() {
+    if (!suggestionsContainer) return;
     suggestionsContainer.style.display = 'none';
-    suggestionsContainer.remove();
+    try { suggestionsContainer.remove(); } catch {}
     document.removeEventListener('mousedown', outsideClickHandler);
   }
 
@@ -5100,12 +5873,20 @@ function showSuggestions(event, _unused, containerId, propertyName) {
         normalized.forEach((s) => {
           const div = document.createElement('div');
           div.textContent = s.label;
-          div.className =
-            'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+          div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
           div.setAttribute('data-raw-value', s.raw);
 
           div.addEventListener('click', (e) => {
             e.stopPropagation();
+
+            if (isSubmitRecordMapCode) {
+              input.value = s.label;
+              input.setAttribute('data-raw-value', String(s.raw));
+              hideSuggestions();
+              input.blur();
+              return;
+            }
+
             const key = mapFilterKey(propertyName);
             activeFilters[key] = s.raw;
 
@@ -5360,12 +6141,12 @@ document.addEventListener(
 async function initializeSubmitMap() {
   renderSubmitMapSection();
   await primeMainCreatorFromSession();
-  setupForms();
   setupBannerDropzone();
   setupAllCustomDropdowns();
   attachSubmitMapAutocompletes();
   bindSubmitMapEditButtons(document.getElementById('submitMapSection'));
   setupMedalsInputs();
+  setupForms();
 }
 
 function initializeSubmitRecord() {

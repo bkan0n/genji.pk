@@ -26,6 +26,7 @@
         </div>
       </div>
     </section>
+
     <div class="mx-auto min-h-[80vh] max-w-7xl px-4 pt-6 pb-0 sm:px-6 sm:pt-1 lg:px-8">
       <!-- Onglets -->
       <div class="mt-1">
@@ -50,9 +51,11 @@
           </button>
         </div>
       </div>
+
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
       </div>
+
       <!-- CONTENU ONGLET : Submit Record -->
       <div
         id="submitRecordSection"
@@ -60,6 +63,7 @@
       >
         <form id="submitRecordForm" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-2">
           @csrf
+
           <!-- Colonne gauche -->
           <div class="space-y-4">
             <!-- Map code  -->
@@ -71,12 +75,15 @@
                   id="mapCodeInput"
                   name="map_code"
                   autocomplete="off"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
                   class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
                   placeholder="e.g. ABCDE"
                 />
                 <div
                   id="mapCodeAutoList"
-                  class="absolute top-[110%] right-0 left-0 z-10 hidden rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl backdrop-blur"
+                  class="absolute top-[110%] right-0 left-0 z-[110] hidden max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl backdrop-blur"
                 ></div>
               </div>
             </div>
@@ -88,6 +95,10 @@
                 type="text"
                 id="inputTime"
                 name="time"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
                 class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
                 placeholder="e.g. 123.56"
               />
@@ -98,19 +109,19 @@
               <label class="mb-1 block text-xs text-zinc-400">
                 {{ __('submit.table.quality') }}
               </label>
-              <div id="qualityDropdown" class="fake-select fake-select relative">
+              <div id="qualityDropdown" class="fake-select relative">
                 <button
                   type="button"
                   id="qualityDropdownBtn"
                   class="fake-select-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
                 >
                   {{ __('submit.record.select_quality') }}
-                  <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+                  <svg class="h-4 w-4 text-zinc-400 transform transition-transform" viewBox="0 0 20 20" aria-hidden="true">
                     <path fill="currentColor" d="m5 7l5 6l5-6H5z" />
                   </svg>
                 </button>
                 <div
-                  class="fake-select-list absolute right-0 left-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"
+                  class="fake-select-list dropdown-list dd-anim z-[110] absolute right-0 left-0 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"
                 >
                   @for ($i=1;$i<=6;$i++)
                     <label
@@ -142,6 +153,10 @@
                   type="url"
                   id="videoUrlInput"
                   name="video_url"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
                   placeholder="https://…"
                   class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
                 />
@@ -150,15 +165,15 @@
           </div>
 
           <!-- Colonne droite -->
-          <div class="space-y-4">
+          <div class="min-w-0 space-y-4">
             <div>
               <span class="mb-1 block text-xs text-zinc-400">
                 {{ __('submit.record.screenshot') }}
               </span>
-              <div
-                id="screenshotDrop"
-                class="group relative flex h-44 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60"
-              >
+
+              <!-- Zone responsive + anti-overflow -->
+              <div id="screenshotDrop"
+                   class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60">
                 <input
                   id="screenshotInput"
                   name="screenshot"
@@ -166,13 +181,14 @@
                   accept="image/*"
                   class="hidden"
                 />
-                <div id="screenshotPlaceholder" class="text-sm text-zinc-300">
+                <div id="screenshotPlaceholder"
+                     class="px-2 text-center text-sm text-zinc-300 whitespace-normal break-words">
                   {{ __('submit.record.drag_and_drop') }}
                 </div>
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
                 class="sr-reveal inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 [--sr-delay:605ms] hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:[animation-delay:var(--sr-delay)]"
@@ -233,6 +249,7 @@
         class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
       ></div>
     </div>
+
     <!-- Loading + Pagination -->
     <div id="paginationContainer" class="mt-6 mb-16 flex items-center justify-center gap-2"></div>
   </section>
@@ -242,6 +259,8 @@
   <script nonce="{{ $nonce }}">
     document.documentElement.lang = @json(app()->getLocale());
     window.SUBMIT_I18N = @json(\Illuminate\Support\Facades\Lang::get('submit'));
+    window.user_id = @json(session('user_id'));
+    window.CAN_MODERATE = @json((bool) session('can_moderate', false));
   </script>
   @vite('resources/js/pages/submit.js', null, ['nonce' => csp_nonce()])
 @endpush

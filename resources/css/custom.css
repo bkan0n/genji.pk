@@ -1655,6 +1655,43 @@ i.flag-zimbabwe:before {
   z-index: 1100 !important;
 }
 
+.custom-multiselect,
+.fake-select {
+  position: relative;
+  overflow: visible;
+}
+
+.custom-multiselect .custom-multiselect-list,
+.fake-select .fake-select-list,
+.dropdown-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 90;
+  max-height: 16rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.custom-multiselect .custom-multiselect-btn,
+.fake-select .fake-select-btn {
+  position: relative;
+  z-index: 1;
+}
+
+.suggestions-container,
+.suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  max-height: 14rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 /* ================= SUBMIT ================= */
 #submitRecordSection {
   will-change: opacity, transform;
@@ -1734,6 +1771,47 @@ i.flag-zimbabwe:before {
     transition: none !important;
   }
 }
+
+/* Transitions génériques */
+.x-anim{transition:opacity .22s ease, transform .22s ease; will-change:opacity,transform}
+.x-enter{opacity:0; transform:translateY(8px) scale(.992)}
+.x-enter-active{opacity:1; transform:translateY(0) scale(1)}
+.x-exit{opacity:1; transform:translateY(0) scale(1)}
+.x-exit-active{opacity:0; transform:translateY(8px) scale(.98)}
+
+/* Anim cartes */
+.pt-card-anim{
+  opacity:0;
+  transform:translateY(14px) scale(.98);
+  transition:transform 550ms cubic-bezier(.22,.68,0,1), opacity 500ms ease;
+}
+.pt-card-anim.pt-in{opacity:1; transform:none}
+
+/* Anim toolbar */
+.toolbar-anim{
+  opacity:0; transform:translateY(8px) scale(.992);
+  transition:opacity .22s ease, transform .22s cubic-bezier(.22,.68,0,1);
+}
+.toolbar-anim.in{opacity:1; transform:translateY(0) scale(1)}
+.pt-toolbar-button:hover{transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.22)}
+
+/* Dropdown animation */
+.dropdown-list{max-height:260px; overflow-y:auto; overscroll-behavior:contain}
+.dd-anim{
+  opacity:0; transform:translateY(4px) scale(.98);
+  transition:opacity .16s ease, transform .16s ease; will-change:opacity,transform;
+}
+.dd-anim.dd-in{opacity:1; transform:translateY(0) scale(1)}
+.dd-anim.dd-out{opacity:0; transform:translateY(4px) scale(.98)}
+
+/* Screenshot preview */
+#screenshotDrop img{
+  display:block; width:100%; height:100%;
+  object-fit:contain; object-position:center;
+  user-select:none; pointer-events:none;
+}
+
+.pt-dot {display:inline-block; width:10px; height:10px; border-radius:9999px; margin-right:8px; flex:0 0 auto;}
 
 /* ================= LOOTBOX ================= */
 #infoModal .modal-infos {
