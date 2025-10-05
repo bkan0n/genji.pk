@@ -374,7 +374,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-async function selectSection(sectionId) {
+async function selectSection(sectionId, opts = {}) {
+  const { push = true, replace = false } = opts;
+
   if (sectionId === 'personal_records' && !user_id) {
     renderMessage(t('popup.login_required_pr'));
     hideLoadingBar();
@@ -408,8 +410,37 @@ async function selectSection(sectionId) {
 
   const fa = document.getElementById('filterActions');
   if (fa) showFlex(fa);
+
+  if (push) {
+    const url = new URL(location.href);
+    url.searchParams.set(SECTION_URL_PARAM, sectionId);
+    const state = { section: sectionId };
+    if (replace) history.replaceState(state, '', url);
+    else history.pushState(state, '', url);
+  }
 }
 window.selectSection = selectSection;
+
+/* =========================
+   URL
+   ========================= */
+const SECTION_URL_PARAM = 'section';
+const VALID_SECTIONS = new Set(['map_search','completions','guide','personal_records']);
+
+window.addEventListener('popstate', () => {
+  const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
+  const section = VALID_SECTIONS.has(s) ? s : 'map_search';
+  if (section !== currentSection) selectSection(section, { push: false });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
+  const initial = VALID_SECTIONS.has(s) ? s : 'map_search';
+  if (!currentSection) {
+    selectSection(initial, { push: false });
+    history.replaceState({ section: initial }, '', location.href);
+  }
+});
 
 /* =========================
    GLOBAL INITS
@@ -1257,6 +1288,7 @@ async function applyFilters(filters) {
     }
   }
 
+  renderSkeletonForSection(currentSection);
   showLoadingBar();
 
   try {
@@ -1436,6 +1468,26 @@ function getSuggestionsContainer(containerId, input) {
     ['pointerdown', 'mousedown', 'click'].forEach((type) =>
       suggestionsContainer.addEventListener(type, (e) => e.stopPropagation())
     );
+  }
+
+  if (input && !suggestionsContainer.__widthSync) {
+    suggestionsContainer.style.boxSizing = 'border-box';
+    const applyWidth = () => {
+      const w = Math.round(input.getBoundingClientRect().width || input.offsetWidth || 0);
+      if (w > 0) {
+        suggestionsContainer.style.width = w + 'px';
+        suggestionsContainer.style.minWidth = w + 'px';
+      }
+    };
+    applyWidth();
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(applyWidth);
+      ro.observe(input);
+      suggestionsContainer.__ro = ro;
+    } else {
+      window.addEventListener('resize', applyWidth);
+    }
+    suggestionsContainer.__widthSync = true;
   }
   return suggestionsContainer;
 }
@@ -1918,6 +1970,14 @@ function normalizeToRows(data /*, kind */) {
    RENDER MAP SEARCH
    ========================= */
 async function displayMapSearchResults(rowsInput) {
+  if (!window.__gridCSS_map_search) {
+    __addRule('.grid-map_search','display:grid;grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;align-items:center;column-gap:20px');
+    __addRule('.minw-map_search', 'min-width:1024px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    __addRule('.grid-map_search > :nth-child(7), .grid-completions > :nth-child(7)', 'justify-self:end; text-align:right');
+    window.__gridCSS_map_search = true;
+  }
+
   const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'map');
   const filtered = rows.filter((r) => r && r.map_name && r.map_name !== 'N/A');
 
@@ -1931,177 +1991,135 @@ async function displayMapSearchResults(rowsInput) {
   const allCreatorIds = [...new Set(filtered.flatMap(pickCreatorIds).filter(Boolean))];
   const avatarMap = await resolveCreatorAvatars(allCreatorIds);
 
-  const headerCell = (txt) =>
-    `<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${esc(txt)}</th>`;
-  const cell = (html) => `<td class="px-3 py-2 align-middle">${html}</td>`;
+  const safeHex = (c) => (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(c)) ? c : '#ffffff');
   const starsHTML = (quality, max = 6) => {
     if (quality == null || isNaN(Number(quality))) return 'N/A';
     const q = Math.max(0, Math.min(max, Math.floor(Number(quality))));
     return `<span class="tracking-tight">${'★'.repeat(q)}${'☆'.repeat(max - q)}</span>`;
   };
-  const safeHex = (c) => (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(c)) ? c : '#ffffff');
 
-  const colgroup = `
-    <colgroup>
-      <col class="w-[10%]">
-      <col class="w-[17%]">
-      <col class="w-[8%]">
-      <col class="w-[15%]">
-      <col class="w-[10%]">
-      <col class="w-[10%]">
-      <col class="w-[10%]">
-    </colgroup>
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
+      <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapName')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapType')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapCreator')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDifficulty')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapQuality')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDetails')}</div>
+    </div>
   `;
 
-  setResultsHTML(`
+  const rowsHTML = filtered.map((r, idx) => {
+    const ringColor =
+      user_id && r.medal_type === 'Gold'   ? 'after:ring-yellow-400/40' :
+      user_id && r.medal_type === 'Silver' ? 'after:ring-zinc-200/30'  :
+      user_id && r.medal_type === 'Bronze' ? 'after:ring-amber-600/40' : '';
+    const halo = ringColor
+      ? `relative after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5 after:rounded-lg after:ring-2 after:pointer-events-none after:z-0 ${ringColor}`
+      : 'relative';
+
+    const diffColor = safeHex(difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
+
+    const types = getTypesArray(r);
+    const mapType = types.length ? types.join(', ') : 'N/A';
+
+    const names = pickCreatorNames(r);
+    const ids   = pickCreatorIds(r);
+    if (names.length === 1 && ids.length === 0 && r.user_id) ids.push(String(r.user_id));
+
+    const creatorsHTML = names.map((name, i) => {
+      const id = ids[i];
+      const fallback = defaultAvatarFromId(id || name);
+      const url = id ? avatarMap.get(String(id)) || fallback : fallback;
+      const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
+      return `
+        <a href="${escAttr(profileHref)}"
+           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+           title="${escAttr(name)}">
+          <img
+            src="${escAttr(url)}"
+            alt=""
+            class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+            loading="lazy" decoding="async" referrerpolicy="no-referrer"
+            data-fallback-src="${escAttr(fallback)}"
+          />
+          <span data-sf="${escAttr(name)}"></span>
+        </a>`;
+    }).join('');
+
+    const code = r.code || 'N/A';
+    const hasNonNullTime = r.time != null && String(r.time).trim().toLowerCase() !== 'null';
+    const hasCheck = Boolean(user_id) && (r.user_has_completion || r.user_has_record || r.user_completed || hasNonNullTime);
+    const ratingValue = r.ratings != null ? r.ratings : r.quality;
+
+    const codeChip = code !== 'N/A'
+      ? `
+        <button type="button"
+                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
+                       text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                       w-full min-w-0"
+                data-code="${escAttr(code)}"
+                aria-label="${escAttr(t('popup.click_to_copy_map_code'))}"
+                title="${escAttr(t('popup.click_to_copy_map_code'))}">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+          </svg>
+          <span class="min-w-0 truncate" data-sf="${escAttr(code)}"></span>
+          ${hasCheck ? '<span class="ml-auto text-emerald-400 shrink-0">✓</span>' : ''}
+        </button>`
+      : `<span data-sf="N/A"></span>`;
+
+    return `
+      <div class="${halo} grid grid-map_search bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+        <div class="min-w-0">${codeChip}</div>
+        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(r.map_name || 'N/A')}"></span></div>
+        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(mapType)}"></span></div>
+        <div class="min-w-0 -ml-1 flex flex-wrap items-center gap-2">${creatorsHTML || 'N/A'}</div>
+        <div class="min-w-0"><span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span></div>
+        <div class="min-w-0">${qualityMicroBarHTML(ratingValue)}</div>
+        <div class="min-w-0">
+          <button
+            type="button"
+            class="js-open-map-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
+            data-index="${idx}">
+            ${esc(t('thead.mapView'))}
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const shell = `
     <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
       <div class="overflow-auto">
-        <table class="min-w-full text-sm table-fixed border-separate border-spacing-y-1">
-          ${colgroup}
-          <thead class="bg-zinc-900/60 text-zinc-300">
-            <tr>
-              ${headerCell(t('thead.mapCode'))}
-              ${headerCell(t('thead.mapName'))}
-              ${headerCell(t('thead.mapType'))}
-              ${headerCell(t('thead.mapCreator'))}
-              ${headerCell(t('thead.mapDifficulty'))}
-              ${headerCell(t('thead.mapQuality'))}
-              ${headerCell(t('thead.mapDetails'))}
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered
-              .map((r, idx) => {
-                const ringColor =
-                  user_id && r.medal_type === 'Gold'
-                    ? 'after:ring-yellow-400/40'
-                    : user_id && r.medal_type === 'Silver'
-                      ? 'after:ring-zinc-200/30'
-                      : user_id && r.medal_type === 'Bronze'
-                        ? 'after:ring-amber-600/40'
-                        : '';
-                const halo = ringColor
-                  ? `relative after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5
-                     after:rounded-lg after:ring-2 after:pointer-events-none after:z-0 ${ringColor}`
-                  : 'relative';
-
-                const diffColor = safeHex(
-                  difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff'
-                );
-
-                const types = getTypesArray(r);
-                const mapType = types.length ? types.join(', ') : 'N/A';
-
-                const names = pickCreatorNames(r);
-                const ids = pickCreatorIds(r);
-                if (names.length === 1 && ids.length === 0 && r.user_id)
-                  ids.push(String(r.user_id));
-
-                const creatorsHTML = names
-                  .map((name, i) => {
-                    const id = ids[i];
-                    const fallback = defaultAvatarFromId(id || name);
-                    const url = id ? avatarMap.get(String(id)) || fallback : fallback;
-                    const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
-                    return `
-                  <a href="${escAttr(profileHref)}"
-                     class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-                     title="${escAttr(name)}">
-                    <img
-                      src="${escAttr(url)}"
-                      alt=""
-                      class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-                      loading="lazy" decoding="async" referrerpolicy="no-referrer"
-                      data-fallback-src="${escAttr(fallback)}"
-                    />
-                    <span data-sf="${escAttr(name)}"></span>
-                  </a>
-                `;
-                  })
-                  .join('');
-
-                const code = r.code || 'N/A';
-
-                const hasNonNullTime =
-                  r.time != null && String(r.time).trim().toLowerCase() !== 'null';
-                const hasCheck =
-                  Boolean(user_id) &&
-                  (r.user_has_completion ||
-                    r.user_has_record ||
-                    r.user_completed ||
-                    hasNonNullTime);
-
-                const ratingValue = r.ratings != null ? r.ratings : r.quality;
-
-                const codeChip =
-                  code !== 'N/A'
-                    ? `
-                  <button type="button"
-                          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
-                                text-xs font-semibold text-zinc-100 hover:bg-white/10
-                                focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
-                                w-28"
-                          data-code="${escAttr(code)}"
-                          aria-label="${escAttr(t('popup.click_to_copy_map_code'))}"
-                          title="${escAttr(t('popup.click_to_copy_map_code'))}">
-                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                      <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-                    </svg>
-                    <span class="min-w-0 truncate" data-sf="${escAttr(code)}"></span>
-                    ${hasCheck ? '<span class="ml-auto text-emerald-400 shrink-0">✓</span>' : ''}
-                  </button>
-                `
-                    : `<span data-sf="N/A"></span>`;
-
-                return `
-                <tr class="${halo} bg-zinc-900/40 hover:bg-white/5 transition">
-                  ${cell(codeChip)}
-                  ${cell(`<span data-sf="${escAttr(r.map_name || 'N/A')}"></span>`)}
-                  ${cell(`<span data-sf="${escAttr(mapType)}"></span>`)}
-                  <td class="px-3 py-2 align-middle">
-                    <div class="-ml-1 flex flex-wrap items-center gap-2">${creatorsHTML || 'N/A'}</div>
-                  </td>
-                  ${cell(`<span class="${__clsTextColor(diffColor)}">
-                            <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
-                          </span>`)}
-                  ${cell(qualityMicroBarHTML(ratingValue))}
-                  ${cell(`
-                    <button
-                      type="button"
-                      class="js-open-map-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
-                      data-index="${idx}">
-                      ${esc(t('thead.mapView'))}
-                    </button>
-                  `)}
-                </tr>
-              `;
-              })
-              .join('')}
-          </tbody>
-        </table>
+        <div class="minw-map_search">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${rowsHTML}
+          </div>
+        </div>
       </div>
     </div>
-  `);
+  `;
+
+  setResultsHTML(shell);
 
   const resultsRoot = document.getElementById('resultsContainer');
   applySplitFlap(resultsRoot);
-  cascadeRows();
 
   if (typeof registerMapCodeCopyTargets === 'function') {
     registerMapCodeCopyTargets(resultsRoot);
   } else if (resultsRoot && resultsRoot.dataset.copyDelegated !== '1') {
     resultsRoot.dataset.copyDelegated = '1';
     resultsRoot.addEventListener('click', (e) => {
-      const btn = e.target.closest('.copy-map-code');
-      if (!btn) return;
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
       e.preventDefault();
       const code = btn.getAttribute('data-code') || btn.textContent.trim();
       if (code && code !== 'N/A') copyMapCode(code);
     });
     resultsRoot.addEventListener('keydown', (e) => {
-      const btn = e.target.closest('.copy-map-code');
-      if (!btn) return;
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         const code = btn.getAttribute('data-code') || btn.textContent.trim();
@@ -2112,15 +2130,10 @@ async function displayMapSearchResults(rowsInput) {
 
   resultsRoot.querySelectorAll('img[data-fallback-src]').forEach((img) => {
     const fallback = img.getAttribute('data-fallback-src');
-    img.addEventListener(
-      'error',
-      () => {
-        if (img.src !== fallback) img.src = fallback;
-      },
-      { once: true }
-    );
+    img.addEventListener('error', () => { if (img.src !== fallback) img.src = fallback; }, { once: true });
   });
 
+  // Modal
   if (!document.getElementById('detailsModalOverlay')) {
     const shell = document.createElement('div');
     shell.innerHTML = `
@@ -2155,25 +2168,20 @@ async function displayMapSearchResults(rowsInput) {
     let mech = Array.isArray(r.mechanics) ? r.mechanics : [];
     let rest = Array.isArray(r.restrictions) ? r.restrictions : [];
     if (CURRENT_LANG === 'cn') {
-      mech = mech
-        .filter(Boolean)
-        .map((o) => t(`mechanics.${o.toLowerCase().replace(/ /g, '_')}`) || o);
-      rest = rest
-        .filter(Boolean)
-        .map((o) => t(`restrictions.${o.toLowerCase().replace(/ /g, '_')}`) || o);
+      mech = mech.filter(Boolean).map((o) => t(`mechanics.${o.toLowerCase().replace(/ /g, '_')}`) || o);
+      rest = rest.filter(Boolean).map((o) => t(`restrictions.${o.toLowerCase().replace(/ /g, '_')}`) || o);
     }
     const mechanics = mech.length ? mech.join(', ') : 'N/A';
     const restrictions = rest.length ? rest.join(', ') : 'N/A';
 
-    const description =
-      r.description || r.desc || t('no_description') || 'No description available';
+    const description = r.description || r.desc || t('no_description') || 'No description available';
     const mapNameKey = r.original_map_name
       ? r.original_map_name.toLowerCase().replace(/[()\s']/g, '')
       : (r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
     const fallbackBannerPath = `assets/banners/${mapNameKey}.png`;
     const bannerPath = r.map_banner || fallbackBannerPath;
 
-    const diffColor = safeHex(difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
+    const diffColor = (difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
     const typeText = Array.isArray(r.category) ? r.category.join(', ') : r.category || 'Classic';
     const creatorNames = pickCreatorNames(r).join(', ') || 'N/A';
 
@@ -2182,27 +2190,21 @@ async function displayMapSearchResults(rowsInput) {
     const medalBronze = r.medals && r.medals.bronze != null ? r.medals.bronze : r.bronze;
 
     const medals = [];
-    if (medalGold != null && medalGold !== 'N/A')
-      medals.push(`
+    if (medalGold != null && medalGold !== 'N/A') medals.push(`
       <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <img src="assets/verifications/gold_wr.gif" alt="Gold Medal" class="h-6 w-6" />
+        <img src="assets/verifications/old/gold_wr.gif" alt="Gold Medal" class="h-6 w-6" />
         <span class="text-sm">${esc(String(medalGold))}</span>
-      </div>
-    `);
-    if (medalSilver != null && medalSilver !== 'N/A')
-      medals.push(`
+      </div>`);
+    if (medalSilver != null && medalSilver !== 'N/A') medals.push(`
       <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <img src="assets/verifications/silver_wr.gif" alt="Silver Medal" class="h-6 w-6" />
+        <img src="assets/verifications/old/silver_wr.gif" alt="Silver Medal" class="h-6 w-6" />
         <span class="text-sm">${esc(String(medalSilver))}</span>
-      </div>
-    `);
-    if (medalBronze != null && medalBronze !== 'N/A')
-      medals.push(`
+      </div>`);
+    if (medalBronze != null && medalBronze !== 'N/A') medals.push(`
       <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <img src="assets/verifications/bronze_wr.gif" alt="Bronze Medal" class="h-6 w-6" />
+        <img src="assets/verifications/old/bronze_wr.gif" alt="Bronze Medal" class="h-6 w-6" />
         <span class="text-sm">${esc(String(medalBronze))}</span>
-      </div>
-    `);
+      </div>`);
 
     const ratingValue = r.ratings != null ? r.ratings : r.quality;
 
@@ -2257,7 +2259,7 @@ async function displayMapSearchResults(rowsInput) {
             <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
               <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapView'))}</h3>
               <dl class="grid grid-cols-1 gap-2 text-sm">
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCreator'))}</dt><dd class="text-right">${esc(creatorNames)}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCreator'))}</dt><dd class="text-right">${esc(pickCreatorNames(r).join(', ') || 'N/A')}</dd></div>
                 <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCheckpoints'))}</dt><dd class="text-right">${esc(String(r.checkpoints ?? t('na')))}</dd></div>
                 <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapMechanics'))}</dt><dd class="text-right">${esc(mechanics)}</dd></div>
                 <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapRestrictions'))}</dt><dd class="text-right">${esc(restrictions)}</dd></div>
@@ -2290,77 +2292,29 @@ async function displayMapSearchResults(rowsInput) {
     const bannerImg = document.getElementById('modalBannerImg');
     if (bannerImg) {
       const fb = bannerImg.getAttribute('data-fallback-src');
-      bannerImg.addEventListener(
-        'error',
-        () => {
-          if (bannerImg.src !== fb) bannerImg.src = fb;
-        },
-        { once: true }
-      );
+      bannerImg.addEventListener('error', () => { if (bannerImg.src !== fb) bannerImg.src = fb; }, { once: true });
     }
 
-    if (typeof registerMapCodeCopyTargets === 'function') {
-      registerMapCodeCopyTargets(modalRoot);
-    } else {
-      if (modalRoot && modalRoot.dataset.copyDelegated !== '1') {
-        modalRoot.dataset.copyDelegated = '1';
-        modalRoot.addEventListener('click', (e) => {
-          const btn = e.target.closest('.copy-map-code');
-          if (!btn) return;
-          e.preventDefault();
-          const code = btn.getAttribute('data-code') || btn.textContent.trim();
-          if (code && code !== 'N/A') copyMapCode(code);
-        });
-        modalRoot.addEventListener('keydown', (e) => {
-          const btn = e.target.closest('.copy-map-code');
-          if (!btn) return;
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            const code = btn.getAttribute('data-code') || btn.textContent.trim();
-            if (code && code !== 'N/A') copyMapCode(code);
-          }
-        });
-      }
-    }
+    if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(modalRoot);
 
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
-    const prevOverflow = document.body.style.overflow;
-
+    overlay.classList.remove('hidden'); overlay.classList.add('flex');
     requestAnimationFrame(() => {
-      overlay.classList.remove('opacity-0');
-      overlay.classList.add('opacity-100');
+      overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100');
       box.classList.remove('translate-y-3', 'opacity-0');
       box.classList.add('translate-y-0', 'opacity-100');
     });
 
     const btnClose = document.getElementById('detailsModalClose');
     const closeDetailsModal = () => {
-      overlay.classList.add('opacity-0');
-      overlay.classList.remove('opacity-100');
-      box.classList.add('translate-y-3', 'opacity-0');
-      box.classList.remove('translate-y-0', 'opacity-100');
+      overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100');
+      box.classList.add('translate-y-3', 'opacity-0'); box.classList.remove('translate-y-0', 'opacity-100');
       setTimeout(() => {
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
-        overlay.removeEventListener('click', outsideHandler);
-        document.removeEventListener('keydown', escHandler);
-        document.body.style.overflow = prevOverflow || '';
+        overlay.classList.add('hidden'); overlay.classList.remove('flex');
       }, 180);
     };
-    const outsideHandler = (e) => {
-      if (e.target === overlay) closeDetailsModal();
-    };
-    const escHandler = (e) => {
-      if (e.key === 'Escape') closeDetailsModal();
-    };
-
-    overlay.addEventListener('click', outsideHandler);
-    document.addEventListener('keydown', escHandler);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDetailsModal(); }, { once: true });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetailsModal(); }, { once: true });
     btnClose.addEventListener('click', closeDetailsModal, { once: true });
-    window.closeDetailsModal = closeDetailsModal;
-
-    btnClose.focus();
 
     const [stats, progressionData] = await Promise.all([
       fetchMapCompletionStatistics(r.code),
@@ -2385,6 +2339,16 @@ async function displayMapSearchResults(rowsInput) {
    RENDER PERSONAL RECORDS
    ========================= */
 async function displayPersonalRecordsResults(results) {
+  if (!window.__gridCSS_personal_records) {
+    __addRule(
+      '.grid-personal_records',
+      'display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;column-gap:20px'
+    );
+    __addRule('.minw-personal_records', 'min-width:920px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    window.__gridCSS_personal_records = true;
+  }
+
   const rows = Array.isArray(results.results) ? results.results : [];
   const filtered = rows.filter((r) => r.code && r.code !== 'N/A');
 
@@ -2410,157 +2374,108 @@ async function displayPersonalRecordsResults(results) {
 
   let avatarMap = new Map();
   if (!currentUserAvatar) {
-    const allIds = [
-      ...new Set(
-        filtered
-          .map((r) => r.user_id)
-          .filter(Boolean)
-          .map(String)
-      ),
-    ];
+    const allIds = [...new Set(filtered.map((r) => r.user_id).filter(Boolean).map(String))];
     avatarMap = await resolveCreatorAvatars(allIds);
   }
 
-  setResultsHTML(`
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
+      <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapNickname')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDiscordTag')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDifficulty')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapTime')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapMedal')}</div>
+    </div>
+  `;
+
+  const rowsHTML = filtered.map((r) => {
+    const diff = r.difficulty || 'N/A';
+    const diffColor = difficultyColors[normalizeDifficulty(diff)] || '#fff';
+
+    const isCompletion = r.completion === true;
+    const timeDisplay = isCompletion ? t('completion') || 'Completion'
+                                     : r.time != null ? String(r.time) : 'N/A';
+
+    const uid = r.user_id ? String(r.user_id) : null;
+    const fallback = currentUid ? defaultAvatarFromId(currentUid) : defaultAvatarFromId(uid || '0');
+    const avatarUrl = currentUserAvatar ? currentUserAvatar : uid ? avatarMap.get(uid) || fallback : fallback;
+
+    const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
+    const nickname = r.name || r.nickname || 'N/A';
+    const also = r.also_known_as || r.discord_tag || 'N/A';
+
+    const mapCodeCell = r.code
+      ? `
+        <button type="button"
+          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
+                 text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                 w-[6.5rem]"
+          data-code="${escAttr(r.code)}"
+          title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+          </svg>
+          <span data-sf="${escAttr(r.code)}"></span>
+        </button>`
+      : `<span data-sf="N/A">N/A</span>`;
+
+    const nicknameBlock = profileHref
+      ? `
+        <a href="${escAttr(profileHref)}"
+           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+           title="${escAttr(nickname)}">
+          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
+          <span data-sf="${escAttr(nickname)}"></span>
+        </a>`
+      : `
+        <div class="flex items-center gap-2">
+          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
+          <span data-sf="${escAttr(nickname)}"></span>
+        </div>`;
+
+    return `
+      <div class="grid grid-personal_records bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+        <div class="min-w-0">${mapCodeCell}</div>
+        <div class="min-w-0">${nicknameBlock}</div>
+        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(also)}">${esc(also)}</span></div>
+        <div class="min-w-0">
+          <span class="${__clsTextColor(diffColor)}">
+            <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
+          </span>
+        </div>
+        <div class="min-w-0"><span data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</span></div>
+        <div class="min-w-0"><span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span></div>
+      </div>`;
+  }).join('');
+
+  const shell = `
     <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
       <div class="overflow-auto">
-        <table class="min-w-full text-sm table-fixed border-separate border-spacing-y-1">
-          <thead class="bg-zinc-900/60 text-zinc-300">
-            <tr>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapCode')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapNickname')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapDiscordTag')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapDifficulty')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapTime')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapMedal')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered
-              .map((r) => {
-                const diff = r.difficulty || 'N/A';
-                const diffColor = difficultyColors[normalizeDifficulty(diff)] || '#fff';
-
-                const isCompletion = r.completion === true;
-                const timeDisplay = isCompletion
-                  ? t('completion') || 'Completion'
-                  : r.time != null
-                    ? String(r.time)
-                    : 'N/A';
-
-                const uid = r.user_id ? String(r.user_id) : null;
-                const fallback = currentUid
-                  ? defaultAvatarFromId(currentUid)
-                  : defaultAvatarFromId(uid || '0');
-                const avatarUrl = currentUserAvatar
-                  ? currentUserAvatar
-                  : uid
-                    ? avatarMap.get(uid) || fallback
-                    : fallback;
-
-                const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
-                const nickname = r.name || r.nickname || 'N/A';
-                const also = r.also_known_as || r.discord_tag || 'N/A';
-
-                const mapCodeCell = r.code
-                  ? `
-                  <button
-                    type="button"
-                    class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
-                              text-xs font-semibold text-zinc-100 hover:bg-white/10
-                              focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
-                              w-24"
-                    data-code="${escAttr(r.code)}"
-                    title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
-                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                      <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-                    </svg>
-                    <span data-sf="${escAttr(r.code)}"></span>
-                  </button>`
-                  : `<span data-sf="N/A">N/A</span>`;
-
-                const nicknameBlock = profileHref
-                  ? `
-                  <a href="${escAttr(profileHref)}"
-                     class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-                     title="${escAttr(nickname)}">
-                    <img
-                      class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-                      alt=""
-                      referrerpolicy="no-referrer"
-                      loading="lazy"
-                      decoding="async"
-                      src="${escAttr(avatarUrl)}"
-                      data-fallback-src="${escAttr(fallback)}"/>
-                    <span data-sf="${escAttr(nickname)}"></span>
-                  </a>`
-                  : `
-                  <div class="flex items-center gap-2">
-                    <img
-                      class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-                      alt=""
-                      referrerpolicy="no-referrer"
-                      loading="lazy"
-                      decoding="async"
-                      src="${escAttr(avatarUrl)}"
-                      data-fallback-src="${escAttr(fallback)}"/>
-                    <span data-sf="${escAttr(nickname)}"></span>
-                  </div>`;
-
-                return `
-                <tr class="relative bg-zinc-900/40 hover:bg-white/5 transition">
-                  <td class="px-3 py-2 align-middle">
-                    ${mapCodeCell}
-                  </td>
-
-                  <td class="px-3 py-2 align-middle">
-                    ${nicknameBlock}
-                  </td>
-
-                  <td class="px-3 py-2 align-middle">
-                    <span data-sf="${escAttr(also)}">${esc(also)}</span>
-                  </td>
-
-                  <td class="px-3 py-2 align-middle">
-                    <span class="${__clsTextColor(diffColor)}">
-                      <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
-                    </span>
-                  </td>
-
-                  <td class="px-3 py-2 align-middle">
-                    <span data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</span>
-                  </td>
-
-                  <td class="px-3 py-2 align-middle">
-                    <span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span>
-                  </td>
-                </tr>
-              `;
-              })
-              .join('')}
-          </tbody>
-        </table>
+        <div class="minw-personal_records">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${rowsHTML}
+          </div>
+        </div>
       </div>
     </div>
-  `);
+  `;
+
+  setResultsHTML(shell);
 
   const root = document.getElementById('resultsContainer');
   applySplitFlap(root);
-  cascadeRows();
-  if (typeof registerMapCodeCopyTargets === 'function') {
-    registerMapCodeCopyTargets(root);
-  }
+  if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(root);
 
   root.querySelectorAll('img[data-fallback-src]').forEach((img) => {
     const fallback = img.getAttribute('data-fallback-src');
-    img.addEventListener(
-      'error',
-      () => {
-        if (img.src !== fallback) img.src = fallback;
-      },
-      { once: true }
-    );
+    img.addEventListener('error', () => { if (img.src !== fallback) img.src = fallback; }, { once: true });
   });
 }
 
@@ -2568,6 +2483,16 @@ async function displayPersonalRecordsResults(results) {
    RENDER COMPLETIONS
    ========================= */
 async function displayCompletionsResults(results) {
+  if (!window.__gridCSS_completions) {
+    __addRule(
+      '.grid-completions',
+      'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;column-gap:20px'
+    );
+    __addRule('.minw-completions', 'min-width:1024px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    window.__gridCSS_completions = true;
+  }
+
   const rows = Array.isArray(results.results) ? results.results : [];
   const filtered = rows.filter((r) => (r.map_code || r.code) && (r.map_code || r.code) !== 'N/A');
 
@@ -2578,17 +2503,11 @@ async function displayCompletionsResults(results) {
     return;
   }
 
-  const allIds = [
-    ...new Set(
-      filtered
-        .map((r) => r.user_id)
-        .filter(Boolean)
-        .map(String)
-    ),
-  ];
+  const allIds = [...new Set(filtered.map((r) => r.user_id).filter(Boolean).map(String))];
   const avatarMap = await resolveCreatorAvatars(allIds);
   const currentUid = window.user_id ? String(window.user_id) : null;
 
+  // Modal
   if (!document.getElementById('detailsModalOverlay')) {
     const shell = document.createElement('div');
     shell.innerHTML = `
@@ -2632,14 +2551,10 @@ async function displayCompletionsResults(results) {
   }
 
   btnClose.onclick = closeDetailsModal;
-
   if (!overlay.__outsideBound) {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeDetailsModal();
-    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDetailsModal(); });
     overlay.__outsideBound = true;
   }
-
   if (!document.__detailsEscHandlerBound) {
     document.__detailsEscHandlerBound = true;
     document.addEventListener('keydown', (e) => {
@@ -2648,124 +2563,113 @@ async function displayCompletionsResults(results) {
       if (ov && !ov.classList.contains('hidden')) closeDetailsModal();
     });
   }
-
   window.closeDetailsModal = closeDetailsModal;
 
-  setResultsHTML(`
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
+      <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapNickname')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDiscordTag')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapTime')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapMedal')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapVideo')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDetails')}</div>
+    </div>
+  `;
+
+  const rowsHTML = filtered.map((r, idx) => {
+    const mapCode = r.map_code || r.code || 'N/A';
+    const isCompletion = r.completion === true;
+    const timeDisplay = isCompletion ? t('completion') || 'Completion'
+                                     : r.time != null ? String(r.time) : 'N/A';
+
+    const uid = r.user_id ? String(r.user_id) : null;
+    const fallback = defaultAvatarFromId(uid || '0');
+    const avatarUrl = uid ? avatarMap.get(uid) || fallback : fallback;
+    const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
+
+    const nickname = r.nickname || r.name || 'N/A';
+    const also = r.also_known_as ?? r.discord_tag ?? 'N/A';
+
+    const codeCell = mapCode !== 'N/A'
+      ? `
+        <button type="button"
+          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
+                 text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                 w-[6.5rem]"
+          data-code="${escAttr(mapCode)}"
+          title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+          </svg>
+          <span data-sf="${escAttr(mapCode)}"></span>
+        </button>`
+      : `<span data-sf="N/A">N/A</span>`;
+
+    const nicknameBlock = profileHref
+      ? `
+        <a href="${escAttr(profileHref)}"
+           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+           title="${currentUid && uid && currentUid === uid ? t('popup.you') : escAttr(nickname)}">
+          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
+          <span data-sf="${escAttr(nickname)}"></span>
+        </a>`
+      : `
+        <div class="flex items-center gap-2">
+          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
+          <span data-sf="${escAttr(nickname)}"></span>
+        </div>`;
+
+    const videoCell = r.video
+      ? `<a data-sf="Watch" href="${escAttr(r.video)}" target="_blank" rel="noopener"
+           class="text-brand-300 hover:text-brand-200 underline">${esc(t('watch') || 'Watch')}</a>`
+      : `<span data-sf="N/A">N/A</span>`;
+
+    return `
+      <div class="grid grid-completions bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+        <div class="min-w-0">${codeCell}</div>
+        <div class="min-w-0">${nicknameBlock}</div>
+        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(also)}">${esc(also)}</span></div>
+        <div class="min-w-0"><span data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</span></div>
+        <div class="min-w-0"><span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span></div>
+        <div class="min-w-0">${videoCell}</div>
+        <div class="min-w-0">
+          <button
+            class="js-open-completion-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
+            data-index="${idx}">
+            ${esc(t('thead.mapView') || 'View')}
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const shell = `
     <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
       <div class="overflow-auto">
-        <table class="min-w-full text-sm table-fixed border-separate border-spacing-y-1">
-          <thead class="bg-zinc-900/60 text-zinc-300">
-            <tr>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapCode')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapNickname')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapDiscordTag')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapTime')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapMedal')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapVideo')}</th>
-              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${t('thead.mapDetails') || 'Details'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered
-              .map((r, idx) => {
-                const mapCode = r.map_code || r.code || 'N/A';
-                const isCompletion = r.completion === true;
-                const timeDisplay = isCompletion
-                  ? t('completion') || 'Completion'
-                  : r.time != null
-                    ? String(r.time)
-                    : 'N/A';
-
-                const uid = r.user_id ? String(r.user_id) : null;
-                const fallback = defaultAvatarFromId(uid || '0');
-                const avatarUrl = uid ? avatarMap.get(uid) || fallback : fallback;
-                const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
-
-                const nickname = r.nickname || r.name || 'N/A';
-                const also = r.also_known_as ?? r.discord_tag ?? 'N/A';
-
-                const codeCell =
-                  mapCode !== 'N/A'
-                    ? `
-                  <button type="button"
-                    class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
-                           text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none
-                           focus:ring-2 focus:ring-emerald-400/50 cursor-pointer w-24"
-                    data-code="${escAttr(mapCode)}"
-                    title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
-                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                      <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-                    </svg>
-                    <span data-sf="${escAttr(mapCode)}"></span>
-                  </button>`
-                    : `<span data-sf="N/A">N/A</span>`;
-
-                const nicknameBlock = profileHref
-                  ? `
-                  <a href="${escAttr(profileHref)}"
-                     class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-                     title="${currentUid && uid && currentUid === uid ? t('popup.you') : escAttr(nickname)}">
-                    <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-                         alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-                         src="${escAttr(avatarUrl)}"
-                         data-fallback-src="${escAttr(fallback)}"/>
-                    <span data-sf="${escAttr(nickname)}"></span>
-                  </a>`
-                  : `
-                  <div class="flex items-center gap-2">
-                    <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-                         alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-                         src="${escAttr(avatarUrl)}"
-                         data-fallback-src="${escAttr(fallback)}"/>
-                    <span data-sf="${escAttr(nickname)}"></span>
-                  </div>`;
-
-                const videoCell = r.video
-                  ? `<a data-sf="Watch" href="${escAttr(r.video)}" target="_blank" rel="noopener"
-                     class="text-brand-300 hover:text-brand-200 underline">${esc(t('watch') || 'Watch')}</a>`
-                  : `<span data-sf="N/A">N/A</span>`;
-
-                return `
-                <tr class="relative bg-zinc-900/40 hover:bg-white/5 transition">
-                  <td class="px-3 py-2 align-middle">${codeCell}</td>
-                  <td class="px-3 py-2 align-middle">${nicknameBlock}</td>
-                  <td class="px-3 py-2 align-middle"><span data-sf="${escAttr(also)}">${esc(also)}</span></td>
-                  <td class="px-3 py-2 align-middle"><span data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</span></td>
-                  <td class="px-3 py-2 align-middle"><span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span></td>
-                  <td class="px-3 py-2 align-middle">${videoCell}</td>
-                  <td class="px-3 py-2 align-middle">
-                    <button
-                      class="js-open-completion-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
-                      data-index="${idx}">
-                      ${esc(t('thead.mapView') || 'View')}
-                    </button>
-                  </td>
-                </tr>
-              `;
-              })
-              .join('')}
-          </tbody>
-        </table>
+        <div class="minw-completions">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${rowsHTML}
+          </div>
+        </div>
       </div>
     </div>
-  `);
+  `;
+
+  setResultsHTML(shell);
 
   const root = document.getElementById('resultsContainer');
   applySplitFlap(root);
-  cascadeRows();
   if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(root);
 
   root.querySelectorAll('img[data-fallback-src]').forEach((img) => {
     const fallback = img.getAttribute('data-fallback-src');
-    img.addEventListener(
-      'error',
-      () => {
-        if (img.src !== fallback) img.src = fallback;
-      },
-      { once: true }
-    );
+    img.addEventListener('error', () => { if (img.src !== fallback) img.src = fallback; }, { once: true });
   });
 
   function openCompletionDetails(index) {
@@ -2838,14 +2742,7 @@ async function displayCompletionsResults(results) {
                 ${infoRow(t('thead.mapDiscordTag'), esc(r.also_known_as ?? r.discord_tag ?? 'N/A'))}
                 ${infoRow('User ID', uid ? (profileHref ? `<a class="underline" href="${escAttr(profileHref)}">${esc(uid)}</a>` : esc(uid)) : 'N/A')}
                 ${infoRow(t('thead.mapMedal'), esc(r.medal || 'N/A'))}
-                ${infoRow(
-                  t('thead.mapTime'),
-                  r.completion
-                    ? esc(t('completion') || 'Completion')
-                    : r.time != null
-                      ? esc(String(r.time))
-                      : 'N/A'
-                )}
+                ${infoRow(t('thead.mapTime'), r.completion ? esc(t('completion') || 'Completion') : r.time != null ? esc(String(r.time)) : 'N/A')}
                 ${infoRow('Rank', r.rank != null ? esc(String(r.rank)) : 'N/A')}
                 ${infoRow('Verified', r.verified === true ? '✓' : 'N/A')}
                 ${infoRow('Suspicious', r.suspicious === true ? '✓' : 'N/A')}
@@ -2877,13 +2774,7 @@ async function displayCompletionsResults(results) {
     const bannerImg = document.getElementById('modalBannerImg');
     if (bannerImg) {
       const fb = bannerImg.getAttribute('data-fallback-src');
-      bannerImg.addEventListener(
-        'error',
-        () => {
-          if (bannerImg.src !== fb) bannerImg.src = fb;
-        },
-        { once: true }
-      );
+      bannerImg.addEventListener('error', () => { if (bannerImg.src !== fb) bannerImg.src = fb; }, { once: true });
     }
 
     if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(container);
@@ -2910,6 +2801,18 @@ async function displayCompletionsResults(results) {
    RENDER GUIDES
    ========================= */
 function displayGuideResults(results) {
+  if (!window.__gridCSS_guide) {
+    __addRule(
+      '.grid-guide',
+      'display:grid;grid-template-columns:minmax(0,1fr);align-items:start;justify-items:stretch'
+    );
+    __addRule('.minw-guide', 'min-width:640px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    __addRule('.video-embed','position:relative;overflow:hidden;border-radius:12px;background:black;aspect-ratio:16/9');
+    __addRule('.video-embed > iframe','position:absolute;inset:0;width:100% !important;height:100% !important;display:block');
+    window.__gridCSS_guide = true;
+  }
+
   const rows = Array.isArray(results.results) ? results.results : [];
   const filtered = rows.filter((r) => r.url);
 
@@ -2920,59 +2823,52 @@ function displayGuideResults(results) {
     return;
   }
 
-  setResultsHTML(`
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-guide px-3 py-2">
+      <div class="whitespace-nowrap text-center">${t('thead.mapVideo')}</div>
+    </div>
+  `;
+
+  const rowsHTML = filtered.map((r) => {
+    const embedUrl = getEmbedUrl(r.url);
+    return `
+      <div class="grid grid-guide bg-zinc-900/40 hover:bg-white/5 transition px-3 py-4">
+        <div class="text-center">
+          ${
+            embedUrl
+              ? ` <div class="mx-auto w-full max-w-3xl">
+                  <div class="video-embed ring-1 ring-white/10">
+                    <iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                  </div>
+                   ${
+                     Array.isArray(r.usernames) && r.usernames.length > 1
+                       ? `<div class="mt-2 text-center text-xs text-zinc-400">
+                            ${esc(t('thead.mapNickname'))}:
+                            <span class="text-zinc-200">${esc(r.usernames[1])}</span>
+                          </div>`
+                       : ``
+                   }
+                 </div>`
+              : 'N/A'
+          }
+        </div>
+      </div>`;
+  }).join('');
+
+  const shell = `
     <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
       <div class="overflow-auto">
-        <table class="min-w-full text-sm table-fixed border-separate border-spacing-y-1">
-          <thead class="bg-zinc-900/60 text-zinc-300">
-            <tr>
-              <th class="px-3 py-2 text-center align-middle font-semibold whitespace-nowrap">
-                ${t('thead.mapVideo')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered
-              .map((r) => {
-                const embedUrl = getEmbedUrl(r.url);
-                return `
-                <tr class="relative bg-zinc-900/40 hover:bg-white/5 transition">
-                  <td class="px-3 py-2 align-middle">
-                    ${
-                      embedUrl
-                        ? `<div class="flex flex-col items-center gap-2 py-2">
-                          <!-- Wrapper 16:9, no inline style -->
-                          <div
-                            class="relative w-[85%] max-w-3xl rounded-xl ring-1 ring-white/10 overflow-hidden bg-black aspect-video max-h-[360px]">
-                            <iframe
-                              class="absolute inset-0 w-full h-full"
-                              src="${embedUrl}"
-                              frameborder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowfullscreen>
-                            </iframe>
-                          </div>
-                          ${
-                            Array.isArray(r.usernames) && r.usernames.length > 1
-                              ? `<div class="text-xs text-zinc-400">
-                                   ${esc(t('thead.mapNickname'))}:
-                                   <span class="text-zinc-200">${esc(r.usernames[1])}</span>
-                                 </div>`
-                              : ``
-                          }
-                        </div>`
-                        : 'N/A'
-                    }
-                  </td>
-                </tr>
-              `;
-              })
-              .join('')}
-          </tbody>
-        </table>
+        <div class="minw-guide">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${rowsHTML}
+          </div>
+        </div>
       </div>
     </div>
-  `);
+  `;
+
+  setResultsHTML(shell);
 }
 
 function getEmbedUrl(url) {
@@ -2986,6 +2882,313 @@ function getEmbedUrl(url) {
     return m ? `https://player.bilibili.com/player.html?bvid=${m[1]}` : null;
   }
   return null;
+}
+
+/* =========================
+   SKELETONS
+   ========================= */
+let __skeletonCSSReady = false;
+function ensureSkeletonCSS() {
+  if (__skeletonCSSReady) return;
+  try {
+    __sheet.insertRule(
+      '@keyframes skelShine{0%{background-position:-200% 0}100%{background-position:200% 0}}',
+      __sheet.cssRules.length
+    );
+  } catch {}
+  try {
+    __sheet.insertRule('.hide-scrollbar{scrollbar-width:none;-ms-overflow-style:none}', __sheet.cssRules.length);
+  } catch {}
+  try {
+    __sheet.insertRule('.hide-scrollbar::-webkit-scrollbar{width:0;height:0}', __sheet.cssRules.length);
+  } catch {}
+
+  __addRule('.skel', [
+    'display:block',
+    'position:relative',
+    'overflow:hidden',
+    'background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.14), rgba(255,255,255,0))',
+    'background-size:200% 100%',
+    'animation:skelShine 1.1s linear infinite',
+    'border-radius:8px',
+  ].join(';'));
+
+  __addRule('.skel-table', '');
+  __addRule('.skel-chip', 'height:1.25rem; width:6.5rem; border-radius:9999px');
+  __addRule('.skel-avatar', 'height:24px; width:24px; border-radius:9999px');
+  __addRule('.skel-btn', 'height:24px; width:72px; border-radius:8px');
+  __addRule('.skel-bar-sm', 'height:10px; display:inline-block');
+  __addRule('.skel-bar-md', 'height:14px; display:inline-block');
+  __addRule('.skel-vid', 'border-radius:12px');
+
+  __skeletonCSSReady = true;
+}
+
+const __skelW = new Map();
+function __clsSkelW(w) {
+  const key = String(w);
+  let cls = __skelW.get(key);
+  if (!cls) {
+    cls = `skw-${key.replace(/[^a-z0-9_-]/gi,'') || 'x'}`;
+    __addRule(`.${cls}`, `width:${w};min-width:${w};flex:0 0 ${w};flex-shrink:0`);
+    __skelW.set(key, cls);
+  }
+  return cls;
+}
+
+function sBar(width='100%', size='md') {
+  const h = size === 'sm' ? 'skel-bar-sm' : 'skel-bar-md';
+  const w = typeof width === 'number' ? `${width}px` : width;
+  return `<div class="skel ${h} ${__clsSkelW(w)}"></div>`;
+}
+function sChip(width='6.5rem') {
+  const w = typeof width === 'number' ? `${width}px` : width;
+  return `<div class="skel skel-chip ${__clsSkelW(w)}"></div>`;
+}
+function sBtn(width=72) {
+  const w = typeof width === 'number' ? `${width}px` : width;
+  return `<div class="skel skel-btn ${__clsSkelW(w)}"></div>`;
+}
+function sAvatar() { return `<div class="skel skel-avatar"></div>`; }
+
+function sNick(width = '12ch') {
+  return `
+    <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5">
+      <div class="h-6 w-6 rounded-full ring-1 ring-white/10 bg-zinc-800 overflow-hidden">
+        ${sAvatar()}
+      </div>
+      ${sBar(width,'sm')}
+    </div>
+  `;
+}
+
+function skeletonTableShell(headHTML, bodyRowsHTML, colgroupHTML = '') {
+  return `
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div class="overflow-auto">
+        <div class="overflow-hidden hide-scrollbar">
+          ${colgroupHTML}
+          <thead class="bg-zinc-900/60 text-zinc-300">${headHTML}</thead>
+          <tbody>${bodyRowsHTML}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderMapSearchSkeleton(rows = 8) {
+  ensureSkeletonCSS();
+  if (!window.__gridCSS_map_search) {
+    __addRule('.grid-map_search','display:grid;grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;align-items:center;column-gap:20px');
+    __addRule('.minw-map_search', 'min-width:1024px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    window.__gridCSS_map_search = true;
+  }
+
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
+      <div>${t('thead.mapCode')}</div>
+      <div>${t('thead.mapName')}</div>
+      <div>${t('thead.mapType')}</div>
+      <div>${t('thead.mapCreator')}</div>
+      <div>${t('thead.mapDifficulty')}</div>
+      <div>${t('thead.mapQuality')}</div>
+      <div>${t('thead.mapDetails')}</div>
+    </div>
+  `;
+
+  const row = `
+    <div class="grid grid-map_search bg-zinc-900/40 px-3 py-2">
+      <div>${sChip(116)}</div>
+      <div>${sBar(150,'sm')}</div>
+      <div>${sBar(100,'sm')}</div>
+      <div>${sNick('12ch')}</div>
+      <div>${sBar(70,'sm')}</div>
+      <div>${sBar(80,'sm')}</div>
+      <div>${sBtn(55)}</div>
+    </div>
+  `;
+
+  const body = new Array(rows).fill(row).join('');
+
+  const shell = `
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div class="overflow-auto">
+        <div class="minw-map_search">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${body}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  setResultsHTML(shell);
+}
+
+function renderCompletionsSkeleton(rows = 8) {
+  ensureSkeletonCSS();
+  if (!window.__gridCSS_completions) {
+    __addRule(
+      '.grid-completions',
+      'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;column-gap:20px'
+    );
+    __addRule('.minw-completions', 'min-width:1024px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    window.__gridCSS_completions = true;
+  }
+
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
+      <div>${t('thead.mapCode')}</div>
+      <div>${t('thead.mapNickname')}</div>
+      <div>${t('thead.mapDiscordTag')}</div>
+      <div>${t('thead.mapTime')}</div>
+      <div>${t('thead.mapMedal')}</div>
+      <div>${t('thead.mapVideo')}</div>
+      <div>${t('thead.mapDetails')}</div>
+    </div>
+  `;
+
+  const row = `
+    <div class="grid grid-completions bg-zinc-900/40 px-3 py-2">
+      <div>${sChip(116)}</div>
+      <div>${sNick('12ch')}</div>
+      <div>${sBar(130,'sm')}</div>
+      <div>${sBar(80,'sm')}</div>
+      <div>${sBar(70,'sm')}</div>
+      <div>${sBar(60,'sm')}</div>
+      <div>${sBtn(55)}</div>
+    </div>
+  `;
+
+  const body = new Array(rows).fill(row).join('');
+
+  const shell = `
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div class="overflow-auto">
+        <div class="minw-completions">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${body}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  setResultsHTML(shell);
+}
+
+function renderPersonalRecordsSkeleton(rows = 8) {
+  ensureSkeletonCSS();
+  if (!window.__gridCSS_personal_records) {
+    __addRule(
+      '.grid-personal_records',
+      'display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;column-gap:20px'
+    );
+    __addRule('.minw-personal_records', 'min-width:920px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    window.__gridCSS_personal_records = true;
+  }
+
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
+      <div>${t('thead.mapCode')}</div>
+      <div>${t('thead.mapNickname')}</div>
+      <div>${t('thead.mapDiscordTag')}</div>
+      <div>${t('thead.mapDifficulty')}</div>
+      <div>${t('thead.mapTime')}</div>
+      <div>${t('thead.mapMedal')}</div>
+    </div>
+  `;
+
+  const row = `
+    <div class="grid grid-personal_records bg-zinc-900/40 px-3 py-2">
+      <div>${sChip(116)}</div>
+      <div>${sNick('12ch')}</div>
+      <div>${sBar(130,'sm')}</div>
+      <div>${sBar(80,'sm')}</div>
+      <div>${sBar(80,'sm')}</div>
+      <div>${sBar(70,'sm')}</div>
+    </div>
+  `;
+
+  const body = new Array(rows).fill(row).join('');
+
+  const shell = `
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div class="overflow-auto">
+        <div class="minw-personal_records">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${body}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  setResultsHTML(shell);
+}
+
+function renderGuidesSkeleton(rows = 2) {
+  ensureSkeletonCSS();
+  if (!window.__gridCSS_guide) {
+   __addRule(
+     '.grid-guide',
+     'display:grid;grid-template-columns:minmax(0,1fr);align-items:start;justify-items:stretch'
+   );
+    __addRule('.minw-guide', 'min-width:640px');
+    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
+    __addRule('.video-embed','position:relative;overflow:hidden;border-radius:12px;aspect-ratio:16/9');
+    __addRule('.video-embed > iframe','position:absolute;inset:0;width:100% !important;height:100% !important;display:block');
+    __addRule('.video-embed > .skel-vid','position:absolute;inset:0;width:100%;height:100%');
+    window.__gridCSS_guide = true;
+  }
+
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-guide px-3 py-2">
+      <div class="text-center">${t('thead.mapVideo')}</div>
+    </div>
+  `;
+
+  const row = `
+    <div class="grid grid-guide bg-zinc-900/40 px-3 py-4">
+      <div class="text-center">
+        <div class="mx-auto w-full max-w-3xl">
+          <div class="video-embed ring-1 ring-white/10">
+            <div class="skel skel-vid"></div>
+          </div>
+          <div class="mt-2 flex justify-center">${sBar(160,'sm')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const body = new Array(rows).fill(row).join('');
+
+  const shell = `
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div class="overflow-auto">
+        <div class="minw-guide">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${body}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  setResultsHTML(shell);
+}
+
+function renderSkeletonForSection(sectionId) {
+  switch (sectionId) {
+    case 'map_search':        return renderMapSearchSkeleton();
+    case 'completions':       return renderCompletionsSkeleton();
+    case 'guide':             return renderGuidesSkeleton();
+    case 'personal_records':  return renderPersonalRecordsSkeleton();
+    default:                  return renderMapSearchSkeleton();
+  }
 }
 
 /* =========================
@@ -3039,6 +3242,7 @@ async function changePage(pageNumber) {
   if (target === currentPage) return;
 
   currentPage = target;
+  renderSkeletonForSection(currentSection);
 
   const data = await fetchPageData(currentPage);
   if (data) {
