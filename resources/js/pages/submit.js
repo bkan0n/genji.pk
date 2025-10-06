@@ -639,8 +639,8 @@ function animatePlaytestCardsAndSplitflap() {
 
 const _origApplyFilters = typeof applyFilters === 'function' ? applyFilters : null;
 async function applyFiltersWithAnimation(page = 1) {
-  if (typeof renderPlaytestSkeletonCards === 'function') { renderPlaytestSkeletonCards(itemsPerPage); }
-  if (_origApplyFilters) { await _origApplyFilters(page); animatePlaytestCardsAndSplitflap(); }
+  closeOpenToolbarOverlays({ animate: true });
+  setTimeout(() => applyFilters(page), 140);
 }
 
 const loadingEl = document.getElementById('loadingContainer');
@@ -1797,9 +1797,7 @@ function bindSubmitMapEditButtons(root = document) {
 }
 
 function hideAllSuggestions() {
-  document.querySelectorAll('.suggestions-container, .suggestions-dropdown').forEach((el) => {
-    el.style.display = 'none';
-  });
+  document.querySelectorAll('.pt-suggestions-container').forEach((el) => __animateOutAndRemove(el));
 }
 
 async function loadMainCreatorFromUserId(user_id) {
@@ -5215,9 +5213,42 @@ function showPlaytestSectionWithToolbar() {
 }
 
 async function initializePlaytestToolbar() {
-  const { mechanicsOptions, restrictionsOptions } = await fillMechanicsAndRestrictions();
+  const hasAnimIn  = typeof __animateIn === 'function';
+  const hasAnimOut = typeof __animateOutAndRemove === 'function';
+  const closeAll = (animate = true) => {
+    if (typeof closeOpenToolbarOverlays === 'function') {
+      closeOpenToolbarOverlays({ animate });
+      return;
+    }
+    const kill = (el) => {
+      if (!el) return;
+      try { el.__cleanup?.(); } catch {}
+      if (animate && hasAnimOut) __animateOutAndRemove(el);
+      else el.remove();
+    };
+    document.querySelectorAll('.pt-toolbar-input').forEach(kill);
+    document.querySelectorAll('.pt-custom-options').forEach(kill);
+    document.querySelectorAll('.pt-suggestions-container').forEach(kill);
+    const scope = document.getElementById('playtestSection');
+    scope?.querySelectorAll('.pt-toolbar-button.selected').forEach((b) => b.classList.remove('selected'));
+    document.removeEventListener('mousedown', handleOutsideClick);
+  };
 
-  const playtestIcons = icons.filter((icon) =>
+  const applyWithAnim = (page = 1) => {
+    if (typeof applyFiltersWithAnimation === 'function') {
+      applyFiltersWithAnimation(page);
+    } else {
+      closeAll(true);
+      setTimeout(() => applyFilters(page), 140);
+    }
+  };
+
+  const { mechanicsOptions, restrictionsOptions } = await fillMechanicsAndRestrictions().catch(() => ({
+    mechanicsOptions: [],
+    restrictionsOptions: [],
+  }));
+
+  const playtestIcons = (icons || []).filter((icon) =>
     [
       'map_code',
       'creator',
@@ -5243,9 +5274,7 @@ async function initializePlaytestToolbar() {
   toolbar.innerHTML = '';
 
   const frame = toolbar.closest('.toolbar-container');
-  if (frame) {
-    frame.classList.add('overflow-x-auto');
-  }
+  if (frame) frame.classList.add('overflow-x-auto');
 
   const filterType = {
     map_code: 'input',
@@ -5268,12 +5297,8 @@ async function initializePlaytestToolbar() {
     ],
     map_type: [
       { text: t('filters.classic'), value: 'Classic', raw: 'Classic' },
-      {
-        text: t('filters.increasing_difficulty'),
-        value: 'Increasing Difficulty',
-        raw: 'Increasing Difficulty',
-      },
-      //{ text: t("filters.tournament"), value: "Tournament", raw: "Tournament" },
+      { text: t('filters.increasing_difficulty'), value: 'Increasing Difficulty', raw: 'Increasing Difficulty' },
+      // { text: t('filters.tournament'), value: 'Tournament', raw: 'Tournament' },
     ],
     mechanics: mechanicsOptions,
     restrictions: restrictionsOptions,
@@ -5291,12 +5316,14 @@ async function initializePlaytestToolbar() {
       e.stopPropagation();
 
       if (icon.id === 'apply_filters') {
-        applyFiltersWithAnimation(1);
+        closeAll(true);
+        applyWithAnim(1);
         return;
       }
       if (icon.id === 'clear_filters') {
+        closeAll(true);
         clearFilters();
-        applyFiltersWithAnimation(1);
+        applyWithAnim(1);
         return;
       }
 
@@ -5305,22 +5332,14 @@ async function initializePlaytestToolbar() {
         .forEach((btn) => btn.classList.remove('selected'));
       button.classList.add('selected');
 
-      if (currentInput) {
-        currentInput.__cleanup?.();
-        currentInput.remove();
-        currentInput = null;
-      }
-      if (currentOptionsContainer) {
-        currentOptionsContainer.__cleanup?.();
-        currentOptionsContainer.remove();
-        currentOptionsContainer = null;
-      }
+      closeAll(true);
 
       const type = filterType[icon.id];
 
       if (type === 'input') {
         if (button.querySelector('.pt-toolbar-input')) {
-          button.querySelector('.pt-toolbar-input').focus();
+          const existing = button.querySelector('.pt-toolbar-input');
+          existing.focus();
           return;
         }
 
@@ -5334,7 +5353,8 @@ async function initializePlaytestToolbar() {
           'text-zinc-100 placeholder:text-zinc-500',
           'shadow-xl ring-1 ring-white/10',
           'outline-none focus:ring-2 focus:ring-emerald-500/60',
-        ].join(' ');
+          hasAnimIn ? 'opacity-0 translate-y-2 scale-95' : '',
+        ].filter(Boolean).join(' ');
         input.placeholder = icon.name;
         input.setAttribute('data-parent', `${icon.id}FilterButton`);
         input.style.minWidth = '250px';
@@ -5346,12 +5366,13 @@ async function initializePlaytestToolbar() {
         input.setAttribute('spellcheck', 'false');
 
         positionInputOrDropdown(input, null, button);
+        if (hasAnimIn) __animateIn(input);
         input.focus();
         currentInput = input;
 
-        input.addEventListener('input', (e) => {
+        input.addEventListener('input', (ev) => {
           const key = mapFilterKey(icon.id);
-          activeFilters[key] = e.target.value.trim();
+          activeFilters[key] = ev.target.value.trim();
           updateActiveFilters();
           updateToolbarButtonStates();
         });
@@ -5365,22 +5386,31 @@ async function initializePlaytestToolbar() {
           });
         }
 
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Escape') {
+            if (hasAnimOut) __animateOutAndRemove(input);
+            else { input.__cleanup?.(); input.remove(); }
+            button.classList.remove('selected');
+            currentInput = null;
+            document.querySelectorAll('.pt-suggestions-container').forEach((el) => {
+              if (hasAnimOut) __animateOutAndRemove(el);
+              else el.remove();
+            });
+          }
+        });
+
         setTimeout(() => {
-          document.addEventListener(
-            'mousedown',
-            function handler(ev) {
-              const scope = document.getElementById('playtestSection');
-              if (scope && scope.contains(ev.target)) return;
-              if (!input.contains(ev.target) && ev.target !== button) {
-                input.__cleanup?.();
-                input.remove();
-                if (button.isConnected) button.classList.remove('selected');
-                currentInput = null;
-                document.removeEventListener('mousedown', handler);
-              }
-            },
-            { once: true }
-          );
+          document.addEventListener('mousedown', function handler(ev) {
+            const scope = document.getElementById('playtestSection');
+            if (scope && scope.contains(ev.target)) return;
+            if (!input.contains(ev.target) && ev.target !== button) {
+              if (hasAnimOut) __animateOutAndRemove(input);
+              else { input.__cleanup?.(); input.remove(); }
+              if (button.isConnected) button.classList.remove('selected');
+              currentInput = null;
+              document.removeEventListener('mousedown', handler);
+            }
+          }, { once: true });
         }, 0);
       }
 
@@ -5388,12 +5418,30 @@ async function initializePlaytestToolbar() {
         const id = `pt-${icon.id}Options`;
         const useWrapper = ['mechanics', 'restrictions'].includes(icon.id);
         const opts = showOptionsContainer(id, dropdownOptions[icon.id], button, useWrapper);
-        if (opts) currentOptionsContainer = opts;
+        if (opts) {
+          currentOptionsContainer = opts;
+          if (hasAnimIn && !opts.__animatedOnce) {
+            opts.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+            __animateIn(opts);
+            opts.__animatedOnce = true;
+          }
+        }
       }
     });
   });
 
   updateToolbarButtonStates();
+
+  const applyBtn = toolbar.querySelector('#apply_filtersFilterButton');
+  const clearBtn = toolbar.querySelector('#clear_filtersFilterButton');
+  if (applyBtn && !applyBtn.__pt_patched) {
+    applyBtn.__pt_patched = true;
+    applyBtn.addEventListener('click', () => closeAll(true), { capture: true });
+  }
+  if (clearBtn && !clearBtn.__pt_patched) {
+    clearBtn.__pt_patched = true;
+    clearBtn.addEventListener('click', () => closeAll(true), { capture: true });
+  }
 }
 
 function initializeIcons() {
@@ -5471,20 +5519,14 @@ function setupToolbarDeselectOnClickOutside() {
   document.addEventListener('mousedown', function (event) {
     const scope = document.getElementById('playtestSection');
     if (!scope) return;
+
     const isToolbarButton = event.target.closest('#playtestSection .pt-toolbar-button');
-    const isPTDropdown = event.target.closest('.pt-custom-options');
-    const isPTInput = event.target.closest('.pt-toolbar-input');
-    const isPTSuggestions = event.target.closest('.pt-suggestions-container');
+    const isPTDropdown   = event.target.closest('.pt-custom-options');
+    const isPTInput      = event.target.closest('.pt-toolbar-input');
+    const isPTSuggestions= event.target.closest('.pt-suggestions-container');
+
     if (!isToolbarButton && !isPTDropdown && !isPTInput && !isPTSuggestions) {
-      document.querySelectorAll('.pt-custom-options').forEach((el) => el.remove());
-      document.querySelectorAll('.pt-toolbar-input').forEach((el) => {
-        el.__cleanup?.();
-        el.remove();
-      });
-      document.querySelectorAll('.pt-suggestions-container').forEach((el) => el.remove());
-      scope
-        .querySelectorAll('.pt-toolbar-button.selected')
-        .forEach((btn) => btn.classList.remove('selected'));
+      closeOpenToolbarOverlays({ animate: true });
     }
   });
 }
@@ -5492,14 +5534,15 @@ function setupToolbarDeselectOnClickOutside() {
 function showOptionsContainer(id, options, button, useWrapper = false) {
   let existing = document.getElementById(id);
   if (existing) {
-    const visible = existing.style.display !== 'none';
-    if (visible) {
-      existing.style.display = 'none';
-      existing.__cleanup?.();
+    const isVisible = existing.style.display !== 'none';
+    if (isVisible) {
+      __animateOutAndRemove(existing);
       return null;
     } else {
-      existing.__place?.();
       existing.style.display = 'block';
+      existing.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+      existing.__place?.();
+      __animateIn(existing);
       return existing;
     }
   }
@@ -5512,11 +5555,11 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
   container.id = id;
   container.setAttribute('data-scope', 'playtest');
   container.className = [
-    'pt-custom-options',
-    'custom-options',
+    'pt-custom-options', 'custom-options',
     'rounded-lg border border-white/10 bg-zinc-900/95',
     'p-1 shadow-xl ring-1 ring-white/10',
     'max-h-64 overflow-y-auto',
+    'opacity-0 translate-y-2 scale-95'
   ].join(' ');
   container.style.position = 'absolute';
   container.style.display = 'block';
@@ -5533,8 +5576,8 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = 'pt-custom-checkbox custom-checkbox accent-emerald-500';
-      cb.id = `${id}_${raw.replace(/\s+/g, '_')}`;
-      cb.checked = activeFilters[prop].includes(raw);
+      cb.id = `${id}_${String(raw).replace(/\s+/g, '_')}`;
+      cb.checked = Array.isArray(activeFilters[prop]) && activeFilters[prop].includes(raw);
 
       const label = document.createElement('label');
       label.htmlFor = cb.id;
@@ -5578,9 +5621,8 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
         activeFilters[prop] = raw;
         updateActiveFilters();
         updateToolbarButtonStates();
-        container.style.display = 'none';
-        container.__cleanup?.();
-        container.remove();
+
+        __animateOutAndRemove(container);
       });
 
       container.append(el);
@@ -5592,16 +5634,10 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
   const place = () => {
     const r = button.getBoundingClientRect();
     const desiredTop = window.scrollY + r.bottom + 8;
-
     container.style.width = `${r.width}px`;
-
-    const { left, top } = clampToFrame(
-      window.scrollX + r.left,
-      container.offsetWidth || r.width,
-      desiredTop
-    );
+    const { left, top } = clampToFrame(window.scrollX + r.left, container.offsetWidth || r.width, desiredTop);
     container.style.left = `${left}px`;
-    container.style.top = `${top}px`;
+    container.style.top  = `${top}px`;
   };
   place();
 
@@ -5616,6 +5652,9 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
   };
 
   document.addEventListener('mousedown', handleOutsideClick);
+
+  __animateIn(container);
+
   return container;
 }
 
@@ -5668,6 +5707,8 @@ function clearFilters() {
   currentPage = 1;
   hidePlaytestModal();
   updateToolbarButtonStates();
+
+  closeOpenToolbarOverlays({ animate: true });
 }
 
 async function applyFilters(page = 1) {
@@ -5704,9 +5745,9 @@ async function applyFilters(page = 1) {
     );
 
     if (arr.length === 0) {
-      renderMessage(t('popup.no_results'));
+      showErrorMessage(t('popup.no_results'));
       clearFilters();
-      applyFilters({});
+      applyFilters();
       return;
     }
 
@@ -5815,19 +5856,14 @@ function showSuggestions(event, _unused, containerId, propertyName) {
   const isSubmitRecordMapCode = !!(
     input &&
     input.closest('#submitRecordSection') &&
-    (
-      propertyName === 'map_code' ||
-      input.id === 'mapCodeInput' ||
-      input.name === 'map_code'
-    )
+    (propertyName === 'map_code' || input.id === 'mapCodeInput' || input.name === 'map_code')
   );
 
   suggestionsContainer.addEventListener('mousedown', (e) => e.stopPropagation(), { once: true });
 
   function hideSuggestions() {
     if (!suggestionsContainer) return;
-    suggestionsContainer.style.display = 'none';
-    try { suggestionsContainer.remove(); } catch {}
+    __animateOutAndRemove(suggestionsContainer);
     document.removeEventListener('mousedown', outsideClickHandler);
   }
 
@@ -5846,7 +5882,7 @@ function showSuggestions(event, _unused, containerId, propertyName) {
 
   const propToKind = (prop) => {
     if (prop === 'map_code') return 'map-codes';
-    if (prop === 'creator') return 'users';
+    if (prop === 'creator')  return 'users';
     if (prop === 'map_name') return 'map-names';
     return '';
   };
@@ -5916,10 +5952,13 @@ function showSuggestions(event, _unused, containerId, propertyName) {
           } else {
             const rect = input.getBoundingClientRect();
             suggestionsContainer.style.position = 'absolute';
-            suggestionsContainer.style.top = `${rect.bottom + window.scrollY + 4}px`;
+            suggestionsContainer.style.top  = `${rect.bottom + window.scrollY + 4}px`;
             suggestionsContainer.style.left = `${rect.left + window.scrollX}px`;
-            suggestionsContainer.style.width = `${input.offsetWidth}px`;
+            suggestionsContainer.style.width= `${input.offsetWidth}px`;
           }
+
+          suggestionsContainer.classList.add('transform', 'opacity-0', 'translate-y-2', 'scale-95');
+          __animateIn(suggestionsContainer);
           document.addEventListener('mousedown', outsideClickHandler);
         } else {
           hideSuggestions();
@@ -5984,29 +6023,13 @@ function getSuggestionsContainer(containerId, input) {
    ========================= */
 function handleOutsideClick(e) {
   const scope = document.getElementById('playtestSection');
-  const isClickInsideToolbar =
-    scope && scope.querySelector('.toolbar') && scope.querySelector('.toolbar').contains(e.target);
+  const isClickInsideToolbar = scope && scope.querySelector('.toolbar') && scope.querySelector('.toolbar').contains(e.target);
   const isClickInsideDropdown = e.target.closest('.pt-custom-options');
-  const isClickInsideInput = e.target.closest('.pt-toolbar-input');
-  const isClickInsideSuggest = e.target.closest('.pt-suggestions-container');
+  const isClickInsideInput    = e.target.closest('.pt-toolbar-input');
+  const isClickInsideSuggest  = e.target.closest('.pt-suggestions-container');
 
-  if (
-    !isClickInsideToolbar &&
-    !isClickInsideDropdown &&
-    !isClickInsideInput &&
-    !isClickInsideSuggest
-  ) {
-    document.querySelectorAll('.pt-custom-options').forEach((el) => el.remove());
-    document.querySelectorAll('.pt-toolbar-input').forEach((el) => {
-      el.__cleanup?.();
-      el.remove();
-    });
-    document.querySelectorAll('.pt-suggestions-container').forEach((el) => el.remove());
-    if (scope)
-      scope
-        .querySelectorAll('.pt-toolbar-button.selected')
-        .forEach((btn) => btn.classList.remove('selected'));
-    document.removeEventListener('mousedown', handleOutsideClick);
+  if (!isClickInsideToolbar && !isClickInsideDropdown && !isClickInsideInput && !isClickInsideSuggest) {
+    closeOpenToolbarOverlays({ animate: true });
   }
 }
 
@@ -6015,7 +6038,6 @@ function positionInputOrDropdown(input, _optionsContainer, button) {
     const r = button.getBoundingClientRect();
     const desiredTop = window.scrollY + r.bottom + offsetY;
     const width = r.width;
-
     const { left, top } = clampToFrame(window.scrollX + r.left, width, desiredTop);
 
     el.style.position = 'absolute';
@@ -6030,7 +6052,7 @@ function positionInputOrDropdown(input, _optionsContainer, button) {
       currentInput.__cleanup?.();
       currentInput.remove();
     }
-    input.classList.add('pt-toolbar-input');
+    input.classList.add('pt-toolbar-input', 'opacity-0', 'translate-y-2', 'scale-95');
     document.body.appendChild(input);
     placeNear(input, 6);
 
@@ -6042,9 +6064,66 @@ function positionInputOrDropdown(input, _optionsContainer, button) {
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onResize);
     };
+
+    __animateIn(input);
+
     currentInput = input;
   }
 }
+
+
+function __animateIn(el) {
+  if (!el) return;
+  el.classList.add(
+    'transform', 'transition', 'duration-150', 'ease-out',
+    'opacity-0', 'translate-y-2', 'scale-95'
+  );
+  void el.offsetWidth;
+  requestAnimationFrame(() => {
+    el.classList.remove('opacity-0', 'translate-y-2', 'scale-95');
+    el.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+  });
+}
+
+function __animateOutAndRemove(el, { remove = true } = {}) {
+  if (!el) return;
+  el.classList.add('transform', 'transition', 'duration-125', 'ease-in');
+  el.classList.remove('opacity-100', 'translate-y-0', 'scale-100');
+  el.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+  const done = () => {
+    el.removeEventListener('transitionend', done);
+    if (remove) {
+      try { el.__cleanup?.(); } catch {}
+      try { el.remove(); } catch {}
+    }
+  };
+  el.addEventListener('transitionend', done, { once: true });
+}
+
+function closeOpenToolbarOverlays({ animate = true } = {}) {
+  const scope = document.getElementById('playtestSection');
+
+  document.querySelectorAll('.pt-toolbar-input').forEach((el) => {
+    if (animate) __animateOutAndRemove(el);
+    else { el.__cleanup?.(); el.remove(); }
+  });
+
+  document.querySelectorAll('.pt-custom-options').forEach((el) => {
+    if (animate) __animateOutAndRemove(el);
+    else { el.__cleanup?.(); el.remove(); }
+  });
+
+  document.querySelectorAll('.pt-suggestions-container').forEach((el) => {
+    if (animate) __animateOutAndRemove(el);
+    else { el.__cleanup?.(); el.remove(); }
+  });
+
+  if (scope)
+    scope.querySelectorAll('.pt-toolbar-button.selected').forEach((btn) => btn.classList.remove('selected'));
+
+  document.removeEventListener('mousedown', handleOutsideClick);
+}
+
 /* =========================
    AUTH LOCK
    ========================= */
