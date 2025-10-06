@@ -10,7 +10,6 @@
 @endpush
 
 @section('content')
-  <!-- En-tête -->
   <section class="relative">
     <div class="mx-auto max-w-7xl px-4 pt-10 pb-6 sm:px-6 sm:pt-14 sm:pb-8 lg:px-8">
       <div class="flex items-start justify-between gap-4">
@@ -26,7 +25,7 @@
     </div>
   </section>
 
-  <!-- Onglets (Newsfeed / Completions) -->
+  <!-- Sections (Newsfeed / Completions) -->
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mt-1">
       <div id="nfTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
@@ -48,12 +47,12 @@
 
   <!-- ========== PANEL: NEWSFEED ========== -->
   <div id="panel-newsfeed" class="mt-6 space-y-6">
-    <!-- Filtres / recherche -->
+    <!-- Filters / search -->
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div class="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
           <div class="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <!-- Recherche + tags -->
+            <!-- Search + tags -->
             <div class="space-y-3">
               <div
                 class="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2"
@@ -119,12 +118,9 @@
     <section class="relative pb-10 sm:pb-16">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="grid gap-6 lg:grid-cols-12">
-          <!-- Colonne liste -->
           <div class="lg:col-span-8">
-            <!-- Liste dynamique -->
             <div id="newsfeedContainer" class="space-y-4"></div>
 
-            <!-- Empty state AU MÊME ENDROIT que la liste -->
             <div
               id="nf-empty"
               class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-8 text-center"
@@ -143,7 +139,7 @@
               <p class="mt-1 text-sm text-zinc-400">{{ __('newsfeed.empty.subtitle') }}</p>
             </div>
 
-            <!-- Load more (caché quand empty est visible) -->
+            <!-- Load more  -->
             <div class="mt-4 flex items-center justify-center">
               <button
                 id="nf-loadmore"
@@ -242,7 +238,7 @@
       </div>
     </section>
 
-    <!-- Overlay détails -->
+    <!-- Overlay -->
     <div
       id="detailsModalOverlay"
       class="fixed inset-0 z-50 hidden bg-black/60 p-4 backdrop-blur-sm"
@@ -265,16 +261,15 @@
   <!-- ========== PANEL: COMPLETIONS ========== -->
   <div id="panel-completions" class="mt-6 hidden">
     <section class="relative">
-      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 min-h-[100vh]">
         <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div class="mb-4 flex items-center justify-between">
             <h2 class="font-semibold">{{ __('newsfeed.tabs.completions') }}</h2>
           </div>
 
-          <!-- Liste des complétions -->
+          <!-- Completions -->
           <div id="completionsContainer" class="grid grid-cols-1 gap-4 sm:grid-cols-2"></div>
 
-          <!-- Empty state -->
           <div
             id="comp-empty"
             class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-8 text-center"
