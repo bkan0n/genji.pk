@@ -734,8 +734,10 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       let wrapper = null;
       let optionElement = null;
       let checkbox = null;
+
       const displayText = option.translated || option.text || '';
       const rawValue = option.raw || 'default';
+      const isDifficulty = id === 'difficulty_exactOptions';
 
       if (useWrapper) {
         wrapper = document.createElement('label');
@@ -762,29 +764,40 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
           </svg>
         `;
 
-        optionElement = document.createElement('span');
-        optionElement.className =
-          'custom-option flex-1 text-sm text-zinc-200 group-hover:text-white';
-        optionElement.textContent = displayText;
-        optionElement.setAttribute('data-raw-value', rawValue);
+        const label = document.createElement('span');
+        label.className = 'custom-option flex-1 text-sm text-zinc-200 group-hover:text-white';
+        label.textContent = displayText;
+        label.setAttribute('data-raw-value', rawValue);
 
         wrapper.appendChild(checkbox);
         wrapper.appendChild(ui);
-        wrapper.appendChild(optionElement);
+        wrapper.appendChild(label);
         optionsContainer.appendChild(wrapper);
 
         checkbox.addEventListener('change', () => updateActiveFilters());
+        optionElement = label;
       } else {
         optionElement = document.createElement('div');
         optionElement.className =
           'custom-option cursor-pointer rounded-md px-3 py-2 text-sm text-zinc-200 hover:bg-white/10 flex items-center justify-between gap-3';
+        optionElement.setAttribute('data-raw-value', rawValue);
+
+        let dotHTML = '';
+        if (isDifficulty) {
+          const { dot } = difficultyClasses(rawValue);
+          dotHTML = `<span class="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white/20 shrink-0 ${dot}" aria-hidden="true"></span>`;
+        }
+
         optionElement.innerHTML = `
-          <span class="truncate">${displayText}</span>
+          <span class="min-w-0 flex items-center gap-2">
+            ${dotHTML}
+            <span class="truncate">${displayText}</span>
+          </span>
           <svg data-check viewBox="0 0 20 20" class="h-4 w-4 opacity-0 transition-opacity" aria-hidden="true">
             <path d="M5 10.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
-        optionElement.setAttribute('data-raw-value', rawValue);
+
         optionsContainer.appendChild(optionElement);
       }
 
@@ -792,29 +805,14 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
         event.stopPropagation();
         let labelId = '';
         switch (id.replace('Options', '')) {
-          case 'mapType':
-            labelId = 'map type';
-            break;
-          case 'difficulty':
-            labelId = 'difficulty';
-            break;
-          case 'mechanics':
-            labelId = 'mechanics';
-            break;
-          case 'restrictions':
-            labelId = 'restrictions';
-            break;
-          case 'onlyPlaytest':
-            labelId = 'only playtest';
-            break;
-          case 'ignoreCompletions':
-            labelId = 'ignore completions';
-            break;
-          case 'onlyMedals':
-            labelId = 'only medals';
-            break;
-          default:
-            labelId = id.replace('Options', '');
+          case 'mapType':           labelId = 'map type'; break;
+          case 'difficulty_exact':  labelId = 'difficulty'; break;
+          case 'mechanics':         labelId = 'mechanics'; break;
+          case 'restrictions':      labelId = 'restrictions'; break;
+          case 'onlyPlaytest':      labelId = 'only playtest'; break;
+          case 'ignoreCompletions': labelId = 'ignore completions'; break;
+          case 'onlyMedals':        labelId = 'only medals'; break;
+          default:                  labelId = id.replace('Options', '');
         }
 
         if (!useWrapper) {
@@ -847,11 +845,99 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
 
     button.appendChild(optionsContainer);
   }
+
   const rawKey = id.replace('Options', '');
   syncOptionsWithFilters(optionsContainer, rawKey);
-
   return optionsContainer;
 }
+
+function difficultyClasses(label, value) {
+  const base = {
+    text: 'text-zinc-200',
+    chip: 'border-white/10 bg-white/5 text-zinc-200',
+    dot: 'bg-zinc-400/70',
+  };
+
+  if (typeof label === 'string') {
+    const L = label.toLowerCase();
+    if (L.startsWith('easy'))
+      return {
+        text: 'text-emerald-300',
+        chip: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200',
+        dot: 'bg-emerald-400',
+      };
+    if (L.startsWith('medium'))
+      return {
+        text: 'text-yellow-300',
+        chip: 'border-yellow-400/20 bg-yellow-500/10 text-yellow-200',
+        dot: 'bg-yellow-400',
+      };
+    if (L.startsWith('hard') && !L.startsWith('very'))
+      return {
+        text: 'text-orange-300',
+        chip: 'border-orange-400/20 bg-orange-500/10 text-orange-200',
+        dot: 'bg-orange-400',
+      };
+    if (L.startsWith('very hard'))
+      return {
+        text: 'text-orange-400',
+        chip: 'border-orange-500/20 bg-orange-600/10 text-orange-300',
+        dot: 'bg-orange-500',
+      };
+    if (L.startsWith('extreme'))
+      return {
+        text: 'text-red-400',
+        chip: 'border-red-500/20 bg-red-600/10 text-red-300',
+        dot: 'bg-red-500',
+      };
+    if (L.startsWith('hell'))
+      return {
+        text: 'text-rose-400',
+        chip: 'border-rose-500/20 bg-rose-600/10 text-rose-300',
+        dot: 'bg-rose-500',
+      };
+  }
+
+  if (Number.isFinite(value)) {
+    if (value < 2.35)
+      return {
+        text: 'text-emerald-300',
+        chip: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200',
+        dot: 'bg-emerald-400',
+      }; // Easy
+    if (value < 4.12)
+      return {
+        text: 'text-yellow-300',
+        chip: 'border-yellow-400/20 bg-yellow-500/10 text-yellow-200',
+        dot: 'bg-yellow-400',
+      }; // Medium
+    if (value < 5.88)
+      return {
+        text: 'text-orange-300',
+        chip: 'border-orange-400/20 bg-orange-500/10 text-orange-200',
+        dot: 'bg-orange-400',
+      }; // Hard
+    if (value < 7.65)
+      return {
+        text: 'text-orange-400',
+        chip: 'border-orange-500/20 bg-orange-600/10 text-orange-300',
+        dot: 'bg-orange-500',
+      }; // Very Hard
+    if (value < 9.41)
+      return {
+        text: 'text-red-400',
+        chip: 'border-red-500/20 bg-red-600/10 text-red-300',
+        dot: 'bg-red-500',
+      }; // Extreme
+    return {
+      text: 'text-rose-400',
+      chip: 'border-rose-500/20 bg-rose-600/10 text-rose-300',
+      dot: 'bg-rose-500',
+    }; // Hell
+  }
+
+  return base;
+} 
 
 /* =========================
    TOOLBAR INIT
