@@ -61,7 +61,7 @@ function enhanceDropdown(selectOrId) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className =
-    'inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-500/40';
+    'inline-flex cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-500/40';
   btn.setAttribute('aria-haspopup', 'listbox');
   btn.setAttribute('aria-expanded', 'false');
   btn.innerHTML = `<span class="truncate"></span><svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="M5 8l5 5 5-5H5z"/></svg>`;
@@ -206,24 +206,46 @@ function enhanceOrUpdateDropdown(id) {
 let __modalChartInstance = null;
 
 function closeChartModal() {
-  if (__modalChartInstance) {
-    try {
-      __modalChartInstance.destroy();
-    } catch {}
-    __modalChartInstance = null;
-  }
-  document.getElementById('chartModalOverlay')?.remove();
-  document.body.classList.remove('overflow-hidden');
+  const overlay = document.getElementById('chartModalOverlay');
+  if (!overlay) return;
+
+  const box = overlay.querySelector('[data-modal-box]');
+  overlay.classList.add('opacity-0');
+  if (box) box.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+
+  const cleanup = () => {
+    overlay.removeEventListener('transitionend', onEnd);
+    overlay.remove();
+    document.body.classList.remove('overflow-hidden');
+    if (__modalChartInstance) {
+      try { __modalChartInstance.destroy(); } catch {}
+      __modalChartInstance = null;
+    }
+  };
+  const onEnd = (e) => {
+    if (e.target === overlay) cleanup();
+  };
+  overlay.addEventListener('transitionend', onEnd);
+  setTimeout(cleanup, 400);
 }
+
 function createBaseModal(titleText) {
   const overlay = document.createElement('div');
   overlay.id = 'chartModalOverlay';
-  overlay.className =
-    'fixed inset-0 z-[140] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4';
+  overlay.className = [
+    'fixed inset-0 z-[140] flex items-center justify-center',
+    'bg-black/70 backdrop-blur-sm p-4',
+    'transition-opacity duration-300 opacity-0'
+  ].join(' ');
 
   const box = document.createElement('div');
-  box.className =
-    'w-[92vw] h-[82vh] max-w-7xl rounded-2xl border border-white/10 bg-zinc-950/95 ring-1 ring-white/10 shadow-2xl overflow-hidden flex flex-col';
+  box.setAttribute('data-modal-box', '');
+  box.className = [
+    'w-[92vw] h-[82vh] max-w-7xl rounded-2xl border border-white/10',
+    'bg-zinc-950/95 ring-1 ring-white/10 shadow-2xl overflow-hidden flex flex-col',
+    'transform-gpu transition-all duration-300 ease-out',
+    'opacity-0 translate-y-2 scale-95'
+  ].join(' ');
   overlay.appendChild(box);
 
   const header = document.createElement('header');
@@ -253,6 +275,12 @@ function createBaseModal(titleText) {
 
   document.body.appendChild(overlay);
   document.body.classList.add('overflow-hidden');
+
+  requestAnimationFrame(() => {
+    overlay.classList.remove('opacity-0');
+    box.classList.remove('opacity-0', 'translate-y-2', 'scale-95');
+  });
+
   return { overlay, body };
 }
 
@@ -310,6 +338,33 @@ function openSvgModalFromElement(svgEl, titleText) {
 
   wrap.appendChild(clone);
   clone.addEventListener('dblclick', closeChartModal);
+
+  const vb = (clone.getAttribute('viewBox') || '0 0 600 600').split(/\s+/).map(Number);
+  const cx = (vb[0] || 0) + (vb[2] || 600) / 2;
+  const cy = (vb[1] || 0) + (vb[3] || 600) / 2;
+
+  const hover = clone.querySelector('#hover-text');
+  if (hover) {
+    hover.style.opacity = 0;
+  }
+
+  clone.querySelectorAll('path.segment').forEach((seg) => {
+    seg.addEventListener('mouseenter', () => {
+      const amount = Number(seg.getAttribute('data-amount')) || 0;
+      const tier = seg.getAttribute('data-tier') || '';
+      if (hover) {
+        hover.textContent = t('playersInTier', { amount, tier });
+        hover.style.opacity = 1;
+      }
+      if (window.gsap) {
+        gsap.to(seg, { duration: 0.15, scale: 1.015, transformOrigin: `${cx}px ${cy}px` });
+      }
+    });
+    seg.addEventListener('mouseleave', () => {
+      if (hover) hover.style.opacity = 0;
+      if (window.gsap) gsap.to(seg, { duration: 0.2, scale: 1 });
+    });
+  });
 }
 
 /* ======================================================================
@@ -454,6 +509,8 @@ async function generateSVG(endpoint) {
     path.setAttribute('class', 'segment');
     path.setAttribute('fill', colors[i % colors.length]);
     path.setAttribute('filter', 'url(#segShadow)');
+    path.setAttribute('data-amount', String(amount));
+    path.setAttribute('data-tier', String(rank.tier));
     path.style.opacity = 0;
 
     path.addEventListener('mouseenter', () => {
@@ -561,7 +618,8 @@ async function generateSVG(endpoint) {
    ====================================================================== */
 function registerChartZoom(el, chartInstance, title) {
   if (!el) return;
-  el.style.cursor = 'zoom-in';
+  el.classList.add('cursor-pointer');
+  el.style.cursor = 'pointer';
 
   el.__currentChart = chartInstance;
   el.__modalTitle = title || 'Chart';
@@ -674,30 +732,32 @@ function initPopularCreators() {
   let chart;
 
   function render(data) {
-    const sorted = data
-      .slice()
-      .sort((a, b) => b.map_count - a.map_count)
-      .slice(0, 18);
+    const sorted = data.slice().sort((a, b) => b.map_count - a.map_count).slice(0, 18);
     const creators = sorted.map((x) => x.name);
-    const counts = sorted.map((x) => Number(x.map_count) || 0);
-    const avgQ = sorted.map((x) => Number(x.average_quality) || 0);
-    const points = creators.map((_, i) => ({ x: counts[i], y: avgQ[i] }));
+    const counts   = sorted.map((x) => Number(x.map_count) || 0);
+    const avgQ     = sorted.map((x) => Number(x.average_quality) || 0);
+    const points   = creators.map((_, i) => ({ x: counts[i], y: avgQ[i] }));
+
+    const palette = [
+      '#22c55e','#34d399','#10b981','#2dd4bf','#06b6d4','#0ea5e9',
+      '#93c5fd','#a78bfa','#f472b6','#f43f5e','#ef4444','#fb923c',
+      '#f97316','#eab308','#84cc16','#a3e635','#fde047','#fb7185'
+    ];
+    const colors = creators.map((_, i) => palette[i % palette.length]);
 
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
       type: 'scatter',
       data: {
-        datasets: [
-          {
-            label: t('popularCreators'),
-            data: points,
-            backgroundColor: '#22c55e',
-            borderColor: '#22c55e',
-            pointRadius: 6,
-            pointHoverRadius: 8,
-            borderWidth: 0,
-          },
-        ],
+        datasets: [{
+          label: t('popularCreators'),
+          data: points,
+          backgroundColor: colors,
+          borderColor: colors,
+          pointRadius: 8,
+          pointHoverRadius: 11,
+          borderWidth: 0,
+        }],
       },
       options: {
         responsive: true,
@@ -789,7 +849,7 @@ function initMostPlayedMaps() {
     const quality = rows.map((r) => Number(r.quality) || 0);
 
     const labels = codes;
-    const points = codes.map((_, i) => ({ x: i, y: compl[i], r: Math.max(quality[i] * 2, 3) }));
+    const points = codes.map((_, i) => ({ x: i, y: compl[i], r: Math.max(quality[i] * 3.2, 5) }));
     const color = difficultyColors[difficulty] || 'rgba(52,211,153,0.6)';
 
     if (chart) chart.destroy();
@@ -804,6 +864,9 @@ function initMostPlayedMaps() {
             backgroundColor: color,
             borderColor: tw.border,
             borderWidth: 1,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointHitRadius: 9,
           },
         ],
       },
@@ -890,6 +953,22 @@ function initMapsCount() {
       const el = document.getElementById('mapsCountChart');
       const ctx = el.getContext('2d');
 
+      const palette = [
+        '#22c55e','#34d399','#10b981','#2dd4bf','#06b6d4','#0ea5e9',
+        '#93c5fd','#a78bfa','#f472b6','#f43f5e','#ef4444','#fb923c',
+        '#f97316','#eab308','#84cc16','#a3e635'
+      ];
+      const hexToRgba = (hex, a = 1) => {
+        const h = hex.replace('#','');
+        const n = h.length === 3
+          ? h.split('').map(c => parseInt(c + c, 16))
+          : [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+        return `rgba(${n[0]},${n[1]},${n[2]},${a})`;
+      };
+      const bg = labels.map((_, i) => hexToRgba(palette[i % palette.length], 0.25));
+      const bd = labels.map((_, i) => palette[i % palette.length]);
+      const bgHover = labels.map((_, i) => hexToRgba(palette[i % palette.length], 0.45));
+
       const chart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -898,8 +977,9 @@ function initMapsCount() {
             {
               label: t('amountOfMaps'),
               data: values,
-              backgroundColor: 'rgba(52,211,153,0.2)',
-              borderColor: '#34d399',
+              backgroundColor: bg,
+              hoverBackgroundColor: bgHover,
+              borderColor: bd,
               borderWidth: 1,
               barThickness: 6,
               borderRadius: 14,
@@ -957,6 +1037,16 @@ function initTimePlayed() {
       if (data?.error) throw new Error(data.error);
       const labels = data.map((x) => x.difficulty);
       const totalHours = data.map((x) => (Number(x.total_seconds) || 0) / 3600);
+
+      const diffColor = (name) => ({
+        'Easy':      '#22c55e',
+        'Medium':    '#eab308',
+        'Hard':      '#fb923c',
+        'Very Hard': '#f97316',
+        'Extreme':   '#ef4444',
+        'Hell':      '#991b1b',
+      }[name] || '#34d399');
+
       const el = document.getElementById('timePlayedChart');
       const ctx = el.getContext('2d');
 
@@ -964,19 +1054,21 @@ function initTimePlayed() {
         type: 'line',
         data: {
           labels,
-          datasets: [
-            {
-              label: t('time_played_per_difficulty'),
-              data: totalHours,
-              borderColor: '#22c55e',
-              backgroundColor: 'rgba(34,197,94,0.15)',
-              pointBackgroundColor: '#34d399',
-              pointBorderWidth: 0,
-              borderWidth: 2,
-              tension: 0.35,
-              fill: true,
+          datasets: [{
+            label: t('time_played_per_difficulty'),
+            data: totalHours,
+            pointBackgroundColor: (c) => diffColor(labels[c.dataIndex]),
+            pointBorderColor:     (c) => diffColor(labels[c.dataIndex]),
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointHitRadius: 9,
+            borderWidth: 2,
+            tension: 0.35,
+            fill: false,
+            segment: {
+              borderColor: (ctx) => diffColor(labels[ctx.p1DataIndex]),
             },
-          ],
+          }],
         },
         options: {
           responsive: true,
@@ -990,7 +1082,10 @@ function initTimePlayed() {
                 color: tw.subtext,
                 font: { size: 14, weight: '700' },
               },
-              ticks: { color: tw.subtext, font: { size: 11, weight: '600' } },
+              ticks: {
+                color: (c) => diffColor(labels[c.index]),
+                font: { size: 11, weight: '600' },
+              },
               grid: { color: tw.gridSoft },
             },
             y: {
@@ -1080,7 +1175,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const donutSvg = document.querySelector('#rings-container')?.ownerSVGElement;
   if (donutSvg) {
-    donutSvg.style.cursor = 'zoom-in';
+    donutSvg.classList.add('cursor-pointer');
+    donutSvg.style.cursor = 'pointer';
     donutSvg.addEventListener('click', () => {
       const sel = document.getElementById('rankSelect');
       const title =
