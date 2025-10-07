@@ -856,16 +856,25 @@ async function loadNewsfeed(append = false) {
     else container.innerHTML = cardsHtml.join('');
 
     __cspInit();
-    container.querySelectorAll('.news-card').forEach((card, i) => {
-      card.classList.add('csp-fade-enter');
-      setTimeout(
-        () => {
+
+    const animateCards = (cards) => {
+      cards.forEach((card, i) => {
+        if (card.dataset.animated === '1') return;
+        card.classList.add('csp-fade-enter');
+        setTimeout(() => {
           card.classList.add('csp-fade-active');
           card.classList.remove('csp-fade-enter');
-        },
-        16 + i * 60
-      );
-    });
+          card.dataset.animated = '1';
+        }, 16 + i * 60);
+      });
+    };
+
+    if (append) {
+      const newCards = Array.from(container.querySelectorAll('.news-card')).slice(-items.length);
+      animateCards(newCards);
+    } else {
+      animateCards(container.querySelectorAll('.news-card'));
+    }
 
     items.forEach((it) => {
       const p = it?.payload || it?.data || {};
@@ -1719,15 +1728,26 @@ async function loadCompletions(append = false) {
     if (append) container.insertAdjacentHTML('beforeend', html);
     else container.innerHTML = html;
 
-    container.querySelectorAll('.comp-card').forEach((card, i) => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(6px)';
-      setTimeout(() => {
-        card.style.transition = 'opacity .35s ease, transform .35s ease';
-        card.style.opacity = '1';
-        card.style.transform = 'translateY(0)';
-      }, i * 50);
-    });
+    const animateCompCards = (cards) => {
+      cards.forEach((card, i) => {
+        if (card.dataset.animated === '1') return;
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(6px)';
+        setTimeout(() => {
+          card.style.transition = 'opacity .35s ease, transform .35s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+          setTimeout(() => { card.dataset.animated = '1'; }, 400);
+        }, i * 50);
+      });
+    };
+
+    if (append) {
+      const newCards = Array.from(container.querySelectorAll('.comp-card')).slice(-items.length);
+      animateCompCards(newCards);
+    } else {
+      animateCompCards(container.querySelectorAll('.comp-card'));
+    }
 
     document.getElementById('comp-empty')?.classList.toggle('hidden', items.length > 0);
 
@@ -2059,7 +2079,7 @@ async function renderCompletionCard(item) {
               src="${sshot}"
               alt="Screenshot"
               class="absolute cursor-pointer inset-0 h-full w-full object-contain rounded-xl transition group-hover:opacity-95"
-              onerror="this.closest('button')?.remove()"
+              data-hide-on-error
             >
           </div>
         </button>
@@ -2129,6 +2149,13 @@ document.addEventListener('click', async (e) => {
     showErrorMessage(t?.('newsfeed.copy_clipboard_error') || 'Failed to copy');
   }
 });
+
+document.addEventListener('error', (e) => {
+  const t = e.target;
+  if (t && t.matches?.('[data-hide-on-error]')) {
+    t.closest('[data-open-screenshot]')?.remove() || t.classList.add('hidden');
+  }
+}, true);
 
 /* =========================
    RENDER CHANGELOGS
