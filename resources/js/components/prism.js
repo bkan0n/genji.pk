@@ -35,7 +35,7 @@ export function createPrism(container, {
   const HOVSTR = Math.max(0, hoverStrength || 1);
   const INERT = Math.max(0, Math.min(1, inertia || 0.12));
 
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  let dpr = Math.min(2, window.devicePixelRatio || 1);
   const renderer = new Renderer({ dpr, alpha: transparent, antialias: false });
   const gl = renderer.gl;
 
@@ -196,14 +196,20 @@ export function createPrism(container, {
   const mesh = new Mesh(gl, { geometry, program });
 
   const resize = () => {
+    const nextDpr = Math.min(2, window.devicePixelRatio || 1);
+    if (nextDpr !== dpr) { dpr = nextDpr; renderer.dpr = dpr; }
+
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
     renderer.setSize(w, h);
+
     iResBuf[0] = gl.drawingBufferWidth;
     iResBuf[1] = gl.drawingBufferHeight;
     offsetPxBuf[0] = offX * dpr;
     offsetPxBuf[1] = offY * dpr;
     program.uniforms.uPxScale.value = 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE);
+
+    renderer.render({ scene: mesh });
   };
 
   const ro = new ResizeObserver(resize);
