@@ -2,11 +2,15 @@
 
 @section('title', 'Genji Parkour — ' . __('game.title'))
 
+@push('head')
+  @php($nonce = csp_nonce())
+@endpush
+
 @section('content')
-  <!-- Héro -->
+  <!-- Hero -->
   <section class="relative">
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <!-- Titre / lead -->
+      <!-- Title / lead -->
       <div class="max-w-3xl space-y-5">
         <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
           GENJI PARKOUR
@@ -22,14 +26,13 @@
         </p>
       </div>
 
-      <!-- Carte du mini-jeu — centrée, 800x200 -->
+      <!-- Card -->
       <div class="mt-8 flex justify-center lg:mt-12">
-        <!-- largeur de la carte = 800px + padding -->
         <div class="w-full max-w-[860px]">
           <div
             class="rounded-2xl bg-zinc-900/70 p-4 shadow-2xl ring-1 shadow-black/50 ring-white/10 backdrop-blur sm:p-5"
           >
-            <!-- En-tête -->
+            <!-- Header -->
             <div class="mb-3 flex items-center justify-between">
               <h2 class="text-sm font-semibold text-zinc-200">{{ __('game.card_title') }}</h2>
               <div class="flex items-center gap-2 text-xs">
@@ -60,14 +63,14 @@
               ></canvas>
             </div>
 
-            <!-- Aides / volume / actions -->
+            <!-- Volume / actions -->
             <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
               <!-- Astuce -->
               <p class="flex-1 text-xs text-zinc-400 sm:text-sm">
                 {{ __('game.press_space_to_jump') }}
               </p>
 
-              <!-- Slider volume (à gauche du bouton) -->
+              <!-- Slider volume  -->
               <label class="flex items-center gap-2 text-xs text-zinc-200 sm:text-sm">
                 <svg
                   class="h-5 w-5 text-zinc-300"
@@ -92,7 +95,7 @@
                 />
               </label>
 
-              <!-- Bouton restart -->
+              <!-- Restart -->
               <button
                 id="restartButton"
                 class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
@@ -108,5 +111,9 @@
 @endsection
 
 @push('scripts')
-  @vite('resources/js/pages/game.js')
+  <script nonce="{{ $nonce }}">
+    document.documentElement.lang = @json(app()->getLocale());
+    window.GAME_I18N = @json(\Illuminate\Support\Facades\Lang::get('game'));
+  </script>
+  @vite('resources/js/pages/game.js', null, ['nonce' => csp_nonce()])
 @endpush

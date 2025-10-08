@@ -634,7 +634,7 @@ function openMapDetailsModal(mapCode) {
       if (!map) {
         container.innerHTML = `
           <div class="p-4 sm:p-5">
-            <p class="text-sm text-rose-300">${t('common.error')}: Not found</p>
+            <p class="text-sm text-rose-300">${t('common.error')}: ${t('common.not_found')}</p>
           </div>`;
         return;
       }
@@ -672,11 +672,11 @@ function openMapDetailsModal(mapCode) {
 
       const medals = [];
       if (map.gold && map.gold !== 'N/A')
-        medals.push(medal('Gold', 'assets/verifications/gold_wr.gif', map.gold));
+        medals.push(medal(t('common.medals.gold'), 'assets/verifications/gold_wr.gif', map.gold));
       if (map.silver && map.silver !== 'N/A')
-        medals.push(medal('Silver', 'assets/verifications/silver_wr.gif', map.silver));
+        medals.push(medal(t('common.medals.silver'), 'assets/verifications/silver_wr.gif', map.silver));
       if (map.bronze && map.bronze !== 'N/A')
-        medals.push(medal('Bronze', 'assets/verifications/bronze_wr.gif', map.bronze));
+        medals.push(medal(t('common.medals.bronze'), 'assets/verifications/bronze_wr.gif', map.bronze));
 
       container.innerHTML = `
         <header class="sticky top-0 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80 backdrop-blur border-b border-white/10 px-4 sm:px-5 py-3 flex items-center justify-between">
@@ -923,7 +923,7 @@ async function createNewsCard(item) {
               <time class="timestamp text-xs text-zinc-400" data-timestamp="${ts}"></time>
             </div>
           </div>
-          <span class="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">Announcements</span>
+          <span class="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">${t('tags.announcement')}</span>
         </header>
 
         <div class="mt-3 space-y-3">
@@ -1023,7 +1023,7 @@ async function createNewsCard(item) {
 
     html += `
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold">${nfEscapeHtml(code)} was updated</h3>
+        <h3 class="text-lg font-bold">${t('newsfeed.map_updated', { map_code: nfEscapeHtml(code) })}</h3>
         <img src="assets/verifications/new/icons/warning.avif"
             alt="warning" class="h-11 w-11 rounded-full ring-1 ring-white/10 select-none">
       </div>
@@ -1034,7 +1034,7 @@ async function createNewsCard(item) {
         reason
           ? `
         <p class="text-sm text-zinc-300">
-          <span class="text-zinc-400">${t('common.reason') || 'Reason'}:</span> ${nfEscapeHtml(reason)}
+          <span class="text-zinc-400">${t('common.reason')}</span> ${nfEscapeHtml(reason)}
         </p>`
           : ''
       }
@@ -1042,7 +1042,7 @@ async function createNewsCard(item) {
       ${
         list
           ? `<ul class="mt-2 space-y-1.5">${list}</ul>`
-          : `<p class="text-sm text-zinc-400">${t('newsfeed.no_changes') || 'No changes.'}</p>`
+          : `<p class="text-sm text-zinc-400">${t('newsfeed.no_changes')}</p>`
       }
     `;
   }
@@ -1086,14 +1086,14 @@ async function createNewsCard(item) {
       <p class="text-sm text-zinc-300"><strong>${t('newsfeed.new_wr_info', { map_name: mapName, creators: p?.creators || '', map_code: code })}</strong></p>
       <div class="grid sm:grid-cols-2 gap-2 text-sm">
         <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-          <span class="text-zinc-400 mr-1">Record:</span> ${record || t('common.na')}
+          <span class="text-zinc-400 mr-1">${t('newsfeed.record_label')}:</span> ${record || t('common.na')}
           <img class="inline h-5 w-5 align-[-3px]" src="assets/verifications/new_wr.gif" alt="VRF">
         </div>
         ${
           video
             ? `
         <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-          <span class="text-zinc-400 mr-1">Video:</span>
+          <span class="text-zinc-400 mr-1">${t('newsfeed.video_label')}:</span>
           <a class="text-brand-300 hover:text-brand-200" href="${video}" target="_blank">${t('newsfeed.link')}</a>
         </div>`
             : ``
@@ -1338,7 +1338,7 @@ function createEmbeddedVideo(containerId, videoUrl) {
     container.appendChild(iframe);
   } else {
     container.innerHTML =
-      '<p class="text-sm text-rose-300">La vidéo ne peut pas être intégrée.</p>';
+      `<p class="text-sm text-rose-300">${t('common.video_embed_failed')}</p>`;
   }
 }
 
@@ -1678,10 +1678,10 @@ document.addEventListener('click', async (event) => {
       )
       .replace(/\n/g, '<br>');
 
-    translatedTextElement.innerHTML = corrected || 'Translation failed.';
+    translatedTextElement.innerHTML = corrected || t('newsfeed.translation_failed');
   } catch (err) {
     console.error(err);
-    translatedTextElement.innerHTML = 'Error occurred during translation.';
+    translatedTextElement.innerHTML = t('newsfeed.translation_error');
   } finally {
     loadingIndicator.style.display = 'none';
     event.target.disabled = false;
@@ -1860,12 +1860,12 @@ function resolveStatusIcon(item) {
 
 function resolveStatusText(item) {
   if (item?.verified && item?.completion && !item?.video)
-    return 'Verified screenshot submission! A clear has been confirmed without video proof.';
+    return t('completions.status.verified_screenshot');
   if (item?.verified && item?.completion && item?.video)
-    return 'Verified completion with video proof.';
-  if (!item?.verified && item?.completion) return 'Submission pending review.';
-  if (item?.verified && !item?.completion) return 'Verified record / time.';
-  return 'Submission under review.';
+    return t('completions.status.verified_completion_video');
+  if (!item?.verified && item?.completion) return t('completions.status.pending_review');
+  if (item?.verified && !item?.completion) return t('completions.status.verified_record');
+  return t('completions.status.under_review');
 }
 
 async function fetchDiscordAvatar(user_id) {
@@ -1906,7 +1906,7 @@ document.addEventListener('click', async (e) => {
   const messageId = btn.getAttribute('data-message-id');
   const userId = String(window.user_id || '');
   if (!messageId || !userId) {
-    showErrorMessage('Missing user or message id');
+    showErrorMessage(t('common.missing_ids'));
     return;
   }
 
@@ -1949,7 +1949,7 @@ document.addEventListener('click', async (e) => {
     scoreEl.textContent = String(prevScore);
     btn.classList.remove(...UPVOTE_ACTIVE_CLASSES.split(' '));
     btn.classList.add(...UPVOTE_INACTIVE_CLASSES.split(' '));
-    showErrorMessage('Upvote failed');
+    showErrorMessage(t('completions.upvote_failed'))
     console.error(err);
   }
 });
@@ -1995,7 +1995,7 @@ function upvotePillHtml(item) {
             data-voted="${active ? '1' : '0'}"
             data-message-id="${item?.message_id ?? ''}"
             aria-pressed="${active ? 'true' : 'false'}"
-            aria-label="Upvote">
+            aria-label="${t('common.upvote')}">
       <span class="inline-flex h-5 w-5 items-center justify-center">
         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2016,7 +2016,7 @@ function watchPillHtml(videoUrl) {
       <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
         <path d="M8 5v14l11-7z"></path>
       </svg>
-      Watch
+      ${t('completions.watch')}
     </a>
   `;
 }
@@ -2046,15 +2046,15 @@ async function renderCompletionCard(item) {
                class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10">
           <div class="min-w-0">
             <h3 class="text-base sm:text-lg font-extrabold tracking-tight truncate">
-              New Submission from ${nickname}
+              ${t('completions.new_submission_from', { nickname })}
             </h3>
 
             <div class="mt-2 flex flex-wrap gap-1.5">
-              ${code ? kvLineCopyable('Code', code) : kvLine('Code', code)}
-              ${kvLine('Map', mapName)}
-              ${kvLineDiff('Difficulty', mapDifficulty)}
-              ${kvLine('Time', timeFmt)}
-              ${kvLine('Also Known As', akaText || '—')}
+              ${code ? kvLineCopyable(t('completions.kv.code'), code) : kvLine(t('completions.kv.code'), code)}
+              ${kvLine(t('completions.kv.map'), mapName)}
+              ${kvLineDiff(t('completions.kv.difficulty'), mapDifficulty)}
+              ${kvLine(t('completions.kv.time'), timeFmt)}
+              ${kvLine(t('completions.kv.aka'), akaText || '—')}
             </div>
           </div>
         </div>
@@ -2072,7 +2072,7 @@ async function renderCompletionCard(item) {
           type="button"
           class="block mt-3 w-full group"
           data-open-screenshot="${sshot}"
-          title="Open screenshot"
+          title="${t('completions.open_screenshot')}"
         >
           <div class="relative aspect-[16/9] w-full">
             <img
@@ -2104,7 +2104,7 @@ const ScreenshotLightbox = (() => {
     overlay.className = 'fixed inset-0 z-50 hidden p-4 bg-black/70 backdrop-blur-sm';
     overlay.innerHTML = `
       <div class="mx-auto max-w-5xl w-full h-full flex items-center justify-center">
-        <img id="ssModalImg" src="" alt="Screenshot"
+        <img id="ssModalImg" src="" alt="${t('completions.screenshot_alt')}"
              class="max-h-[90vh] w-auto rounded-2xl shadow-2xl">
       </div>`;
     document.body.appendChild(overlay);
@@ -2205,7 +2205,7 @@ async function hydrateChangelogsSidebar() {
       <article class="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
         <header class="flex items-center gap-2">
           <h4 class="text-xl font-extrabold tracking-tight">${nfEscapeHtml(r.name || r.tag || 'Release')}</h4>
-          <span class="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Latest</span>
+          <span class="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">${t('changelogs.latest')}</span>
         </header>
         ${dateText ? `<div class="mt-1 text-xs text-zinc-400">${dateText}</div>` : ''}
 
@@ -2290,7 +2290,7 @@ function openChangelogsModal() {
         <span class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5">
           <svg class="h-3.5 w-3.5 text-zinc-300" viewBox="0 0 24 24"><path fill="currentColor" d="M20 6H4v12h16V6Zm-2 2v2h-5V8h5ZM6 8h5v2H6V8Zm12 4v4h-5v-4h5ZM6 12h5v4H6v-4Z"/></svg>
         </span>
-        Changelogs
+        ${t('changelogs.title')}
       </h2>
       <button type="button" class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
               id="closeChangelogsModal">Esc</button>
@@ -2324,8 +2324,8 @@ function openChangelogsModal() {
       if (!wrap) return;
 
       if (!data || data.rate_limited || !Array.isArray(data.releases) || !data.releases.length) {
-        wrap.innerHTML = `<p class="text-sm text-zinc-300">No changelogs available.</p>`;
-        return;
+        wrap.innerHTML = `<p class="text-sm text-zinc-300">${t('changelogs.none')}</p>`;
+        return
       }
 
       const lang = document.documentElement.lang || 'en';
@@ -2351,7 +2351,7 @@ function openChangelogsModal() {
           </div>
           ${dateTxt ? `<div class="mt-1 text-xs text-zinc-400">${dateTxt}</div>` : ``}
           <div class="mt-3 prose prose-invert prose-sm max-w-none changelog-body">${body}</div>
-          ${rel.url ? `<a class="mt-3 inline-flex items-center gap-1.5 text-xs text-brand-300 hover:text-brand-200 underline underline-offset-2" href="${rel.url}" target="_blank" rel="noopener">View on GitHub</a>` : ``}
+          ${rel.url ? `<a class="mt-3 inline-flex items-center gap-1.5 text-xs text-brand-300 hover:text-brand-200 underline underline-offset-2" href="${rel.url}" target="_blank" rel="noopener">${t('changelogs.view_on_github')}</a>` : ``}
         </article>
       `;
         })
@@ -2361,7 +2361,7 @@ function openChangelogsModal() {
     })
     .catch(() => {
       const wrap = document.getElementById('changelogsScroll');
-      if (wrap) wrap.innerHTML = `<p class="text-sm text-rose-300">Failed to load changelogs.</p>`;
+      if (wrap) wrap.innerHTML = `<p class="text-sm text-rose-300">${t('changelogs.fetch_failed')}</p>`;
     });
 
   document

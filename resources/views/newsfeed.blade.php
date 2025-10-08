@@ -224,7 +224,7 @@
               <h3 class="font-semibold">{{ __('newsfeed.sidebar.submit_title') }}</h3>
               <p class="mt-1 text-sm text-zinc-300">{{ __('newsfeed.sidebar.submit_desc') }}</p>
               <a
-                href="{{ url('/maps') }}"
+                href="{{ url('/submit?section=submit_map') }}"
                 class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
               >
                 {{ __('newsfeed.sidebar.submit_cta') }}

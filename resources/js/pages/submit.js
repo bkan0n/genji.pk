@@ -1725,7 +1725,7 @@ function resetBannerDropzone() {
     <input id="bannerInput" type="file" accept="image/*" class="hidden">
     <div id="bannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
       ${t('record.drag_and_drop') || 'Drag & drop or click to upload'}
-      <div class="text-[11px] text-zinc-400 mt-1">${t('record.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.'}</div>
+      <div class="text-[11px] text-zinc-400 mt-1">${t('map.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.'}</div>
     </div>
   `;
   setupBannerDropzone();
@@ -2327,7 +2327,7 @@ function editInline(field) {
       }
     }
     if (field === 'optGuide' && newValue === '') newValue = 'N/A';
-    if (field === 'optDescription' && newValue === '') newValue = t('submit.no_description');
+    if (field === 'optDescription' && newValue === '') newValue = t('map.no_description');
     if (field === 'metaCheckpoints') {
       if (newValue === '' || isNaN(newValue) || Number(newValue) < 0) {
         input.focus();
@@ -2820,7 +2820,7 @@ async function sendCompletionToApi() {
     return { error: t('errors.invalid_form') || 'Formulaire invalide' };
   }
   if (!window.screenshotUrl && !window.screenshotFile) {
-    return { error: t('submit.screenshot_confirm') || "Merci d'ajouter une capture." };
+    return { error: t('record.screenshot_required')};
   }
 
   try {

@@ -5,45 +5,46 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const highScoreDisplay = document.getElementById('highScoreDisplay');
 let startScreenImage = new Image();
 
-const currentLang = document.documentElement.lang || 'en';
-let translations = {};
+const CURRENT_LANG = (document.documentElement.lang || 'en').toLowerCase();
+let translations = window.GAME_I18N || {};
 let currentDialogueText = '';
 let jackCurrentDialogue = '';
 
-async function loadTranslations() {
-  try {
-    const response = await fetch('translations/translations.json');
-    const data = await response.json();
-
-    translations = data[currentLang]?.game || {};
-
-    if (!translations.dialogues) {
-      console.error('Aucun dialogue chargé');
-    }
-    initializeDialogues();
-    applyTranslations();
-    showStartScreen();
-  } catch (error) {
-    console.error('Erreur lors du chargement des traductions :', error);
+/* =========================
+   I18N
+   ========================= */
+function t(path, params = {}) {
+  const parts = path.split('.');
+  let result = translations;
+  for (const part of parts) {
+    result = result?.[part];
+    if (!result) break;
   }
+  if (typeof result !== 'string') return path;
+  for (const k in params) result = result.replace(`{${k}}`, params[k]);
+  return result;
+}
+
+function resolveTranslations() {
+  let base = window.GAME_I18N || {};
+  const short = CURRENT_LANG.split('-')[0];
+
+  if (base[CURRENT_LANG]) base = base[CURRENT_LANG];
+  else if (base[short]) base = base[short];
+
+  if (base.game) base = base.game;
+  translations = base;
 }
 
 function initializeDialogues() {
-  currentDialogueText = translations.dialogues?.genji_success || 'Text Missing';
-  jackCurrentDialogue = translations.dialogues?.jack_intro || 'Text Missing';
+  currentDialogueText = t('dialogues.genji_success');
+  jackCurrentDialogue = t('dialogues.jack_intro');
 }
 
-window.addEventListener('load', () => {
-  loadTranslations();
-});
-
 function applyTranslations() {
-  document.getElementById('restartButton').innerHTML = translations.restart_button;
-  scoreDisplay.innerHTML = translations.score + '0';
-  highScoreDisplay.innerHTML = translations.highest_score + '0';
-  restartButton.innerHTML = translations?.restart_button || 'Restart';
-  scoreDisplay.innerHTML = `${translations?.score || 'Score'} 0`;
-  highScoreDisplay.innerHTML = `${translations?.highest_score || 'Highest score'} 0`;
+  restartButton.textContent = t('common.restart_button');
+  scoreDisplay.textContent = `${t('common.score')} 0`;
+  highScoreDisplay.textContent = `${t('common.highest_score')} 0`;
 }
 
 const sounds = {
@@ -57,9 +58,7 @@ const sounds = {
 
 sounds.gameRunning.loop = true;
 sounds.gameFreemode.loop = true;
-Object.values(sounds).forEach((a) => {
-  a.preload = 'auto';
-});
+Object.values(sounds).forEach((a) => { a.preload = 'auto'; });
 
 function stopAllSounds(except = null) {
   for (const a of Object.values(sounds)) {
@@ -130,40 +129,10 @@ const backgroundImage = new Image();
 backgroundImage.src = 'assets/404/background.png';
 
 const obstacleGroups = {
-  group1: [
-    'assets/404/obstacles/obstacle1.png',
-    'assets/404/obstacles/obstacle2.png',
-    'assets/404/obstacles/obstacle3.png',
-  ].map((src) => {
-    const img = new Image();
-    img.src = src;
-    return img;
-  }),
-  group2: [
-    'assets/404/obstacles/obstacle4.png',
-    'assets/404/obstacles/obstacle5.png',
-    'assets/404/obstacles/obstacle6.png',
-  ].map((src) => {
-    const img = new Image();
-    img.src = src;
-    return img;
-  }),
-  group3: [
-    'assets/404/obstacles/obstacle7.png',
-    'assets/404/obstacles/obstacle8.png',
-    'assets/404/obstacles/obstacle9.png',
-  ].map((src) => {
-    const img = new Image();
-    img.src = src;
-    return img;
-  }),
-  group4: ['assets/404/obstacles/obstacle10.png', 'assets/404/obstacles/obstacle11.png'].map(
-    (src) => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    }
-  ),
+  group1: ['assets/404/obstacles/obstacle1.png','assets/404/obstacles/obstacle2.png','assets/404/obstacles/obstacle3.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group2: ['assets/404/obstacles/obstacle4.png','assets/404/obstacles/obstacle5.png','assets/404/obstacles/obstacle6.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group3: ['assets/404/obstacles/obstacle7.png','assets/404/obstacles/obstacle8.png','assets/404/obstacles/obstacle9.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group4: ['assets/404/obstacles/obstacle10.png','assets/404/obstacles/obstacle11.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
 };
 
 function drawBackground() {
@@ -173,7 +142,6 @@ function drawBackground() {
   const bgRatio = bgWidth / bgHeight;
 
   let drawWidth, drawHeight;
-
   if (bgRatio > canvasRatio) {
     drawHeight = canvas.height;
     drawWidth = bgWidth * (canvas.height / bgHeight);
@@ -197,17 +165,8 @@ function drawGenji() {
   const shouldAnimate = isMoving || score < maxScore;
 
   if (genji.isJumping) {
-    ctx.drawImage(
-      jumpFrames[genjiJumpFrameIndex],
-      genji.x,
-      genji.y + genjiYOffset,
-      genji.width,
-      genji.height
-    );
-
-    if (frameCount % 10 === 0) {
-      genjiJumpFrameIndex = (genjiJumpFrameIndex + 1) % jumpFrames.length;
-    }
+    ctx.drawImage(jumpFrames[genjiJumpFrameIndex], genji.x, genji.y + genjiYOffset, genji.width, genji.height);
+    if (frameCount % 10 === 0) genjiJumpFrameIndex = (genjiJumpFrameIndex + 1) % jumpFrames.length;
   } else if (shouldAnimate) {
     const defaultFrame = genjiNeutral;
     const frames = genjiDirection === 'right' ? sprintFrames : sprintFramesLeft;
@@ -215,10 +174,7 @@ function drawGenji() {
     if (frame && frame.complete && frame.naturalWidth > 0) {
       ctx.drawImage(frame, genji.x, genji.y + genjiYOffset, genji.width, genji.height);
     }
-
-    if (frameCount % 10 === 0) {
-      genjiFrameIndex = (genjiFrameIndex + 1) % frames.length;
-    }
+    if (frameCount % 10 === 0) genjiFrameIndex = (genjiFrameIndex + 1) % frames.length;
   } else {
     ctx.drawImage(genjiNeutral, genji.x, genji.y + genjiYOffset, genji.width, genji.height);
   }
@@ -229,7 +185,7 @@ function drawMercy() {
   const mercyY = isFreeMode ? 120 : 20;
   const mercyWidth = 60;
   const mercyHeight = 80;
-  const mercyName = translations.characters?.mercy || 'Mercy';
+  const mercyName = t('characters.mercy');
 
   const frames = isFreeMode ? mercyStandFrames : mercyFrames;
   const frame = frames[mercyFrameIndex];
@@ -264,8 +220,8 @@ function drawJack() {
   const jackWidth = 90;
   const jackHeight = 90;
   const currentTime = performance.now();
-  const genjiName = translations.characters?.genji || 'Genji';
-  const jackName = translations.characters?.jack || 'Jack';
+  const genjiName = t('characters.genji');
+  const jackName = t('characters.jack');
 
   if (isJackVisible) {
     ctx.fillStyle = 'white';
@@ -283,9 +239,7 @@ function drawJack() {
       jackCurrentDialogue = 'now_die';
       drawDialogue(jackPosition.x + jackWidth / 2, jackPosition.y - 10, jackCurrentDialogue);
 
-      setTimeout(() => {
-        jackCurrentDialogue = '';
-      }, 500);
+      setTimeout(() => { jackCurrentDialogue = ''; }, 500);
     }, 1500);
   }
 
@@ -306,21 +260,14 @@ function drawJack() {
 
   let frame;
   switch (jackState) {
-    case 'neutral1':
-      frame = jackNeutralFrames[0];
-      break;
-    case 'neutral2':
-      frame = jackNeutralFrames[1];
-      break;
-    case 'guard':
-      frame = jackGuardFrames[jackGuardFrameIndex];
-      break;
+    case 'neutral1': frame = jackNeutralFrames[0]; break;
+    case 'neutral2': frame = jackNeutralFrames[1]; break;
+    case 'guard':    frame = jackGuardFrames[jackGuardFrameIndex]; break;
     case 'attack':
       frame = jackAttackFrames[jackAttackFrameIndex];
       if (currentTime - jackLastFrameTime > 150) {
         jackAttackFrameIndex++;
         jackLastFrameTime = currentTime;
-
         if (jackAttackFrameIndex >= jackAttackFrames.length) {
           jackAttackAnimationInProgress = false;
           jackState = 'neutral1';
@@ -333,9 +280,7 @@ function drawJack() {
     ctx.drawImage(frame, jackPosition.x, jackPosition.y, jackWidth, jackHeight);
   }
 
-  if (jackState === 'attack') {
-    jackPosition.x -= 2;
-  }
+  if (jackState === 'attack') jackPosition.x -= 2;
 
   if (jackCurrentDialogue) {
     drawDialogue(jackPosition.x + jackWidth / 2, jackPosition.y - 10, jackCurrentDialogue);
@@ -344,22 +289,20 @@ function drawJack() {
 
 function drawCharacters() {
   if (isFreeMode) {
+    const mercyX = canvas.width - 100;
+    const mercyY = isFreeMode ? 120 : 20;
+    const mercyWidth = 60;
     ctx.fillStyle = 'white';
     ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'center';
-
-    ctx.fillText(
-      translations.characters.genji,
-      genji.x + genji.width / 2,
-      genji.y + genjiYOffset - 10
-    );
-    ctx.fillText(translations.characters.jack, jackPosition.x + 45, jackPosition.y - 10);
-    ctx.fillText(translations.characters.mercy, mercyX + mercyWidth / 2, mercyY - 10);
+    ctx.fillText(t('characters.genji'), genji.x + genji.width / 2, genji.y + genjiYOffset - 10);
+    ctx.fillText(t('characters.jack'), jackPosition.x + 45, jackPosition.y - 10);
+    ctx.fillText(t('characters.mercy'), mercyX + mercyWidth / 2, mercyY - 10);
   }
 }
 
 function drawDialogue(x, y, key) {
-  const text = translations.dialogues?.[key] || 'Text Missing';
+  const text = t(`dialogues.${key}`);
 
   const padding = 10;
   const fontSize = 14;
@@ -414,13 +357,7 @@ function getObstacleImage() {
 
 function generateObstacle() {
   const obstacleImage = getObstacleImage();
-  const obstacle = {
-    x: canvas.width,
-    y: 150,
-    width: 50,
-    height: 50,
-    image: obstacleImage,
-  };
+  const obstacle = { x: canvas.width, y: 150, width: 50, height: 50, image: obstacleImage };
   obstacles.push(obstacle);
 }
 
@@ -428,9 +365,7 @@ function drawObstacles() {
   for (let i = 0; i < obstacles.length; i++) {
     const obs = obstacles[i];
     obs.x -= 6;
-
     ctx.drawImage(obs.image, obs.x, obs.y, obs.width, obs.height);
-
     if (obs.x + obs.width < 0) obstacles.splice(i, 1);
   }
 }
@@ -444,9 +379,7 @@ function updateGame() {
     drawMercy();
     drawJack();
 
-    if (!postGameOverTimeout) {
-      postGameOverTimeout = performance.now();
-    }
+    if (!postGameOverTimeout) postGameOverTimeout = performance.now();
 
     if (jackAttackAnimationInProgress) {
       animationFrame = requestAnimationFrame(updateGame);
@@ -465,9 +398,7 @@ function updateGame() {
     drawJack();
     drawObstacles();
 
-    if (!postGameOverTimeout) {
-      postGameOverTimeout = performance.now();
-    }
+    if (!postGameOverTimeout) postGameOverTimeout = performance.now();
     if (performance.now() - postGameOverTimeout > 2000) {
       cancelAnimationFrame(animationFrame);
       return;
@@ -487,9 +418,7 @@ function updateGame() {
 
     if (isFreeMode) {
       if (!isJackVisible) {
-        setTimeout(() => {
-          isJackVisible = true;
-        }, 2000);
+        setTimeout(() => { isJackVisible = true; }, 2000);
       }
       const jackX = canvas.width / 2 + 50;
       const distance = Math.abs(genji.x - jackX);
@@ -536,17 +465,15 @@ function updateGame() {
       isFreeMode = true;
       obstacles = [];
       maxScoreReached = true;
-
       stopAllSounds(sounds.gameFreemode);
       safePlay(sounds.gameFreemode);
     }
 
-    if (!maxScoreReached) {
-      score++;
-    }
+    if (!maxScoreReached) score++;
 
-    scoreDisplay.textContent = `${translations.score} ${score}`;
-    highScoreDisplay.textContent = `${translations.highest_score} ${highScore}`;
+    restartButton.textContent = t('common.restart_button');
+    scoreDisplay.textContent = `${t('common.score')} ${score}`;
+    highScoreDisplay.textContent = `${t('common.highest_score')} ${highScore}`;
 
     frameCount++;
   }
@@ -555,8 +482,8 @@ function updateGame() {
 }
 
 function displayGameOver() {
-  const gameOverText = translations?.gameplay?.game_over || 'GAME OVER';
-  const restartPromptText = translations?.gameplay?.restart_prompt || 'Press Restart to play again';
+  const gameOverText = t('gameplay.game_over');
+  const restartPromptText = t('gameplay.restart_prompt');
 
   if (jackKilledGenji) {
     stopAllSounds(sounds.genjiKilled);
@@ -617,7 +544,6 @@ document.addEventListener('keydown', (e) => {
   if (key === ' ' && genji.y === 150) {
     genji.velocityY = -10;
     genji.isJumping = true;
-
     sounds.genjiJump.currentTime = 0;
     safePlay(sounds.genjiJump);
   }
@@ -685,9 +611,14 @@ restartButton.addEventListener('click', () => {
   updateGame();
 });
 
+resolveTranslations();
+initializeDialogues();
+applyTranslations();
+
 ctx.fillStyle = 'white';
 ctx.font = '20px Arial';
-ctx.fillText('Press Restart to start the game.', canvas.width / 4, canvas.height / 2);
+const firstHint = t('gameplay.press_restart_to_start');
+ctx.fillText(firstHint, canvas.width / 4, canvas.height / 2);
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -761,17 +692,16 @@ async function preloadImages() {
   }
 }
 preloadImages();
+
 function showStartScreen() {
-  const startPromptText = translations?.gameplay?.press_start || 'Press "Start Game" to begin!';
+  const startPromptText = t('gameplay.press_start');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const imgAspect = startScreenImage.width / startScreenImage.height;
   const canvasAspect = canvas.width / canvas.height;
 
-  let sourceX = 0,
-    sourceY = 0;
-  let sourceWidth = startScreenImage.width,
-    sourceHeight = startScreenImage.height;
+  let sourceX = 0, sourceY = 0;
+  let sourceWidth = startScreenImage.width, sourceHeight = startScreenImage.height;
 
   if (imgAspect > canvasAspect) {
     sourceWidth = startScreenImage.height * canvasAspect;
@@ -783,14 +713,8 @@ function showStartScreen() {
 
   ctx.drawImage(
     startScreenImage,
-    sourceX,
-    sourceY,
-    sourceWidth,
-    sourceHeight,
-    0,
-    0,
-    canvas.width,
-    canvas.height
+    sourceX, sourceY, sourceWidth, sourceHeight,
+    0, 0, canvas.width, canvas.height
   );
 
   ctx.font = 'bold 20px Arial';
@@ -823,20 +747,19 @@ function startGame() {
 
 // Volume
 const volumeSlider = document.getElementById('volumeRange');
-
 function updateGameVolume(level) {
   const v = Math.max(0, Math.min(100, Number(level))) / 100;
-  Object.values(sounds).forEach((a) => {
-    a.volume = v;
-  });
+  Object.values(sounds).forEach((a) => { a.volume = v; });
   localStorage.setItem('gp_game_volume', String(Math.round(v * 100)));
 }
-
 if (volumeSlider) {
   const saved = Number(localStorage.getItem('gp_game_volume') ?? 70);
   volumeSlider.value = String(saved);
   updateGameVolume(saved);
-
   volumeSlider.addEventListener('input', (e) => updateGameVolume(e.target.value));
   volumeSlider.addEventListener('change', (e) => updateGameVolume(e.target.value));
 }
+
+window.addEventListener('load', () => {
+  showStartScreen();
+});

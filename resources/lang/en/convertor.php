@@ -1,7 +1,15 @@
 <?php
 
 return [
-    // Hero / badges / tips
+    /*
+    |--------------------------------------------------------------------------
+    | Convertor (EN)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // HERO / BADGES / TIPS
+    // ──────────────────────────────────────────────────────────────────────
     'badge_tools' => 'Editor & tools',
     'hero_title_top' => 'OverPy → Workshop',
     'hero_title_bottom' => 'Convertor',
@@ -11,20 +19,26 @@ return [
     'tips_2' => 'Use Translate to change language.',
     'tips_3' => 'Open Map settings to tweak data.',
 
-    // Tabs / actions
+    // ──────────────────────────────────────────────────────────────────────
+    // TABS / ACTIONS
+    // ──────────────────────────────────────────────────────────────────────
     'convert_map' => 'Convert map',
     'help' => 'Help ?',
     'edit_map_data' => 'Edit map data',
     'copy_to_clipboard' => 'Copy map to clipboard',
     'map_placeholder' => 'map pasta here',
 
-    // Descriptions
+    // ──────────────────────────────────────────────────────────────────────
+    // DESCRIPTIONS
+    // ──────────────────────────────────────────────────────────────────────
     'description_line_1' => 'Experimental feature that attempts to load mapdata from map pasta.',
     'description_line_2' => 'Copy the entire mode pasta in the text field, select your client language and press convert.',
     'description_line_3' => 'Only supports data pasted from Overwatch. If you copy straight from the web interface, it might not work.',
     'description_line_4' => 'This might not import everything and it’s on you to check your map for mistakes in converting.',
 
-    // Capability lists
+    // ──────────────────────────────────────────────────────────────────────
+    // CAPABILITIES
+    // ──────────────────────────────────────────────────────────────────────
     'yes' => 'Yes',
     'yes_1' => 'Checkpoint positions',
     'yes_2' => 'Teleports',
@@ -43,7 +57,9 @@ return [
     'no_3' => 'if’s, returns or aborts in rule data',
     'no_4' => 'everything else',
 
-    // Controls
+    // ──────────────────────────────────────────────────────────────────────
+    // CONTROLS
+    // ──────────────────────────────────────────────────────────────────────
     'pasta_language'  => 'Pasta language',
     'target_language' => 'Target language',
     'convert_data'    => 'Convert data',
@@ -52,11 +68,15 @@ return [
     'global_settings' => 'Global Settings',
     'edit_mode'       => 'Edit mode',
 
-    // Footer info
+    // ──────────────────────────────────────────────────────────────────────
+    // FOOTER INFO
+    // ──────────────────────────────────────────────────────────────────────
     'footer_made_by' => 'Made by FishoFire / Reworked by Arrow',
     'footer_version' => 'Version 1.10.4D',
 
-    // Help steps
+    // ──────────────────────────────────────────────────────────────────────
+    // HELP STEPS
+    // ──────────────────────────────────────────────────────────────────────
     'step1'                     => 'Step 1',
     'step1_text'                => 'Copy settings from Overwatch. Open the workshop editor on code 54CRY and configure your map. You can also copy the settings from whatever map you want.',
     'step2'                     => 'Step 2',
@@ -71,6 +91,9 @@ return [
     'step5_text'                => 'Paste back into Workshop.',
     'please_use_converter'      => 'Please use the convertor first',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP DATA EDITOR
+    // ──────────────────────────────────────────────────────────────────────
     'map_data' => [
         'pasta_language'  => 'Pasta language',
         'target_language' => 'Target language',
@@ -135,11 +158,17 @@ return [
         'mapdata_error'         => 'The "map data" rule hasn\'t been extracted correctly.',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // COMMON MESSAGES
+    // ──────────────────────────────────────────────────────────────────────
     'common' => [
         'copy_clipboard'       => 'Command has been copied to clipboard',
         'copy_clipboard_error' => 'Failed to copy command to clipboard',
         'save_settings'        => 'Settings have been saved',
         'deleted_checkpoint'   => 'Checkpoint has been deleted',
         'cancel_changes'       => 'Changes have been cancelled',
+        'processing'           => 'Processing…',
+        'translating'          => 'Translating…',
+        'converting'           => 'Converting…',
     ],
 ];

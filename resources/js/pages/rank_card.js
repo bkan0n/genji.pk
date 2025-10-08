@@ -138,7 +138,7 @@ async function initRankCard() {
     if (!userId && /^\d+$/.test(typed)) userId = typed;
 
     if (!userId) {
-      toastError('Sélectionne un utilisateur dans la liste.');
+      toastError(t('errors.select_user'));
       return;
     }
 
@@ -216,7 +216,7 @@ async function initRankCard() {
 
     if (!me) {
       hideRankCardContainer();
-      badgeMasteryContent.innerHTML = `<p class="text-sm text-white/70">Aucun badge trouvé.</p>`;
+      badgeMasteryContent.innerHTML = `<p class="text-sm text-white/70">${t('no_badges_found')}</p>`;
     } else {
       await fetchUserMastery(me);
       badgeMasteryContent.dataset.loadedFor = String(me);
@@ -409,7 +409,7 @@ function setEditButtonsState(enabled) {
     b.classList.toggle('opacity-50', !effective);
 
     const tipKey = t('loading_rewards');
-    const msg = tipKey && tipKey !== 'loading_rewards' ? tipKey : 'Chargement des récompenses…';
+    const msg = tipKey && tipKey !== 'loading_rewards' ? tipKey : t('loading_rewards');
     if (!effective) b.setAttribute('title', msg);
     else b.removeAttribute('title');
   });
@@ -525,7 +525,7 @@ async function loadRankCardContent() {
       <div class="rank-card-container relative">
         <div class="relative overflow-hidden rounded-2xl ring-1 ring-white/10">
           <div class="background absolute inset-0">
-            <img src="${data.background_url || 'default-background.webp'}" alt="Background" class="h-full w-full object-cover">
+            <img src="${data.background_url || 'default-background.webp'}" alt="${t('alts.background')}" class="h-full w-full object-cover">
           </div>
 
           <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
@@ -547,13 +547,13 @@ async function loadRankCardContent() {
                       <span class="col-start-1 col-end-2"></span>
                       <span class="col-start-2 col-end-3"></span>
                       <span class="text-center">
-                        <img src="${MEDAL_ICON.gold}"   alt="Gold"   class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
+                        <img src="${MEDAL_ICON.gold}"   alt="${t('medals.gold')}"  class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
                       </span>
                       <span class="text-center">
-                        <img src="${MEDAL_ICON.silver}" alt="Silver" class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
+                        <img src="${MEDAL_ICON.silver}" alt="${t('medals.silver')}" class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
                       </span>
                       <span class="text-center">
-                        <img src="${MEDAL_ICON.bronze}" alt="Bronze" class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
+                        <img src="${MEDAL_ICON.bronze}" alt="${t('medals.bronze')}" class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
                       </span>
                     </div>
 
@@ -574,7 +574,7 @@ async function loadRankCardContent() {
                               <div class="progress progress-${slug} absolute left-0 top-0 h-full w-0" data-width="${pct}"></div>
                             </div>
                             <div class="pointer-events-none absolute -top-7 right-0 hidden rounded-md bg-black/80 px-2 py-1 text-[11px] text-white/90 ring-1 ring-white/10 group-hover:block">
-                              Completed: ${stats.completed} / ${stats.total}
+                              ${t('completed_total', { completed: stats.completed, total: stats.total })}
                             </div>
                           </div>
 
@@ -643,10 +643,10 @@ async function loadRankCardContent() {
                   <span class="player-rank-name text-sm text-white/90 leading-none">
                     ${data.rank_name}
                   </span>
-                  <img src="${data.rank_url || 'assets/default_rank.png'}" alt="Player Rank Badge" class="player-rank-badge h-5 sm:h-6 object-contain">
+                  <img src="${data.rank_url || 'assets/default_rank.png'}" alt="${t('alts.player_rank_badge')}" class="player-rank-badge h-5 sm:h-6 object-contain">
                 </div>
 
-                <img src="${data.avatar_url || 'assets/default_avatar.png'}" alt="Player Avatar"
+                <img src="${data.avatar_url || 'assets/default_avatar.png'}" alt="${t('alts.player_avatar')}"
                      class="player-avatar mt-4 w-full max-w-[240px] object-contain bg-transparent">
               </div>
             </div>
@@ -725,7 +725,7 @@ async function fetchUserRankCard(userId, opts = {}) {
   if (!noSpinner) showLoadingBar();
   try {
     const response = await fetch(endpoints.rankcard.data(userId), { credentials: 'same-origin' });
-    if (!response.ok) throw new Error("Erreur de connexion à l'API.");
+    if (!response.ok) throw new Error(t('errors.api_connection'));
     const data = await response.json();
     if (!data || data.error) {
       rankCardContent.innerHTML = '';
@@ -813,7 +813,7 @@ async function fetchUserRankCard(userId, opts = {}) {
                           .filter((b) => !!b.url)
                           .map(
                             (b) => `
-                              <img src="${b.url}" alt="${b.name || 'Badge'}"
+                              <img src="${b.url}" alt="${b.name || t('alts.badge')}"
                                     class="badge h-8 w-8 sm:h-10 sm:w-10 flex-none rounded-full ring-1 ring-white/10 object-cover">
                             `
                           )
@@ -959,13 +959,13 @@ async function fetchUserMastery(userId) {
 
   try {
     const r = await fetch(endpoints.rankcard.mastery(userId), { credentials: 'same-origin' });
-    if (!r.ok) throw new Error("Erreur de connexion à l'API.");
+    if (!r.ok) throw new Error(t('errors.api_connection'));
     const data = await r.json();
 
     scroller.innerHTML = '';
 
     if (!Array.isArray(data) || data.length === 0) {
-      scroller.innerHTML = `<p class="col-span-full text-sm text-white/70">Aucun badge trouvé.</p>`;
+      scroller.innerHTML = `<p class="col-span-full text-sm text-white/70">${t('no_badges_found')}</p>`;
       counter.textContent = '0';
       container.dataset.loadedFor = String(userId);
       return;
@@ -1019,7 +1019,7 @@ async function fetchUserMastery(userId) {
     container.dataset.loadedFor = String(userId);
   } catch (err) {
     console.error('Erreur badges user:', err);
-    scroller.innerHTML = `<p class="col-span-full text-sm text-rose-300">Erreur de chargement des badges.</p>`;
+    scroller.innerHTML = `<p class="col-span-full text-sm text-rose-300">${t('errors.badges_fetch_failed')}</p>`;
   }
 }
 
@@ -1212,7 +1212,7 @@ function createSearchSuggestions() {
     const ticket = ++inflight;
     try {
       const resp = await fetch(endpoints.autocomplete.users(q), { credentials: 'same-origin' });
-      if (!resp.ok) throw new Error('Erreur de chargement des suggestions.');
+      if (!resp.ok) throw new Error(t('errors.suggestions_failed'));
       const raw = await resp.json();
       if (ticket !== inflight) return;
       items = normalizeUserSuggestions(raw);
@@ -1510,7 +1510,7 @@ function initBadgesChanges() {
       })
       .catch((e) => {
         console.error(e);
-        toastError('Erreur sauvegarde badges');
+        toastError(t('errors.badges_save_failed'));
       });
   });
 
@@ -1732,7 +1732,7 @@ function initBackgroundChanges() {
       })
       .catch((e) => {
         console.error('Erreur sauvegarde bg:', e);
-        toastError('Erreur sauvegarde background');
+        toastError(t('errors.background_save_failed'));
       });
   });
 
@@ -1770,7 +1770,7 @@ function updateBackgroundContainer(res) {
   }
   const img = document.createElement('img');
   img.src = res.url;
-  img.alt = res.name || 'Background';
+  img.alt = res.name || t('alts.background');
   img.className = 'background-image h-full w-full object-cover';
   bg.appendChild(img);
 }
@@ -2067,7 +2067,7 @@ function initAvatarChanges() {
       })
       .catch((e) => {
         console.error('Erreur sauvegarde avatar:', e);
-        toastError('Erreur sauvegarde avatar');
+        toastError(t('errors.avatar_save_failed'));
       });
   });
 
@@ -2096,7 +2096,7 @@ function updatePlayerAvatar(data) {
     return;
   }
   img.src = data.url;
-  img.alt = data.name || 'Player Avatar';
+  img.alt = data.name || t('alts.player_avatar');
 }
 
 /* =========================
@@ -2111,7 +2111,7 @@ function preloadAvatarPreviews() {
   if (skinPreview) {
     fetch(endpoints.rankcard.avatar.skin.get(me), { credentials: 'same-origin' })
       .then((r) => {
-        if (!r.ok) throw new Error('Erreur skins.');
+        if (!r.ok) throw new Error(t('errors.skins_fetch_failed'));
         return r.json();
       })
       .then((data) => {
@@ -2131,7 +2131,7 @@ function preloadAvatarPreviews() {
   if (posePreview) {
     fetch(endpoints.rankcard.avatar.pose.get(me), { credentials: 'same-origin' })
       .then((r) => {
-        if (!r.ok) throw new Error('Erreur poses.');
+        if (!r.ok) throw new Error(t('errors.poses_fetch_failed'));
         return r.json();
       })
       .then((data) => {
@@ -2155,7 +2155,7 @@ function preloadAvatarOptions() {
 
   return fetch(endpoints.lootbox.userRewards(me), { credentials: 'same-origin' })
     .then((r) => {
-      if (!r.ok) throw new Error('Erreur chargement récompenses.');
+      if (!r.ok) throw new Error(t('errors.rewards_fetch_failed'));
       return r.json();
     })
     .then((data) => {
@@ -2314,10 +2314,9 @@ function rankCardSkeletonHTML() {
           <div class="h-full w-full bg-white/10"></div>
         </div>
 
-        <!-- Overlay gradient identique -->
         <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
 
-          <!-- Titre joueur (mêmes classes/typo) -->
+          <!-- Titre joueur -->
           <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight">
             <div class="mx-auto h-[1.2em] w-56 sm:w-72 rounded bg-white/10 animate-pulse"></div>
           </div>
@@ -2329,7 +2328,7 @@ function rankCardSkeletonHTML() {
             <div class="rank-details-container md:col-start-1 md:row-start-1 space-y-4">
               <div class="rank-section-container h-[410px] rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col overflow-hidden">
 
-                <!-- En-têtes médailles (même grille) -->
+                <!-- Médailles -->
                 <div class="rank-section space-y-3">
                   <div class="medals-header grid items-center text-sm text-white/80 gap-2
                               grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
@@ -2340,7 +2339,7 @@ function rankCardSkeletonHTML() {
                     <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
                   </div>
 
-                  <!-- Lignes difficultés (6 pour coller à easy…hell) -->
+                  <!-- Difficultés -->
                   ${Array.from({ length: 6 }).map(() => `
                     <div class="rank-row grid items-center gap-2
                                 grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
@@ -2357,7 +2356,7 @@ function rankCardSkeletonHTML() {
                   `).join('')}
                 </div>
 
-                <!-- Stats inline (même structure/classes) -->
+                <!-- Stats inline -->
                 <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
                   ${Array.from({ length: 3 }).map(() => `
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
@@ -2367,7 +2366,7 @@ function rankCardSkeletonHTML() {
                   `).join('')}
                 </div>
 
-                <!-- Bas: badges + mini stats (même DOM & classes) -->
+                <!-- Bas: badges + mini stats -->
                 <div class="combined-container mt-3 grid gap-4 md:grid-cols-2 items-stretch">
                   <div class="badges-container rounded-xl bg-white/5 p-2 ring-1 ring-white/10 min-w-0 overflow-hidden">
                     <div class="badges-grid grid grid-cols-[repeat(auto-fit,minmax(2.5rem,1fr))] gap-2 sm:gap-3 place-items-center">
@@ -2396,7 +2395,6 @@ function rankCardSkeletonHTML() {
                 <div class="h-5 w-5 rounded bg-white/10 animate-pulse"></div>
               </div>
 
-              <!-- boîte avatar : un peu moins large et plus haute -->
               <div class="player-avatar mt-4 w-full max-w-[220px]">
                 <div class="w-full rounded-lg bg-white/10 animate-pulse aspect-[3/4] sm:aspect-[2/3]"></div>
               </div>

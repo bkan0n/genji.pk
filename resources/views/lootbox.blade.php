@@ -81,7 +81,7 @@
         </button>
         <button
           class="info-button cursor-pointer rounded-full border border-white/10 bg-zinc-900/60 p-2 hover:bg-white/5"
-          aria-label="Infos"
+          aria-label="{{ __('lootbox.ui.info') }}"
         >
           <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -106,7 +106,7 @@
         >
           <button
             class="close-button absolute top-4 right-4 rounded-md p-1 hover:bg-white/10"
-            aria-label="Close Modal"
+            aria-label="{{ __('lootbox.ui.close_modal') }}"
           >
             <span class="text-lg leading-none">&times;</span>
           </button>

@@ -1,30 +1,46 @@
 <?php
 
 return [
-    // Meta
+    /*
+    |--------------------------------------------------------------------------
+    | Tutorials (FR)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // META
+    // ──────────────────────────────────────────────────────────────────────
     'pageTitle' => 'Genji Parkour - Tutoriel',
     'ogTitle' => 'Genji Parkour - Tutoriel',
-    'ogDescription' => 'Apprenez les techniques de parkour de Genji, avec tutoriels et speedrunning.',
+    'ogDescription' => 'Apprenez les techniques de Genji Parkour, des tutoriels et le speedrunning.',
 
-    // Section 1
-    'genjiParkourTechsTitle' => 'Techniques de parkour de Genji',
-    'genjiParkourTechsDescription' => 'Apprenez les techniques essentielles du parkour de Genji avec des explications détaillées et des exemples.',
-    'scrollDown' => 'Faites défiler',
+    // ──────────────────────────────────────────────────────────────────────
+    // SECTION 1 — GENJI PARKOUR TECHNIQUES
+    // ──────────────────────────────────────────────────────────────────────
+    'genjiParkourTechsTitle' => 'Techniques de Genji Parkour',
+    'genjiParkourTechsDescription' => 'Apprenez les techniques de base de Genji Parkour avec des explications détaillées et des exemples.',
+    'scrollDown' => 'Faire défiler',
 
-    // Section 2
-    'techniquesImageAlt' => 'Aperçu des techniques de parkour de Genji',
+    // ──────────────────────────────────────────────────────────────────────
+    // SECTION 2 — TUTORIAL
+    // ──────────────────────────────────────────────────────────────────────
+    'techniquesImageAlt' => 'Aperçu des techniques de Genji Parkour',
     'tutorialTitle' => 'Tutoriel',
-    'tutorialDescription' => 'Un tutoriel complet pour démarrer rapidement.',
+    'tutorialDescription' => 'Un tutoriel complet pour bien démarrer.',
     'codeLabel' => 'Code',
     'codeValue' => 'HBARG',
-    'copyTooltip' => 'Cliquez pour copier',
+    'copyTooltip' => 'Cliquer pour copier',
 
-    // Section 3
-    'mapCreation' => 'Création de cartes',
+    // ──────────────────────────────────────────────────────────────────────
+    // SECTION 3 — MAP CREATION
+    // ──────────────────────────────────────────────────────────────────────
+    'mapCreation' => 'Création de carte',
     'mapCreationDescription' => 'Comprenez comment les cartes sont conçues et quels outils sont utilisés.',
 
-    // Section 4
+    // ──────────────────────────────────────────────────────────────────────
+    // SECTION 4 — SPEEDRUNNER
+    // ──────────────────────────────────────────────────────────────────────
     'speedrunnerTitle' => 'Speedrunner',
-    'speedrunnerDescription' => 'Conseils et astuces pour améliorer vos runs.',
-    'backToTop' => 'Retour en haut',
+    'speedrunnerDescription' => 'Astuces et conseils pour améliorer vos runs.',
+    'backToTop' => 'Haut de page',
 ];

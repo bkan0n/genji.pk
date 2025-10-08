@@ -175,7 +175,7 @@ function getRandomRewards(user_id, keyType) {
       const rewards = Array.isArray(response) ? response : response?.data;
       if (!Array.isArray(rewards)) {
         console.error('Format inattendu:', response);
-        showErrorMessage(t('popup.error_generic') || 'Unexpected rewards format.');
+        showErrorMessage(t('popup.unexpected_format'));
         restoreCrate();
         return;
       }
@@ -185,7 +185,7 @@ function getRandomRewards(user_id, keyType) {
       proceedWithLootBoxOpening();
     },
     error: function () {
-      showErrorMessage(t('popup.error_generic') || 'Network error.');
+      showErrorMessage(t('popup.network_error'));
       restoreCrate();
     },
   });
@@ -199,7 +199,7 @@ function fetchKeys(user_id, selectedKeyType = 'Classic') {
     success: function (response) {
       if (response?.error) {
         console.error('Erreur de récupération des clés :', response.error);
-        $('#key-count').html("<i class='fas fa-key mr-1'></i> Error fetching keys");
+        $('#key-count').html("<i class='fas fa-key mr-1'></i> " + t('popup.error_fetching_keys'));
         return;
       }
       const list = Array.isArray(response) ? response : response?.data || [];
@@ -208,7 +208,7 @@ function fetchKeys(user_id, selectedKeyType = 'Classic') {
       updateKeyDisplay();
     },
     error: function () {
-      $('#key-count').html("<i class='fas fa-key mr-1'></i> Error fetching keys");
+      $('#key-count').html("<i class='fas fa-key mr-1'></i> " + t('popup.error_fetching_keys'));
     },
   });
 }
@@ -270,12 +270,12 @@ $('.generate').on('click', function () {
       if (keys > 0) {
         getRandomRewards(user_id, rewardKeyType);
       } else {
-        showErrorMessage(t('lootbox.no_keys_available'));
+        showErrorMessage(t('ui.no_keys_available'));
         restoreCrate();
       }
     },
     error: function () {
-      showErrorMessage(t('popup.error_generic') || 'Network error.');
+      showErrorMessage(t('popup.network_error'));
       restoreCrate();
     },
   });
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.role = 'option';
         item.className =
           'w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-white/5 border-b border-white/5 last:border-b-0';
-        item.textContent = kt;
+        item.textContent = t(`ui.key_types.${kt}`) || kt;
         item.addEventListener('click', () => {
           rewardKeyType = kt;
           keyTypeButton.textContent = kt;
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderDropdown();
-    keyTypeButton.textContent = rewardKeyType;
+    keyTypeButton.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
     fetchKeys(user_id, rewardKeyType);
   }
 });
@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       rewardsContainer.classList.remove('hidden');
     } catch (err) {
       console.error('Error fetching rewards:', err);
-      rewardsContainer.innerHTML = `<p class="text-sm text-zinc-300">Error loading rewards.</p>`;
+      rewardsContainer.innerHTML = `<p class="text-sm text-zinc-300">${t('ui.error_loading_rewards')}</p>`;
       rewardsContainer.classList.remove('hidden');
     }
   }

@@ -1,9 +1,15 @@
 <?php
 
 return [
-    // -------------------------------------------------
-    // Métadonnées (balise <head> de la page)
-    // -------------------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Home (FR)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // META (PAGE <HEAD>)
+    // ──────────────────────────────────────────────────────────────────────
     'meta' => [
         'title' => 'Genji Parkour - Accueil',
         'og' => [
@@ -12,9 +18,9 @@ return [
         ],
     ],
 
-    // -------------------------------------------------
-    // Hero
-    // -------------------------------------------------
+    // ──────────────────────────────────────────────────────────────────────
+    // HERO
+    // ──────────────────────────────────────────────────────────────────────
     'hero' => [
         'badge' => 'Communauté en direct · 24/7',
         'title' => 'GENJI PARKOUR',
@@ -27,19 +33,18 @@ return [
         'stats' => [
             'players' => '1k+ joueurs',
             'maps' => '300+ cartes',
-            'languages' => 'multi-langues',
+            'languages' => 'multilingue',
         ],
     ],
 
-    // -------------------------------------------------
-    // Cartes populaires (carte latérale)
-    // -------------------------------------------------
+    // ──────────────────────────────────────────────────────────────────────
+    // TOP MAPS (SIDEBAR CARD)
+    // ──────────────────────────────────────────────────────────────────────
     'top_maps' => [
         'title' => 'Meilleures cartes',
         'see_all' => 'Tout voir →',
         'play' => 'Jouer',
 
-        // (facultatif) exemples de lignes affichées dans la carte
         'items' => [
             [
                 'name' => 'Shuriken Trials',
@@ -48,7 +53,7 @@ return [
             ],
             [
                 'name' => 'Dragon’s Path',
-                'difficulty' => 'Moyen',
+                'difficulty' => 'Moyenne',
                 'wr' => '08:12 WR',
             ],
             [
@@ -59,9 +64,9 @@ return [
         ],
     ],
 
-    // -------------------------------------------------
-    // Cartes de fonctionnalités
-    // -------------------------------------------------
+    // ──────────────────────────────────────────────────────────────────────
+    // FEATURE CARDS
+    // ──────────────────────────────────────────────────────────────────────
     'features' => [
         'title' => 'Tout pour la communauté',
         'join' => 'Rejoindre →',
@@ -73,14 +78,14 @@ return [
                 'description' => 'Suivi des records, filtres de difficulté, profils joueurs et badges.',
                 'links' => [
                     'leaderboard' => 'Classement',
-                    'stats' => 'Statistiques',
+                    'stats' => 'Stats',
                 ],
             ],
 
             'guides' => [
-                'title' => 'Guides & tutoriels',
+                'title' => 'Guides & tutos',
                 'pill' => 'Nouveau',
-                'description' => 'Astuces, mécaniques avancées, parcours optimisés, vidéos intégrées.',
+                'description' => 'Astuces, mécaniques avancées, routes optimisées, vidéos intégrées.',
                 'links' => [
                     'guides' => 'Guides',
                     'submit' => 'Soumettre',
@@ -99,9 +104,9 @@ return [
         ],
     ],
 
-    // -------------------------------------------------
-    // Bandeau d’appel à l’action (CTA)
-    // -------------------------------------------------
+    // ──────────────────────────────────────────────────────────────────────
+    // CTA STRIP
+    // ──────────────────────────────────────────────────────────────────────
     'cta' => [
         'title' => 'Prêt à grimper au classement ?',
         'description' => 'Connectez-vous pour sauvegarder vos records et débloquer des récompenses.',

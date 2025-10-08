@@ -1,22 +1,36 @@
 <?php
 
 return [
-    // Meta / page
+    /*
+    |--------------------------------------------------------------------------
+    | Search (EN)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // META / PAGE
+    // ──────────────────────────────────────────────────────────────────────
     'page_title' => 'Search',
     'og_title' => 'Genji Parkour - Search',
     'og_description' => 'Find maps, completions, guides and personal records.',
 
-    // Header
+    // ──────────────────────────────────────────────────────────────────────
+    // HEADER
+    // ──────────────────────────────────────────────────────────────────────
     'title' => 'Maps',
     'subtitle' => 'search · completions · guides · personal records',
 
-    // Tabs
+    // ──────────────────────────────────────────────────────────────────────
+    // TABS
+    // ──────────────────────────────────────────────────────────────────────
     'map_search' => 'Map Search',
     'completions' => 'Completions',
     'guides' => 'Guides',
     'personal_records' => 'Personal Records',
 
-    // Toolbar / helpers
+    // ──────────────────────────────────────────────────────────────────────
+    // TOOLBAR & HELPERS
+    // ──────────────────────────────────────────────────────────────────────
     'select_mode' => 'Select a search mode',
     'add_filter_hint' => 'Add a filter or click ✔',
     'screenshot' => 'Screenshot',
@@ -25,13 +39,17 @@ return [
     'watch' => 'Watch',
     'na' => 'N/A',
 
-    // Placeholders
+    // ──────────────────────────────────────────────────────────────────────
+    // PLACEHOLDERS
+    // ──────────────────────────────────────────────────────────────────────
     'map_name_placeholder' => 'Map Name',
     'map_code_placeholder' => 'Map Code',
     'nickname_placeholder' => 'Nickname',
     'completion' => 'Completion',
 
-    // Filters toolbar
+    // ──────────────────────────────────────────────────────────────────────
+    // FILTERS TOOLBAR (UI toolbar options)
+    // ──────────────────────────────────────────────────────────────────────
     'filters_toolbar' => [
         'creator' => 'Creator',
         'enter_creator' => 'Enter creator',
@@ -67,7 +85,9 @@ return [
         'clear_filters' => 'Clear filters',
     ],
 
-    // --- Added sections ---
+    // ──────────────────────────────────────────────────────────────────────
+    // FILTERS (common labels used across views)
+    // ──────────────────────────────────────────────────────────────────────
     'filters' => [
         'map_name' => 'Map Name',
         'map_code' => 'Map Code',
@@ -81,6 +101,9 @@ return [
         'player_name' => 'Player Name',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MECHANICS
+    // ──────────────────────────────────────────────────────────────────────
     'mechanics' => [
         'edge_climb' => 'Edge Climb',
         'bhop' => 'Bhop',
@@ -103,6 +126,9 @@ return [
         'standing_create_bhop' => 'Standing Create Bhop',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // RESTRICTIONS
+    // ──────────────────────────────────────────────────────────────────────
     'restrictions' => [
         'dash_start' => 'Dash Start',
         'triple_jump' => 'Triple Jump',
@@ -114,6 +140,9 @@ return [
         'wall_climb' => 'Wall Climb',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP TYPE
+    // ──────────────────────────────────────────────────────────────────────
     'map_type' => [
         'classic' => 'Classic',
         'increasing_difficulty' => 'Increasing Difficulty',
@@ -121,6 +150,9 @@ return [
         'practice' => 'Practice',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP NAME (canonical list)
+    // ──────────────────────────────────────────────────────────────────────
     'map_name' => [
         'aatlis' => 'Aatlis',
         'ayutthaya' => 'Ayutthaya',
@@ -186,6 +218,9 @@ return [
         'throne_of_anubis' => 'Throne of Anubis',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // POPUP / MISC
+    // ──────────────────────────────────────────────────────────────────────
     'popup' => [
         'login_required_btn' => 'Login required',
         'login_required_msg' => 'Login is required on this page',
@@ -209,6 +244,9 @@ return [
         'copy_failed' => 'Failed to copy map code',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // PAGINATION
+    // ──────────────────────────────────────────────────────────────────────
     'pagination' => [
         'first' => '« First',
         'prev' => '‹ Prev',
@@ -217,6 +255,9 @@ return [
         'page_of' => 'Page {current} of {total}',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // CHARTS
+    // ──────────────────────────────────────────────────────────────────────
     'chart' => [
         'mapDifficultyDistribution' => 'Map difficulty Distribution',
         'amountOfMaps' => 'Amount of maps',
@@ -254,6 +295,9 @@ return [
         'time_played_per_difficulty' => 'Time played per difficulty',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // TABLE HEADERS
+    // ──────────────────────────────────────────────────────────────────────
     'thead' => [
         'mapCode' => 'Code',
         'mapName' => 'Name',

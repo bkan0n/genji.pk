@@ -1,25 +1,41 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Statistics (EN)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // HEADERS
+    // ──────────────────────────────────────────────────────────────────────
     'graphs' => 'Graphs',
     'graphsAndInsights' => 'Graphs & Insights',
     'subtitle' => 'player tiers · map difficulty · popularity · quality',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // CHARTS & TITLES
+    // ──────────────────────────────────────────────────────────────────────
     'mapDifficultyDistribution' => 'Maps per Difficulty',
     'popularCreators' => 'Popular Creators',
     'topMapsFor' => 'Most Played Maps',
     'difficulty' => 'Difficulty',
-
     'totalMapCounts' => 'Total Map Counts',
     'top25' => 'Top 25',
-
     'timePlayedPerDifficulty' => 'Time Played per Difficulty',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // RANK DISTRIBUTION TITLES
+    // ──────────────────────────────────────────────────────────────────────
     'rankDistribution' => 'Distribution of community ranks / skill tiers',
     'mapRankDistribution' => 'Ranks distribution',
     'skillRank' => 'Skill tiers',
     'tierRank' => 'Community ranks',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // AXES / LABELS / TOOLTIP
+    // ──────────────────────────────────────────────────────────────────────
     'amountOfMaps' => 'Amount of maps',
     'difficultyLevel' => 'Difficulty level',
     'mapAmountLogScale' => 'Amount of maps (Log Scale)',

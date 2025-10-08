@@ -1,6 +1,15 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Navbar (FR)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // NAVIGATION
+    // ──────────────────────────────────────────────────────────────────────
     'home' => 'Accueil',
     'leaderboard' => 'Classement',
     'search' => 'Recherche',
@@ -8,11 +17,19 @@ return [
     'guides' => 'Guides',
     'completions' => 'Completions',
     'community' => 'Communauté',
-    'news' => 'Actualités',
-    'newsfeed' => 'Fil d’actualité',
+    'news' => 'Actus',
+    'newsfeed' => 'Newsfeed',
     'announcements' => 'Annonces',
     'tutorial' => 'Tutoriels',
     'statistics' => 'Statistiques',
+    'submit' => 'Soumettre',
+    'submit_record' => 'Record',
+    'submit_playtest' => 'Vote playtest',
+    'submit_map' => 'Carte',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // AUTH & PROFILE
+    // ──────────────────────────────────────────────────────────────────────
     'login' => 'Connexion',
     'logout' => 'Déconnexion',
     'lootbox' => 'Lootbox',
@@ -22,6 +39,10 @@ return [
     'dashboard' => 'Tableau de bord',
     'settings' => 'Paramètres',
     'submit' => 'Soumettre',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // BRAND
+    // ──────────────────────────────────────────────────────────────────────
     'brand_title' => 'GENJI PARKOUR',
     'brand_tagline' => 'communauté & outils',
 ];

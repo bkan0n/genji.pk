@@ -1,6 +1,15 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Lootbox (FR)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // META
+    // ──────────────────────────────────────────────────────────────────────
     'meta' => [
         'title' => 'Genji Parkour - Lootbox',
         'og' => [
@@ -9,29 +18,69 @@ return [
         ],
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // HEADER
+    // ──────────────────────────────────────────────────────────────────────
     'header' => [
         'title' => 'Lootbox',
-        'subtitle' => 'Ouvrez des packs · Gagnez des récompenses · Collectionnez des cosmétiques',
+        'subtitle' => 'Ouvrir des packs · Gagner des récompenses · Collectionner des cosmétiques',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // UI
+    // ──────────────────────────────────────────────────────────────────────
     'ui' => [
-        'give_key' => 'Attribuer une clé',
+        'give_key' => 'Donner une clé',
         'open_pack' => 'Ouvrir un pack',
+        'select_key_type' => 'Sélectionner le type de clé',
+        'info' => 'Infos',
+        'close_modal' => 'Fermer la fenêtre',
+
         'pick_a_card' => 'Choisissez une carte',
-        'common' => 'Commun',
-        'rare' => 'Rare',
-        'epic' => 'Épique',
-        'legendary' => 'Légendaire',
-        'no_keys_available' => 'Aucune clé disponible',
-        'select_key_type' => 'Sélectionnez le type de clé',
-        'drop_rates' => 'Taux d’obtention',
-        'lootbox_infos' => 'Une clé vous est attribuée lorsque vous passez à un nouveau sous-palier. Par exemple, de Newcomer I → Newcomer II.',
         'rewards_types' => [
             'spray' => 'Spray',
             'skin' => 'Skin',
             'pose' => 'Pose',
-            'background' => 'Arrière-plan',
+            'background' => 'Fond d’écran',
             'coins' => 'Pièces',
         ],
+
+        'common' => 'Commune',
+        'rare' => 'Rare',
+        'epic' => 'Épique',
+        'legendary' => 'Légendaire',
+
+        'drop_rates' => 'Taux d’obtention',
+        'lootbox_infos' => 'Vous recevez une clé quand vous passez à un nouveau sous-palier. Par exemple : de Newcomer I → Newcomer II.',
+
+        'no_keys_available' => 'Aucune clé disponible',
+        'session_expired' => 'Session expirée. Ouvrez un nouveau pack.',
+        'error_fetching_keys' => 'Erreur lors de la récupération des clés',
+        'error_loading_rewards' => 'Erreur lors du chargement des récompenses.',
+
+        'key_types' => [
+            'Classic' => 'Classique',
+            'Winter'  => 'Hiver',
+        ],
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // POPUP / ERRORS
+    // ──────────────────────────────────────────────────────────────────────
+    'popup' => [
+        'error_generic' => 'Un problème est survenu. Veuillez réessayer.',
+        'network_error' => 'Erreur réseau.',
+        'unexpected_format' => 'Format de récompenses inattendu.',
+        'click_required' => 'Une action de l’utilisateur est requise.',
+        'login_required_msg' => 'Connexion requise.',
+        'login_required_btn' => 'Connexion',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // LOOTBOX (duplicate strings for convenience)
+    // ──────────────────────────────────────────────────────────────────────
+    'lootbox' => [
+        'no_keys_available' => 'Aucune clé disponible',
+        'session_expired'   => 'Session expirée. Ouvrez un nouveau pack.',
     ],
 ];

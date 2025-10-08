@@ -1,17 +1,35 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Newsfeed (EN)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // HEADER
+    // ──────────────────────────────────────────────────────────────────────
     'title' => 'Newsfeed',
     'subtitle' => 'updates · records · guides · announcements',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // SEARCH & RESET
+    // ──────────────────────────────────────────────────────────────────────
     'search_placeholder' => 'Search posts, tags, authors…',
     'reset' => 'Reset',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // TABS
+    // ──────────────────────────────────────────────────────────────────────
     'tabs' => [
         'newsfeed' => 'Newsfeed',
         'completions' => 'Completions',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // TAGS
+    // ──────────────────────────────────────────────────────────────────────
     'tags' => [
         'all' => 'All',
         'announcement' => 'Announcement',
@@ -21,6 +39,9 @@ return [
         'record' => 'Record',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // SIDEBAR
+    // ──────────────────────────────────────────────────────────────────────
     'sidebar' => [
         'community_picks' => 'Community Picks',
         'see_all' => 'See all →',
@@ -28,20 +49,24 @@ return [
         'submit_title' => 'Submit your map',
         'submit_desc' => 'Share your creation and get feedback from the community.',
         'submit_cta' => 'Submit',
-        'changes' => [
-            '[v1.10.3F] Fixed dash reset bug on portals',
-            '[v1.10.3E] Added new “Difficulty HUD”',
-            '[v1.10.2]  Improved leaderboard performance',
-        ],
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // EMPTY STATE
+    // ──────────────────────────────────────────────────────────────────────
     'empty' => [
         'title' => 'No posts match your filters',
         'subtitle' => 'Try changing the tag or search terms.',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // ACTIONS
+    // ──────────────────────────────────────────────────────────────────────
     'load_more' => 'Load more',
 
+    // ──────────────────────────────────────────────────────────────────────
+    // TABLE HEADERS (shared)
+    // ──────────────────────────────────────────────────────────────────────
     'thead' => [
         'mapCheckpoints' => 'Checkpoints',
         'mapQuality' => 'Quality',
@@ -51,6 +76,9 @@ return [
         'mapDescription' => 'Description',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // COMMON
+    // ──────────────────────────────────────────────────────────────────────
     'common' => [
         'na' => 'N/A',
         'no_description' => 'No description available',
@@ -58,8 +86,23 @@ return [
         'loading' => 'Loading...',
         'to_see_details' => 'to see the details!',
         'timestamp_format' => '{month} {day}, {year} at {hour}:{minute} {AMorPM}',
+        'reason' => 'Reason',
+        'not_found' => 'Not found',
+        'video_embed_failed' => 'The video cannot be embedded.',
+        'bot' => 'BOT',
+        'upvote' => 'Upvote',
+        'missing_ids' => 'Missing user or message id',
+        'empty' => 'Empty',
+        'medals' => [
+            'gold' => 'Gold',
+            'silver' => 'Silver',
+            'bronze' => 'Bronze',
+        ],
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // PAGINATION
+    // ──────────────────────────────────────────────────────────────────────
     'pagination' => [
         'first' => '« First',
         'prev' => '‹ Prev',
@@ -68,6 +111,9 @@ return [
         'page_of' => 'Page {current} of {total}',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MECHANICS
+    // ──────────────────────────────────────────────────────────────────────
     'mechanics' => [
         'edge_climb' => 'Edge Climb',
         'bhop' => 'Bhop',
@@ -90,6 +136,9 @@ return [
         'standing_create_bhop' => 'Standing Create Bhop',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // RESTRICTIONS
+    // ──────────────────────────────────────────────────────────────────────
     'restrictions' => [
         'dash_start' => 'Dash Start',
         'triple_jump' => 'Triple Jump',
@@ -101,6 +150,9 @@ return [
         'wall_climb' => 'Wall Climb',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // NEWSFEED MESSAGES
+    // ──────────────────────────────────────────────────────────────────────
     'newsfeed' => [
         'new_wr' => '{nickname} has set a new World Record!',
         'new_wr_info' => '{map_name} by {creators} ({map_code})',
@@ -121,7 +173,6 @@ return [
         'new_map_filter' => 'New map',
         'role_filter' => 'Role',
         'record_filter' => 'Record',
-        'announcement_filter' => 'Announcement',
         'reset_filter' => 'Reset filter',
         'translate_button' => 'Translate',
         'archived_map' => '{map_code} has been archived',
@@ -131,5 +182,51 @@ return [
         'difficulty' => 'Difficulty',
         'bulk_archived' => 'Multiple maps have been archived',
         'bulk_unarchived' => 'Multiple maps have been unarchived',
+
+        'no_changes' => 'No changes.',
+        'map_updated' => '{map_code} was updated',
+        'record_label' => 'Record',
+        'video_label' => 'Video',
+        'translation_failed' => 'Translation failed.',
+        'translation_error' => 'Error occurred during translation.',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // COMPLETIONS
+    // ──────────────────────────────────────────────────────────────────────
+    'completions' => [
+        'new_submission_from' => 'New Submission from {nickname}',
+        'watch' => 'Watch',
+        'open_screenshot' => 'Open screenshot',
+        'screenshot_alt' => 'Screenshot',
+        'upvote_failed' => 'Upvote failed',
+
+        'kv' => [
+            'code' => 'Code',
+            'map' => 'Map',
+            'difficulty' => 'Difficulty',
+            'time' => 'Time',
+            'aka' => 'Also Known As',
+        ],
+
+        'status' => [
+            'verified_screenshot' => 'Verified screenshot submission! A clear has been confirmed without video proof.',
+            'verified_completion_video' => 'Verified completion with video proof.',
+            'pending_review' => 'Submission pending review.',
+            'verified_record' => 'Verified record / time.',
+            'under_review' => 'Submission under review.',
+        ],
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // CHANGELOGS
+    // ──────────────────────────────────────────────────────────────────────
+    'changelogs' => [
+        'title' => 'Changelogs',
+        'latest' => 'Latest',
+        'view_on_github' => 'View on GitHub',
+        'none' => 'No changelogs available.',
+        'fetch_failed' => 'Failed to load changelogs.',
+        'release' => 'Release',
     ],
 ];

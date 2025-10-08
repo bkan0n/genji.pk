@@ -432,12 +432,12 @@ function setButtonsBusy(isBusy, kind = '') {
 
   if (btnConvert) {
     btnConvert.disabled = isBusy;
-    if (isBusy && kind === 'convert') btnConvert.dataset._old = btnConvert.textContent, btnConvert.textContent = 'Processing…';
+    if (isBusy && kind === 'convert') btnConvert.dataset._old = btnConvert.textContent, btnConvert.textContent = t('common.processing');
     else if (!isBusy && btnConvert.dataset._old) btnConvert.textContent = btnConvert.dataset._old;
   }
   if (btnTranslate) {
     btnTranslate.disabled = isBusy;
-    if (isBusy && kind === 'translate') btnTranslate.dataset._old = btnTranslate.textContent, btnTranslate.textContent = 'Translating…';
+    if (isBusy && kind === 'translate') btnTranslate.dataset._old = btnTranslate.textContent, btnTranslate.textContent = t('common.translating');
     else if (!isBusy && btnTranslate.dataset._old) btnTranslate.textContent = btnTranslate.dataset._old;
   }
 }
@@ -3788,7 +3788,7 @@ function showLoader() {
         <div class="h-16 w-16 rounded-full border-8 border-white/20"></div>
         <div class="absolute inset-0 h-16 w-16 rounded-full border-8 border-transparent border-t-white animate-spin"></div>
       </div>
-      <div class="text-white/90 text-sm sm:text-base font-medium tracking-tight">Converting…</div>
+      <div class="text-white/90 text-sm sm:text-base font-medium tracking-tight">${t('common.converting')}</div>
     `;
     document.body.append(o);
   }

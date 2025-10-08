@@ -20,7 +20,7 @@
               <div class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-white/10">
                 <img
                   src="{{ $avatar_url ?: asset('assets/img/default-avatar.jpg') }}"
-                  alt="User Avatar"
+                  alt="{{ __('rank_card.alts.user_avatar') }}"
                   class="h-full w-full object-cover"
                 />
               </div>
@@ -99,13 +99,13 @@
         <div class="badge-viewer-container relative w-full max-w-lg">
           <img
             id="badgeViewerImage"
-            alt="Badge Enlarged"
+            alt="{{ __('rank_card.alts.badge_enlarged') }}"
             class="badge-viewer-rotatable mx-auto max-h-[70vh] rounded-xl p-2 shadow-2xl"
           />
           <button
             class="badge-viewer-close absolute -top-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10"
             onclick="closeBadgeViewer()"
-            aria-label="Close"
+            aria-label="{{ __('rank_card.close') }}"
           >
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
               <path

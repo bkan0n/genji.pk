@@ -17,7 +17,7 @@ return [
 
     'tabs' => [
         'record'   => 'Submit completion',
-        'playtest' => 'Submit playtest',
+        'playtest' => 'Submit playtest vote',
         'map'      => 'Submit map',
     ],
 
@@ -33,25 +33,21 @@ return [
         'cancel'            => 'Cancel',
         'submit_label'      => 'Submit record',
 
-        // validations/messages
         'code_invalid'        => 'Please enter a valid map code.',
         'time_label'          => 'Record time',
         'time_invalid'        => 'Please enter a valid time.',
         'quality_required'    => 'Please select a quality.',
         'screenshot_required' => 'Please upload a screenshot.',
         'video_invalid'       => 'Please enter a valid video URL.',
-        // confirmations
         'confirm' => 'Your record was submitted successfully.',
 
-        // format hints
         'time_hint' => 'Invalid time format: up to 5 digits before the dot and 2 after (e.g. 12345.67).',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
-    // MAP (Submit Map tab)
+    // MAP
     // ──────────────────────────────────────────────────────────────────────
     'map' => [
-        // Meta block
         'meta' => [
             'creator'           => 'Creator',
             'code'              => 'Code',
@@ -63,7 +59,6 @@ return [
             'search_map_name'   => 'Search a map name…',
         ],
 
-        // Required block
         'required_title'          => 'Required',
         'dropdown' => [
             'select_difficulty'   => 'Select difficulty',
@@ -76,7 +71,6 @@ return [
             'restrictions'        => 'Restrictions',
         ],
 
-        // Optional block
         'optional_title'         => 'Optional',
         'title_label'            => 'Title',
         'title_placeholder'      => 'Optional short title (max 128 chars)',
@@ -88,10 +82,8 @@ return [
         'medals_hint'            => 'Format: max 5 digits before the decimal and up to 2 after (e.g., 12345.67). Values ≥ 0. Required order: bronze > silver > gold.',
         'remove'                 => 'Remove',
 
-        // Submit button
         'submit_label' => 'Submit map',
 
-        // Validations
         'val' => [
             'creator'                => 'Please select a main creator.',
             'map_code'               => 'Please enter a valid map code.',
@@ -106,10 +98,8 @@ return [
             'medals_order'           => 'Ordering must be Bronze > Silver > Gold.',
         ],
 
-        // Confirmations
         'confirm'        => 'Your map was submitted successfully.',
 
-        // Misc
         'no_description' => 'No description provided.',
     ],
 
@@ -224,7 +214,7 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
-    // POPUP / MISC (used in JS)
+    // POPUP / MISC
     // ──────────────────────────────────────────────────────────────────────
     'popup' => [
         'no_results'              => 'No results found.',

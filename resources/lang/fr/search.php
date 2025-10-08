@@ -1,81 +1,109 @@
 <?php
 
 return [
-    // Meta / page
+    /*
+    |--------------------------------------------------------------------------
+    | Search (FR)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // META / PAGE
+    // ──────────────────────────────────────────────────────────────────────
     'page_title' => 'Recherche',
     'og_title' => 'Genji Parkour - Recherche',
-    'og_description' => 'Trouvez des cartes, des complétions, des guides et des records personnels.',
+    'og_description' => 'Trouvez des cartes, des completions, des guides et des records personnels.',
 
-    // Header
+    // ──────────────────────────────────────────────────────────────────────
+    // HEADER
+    // ──────────────────────────────────────────────────────────────────────
     'title' => 'Cartes',
-    'subtitle' => 'recherche · complétions · guides · records personnels',
+    'subtitle' => 'recherche · completions · guides · records personnels',
 
-    // Tabs
-    'map_search' => 'Recherche de carte',
-    'completions' => 'Complétions',
+    // ──────────────────────────────────────────────────────────────────────
+    // TABS
+    // ──────────────────────────────────────────────────────────────────────
+    'map_search' => 'Recherche de cartes',
+    'completions' => 'Completions',
     'guides' => 'Guides',
     'personal_records' => 'Records personnels',
 
-    // Toolbar / helpers
+    // ──────────────────────────────────────────────────────────────────────
+    // TOOLBAR & HELPERS
+    // ──────────────────────────────────────────────────────────────────────
     'select_mode' => 'Sélectionnez un mode de recherche',
     'add_filter_hint' => 'Ajoutez un filtre ou cliquez sur ✔',
+    'screenshot' => 'Capture d’écran',
+    'open_screenshot' => 'Ouvrir la capture d’écran',
+    'no_description' => 'Aucune description',
+    'watch' => 'Regarder',
+    'na' => 'N/A',
 
-    // Placeholders
+    // ──────────────────────────────────────────────────────────────────────
+    // PLACEHOLDERS
+    // ──────────────────────────────────────────────────────────────────────
     'map_name_placeholder' => 'Nom de la carte',
     'map_code_placeholder' => 'Code de la carte',
     'nickname_placeholder' => 'Pseudo',
+    'completion' => 'Achèvement',
 
-    // Filters toolbar
+    // ──────────────────────────────────────────────────────────────────────
+    // FILTERS TOOLBAR (UI toolbar options)
+    // ──────────────────────────────────────────────────────────────────────
     'filters_toolbar' => [
         'creator' => 'Créateur',
         'enter_creator' => 'Saisir un créateur',
-        'map_name' => 'Nom de la carte',
-        'enter_map_name' => 'Saisir le nom de la carte',
+        'map_name' => 'Map name',
+        'enter_map_name' => 'Enter map name',
         'user' => 'Nom d’utilisateur',
-        'enter_nickname' => 'Saisir un nom d’utilisateur',
-        'map_code' => 'Code de la carte',
+        'enter_nickname' => 'Saisir le nom d’utilisateur',
+        'code' => 'Code de la carte',
         'enter_map_code' => 'Saisir le code de la carte',
-        'difficulty' => 'Difficulté',
+        'difficulty_exact' => 'Difficulté',
         'beginner' => 'Débutant',
         'easy' => 'Facile',
-        'medium' => 'Moyen',
+        'medium' => 'Moyenne',
         'hard' => 'Difficile',
         'very_hard' => 'Très difficile',
         'extreme' => 'Extrême',
         'hell' => 'Enfer',
-        'map_type' => 'Type de carte',
+        'category' => 'Type de carte',
         'classic' => 'Classique',
-        'increasing_difficulty' => 'Difficulté croissante',
+        'increasing_difficulty' => 'Difficulté progressive',
         'tournament' => 'Tournoi',
-        'mechanics' => 'Mécaniques',
+        'mechanics' => 'Mechanics',
         'restrictions' => 'Restrictions',
-        'only_playtest' => 'Uniquement playtest',
-        'only_true' => 'Vrai',
-        'only_false' => 'Faux',
-        'ignore_completions' => 'Ignorer les complétions',
-        'only_maps_with_medals' => 'Uniquement médailles',
+        'playtest_status' => 'Playtest uniquement',
+        'only_true' => 'Oui',
+        'only_false' => 'Non',
+        'completion_filter' => 'Completions uniquement',
+        'medal_filter' => 'Médailles uniquement',
         'participation_filter' => 'Filtre de participation',
         'participated_yes' => 'A participé',
         'participated_no' => 'N’a pas participé',
         'apply_filters' => 'Appliquer les filtres',
-        'clear_filters' => 'Effacer les filtres',
+        'clear_filters' => 'Réinitialiser les filtres',
     ],
 
-    // --- Added sections ---
+    // ──────────────────────────────────────────────────────────────────────
+    // FILTERS (common labels used across views)
+    // ──────────────────────────────────────────────────────────────────────
     'filters' => [
-        'map_name' => 'Nom de la carte',
+        'map_name' => 'Map Name',
         'map_code' => 'Code de la carte',
         'difficulty' => 'Difficulté de la carte',
         'creator' => 'Créateur de la carte',
-        'mechanics' => 'Mécaniques',
+        'mechanics' => 'Mechanics',
         'restrictions' => 'Restrictions',
-        'only_playtest' => 'Uniquement playtest',
-        'only_maps_with_medals' => 'Uniquement médailles',
-        'ignore_completions' => 'Ignorer les complétions',
+        'only_playtest' => 'Playtest uniquement',
+        'only_maps_with_medals' => 'Médailles uniquement',
+        'ignore_completions' => 'Completions uniquement',
         'player_name' => 'Nom du joueur',
     ],
 
-    // Laisser ces sections inchangées (anglais)
+    // ──────────────────────────────────────────────────────────────────────
+    // MECHANICS
+    // ──────────────────────────────────────────────────────────────────────
     'mechanics' => [
         'edge_climb' => 'Edge Climb',
         'bhop' => 'Bhop',
@@ -98,6 +126,9 @@ return [
         'standing_create_bhop' => 'Standing Create Bhop',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // RESTRICTIONS
+    // ──────────────────────────────────────────────────────────────────────
     'restrictions' => [
         'dash_start' => 'Dash Start',
         'triple_jump' => 'Triple Jump',
@@ -109,13 +140,19 @@ return [
         'wall_climb' => 'Wall Climb',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP TYPE
+    // ──────────────────────────────────────────────────────────────────────
     'map_type' => [
-        'classic' => 'Classic',
-        'increasing_difficulty' => 'Increasing Difficulty',
-        'tournament' => 'Tournament',
-        'practice' => 'Practice',
+        'classic' => 'Classique',
+        'increasing_difficulty' => 'Difficulté progressive',
+        'tournament' => 'Tournoi',
+        'practice' => 'Entraînement',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP NAME (canonical list)
+    // ──────────────────────────────────────────────────────────────────────
     'map_name' => [
         'aatlis' => 'Aatlis',
         'ayutthaya' => 'Ayutthaya',
@@ -181,12 +218,15 @@ return [
         'throne_of_anubis' => 'Throne of Anubis',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // POPUP / MISC (used in JS)
+    // ──────────────────────────────────────────────────────────────────────
     'popup' => [
         'login_required_btn' => 'Connexion requise',
         'login_required_msg' => 'La connexion est requise sur cette page',
-        'login_required_pr' => 'La connexion est requise pour voir les records personnels',
+        'login_required_pr' => 'La connexion est requise pour utiliser cette fonctionnalité',
         'login_required_filter' => 'La connexion est requise pour utiliser ce filtre',
-        'login_required_progression' => 'Merci de vous connecter pour voir votre progression',
+        'login_required_progression' => 'Veuillez vous connecter pour voir votre progression',
         'map_code_required' => 'Entrez un code de carte',
         'no_results' => 'Aucun résultat',
         'filter_applied' => 'Filtre appliqué pour {filterId} : {value}',
@@ -195,44 +235,50 @@ return [
         'username_updated' => 'Votre nom d’utilisateur a été mis à jour',
         'primary_username_updated' => 'Nom d’utilisateur principal mis à jour',
         'already_exist_username' => 'Le nom d’utilisateur existe déjà',
-        'set_primary_username' => 'Définir comme nom principal',
+        'set_primary_username' => 'Définir comme nom d’utilisateur principal',
         'delete_username' => 'Supprimer le nom d’utilisateur',
         'no_username_set' => 'Aucun nom d’utilisateur défini',
         'confirm_button' => 'Confirmer',
-        'click_to_copy_map_code' => 'Cliquez pour copier le code de la carte',
+        'click_to_copy_map_code' => 'Cliquer pour copier le code de la carte',
         'map_code_copied' => 'Code de la carte copié dans le presse-papiers',
         'copy_failed' => 'Échec de la copie du code de la carte',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // PAGINATION
+    // ──────────────────────────────────────────────────────────────────────
     'pagination' => [
-        'first' => '« Première',
-        'prev' => '‹ Préc.',
-        'next' => 'Suiv. ›',
-        'last' => 'Dernière »',
+        'first' => '« Premier',
+        'prev' => '‹ Précédent',
+        'next' => 'Suivant ›',
+        'last' => 'Dernier »',
         'page_of' => 'Page {current} sur {total}',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // CHARTS
+    // ──────────────────────────────────────────────────────────────────────
     'chart' => [
-        'mapDifficultyDistribution' => 'Répartition des difficultés des cartes',
+        'mapDifficultyDistribution' => 'Cartes par difficulté',
         'amountOfMaps' => 'Nombre de cartes',
         'difficultyLevel' => 'Niveau de difficulté',
-        'popularCreators' => 'Créateurs classés par qualité moyenne',
+        'popularCreators' => 'Créateurs de cartes par qualité moyenne',
         'mapAmountLogScale' => 'Nombre de cartes (échelle log)',
         'averageQuality' => 'Qualité moyenne',
         'topMapsFor' => 'Cartes les plus populaires pour la difficulté {difficulty}',
         'mapCodes' => 'Codes des cartes',
-        'completions' => 'Complétions',
+        'completions' => 'Completions',
         'rank' => 'Rang',
         'playersIn' => 'Joueurs en {tier}',
         'map' => 'Cartes',
         'quality' => 'Qualité',
-        'completionsTooltip' => '{map} : {completions} complétions, Qualité : {quality}',
+        'completionsTooltip' => '{map} : {completions} Completions, Qualité : {quality}',
         'playersInTier' => '{amount} joueurs en {tier}',
         'tooltipLabel' => '{creator} - Cartes : {mapCount}, Qualité : {quality}',
         'tierRank' => 'Rang de palier',
         'skillRank' => 'Rang de compétence',
         'easy' => 'Facile',
-        'medium' => 'Moyen',
+        'medium' => 'Moyenne',
         'hard' => 'Difficile',
         'very hard' => 'Très difficile',
         'extreme' => 'Extrême',
@@ -249,6 +295,9 @@ return [
         'time_played_per_difficulty' => 'Temps joué par difficulté',
     ],
 
+    // ──────────────────────────────────────────────────────────────────────
+    // TABLE HEADERS
+    // ──────────────────────────────────────────────────────────────────────
     'thead' => [
         'mapCode' => 'Code',
         'mapName' => 'Nom',
@@ -261,6 +310,7 @@ return [
         'mapSilver' => 'Argent',
         'mapBronze' => 'Bronze',
         'mapDetails' => 'Détails',
+        'mapView' => 'Voir',
         'mapNickname' => 'Pseudo',
         'mapDiscordTag' => 'Tag Discord',
         'mapTime' => 'Temps',
@@ -271,7 +321,7 @@ return [
         'mapWR' => 'Records du monde',
         'mapMade' => 'Cartes créées',
         'mapPlaytestsVotes' => 'Votes de playtest',
-        'mapTierRank' => 'Palier',
+        'mapTierRank' => 'Tier',
         'mapRankDistribution' => 'Répartition des rangs',
         'mapMechanics' => 'Mécaniques',
         'mapRestrictions' => 'Restrictions',
