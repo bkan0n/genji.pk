@@ -106,26 +106,73 @@ function t(path, params = {}) {
   return result;
 }
 
-function showToast(message, ok = true) {
+function showToast(message, type = 'ok', opts = {}) {
+  const {
+    duration = 1200,
+    enter    = 220,
+    exit     = 220,
+    easing   = 'cubic-bezier(0.4,0,0.2,1)',
+  } = opts;
+
+  let root = document.getElementById('toast-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'toast-root';
+    root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[200] flex justify-center px-3';
+    document.body.appendChild(root);
+  }
+
+  while (root.firstElementChild) {
+    const prev = root.firstElementChild;
+    try { prev.getAnimations?.().forEach(a => a.cancel()); } catch {}
+    prev.remove();
+  }
+
+  const palette =
+    type === 'ok'
+      ? 'bg-emerald-500/90 text-white'
+      : type === 'warn'
+        ? 'bg-amber-500/90 text-zinc-900'
+        : 'bg-red-600/90 text-white';
+
   const el = document.createElement('div');
-  el.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-2xl border transition-all duration-300 opacity-0 translate-y-2
-    ${ok ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-rose-500/20 text-rose-200 border-rose-400/30'}`;
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.className = [
+    'pointer-events-auto select-none rounded-xl px-4 py-2',
+    'text-sm shadow-lg text-center transform-gpu',
+    'w-auto max-w-[92vw] sm:max-w-[42rem]',
+    palette
+  ].join(' ');
   el.textContent = message;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => {
-    el.classList.remove('opacity-0', 'translate-y-2');
-  });
-  setTimeout(() => {
-    el.classList.add('opacity-0', 'translate-y-2');
-    el.addEventListener('transitionend', () => el.remove(), { once: true });
-  }, 1200);
+
+  root.appendChild(el);
+
+  const inAnim = el.animate(
+    [{ opacity: 0, transform: 'translateY(8px)' },
+     { opacity: 1, transform: 'translateY(0)' }],
+    { duration: enter, easing, fill: 'forwards' }
+  );
+
+  const close = () => {
+    Promise.resolve(inAnim.finished).catch(() => {}).finally(() => {
+      const outAnim = el.animate(
+        [{ opacity: 1, transform: 'translateY(0)' },
+         { opacity: 0, transform: 'translateY(8px)' }],
+        { duration: exit, easing, fill: 'forwards' }
+      );
+      outAnim.finished.then(() => el.remove()).catch(() => el.remove());
+      setTimeout(() => el.remove(), exit + 120);
+    });
+  };
+
+  const timer = setTimeout(close, Math.max(duration, enter + 50));
+  el.addEventListener('click', () => { clearTimeout(timer); close(); });
 }
-function showConfirmationMessage(m) {
-  showToast(m, true);
-}
-function showErrorMessage(m) {
-  showToast(m, false);
-}
+
+const showConfirmationMessage = (m) => showToast(m, 'ok');
+const showErrorMessage        = (m) => showToast(m, 'error');
+const showWarningMessage      = (m) => showToast(m, 'warn');
 
 function rarityStyle(rarity) {
   switch (String(rarity).toLowerCase()) {
@@ -214,21 +261,21 @@ function fetchKeys(user_id, selectedKeyType = 'Classic') {
 }
 function grantReward(user_id, reward) {
   if (navigator.userActivation && !navigator.userActivation.isActive) {
-    showErrorMessage(t('popup.click_required') || 'User action required.');
+    showErrorMessage(t('popup.click_required'));
     return;
   }
   if (!openSession) {
-    showErrorMessage(t('lootbox.session_expired') || 'Session expired. Open a new pack.');
+    showErrorMessage(t('lootbox.session_expired'));
     return;
   }
   if (openSession.keyType !== rewardKeyType) {
-    showErrorMessage(t('popup.error_generic') || 'Invalid session state.');
+    showErrorMessage(t('popup.error_generic'));
     return;
   }
 
   const sig = mkRewardSig(reward);
   if (!openSession.keySet.has(sig)) {
-    showErrorMessage(t('popup.error_generic') || 'Invalid reward.');
+    showErrorMessage(t('popup.error_generic'));
     return;
   }
   if (redeeming) return;
@@ -250,7 +297,7 @@ function grantReward(user_id, reward) {
 // ====== UI (boutons) ======
 $('.generate').on('click', function () {
   if (!window.user_id) {
-    showErrorMessage(t('popup.login_required_msg') || 'Login required.');
+    showWarningMessage(t('popup.login_required_msg'));
     return;
   }
   if (!rewardKeyType) return;
@@ -270,7 +317,7 @@ $('.generate').on('click', function () {
       if (keys > 0) {
         getRandomRewards(user_id, rewardKeyType);
       } else {
-        showErrorMessage(t('ui.no_keys_available'));
+        showWarningMessage(t('ui.no_keys_available'));
         restoreCrate();
       }
     },
@@ -348,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ====== Open pack flow ======
 function proceedWithLootBoxOpening() {
   if (keys <= 0) {
-    showErrorMessage(t('lootbox.no_keys_available') || 'No keys.');
+    showWarningMessage(t('lootbox.no_keys_available'));
     return;
   }
   if (isRunning) return;

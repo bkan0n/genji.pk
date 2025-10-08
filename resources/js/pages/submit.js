@@ -338,26 +338,73 @@ function setActiveSectionUI(prev, next) {
   });
 }
 
-function showToast(message, ok = true) {
+function showToast(message, type = 'ok', opts = {}) {
+  const {
+    duration = 1200,
+    enter    = 220,
+    exit     = 220,
+    easing   = 'cubic-bezier(0.4,0,0.2,1)',
+  } = opts;
+
+  let root = document.getElementById('toast-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'toast-root';
+    root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[200] flex justify-center px-3';
+    document.body.appendChild(root);
+  }
+
+  while (root.firstElementChild) {
+    const prev = root.firstElementChild;
+    try { prev.getAnimations?.().forEach(a => a.cancel()); } catch {}
+    prev.remove();
+  }
+
+  const palette =
+    type === 'ok'
+      ? 'bg-emerald-500/90 text-white'
+      : type === 'warn'
+        ? 'bg-amber-500/90 text-zinc-900'
+        : 'bg-red-600/90 text-white';
+
   const el = document.createElement('div');
-  el.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-[9000] rounded-xl px-4 py-2 text-sm shadow-2xl border transition-all duration-300 opacity-0 translate-y-2
-    ${ok ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-rose-500/20 text-rose-200 border-rose-400/30'}`;
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.className = [
+    'pointer-events-auto select-none rounded-xl px-4 py-2',
+    'text-sm shadow-lg text-center transform-gpu',
+    'w-auto max-w-[92vw] sm:max-w-[42rem]',
+    palette
+  ].join(' ');
   el.textContent = message;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => {
-    el.classList.remove('opacity-0', 'translate-y-2');
-  });
-  setTimeout(() => {
-    el.classList.add('opacity-0', 'translate-y-2');
-    el.addEventListener('transitionend', () => el.remove(), { once: true });
-  }, 1200);
+
+  root.appendChild(el);
+
+  const inAnim = el.animate(
+    [{ opacity: 0, transform: 'translateY(8px)' },
+     { opacity: 1, transform: 'translateY(0)' }],
+    { duration: enter, easing, fill: 'forwards' }
+  );
+
+  const close = () => {
+    Promise.resolve(inAnim.finished).catch(() => {}).finally(() => {
+      const outAnim = el.animate(
+        [{ opacity: 1, transform: 'translateY(0)' },
+         { opacity: 0, transform: 'translateY(8px)' }],
+        { duration: exit, easing, fill: 'forwards' }
+      );
+      outAnim.finished.then(() => el.remove()).catch(() => el.remove());
+      setTimeout(() => el.remove(), exit + 120);
+    });
+  };
+
+  const timer = setTimeout(close, Math.max(duration, enter + 50));
+  el.addEventListener('click', () => { clearTimeout(timer); close(); });
 }
-function showConfirmationMessage(m) {
-  showToast(m, true);
-}
-function showErrorMessage(m) {
-  showToast(m, false);
-}
+
+const showConfirmationMessage = (m) => showToast(m, 'ok');
+const showErrorMessage        = (m) => showToast(m, 'error');
+const showWarningMessage      = (m) => showToast(m, 'warn');
 
 function canCopy() {
   return !!(navigator.clipboard && navigator.clipboard.writeText);
@@ -1387,9 +1434,8 @@ function setupForms() {
     submitMapForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (IS_GUEST) {
-        showErrorMessage(
-          t('popup.login_required_msg') || 'Connectez-vous pour accéder à cette section'
-        );
+        showWarningMessage(
+          t('popup.login_required_msg'));
         return;
       }
       const ok = await validateSubmitMapForm(e);
@@ -1408,7 +1454,7 @@ function setupForms() {
         });
       } catch (err) {
         console.error(err);
-        showErrorMessage(t('errors.server_unreachable') || 'Erreur réseau');
+        showErrorMessage(t('errors.server_unreachable'));
       }
     });
   }
@@ -1588,7 +1634,7 @@ function setupBannerDropzone() {
           const dataUrl = await readAsDataURL(file);
           img.src = dataUrl;
         } catch {
-          showErrorMessage(t('errors.upload_failed') || 'Preview failed.');
+          showErrorMessage(t('errors.upload_failed'));
         } finally {
           if (blobUrl) URL.revokeObjectURL(blobUrl);
         }
@@ -1602,7 +1648,7 @@ function setupBannerDropzone() {
         const dataUrl = await readAsDataURL(file);
         img.src = dataUrl;
       } catch {
-        showErrorMessage(t('errors.upload_failed') || 'Preview failed.');
+        showErrorMessage(t('errors.upload_failed'));
       }
     }
 
@@ -1615,11 +1661,11 @@ function setupBannerDropzone() {
     if (!file) return;
 
     if (!BANNER_ALLOWED_MIME.includes(file.type)) {
-      showErrorMessage(t('errors.image_type') || 'Invalid image type.');
+      showErrorMessage(t('errors.image_type'));
       return;
     }
     if (file.size > BANNER_MAX_BYTES) {
-      showErrorMessage(t('errors.image_too_large') || 'Image too large (max 8MB).');
+      showWarningMessage(t('errors.image_too_large'));
       return;
     }
 
@@ -1693,12 +1739,11 @@ function validateMedals(showToast = true) {
     }
     if (Number(v) < 0) {
       if (showToast)
-        showErrorMessage(t('map.val.medals_non_negative') || 'Medal values cannot be negative.');
+        showWarningMessage(t('map.val.medals_non_negative'));
       document.getElementById(ids[k])?.focus();
       return {
         ok: false,
-        error: t('map.val.medals_non_negative') || 'Medal values cannot be negative.',
-      };
+        error: t('map.val.medals_non_negative')};
     }
   }
 
@@ -1774,7 +1819,7 @@ async function startBannerUpload(file) {
     setTimeout(() => ok.remove(), 1500);
   } catch (e) {
     window.customBannerUrl = null;
-    showErrorMessage(e?.message || t('errors.upload_failed') || 'Banner upload failed.');
+    showErrorMessage(e?.message || t('errors.upload_failed'));
   } finally {
     endBusy();
   }
@@ -2062,14 +2107,14 @@ async function validateSubmitMapForm(event) {
 
   const mainCreator = document.getElementById('metaCreatorMain');
   if (!mainCreator || !mainCreator.getAttribute('data-raw-id')) {
-    showErrorMessage(t('map.val.creator'));
+    showWarningMessage(t('map.val.creator'));
     valid = false;
     return false;
   }
 
   const codeLabel = document.getElementById('metaCode');
   if (!codeLabel || !codeLabel.textContent.trim() || codeLabel.textContent.trim() === 'N/A') {
-    showErrorMessage(t('map.val.map_code'));
+    showWarningMessage(t('map.val.map_code'));
     valid = false;
     return false;
   }
@@ -2077,7 +2122,7 @@ async function validateSubmitMapForm(event) {
   const enteredCode = codeLabel.textContent.trim();
   const alreadyExists = await checkMapCodeAlreadyExists(enteredCode);
   if (alreadyExists) {
-    showErrorMessage(t('map.val.map_code_already_exist'));
+    showWarningMessage(t('map.val.map_code_already_exist'));
     try {
       if (typeof editInline === 'function') editInline('metaCode');
     } catch {}
@@ -2086,7 +2131,7 @@ async function validateSubmitMapForm(event) {
 
   const mapLabel = document.getElementById('metaMap');
   if (!mapLabel || !mapLabel.textContent.trim() || mapLabel.textContent.trim() === 'N/A') {
-    showErrorMessage(t('map.val.map_name'));
+    showWarningMessage(t('map.val.map_name'));
     valid = false;
     return false;
   }
@@ -2098,7 +2143,7 @@ async function validateSubmitMapForm(event) {
     isNaN(checkpointsLabel.textContent.trim()) ||
     Number(checkpointsLabel.textContent.trim()) <= 0
   ) {
-    showErrorMessage(t('map.val.checkpoints'));
+    showWarningMessage(t('map.val.checkpoints'));
     valid = false;
     return false;
   }
@@ -2106,7 +2151,7 @@ async function validateSubmitMapForm(event) {
   const diffRadios = document.querySelectorAll('#difficultyDropdown input[type="radio"]');
   const hasDiff = Array.from(diffRadios).some((r) => r.checked);
   if (!hasDiff) {
-    showErrorMessage(t('map.val.difficulty'));
+    showWarningMessage(t('map.val.difficulty'));
     valid = false;
     return false;
   }
@@ -2114,7 +2159,7 @@ async function validateSubmitMapForm(event) {
   const typeRadios = document.querySelectorAll('#categoryDropdown input[type="radio"]');
   const hasType = Array.from(typeRadios).some((r) => r.checked);
   if (!hasType) {
-    showErrorMessage(t('map.val.map_type'));
+    showWarningMessage(t('map.val.map_type'));
     valid = false;
     return false;
   }
@@ -2122,7 +2167,7 @@ async function validateSubmitMapForm(event) {
   const mechanicsBoxes = document.querySelectorAll('#mechanicsDropdown input[type="checkbox"]');
   const hasMechanics = Array.from(mechanicsBoxes).some((c) => c.checked);
   if (!hasMechanics) {
-    showErrorMessage(t('map.val.mechanics'));
+    showWarningMessage(t('map.val.mechanics'));
     valid = false;
     return false;
   }
@@ -2132,7 +2177,7 @@ async function validateSubmitMapForm(event) {
   );
   const hasRestrictions = Array.from(restrictionsBoxes).some((c) => c.checked);
   if (!hasRestrictions) {
-    showErrorMessage(t('map.val.restrictions'));
+    showWarningMessage(t('map.val.restrictions'));
     valid = false;
     return false;
   }
@@ -2770,7 +2815,7 @@ async function autoUploadScreenshot(file) {
     setTimeout(() => ok.remove(), 1500);
   } catch (e) {
     window.screenshotUrl = null;
-    showErrorMessage(e?.message || t('errors.upload_failed') || 'Screenshot upload failed.');
+    showErrorMessage(e?.message || t('errors.upload_failed'));
   } finally {
     endBusy();
   }
@@ -2920,13 +2965,13 @@ function dragAndDrop() {
       img.src = blobUrl;
       img.onerror = async () => {
         try { img.src = await readAsDataURL(file); }
-        catch { showErrorMessage(t('errors.upload_failed') || 'Preview failed.'); }
+        catch { showErrorMessage(t('errors.upload_failed')); }
         finally { if (blobUrl) URL.revokeObjectURL(blobUrl); }
       };
       img.onload = () => { if (blobUrl) URL.revokeObjectURL(blobUrl); };
     } catch {
       try { img.src = await readAsDataURL(file); }
-      catch { showErrorMessage(t('errors.upload_failed') || 'Preview failed.'); }
+      catch { showErrorMessage(t('errors.upload_failed')); }
     }
 
     host.appendChild(img);
@@ -2936,7 +2981,7 @@ function dragAndDrop() {
   function acceptFile(file) {
     if (!file) return;
     if (!file.type || !file.type.startsWith('image/')) {
-      showErrorMessage(t('errors.image_type') || 'Invalid image type.');
+      showErrorMessage(t('errors.image_type'));
       return;
     }
     window.screenshotFile = file;
@@ -3004,7 +3049,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function validateSubmitRecordForm(event) {
   const mapCodeInput = document.getElementById('mapCodeInput');
   if (!mapCodeInput || !mapCodeInput.value.trim()) {
-    showErrorMessage(t('record.code_invalid'));
+    showWarningMessage(t('record.code_invalid'));
     return false;
   }
 
@@ -3012,14 +3057,14 @@ function validateSubmitRecordForm(event) {
   const timeValue = inputTime ? inputTime.value.trim() : '';
 
   if (!TIME_REGEX.test(timeValue)) {
-    showErrorMessage(t('record.time_invalid'));
+    showWarningMessage(t('record.time_invalid'));
     if (inputTime) inputTime.focus();
     return false;
   }
 
   const numericTime = Number(timeValue);
   if (!Number.isFinite(numericTime) || numericTime <= 0) {
-    showErrorMessage(t('record.time_invalid'));
+    showWarningMessage(t('record.time_invalid'));
     return false;
   }
 
@@ -3035,19 +3080,19 @@ function validateSubmitRecordForm(event) {
       qualityBtn && qualityBtn.textContent && qualityBtn.textContent.trim() !== 'Select...';
   }
   if (!hasQuality) {
-    showErrorMessage(t('record.quality_required'));
+    showWarningMessage(t('record.quality_required'));
     return false;
   }
 
   if (!window.screenshotUrl) {
-    showErrorMessage(t('record.screenshot_required'));
+    showWarningMessage(t('record.screenshot_required'));
     return false;
   }
 
   const videoEl = document.getElementById('inputVideo');
   const v = (videoEl?.value || '').trim();
   if (v && !/^(https?:\/\/)?[^\s]+$/i.test(v)) {
-    showErrorMessage(t('record.video_invalid'));
+    showWarningMessage(t('record.video_invalid'));
     if (videoEl) videoEl.focus();
     return false;
   }
@@ -3612,12 +3657,12 @@ function setupRatingDropdown() {
 
   async function sendVote(selectedLabel) {
     if (!threadId || !userId) {
-      showErrorMessage(t('errors.server_unreachable') || 'Vote failed.');
+      showErrorMessage(t('errors.server_unreachable'));
       return;
     }
     const range = labelToRange[selectedLabel];
     if (!range) {
-      showErrorMessage(t('errors.invalid_form') || 'Invalid difficulty.');
+      showErrorMessage(t('errors.invalid_form'));
       return;
     }
 
@@ -3705,7 +3750,7 @@ function setupRatingDropdown() {
         }
       }
     } catch (e) {
-      showErrorMessage(t('errors.server_unreachable') || 'Network error.');
+      showErrorMessage(t('errors.server_unreachable'));
     }
   }
 
@@ -4594,7 +4639,7 @@ function mountModeratorActions(modalEl, playtest) {
   root.querySelector('#ptModForceDeny')?.addEventListener('click', async (ev) => {
     const btn = ev.currentTarget;
     const reason = root.querySelector('#ptModDenyReason')?.value.trim() || '';
-    if (!reason) return showErrorMessage('Reason is required.');
+    if (!reason) return showWarningMessage('Reason is required.');
 
     const ok = await showConfirmDialog({
       title: 'Force deny playtest',
@@ -4625,7 +4670,7 @@ function mountModeratorActions(modalEl, playtest) {
     const reason = root.querySelector('#ptModResetReason')?.value.trim() || '';
     const removeVotes = !!root.querySelector('#ptModResetVotes')?.checked;
     const removeCompletions = !!root.querySelector('#ptModResetCompletions')?.checked;
-    if (!reason) return showErrorMessage('Reason is required.');
+    if (!reason) return showWarningMessage('Reason is required.');
 
     const ok = await showConfirmDialog({
       title: 'Reset playtest',
@@ -4656,7 +4701,7 @@ function mountModeratorActions(modalEl, playtest) {
   root.querySelector('#ptModDeleteVote')?.addEventListener('click', async (ev) => {
     const btn = ev.currentTarget;
     const uid = (root.querySelector('#ptModDeleteVoteUser')?.value || '').trim();
-    if (!uid) return showErrorMessage('User ID is required.');
+    if (!uid) return showWarningMessage('User ID is required.');
 
     const ok = await showConfirmDialog({
       title: 'Delete user vote',
@@ -5745,7 +5790,7 @@ async function applyFilters(page = 1) {
     );
 
     if (arr.length === 0) {
-      showErrorMessage(t('popup.no_results'));
+      showWarningMessage(t('popup.no_results'));
       clearFilters();
       applyFilters();
       return;
@@ -5797,9 +5842,7 @@ async function applyFilters(page = 1) {
     }
   } catch (err) {
     console.error('Erreur getPlaytests:', err);
-    showErrorMessage(
-      t('errors.playtests_load_failed') || 'Erreur lors du chargement des playtests.'
-    );
+    showErrorMessage(t('errors.playtests_load_failed'));
   }
 }
 
