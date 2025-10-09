@@ -1738,6 +1738,12 @@ document.addEventListener('click', async (event) => {
 // ———————————————————————————————————————————————————————————————
 // COMPLETIONS
 async function loadCompletions(append = false) {
+  const container = document.getElementById('completionsContainer');
+  if (!container) return;
+
+  const skelCount = append ? Math.min(3, compPageSize) : Math.min(6, compPageSize);
+  insertCompSkeleton(append, skelCount);
+
   try {
     const params = new URLSearchParams({
       page_size: String(compPageSize),
@@ -1769,8 +1775,7 @@ async function loadCompletions(append = false) {
     const cards = await Promise.all(items.map(renderCompletionCard));
     const html = cards.join('');
 
-    const container = document.getElementById('completionsContainer');
-    if (!container) return;
+    if (append) removeCompSkeleton();
 
     if (append) container.insertAdjacentHTML('beforeend', html);
     else container.innerHTML = html;
@@ -1810,6 +1815,7 @@ async function loadCompletions(append = false) {
     }
   } catch (e) {
     console.error('Erreur chargement completions:', e);
+    removeCompSkeleton();
     document.getElementById('comp-empty')?.classList.remove('hidden');
   }
 }
@@ -2203,6 +2209,51 @@ document.addEventListener('error', (e) => {
     t.closest('[data-open-screenshot]')?.remove() || t.classList.add('hidden');
   }
 }, true);
+
+/* =========================
+   COMPLETIONS SKELETON
+   ========================= */
+function compSkeletonCard() {
+  return `
+    <article class="comp-card comp-skel h-full rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 animate-pulse" aria-hidden="true">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="h-10 w-10 rounded-full bg-white/10 ring-2 ring-white/10"></div>
+          <div class="min-w-0 flex-1">
+            <div class="h-4 w-48 rounded bg-white/10"></div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <div class="h-5 w-20 rounded-md bg-white/10"></div>
+              <div class="h-5 w-28 rounded-md bg-white/10"></div>
+              <div class="h-5 w-24 rounded-md bg-white/10"></div>
+              <div class="h-5 w-16 rounded-md bg-white/10"></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/10 ring-1 ring-white/10"></div>
+      </div>
+
+      <div class="mt-2 h-4 w-3/4 rounded bg-white/10"></div>
+
+      <div class="mt-3 w-full aspect-[16/9] rounded-xl border border-white/10 bg-white/5"></div>
+
+      <div class="mt-3 flex items-center gap-2">
+        <div class="h-9 w-14 rounded-full bg-white/10"></div>
+      </div>
+    </article>
+  `;
+}
+
+function insertCompSkeleton(append = false, count = 3) {
+  const container = document.getElementById('completionsContainer');
+  if (!container) return;
+  const html = Array.from({ length: Math.max(1, count) }, compSkeletonCard).join('');
+  if (append) container.insertAdjacentHTML('beforeend', html);
+  else container.innerHTML = html;
+}
+
+function removeCompSkeleton() {
+  document.querySelectorAll('#completionsContainer .comp-skel').forEach((n) => n.remove());
+}
 
 /* =========================
    RENDER CHANGELOGS
