@@ -18,13 +18,14 @@
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-center gap-3">
               <div class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-white/10">
-                <img
-                  src="{{ $avatar_url ?: asset('assets/img/default-avatar.jpg') }}"
-                  alt="{{ __('rank_card.alts.user_avatar') }}"
-                  class="h-full w-full object-cover"
-                />
+              <img
+                id="headerAvatar"
+                src="{{ $avatar_url ?: asset('assets/img/default-avatar.jpg') }}"
+                alt="{{ __('rank_card.alts.user_avatar') }}"
+                class="h-full w-full object-cover"
+              />
               </div>
-              <h2 class="truncate text-xl font-bold sm:text-2xl">{{ $username }}</h2>
+              <h2 id="headerUsername" class="truncate text-xl font-bold sm:text-2xl">{{ $username }}</h2>
             </div>
 
             {{-- Tabs --}}

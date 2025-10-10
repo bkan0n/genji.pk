@@ -29,6 +29,8 @@ const endpoints = {
 
   lootbox: { userRewards: (userId) => `/api/lootbox/users/${encodeURIComponent(userId)}/rewards` },
 
+  profile: { discordAvatar: (userId) => `/api/settings/user-avatar?user_id=${encodeURIComponent(userId)}`, },
+
   autocomplete: { users: (q) => `/api/autocomplete/users?value=${encodeURIComponent(q)}` },
 };
 
@@ -234,9 +236,7 @@ async function initRankCard() {
     updateButtonContainerVisibility();
     hideLoadingBar();
   });
-  
-  renderRankCardSkeleton();
-  showLoadingBar();
+
   const me = getCurrentUserId();
   if (me) {
     preloadAllRewards();
@@ -252,13 +252,12 @@ async function initRankCard() {
   createSearchSuggestions();
 
   const hasQueryId = typeof userIdFromUrl === 'string' && userIdFromUrl.trim() !== '';
-  if (hasQueryId) {
-    await fetchUserRankCard(userIdFromUrl.trim());
-  } else if (me) {
-    await loadRankCardContent();
-  } else {
+  if (me || hasQueryId) {
+    renderRankCardSkeleton();
+    showLoadingBar();
+    if (hasQueryId) await fetchUserRankCard(userIdFromUrl.trim());
+    else           await loadRankCardContent();
     hideLoadingBar();
-    hideRankCardContainer();
   }
 
   enableButtons();
@@ -456,12 +455,30 @@ function hideRankCardContainer() {
   el.classList.add('gp-panel-leave-to');
   const onEnd = (e) => {
     if (e.target !== el) return;
+    if (!el.classList.contains('gp-panel-leave-to')) return;
     el.classList.remove('gp-panel-leave', 'gp-panel-leave-to');
     el.classList.add('hidden');
     el.removeEventListener('transitionend', onEnd);
   };
   el.addEventListener('transitionend', onEnd);
 }
+
+async function updateHeaderDiscordProfile(userId, { fallbackNickname } = {}) {
+  const nameEl = byId('headerUsername');
+  const imgEl  = byId('headerAvatar');
+
+  if (nameEl && fallbackNickname) nameEl.textContent = fallbackNickname;
+
+  try {
+    const res = await fetch(`/api/settings/user-avatar?user_id=${encodeURIComponent(userId)}`, { credentials: 'same-origin' });
+    if (!res.ok) return;
+    const data = await res.json().catch(() => ({}));
+
+    if (imgEl && data.avatar_url) imgEl.src = data.avatar_url;
+    if (nameEl && data.global_name) nameEl.textContent = data.global_name;
+  } catch {}
+}
+
 
 /* =========================
    TOASTS
@@ -520,6 +537,7 @@ async function loadRankCardContent() {
       hideLoadingBar();
       return;
     }
+    updateHeaderDiscordProfile(me, { fallbackNickname: data.nickname });
 
     rankCardContent.innerHTML = `
       <div class="rank-card-container relative">
@@ -542,8 +560,9 @@ async function loadRankCardContent() {
                 <div class="rank-section-container rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col">
                   
                   <div class="rank-section space-y-3">
-                    <div class="medals-header grid items-center text-sm text-white/80 gap-2
-                      grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                    <div class="medals-header grid items-center text-sm text-white/80 gap-0.5 sm:gap-2
+                      grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
+                      sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
                       <span class="col-start-1 col-end-2"></span>
                       <span class="col-start-2 col-end-3"></span>
                       <span class="text-center">
@@ -563,11 +582,12 @@ async function loadRankCardContent() {
                         const slug = level.toLowerCase().replace(/\s+/g, '-');
                         const key = level.toLowerCase().replace(/\s+/g, '_');
                         return `
-                        <div class="rank-row grid items-center gap-2
-                          grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
-                          <span class="rank-title text-sm sm:text-base">
-                            ${t('difficulties.' + key)}
-                          </span>
+                          <div class="rank-row grid items-center gap-0.5 sm:gap-2
+                            grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
+                            sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                            <span class="rank-title text-[13px] sm:text-base whitespace-nowrap pr-1 sm:pr-0">
+                              ${t('difficulties.' + key)}
+                            </span>
 
                           <div class="relative group w-full">
                             <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/10 ring-1 ring-white/10">
@@ -733,6 +753,7 @@ async function fetchUserRankCard(userId, opts = {}) {
       if (!noSpinner) hideLoadingBar();
       return;
     }
+    updateHeaderDiscordProfile(userId, { fallbackNickname: data.nickname });
 
     rankCardContent.innerHTML = `
       <div class="rank-card-container relative">
@@ -751,8 +772,9 @@ async function fetchUserRankCard(userId, opts = {}) {
                 <div class="rank-section-container rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col">
                   
                   <div class="rank-section space-y-3">
-                    <div class="medals-header grid items-center text-sm text-white/80 gap-2
-                      grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                    <div class="medals-header grid items-center text-sm text-white/80 gap-0.5 sm:gap-2
+                      grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
+                      sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
                       <span></span><span></span>
                       <span class="text-center">
                         <img src="${MEDAL_ICON.gold}"   alt="Gold"   class="mx-auto h-4 w-4 sm:h-5 sm:w-5 object-contain" />
@@ -771,9 +793,10 @@ async function fetchUserRankCard(userId, opts = {}) {
                         const slug = level.toLowerCase().replace(/\s+/g, '-');
                         const key = level.toLowerCase().replace(/\s+/g, '_');
                         return `
-                        <div class="rank-row grid items-center gap-2
-                          grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
-                          <span class="rank-title text-sm sm:text-base">${t('difficulties.' + key)}</span>
+                          <div class="rank-row grid items-center gap-0.5 sm:gap-2
+                            grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
+                            sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                          <span class="rank-title text-[13px] sm:text-base whitespace-nowrap pr-1 sm:pr-0">${t('difficulties.' + key)}</span>
                           <div class="relative group w-full">
                             <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/10 ring-1 ring-white/10">
                               <div class="progress progress-${slug} absolute left-0 top-0 h-full w-0" data-width="${pct}"></div>
@@ -2330,8 +2353,9 @@ function rankCardSkeletonHTML() {
 
                 <!-- Médailles -->
                 <div class="rank-section space-y-3">
-                  <div class="medals-header grid items-center text-sm text-white/80 gap-2
-                              grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                  <div class="medals-header grid items-center text-sm text-white/80 gap-0.5 sm:gap-2
+                    grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
+                    sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
                     <span class="col-start-1 col-end-2"></span>
                     <span class="col-start-2 col-end-3"></span>
                     <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
@@ -2341,8 +2365,9 @@ function rankCardSkeletonHTML() {
 
                   <!-- Difficultés -->
                   ${Array.from({ length: 6 }).map(() => `
-                    <div class="rank-row grid items-center gap-2
-                                grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
+                    <div class="rank-row grid items-center gap-0.5 sm:gap-2
+                      grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
+                      sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
                       <span class="h-4 w-24 rounded bg-white/10 animate-pulse"></span>
                       <div class="relative group w-full">
                         <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/10 ring-1 ring-white/10">
