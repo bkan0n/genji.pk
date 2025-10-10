@@ -223,6 +223,7 @@ return [
         'map_code_copied'         => 'Map code copied to clipboard!',
         'click_to_copy_map_code'  => 'Click to copy',
         'copied'                  => 'Copied!',
+        'copy'                    => 'Copy',
         'copy_failed'             => 'Failed to copy.',
         'login'                   => 'Login',
         'user_id_copied'          => 'User ID {id} copied to clipboard!',

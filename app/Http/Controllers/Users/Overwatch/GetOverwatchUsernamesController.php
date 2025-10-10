@@ -11,10 +11,6 @@ use Throwable;
 
 final class GetOverwatchUsernamesController extends Controller
 {
-    /**
-     * GET /api/users/{user_id}/overwatch
-     * Proxy -> GET {root}/api/v3/users/{user_id}/overwatch
-     */
     public function __invoke(int $user_id): JsonResponse
     {
         $root = rtrim((string) config('services.genji_api.root', ''), '/');

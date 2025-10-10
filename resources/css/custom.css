@@ -1813,6 +1813,14 @@ i.flag-zimbabwe:before {
 
 .pt-dot {display:inline-block; width:10px; height:10px; border-radius:9999px; margin-right:8px; flex:0 0 auto;}
 
+#playtestModalInner .voter-card .avatar-wrap { position:relative; }
+#playtestModalInner .voter-card .copy-id-badge { position:absolute;right:-6px;top:-6px;display:grid;place-items:center;
+  height:20px;width:20px;border-radius:9999px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(159, 161, 161, 0.18);backdrop-filter:blur(2px);
+  cursor:pointer;transition:transform .15s ease, background-color .15s ease; }
+#playtestModalInner .voter-card .copy-id-badge:hover { transform:scale(1.05);background:rgba(91, 94, 93, 0.28); }
+#playtestModalInner .voter-card .copy-id-badge svg { opacity:.9; }
+
 /* ================= LOOTBOX ================= */
 #infoModal .modal-infos {
   max-height: 80svh;

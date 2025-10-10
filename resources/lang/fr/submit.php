@@ -223,6 +223,7 @@ return [
         'map_code_copied'         => 'Code de carte copié dans le presse-papiers !',
         'click_to_copy_map_code'  => 'Cliquer pour copier',
         'copied'                  => 'Copié !',
+        'copy'                    => 'Copier',
         'copy_failed'             => 'Échec de la copie.',
         'login'                   => 'Connexion',
         'user_id_copied'          => 'ID utilisateur {id} copié dans le presse-papiers !',

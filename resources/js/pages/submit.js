@@ -350,7 +350,7 @@ function showToast(message, type = 'ok', opts = {}) {
   if (!root) {
     root = document.createElement('div');
     root.id = 'toast-root';
-    root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[200] flex justify-center px-3';
+    root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[9999] flex justify-center px-3';
     document.body.appendChild(root);
   }
 
@@ -3939,20 +3939,32 @@ function buildVotersGridHTML(preloaded, voterIds) {
   }
   return `
     <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3">
-      ${voterIds
-        .map((id) => {
-          const key = String(id);
-          const avatar = preloaded[key]?.avatar || 'assets/profile/default-avatar.png';
-          const name = preloaded[key]?.name || '—';
-          return `
+      ${voterIds.map((id) => {
+        const key = String(id);
+        const avatar = preloaded[key]?.avatar || 'assets/profile/default-avatar.png';
+        const name = preloaded[key]?.name || '—';
+        return `
           <div class="voter-card flex flex-col items-center text-center" data-voter-row data-user-id="${esc(key)}">
-            <img
-              src="${esc(avatar)}"
-              alt="${esc(name)}"
-              class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-              data-user-id="${esc(key)}"
-              loading="lazy"
-            >
+            <div class="avatar-wrap relative">
+              <img
+                src="${esc(avatar)}"
+                alt="${esc(name)}"
+                class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                data-user-id="${esc(key)}"
+                loading="lazy"
+              >
+              <button
+                type="button"
+                class="copy-id-badge"
+                data-copy-user-id="${esc(key)}"
+                aria-label="Copy user id ${esc(key)}"
+                title="${t('popup.copy')}"
+              >
+                <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true">
+                  <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+              </button>
+            </div>
             <button
               type="button"
               class="open-rank-card mt-1 max-w-[120px] truncate text-sm text-zinc-200 font-medium cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -3961,19 +3973,9 @@ function buildVotersGridHTML(preloaded, voterIds) {
             >
               ${esc(name)}
             </button>
-            <button
-              type="button"
-              class="copy-user-id mt-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-mono text-emerald-200 hover:text-emerald-100 max-w-[120px] truncate cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-              data-user-id="${esc(key)}"
-              title="${esc(key)}"
-              aria-label="Copy user id ${esc(key)}"
-            >
-              ${esc(key)}
-            </button>
           </div>
         `;
-        })
-        .join('')}
+      }).join('')}
     </div>
   `;
 }
@@ -4024,10 +4026,23 @@ async function fetchDiscordAvatar(user_id) {
 
 async function fetchUserPrimaryName(user_id) {
   try {
-    const resp = await fetch(`/api/users/${encodeURIComponent(user_id)}/overwatch`);
+    const resp = await fetch(`/api/users/${encodeURIComponent(user_id)}`, {
+      headers: { 'Accept': 'application/json' },
+    });
     if (!resp.ok) return null;
+
     const json = await resp.json();
-    return json?.primary || null;
+
+    const ow = Array.isArray(json?.overwatch_usernames)
+      ? json.overwatch_usernames.filter(v => typeof v === 'string' && v.trim() !== '')
+      : [];
+
+    if (ow.length > 0) {
+      return ow[0];
+    }
+
+    const nickname = typeof json?.nickname === 'string' ? json.nickname.trim() : '';
+    return nickname || null;
   } catch {
     return null;
   }
@@ -4443,35 +4458,35 @@ function mountModeratorActions(modalEl, playtest) {
   let activeOpt = DIFFICULTY_FINE_OPTIONS.find(o => o.value === 'Medium') || DIFFICULTY_FINE_OPTIONS[0];
 
   const root = document.createElement('section');
-  root.className = 'mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3';
+  root.className = 'mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3 overflow-hidden';
   root.innerHTML = `
     <h3 class="mb-2 text-sm font-semibold text-emerald-300">Moderator actions</h3>
 
-    <div class="grid gap-2 sm:grid-cols-2">
+    <div class="grid min-w-0 gap-2 sm:grid-cols-2">
       <!-- Approve -->
       <button type="button" id="ptModApprove"
-        class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+        class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
         Approve (verifier = me)
       </button>
 
       <!-- Force Accept -->
-      <div class="flex items-center gap-2">
-        <div class="relative">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0">
+        <div class="relative w-full sm:w-auto min-w-0">
           <div id="ptmod-diffbutton"
-            class="ptmod-diffbutton group flex w-[12rem] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
+            class="ptmod-diffbutton group flex w-full sm:w-[12rem] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
             role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
-            <div class="inline-flex items-center gap-2">
-              <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20"></span>
-              <span id="ptmod-difflabel">${activeOpt.text()}</span>
+            <div class="inline-flex items-center gap-2 min-w-0">
+              <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20 shrink-0"></span>
+              <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
             </div>
-            <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform" viewBox="0 0 22 22" aria-hidden="true">
+            <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform shrink-0" viewBox="0 0 22 22" aria-hidden="true">
               <path fill="currentColor" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
             </svg>
           </div>
 
           <!-- Menu au-dessus -->
           <div id="ptmod-diffmenu"
-            class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] top-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
+            class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] top-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5 w-full"
             role="menu" aria-label="Select difficulty">
             ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
               <div
@@ -4485,50 +4500,50 @@ function mountModeratorActions(modalEl, playtest) {
         </div>
 
         <button type="button" id="ptModForceAccept"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
           Force Accept
         </button>
       </div>
 
       <!-- Force Deny -->
-      <div class="flex items-center gap-2 sm:col-span-2">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
         <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
         <button type="button" id="ptModForceDeny"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
           Force Deny
         </button>
       </div>
 
       <!-- Reset -->
-      <div class="flex items-center gap-2 sm:col-span-2">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
         <input id="ptModResetReason" type="text" placeholder="Reset reason…"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+        <label class="text-sm text-zinc-300 inline-flex items-center gap-1 shrink-0">
           <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
         </label>
-        <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+        <label class="text-sm text-zinc-300 inline-flex items-center gap-1 shrink-0">
           <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
         </label>
         <button type="button" id="ptModReset"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
           Reset Playtest
         </button>
       </div>
 
       <!-- Votes -->
-      <div class="flex items-center gap-2 sm:col-span-2">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
         <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
         <button type="button" id="ptModDeleteVote"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
           Delete user vote
         </button>
         <button type="button" id="ptModDeleteAllVotes"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
           Delete all votes
         </button>
       </div>
@@ -4846,27 +4861,27 @@ function renderPlaytestModal(data) {
       : `<span class="rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-200">—</span>`;
 
   const votersMount = `
-      <div id="votersMount" class="mt-3 max-h-[300px] w-full overflow-y-auto overflow-x-hidden pr-1">
-        <div class="max-h-[160px] overflow-hidden">
-          <div class="space-y-2.5" aria-busy="true" aria-live="polite">
-            <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>
-            <div class="flex flex-col gap-2.5">
-              ${Array.from({ length: 4 })
-                .map(
-                  () => `
-                <div class="flex flex-col items-center text-center">
-                  <div class="h-10 w-10 shrink-0 rounded-full bg-white/10 animate-pulse"></div>
-                  <div class="mt-1 h-2.5 w-20 max-w-full rounded bg-white/10 animate-pulse"></div>
-                  <div class="mt-1 h-2.5 w-24 max-w-full rounded bg-white/10 animate-pulse"></div>
-                </div>
-              `
-                )
-                .join('')}
-            </div>
+    <div id="votersMount" class="mt-3 max-h-[300px] w-full overflow-y-auto overflow-x-hidden pr-1 pt-2">
+      <div class="max-h-[160px] overflow-hidden">
+        <div class="space-y-2.5" aria-busy="true" aria-live="polite">
+          <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>
+          <div class="flex flex-col gap-2.5">
+            ${Array.from({ length: 4 })
+              .map(
+                () => `
+              <div class="flex flex-col items-center text-center">
+                <div class="h-10 w-10 shrink-0 rounded-full bg-white/10 animate-pulse"></div>
+                <div class="mt-1 h-2.5 w-20 max-w-full rounded bg-white/10 animate-pulse"></div>
+                <div class="mt-1 h-2.5 w-24 max-w-full rounded bg-white/10 animate-pulse"></div>
+              </div>
+            `
+              )
+              .join('')}
           </div>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
   return `
     <!-- HERO -->
@@ -4923,12 +4938,12 @@ function renderPlaytestModal(data) {
 
       <!-- CONTAINER 1 : name / checkpoints / mechanics / restrictions -->
       <section class="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+        <div class="grid grid-cols-1 gap-2">
+          <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
             <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.map_name')}</span>
-            <span class="max-w-[60%] truncate text-sm text-zinc-100 text-right">${esc(data.name || '—')}</span>
+            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-100 text-right">${esc(data.name || '—')}</span>
           </div>
-          <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+          <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
             <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.checkpoints')}</span>
             <span class="text-sm text-zinc-100">${Number.isFinite(data.checkpoints) ? esc(data.checkpoints) : '—'}</span>
           </div>
@@ -5006,11 +5021,6 @@ function renderPlaytestModal(data) {
 
           <!-- CHART -->
           <canvas id="difficultyChart" class="h-[160px] w-full"></canvas>
-        </div>
-
-        <div class="mt-2 flex items-center justify-between text-[11px] text-zinc-400">
-          <span>Easy</span><span>Medium</span><span>Hard</span>
-          <span>Very Hard</span><span>Extreme</span><span>Hell</span>
         </div>
       </div>
 
