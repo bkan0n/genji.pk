@@ -54,7 +54,7 @@ return [
     ],
 
     'github' => [
-        'token' => env('GITHUB_TOKEN'),
+        'token' => env('X_GITHUB_TOKEN'),
         'releases_repo' => env('GITHUB_RELEASES_REPO', 'tylovejoy/genji-framework'),
     ],
 ];
