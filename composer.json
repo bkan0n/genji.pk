@@ -13,6 +13,7 @@
     "laravel/framework": "^12.0",
     "laravel/socialite": "^5.23",
     "laravel/tinker": "^2.10.1",
+    "sentry/sentry": "^4.16",
     "sentry/sentry-laravel": "^4.15",
     "socialiteproviders/discord": "^4.2",
     "spatie/laravel-csp": "^3.17"

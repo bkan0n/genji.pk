@@ -4,10 +4,7 @@ use App\Http\Middleware\RequireDiscordModerator;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-// Spatie
 use Spatie\Csp\AddCspHeaders;
-
-// Ton debug
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
