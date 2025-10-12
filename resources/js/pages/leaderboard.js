@@ -128,41 +128,30 @@ const paginationContainer = $('.pagination-container');
 /* =========================
    TABLE HELPERS
    ========================= */
-function ensureThead() {
+function ensureLeaderboard() {
   if (!table) return;
-  table.classList.add(
-    'min-w-full',
-    'text-sm',
-    'table-fixed',
-    'border-separate',
-    'border-spacing-y-1'
-  );
-  let thead = table.querySelector('thead');
 
-  if (!thead) {
+  table.classList.add('lb');
+  if (!table.querySelector('.lb-inner')) {
     table.innerHTML = `
-      <thead class="bg-zinc-900/60 text-zinc-300">
-        <tr class="thead-wrapper">
-          <th class="col-idx px-4 py-3 text-left font-semibold">#</th>
-          <th class="col-nickname px-4 py-3 text-left font-semibold">Nickname</th>
-          <th class="col-xp px-4 py-3 text-left font-semibold">XP</th>
-          <th class="col-tier px-4 py-3 text-left font-semibold">Tier</th>
-          <th class="col-skill-rank px-4 py-3 text-left font-semibold">Skill rank</th>
-          <th class="col-wr px-4 py-3 text-left font-semibold">World records</th>
-          <th class="col-maps px-4 py-3 text-left font-semibold">Maps made</th>
-          <th class="col-playtest px-4 py-3 text-left font-semibold">Playtest votes</th>
-          <th class="col-discord px-4 py-3 text-left font-semibold">Discord tag</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
+      <div class="lb-inner">
+        <div class="lb-head lb-grid bg-zinc-900/60 text-zinc-300 rounded-lg mb-1 px-2 py-2">
+          <div class="col-idx px-2 font-semibold">#</div>
+          <div class="col-nickname px-2 font-semibold">Nickname</div>
+          <div class="col-xp px-2 font-semibold">XP</div>
+          <div class="col-tier px-2 font-semibold">Tier</div>
+          <div class="col-skill-rank px-2 font-semibold">Skill rank</div>
+          <div class="col-wr px-2 font-semibold">World records</div>
+          <div class="col-maps px-2 font-semibold">Maps made</div>
+          <div class="col-playtest px-2 font-semibold">Playtest votes</div>
+          <div class="col-discord px-2 font-semibold">Discord tag</div>
+        </div>
+        <div class="lb-rows"></div>
+      </div>
     `;
-    thead = table.querySelector('thead');
   }
-
-  thead.querySelectorAll('th').forEach((th) => {
-    th.classList.add('align-middle', 'whitespace-nowrap');
-  });
 }
+
 
 export async function fetchLeaderboard(params = {}) {
   const url = new URL('/api/community/leaderboard', window.location.origin);
@@ -237,7 +226,7 @@ async function updateLeaderboard(extra = {}) {
 
   const cached = readPageCache(activeFilters);
   if (!cached) {
-    ensureThead();
+    ensureLeaderboard();
     renderSkeletonRows(pageSize);
     table?.setAttribute('aria-busy', 'true');
   }
@@ -249,12 +238,11 @@ async function updateLeaderboard(extra = {}) {
     rows = sortBySkillRankClient(rows, activeFilters.sort_direction);
   }
 
-  const ids = [...new Set(rows.map(extractDiscordId).filter(Boolean))];
-  const avatarMap = await resolveDiscordAvatars(ids);
+  ensureLeaderboard();
+  renderRows(rows, activeFilters.page_number, activeFilters.page_size);
 
-  ensureThead();
-  renderRows(rows, activeFilters.page_number, activeFilters.page_size, avatarMap);
-  applySplitFlap(tbody);
+  const rowsEl = table?.querySelector('.lb-rows');
+  if (rowsEl) applySplitFlap(rowsEl);
   cascadeRows();
   renderPagination(total, activeFilters.page_number, activeFilters.page_size);
 
@@ -556,104 +544,86 @@ async function resolveDiscordAvatars(ids) {
 /* =========================
    TABLE RENDER
    ========================= */
-function renderRows(data, pageNumber, pageSize, avatarMap = new Map()) {
-  if (!tbody) return;
-  tbody.innerHTML = '';
+function renderRows(data, pageNumber, pageSize) {
+  ensureLeaderboard();
+  const rowsEl = table?.querySelector('.lb-rows');
+  if (!rowsEl) return;
+  rowsEl.innerHTML = '';
 
   const startIndex = (pageNumber - 1) * pageSize;
+  const avatarObserver = ensureAvatarObserver();
 
   data.forEach((player, idx) => {
     const rowNum = startIndex + idx + 1;
 
     const discordId = extractDiscordId(player);
-    const fallback = defaultDiscordAvatarFromId(discordId);
-    const avatarUrl = discordId ? avatarMap.get(discordId) || fallback : fallback;
+    const fallback  = defaultDiscordAvatarFromId(discordId);
 
-    const discordTag =
-      player.discord_tag === 'Unknown Username' ? 'N/A' : player.discord_tag || 'N/A';
+    const discordTag = (player.discord_tag === 'Unknown Username' || !player.discord_tag)
+      ? 'N/A'
+      : player.discord_tag;
 
     const skillRank = normalizeSkillRank(player.skill_rank);
 
-    const haloClass = `
-      relative
-      after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5
-      after:rounded-lg after:ring-2 after:pointer-events-none after:ring-zinc-200/30
-      bg-zinc-900/40 hover:bg-white/5 transition gp-reveal-show
-    `;
+    const row = document.createElement('div');
+    row.className = `lb-row lb-grid gp-reveal-show ${__clsAnimDelay(__clamp(idx * 30, 0, 250))} tr-sf-enter`;
 
-    const tr = document.createElement('tr');
-    tr.className = haloClass.replace(/\s+/g, ' ').trim();
-    tr.classList.add(__clsAnimDelay(__clamp(idx * 30, 0, 250)), 'tr-sf-enter');
+    row.innerHTML = `
+      <div class="col-idx px-2 py-2 text-zinc-400" data-sf="${escAttr(rowNum)}">${esc(rowNum)}</div>
 
-    tr.innerHTML = `
-      <td class="col-idx px-4 py-3 text-zinc-400 align-middle"
-          data-sf="${escAttr(rowNum)}">${esc(rowNum)}</td>
-
-      <td class="col-nickname px-4 py-3 align-middle">
+      <div class="col-nickname px-2 py-2">
         <a href="rank_card?user_id=${encodeURIComponent(player.user_id)}"
-           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5 transition">
-          <img
-            src="${avatarUrl}"
-            alt=""
-            class="h-8 w-8 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-            loading="lazy" decoding="async" referrerpolicy="no-referrer"
-            data-discord-avatar data-fallback="${fallback}"
-          />
-          <span class="font-medium"
+          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5 transition max-w-full">
+          <span class="avatar-shell ring-1 ring-white/10">
+            <img
+              src="${BLANK_IMG}"
+              alt=""
+              class="avatar-img avatar-lazy h-8 w-8 rounded-full object-cover shrink-0"
+              loading="lazy" decoding="async" referrerpolicy="no-referrer"
+              data-discord-avatar
+              data-discord-id="${escAttr(discordId)}"
+              data-fallback="${escAttr(fallback)}"
+            />
+          </span>
+          <span class="font-medium truncate block max-w-[28ch]"
                 data-sf="${escAttr(player.nickname || 'N/A')}">${esc(player.nickname || 'N/A')}</span>
         </a>
-      </td>
+      </div>
 
-      <td class="col-xp px-4 py-3 font-semibold align-middle"
-          data-sf="${escAttr((Number(player.xp_amount) || 0).toLocaleString())}">
-          ${(Number(player.xp_amount) || 0).toLocaleString()}
-      </td>
+      <div class="col-xp px-2 py-2 font-semibold" data-sf="${escAttr((Number(player.xp_amount)||0).toLocaleString())}">
+        ${(Number(player.xp_amount)||0).toLocaleString()}
+      </div>
 
-      <td class="col-tier px-4 py-3 align-middle">
+      <div class="col-tier px-2 py-2">
         ${mkTierPill(player.tier_name)}
-      </td>
+      </div>
 
-      <td class="col-skill-rank px-4 py-3 align-middle">
+      <div class="col-skill-rank px-2 py-2">
         ${mkSkillPill(skillRank)}
-      </td>
+      </div>
 
-      <td class="col-wr px-4 py-3 align-middle"
-          data-sf="${escAttr((Number(player.wr_count) || 0).toLocaleString())}">
-          ${(Number(player.wr_count) || 0).toLocaleString()}
-      </td>
+      <div class="col-wr px-2 py-2" data-sf="${escAttr((Number(player.wr_count)||0).toLocaleString())}">
+        ${(Number(player.wr_count)||0).toLocaleString()}
+      </div>
 
-      <td class="col-maps px-4 py-3 align-middle"
-          data-sf="${escAttr((Number(player.map_count) || 0).toLocaleString())}">
-          ${(Number(player.map_count) || 0).toLocaleString()}
-      </td>
+      <div class="col-maps px-2 py-2" data-sf="${escAttr((Number(player.map_count)||0).toLocaleString())}">
+        ${(Number(player.map_count)||0).toLocaleString()}
+      </div>
 
-      <td class="col-playtest px-4 py-3 align-middle"
-          data-sf="${escAttr((Number(player.playtest_count) || 0).toLocaleString())}">
-          ${(Number(player.playtest_count) || 0).toLocaleString()}
-      </td>
+      <div class="col-playtest px-2 py-2" data-sf="${escAttr((Number(player.playtest_count)||0).toLocaleString())}">
+        ${(Number(player.playtest_count)||0).toLocaleString()}
+      </div>
 
-      <td class="col-discord px-4 py-3 text-zinc-300 align-middle"
-          data-sf="${escAttr(discordTag)}">${esc(discordTag)}</td>
+      <div class="col-discord px-2 py-2 text-zinc-300">
+        <span class="truncate block max-w-[28ch]" data-sf="${escAttr(discordTag)}">${esc(discordTag)}</span>
+      </div>
     `;
 
-    tbody.appendChild(tr);
+    rowsEl.appendChild(row);
 
-    const img = tr.querySelector('img[data-discord-avatar]');
-    if (img) {
-      img.addEventListener(
-        'error',
-        () => {
-          const fb = img.getAttribute('data-fallback');
-          if (fb && img.src !== fb) img.src = fb;
-        },
-        { once: true }
-      );
-    }
+    const img = row.querySelector('img[data-discord-avatar]');
+    if (img) avatarObserver.observe(img);
   });
-
-  applySplitFlap(tbody);
-  cascadeRows();
-  smoothRevealTableRows(table);
 }
 
 /* =========================
@@ -852,9 +822,9 @@ function applySplitFlap(root = document) {
 }
 
 function cascadeRows() {
-  document.querySelectorAll('tbody tr').forEach((tr, i) => {
-    tr.classList.add(__clsAnimDelay(__clamp(i * 30, 0, 250)), 'tr-sf-enter');
-    tr.addEventListener('animationend', () => tr.classList.remove('tr-sf-enter'), { once: true });
+  document.querySelectorAll('.lb-rows .lb-row').forEach((row, i) => {
+    row.classList.add(__clsAnimDelay(__clamp(i * 30, 0, 250)), 'tr-sf-enter');
+    row.addEventListener('animationend', () => row.classList.remove('tr-sf-enter'), { once: true });
   });
 }
 
@@ -866,16 +836,16 @@ function escAttr(v) {
 }
 
 function smoothRevealTableRows(rootEl) {
-  const rows = rootEl.querySelectorAll('tbody tr');
+  const rows = rootEl.querySelectorAll('.lb-rows .lb-row');
   if (!rows.length) return;
 
-  rows.forEach((tr) => tr.classList.add('gp-reveal'));
+  rows.forEach((el) => el.classList.add('gp-reveal'));
 
   requestAnimationFrame(() => {
-    rows.forEach((tr, i) => {
+    rows.forEach((el, i) => {
       const delay = __clamp(i * 18, 0, 280);
-      tr.classList.add(__clsTransDelay(delay), 'gp-reveal-show');
-      tr.classList.remove('gp-reveal');
+      el.classList.add(__clsTransDelay(delay), 'gp-reveal-show');
+      el.classList.remove('gp-reveal');
     });
   });
 }
@@ -959,64 +929,118 @@ function __addKeyframes(name, body) {
    RENDER SKELETON
    ========================= */
 function renderSkeletonRows(count = pageSize) {
-  ensureThead();
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const haloClass = `
-    relative
-    after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5
-    after:rounded-lg after:ring-2 after:pointer-events-none after:ring-zinc-200/30
-    bg-zinc-900/40 hover:bg-white/5 transition gp-reveal-show
-  `.replace(/\s+/g, ' ').trim();
+  ensureLeaderboard();
+  const rowsEl = table?.querySelector('.lb-rows');
+  if (!rowsEl) return;
+  rowsEl.innerHTML = '';
 
   for (let i = 0; i < count; i++) {
-    const tr = document.createElement('tr');
-    tr.className = `${haloClass} ${__clsAnimDelay(__clamp(i * 30, 0, 250))} tr-sf-enter`;
+    const row = document.createElement('div');
+    row.className = `lb-row lb-grid ${__clsAnimDelay(__clamp(i * 30, 0, 250))} tr-sf-enter`;
 
-    tr.innerHTML = `
-      <td class="col-idx px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-8"></span>
-      </td>
+    row.innerHTML = `
+      <div class="col-idx px-2 py-2"><span class="skel skel-sm skel-w-8"></span></div>
 
-      <td class="col-nickname px-4 py-3 align-middle">
+      <div class="col-nickname px-2 py-2">
         <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5">
           <span class="skel skel-circle h-8 w-8 rounded-full ring-1 ring-white/10"></span>
           <span class="skel skel-md skel-w-36"></span>
         </div>
-      </td>
+      </div>
 
-      <td class="col-xp px-4 py-3 font-semibold align-middle">
-        <span class="skel skel-sm skel-w-20"></span>
-      </td>
-
-      <td class="col-tier px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-20"></span>
-      </td>
-
-      <td class="col-skill-rank px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-20"></span>
-      </td>
-
-      <td class="col-wr px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-12"></span>
-      </td>
-
-      <td class="col-maps px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-12"></span>
-      </td>
-
-      <td class="col-playtest px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-12"></span>
-      </td>
-
-      <td class="col-discord px-4 py-3 align-middle">
-        <span class="skel skel-sm skel-w-28"></span>
-      </td>
+      <div class="col-xp px-2 py-2"><span class="skel skel-sm skel-w-20"></span></div>
+      <div class="col-tier px-2 py-2"><span class="skel skel-sm skel-w-20"></span></div>
+      <div class="col-skill-rank px-2 py-2"><span class="skel skel-sm skel-w-20"></span></div>
+      <div class="col-wr px-2 py-2"><span class="skel skel-sm skel-w-12"></span></div>
+      <div class="col-maps px-2 py-2"><span class="skel skel-sm skel-w-12"></span></div>
+      <div class="col-playtest px-2 py-2"><span class="skel skel-sm skel-w-12"></span></div>
+      <div class="col-discord px-2 py-2"><span class="skel skel-sm skel-w-28"></span></div>
     `;
 
-    tbody.appendChild(tr);
+    rowsEl.appendChild(row);
   }
+}
+
+/* =========================
+   DISCORD AVATAR LAZY LOADER
+   ========================= */
+const BLANK_IMG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=';
+
+let __avatarIO = null;
+function ensureAvatarObserver() {
+  if (__avatarIO) return __avatarIO;
+  if (!('IntersectionObserver' in window)) {
+    __avatarIO = {
+      observe(img) {
+        const id = img.getAttribute('data-discord-id') || '';
+        const fb = img.getAttribute('data-fallback') || defaultDiscordAvatarFromId(id);
+        const cached = id && avatarCache.get(id);
+        if (cached) return setAvatarSrc(img, cached, fb);
+        if (!id) return setAvatarSrc(img, fb, fb);
+        fetchAvatarUrlForId(id)
+          .then((u) => {
+            const finalUrl = u || fb;
+            if (id) avatarCache.set(id, finalUrl);
+            persistAvatarCache();
+            setAvatarSrc(img, finalUrl, fb);
+          })
+          .catch(() => setAvatarSrc(img, fb, fb));
+      },
+      unobserve() {},
+      disconnect() {},
+    };
+    return __avatarIO;
+  }
+  __avatarIO = new IntersectionObserver(onAvatarIntersect, {
+    root: document.querySelector('#leaderboard') || null,
+    rootMargin: '200px 0px',
+    threshold: 0.01,
+  });
+  return __avatarIO;
+}
+
+function onAvatarIntersect(entries, obs) {
+  for (const entry of entries) {
+    if (!entry.isIntersecting) continue;
+    const img = entry.target;
+    obs.unobserve(img);
+    const id = img.getAttribute('data-discord-id') || '';
+    const fb = img.getAttribute('data-fallback') || defaultDiscordAvatarFromId(id);
+
+    const cached = id && avatarCache.get(id);
+    if (cached) {
+      setAvatarSrc(img, cached, fb);
+    } else if (!id) {
+      setAvatarSrc(img, fb, fb);
+    } else {
+      fetchAvatarUrlForId(id)
+        .then((u) => {
+          const finalUrl = u || fb;
+          avatarCache.set(id, finalUrl);
+          persistAvatarCache();
+          setAvatarSrc(img, finalUrl, fb);
+        })
+        .catch(() => setAvatarSrc(img, fb, fb));
+    }
+  }
+}
+
+function setAvatarSrc(img, url, fallback) {
+  const finish = () => {
+    img.classList.remove('avatar-lazy');
+    img.classList.add('avatar-loaded');
+    if (img.parentElement && img.parentElement.classList) {
+      img.parentElement.classList.add('loaded');
+    }
+  };
+  img.addEventListener('load', finish, { once: true });
+  img.addEventListener('error', () => {
+    if (fallback && img.src !== fallback) img.src = fallback;
+    finish();
+  }, { once: true });
+
+  img.src = url;
 }
 
 /* =========================

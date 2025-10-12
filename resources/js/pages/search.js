@@ -1785,6 +1785,76 @@ function pickCreatorNames(row) {
 }
 
 /* =========================
+   Avatars Lazy Load
+   ========================= */
+const LAZY_AVATARS = true;
+
+let __avatarIO = null;
+
+function initAvatarLazyLoading() {
+  if (!LAZY_AVATARS || __avatarIO) return;
+
+  if ('IntersectionObserver' in window) {
+    __avatarIO = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const img = entry.target;
+        if (entry.isIntersecting) {
+          __avatarIO.unobserve(img);
+          loadAvatarFor(img);
+        }
+      });
+    }, { rootMargin: '300px 0px', threshold: 0.01 });
+  } else {
+    __avatarIO = {
+      observe: (img) => loadAvatarFor(img),
+      unobserve: () => {},
+    };
+  }
+}
+
+function refreshAvatarLazyLoading(root = document) {
+  if (!LAZY_AVATARS) return;
+  initAvatarLazyLoading();
+  const imgs = root.querySelectorAll('img[data-avatar-id]');
+  imgs.forEach((img) => {
+    if (!img.__fbBound) {
+      img.__fbBound = true;
+      const fb = img.getAttribute('data-fallback-src') || defaultAvatarFromId(img.dataset.avatarId || '0');
+      img.addEventListener('error', () => { if (img.src !== fb) img.src = fb; }, { once: true });
+    }
+    __avatarIO.observe(img);
+  });
+}
+
+async function loadAvatarFor(img) {
+  if (!img || img.dataset.avatarLoaded === '1') return;
+  const id = String(img.dataset.avatarId || '');
+  const want64 = (img.dataset.avatarSize || '64') === '64';
+
+  let url = id ? creatorAvatarCache.get(id) : null;
+  if (!url && id) {
+    try {
+      url = await fetchAvatarUrlForUserId(id);
+    } catch {}
+    url = url || defaultAvatarFromId(id);
+    creatorAvatarCache.set(id, url);
+    persistCreatorAvatarCache();
+  }
+  if (!url) url = defaultAvatarFromId(id || '0');
+  if (want64) url = ensureSize64(url);
+
+  if (img.isConnected) {
+    img.src = url;
+    img.dataset.avatarLoaded = '1';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAvatarLazyLoading();
+  refreshAvatarLazyLoading(document);
+});
+
+/* =========================
    INTERACTIVITY
    ========================= */
 function qualityMicroBarHTML(value, max = 6) {
@@ -2074,9 +2144,6 @@ async function displayMapSearchResults(rowsInput) {
     return;
   }
 
-  const allCreatorIds = [...new Set(filtered.flatMap(pickCreatorIds).filter(Boolean))];
-  const avatarMap = await resolveCreatorAvatars(allCreatorIds);
-
   const safeHex = (c) => (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(c)) ? c : '#ffffff');
   const starsHTML = (quality, max = 6) => {
     if (quality == null || isNaN(Number(quality))) return 'N/A';
@@ -2117,17 +2184,17 @@ async function displayMapSearchResults(rowsInput) {
     const creatorsHTML = names.map((name, i) => {
       const id = ids[i];
       const fallback = defaultAvatarFromId(id || name);
-      const url = id ? avatarMap.get(String(id)) || fallback : fallback;
       const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
       return `
         <a href="${escAttr(profileHref)}"
-           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-           title="${escAttr(name)}">
+          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+          title="${escAttr(name)}">
           <img
-            src="${escAttr(url)}"
+            src="${escAttr(fallback)}"
             alt=""
             class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
             loading="lazy" decoding="async" referrerpolicy="no-referrer"
+            data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
             data-fallback-src="${escAttr(fallback)}"
           />
           <span data-sf="${escAttr(name)}"></span>
@@ -2190,6 +2257,7 @@ async function displayMapSearchResults(rowsInput) {
   `;
 
   setResultsHTML(shell);
+  refreshAvatarLazyLoading(document.getElementById('resultsContainer'));
 
   const resultsRoot = document.getElementById('resultsContainer');
   applySplitFlap(resultsRoot);
@@ -2485,7 +2553,6 @@ async function displayPersonalRecordsResults(results) {
 
     const uid = r.user_id ? String(r.user_id) : null;
     const fallback = currentUid ? defaultAvatarFromId(currentUid) : defaultAvatarFromId(uid || '0');
-    const avatarUrl = currentUserAvatar ? currentUserAvatar : uid ? avatarMap.get(uid) || fallback : fallback;
 
     const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
     const nickname = r.name || r.nickname || 'N/A';
@@ -2507,23 +2574,27 @@ async function displayPersonalRecordsResults(results) {
         </button>`
       : `<span data-sf="N/A">N/A</span>`;
 
-    const nicknameBlock = profileHref
-      ? `
-        <a href="${escAttr(profileHref)}"
-           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-           title="${escAttr(nickname)}">
-          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
-          <span data-sf="${escAttr(nickname)}"></span>
-        </a>`
-      : `
-        <div class="flex items-center gap-2">
-          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
-          <span data-sf="${escAttr(nickname)}"></span>
-        </div>`;
+  const nicknameBlock = profileHref
+    ? `
+      <a href="${escAttr(profileHref)}"
+        class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+        title="${escAttr(nickname)}">
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+            alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+            src="${escAttr(fallback)}"
+            data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
+            data-fallback-src="${escAttr(fallback)}"/>
+        <span data-sf="${escAttr(nickname)}"></span>
+      </a>`
+    : `
+      <div class="flex items-center gap-2">
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+            alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+            src="${escAttr(fallback)}"
+            data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
+            data-fallback-src="${escAttr(fallback)}"/>
+        <span data-sf="${escAttr(nickname)}"></span>
+      </div>`;
 
     return `
       <div class="grid grid-personal_records bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
@@ -2554,6 +2625,7 @@ async function displayPersonalRecordsResults(results) {
   `;
 
   setResultsHTML(shell);
+  refreshAvatarLazyLoading(document.getElementById('resultsContainer'));
 
   const root = document.getElementById('resultsContainer');
   applySplitFlap(root);
@@ -2589,8 +2661,6 @@ async function displayCompletionsResults(results) {
     return;
   }
 
-  const allIds = [...new Set(filtered.map((r) => r.user_id).filter(Boolean).map(String))];
-  const avatarMap = await resolveCreatorAvatars(allIds);
   const currentUid = window.user_id ? String(window.user_id) : null;
 
   // Modal
@@ -2671,7 +2741,7 @@ async function displayCompletionsResults(results) {
 
     const uid = r.user_id ? String(r.user_id) : null;
     const fallback = defaultAvatarFromId(uid || '0');
-    const avatarUrl = uid ? avatarMap.get(uid) || fallback : fallback;
+
     const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
 
     const nickname = r.nickname || r.name || 'N/A';
@@ -2696,18 +2766,22 @@ async function displayCompletionsResults(results) {
     const nicknameBlock = profileHref
       ? `
         <a href="${escAttr(profileHref)}"
-           class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-           title="${currentUid && uid && currentUid === uid ? t('popup.you') : escAttr(nickname)}">
+          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+          title="${currentUid && uid && currentUid === uid ? t('popup.you') : escAttr(nickname)}">
           <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
+              alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+              src="${escAttr(fallback)}"
+              data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
+              data-fallback-src="${escAttr(fallback)}"/>
           <span data-sf="${escAttr(nickname)}"></span>
         </a>`
       : `
         <div class="flex items-center gap-2">
           <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-               alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-               src="${escAttr(avatarUrl)}" data-fallback-src="${escAttr(fallback)}"/>
+              alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+              src="${escAttr(fallback)}"
+              data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
+              data-fallback-src="${escAttr(fallback)}"/>
           <span data-sf="${escAttr(nickname)}"></span>
         </div>`;
 
@@ -2748,6 +2822,7 @@ async function displayCompletionsResults(results) {
   `;
 
   setResultsHTML(shell);
+  refreshAvatarLazyLoading(document.getElementById('resultsContainer'));
 
   const root = document.getElementById('resultsContainer');
   applySplitFlap(root);

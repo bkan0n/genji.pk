@@ -1414,6 +1414,174 @@ i.flag-zimbabwe:before {
   }
 }
 
+/* --- LEADERBOARD WRAPPER --- */
+#leaderboard{
+  overflow-x: hidden;
+  overflow: clip;
+  overscroll-behavior-x: contain;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  scrollbar-gutter: stable both-edges;
+}
+
+#leaderboard::-webkit-scrollbar{
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+#leaderboard[aria-busy="true"]{
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+}
+
+#leaderboard[aria-busy="true"] .lb-inner{
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+#leaderboard[aria-busy="true"] .lb-rows{
+  overflow: hidden;
+}
+
+/* --- GRID LAYOUT --- */
+.lb-grid{
+  display: grid;
+  grid-template-columns:
+    3.25rem
+    minmax(180px, 2fr)
+    minmax(90px, 1fr)
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    minmax(110px, 1fr)
+    minmax(110px, 1fr)
+    minmax(130px, 1fr)
+    minmax(180px, 2fr);
+  gap: .5rem;
+  align-items: center;
+}
+
+.lb-head{
+  background: rgba(24,24,27,.60);
+  color: #d4d4d8;
+  border-radius: .5rem;
+  margin-bottom: .25rem;
+  padding: .5rem .5rem;
+}
+
+/* --- ROW "CARD" --- */
+.lb-row{
+  position: relative;
+  border-radius: .75rem;
+  padding: .5rem .5rem;
+  background: rgba(24,24,27,.40);
+  transition: background .2s;
+}
+.lb-row:hover{
+  background: rgba(255,255,255,.05);
+}
+.lb-row::after{
+  content: "";
+  position: absolute;
+  inset: .125rem .5rem;
+  border-radius: .75rem;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(228,228,231,.30) inset;
+}
+
+/* --- PILLS --- */
+.pill{
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-weight: 600;
+  font-size: .75rem;
+  line-height: 1rem;
+  border: 1px solid var(--pill-border);
+  background: var(--pill-bg);
+  color: var(--pill-text);
+}
+/* --- SKELETON --- */
+
+@keyframes skelShimmer{
+  0%{ background-position: -200% 0; }
+  100%{ background-position: 200% 0; }
+}
+.skel{
+  display: inline-block;
+  border-radius: .5rem;
+  height: .875rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.06),
+    rgba(255,255,255,0.12),
+    rgba(255,255,255,0.06)
+  );
+  background-size: 200% 100%;
+  animation: skelShimmer 1.1s linear infinite;
+}
+.skel-circle{ border-radius: 9999px; height: 2rem; width: 2rem; }
+.skel-sm{ height: .75rem; }
+.skel-md{ height: .9rem; }
+.skel-lg{ height: 1rem; }
+.skel-w-8{ width: 1.2rem; }
+.skel-w-12{ width: 3rem; }
+.skel-w-20{ width: 5rem; }
+.skel-w-28{ width: 7rem; }
+.skel-w-36{ width: 9rem; }
+
+img.avatar-lazy{
+  display: block;
+  background-image: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.12), rgba(255,255,255,.06));
+  background-size: 200% 100%;
+  background-position: 0 0;
+  animation: skelShimmer 1.1s linear infinite;
+  background-color: transparent !important;
+}
+
+img.avatar-loaded{
+  animation: none !important;
+  background: none !important;
+}
+
+.avatar-shell{
+  position: relative;
+  height: 2rem; width: 2rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.avatar-shell::before{
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.12), rgba(255,255,255,.06));
+  background-size: 200% 100%;
+  animation: skelShimmer 1.1s linear infinite;
+  opacity: 1;
+  transition: opacity .28s ease;
+}
+
+.avatar-shell.loaded::before{
+  opacity: 0;
+}
+
+.avatar-img{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+  opacity: 0;
+  transition: opacity .28s ease;
+}
+
+.avatar-img.avatar-loaded{
+  opacity: 1;
+}
+
 /* ================= SEARCH ================= */
 .tab-buttons button.active {
   background-color: rgba(255, 255, 255, 0.06);
