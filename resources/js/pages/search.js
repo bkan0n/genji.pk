@@ -855,7 +855,7 @@ function difficultyClasses(label, value) {
   const base = {
     text: 'text-zinc-200',
     chip: 'border-white/10 bg-white/5 text-zinc-200',
-    dot: 'bg-zinc-400/70',
+    dot: 'bg-zinc-900/60',
   };
 
   if (typeof label === 'string') {
@@ -2152,7 +2152,7 @@ async function displayMapSearchResults(rowsInput) {
   };
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
+    <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
       <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
       <div class="whitespace-nowrap">${t('thead.mapName')}</div>
       <div class="whitespace-nowrap">${t('thead.mapType')}</div>
@@ -2209,8 +2209,8 @@ async function displayMapSearchResults(rowsInput) {
     const codeChip = code !== 'N/A'
       ? `
         <button type="button"
-                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
-                       text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
+                       text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                        w-full min-w-0"
                 data-code="${escAttr(code)}"
                 aria-label="${escAttr(t('popup.click_to_copy_map_code'))}"
@@ -2293,21 +2293,12 @@ async function displayMapSearchResults(rowsInput) {
     shell.innerHTML = `
       <div id="detailsModalOverlay"
         class="fixed inset-0 z-[70] hidden flex items-center justify-center
-               bg-black/50 backdrop-blur opacity-0 transition-opacity duration-200">
+               bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-200"
+        role="dialog" aria-modal="true">
         <div id="detailsModalBox"
-          class="relative w-[min(92vw,980px)] max-h-[88vh] overflow-y-auto
+          class="relative w-[min(96vw,1080px)] max-h-[90vh] overflow-y-auto min-h-[620px]
                  translate-y-3 opacity-0 transition-all duration-200
-                 rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl ring-1 ring-white/5">
-          <button id="detailsModalClose"
-            class="absolute right-3 top-3 z-10
-                   inline-flex h-8 w-8 items-center justify-center
-                   rounded-full bg-white/10 text-zinc-300 hover:bg-white/20
-                   focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-            aria-label="Close modal">
-            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 6L18 18M18 6L6 18"/>
-            </svg>
-          </button>
+                 rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-900/95 shadow-2xl ring-1 ring-white/5">
           <div id="modalDetailsContainer" class="p-0"></div>
         </div>
       </div>
@@ -2329,110 +2320,110 @@ async function displayMapSearchResults(rowsInput) {
     const restrictions = rest.length ? rest.join(', ') : 'N/A';
 
     const description = r.description || r.desc || t('no_description') || 'No description available';
-    const mapNameKey = r.original_map_name
-      ? r.original_map_name.toLowerCase().replace(/[()\s']/g, '')
-      : (r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
-    const fallbackBannerPath = `assets/banners/${mapNameKey}.png`;
-    const bannerPath = r.map_banner || fallbackBannerPath;
+    const mapNameKey = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
+    const bannerPath = r.map_banner || `assets/banners/${mapNameKey}.png`;
 
     const diffColor = (difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
+    const diffClass = difficultyClasses(r.difficulty || '').chip;
     const typeText = Array.isArray(r.category) ? r.category.join(', ') : r.category || 'Classic';
-    const creatorNames = pickCreatorNames(r).join(', ') || 'N/A';
 
-    const medalGold = r.medals && r.medals.gold != null ? r.medals.gold : r.gold;
-    const medalSilver = r.medals && r.medals.silver != null ? r.medals.silver : r.silver;
-    const medalBronze = r.medals && r.medals.bronze != null ? r.medals.bronze : r.bronze;
-
-    const medals = [];
-    if (medalGold != null && medalGold !== 'N/A') medals.push(`
-      <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <img src="assets/verifications/old/gold_wr.gif" alt="Gold Medal" class="h-6 w-6" />
-        <span class="text-sm">${esc(String(medalGold))}</span>
-      </div>`);
-    if (medalSilver != null && medalSilver !== 'N/A') medals.push(`
-      <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <img src="assets/verifications/old/silver_wr.gif" alt="Silver Medal" class="h-6 w-6" />
-        <span class="text-sm">${esc(String(medalSilver))}</span>
-      </div>`);
-    if (medalBronze != null && medalBronze !== 'N/A') medals.push(`
-      <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <img src="assets/verifications/old/bronze_wr.gif" alt="Bronze Medal" class="h-6 w-6" />
-        <span class="text-sm">${esc(String(medalBronze))}</span>
-      </div>`);
+    const medalGold   = r.medals?.gold   ?? r.gold;
+    const medalSilver = r.medals?.silver ?? r.silver;
+    const medalBronze = r.medals?.bronze ?? r.bronze;
 
     const ratingValue = r.ratings != null ? r.ratings : r.quality;
+    const hasRating   = ratingValue != null && !isNaN(Number(ratingValue));
 
+    const medalPill = (kind, val) => (val != null && val !== 'N/A')
+      ? `<span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/60 px-2.5 py-1 text-xs">
+          <img src="assets/medals/${kind}.png" alt="${kind} medal" class="h-4 w-4"/>
+          <span>${esc(String(val))}</span>
+        </span>` : '';
+
+    // HEADER
     const headerBanner = `
       <div class="relative">
-        <div class="h-36 sm:h-44 w-full bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-t-2xl overflow-hidden">
-          <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="${escAttr(r.map_name || 'banner')}"
-               class="h-full w-full object-cover opacity-70"
-               data-fallback-src="${escAttr(fallbackBannerPath)}">
+        <div class="h-40 sm:h-52 w-full rounded-t-3xl overflow-hidden bg-zinc-900">
+          <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="" class="h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/40 to-transparent"></div>
+          <div class="absolute inset-0 pointer-events-none banner-bottom-mask"></div>
         </div>
-        <div class="pointer-events-none absolute inset-0 rounded-t-2xl bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
 
-        <div class="absolute bottom-3 left-4 right-4 flex flex-wrap items-end gap-3 pr-2">
-          <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight">${esc(r.map_name || 'N/A')}</h2>
-            <p class="text-sm text-zinc-300">${esc(typeText)}</p>
-          </div>
-          <div class="ml-auto flex flex-wrap items-center gap-2">
+        <!-- Top left -->
+        <div class="absolute top-4 left-5 right-1">
+          <div class="flex flex-wrap justify-start gap-2">
+            ${r.code ? `
             <button type="button"
-              class="copy-map-code relative z-10 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5
-                     text-xs font-semibold text-zinc-100 hover:bg-white/10 hover:text-emerald-300 hover:ring-1 hover:ring-emerald-400/40
-                     focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer"
-              data-code="${escAttr(r.code || '')}"
-              aria-label="${escAttr(t('popup.click_to_copy_map_code') || 'Click to copy map code')}"
-              title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
-              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              class="copy-map-code inline-flex items-center gap-2 cursor-pointer rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+              data-code="${escAttr(r.code)}"
+              title="${escAttr(t('popup.click_to_copy_map_code') || 'Click to copy map code')}">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                 <rect x="3" y="3" width="13" height="13" rx="2"></rect>
               </svg>
-              <span class="font-semibold">${esc(t('thead.mapCode'))}:</span> ${esc(r.code || 'N/A')}
-            </button>
+              <span class="font-semibold">${esc(t('thead.mapCode'))}</span> ${esc(r.code)}
+            </button>` : ''}
 
-            <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs">
+            <span class="inline-flex items-center gap-2 rounded-full bg-zinc-900/60 px-3 py-1 text-xs ring-1 ring-inset ring-white/10">
               <span class="font-semibold">${esc(t('thead.mapDifficulty'))}:</span>
-              <span class="${__clsTextColor(diffColor)}">
-                <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
-              </span>
+              <span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span>
             </span>
-            <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs">
+
+            ${typeText ? `
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs">
+              <span class="font-semibold">${esc(t('thead.mapType'))}:</span>
+              <span class="truncate max-w-[28ch]">${esc(typeText)}</span>
+            </span>` : ''}
+          </div>
+        </div>
+
+        <!-- Top right -->
+        <div class="absolute top-4 right-5">
+          <div class="flex flex-wrap justify-end gap-2">
+            ${hasRating ? `
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs">
               <span class="font-semibold">${esc(t('thead.mapQuality'))}:</span>
-              ${starsHTML(ratingValue)}
-            </span>
+              <span class="tracking-tight">${'★'.repeat(Math.max(0, Math.min(6, Math.floor(Number(ratingValue)))))}
+                    ${'☆'.repeat(Math.max(0, 6 - Math.floor(Number(ratingValue))))}</span>
+            </span>` : ''}
+
+            ${medalPill('gold', medalGold)}
+            ${medalPill('silver', medalSilver)}
+            ${medalPill('bronze', medalBronze)}
           </div>
         </div>
       </div>
     `;
 
+    // --- BODY
     const detailsGrid = `
-      <div class="px-5 pb-6 pt-2 space-y-6">
+      <div class="px-5 pb-7 pt-4">
         <div class="grid gap-6 md:grid-cols-2">
-          <div class="space-y-3">
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
+          <!-- Left col -->
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
               <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapView'))}</h3>
               <dl class="grid grid-cols-1 gap-2 text-sm">
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCreator'))}</dt><dd class="text-right">${esc(pickCreatorNames(r).join(', ') || 'N/A')}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCheckpoints'))}</dt><dd class="text-right">${esc(String(r.checkpoints ?? t('na')))}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapMechanics'))}</dt><dd class="text-right">${esc(mechanics)}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapRestrictions'))}</dt><dd class="text-right">${esc(restrictions)}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCreator'))}</dt><dd class="text-right text-zinc-100">${esc((pickCreatorNames(r).join(', ')) || 'N/A')}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCheckpoints'))}</dt><dd class="text-right text-zinc-100">${esc(String(r.checkpoints ?? t('na')))}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapMechanics'))}</dt><dd class="text-right text-zinc-100">${esc(mechanics)}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapRestrictions'))}</dt><dd class="text-right text-zinc-100">${esc(restrictions)}</dd></div>
               </dl>
             </div>
 
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-              <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapDescription'))}</h3>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
+              <h3 class="text-sm font-semibold text-zinc-200 mb-2">${esc(t('thead.mapDescription'))}</h3>
               <p class="text-sm leading-relaxed text-zinc-200">${esc(description)}</p>
             </div>
           </div>
 
-          <div class="space-y-3">
-            <div class="flex flex-wrap items-center gap-2">${medals.join('')}</div>
+          <!-- Right col -->
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
+              <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('chart.record_progression_time'))}</h3>
+              <div id="chartContainer"></div>
+            </div>
           </div>
-        </div>
-
-        <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-          <div id="chartContainer"></div>
         </div>
       </div>
     `;
@@ -2445,10 +2436,9 @@ async function displayMapSearchResults(rowsInput) {
 
     const bannerImg = document.getElementById('modalBannerImg');
     if (bannerImg) {
-      const fb = bannerImg.getAttribute('data-fallback-src');
+      const fb = `assets/banners/${mapNameKey}.png`;
       bannerImg.addEventListener('error', () => { if (bannerImg.src !== fb) bannerImg.src = fb; }, { once: true });
     }
-
     if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(modalRoot);
 
     overlay.classList.remove('hidden'); overlay.classList.add('flex');
@@ -2458,18 +2448,21 @@ async function displayMapSearchResults(rowsInput) {
       box.classList.add('translate-y-0', 'opacity-100');
     });
 
-    const btnClose = document.getElementById('detailsModalClose');
-    const closeDetailsModal = () => {
+    const onEsc = (e) => { if (e.key === 'Escape') closeDetailsModal(); };
+    const onOutside = (e) => { if (!box.contains(e.target)) closeDetailsModal(); };
+    document.addEventListener('keydown', onEsc);
+    overlay.addEventListener('pointerdown', onOutside, true);
+
+    function closeDetailsModal() {
+      document.removeEventListener('keydown', onEsc);
+      overlay.removeEventListener('pointerdown', onOutside, true);
+
       overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100');
       box.classList.add('translate-y-3', 'opacity-0'); box.classList.remove('translate-y-0', 'opacity-100');
-      setTimeout(() => {
-        overlay.classList.add('hidden'); overlay.classList.remove('flex');
-      }, 180);
-    };
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDetailsModal(); }, { once: true });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetailsModal(); }, { once: true });
-    btnClose.addEventListener('click', closeDetailsModal, { once: true });
+      setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
+    }
 
+    showProgressionLoading();
     const [stats, progressionData] = await Promise.all([
       fetchMapCompletionStatistics(r.code),
       fetchProgression(r.code),
@@ -2561,11 +2554,11 @@ async function displayPersonalRecordsResults(results) {
     const mapCodeCell = r.code
       ? `
         <button type="button"
-          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
-                 text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
+                 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                  w-[6.5rem]"
           data-code="${escAttr(r.code)}"
-          title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
+          title="${escAttr(t('popup.click_to_copy_map_code'))}">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="9" y="9" width="13" height="13" rx="2"></rect>
             <rect x="3" y="3" width="13" height="13" rx="2"></rect>
@@ -2669,20 +2662,12 @@ async function displayCompletionsResults(results) {
     shell.innerHTML = `
       <div id="detailsModalOverlay"
         class="fixed inset-0 z-[70] hidden flex items-center justify-center
-               bg-black/50 backdrop-blur opacity-0 transition-opacity duration-200">
+               bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-200"
+        role="dialog" aria-modal="true">
         <div id="detailsModalBox"
-          class="relative w-[min(92vw,980px)] max-h-[88vh] overflow-y-auto
+          class="relative w-[min(96vw,1080px)] max-h-[90vh] overflow-y-auto min-h-[620px]
                  translate-y-3 opacity-0 transition-all duration-200
-                 rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl ring-1 ring-white/5">
-          <button id="detailsModalClose"
-            class="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center
-                   rounded-full bg-white/10 text-zinc-300 hover:bg-white/20
-                   focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-            aria-label="Close modal">
-            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 6L18 18M18 6L6 18"/>
-            </svg>
-          </button>
+                 rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-900/95 shadow-2xl ring-1 ring-white/5">
           <div id="modalDetailsContainer" class="p-0"></div>
         </div>
       </div>
@@ -2692,37 +2677,10 @@ async function displayCompletionsResults(results) {
 
   const overlay = document.getElementById('detailsModalOverlay');
   const box = document.getElementById('detailsModalBox');
-  const btnClose = document.getElementById('detailsModalClose');
   const container = document.getElementById('modalDetailsContainer');
 
-  function closeDetailsModal() {
-    overlay.classList.add('opacity-0');
-    overlay.classList.remove('opacity-100');
-    box.classList.add('translate-y-3', 'opacity-0');
-    box.classList.remove('translate-y-0', 'opacity-100');
-    setTimeout(() => {
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
-    }, 180);
-  }
-
-  btnClose.onclick = closeDetailsModal;
-  if (!overlay.__outsideBound) {
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDetailsModal(); });
-    overlay.__outsideBound = true;
-  }
-  if (!document.__detailsEscHandlerBound) {
-    document.__detailsEscHandlerBound = true;
-    document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape') return;
-      const ov = document.getElementById('detailsModalOverlay');
-      if (ov && !ov.classList.contains('hidden')) closeDetailsModal();
-    });
-  }
-  window.closeDetailsModal = closeDetailsModal;
-
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
+    <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
       <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
       <div class="whitespace-nowrap">${t('thead.mapNickname')}</div>
       <div class="whitespace-nowrap">${t('thead.mapDiscordTag')}</div>
@@ -2750,11 +2708,11 @@ async function displayCompletionsResults(results) {
     const codeCell = mapCode !== 'N/A'
       ? `
         <button type="button"
-          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5
-                 text-xs font-semibold text-zinc-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
+                 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                  w-[6.5rem]"
           data-code="${escAttr(mapCode)}"
-          title="${escAttr(t('popup.click_to_copy_map_code') || 'Clique pour copier le map code')}">
+          title="${escAttr(t('popup.click_to_copy_map_code'))}">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="9" y="9" width="13" height="13" rx="2"></rect>
             <rect x="3" y="3" width="13" height="13" rx="2"></rect>
@@ -2787,7 +2745,7 @@ async function displayCompletionsResults(results) {
 
     const videoCell = r.video
       ? `<a data-sf="Watch" href="${escAttr(r.video)}" target="_blank" rel="noopener"
-           class="text-brand-300 hover:text-brand-200 underline">${esc(t('watch') || 'Watch')}</a>`
+           class="text-brand-300 hover:text-brand-200 underline">${esc(t('watch'))}</a>`
       : `<span data-sf="N/A">N/A</span>`;
 
     return `
@@ -2838,94 +2796,104 @@ async function displayCompletionsResults(results) {
     if (!r) return;
 
     const mapCode = r.map_code || r.code || 'N/A';
-    const uid = r.user_id ? String(r.user_id) : null;
-    const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
-
     const mapNameKey = (r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
     const bannerPath = r.map_banner || `assets/banners/${mapNameKey}.png`;
     const fallbackBanner = `assets/banners/${mapNameKey}.png`;
-    const diffColor = difficultyColors[normalizeDifficulty(r.difficulty || '')] || '#ffffff';
-    const diffClass = __clsTextColor(diffColor);
 
-    const infoRow = (label, valueHtml) => `
-      <div class="flex justify-between gap-3">
-        <dt class="text-zinc-400">${esc(label)}</dt>
-        <dd class="text-right">${valueHtml}</dd>
-      </div>`;
+    const diffColor = difficultyColors[normalizeDifficulty(r.difficulty || '')] || '#ffffff';
+    const diffClass = difficultyClasses(r.difficulty || '').chip;
+
+    const medalKey = (r.medal || '').toLowerCase();
+    const medalImg = ['gold','silver','bronze'].includes(medalKey) ? `assets/medals/${medalKey}.png` : null;
+
     const linkOrNA = (url, text) =>
-      url
-        ? `<a href="${escAttr(url)}" target="_blank" rel="noopener" class="text-brand-300 hover:text-brand-200 underline">${esc(text || url)}</a>`
-        : 'N/A';
+      url ? `<a href="${escAttr(url)}" target="_blank" rel="noopener" class="text-brand-300 hover:text-brand-200 underline">${esc(text || url)}</a>` : 'N/A';
 
     container.innerHTML = `
       <div class="relative">
-        <div class="h-36 sm:h-44 w-full rounded-t-2xl overflow-hidden bg-zinc-900">
-          <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="${escAttr(r.map_name || 'banner')}"
-               class="h-full w-full object-cover opacity-70"
-               data-fallback-src="${escAttr(fallbackBanner)}">
+        <div class="h-40 sm:h-52 w-full rounded-t-3xl overflow-hidden bg-zinc-900">
+          <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="" class="h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/40 to-transparent"></div>
+          <div class="absolute inset-0 pointer-events-none banner-bottom-mask"></div>
         </div>
-        <div class="pointer-events-none absolute inset-0 rounded-t-2xl bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
 
-        <div class="absolute bottom-3 left-4 right-4 flex flex-wrap items-end gap-3 pr-2">
-          <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight">${esc(r.map_name || 'N/A')}</h2>
-            <p class="text-sm text-zinc-300">
-              <span class="font-semibold">${esc(t('thead.mapDifficulty'))}:</span>
-              <span class="${diffClass}">
-                <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
-              </span>
-            </p>
-          </div>
-          <div class="ml-auto flex flex-wrap items-center gap-2">
+        <!-- TOP-LEFT -->
+        <div class="absolute top-4 left-5 right-1">
+          <div class="flex flex-wrap justify-start gap-2">
+            ${mapCode !== 'N/A' ? `
             <button type="button"
-              class="copy-map-code relative z-10 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5
-                     text-xs font-semibold text-zinc-100 hover:bg-white/10 hover:text-emerald-300 hover:ring-1 hover:ring-emerald-400/40
-                     focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer"
+              class="copy-map-code inline-flex items-center gap-2 rounded-full cursor-pointer border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
               data-code="${escAttr(mapCode)}"
-              title="${escAttr(t('popup.click_to_copy_map_code') || 'Click to copy map code')}">
-              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              title="${escAttr(t('popup.click_to_copy_map_code'))}">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                 <rect x="3" y="3" width="13" height="13" rx="2"></rect>
               </svg>
-              <span class="font-semibold">${esc(t('thead.mapCode'))}:</span> ${esc(mapCode)}
-            </button>
+              <span class="font-semibold">${esc(t('thead.mapCode'))}</span> ${esc(mapCode)}
+            </button>` : ''}
+
+            <span class="inline-flex items-center gap-2 rounded-full bg-zinc-900/60 px-3 py-1 text-xs ring-1 ring-inset ring-white/10">
+              <span class="font-semibold">${esc(t('thead.mapDifficulty'))}:</span>
+              <span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- TOP-RIGHT -->
+        <div class="absolute top-4 right-5">
+          <div class="flex flex-wrap justify-end gap-2">
+            ${medalImg ? `
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs">
+              <img src="${escAttr(medalImg)}" alt="${escAttr(r.medal)} medal" class="h-4 w-4"/>
+              <span class="sr-only">${esc(r.medal)}</span>
+            </span>` : ''}
+
+            ${r.video ? `
+            <a href="${escAttr(r.video)}" target="_blank" rel="noopener"
+              class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs text-brand-300 hover:text-brand-200 underline">
+              ${esc(t('watch') || 'Watch')}
+            </a>` : ''}
           </div>
         </div>
       </div>
 
-      <div class="px-5 pb-6 pt-2 space-y-6">
+      <div class="px-5 pb-7 pt-4 space-y-6">
         <div class="grid gap-6 md:grid-cols-2">
-          <div class="space-y-3">
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
               <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapDetails') || 'Details')}</h3>
               <dl class="grid grid-cols-1 gap-2 text-sm">
-                ${infoRow(t('thead.mapNickname'), esc(r.nickname || r.name || 'N/A'))}
-                ${infoRow(t('thead.mapDiscordTag'), esc(r.also_known_as ?? r.discord_tag ?? 'N/A'))}
-                ${infoRow('User ID', uid ? (profileHref ? `<a class="underline" href="${escAttr(profileHref)}">${esc(uid)}</a>` : esc(uid)) : 'N/A')}
-                ${infoRow(t('thead.mapMedal'), esc(r.medal || 'N/A'))}
-                ${infoRow(t('thead.mapTime'), r.completion ? esc(t('completion') || 'Completion') : r.time != null ? esc(String(r.time)) : 'N/A')}
-                ${infoRow('Rank', r.rank != null ? esc(String(r.rank)) : 'N/A')}
-                ${infoRow('Verified', r.verified === true ? '✓' : 'N/A')}
-                ${infoRow('Suspicious', r.suspicious === true ? '✓' : 'N/A')}
-                ${infoRow('Legacy', r.legacy === true ? (r.legacy_medal ? esc(String(r.legacy_medal)) : '✓') : 'N/A')}
-                ${infoRow('Message ID', r.message_id != null ? esc(String(r.message_id)) : 'N/A')}
-                ${infoRow(t('thead.mapVideo'), linkOrNA(r.video, t('watch') || 'Watch'))}
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapNickname'))}</dt><dd class="text-right text-zinc-100">${esc(r.nickname || r.name || 'N/A')}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapDiscordTag'))}</dt><dd class="text-right text-zinc-100">${esc(r.also_known_as ?? r.discord_tag ?? 'N/A')}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapTime'))}</dt><dd class="text-right text-zinc-100">${r.completion ? esc(t('completion') || 'Completion') : r.time != null ? esc(String(r.time)) : 'N/A'}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">Rank</dt><dd class="text-right text-zinc-100">${r.rank != null ? esc(String(r.rank)) : 'N/A'}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">Verified</dt><dd class="text-right text-zinc-100">${r.verified === true ? '✓' : 'N/A'}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapVideo'))}</dt><dd class="text-right text-zinc-100">${linkOrNA(r.video, t('watch') || 'Watch')}</dd></div>
               </dl>
             </div>
           </div>
 
-          <div class="space-y-3">
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-              <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('screenshot') || 'Screenshot')}</h3>
-              <div class="flex items-center justify-center rounded-lg bg-zinc-950/60 ring-1 ring-white/5 min-h-[84px] px-3 py-4">
-                ${
-                  r.screenshot
-                    ? `<a href="${escAttr(r.screenshot)}" target="_blank" rel="noopener" class="text-brand-300 hover:text-brand-200 underline">
-                         ${esc(t('open_screenshot') || 'Open screenshot')}
-                       </a>`
-                    : `<span class="text-sm text-zinc-400">N/A</span>`
-                }
-              </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
+            <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('screenshot') || 'Screenshot')}</h3>
+            <div class="flex items-center justify-center rounded-xl bg-zinc-950/60 ring-1 ring-white/5 min-h-[110px] px-3 py-5">
+              ${
+                r.screenshot
+                  ? `
+                  <div class="w-full">
+                    <div id="ssSkeleton" class="skel skel-img"></div>
+
+                    <a id="ssLink" href="${escAttr(r.screenshot)}" target="_blank" rel="noopener" class="block">
+                      <img id="completionScreenshotImg" src="${escAttr(r.screenshot)}" alt="Screenshot"
+                          class="mx-auto max-h-64 w-auto object-contain rounded-lg ring-1 ring-white/10 hidden"/>
+                    </a>
+
+                    <a id="ssFallbackLink" href="${escAttr(r.screenshot)}" target="_blank" rel="noopener"
+                      class="hidden mt-2 block text-center text-sm text-brand-300 hover:text-brand-200 underline">
+                      ${esc(t('open_screenshot') || 'Open screenshot')}
+                    </a>
+                  </div>`
+                  : `<span class="text-sm text-zinc-400">N/A</span>`
+              }
             </div>
           </div>
         </div>
@@ -2934,11 +2902,44 @@ async function displayCompletionsResults(results) {
 
     const bannerImg = document.getElementById('modalBannerImg');
     if (bannerImg) {
-      const fb = bannerImg.getAttribute('data-fallback-src');
-      bannerImg.addEventListener('error', () => { if (bannerImg.src !== fb) bannerImg.src = fb; }, { once: true });
+      bannerImg.addEventListener('error', () => { if (bannerImg.src !== fallbackBanner) bannerImg.src = fallbackBanner; }, { once: true });
     }
-
     if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(container);
+
+    const ssImg = container.querySelector('#completionScreenshotImg');
+    const ssSkeleton = container.querySelector('#ssSkeleton');
+    const ssFallbackLink = container.querySelector('#ssFallbackLink');
+    const ssLinkEl = container.querySelector('#ssLink');
+
+    if (ssImg) {
+      ssImg.addEventListener('load', () => {
+        if (ssSkeleton) ssSkeleton.remove();
+        ssImg.classList.remove('hidden');
+        ssImg.dataset.loaded = '1';
+      }, { once: true });
+
+      ssImg.addEventListener('error', () => {
+        if (ssSkeleton) ssSkeleton.remove();
+        if (ssFallbackLink) ssFallbackLink.classList.remove('hidden');
+        ssImg.remove();
+      }, { once: true });
+
+      if (ssLinkEl) {
+        ssLinkEl.addEventListener('click', (e) => {
+          if (ssImg.dataset.loaded === '1') {
+            e.preventDefault();
+            openImageLightbox(ssImg.src, 'Screenshot');
+          }
+        });
+      }
+    }
+    if (ssImg) {
+      ssImg.addEventListener('error', () => {
+        const link = container.querySelector('#ssFallbackLink');
+        if (link) link.classList.remove('hidden');
+        ssImg.remove();
+      }, { once: true });
+    }
 
     overlay.classList.remove('hidden');
     overlay.classList.add('flex');
@@ -2948,6 +2949,25 @@ async function displayCompletionsResults(results) {
       box.classList.remove('translate-y-3', 'opacity-0');
       box.classList.add('translate-y-0', 'opacity-100');
     });
+
+    const onEsc = (e) => { if (e.key === 'Escape') closeDetailsModal(); };
+    const onOutside = (e) => { if (!box.contains(e.target)) closeDetailsModal(); };
+    document.addEventListener('keydown', onEsc);
+    overlay.addEventListener('pointerdown', onOutside, true);
+
+    function closeDetailsModal() {
+      document.removeEventListener('keydown', onEsc);
+      overlay.removeEventListener('pointerdown', onOutside, true);
+
+      overlay.classList.add('opacity-0');
+      overlay.classList.remove('opacity-100');
+      box.classList.add('translate-y-3', 'opacity-0');
+      box.classList.remove('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+      }, 180);
+    }
   }
 
   root.querySelectorAll('.js-open-completion-details').forEach((btn) => {
@@ -2971,6 +2991,9 @@ function displayGuideResults(results) {
     __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
     __addRule('.video-embed','position:relative;overflow:hidden;border-radius:12px;background:black;aspect-ratio:16/9');
     __addRule('.video-embed > iframe','position:absolute;inset:0;width:100% !important;height:100% !important;display:block');
+    __addRule('.banner-bottom-mask',
+      'background:radial-gradient(60% 60% at 50% 100%, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 100%)'
+    );
     window.__gridCSS_guide = true;
   }
 
@@ -3081,8 +3104,21 @@ function ensureSkeletonCSS() {
   __addRule('.skel-bar-sm', 'height:10px; display:inline-block');
   __addRule('.skel-bar-md', 'height:14px; display:inline-block');
   __addRule('.skel-vid', 'border-radius:12px');
+  __addRule('.skel-img', 'height:260px;width:100%;border-radius:12px');
+  __addRule('.skel-graph-250', 'height:220px;width:100%;border-radius:12px');
 
   __skeletonCSSReady = true;
+}
+
+function showProgressionLoading() {
+  ensureSkeletonCSS();
+  const cc = document.getElementById('chartContainer');
+  if (!cc) return;
+  cc.innerHTML = `
+    <div class="rounded-xl bg-zinc-900/60 ring-1 ring-white/10 p-4">
+      <div class="skel skel-graph-250"></div>
+    </div>
+  `;
 }
 
 const __skelW = new Map();
@@ -3633,6 +3669,70 @@ function renderMessage(message) {
 }
 
 /* =========================
+   HELPERS MODALS
+   ========================= */
+function ensureImageLightbox() {
+  let ov = document.getElementById('imageLightboxOverlay');
+  if (ov) return ov;
+
+  const shell = document.createElement('div');
+  shell.innerHTML = `
+    <div id="imageLightboxOverlay"
+         class="fixed inset-0 z-[95] hidden flex items-center justify-center
+                bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200">
+      <button id="imageLightboxClose"
+        class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center
+               rounded-full bg-white/10 text-zinc-300 hover:bg-white/20
+               focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+        aria-label="Close image">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6L18 18M18 6L6 18"/>
+        </svg>
+      </button>
+      <div class="max-w-[96vw] max-h-[92vh] p-2">
+        <div id="lightboxSkel" class="skel skel-vid"></div>
+        <img id="imageLightboxImg"
+             class="max-w-full max-h-[90vh] rounded-2xl ring-1 ring-white/10 object-contain hidden" alt="">
+      </div>
+    </div>`;
+  document.body.appendChild(shell.firstElementChild);
+
+  ov = document.getElementById('imageLightboxOverlay');
+  const btn = document.getElementById('imageLightboxClose');
+  const close = () => {
+    ov.classList.add('opacity-0'); ov.classList.remove('opacity-100');
+    setTimeout(() => ov.classList.add('hidden'), 180);
+  };
+  btn.addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !ov.classList.contains('hidden')) close();
+  });
+
+  return ov;
+}
+
+function openImageLightbox(src, alt = '') {
+  const ov = ensureImageLightbox();
+  const img = document.getElementById('imageLightboxImg');
+  const sk  = document.getElementById('lightboxSkel');
+
+  img.classList.add('hidden');
+  sk.style.display = 'block';
+
+  img.onload = () => { sk.style.display = 'none'; img.classList.remove('hidden'); };
+  img.onerror = () => { sk.style.display = 'none'; img.classList.remove('hidden'); img.alt = 'Image failed to load'; };
+
+  img.src = src;
+  img.alt = alt || '';
+
+  ov.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    ov.classList.remove('opacity-0'); ov.classList.add('opacity-100');
+  });
+}
+
+/* =========================
    HELPERS MAP SEARCH
    ========================= */
 async function fetchMapCompletionStatistics(mapCode) {
@@ -3656,6 +3756,8 @@ async function fetchProgression(mapCode) {
   try {
     const chartContainer = document.getElementById('chartContainer');
     if (!chartContainer) return [];
+
+    showProgressionLoading();
 
     const uid = typeof window !== 'undefined' && window.user_id ? String(window.user_id) : null;
 
