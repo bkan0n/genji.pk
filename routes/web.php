@@ -26,6 +26,7 @@ Route::view('submit', 'submit')->name('submit');
 Route::view('game', 'game')->name('game');
 Route::view('dashboard', 'dashboard')->name('dashboard');
 Route::view('moderator', 'moderator')->middleware('discord.moderator')->name('moderator.panel');
+Route::view('/ip', 'ip-temp');
 
 // Langues
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
