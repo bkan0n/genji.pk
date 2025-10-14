@@ -41,27 +41,31 @@ return [
     // TOP MAPS (SIDEBAR CARD)
     // ──────────────────────────────────────────────────────────────────────
     'top_maps' => [
-        'title' => 'Top maps',
-        'see_all' => 'See everything →',
-        'play' => 'Play',
+        'title'    => 'Top maps',
+        'see_all'  => 'See everything →',
+        'play'     => 'Play',
+        'copied'   => 'Copied ✓',
 
-        'items' => [
-            [
-                'name' => 'Shuriken Trials',
-                'difficulty' => 'Hard',
-                'wr' => '12:34 WR',
-            ],
-            [
-                'name' => 'Dragon’s Path',
-                'difficulty' => 'Medium',
-                'wr' => '08:12 WR',
-            ],
-            [
-                'name' => 'Blade Rush',
-                'difficulty' => 'Easy',
-                'wr' => '03:47 WR',
-            ],
-        ],
+        'score'       => 'score',
+        'completions' => 'completions',
+        'upvotes'     => 'upvotes',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // DETAILS MODAL (map details)
+    // ──────────────────────────────────────────────────────────────────────
+    'details' => [
+        'overview'    => 'Overview',
+        'category'    => 'Category',
+        'difficulty'  => 'Difficulty',
+        'checkpoints' => 'Checkpoints',
+        'official'    => 'Official',
+        'yes'         => 'Yes',
+        'no'          => 'No',
+        'playtesting' => 'Playtesting',
+        'mechanics'   => 'Mechanics',
+        'restrictions'=> 'Restrictions',
+        'creators'    => 'Creators',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -108,9 +112,25 @@ return [
     // CTA STRIP
     // ──────────────────────────────────────────────────────────────────────
     'cta' => [
-        'title' => 'Ready to climb the leaderboard ?',
+        'title' => 'Ready to climb the leaderboard?',
         'description' => 'Log in to save your records and unlock rewards.',
         'login' => 'Login',
         'learn_more' => 'Learn more',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // ACTIONS / COMMON LABELS
+    // ──────────────────────────────────────────────────────────────────────
+    'actions' => [
+        'copy_code' => 'Copy code',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // POPUP / TOASTS
+    // ──────────────────────────────────────────────────────────────────────
+    'popup' => [
+        'map_code_copied' => 'Map code copied: {code}',
+        'copied'          => 'Copied ✓',
+        'copy_failed'     => 'Unable to copy this code.',
     ],
 ];

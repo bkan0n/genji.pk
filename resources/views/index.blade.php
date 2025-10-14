@@ -4,6 +4,10 @@
 @section('og:title', __('index.meta.og.title'))
 @section('og:description', __('index.meta.og.description'))
 
+@push('head')
+  @php($nonce = csp_nonce())
+@endpush
+
 @section('content')
   <!-- Hero -->
   <section class="relative overflow-visible">
@@ -70,33 +74,166 @@
         </div>
 
         <div class="lg:col-span-5">
-          <div class="relative rounded-2xl border border-white/10 bg-white/5 p-2 shadow-2xl">
+          <div
+            id="topMapsCard"
+            class="relative rounded-2xl border border-white/10 bg-white/5 p-2 shadow-2xl"
+            data-endpoint="{{ url('api/maps/trending?limit=3') }}"
+            data-full-endpoint="{{ url('api/maps/trending?limit=25') }}"
+            data-map-endpoint="{{ url('api/maps') }}"
+            data-play-label="{{ __('index.top_maps.play') }}"
+            data-copied-label="{{ __('index.top_maps.copied')}}"
+            data-score-label="{{ __('index.top_maps.score') }}"
+            data-completions-label="{{ __('index.top_maps.completions') }}"
+            data-upvotes-label="{{ __('index.top_maps.upvotes') }}"
+            data-copy-code-label="{{ __('index.actions.copy_code') }}"
+          >
             <div class="rounded-xl bg-zinc-900/50 p-6">
               <div class="mb-4 flex items-center justify-between text-xs text-zinc-400">
                 <span>{{ __('index.top_maps.title') }}</span>
-                <a href="#maps" class="hover:text-zinc-200">{{ __('index.top_maps.see_all') }}</a>
+                <button id="openTrendingModal" type="button" class="hover:text-zinc-200 cursor-pointer">
+                  {{ __('index.top_maps.see_all') }}
+                </button>
               </div>
 
-              @php($topMaps = trans('index.top_maps.items'))
-              <ul class="space-y-3">
-                @foreach ($topMaps ?? [] as $map)
-                  <li
-                    class="flex items-center justify-between gap-3 rounded-lg border border-white/10 p-3 hover:bg-white/5"
-                  >
-                    <div>
-                      <div class="font-semibold">{{ $map['name'] ?? '' }}</div>
-                      <div class="text-xs text-zinc-400">
-                        {{ $map['difficulty'] ?? '' }} · {{ $map['wr'] ?? '' }}
+              <ul id="topMapsList" class="space-y-3"></ul>
+
+              <ul id="topMapsSkeleton" class="space-y-3">
+                @for ($i = 0; $i < 3; $i++)
+                  <li class="min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <div class="h-4 w-20 bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-14 bg-white/10 rounded animate-pulse"></div>
                       </div>
+                      <div class="mt-1 h-3 w-52 bg-white/10 rounded animate-pulse"></div>
                     </div>
-                    <button
-                      class="cursor-pointer rounded-lg border border-white/10 px-3 py-1 text-xs hover:bg-white/5"
-                    >
-                      {{ __('index.top_maps.play') }}
-                    </button>
+                    <div class="h-8 w-12 bg-white/10 rounded animate-pulse"></div>
                   </li>
-                @endforeach
+                @endfor
               </ul>
+
+              <p id="topMapsError" class="mt-3 text-xs text-red-300" hidden>
+                {{ __('common.error_loading')}}
+              </p>
+            </div>
+          </div>
+
+          {{-- “See all” modal --}}
+          <div id="trendingModal" class="fixed inset-0 z-50" role="dialog" aria-modal="true" hidden>
+            <div data-overlay class="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-200 ease-out"></div>
+
+            <div data-modal-panel
+                class="relative mx-auto mt-16 w-[min(92vw,44rem)] max-h-[85vh] overflow-y-auto
+                        rounded-2xl border border-white/10 bg-zinc-900/95 p-4 shadow-2xl backdrop-blur
+                        opacity-0 translate-y-3 scale-95 transition-all duration-200 ease-out">
+
+              <ul id="trendingModalList" class="space-y-3 pr-1"></ul>
+
+              <ul id="trendingModalSkeleton" class="space-y-3">
+                @for ($i = 0; $i < 25; $i++)
+                  <li class="min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/40 p-3">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <div class="h-4 w-20 bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-14 bg-white/10 rounded animate-pulse"></div>
+                      </div>
+                      <div class="mt-1 h-3 w-64 bg-white/10 rounded animate-pulse"></div>
+                    </div>
+                    <div class="h-8 w-12 bg-white/10 rounded animate-pulse"></div>
+                  </li>
+                @endfor
+              </ul>
+
+              <p id="trendingModalError" class="mt-3 text-xs text-red-300" hidden>{{ __('common.error_loading') }}</p>
+            </div>
+          </div>
+
+          {{-- Map details modal --}}
+          <div id="mapDetailModal" class="fixed inset-0 z-50" role="dialog" aria-modal="true" hidden>
+            <div data-overlay class="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-200 ease-out"></div>
+
+            <div data-modal-panel
+                class="relative mx-auto mt-16 w-[min(96vw,60rem)] max-h-[88vh] overflow-y-auto
+                        rounded-2xl border border-white/10 bg-zinc-900/95 p-5 sm:p-6 shadow-2xl backdrop-blur
+                        opacity-0 translate-y-3 scale-95 transition-all duration-200 ease-out">
+
+              <div id="mapDetailContent" class="space-y-4"></div>
+
+              <div id="mapDetailSkeleton" class="space-y-6" aria-hidden="true">
+                <!-- Banner (exact same wrapper as data view) -->
+                <div class="w-full rounded-2xl overflow-hidden">
+                  <div class="h-40 sm:h-48 md:h-56 w-full bg-white/10 animate-pulse"></div>
+                </div>
+
+                <div class="grid gap-6 lg:grid-cols-3">
+                  <div class="lg:col-span-2 space-y-6">
+                    <!-- Overview card -->
+                    <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                      <div class="mb-3 h-3 w-24 rounded bg-white/10 animate-pulse"></div>
+                      <ul class="divide-y divide-white/5">
+                        <li class="flex items-center justify-between py-2">
+                          <span class="h-3 w-20 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-28 rounded bg-white/10 animate-pulse"></span>
+                        </li>
+                        <li class="flex items-center justify-between py-2">
+                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                        </li>
+                        <li class="flex items-center justify-between py-2">
+                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-16 rounded bg-white/10 animate-pulse"></span>
+                        </li>
+                        <li class="flex items-center justify-between py-2">
+                          <span class="h-3 w-20 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-14 rounded bg-white/10 animate-pulse"></span>
+                        </li>
+                        <li class="flex items-center justify-between py-2">
+                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                        </li>
+                      </ul>
+                    </section>
+
+                    <!-- Mechanics / Restrictions card -->
+                    <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                      <div class="grid gap-6 sm:grid-cols-2">
+                        <div>
+                          <div class="mb-2 h-3 w-24 rounded bg-white/10 animate-pulse"></div>
+                          <div class="flex flex-wrap gap-2">
+                            <div class="h-6 w-24 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-16 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-16 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="mb-2 h-3 w-24 rounded bg-white/10 animate-pulse"></div>
+                          <div class="flex flex-wrap gap-2">
+                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-24 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-16 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <!-- Right column (Creators + button) -->
+                  <aside class="space-y-4 lg:sticky lg:top-6">
+                    <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                      <div class="mb-2 h-3 w-20 rounded bg-white/10 animate-pulse"></div>
+                      <div class="h-3 w-40 rounded bg-white/10 animate-pulse"></div>
+                      <div class="mt-4 flex flex-wrap gap-2">
+                        <div class="h-8 w-24 rounded-lg bg-white/10 animate-pulse"></div>
+                      </div>
+                    </section>
+                  </aside>
+                </div>
+              </div>
+
+              <p id="mapDetailError" class="mt-3 text-xs text-red-300" hidden>{{ __('common.error_loading') }}</p>
             </div>
           </div>
         </div>
@@ -248,3 +385,11 @@
     </section>
   @endunless
 @endsection
+
+@push('scripts')
+  <script nonce="{{ $nonce }}">
+    document.documentElement.lang = @json(app()->getLocale());
+    window.INDEX_I18N = @json(\Illuminate\Support\Facades\Lang::get('index'));
+  </script>
+  @vite('resources/js/pages/index.js')
+@endpush

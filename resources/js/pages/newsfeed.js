@@ -359,7 +359,7 @@ async function fetchEmoji(emojiName, emojiId) {
   try {
     const res = await fetch('/api/newsfeed/emoji', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'X-CSRF-TOKEN': CSRF, },
       body: new URLSearchParams({ emojiName, emojiId }),
       cache: 'no-store',
       credentials: 'same-origin',
@@ -600,9 +600,9 @@ function openMapDetailsModal(mapCode) {
     return null;
   };
 
-  fetch('/api/search/map', {
+  fetch('/api/maps', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': CSRF, },
     body: JSON.stringify({ map_code: mapCode }),
     credentials: 'same-origin',
     cache: 'no-store',
@@ -1711,7 +1711,7 @@ document.addEventListener('click', async (event) => {
   try {
     const response = await fetch('/api/newsfeed/translate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': CSRF, },
       body: JSON.stringify({ text: originalText, targetLang }),
     });
 
@@ -2492,3 +2492,147 @@ function closeChangelogsModal() {
     document.removeEventListener('keydown', onEscOnce);
   }, 180);
 }
+
+/* =========================
+   COMMUNITY PICKS
+   ========================= */
+(() => {
+  const card = document.getElementById('communityPicksCard');
+  if (!card) return;
+
+  const endpoint     = card.dataset.endpoint;
+  const fullEndpoint = card.dataset.fullEndpoint || endpoint.replace(/limit=\d+/, 'limit=25');
+
+  const _i18n = window.NEWSFEED_I18N || {};
+  const t = (path, params = {}) => {
+    const parts = String(path).split('.');
+    let out = _i18n;
+    for (const p of parts) out = out?.[p];
+    if (typeof out !== 'string') out = path;
+    for (const [k, v] of Object.entries(params)) {
+      const val = String(v ?? '');
+      out = out.replaceAll(`{${k}}`, val).replaceAll(`:${k}`, val);
+    }
+    return out;
+  };
+  const tOr = (k, fb) => (t(k) === k ? fb : t(k));
+
+  const labels = {
+    upvotes: tOr('sidebar.upvotes', 'Upvotes'),
+    details: tOr('sidebar.details', 'Details'),
+    copyCode: tOr('sidebar.copy_code', 'Copy code'),
+  };
+
+  const listEl     = document.getElementById('cpList');
+  const skeletonEl = document.getElementById('cpSkeleton');
+  const errorEl    = document.getElementById('cpError');
+
+  const openBtn    = document.getElementById('openCommunityPicksModal');
+  const overlay    = document.getElementById('cpModalOverlay');
+  const box        = document.getElementById('cpModalBox');
+  const closeBtn   = document.getElementById('closeCpModal');
+  const modalList  = document.getElementById('cpModalList');
+  const modalSkel  = document.getElementById('cpModalSkeleton');
+  const modalErr   = document.getElementById('cpModalError');
+
+  const esc = (s) => String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+
+  function renderInto(ul, items, { dense = false } = {}) {
+    ul.innerHTML = '';
+    for (const m of items) {
+      const banner = m.map_banner || m.banner_url || `assets/banners/${(m.map_name || '').toLowerCase().replace(/[^a-z0-9]/g,'')}.png`;
+      const code   = m.code || m.map_code || '';
+      const name   = m.map_name || m.name || '';
+      const upv    = Number(m.upvotes ?? m.votes ?? 0) || 0;
+
+      const li = document.createElement('li');
+      li.className = dense
+        ? 'flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2'
+        : 'flex items-center justify-between';
+
+      li.innerHTML = `
+        <div class="flex min-w-0 items-center gap-2">
+        <div class="h-9 w-20 shrink-0 rounded-md border border-white/10 bg-zinc-900/50 overflow-hidden">
+          <img src="${esc(banner)}" alt="${esc(name)}"
+                class="h-full w-full object-cover"
+                data-hide-on-error />
+        </div>
+          <div class="min-w-0">
+            <div class="truncate font-semibold">${esc(name)}</div>
+            <button type="button"
+              class="map-code mt-0.5 inline-flex items-center gap-1 rounded border border-white/10 bg-zinc-900/60 px-1.5 py-0.5 text-[11px] font-mono text-emerald-200 hover:bg-white/10 cursor-pointer"
+              title="${esc(labels.copyCode)}"
+              aria-label="${esc(labels.copyCode)}"
+              data-copy-code="${esc(code)}">#${esc(code)}</button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="text-zinc-300 text-sm" title="${esc(labels.upvotes)}">★ ${upv}</span>
+        </div>
+      `;
+      ul.appendChild(li);
+    }
+  }
+
+  /* --- skeleton & fetch --- */
+  async function loadTop3() {
+    skeletonEl.hidden = false; errorEl.hidden = true;
+    try {
+      const res = await fetch(endpoint, { headers: { Accept: 'application/json' }, credentials: 'same-origin', cache: 'no-store' });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      const items = Array.isArray(data) ? data.slice(0,3) : (Array.isArray(data?.items) ? data.items.slice(0,3) : []);
+      renderInto(listEl, items, { dense: false });
+    } catch (e) {
+      errorEl.hidden = false;
+      console.error('Community picks failed:', e);
+    } finally {
+      skeletonEl.hidden = true;
+    }
+  }
+
+  async function loadAllInModal() {
+    modalSkel.hidden = false; modalErr.hidden = true; modalList.innerHTML = '';
+    try {
+      const res = await fetch(fullEndpoint, { headers: { Accept: 'application/json' }, credentials: 'same-origin', cache: 'no-store' });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+      renderInto(modalList, items, { dense: true });
+    } catch (e) {
+      modalErr.hidden = false;
+    } finally {
+      modalSkel.hidden = true;
+    }
+  }
+
+  /* --- modal --- */
+  function openModal() {
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      box.classList.remove('opacity-0','scale-95');
+      box.classList.add('opacity-100','scale-100');
+    });
+    box.classList.add('mt-10','sm:mt-14');
+    const card = box.querySelector('div.rounded-2xl.border');
+    if (card) {
+      card.classList.add('max-h-[70vh]', 'overflow-y-auto', 'overflow-x-hidden');
+    }
+    loadAllInModal();
+  }
+  function closeModal() {
+    box.classList.add('opacity-0','scale-95');
+    box.classList.remove('opacity-100','scale-100');
+    setTimeout(() => overlay.classList.add('hidden'), 180);
+  }
+
+  openBtn?.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
+  closeBtn?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (!overlay.classList.contains('hidden') && e.key === 'Escape') closeModal(); });
+
+  loadTop3();
+})();

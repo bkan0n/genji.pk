@@ -49,6 +49,9 @@ return [
         'submit_title' => 'Submit your map',
         'submit_desc' => 'Share your creation and get feedback from the community.',
         'submit_cta' => 'Submit',
+        'upvotes' => 'Upvotes',
+        'details' => 'Details',
+        'copy_code' => 'Copy code',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -164,6 +167,7 @@ return [
         'details_command' => 'Use the command',
         'click_here' => 'Click here',
         'link' => 'Link',
+        'copy_code' => 'Map code copied : {code}',
         'copy_clipboard' => 'Command has been copied to clipboard',
         'copy_clipboard_error' => 'Failed to copy command to clipboard',
         'announcement' => 'New announcement',

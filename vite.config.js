@@ -8,6 +8,7 @@ export default defineConfig({
       input: [
         'resources/css/app.css',
         'resources/js/app.js',
+        'resources/js/pages/index.js',
         'resources/js/pages/leaderboard.js',
         'resources/js/pages/newsfeed.js',
         'resources/js/pages/statistics.js',

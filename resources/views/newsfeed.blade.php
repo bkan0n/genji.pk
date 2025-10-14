@@ -152,53 +152,81 @@
 
           <!-- Sidebar -->
           <aside class="space-y-4 lg:col-span-4">
-            <!-- Community Picks -->
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div class="flex items-center justify-between">
-                <h3 class="font-semibold">{{ __('newsfeed.sidebar.community_picks') }}</h3>
-                <a
-                  href="{{ url('/submit?section=submit_map') }}"
-                  class="text-brand-300 hover:text-brand-200 text-sm"
-                >
-                  {{ __('newsfeed.sidebar.see_all') }}
-                </a>
-              </div>
-              <ul class="mt-3 space-y-3 text-sm">
-                <li class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <img
-                      src="{{ asset('assets/banners/hellmap.png') }}"
-                      alt="Hell Parkour"
-                      class="h-8 w-12 rounded-md border border-white/10 object-cover"
-                    />
-                    <span>Hell Parkour</span>
-                  </div>
-                  <span class="text-zinc-400">★ 92</span>
-                </li>
-                <li class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <img
-                      src="{{ asset('assets/banners/easymap.png') }}"
-                      alt="Easy Jumps"
-                      class="h-8 w-12 rounded-md border border-white/10 object-cover"
-                    />
-                    <span>Easy Jumps</span>
-                  </div>
-                  <span class="text-zinc-400">★ 78</span>
-                </li>
-                <li class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <img
-                      src="{{ asset('assets/banners/classicmap.png') }}"
-                      alt="Classic Run"
-                      class="h-8 w-12 rounded-md border border-white/10 object-cover"
-                    />
-                    <span>Classic Run</span>
-                  </div>
-                  <span class="text-zinc-400">★ 64</span>
-                </li>
-              </ul>
+          <!-- Community Picks -->
+          <div
+            id="communityPicksCard"
+            class="rounded-2xl border border-white/10 bg-white/5 p-4"
+            data-endpoint="{{ url('/api/maps/trending?limit=3') }}"
+            data-full-endpoint="{{ url('/api/maps/trending?limit=25') }}"
+          >
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold">{{ __('newsfeed.sidebar.community_picks') }}</h3>
+
+              <a href="#"
+                id="openCommunityPicksModal"
+                class="text-brand-300 hover:text-brand-200 text-sm">
+                {{ __('newsfeed.sidebar.see_all') }}
+              </a>
             </div>
+
+            <ul id="cpList" class="mt-3 space-y-3 text-sm"></ul>
+
+            <!-- Skeleton -->
+            <ul id="cpSkeleton" class="mt-3 space-y-3" aria-hidden="true">
+              @for ($i=0; $i<3; $i++)
+                <li class="flex items-center justify-between animate-pulse">
+                  <div class="flex min-w-0 items-center gap-2">
+                    <div class="h-9 w-20 rounded-md border border-white/10 bg-zinc-900/50"></div>
+
+                    <div class="min-w-0">
+                      <div class="h-4 w-28 rounded bg-white/10"></div>
+                      <div class="mt-1 h-5 w-16 rounded-md border border-white/10 bg-white/5"></div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1 shrink-0">
+                    <div class="h-4 w-4 rounded bg-white/10"></div>
+                    <div class="h-4 w-6 rounded bg-white/10"></div>
+                  </div>
+                </li>
+              @endfor
+            </ul>
+
+            <!-- Erreur -->
+            <div id="cpError" class="mt-3 hidden text-sm text-rose-300">
+              {{ __('common.error') }}
+            </div>
+          </div>
+
+          <!-- Community Picks: modal -->
+          <div id="cpModalOverlay" class="fixed inset-0 z-50 hidden bg-black/60 p-4 backdrop-blur-sm">
+            <div id="cpModalBox" class="mx-auto w-full max-w-2xl opacity-0 scale-95 transition duration-200 ease-out">
+              <div class="w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl ring-1 ring-white/10">
+                <header class="sticky top-0 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80 px-4 py-3 backdrop-blur">
+                  <h2 class="text-base font-bold tracking-tight">{{ __('newsfeed.sidebar.community_picks') }}</h2>
+                  <button id="closeCpModal" type="button" class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs hover:bg-white/20">Esc</button>
+                </header>
+
+                <div class="p-3">
+                  <ul id="cpModalList" class="space-y-2"></ul>
+
+                  <ul id="cpModalSkeleton" class="space-y-2" aria-hidden="true">
+                    @for ($i=0; $i<25; $i++)
+                      <li class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2 animate-pulse">
+                        <div class="flex items-center gap-2">
+                          <div class="h-9 w-14 rounded-md border border-white/10 bg-white/10"></div>
+                          <div class="h-4 w-36 rounded bg-white/10"></div>
+                        </div>
+                        <div class="h-4 w-20 rounded bg-white/10"></div>
+                      </li>
+                    @endfor
+                  </ul>
+
+                  <div id="cpModalError" class="hidden text-sm text-rose-300 mt-2">{{ __('common.error') }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
             <!-- Changelogs -->
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">

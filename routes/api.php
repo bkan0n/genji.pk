@@ -24,6 +24,7 @@ use App\Http\Controllers\Maps\Guides\GuidesController;
 use App\Http\Controllers\Maps\MapSearchController;
 use App\Http\Controllers\Maps\Playtests\PlaytestVoteController;
 use App\Http\Controllers\Maps\SubmitMapController;
+use App\Http\Controllers\Maps\TrendingMapsController;
 use App\Http\Controllers\Mods\Guides\CreateGuideController;
 use App\Http\Controllers\Mods\Guides\DeleteGuideController;
 use App\Http\Controllers\Mods\Guides\EditGuideController;
@@ -108,6 +109,7 @@ Route::prefix('maps')->group(function () {
     Route::get('{code}/guides', GuidesController::class)
         ->where('code', '[A-Za-z0-9\-]+')
         ->name('api.maps.guides');
+    Route::get('trending', TrendingMapsController::class)->name('api.maps.trending');
 
     Route::middleware(['web'])->group(function () {
         Route::post('/', SubmitMapController::class)->name('api.maps.submit');
