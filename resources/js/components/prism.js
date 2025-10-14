@@ -15,10 +15,53 @@ export function createPrism(container, {
   inertia = 0.05,
   bloom = 1,
   suspendWhenOffscreen = false,
-  timeScale = 0.5
+  timeScale = 0.5,
+  quality = 'auto',              // 'auto' | 'low' | 'medium' | 'high'
 } = {}) {
   if (!container) throw new Error('No container provided');
 
+  const isMobile = /Mobi|Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
+  const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const cores = Math.max(1, navigator.hardwareConcurrency || 4);
+
+  // --- quality heuristics -------------------------------------------------
+  function computeQuality() {
+    const capDesktop = 1.75;
+    const capMobile  = 1.25;
+
+    const stepsHigh = 96;
+    const stepsMed  = 80;
+    const stepsLow  = 64;
+
+    const w = Math.max(1, container.clientWidth);
+    const h = Math.max(1, container.clientHeight);
+    const area = w * h;
+
+    let dprCap = isMobile ? capMobile : capDesktop;
+    let steps  = isMobile ? stepsLow : stepsMed;
+
+    if (quality === 'high')   { dprCap = capDesktop; steps = stepsHigh; }
+    if (quality === 'medium') { dprCap = isMobile ? capMobile : capDesktop; steps = stepsMed; }
+    if (quality === 'low')    { dprCap = isMobile ? 1.0 : 1.25; steps = stepsLow; }
+
+    if (quality === 'auto') {
+      if (area > 1_800_000 && !isMobile) {
+        dprCap = 1.5; steps = stepsMed;
+      }
+      if (cores <= 4 || isMobile) {
+        dprCap = Math.min(dprCap, 1.25);
+        steps  = stepsLow;
+      }
+    }
+
+    if (prefersReducedMotion.matches) {
+      steps = Math.min(72, steps);
+    }
+
+    return { dprCap, steps };
+  }
+
+  // --- uniforms / consts --------------------------------------------------
   const H = Math.max(0.001, height);
   const BW = Math.max(0.001, baseWidth);
   const BASE_HALF = BW * 0.5;
@@ -35,7 +78,9 @@ export function createPrism(container, {
   const HOVSTR = Math.max(0, hoverStrength || 1);
   const INERT = Math.max(0, Math.min(1, inertia || 0.12));
 
-  let dpr = Math.min(2, window.devicePixelRatio || 1);
+  // Renderer
+  let { dprCap, steps: CURRENT_STEPS } = computeQuality();
+  let dpr = Math.min(dprCap, window.devicePixelRatio || 1);
   const renderer = new Renderer({ dpr, alpha: transparent, antialias: false });
   const gl = renderer.gl;
 
@@ -75,6 +120,7 @@ export function createPrism(container, {
     uniform float uMinAxis;
     uniform float uPxScale;
     uniform float uTimeScale;
+    uniform int   uSteps;        // NEW
 
     vec4 tanh4(vec4 x){
       vec4 e2x = exp(2.0*x);
@@ -132,8 +178,10 @@ export function createPrism(container, {
         wob = mat2(c0, c1, c2, c0);
       }
 
-      const int STEPS = 100;
-      for (int i = 0; i < STEPS; i++) {
+      const int MAX_STEPS = 96;
+      for (int i = 0; i < MAX_STEPS; i++) {
+        if (i >= uSteps) break;
+
         p = vec3(f, z);
         p.xz = p.xz * wob;
         p = uRot * p;
@@ -189,14 +237,20 @@ export function createPrism(container, {
       uInvHeight: { value: 1 / H },
       uMinAxis: { value: Math.min(BASE_HALF, H) },
       uPxScale: { value: 1 },
-      uTimeScale: { value: TS }
+      uTimeScale: { value: TS },
+      uSteps: { value: CURRENT_STEPS },    // NEW
     }
   });
 
   const mesh = new Mesh(gl, { geometry, program });
 
+  // --- resize / DPR ---------------------------------------------
   const resize = () => {
-    const nextDpr = Math.min(2, window.devicePixelRatio || 1);
+    const q = computeQuality();
+    if (q.dprCap !== dprCap) { dprCap = q.dprCap; }
+    CURRENT_STEPS = q.steps;
+
+    const nextDpr = Math.min(dprCap, window.devicePixelRatio || 1);
     if (nextDpr !== dpr) { dpr = nextDpr; renderer.dpr = dpr; }
 
     const w = Math.max(1, container.clientWidth);
@@ -208,6 +262,7 @@ export function createPrism(container, {
     offsetPxBuf[0] = offX * dpr;
     offsetPxBuf[1] = offY * dpr;
     program.uniforms.uPxScale.value = 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE);
+    program.uniforms.uSteps.value   = CURRENT_STEPS;
 
     renderer.render({ scene: mesh });
   };
@@ -216,6 +271,7 @@ export function createPrism(container, {
   ro.observe(container);
   resize();
 
+  // --- rotation / animation ------------------------------------------------
   const rotBuf = new Float32Array(9);
   const setMat3FromEuler = (yawY, pitchX, rollZ, out) => {
     const cy = Math.cos(yawY), sy = Math.sin(yawY);
@@ -318,6 +374,10 @@ export function createPrism(container, {
   function start(){ if (!raf) raf = requestAnimationFrame(render); }
   function stop(){ if (raf) cancelAnimationFrame(raf); raf = 0; }
 
+  const onVis = () => (document.visibilityState === 'hidden' ? stop() : start());
+  document.addEventListener('visibilitychange', onVis);
+  prefersReducedMotion.addEventListener?.('change', resize);
+
   let io;
   if (suspendWhenOffscreen && 'IntersectionObserver' in window) {
     io = new IntersectionObserver(entries => {
@@ -333,6 +393,8 @@ export function createPrism(container, {
   function destroy(){
     stop();
     ro.disconnect();
+    document.removeEventListener('visibilitychange', onVis);
+    prefersReducedMotion.removeEventListener?.('change', resize);
     if (onPointerMove) window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('mouseleave', onLeave);
     window.removeEventListener('blur', onBlur);

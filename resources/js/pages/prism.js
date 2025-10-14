@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     colorFrequency: 2.15,
     noise: 0,
     glow: 0.4,
-    suspendWhenOffscreen: true
+    suspendWhenOffscreen: true,
+    quality: 'auto',
   });
 
 });
