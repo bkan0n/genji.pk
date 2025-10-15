@@ -100,35 +100,43 @@
 
   @push('scripts')
     <script nonce="{{ $nonce }}">
-      (function () {
-        const btnShow  = document.getElementById('showIpBtn');
-        const row      = document.getElementById('ipRow');
-        const valueEl  = document.getElementById('ipValue');
-        const hint     = document.getElementById('ipHint');
-        const badge    = document.getElementById('ipBadge');
-        const card     = document.getElementById('ipCard');
+    (() => {
+      const btnShow  = document.getElementById('showIpBtn');
+      const row      = document.getElementById('ipRow');
+      const valueEl  = document.getElementById('ipValue');
+      const hint     = document.getElementById('ipHint');
+      const badge    = document.getElementById('ipBadge');
+      const card     = document.getElementById('ipCard');
 
-        function reveal(ip) {
-          valueEl.textContent = ip || 'N/A';
-          row.hidden = false;
-          btnShow.setAttribute('aria-expanded', 'true');
-          if (hint) hint.textContent = 'Click “Copy” to put the IP into your clipboard.';
-        }
+      const reveal = (ip) => {
+        valueEl.textContent = ip || 'N/A';
+        row.hidden = false;
+        btnShow.setAttribute('aria-expanded', 'true');
+      };
 
-        btnShow?.addEventListener('click', async () => {
-          btnShow.disabled = true;
-          const original = btnShow.innerHTML;
-          btnShow.innerHTML = 'Loading…';
-          try {
-            const ip = card?.dataset?.serverIp || '';
-            await new Promise(r => setTimeout(r, 180));
-            reveal(ip);
-          } finally {
-            btnShow.disabled = false;
-            btnShow.innerHTML = original;
+      btnShow?.addEventListener('click', async () => {
+        btnShow.disabled = true;
+        const original = btnShow.innerHTML;
+        btnShow.innerHTML = 'Loading…';
+        try {
+          const res  = await fetch('{{ route('api.my_ip') }}', { headers:{Accept:'application/json'}, cache:'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            reveal(data.ip);
+            if (hint) hint.textContent = data.proxy_chain ? `XFF: ${data.proxy_chain}` : '—';
+            return;
           }
-        });
-      })();
+          const ipLocal = card?.dataset?.serverIp || '';
+          reveal(ipLocal);
+        } catch {
+          const ipLocal = card?.dataset?.serverIp || '';
+          reveal(ipLocal);
+        } finally {
+          btnShow.disabled = false;
+          btnShow.innerHTML = original;
+        }
+      });
+    })();
     </script>
   @endpush
 @endsection
