@@ -23,7 +23,7 @@ return [
     'tutorial' => 'Tutorials',
     'statistics' => 'Statistics',
     'submit' => 'Submit',
-    'submit_record' => 'Record',
+    'submit_record' => 'Completion',
     'submit_playtest' => 'Playtest',
     'submit_map' => 'Map',
 

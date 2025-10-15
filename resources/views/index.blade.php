@@ -248,7 +248,7 @@
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">
           {{ __('index.features.title') }}
         </h2>
-        <a href="#community" class="text-brand-300 hover:text-brand-200 text-sm">
+        <a href="https://dsc.gg/genjiparkour" class="text-brand-300 hover:text-brand-200 text-sm">
           {{ __('index.features.join') }}
         </a>
       </div>

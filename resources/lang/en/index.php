@@ -42,7 +42,7 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'top_maps' => [
         'title'    => 'Top maps',
-        'see_all'  => 'See everything →',
+        'see_all'  => 'See more top rated maps →',
         'play'     => 'Play',
         'copied'   => 'Copied ✓',
 
