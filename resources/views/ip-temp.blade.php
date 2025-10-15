@@ -105,15 +105,14 @@
       const row      = document.getElementById('ipRow');
       const valueEl  = document.getElementById('ipValue');
       const hint     = document.getElementById('ipHint');
-      const badge    = document.getElementById('ipBadge');
-      const card     = document.getElementById('ipCard');
-      const ipLabel  = document.getElementById('ipLabel');
+      const labelEl  = document.querySelector('#ipRow .font-semibold');
 
-      const reveal = (ip, sourceText) => {
+      const reveal = (ip, src) => {
         valueEl.textContent = ip || 'N/A';
         row.hidden = false;
         btnShow.setAttribute('aria-expanded', 'true');
-        if (hint) hint.textContent = sourceText || '—';
+        if (labelEl) labelEl.textContent = src === 'CF-Connecting-IP' ? 'IP Address (CF)' : 'IP Address';
+        if (hint) hint.textContent = src || '—';
       };
 
       btnShow?.addEventListener('click', async () => {
@@ -121,20 +120,14 @@
         const original = btnShow.innerHTML;
         btnShow.innerHTML = 'Loading…';
         try {
-          const res = await fetch('{{ route('api.my_ip') }}', {
-            headers: { 'Accept': 'application/json' },
-            cache: 'no-store'
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const ipToShow = data.client_ip || data.cf || data.ip || '';
-            if (ipLabel) ipLabel.textContent = data.cf ? 'IP Address (CF-Connecting-IP)' : 'IP Address';
-            reveal(ipToShow, data.source + (data.proxy_chain ? ` · XFF: ${data.proxy_chain}` : ''));
-            return;
-          }
-          reveal(card?.dataset?.serverIp || '', 'from data-server-ip');
+          const res = await fetch('{{ route('api.my_ip') }}', { headers:{Accept:'application/json'}, cache:'no-store' });
+          const data = await res.json();
+          const ipToShow = data.client_ip || data.cf || data.ip || '';
+          const srcText  = data.source + (data.proxy_chain ? ` · XFF: ${data.proxy_chain}` : '');
+          reveal(ipToShow, data.source);
+          if (hint) hint.textContent = srcText;
         } catch {
-          reveal(card?.dataset?.serverIp || '', 'from data-server-ip');
+          reveal('', '—');
         } finally {
           btnShow.disabled = false;
           btnShow.innerHTML = original;

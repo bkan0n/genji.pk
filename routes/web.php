@@ -40,11 +40,10 @@ Route::get('discord/callback', [DiscordAuthController::class, 'callback'])->name
 Route::post('discord/logout', [DiscordAuthController::class, 'logout'])->name('discord.logout');
 
 //IP 
-
 Route::get('/api/my-ip', function (Request $request) {
-    $cf   = $request->header('CF-Connecting-IP');
-    $xff  = (string) $request->header('X-Forwarded-For');
-    $ip   = $request->ip();
+    $cf  = $request->header('CF-Connecting-IP');
+    $xff = (string) $request->header('X-Forwarded-For');
+    $ip  = $request->ip();
 
     $xffLeftmost = null;
     if ($xff !== '') {
@@ -54,6 +53,7 @@ Route::get('/api/my-ip', function (Request $request) {
 
     return response()->json([
         'client_ip'    => $cf ?: $ip,
+
         'cf'           => $cf,
         'ip'           => $ip,
         'proxy_chain'  => $xff,
