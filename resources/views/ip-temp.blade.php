@@ -76,7 +76,7 @@
                   hidden
                 >
                   <div>
-                    <div class="font-semibold">IP Address</div>
+                    <div class="font-semibold" id="ipLabel">IP Address</div>
                     <div id="ipValue" class="text-sm text-zinc-300"></div>
                   </div>
                   <span
@@ -107,11 +107,13 @@
       const hint     = document.getElementById('ipHint');
       const badge    = document.getElementById('ipBadge');
       const card     = document.getElementById('ipCard');
+      const ipLabel  = document.getElementById('ipLabel');
 
-      const reveal = (ip) => {
+      const reveal = (ip, sourceText) => {
         valueEl.textContent = ip || 'N/A';
         row.hidden = false;
         btnShow.setAttribute('aria-expanded', 'true');
+        if (hint) hint.textContent = sourceText || '—';
       };
 
       btnShow?.addEventListener('click', async () => {
@@ -119,18 +121,20 @@
         const original = btnShow.innerHTML;
         btnShow.innerHTML = 'Loading…';
         try {
-          const res  = await fetch('{{ route('api.my_ip') }}', { headers:{Accept:'application/json'}, cache:'no-store' });
+          const res = await fetch('{{ route('api.my_ip') }}', {
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+          });
           if (res.ok) {
             const data = await res.json();
-            reveal(data.ip);
-            if (hint) hint.textContent = data.proxy_chain ? `XFF: ${data.proxy_chain}` : '—';
+            const ipToShow = data.client_ip || data.cf || data.ip || '';
+            if (ipLabel) ipLabel.textContent = data.cf ? 'IP Address (CF-Connecting-IP)' : 'IP Address';
+            reveal(ipToShow, data.source + (data.proxy_chain ? ` · XFF: ${data.proxy_chain}` : ''));
             return;
           }
-          const ipLocal = card?.dataset?.serverIp || '';
-          reveal(ipLocal);
+          reveal(card?.dataset?.serverIp || '', 'from data-server-ip');
         } catch {
-          const ipLocal = card?.dataset?.serverIp || '';
-          reveal(ipLocal);
+          reveal(card?.dataset?.serverIp || '', 'from data-server-ip');
         } finally {
           btnShow.disabled = false;
           btnShow.innerHTML = original;

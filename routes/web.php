@@ -40,15 +40,24 @@ Route::get('discord/callback', [DiscordAuthController::class, 'callback'])->name
 Route::post('discord/logout', [DiscordAuthController::class, 'logout'])->name('discord.logout');
 
 //IP 
+
 Route::get('/api/my-ip', function (Request $request) {
-    $cf  = $request->header('CF-Connecting-IP');
-    $xff = $request->header('X-Forwarded-For');
-    $ip  = $request->ip();
+    $cf   = $request->header('CF-Connecting-IP');
+    $xff  = (string) $request->header('X-Forwarded-For');
+    $ip   = $request->ip();
+
+    $xffLeftmost = null;
+    if ($xff !== '') {
+        $parts = array_map('trim', explode(',', $xff));
+        $xffLeftmost = $parts[0] ?? null;
+    }
 
     return response()->json([
-        'ip'          => $ip,
-        'source'      => $cf ? 'CF-Connecting-IP/XFF via trusted proxies' : 'XFF/REMOTE_ADDR',
-        'cf'          => $cf,
-        'proxy_chain' => $xff,
+        'client_ip'    => $cf ?: $ip,
+        'cf'           => $cf,
+        'ip'           => $ip,
+        'proxy_chain'  => $xff,
+        'xff_leftmost' => $xffLeftmost,
+        'source'       => $cf ? 'CF-Connecting-IP' : 'Laravel $request->ip()',
     ])->header('Cache-Control', 'no-store');
 })->name('api.my_ip');
