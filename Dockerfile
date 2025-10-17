@@ -55,16 +55,12 @@ RUN chmod -R a+rwX /var/www/html/storage /var/www/html/bootstrap/cache \
     && find /var/www/html/storage -type d -exec chmod g+s {} + \
     && find /var/www/html/bootstrap/cache -type d -exec chmod g+s {} +
 
-
-
 # runtime user + perms
 # runtime perms using www-data user that ships with the image
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-
 RUN mkdir -p /var/www/html/storage/framework/sessions \
     && chmod -R a+rwX /var/www/html/storage/framework/sessions
-
 
 # Unit config + entrypoint
 COPY docker/unit.json /docker/unit.json
