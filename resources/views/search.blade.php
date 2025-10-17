@@ -92,6 +92,14 @@
           <div id="dynamicFilters" class="filter-section">
             <div id="filtersContainer" class="filters-container flex flex-wrap gap-2"></div>
           </div>
+              {{-- Résultats --}}
+          <section class="relative pt-2 pb-10 sm:pb-16">
+            <div class="mx-auto max-w-7xl">
+              <div class="overflow-hidden rounded-2xl">
+                <div id="resultsContainer" class="results-container overflow-auto"></div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </section>
@@ -100,21 +108,11 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
     </div>
-
-    {{-- Résultats --}}
-    <section class="relative pt-2 pb-10 sm:pb-16">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-          <div id="resultsContainer" class="results-container overflow-auto"></div>
-        </div>
-
         {{-- Pagination --}}
-        <div
-          id="paginationContainer"
-          class="pagination-container mt-4 flex items-center justify-center gap-2"
-        ></div>
-      </div>
-    </section>
+    <div
+      id="paginationContainer"
+      class="pagination-container mt-4 flex items-center justify-center gap-2"
+    ></div>
   </main>
 @endsection
 
