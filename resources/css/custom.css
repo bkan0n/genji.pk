@@ -1892,6 +1892,100 @@ img.avatar-loaded{
   -webkit-touch-callout: default !important;
 }
 
+/* Layout */
+.mx-wrap{display:flex;flex-direction:column;gap:14px}
+.mx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:stretch}
+
+/* Card container */
+.mx-card{position:relative;display:block;overflow:hidden;border-radius:14px;
+  background:linear-gradient(175deg,rgba(16,17,20,.9),rgba(16,17,20,.8));
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 28px rgba(0,0,0,.35);
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease}
+.mx-card:hover{transform:translateY(-1px);box-shadow:0 16px 40px rgba(0,0,0,.45);border-color:rgba(255,255,255,.14)}
+.mx-card::before{content:"";position:absolute;inset:-1px;border-radius:18px;pointer-events:none;
+  background:radial-gradient(50% 100% at 0% 0%,rgba(255,255,255,.08),transparent 70%);
+  filter:blur(18px);opacity:.25;transition:opacity .3s ease,filter .3s ease}
+.mx-card:hover::before{opacity:.4;filter:blur(14px)}
+
+/* Banner / Hero */
+.mx-hero{position:relative;height:clamp(132px,14.5vw,168px);background:#0b0b0c}
+.mx-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .6s ease}
+.mx-card:hover .mx-hero>img{transform:scale(1.03)}
+.mx-hero::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.14) 0%,rgba(0,0,0,.32) 34%,rgba(0,0,0,.62) 64%,rgba(0,0,0,.9) 100%)}
+
+/* Grain & skeleton */
+.mx-grain{position:absolute;inset:0;mix-blend:overlay;opacity:.06;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27><filter id=%27n%27><feTurbulence type=%27fractalNoise%27 baseFrequency=%270.9%27 numOctaves=%272%27 stitchTiles=%27stitch%27/></filter><rect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27/></svg>");
+  background-size:140px 140px}
+@keyframes mx-skel{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.mx-skel{position:absolute;inset:0;background:linear-gradient(90deg,#0f0f11 0,#161619 20%,#0f0f11 40%);
+  background-size:200% 100%;animation:mx-skel 1.2s linear infinite;opacity:0;transition:opacity .3s ease}
+.mx-hero.is-loading .mx-skel{opacity:1}
+
+/* Title & meta */
+.mx-titlebar{position:absolute;left:12px;right:56px;top:10px;z-index:2;display:flex;flex-direction:column;gap:4px}
+.mx-head{display:flex;align-items:center;gap:10px}
+.mx-title{flex:1;min-width:0;color:#f1f5f9;font-weight:800;font-size:15px;letter-spacing:.2px;text-shadow:0 2px 18px rgba(0,0,0,.7)}
+.mx-meta{display:flex;align-items:center;gap:8px;color:#cbd5e1;font-size:12px;opacity:.95;flex-wrap:wrap}
+.mx-meta .sep{opacity:.5}
+.mx-meta svg{width:14px;height:14px}
+.mx-meta .mx-meta-item{display:inline-flex;align-items:center;gap:6px}
+
+/* Completed status */
+.mx-status{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:9999px;
+  font-size:12px;color:#e5e7eb;background:rgba(15,15,16,.48);border:1px solid rgba(255,255,255,.12)}
+.mx-dot{width:7px;height:7px;border-radius:9999px;background:#ef4444;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
+.mx-status.ok .mx-dot{background:#10b981}
+
+/* Right actions (top) */
+.mx-actions-vert{position:absolute;right:10px;top:10px;z-index:3;display:flex;flex-direction:column;gap:8px;align-items:center}
+.mx-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(15,15,16,.45);color:#e5e7eb;transition:transform .15s ease,background .2s ease,border-color .2s ease}
+.mx-icon:hover{transform:translateY(-1px);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+.mx-icon svg{width:18px;height:18px}
+
+/* Inline code chip */
+.mx-code-inline{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:8px;
+  background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.1);color:#e5e7eb}
+.copy-map-code{cursor:pointer}
+
+/* Difficulty badge */
+.mx-diff{display:inline-flex;align-items:center}
+.mx-diff>span{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:9px;
+  font-size:12px;font-weight:700;border:1px solid;backdrop-filter:saturate(120%) blur(2.5px);
+  box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.mx-card.mx-d-easy .mx-diff>span{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35);color:#a7f3d0}
+.mx-card.mx-d-medium .mx-diff>span{background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.35);color:#fde68a}
+.mx-card.mx-d-hard .mx-diff>span{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.38);color:#fed7aa}
+.mx-card.mx-d-veryhard .mx-diff>span{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.38);color:#fecaca}
+.mx-card.mx-d-extreme .mx-diff>span{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.38);color:#fecaca}
+.mx-card.mx-d-hell .mx-diff>span{background:rgba(185,28,28,.12);border-color:rgba(185,28,28,.42);color:#fecaca}
+
+/* Bottom bar (author left, code + diff right) */
+.mx-bottom{
+  position:absolute;left:12px;right:56px;bottom:8px;z-index:2;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  color:#9ca3af;font-size:12px;
+}
+.mx-b-left{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto}
+.mx-b-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.mx-bottom .sep{opacity:.55}
+.mx-avatar{width:18px;height:18px;border-radius:9999px;object-fit:cover;border:1px solid rgba(255,255,255,.16);
+  background:#18181b;box-shadow:0 1px 0 rgba(255,255,255,.06)}
+
+/* Stagger reveal */
+.mx-stagger .mx-card{opacity:0;transform:translateY(6px) scale(.995)}
+.mx-stagger .mx-card.is-in{opacity:1;transform:none;transition:opacity .25s ease,transform .25s cubic-bezier(.2,.8,.2,1)}
+
+/* Optional medal glow */
+.mx-card--gold::after{content:"";position:absolute;inset:1px;border-radius:12px;pointer-events:none;
+  box-shadow:0 0 0 2px rgba(250,204,21,.22) inset,0 10px 28px rgba(250,204,21,.1)}
+.mx-card--silver::after{content:"";position:absolute;inset:1px;border-radius:12px;pointer-events:none;
+  box-shadow:0 0 0 2px rgba(229,231,235,.18) inset,0 10px 28px rgba(229,231,235,.08)}
+.mx-card--bronze::after{content:"";position:absolute;inset:1px;border-radius:12px;pointer-events:none;
+  box-shadow:0 0 0 2px rgba(217,119,6,.22) inset,0 10px 28px rgba(217,119,6,.1)}
+
 /* ================= SUBMIT ================= */
 #submitRecordSection {
   will-change: opacity, transform;

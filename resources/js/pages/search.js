@@ -2126,140 +2126,143 @@ function normalizeToRows(data /*, kind */) {
    RENDER MAP SEARCH
    ========================= */
 async function displayMapSearchResults(rowsInput) {
-  if (!window.__gridCSS_map_search) {
-    __addRule('.grid-map_search','display:grid;grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;align-items:center;column-gap:20px');
-    __addRule('.minw-map_search', 'min-width:1024px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    __addRule('.grid-map_search > :nth-child(7), .grid-completions > :nth-child(7)', 'justify-self:end; text-align:right');
-    window.__gridCSS_map_search = true;
-  }
-
   const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'map');
   const filtered = rows.filter((r) => r && r.map_name && r.map_name !== 'N/A');
+  if (filtered.length === 0) { renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
 
-  if (filtered.length === 0) {
-    renderMessage(t('popup.no_results'));
-    clearFilters();
-    applyFilters({});
-    return;
-  }
-
-  const safeHex = (c) => (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(c)) ? c : '#ffffff');
-  const starsHTML = (quality, max = 6) => {
-    if (quality == null || isNaN(Number(quality))) return 'N/A';
-    const q = Math.max(0, Math.min(max, Math.floor(Number(quality))));
-    return `<span class="tracking-tight">${'★'.repeat(q)}${'☆'.repeat(max - q)}</span>`;
+  const diffSlug = (d='') => {
+    const L = String(d).toLowerCase();
+    if (L.startsWith('very hard')) return 'veryhard';
+    if (L.startsWith('extreme'))   return 'extreme';
+    if (L.startsWith('hell'))      return 'hell';
+    if (L.startsWith('hard'))      return 'hard';
+    if (L.startsWith('medium'))    return 'medium';
+    return 'easy';
   };
 
-  const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
-      <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
-      <div class="whitespace-nowrap">${t('thead.mapName')}</div>
-      <div class="whitespace-nowrap">${t('thead.mapType')}</div>
-      <div class="whitespace-nowrap">${t('thead.mapCreator')}</div>
-      <div class="whitespace-nowrap">${t('thead.mapDifficulty')}</div>
-      <div class="whitespace-nowrap">${t('thead.mapQuality')}</div>
-      <div class="whitespace-nowrap">${t('thead.mapDetails')}</div>
-    </div>
-  `;
-
-  const rowsHTML = filtered.map((r, idx) => {
-    const ringColor =
-      user_id && r.medal_type === 'Gold'   ? 'after:ring-yellow-400/40' :
-      user_id && r.medal_type === 'Silver' ? 'after:ring-zinc-200/30'  :
-      user_id && r.medal_type === 'Bronze' ? 'after:ring-amber-600/40' : '';
-    const halo = ringColor
-      ? `relative after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5 after:rounded-lg after:ring-2 after:pointer-events-none after:z-0 ${ringColor}`
-      : 'relative';
-
-    const diffColor = safeHex(difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
-
-    const types = getTypesArray(r);
+  const cardsHTML = filtered.map((r, idx) => {
+    const types   = getTypesArray(r);
     const mapType = types.length ? types.join(', ') : 'N/A';
 
     const names = pickCreatorNames(r);
     const ids   = pickCreatorIds(r);
     if (names.length === 1 && ids.length === 0 && r.user_id) ids.push(String(r.user_id));
 
-    const creatorsHTML = names.map((name, i) => {
+    const firstName  = names[0] || 'N/A';
+    const firstId    = ids[0];
+    const authorHref = firstId ? `rank_card?user_id=${encodeURIComponent(firstId)}` : '#';
+
+    const creatorsAvatars = names.slice(0,3).map((name, i) => {
       const id = ids[i];
       const fallback = defaultAvatarFromId(id || name);
       const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
-      return `
-        <a href="${escAttr(profileHref)}"
-          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-          title="${escAttr(name)}">
-          <img
-            src="${escAttr(fallback)}"
-            alt=""
-            class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-            loading="lazy" decoding="async" referrerpolicy="no-referrer"
-            data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
-            data-fallback-src="${escAttr(fallback)}"
-          />
-          <span data-sf="${escAttr(name)}"></span>
-        </a>`;
+      return `<a href="${escAttr(profileHref)}" title="${escAttr(name)}">
+                <img class="mx-avatar" src="${escAttr(fallback)}" alt="" loading="lazy" decoding="async"
+                     referrerpolicy="no-referrer" data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
+                     data-fallback-src="${escAttr(fallback)}" />
+              </a>`;
     }).join('');
 
     const code = r.code || 'N/A';
     const hasNonNullTime = r.time != null && String(r.time).trim().toLowerCase() !== 'null';
     const hasCheck = Boolean(user_id) && (r.user_has_completion || r.user_has_record || r.user_completed || hasNonNullTime);
-    const ratingValue = r.ratings != null ? r.ratings : r.quality;
 
-    const codeChip = code !== 'N/A'
-      ? `
-        <button type="button"
-                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
-                       text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
-                       w-full min-w-0"
-                data-code="${escAttr(code)}"
-                aria-label="${escAttr(t('popup.click_to_copy_map_code'))}"
-                title="${escAttr(t('popup.click_to_copy_map_code'))}">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-            <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-          </svg>
-          <span class="min-w-0 truncate" data-sf="${escAttr(code)}"></span>
-          ${hasCheck ? '<span class="ml-auto text-emerald-400 shrink-0">✓</span>' : ''}
-        </button>`
-      : `<span data-sf="N/A"></span>`;
+    const diff    = r.difficulty || 'N/A';
+    const diffCls = `mx-d-${diffSlug(diff)}`;
+
+    const mapName     = r.original_map_name || r.map_name || 'N/A';
+    const mapNameKey  = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
+    const bannerPath  = r.map_banner || `assets/banners/${mapNameKey}.png`;
+    const bannerFB    = `assets/banners/${mapNameKey}.png`;
+    const checkpoints = (r.checkpoints != null && r.checkpoints !== 'N/A') ? String(r.checkpoints) : '';
+
+    const medalClass =
+      user_id && r.medal_type === 'Gold'   ? 'mx-card--gold'   :
+      user_id && r.medal_type === 'Silver' ? 'mx-card--silver' :
+      user_id && r.medal_type === 'Bronze' ? 'mx-card--bronze' : '';
 
     return `
-      <div class="${halo} grid grid-map_search bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
-        <div class="min-w-0">${codeChip}</div>
-        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(r.map_name || 'N/A')}"></span></div>
-        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(mapType)}"></span></div>
-        <div class="min-w-0 -ml-1 flex flex-wrap items-center gap-2">${creatorsHTML || 'N/A'}</div>
-        <div class="min-w-0"><span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span></div>
-        <div class="min-w-0">${qualityMicroBarHTML(ratingValue)}</div>
-        <div class="min-w-0">
-          <button
-            type="button"
-            class="js-open-map-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
-            data-index="${idx}">
-            ${esc(t('thead.mapView'))}
-          </button>
+      <article class="mx-card ${diffCls} ${medalClass}">
+        <div class="mx-hero is-loading">
+          <div class="mx-skel"></div>
+          <img src="${escAttr(bannerPath)}" alt="" data-fallback-src="${escAttr(bannerFB)}" />
+          <div class="mx-grain"></div>
+
+          <div class="mx-titlebar">
+            <div class="mx-head">
+              <h3 class="mx-title">${esc(mapName)}</h3>
+              <span class="mx-status ${hasCheck ? 'ok' : ''}">
+                <i class="mx-dot"></i>${hasCheck ? esc(t('card.completed')) : esc(t('card.not_completed'))}
+              </span>
+            </div>
+
+            <div class="mx-meta">
+              ${checkpoints ? `
+                <span class="mx-meta-item" title="${escAttr(t('thead.mapCheckpoints'))}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 3a1 1 0 0 0-1 1v16l7-3 7 3V4a1 1 0 0 0-1-1H5z"/></svg>
+                  <span>${esc(checkpoints)}</span>
+                </span>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="mx-actions-vert">
+            <button type="button" class="mx-icon" title="${escAttr(t('labels.like'))}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 21s-6.716-4.534-9.193-7.01A5.5 5.5 0 1 1 12 6.07a5.5 5.5 0 1 1 9.193 7.92C18.716 16.466 12 21 12 21z"/>
+              </svg>
+            </button>
+
+            <button type="button" class="mx-icon mx-icon--primary js-open-map-details"
+                    data-index="${idx}" title="${escAttr(t('thead.mapView'))}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="mx-bottom">
+            <div class="mx-b-left">
+              ${creatorsAvatars}
+              <span>${esc(t('card.mapped_by'))}: </span>
+              <a href="${escAttr(authorHref)}">${esc(firstName)}</a>
+              ${mapType && mapType !== 'N/A' ? `<span class="sep">•</span><span>${esc(mapType)}</span>` : ''}
+            </div>
+
+            <div class="mx-b-right">
+              ${code && code !== 'N/A' ? `
+                <button type="button" class="mx-code-inline copy-map-code" data-code="${escAttr(code)}"
+                        aria-label="${escAttr(t('labels.copy_code'))}" title="${escAttr(t('labels.copy_code'))}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+                  </svg>
+                  <span data-sf="${escAttr(code)}"></span>
+                </button>
+              ` : `<span class="mx-code-inline">N/A</span>`}
+
+              <div class="mx-diff" title="${escAttr(t('thead.mapDifficulty'))}">
+                <span>${esc(diff)}</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>`;
+      </article>
+    `;
   }).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-      <div class="overflow-auto">
-        <div class="minw-map_search">
-          ${headerHTML}
-          <div class="row-gap-y">
-            ${rowsHTML}
-          </div>
-        </div>
+    <section class="mx-wrap">
+      <div class="mx-grid mx-stagger">
+        ${cardsHTML}
       </div>
-    </div>
+    </section>
   `;
-
   setResultsHTML(shell);
-  refreshAvatarLazyLoading(document.getElementById('resultsContainer'));
 
   const resultsRoot = document.getElementById('resultsContainer');
+
+  refreshAvatarLazyLoading(resultsRoot);
   applySplitFlap(resultsRoot);
 
   if (typeof registerMapCodeCopyTargets === 'function') {
@@ -2282,9 +2285,12 @@ async function displayMapSearchResults(rowsInput) {
     });
   }
 
-  resultsRoot.querySelectorAll('img[data-fallback-src]').forEach((img) => {
-    const fallback = img.getAttribute('data-fallback-src');
-    img.addEventListener('error', () => { if (img.src !== fallback) img.src = fallback; }, { once: true });
+  resultsRoot.querySelectorAll('.mx-hero').forEach((hero) => {
+    const img = hero.querySelector('img'); if (!img) return;
+    const fb = img.getAttribute('data-fallback-src');
+    if (img.complete && img.naturalWidth > 0) hero.classList.remove('is-loading');
+    else img.addEventListener('load', () => hero.classList.remove('is-loading'), { once:true });
+    img.addEventListener('error', () => { if (fb && img.src !== fb) img.src = fb; }, { once:true });
   });
 
   // Modal
@@ -2301,14 +2307,12 @@ async function displayMapSearchResults(rowsInput) {
                  rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-900/95 shadow-2xl ring-1 ring-white/5">
           <div id="modalDetailsContainer" class="p-0"></div>
         </div>
-      </div>
-    `;
+      </div>`;
     document.body.appendChild(shell.firstElementChild);
   }
 
   async function openDetailsModal(index) {
-    const r = filtered[index];
-    if (!r) return;
+    const r = filtered[index]; if (!r) return;
 
     let mech = Array.isArray(r.mechanics) ? r.mechanics : [];
     let rest = Array.isArray(r.restrictions) ? r.restrictions : [];
@@ -2316,17 +2320,14 @@ async function displayMapSearchResults(rowsInput) {
       mech = mech.filter(Boolean).map((o) => t(`mechanics.${o.toLowerCase().replace(/ /g, '_')}`) || o);
       rest = rest.filter(Boolean).map((o) => t(`restrictions.${o.toLowerCase().replace(/ /g, '_')}`) || o);
     }
-    const mechanics = mech.length ? mech.join(', ') : 'N/A';
+    const mechanics    = mech.length ? mech.join(', ') : 'N/A';
     const restrictions = rest.length ? rest.join(', ') : 'N/A';
 
     const description = r.description || r.desc || t('no_description') || 'No description available';
-    const mapNameKey = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
-    const bannerPath = r.map_banner || `assets/banners/${mapNameKey}.png`;
+    const mapNameKey  = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
+    const bannerPath  = r.map_banner || `assets/banners/${mapNameKey}.png`;
 
-    const diffColor = (difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
-    const diffClass = difficultyClasses(r.difficulty || '').chip;
-    const typeText = Array.isArray(r.category) ? r.category.join(', ') : r.category || 'Classic';
-
+    const typeText    = Array.isArray(r.category) ? r.category.join(', ') : r.category || 'Classic';
     const medalGold   = r.medals?.gold   ?? r.gold;
     const medalSilver = r.medals?.silver ?? r.silver;
     const medalBronze = r.medals?.bronze ?? r.bronze;
@@ -2340,23 +2341,20 @@ async function displayMapSearchResults(rowsInput) {
           <span>${esc(String(val))}</span>
         </span>` : '';
 
-    // HEADER
     const headerBanner = `
       <div class="relative">
         <div class="h-40 sm:h-52 w-full rounded-t-3xl overflow-hidden bg-zinc-900">
           <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="" class="h-full w-full object-cover">
           <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/40 to-transparent"></div>
-          <div class="absolute inset-0 pointer-events-none banner-bottom-mask"></div>
         </div>
 
-        <!-- Top left -->
         <div class="absolute top-4 left-5 right-1">
           <div class="flex flex-wrap justify-start gap-2">
             ${r.code ? `
             <button type="button"
               class="copy-map-code inline-flex items-center gap-2 cursor-pointer rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
               data-code="${escAttr(r.code)}"
-              title="${escAttr(t('popup.click_to_copy_map_code') || 'Click to copy map code')}">
+              title="${escAttr(t('labels.copy_code'))}">
               <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                 <rect x="3" y="3" width="13" height="13" rx="2"></rect>
@@ -2366,7 +2364,7 @@ async function displayMapSearchResults(rowsInput) {
 
             <span class="inline-flex items-center gap-2 rounded-full bg-zinc-900/60 px-3 py-1 text-xs ring-1 ring-inset ring-white/10">
               <span class="font-semibold">${esc(t('thead.mapDifficulty'))}:</span>
-              <span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span>
+              <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
             </span>
 
             ${typeText ? `
@@ -2377,7 +2375,6 @@ async function displayMapSearchResults(rowsInput) {
           </div>
         </div>
 
-        <!-- Top right -->
         <div class="absolute top-4 right-5">
           <div class="flex flex-wrap justify-end gap-2">
             ${hasRating ? `
@@ -2395,11 +2392,9 @@ async function displayMapSearchResults(rowsInput) {
       </div>
     `;
 
-    // --- BODY
     const detailsGrid = `
       <div class="px-5 pb-7 pt-4">
         <div class="grid gap-6 md:grid-cols-2">
-          <!-- Left col -->
           <div class="space-y-4">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
               <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapView'))}</h3>
@@ -2417,7 +2412,6 @@ async function displayMapSearchResults(rowsInput) {
             </div>
           </div>
 
-          <!-- Right col -->
           <div class="space-y-4">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
               <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('chart.record_progression_time'))}</h3>
@@ -2456,30 +2450,30 @@ async function displayMapSearchResults(rowsInput) {
     function closeDetailsModal() {
       document.removeEventListener('keydown', onEsc);
       overlay.removeEventListener('pointerdown', onOutside, true);
-
       overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100');
       box.classList.add('translate-y-3', 'opacity-0'); box.classList.remove('translate-y-0', 'opacity-100');
       setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
     }
 
-    showProgressionLoading();
-    const [stats, progressionData] = await Promise.all([
-      fetchMapCompletionStatistics(r.code),
-      fetchProgression(r.code),
-    ]);
-    if (stats && Array.isArray(progressionData) && progressionData.length > 0) {
-      renderProgressionChart(progressionData, stats);
-    }
+    try {
+      showProgressionLoading?.();
+      const [stats, progressionData] = await Promise.all([
+        fetchMapCompletionStatistics?.(r.code),
+        fetchProgression?.(r.code),
+      ]);
+      if (stats && Array.isArray(progressionData) && progressionData.length > 0) {
+        renderProgressionChart?.(progressionData, stats);
+      }
+    } catch {}
   }
 
-  resultsRoot.querySelectorAll('.js-open-map-details').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.getAttribute('data-index'));
-      openDetailsModal(idx);
-    });
-  });
+  document.querySelectorAll('.js-open-map-details').forEach((btn) =>
+    btn.addEventListener('click', () => openDetailsModal(Number(btn.getAttribute('data-index'))))
+  );
 
-  animateQualityBars();
+  Array.from(document.querySelectorAll('#resultsContainer .mx-card')).forEach((el, i) =>
+    setTimeout(() => el.classList.add('is-in'), 24 * i)
+  );
 }
 
 /* =========================

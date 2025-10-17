@@ -101,6 +101,12 @@ return [
         'player_name' => 'Player Name',
     ],
 
+    'card' => [
+      'completed'     => 'Completed',
+      'not_completed' => 'Not completed',
+      'mapped_by'     => 'Mapped by',
+    ],
+
     // ──────────────────────────────────────────────────────────────────────
     // MECHANICS
     // ──────────────────────────────────────────────────────────────────────
