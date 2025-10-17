@@ -29,8 +29,26 @@ return [
                 'https://kit.fontawesome.com',
                 'https://www.youtube.com',
                 'https://youtu.be',
-                'https://dev.genji.pk/',
-                'https://genji.pk/',
+                'https://dev.genji.pk',
+                'https://genji.pk',
+            ],
+        ],
+
+        [
+            Directive::SCRIPT_ELEM,
+            [
+                Keyword::SELF,
+                'https://browser.sentry-cdn.com',
+                'https://static.cloudflareinsights.com',
+                'https://ajax.googleapis.com',
+                'https://code.jquery.com',
+                'https://cdn.jsdelivr.net',
+                'https://cdnjs.cloudflare.com',
+                'https://kit.fontawesome.com',
+                'https://www.youtube.com',
+                'https://youtu.be',
+                'https://dev.genji.pk',
+                'https://genji.pk',
             ],
         ],
 
