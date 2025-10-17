@@ -1500,7 +1500,6 @@ i.flag-zimbabwe:before {
   line-height: 1rem;
   border: 1px solid var(--pill-border);
   background: var(--pill-bg);
-  color: var(--pill-text);
 }
 /* --- SKELETON --- */
 
@@ -1580,6 +1579,16 @@ img.avatar-loaded{
 
 .avatar-img.avatar-loaded{
   opacity: 1;
+}
+
+/* No select */
+.lb-head, .lb-head *{
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: default;
 }
 
 /* ================= SEARCH ================= */

@@ -86,18 +86,18 @@ function __ensurePillBase() {
     `.pill`,
     `display:inline-flex;align-items:center;border-radius:9999px;
      padding:0.125rem 0.625rem;font-weight:600;font-size:.75rem;line-height:1rem;
-     border:1px solid var(--pill-border);background:var(--pill-bg);color:var(--pill-text)`
+     border:1px solid var(--pill-border);background:var(--pill-bg)`
   );
   __pillBase = true;
 }
 
-function __ensurePillVariant(key, bg, border, text) {
+function __ensurePillVariant(key, bg, border) {
   __ensurePillBase();
-  const k = `${key}|${bg}|${border}|${text}`;
+  const k = `${key}|${bg}|${border}`;
   if (__pillRules.has(k)) return;
   __addRule(
     `.pill[data-k="${key}"]`,
-    `--pill-bg:${bg};--pill-border:${border};--pill-text:${text}`
+    `--pill-bg:${bg};--pill-border:${border}`
   );
   __pillRules.add(k);
 }
@@ -405,26 +405,24 @@ function relLuma(hex) {
 const PILL_SATURATE = 0.22;
 const PILL_BG_ALPHA = 0.22;
 const PILL_BORDER_ALPHA = 0.45;
+const PILL_TEXT_TW = 'text-zinc-300';
 
 function pill(label, baseHex) {
-  const vivid = saturateHex(baseHex, 0.22);
-  const bg = rgbaFromHex(vivid, 0.22);
-  const border = rgbaFromHex(vivid, 0.45);
-
-  const lum = relLuma(vivid);
-  const darken = lum > 0.75 ? 0.22 : 0.1;
-  const text = darkenHex(vivid, darken);
+  const vivid = saturateHex(baseHex, PILL_SATURATE);
+  const bg = rgbaFromHex(vivid, PILL_BG_ALPHA);
+  const border = rgbaFromHex(vivid, PILL_BORDER_ALPHA);
 
   const key = __slug(label || 'na');
-  __ensurePillVariant(key, bg, border, text);
+  __ensurePillVariant(key, bg, border);
 
-  return `<span class="pill" data-k="${key}">${esc(label)}</span>`;
+  return `<span class="pill ${PILL_TEXT_TW}" data-k="${key}">${esc(label)}</span>`;
 }
 
 function mkSkillPill(rank) {
   const label = normalizeSkillRank(rank) || 'N/A';
   return pill(label, skillRankColor(label));
 }
+
 function mkTierPill(name) {
   const label = name || 'N/A';
   return pill(label, tierColor(label));
