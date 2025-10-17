@@ -1,0 +1,73 @@
+name: Prod Deployment
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  prod-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_HOST_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add remote host to known_hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.SERVER_HOST_IP }} >> ~/.ssh/known_hosts
+
+      - name: Set up Docker context for prod
+        run: |
+          docker context create prod-server \
+            --docker "host=ssh://${{ secrets.SERVER_HOST_USER }}@${{ secrets.SERVER_HOST_IP }}" \
+            --description "Prod server context"
+          docker context use prod-server
+
+      - name: Deploy to Remote Prod Server
+        run: |
+          echo "Deploying to Prod Server..."
+
+          docker compose -f docker-compose.prod.yml up -d --build --no-deps --force-recreate
+
+        env:
+          APP_ENV: ${{ secrets.APP_ENV }}
+          APP_DEBUG: ${{ secrets.APP_DEBUG }}
+          APP_URL: ${{ secrets.APP_URL }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          LOG_CHANNEL: ${{ secrets.LOG_CHANNEL }}
+          LOG_STACK: ${{ secrets.LOG_STACK }}
+          LOG_DEPRECATIONS_CHANNEL: ${{ secrets.LOG_DEPRECATIONS_CHANNEL }}
+          LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+          X_API_ROOT: ${{ secrets.X_API_ROOT }}
+          X_API_VERIFY: ${{ secrets.X_API_VERIFY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          DISCORD_REDIRECT_URI: ${{ secrets.DISCORD_REDIRECT_URI }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          DISCORD_MODERATOR_ROLE_IDS: ${{ secrets.DISCORD_MODERATOR_ROLE_IDS }}
+          TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRANSLATION_API_ROOT: ${{ secrets.TRANSLATION_API_ROOT }}
+          TRANSLATION_API_KEY: ${{ secrets.TRANSLATION_API_KEY }}
+          TRANSLATION_API_VERIFY: ${{ secrets.TRANSLATION_API_VERIFY }}
+          SENTRY_ENVIRONMENT: ${{ secrets.SENTRY_ENVIRONMENT }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TUNNEL_ALLOWED_DSN: ${{ secrets.SENTRY_TUNNEL_ALLOWED_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
+          SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
+          VITE_APP_ENV: ${{ secrets.VITE_APP_ENV }}
+          VITE_APP_RELEASE: ${{ secrets.VITE_APP_RELEASE }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          SESSION_SECURE_COOKIE: ${{ secrets.SESSION_SECURE_COOKIE }}
+          SESSION_DOMAIN: ${{ secrets.SESSION_DOMAIN }}
+          REDIRECT_URL_LOCAL: ${{ secrets.REDIRECT_URL_LOCAL }}
+          REDIRECT_URL_TEST: ${{ secrets.REDIRECT_URL_TEST }}
+          REDIRECT_URL_PROD: ${{ secrets.REDIRECT_URL_PROD }}
