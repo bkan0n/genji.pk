@@ -29,6 +29,7 @@ jobs:
           environment_targets: 'development'
           allow_forks: 'true'
           admins: 'tylovejoy'
+          update_branch: 'warn'
 
       - name: Checkout repository
         uses: actions/checkout@v4
