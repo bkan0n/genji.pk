@@ -29,6 +29,8 @@ return [
                 'https://kit.fontawesome.com',
                 'https://www.youtube.com',
                 'https://youtu.be',
+                'https://dev.genji.pk/',
+                'https://genji.pk/',
             ],
         ],
 
