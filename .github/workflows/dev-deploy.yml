@@ -29,7 +29,10 @@ jobs:
           environment_targets: 'development'
           allow_forks: 'true'
           admins: 'tylovejoy'
+<<<<<<< HEAD
           update_branch: 'disabled'
+=======
+>>>>>>> 5678914f1bcc9bac0af7b71903b6a91ae76800d7
 
       - name: Checkout repository
         uses: actions/checkout@v4
