@@ -81,6 +81,8 @@ return [
             Directive::CONNECT,
             [
                 Keyword::SELF,
+                'https://dev.genji.pk',
+                'https://genji.pk',
                 'https://fonts.googleapis.com',
                 'https://fonts.gstatic.com',
                 'https://analytics.bkan0n.com',
