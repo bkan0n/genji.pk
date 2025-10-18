@@ -35,7 +35,7 @@ return [
         'redirect' => env('DISCORD_REDIRECT_URI', ''),
         'authorize_url' => 'https://discord.com/api/oauth2/authorize',
         'token_url' => 'https://discord.com/api/oauth2/token',
-        'scope' => ['identify', 'guilds', 'guilds.members.read'],
+        'scope' => 'identify guilds guilds.members.read',
         'bot_token' => env('DISCORD_BOT_TOKEN', ''),
         'guild_id' => env('DISCORD_GUILD_ID'),
         'mod_roles' => array_filter(explode(',', (string) env('DISCORD_MODERATOR_ROLE_IDS'))),
