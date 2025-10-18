@@ -16,6 +16,7 @@
 /public/build
 /public/hot
 /public/storage
+/public/assets
 /storage/*.key
 /storage/pail
 /vendor
@@ -23,3 +24,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+**/*.php
+**/*.md
+**/*.json
+**/*.blade.php
+artisan
