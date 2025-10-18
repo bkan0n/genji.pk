@@ -2,9 +2,21 @@
   const card = document.getElementById('topMapsCard');
   if (!card) return;
 
-  const endpoint     = card.dataset.endpoint;
-  const fullEndpoint = card.dataset.fullEndpoint || endpoint.replace(/limit=\d+/, 'limit=25');
-  const mapEndpoint  = card.dataset.mapEndpoint;
+  const toAbs = (u) => {
+    try {
+      const url = new URL(u, window.location.origin);
+      if (url.hostname === window.location.hostname && url.protocol !== window.location.protocol) {
+        return `${window.location.origin}${url.pathname}${url.search}${url.hash}`;
+      }
+      return url.toString();
+    } catch {
+      return u;
+    }
+  };
+
+  const endpoint     = toAbs(card.dataset.endpoint);
+  const fullEndpoint = toAbs(card.dataset.fullEndpoint || `${card.dataset.endpoint}`.replace(/limit=\d+/, 'limit=25'));
+  const mapEndpoint  = toAbs(card.dataset.mapEndpoint);
 
   const translations = (window.INDEX_I18N && typeof window.INDEX_I18N === 'object') ? window.INDEX_I18N : {};
 
