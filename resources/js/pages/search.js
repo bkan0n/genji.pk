@@ -19,6 +19,21 @@ let hideTimeout;
 const resultsContainer = document.getElementById('resultsContainer');
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.SEARCH_I18N || {};
+const MAP_VIEW_LS_KEY = 'map_search_view';
+let mapSearchView = (localStorage.getItem(MAP_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
+let lastMapRows = [];
+const COMPLETIONS_VIEW_LS_KEY = 'completions_view';
+let completionsView = (localStorage.getItem(COMPLETIONS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
+let lastCompletionsRows = [];
+const PERSONAL_RECORDS_VIEW_LS_KEY = 'personal_records_view';
+let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
+let lastPersonalRows = [];
+
+const VIEW_LS_KEYS = {
+  map_search: MAP_VIEW_LS_KEY,
+  completions: COMPLETIONS_VIEW_LS_KEY,
+  personal_records: PERSONAL_RECORDS_VIEW_LS_KEY,
+};
 
 const difficultyColors = {
   //"Beginner": "#00ff1a",
@@ -134,12 +149,6 @@ function __ms(n) {
   return Math.round(Number(n) || 0);
 }
 
-__addRule('.u-d-block', 'display:block !important');
-__addRule('.u-d-none', 'display:none !important');
-__addRule('.u-invisible', 'visibility:hidden !important');
-__addRule('.u-absolute', 'position:absolute !important; z-index:45 !important');
-__addRule('.u-flex', 'display:flex !important');
-
 function showEl(el) {
   if (!el) return;
   el.classList.remove('u-d-none');
@@ -248,11 +257,6 @@ function __clsQmbColor(color) {
   }
   return __qmbC.get(key);
 }
-
-__addRule('.circle-visible', 'opacity:1 !important; transition:all .4s ease-in-out !important');
-__addRule('.ratio-16x9', 'aspect-ratio:16/9');
-__addRule('.max-h-360', 'max-height:360px');
-__addRule('.is-measuring', 'visibility:hidden !important; display:block !important');
 
 /* =========================
    Icônes
@@ -939,11 +943,199 @@ function difficultyClasses(label, value) {
   return base;
 } 
 
+function mountMapViewSwitch() {
+  const container = document.querySelector('.toolbar-container');
+  if (!container) return;
+
+  document.getElementById('completionsViewSwitch')?.remove();
+
+  let wrap = document.getElementById('mapViewSwitch');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'mapViewSwitch';
+    wrap.className =
+      'ml-auto inline-flex items-center gap-0 rounded-lg border border-white/10 overflow-hidden ' +
+      'bg-zinc-900/60 backdrop-blur ring-1 ring-white/10';
+    wrap.innerHTML = `
+      <button type="button" data-view="cards"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${mapSearchView==='cards'?'bg-white/10 ring-1 ring-white/10':''}"
+        aria-pressed="${mapSearchView==='cards'}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/>
+        </svg>
+        <span class="hidden sm:inline"></span>
+      </button>
+      <button type="button" data-view="table"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${mapSearchView==='table'?'bg-white/10 ring-1 ring-white/10':''}"
+        aria-pressed="${mapSearchView==='table'}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/>
+        </svg>
+        <span class="hidden sm:inline"></span>
+      </button>
+    `;
+    container.appendChild(wrap);
+  }
+
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    const view = btn.dataset.view;
+    if (view === mapSearchView) return;
+
+    mapSearchView = view;
+    localStorage.setItem(MAP_VIEW_LS_KEY, mapSearchView);
+
+    wrap.querySelectorAll('button[data-view]').forEach(b => {
+      const on = (b.dataset.view === mapSearchView);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.classList.toggle('bg-white/10', on);
+      b.classList.toggle('ring-1', on);
+      b.classList.toggle('ring-white/10', on);
+    });
+
+    if (Array.isArray(lastMapRows) && lastMapRows.length) {
+      renderMapSearchResultsByMode(lastMapRows);
+    } else {
+      applyFilters(activeFilters);
+    }
+  });
+}
+
+function mountCompletionsViewSwitch() {
+  const container = document.querySelector('.toolbar-container');
+  if (!container) return;
+
+  document.getElementById('mapViewSwitch')?.remove();
+
+  let wrap = document.getElementById('completionsViewSwitch');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'completionsViewSwitch';
+    wrap.className =
+      'ml-auto inline-flex items-center gap-0 rounded-lg border border-white/10 overflow-hidden ' +
+      'bg-zinc-900/60 backdrop-blur ring-1 ring-white/10';
+    wrap.innerHTML = `
+      <button type="button" data-view="cards"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${completionsView==='cards'?'bg-white/10 ring-1 ring-white/10':''}"
+        aria-pressed="${completionsView==='cards'}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/>
+        </svg>
+        <span class="hidden sm:inline"></span>
+      </button>
+      <button type="button" data-view="table"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${completionsView==='table'?'bg-white/10 ring-1 ring-white/10':''}"
+        aria-pressed="${completionsView==='table'}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/>
+        </svg>
+        <span class="hidden sm:inline"></span>
+      </button>
+    `;
+    container.appendChild(wrap);
+  }
+
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    const view = btn.dataset.view;
+    if (view === completionsView) return;
+
+    completionsView = view;
+    localStorage.setItem(COMPLETIONS_VIEW_LS_KEY, completionsView);
+
+    wrap.querySelectorAll('button[data-view]').forEach(b => {
+      const on = (b.dataset.view === completionsView);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.classList.toggle('bg-white/10', on);
+      b.classList.toggle('ring-1', on);
+      b.classList.toggle('ring-white/10', on);
+    });
+
+    if (Array.isArray(lastCompletionsRows) && lastCompletionsRows.length) {
+      renderCompletionsResultsByMode({ results: lastCompletionsRows });
+    } else {
+      applyFilters(activeFilters);
+    }
+  });
+}
+
+function mountPersonalRecordsViewSwitch() {
+  const container = document.querySelector('.toolbar-container');
+  if (!container) return;
+
+  document.getElementById('mapViewSwitch')?.remove();
+  document.getElementById('completionsViewSwitch')?.remove();
+
+  let wrap = document.getElementById('personalViewSwitch');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'personalViewSwitch';
+    wrap.className =
+      'ml-auto inline-flex items-center gap-0 rounded-lg border border-white/10 overflow-hidden '+
+      'bg-zinc-900/60 backdrop-blur ring-1 ring-white/10';
+    wrap.innerHTML = `
+      <button type="button" data-view="cards"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${personalRecordsView==='cards'?'bg-white/10 ring-1 ring-white/10':''}"
+        aria-pressed="${personalRecordsView==='cards'}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/>
+        </svg>
+        <span class="hidden sm:inline"></span>
+      </button>
+      <button type="button" data-view="table"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${personalRecordsView==='table'?'bg-white/10 ring-1 ring-white/10':''}"
+        aria-pressed="${personalRecordsView==='table'}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/>
+        </svg>
+        <span class="hidden sm:inline"></span>
+      </button>
+    `;
+    container.appendChild(wrap);
+  }
+
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    const view = btn.dataset.view;
+    if (view === personalRecordsView) return;
+
+    personalRecordsView = view;
+    localStorage.setItem(PERSONAL_RECORDS_VIEW_LS_KEY, personalRecordsView);
+
+    wrap.querySelectorAll('button[data-view]').forEach(b => {
+      const on = (b.dataset.view === personalRecordsView);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.classList.toggle('bg-white/10', on);
+      b.classList.toggle('ring-1', on);
+      b.classList.toggle('ring-white/10', on);
+    });
+
+    if (Array.isArray(lastPersonalRows) && lastPersonalRows.length) {
+      renderPersonalRecordsResultsByMode({ results: lastPersonalRows });
+    } else {
+      applyFilters(activeFilters);
+    }
+  });
+}
+
+function getSectionView(section) {
+  const key = VIEW_LS_KEYS[section];
+  if (!key) return 'cards';
+  const v = localStorage.getItem(key);
+  return v === 'table' ? 'table' : 'cards';
+}
+
 /* =========================
    TOOLBAR INIT
    ========================= */
 function initializeToolbarButtons() {
   clearToolbarButtons();
+  document.getElementById('mapViewSwitch')?.remove();
+  document.getElementById('completionsViewSwitch')?.remove();
+  document.getElementById('personalViewSwitch')?.remove();
 
   const sectionIconsMap = {
     map_search: icons.filter((icon) => icon.id !== 'user'),
@@ -1113,6 +1305,17 @@ function initializeToolbarButtons() {
       if (optionsContainer) showDropdown(optionsContainer);
     });
   });
+
+  if (currentSection === 'map_search') {
+    mountMapViewSwitch();
+  }
+  if (currentSection === 'completions') {
+    mountCompletionsViewSwitch();
+  }
+  if (currentSection === 'personal_records') {
+    mountPersonalRecordsViewSwitch();
+  }
+
   refreshToolbarAnimation();
 }
 
@@ -1485,8 +1688,10 @@ function buildSectionRequest(section, filters, pageNumber, pageSize) {
 
   if (section === 'personal_records') {
     const query = toQuery({
-      user_id: typeof user_id !== 'undefined' && user_id ? String(user_id) : filters.user_id || '',
+      user_id: (typeof user_id !== 'undefined' && user_id ? String(user_id) : (filters.user_id || '')),
       difficulty: filters.difficulty_exact || '',
+      page_number: pageNumber,
+      page_size: pageSize
     });
     return { method: 'GET', url: `${apiUrls.personalRecords}?${query}` };
   }
@@ -1515,12 +1720,12 @@ function displayResults(data) {
   if (currentSection === 'map_search') {
     const rows = normalizeToRows(data, 'map');
     rows.forEach(post);
-    displayMapSearchResults(rows);
+    renderMapSearchResultsByMode(rows);
     return;
   }
 
   if (currentSection === 'completions') {
-    displayCompletionsResults(normalizeToRowsContainer(data));
+    renderCompletionsResultsByMode(normalizeToRowsContainer(data));
     return;
   }
 
@@ -1530,7 +1735,7 @@ function displayResults(data) {
   }
 
   if (currentSection === 'personal_records') {
-    displayPersonalRecordsResults(normalizeToRowsContainer(data));
+    renderPersonalRecordsResultsByMode(normalizeToRowsContainer(data));
     return;
   }
 }
@@ -2125,7 +2330,8 @@ function normalizeToRows(data /*, kind */) {
 /* =========================
    RENDER MAP SEARCH
    ========================= */
-async function displayMapSearchResults(rowsInput) {
+// ================== CARDS DISPLAY ============== //
+async function displayMapSearchResultsCards(rowsInput) {
   const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'map');
   const filtered = rows.filter((r) => r && r.map_name && r.map_name !== 'N/A');
   if (filtered.length === 0) { renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
@@ -2201,19 +2407,20 @@ async function displayMapSearchResults(rowsInput) {
                 <span class="mx-meta-item" title="${escAttr(t('thead.mapCheckpoints'))}">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 3a1 1 0 0 0-1 1v16l7-3 7 3V4a1 1 0 0 0-1-1H5z"/></svg>
                   <span>${esc(checkpoints)}</span>
+                  ${mapType && mapType !== 'N/A' ? `<span class="sep">•</span><span>${esc(mapType)}</span>` : ''}
                 </span>
               ` : ''}
             </div>
           </div>
 
           <div class="mx-actions-vert">
-            <button type="button" class="mx-icon" title="${escAttr(t('labels.like'))}">
+            <button type="button" class="mx-icon cursor-pointer" title="${escAttr(t('card.like'))}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor" d="M12 21s-6.716-4.534-9.193-7.01A5.5 5.5 0 1 1 12 6.07a5.5 5.5 0 1 1 9.193 7.92C18.716 16.466 12 21 12 21z"/>
               </svg>
             </button>
 
-            <button type="button" class="mx-icon mx-icon--primary js-open-map-details"
+            <button type="button" class="mx-icon mx-icon--primary js-open-map-details cursor-pointer"
                     data-index="${idx}" title="${escAttr(t('thead.mapView'))}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M6 9l6 6 6-6"/>
@@ -2226,13 +2433,12 @@ async function displayMapSearchResults(rowsInput) {
               ${creatorsAvatars}
               <span>${esc(t('card.mapped_by'))}: </span>
               <a href="${escAttr(authorHref)}">${esc(firstName)}</a>
-              ${mapType && mapType !== 'N/A' ? `<span class="sep">•</span><span>${esc(mapType)}</span>` : ''}
             </div>
 
             <div class="mx-b-right">
               ${code && code !== 'N/A' ? `
                 <button type="button" class="mx-code-inline copy-map-code" data-code="${escAttr(code)}"
-                        aria-label="${escAttr(t('labels.copy_code'))}" title="${escAttr(t('labels.copy_code'))}">
+                        aria-label="${escAttr(t('popup.copy_map_code'))}" title="${escAttr(t('popup.copy_map_code'))}">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                     <rect x="3" y="3" width="13" height="13" rx="2"></rect>
@@ -2293,203 +2499,712 @@ async function displayMapSearchResults(rowsInput) {
     img.addEventListener('error', () => { if (fb && img.src !== fb) img.src = fb; }, { once:true });
   });
 
-  // Modal
-  if (!document.getElementById('detailsModalOverlay')) {
-    const shell = document.createElement('div');
-    shell.innerHTML = `
-      <div id="detailsModalOverlay"
-        class="fixed inset-0 z-[70] hidden flex items-center justify-center
-               bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-200"
-        role="dialog" aria-modal="true">
-        <div id="detailsModalBox"
-          class="relative w-[min(96vw,1080px)] max-h-[90vh] overflow-y-auto min-h-[620px]
-                 translate-y-3 opacity-0 transition-all duration-200
-                 rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-900/95 shadow-2xl ring-1 ring-white/5">
-          <div id="modalDetailsContainer" class="p-0"></div>
-        </div>
-      </div>`;
-    document.body.appendChild(shell.firstElementChild);
-  }
-
-  async function openDetailsModal(index) {
-    const r = filtered[index]; if (!r) return;
-
-    let mech = Array.isArray(r.mechanics) ? r.mechanics : [];
-    let rest = Array.isArray(r.restrictions) ? r.restrictions : [];
-    if (CURRENT_LANG === 'cn') {
-      mech = mech.filter(Boolean).map((o) => t(`mechanics.${o.toLowerCase().replace(/ /g, '_')}`) || o);
-      rest = rest.filter(Boolean).map((o) => t(`restrictions.${o.toLowerCase().replace(/ /g, '_')}`) || o);
-    }
-    const mechanics    = mech.length ? mech.join(', ') : 'N/A';
-    const restrictions = rest.length ? rest.join(', ') : 'N/A';
-
-    const description = r.description || r.desc || t('no_description') || 'No description available';
-    const mapNameKey  = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
-    const bannerPath  = r.map_banner || `assets/banners/${mapNameKey}.png`;
-
-    const typeText    = Array.isArray(r.category) ? r.category.join(', ') : r.category || 'Classic';
-    const medalGold   = r.medals?.gold   ?? r.gold;
-    const medalSilver = r.medals?.silver ?? r.silver;
-    const medalBronze = r.medals?.bronze ?? r.bronze;
-
-    const ratingValue = r.ratings != null ? r.ratings : r.quality;
-    const hasRating   = ratingValue != null && !isNaN(Number(ratingValue));
-
-    const medalPill = (kind, val) => (val != null && val !== 'N/A')
-      ? `<span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/60 px-2.5 py-1 text-xs">
-          <img src="assets/medals/${kind}.png" alt="${kind} medal" class="h-4 w-4"/>
-          <span>${esc(String(val))}</span>
-        </span>` : '';
-
-    const headerBanner = `
-      <div class="relative">
-        <div class="h-40 sm:h-52 w-full rounded-t-3xl overflow-hidden bg-zinc-900">
-          <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="" class="h-full w-full object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/40 to-transparent"></div>
-        </div>
-
-        <div class="absolute top-4 left-5 right-1">
-          <div class="flex flex-wrap justify-start gap-2">
-            ${r.code ? `
-            <button type="button"
-              class="copy-map-code inline-flex items-center gap-2 cursor-pointer rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-              data-code="${escAttr(r.code)}"
-              title="${escAttr(t('labels.copy_code'))}">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-              </svg>
-              <span class="font-semibold">${esc(t('thead.mapCode'))}</span> ${esc(r.code)}
-            </button>` : ''}
-
-            <span class="inline-flex items-center gap-2 rounded-full bg-zinc-900/60 px-3 py-1 text-xs ring-1 ring-inset ring-white/10">
-              <span class="font-semibold">${esc(t('thead.mapDifficulty'))}:</span>
-              <span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span>
-            </span>
-
-            ${typeText ? `
-            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs">
-              <span class="font-semibold">${esc(t('thead.mapType'))}:</span>
-              <span class="truncate max-w-[28ch]">${esc(typeText)}</span>
-            </span>` : ''}
-          </div>
-        </div>
-
-        <div class="absolute top-4 right-5">
-          <div class="flex flex-wrap justify-end gap-2">
-            ${hasRating ? `
-            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs">
-              <span class="font-semibold">${esc(t('thead.mapQuality'))}:</span>
-              <span class="tracking-tight">${'★'.repeat(Math.max(0, Math.min(6, Math.floor(Number(ratingValue)))))}
-                    ${'☆'.repeat(Math.max(0, 6 - Math.floor(Number(ratingValue))))}</span>
-            </span>` : ''}
-
-            ${medalPill('gold', medalGold)}
-            ${medalPill('silver', medalSilver)}
-            ${medalPill('bronze', medalBronze)}
-          </div>
-        </div>
-      </div>
-    `;
-
-    const detailsGrid = `
-      <div class="px-5 pb-7 pt-4">
-        <div class="grid gap-6 md:grid-cols-2">
-          <div class="space-y-4">
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
-              <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapView'))}</h3>
-              <dl class="grid grid-cols-1 gap-2 text-sm">
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCreator'))}</dt><dd class="text-right text-zinc-100">${esc((pickCreatorNames(r).join(', ')) || 'N/A')}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapCheckpoints'))}</dt><dd class="text-right text-zinc-100">${esc(String(r.checkpoints ?? t('na')))}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapMechanics'))}</dt><dd class="text-right text-zinc-100">${esc(mechanics)}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapRestrictions'))}</dt><dd class="text-right text-zinc-100">${esc(restrictions)}</dd></div>
-              </dl>
-            </div>
-
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
-              <h3 class="text-sm font-semibold text-zinc-200 mb-2">${esc(t('thead.mapDescription'))}</h3>
-              <p class="text-sm leading-relaxed text-zinc-200">${esc(description)}</p>
-            </div>
-          </div>
-
-          <div class="space-y-4">
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
-              <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('chart.record_progression_time'))}</h3>
-              <div id="chartContainer"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const overlay = document.getElementById('detailsModalOverlay');
-    const box = document.getElementById('detailsModalBox');
-    const modalRoot = document.getElementById('modalDetailsContainer');
-
-    modalRoot.innerHTML = headerBanner + detailsGrid;
-
-    const bannerImg = document.getElementById('modalBannerImg');
-    if (bannerImg) {
-      const fb = `assets/banners/${mapNameKey}.png`;
-      bannerImg.addEventListener('error', () => { if (bannerImg.src !== fb) bannerImg.src = fb; }, { once: true });
-    }
-    if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(modalRoot);
-
-    overlay.classList.remove('hidden'); overlay.classList.add('flex');
-    requestAnimationFrame(() => {
-      overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100');
-      box.classList.remove('translate-y-3', 'opacity-0');
-      box.classList.add('translate-y-0', 'opacity-100');
-    });
-
-    const onEsc = (e) => { if (e.key === 'Escape') closeDetailsModal(); };
-    const onOutside = (e) => { if (!box.contains(e.target)) closeDetailsModal(); };
-    document.addEventListener('keydown', onEsc);
-    overlay.addEventListener('pointerdown', onOutside, true);
-
-    function closeDetailsModal() {
-      document.removeEventListener('keydown', onEsc);
-      overlay.removeEventListener('pointerdown', onOutside, true);
-      overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100');
-      box.classList.add('translate-y-3', 'opacity-0'); box.classList.remove('translate-y-0', 'opacity-100');
-      setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
-    }
-
-    try {
-      showProgressionLoading?.();
-      const [stats, progressionData] = await Promise.all([
-        fetchMapCompletionStatistics?.(r.code),
-        fetchProgression?.(r.code),
-      ]);
-      if (stats && Array.isArray(progressionData) && progressionData.length > 0) {
-        renderProgressionChart?.(progressionData, stats);
-      }
-    } catch {}
-  }
-
-  document.querySelectorAll('.js-open-map-details').forEach((btn) =>
-    btn.addEventListener('click', () => openDetailsModal(Number(btn.getAttribute('data-index'))))
+  ensureSearchDetailsModal();
+  resultsRoot.querySelectorAll('.js-open-map-details').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.getAttribute('data-index'));
+      openSearchDetailsModal(filtered[idx]);
+    })
   );
 
-  Array.from(document.querySelectorAll('#resultsContainer .mx-card')).forEach((el, i) =>
+  Array.from(resultsRoot.querySelectorAll('.mx-card')).forEach((el, i) =>
     setTimeout(() => el.classList.add('is-in'), 24 * i)
   );
+}
+// ================== TABLE DISPLAY ============== //
+async function displayMapSearchResultsTable(rowsInput) {
+  const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'map');
+  const filtered = rows.filter((r) => r && r.map_name && r.map_name !== 'N/A');
+
+  if (filtered.length === 0) {
+    renderMessage(t('popup.no_results'));
+    clearFilters();
+    applyFilters({});
+    return;
+  }
+
+  const safeHex = (c) => (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(c)) ? c : '#ffffff');
+  const starsHTML = (quality, max = 6) => {
+    if (quality == null || isNaN(Number(quality))) return 'N/A';
+    const q = Math.max(0, Math.min(max, Math.floor(Number(quality))));
+    return `<span class="tracking-tight">${'★'.repeat(q)}${'☆'.repeat(max - q)}</span>`;
+  };
+
+  const headerHTML = `
+    <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
+      <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapName')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapType')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapCreator')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDifficulty')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapQuality')}</div>
+      <div class="whitespace-nowrap">${t('thead.mapDetails')}</div>
+    </div>
+  `;
+
+  const rowsHTML = filtered.map((r, idx) => {
+    const ringColor =
+      user_id && r.medal_type === 'Gold'   ? 'after:ring-yellow-400/40' :
+      user_id && r.medal_type === 'Silver' ? 'after:ring-zinc-200/30'  :
+      user_id && r.medal_type === 'Bronze' ? 'after:ring-amber-600/40' : '';
+    const halo = ringColor
+      ? `relative after:content-[''] after:absolute after:inset-x-2 after:inset-y-0.5 after:rounded-lg after:ring-2 after:pointer-events-none after:z-0 ${ringColor}`
+      : 'relative';
+
+    const diffColor = safeHex(difficultyColors[normalizeDifficulty(r.difficulty)] || '#ffffff');
+
+    const types = getTypesArray(r);
+    const mapType = types.length ? types.join(', ') : 'N/A';
+
+    const names = pickCreatorNames(r);
+    const ids   = pickCreatorIds(r);
+    if (names.length === 1 && ids.length === 0 && r.user_id) ids.push(String(r.user_id));
+
+    const creatorsHTML = names.map((name, i) => {
+      const id = ids[i];
+      const fallback = defaultAvatarFromId(id || name);
+      const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
+      return `
+        <a href="${escAttr(profileHref)}"
+          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+          title="${escAttr(name)}">
+          <img
+            src="${escAttr(fallback)}"
+            alt=""
+            class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+            loading="lazy" decoding="async" referrerpolicy="no-referrer"
+            data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
+            data-fallback-src="${escAttr(fallback)}"
+          />
+          <span data-sf="${escAttr(name)}"></span>
+        </a>`;
+    }).join('');
+
+    const code = r.code || 'N/A';
+    const hasNonNullTime = r.time != null && String(r.time).trim().toLowerCase() !== 'null';
+    const hasCheck = Boolean(user_id) && (r.user_has_completion || r.user_has_record || r.user_completed || hasNonNullTime);
+    const ratingValue = r.ratings != null ? r.ratings : r.quality;
+
+    const codeChip = code !== 'N/A'
+      ? `
+        <button type="button"
+                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
+                       text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                       w-full min-w-0"
+                data-code="${escAttr(code)}"
+                aria-label="${escAttr(t('popup.copy_map_code'))}"
+                title="${escAttr(t('popup.copy_map_code'))}">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+          </svg>
+          <span class="min-w-0 truncate" data-sf="${escAttr(code)}"></span>
+          ${hasCheck ? '<span class="ml-auto text-emerald-400 shrink-0">✓</span>' : ''}
+        </button>`
+      : `<span data-sf="N/A"></span>`;
+
+    return `
+      <div class="${halo} grid grid-map_search bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+        <div class="min-w-0">${codeChip}</div>
+        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(r.map_name || 'N/A')}"></span></div>
+        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(mapType)}"></span></div>
+        <div class="min-w-0 -ml-1 flex flex-wrap items-center gap-2">${creatorsHTML || 'N/A'}</div>
+        <div class="min-w-0"><span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span></div>
+        <div class="min-w-0">${qualityMicroBarHTML(ratingValue)}</div>
+        <div class="min-w-0">
+          <button
+            type="button"
+            class="js-open-map-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
+            data-index="${idx}">
+            ${esc(t('thead.mapView'))}
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const shell = `
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div class="overflow-auto">
+        <div class="minw-map_search">
+          ${headerHTML}
+          <div class="row-gap-y">
+            ${rowsHTML}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  setResultsHTML(shell);
+  refreshAvatarLazyLoading(document.getElementById('resultsContainer'));
+
+  const resultsRoot = document.getElementById('resultsContainer');
+  applySplitFlap(resultsRoot);
+
+  if (typeof registerMapCodeCopyTargets === 'function') {
+    registerMapCodeCopyTargets(resultsRoot);
+  } else if (resultsRoot && resultsRoot.dataset.copyDelegated !== '1') {
+    resultsRoot.dataset.copyDelegated = '1';
+    resultsRoot.addEventListener('click', (e) => {
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
+      e.preventDefault();
+      const code = btn.getAttribute('data-code') || btn.textContent.trim();
+      if (code && code !== 'N/A') copyMapCode(code);
+    });
+    resultsRoot.addEventListener('keydown', (e) => {
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const code = btn.getAttribute('data-code') || btn.textContent.trim();
+        if (code && code !== 'N/A') copyMapCode(code);
+      }
+    });
+  }
+
+  resultsRoot.querySelectorAll('img[data-fallback-src]').forEach((img) => {
+    const fallback = img.getAttribute('data-fallback-src');
+    img.addEventListener('error', () => { if (img.src !== fallback) img.src = fallback; }, { once: true });
+  });
+
+  ensureSearchDetailsModal();
+  resultsRoot.querySelectorAll('.js-open-map-details').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.getAttribute('data-index'));
+      openSearchDetailsModal(filtered[idx]);
+    })
+  );
+
+  animateQualityBars();
+}
+
+/* =========================
+   RENDER MAP SEARCH MODAL
+   ========================= */
+function ensureSearchDetailsModal() {
+  let overlay = document.getElementById('detailsModalOverlay');
+  if (overlay && !overlay.querySelector('#mapCode')) {
+    overlay.remove();
+    overlay = null;
+  }
+
+  if (!overlay) {
+    const tpl = document.createElement('div');
+    tpl.innerHTML = `
+    <div id="detailsModalOverlay"
+         class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200"
+         role="dialog" aria-modal="true" aria-labelledby="mapModalTitle">
+      <!-- Gradient border wrapper (no inline CSS) -->
+      <div class="mx-4 w-[min(96vw,1080px)] max-h-[90vh] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
+        <div id="detailsModalBox"
+             class="relative min-h-[640px] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
+
+          <!-- Header / Cover -->
+          <div class="relative h-56 overflow-hidden rounded-t-3xl">
+            <img id="mapModalCover" alt="" class="h-full w-full object-cover opacity-80">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-zinc-900/80"></div>
+
+            <!-- Top actions -->
+            <div class="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
+              <span id="mapCompleted"
+                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/80 ring-1 ring-white/15">
+                <span class="h-2 w-2 rounded-full bg-white/60"></span>
+                ${t('card.completed')}
+              </span>
+
+              <!-- Close -->
+              <button type="button" id="modalCloseBtn"
+                class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                aria-label="${t('popup.close')}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="grid gap-6 p-6 md:grid-cols-12">
+            <!-- Left -->
+            <div class="md:col-span-7 space-y-6">
+              <!-- Code + Copy -->
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-center justify-between gap-4">
+                <div>
+                  <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapCode')}</div>
+                  <div id="mapCode" class="mt-1 font-mono text-lg">—</div>
+                </div>
+                <button id="btnCopyCode"
+                        title="${t('popup.copy_map_code')}"
+                        class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  ${t('popup.copy_map_code')}
+                </button>
+              </div>
+
+              <!-- Medals -->
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapMedal')}</div>
+                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div class="rounded-xl p-3 ring-1 bg-yellow-500/10 ring-yellow-400/30">
+                    <div class="text-xs text-white/70">${t('thead.mapGold')}</div>
+                    <div id="mapGold" class="text-lg font-semibold">—</div>
+                  </div>
+                  <div class="rounded-xl p-3 ring-1 bg-slate-300/10 ring-slate-300/30">
+                    <div class="text-xs text-white/70">${t('thead.mapSilver')}</div>
+                    <div id="mapSilver" class="text-lg font-semibold">—</div>
+                  </div>
+                  <div class="rounded-xl p-3 ring-1 bg-amber-700/10 ring-amber-600/30">
+                    <div class="text-xs text-white/70">${t('thead.mapBronze')}</div>
+                    <div id="mapBronze" class="text-lg font-semibold">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapDescription')}</div>
+                <p id="mapDescription" class="mt-2 leading-relaxed text-white/85">—</p>
+              </div>
+
+              <!-- Mechanics / Restrictions -->
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                  <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapMechanics')}</div>
+                  <div id="mapMechanics" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
+                <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                  <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapRestrictions')}</div>
+                  <div id="mapRestrictions" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right -->
+            <div class="md:col-span-5 space-y-6">
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapDetails')}</div>
+                <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                  <dt class="text-xs text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapCheckpoints')}</dt><dd id="mapCheckpoints" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapQuality')}</dt><dd id="mapQualityDetail" class="text-sm font-medium text-white/90">—</dd>
+                </dl>
+              </div>
+
+              <div class="rounded-2xl bg-gradient-to-b from-white/5 to-white/0 ring-1 ring-white/10 p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs uppercase tracking-widest text-white/60">${t('chart.record_progression_time')}</div>
+                </div>
+                <div id="chartContainer" class="mt-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(tpl.firstElementChild);
+    overlay = document.getElementById('detailsModalOverlay');
+  }
+
+  if (!overlay.__copyBound) {
+    overlay.__copyBound = true;
+
+    const tFmt = (key, params = {}, fallback = '') => {
+      let s = typeof t === 'function' ? t(key, params) : null;
+      if (typeof s !== 'string' || s === key) s = fallback || key;
+      return s.replace(/\{(\w+)\}/g, (_, p) => (params[p] != null ? params[p] : ''));
+    };
+
+    const getCode = () => (document.getElementById('mapCode')?.textContent || '').trim();
+
+    const setBtnState = () => {
+      const btn = document.getElementById('btnCopyCode');
+      if (!btn) return;
+      const code = getCode();
+      const ok = !!code && code !== '—' && code !== 'N/A';
+      btn.disabled = !ok;
+      btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+      btn.title = ok
+        ? tFmt('popup.copy_map_code', {}, 'Copy map code')
+        : tFmt('popup.map_code_required', {}, 'Enter a map code');
+    };
+
+    const codeEl = document.getElementById('mapCode');
+    if (window.MutationObserver && codeEl) {
+      const mo = new MutationObserver(setBtnState);
+      mo.observe(codeEl, { childList: true, subtree: true, characterData: true });
+    }
+    setBtnState();
+
+    const doCopy = async (code) => {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(code);
+        return;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    };
+
+    let inFlight = false;
+
+    const handleActivate = async (ev) => {
+      const btn = ev.target.closest('#btnCopyCode');
+      if (!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      if (inFlight) return;
+      inFlight = true;
+
+      const code = getCode();
+      if (!code || code === '—' || code === 'N/A') {
+        if (typeof showWarningMessage === 'function') {
+          showWarningMessage(tFmt('popup.map_code_required', {}, 'Enter a map code'));
+        }
+        inFlight = false;
+        return;
+      }
+
+      try {
+        await doCopy(code);
+
+        if (typeof showConfirmationMessage === 'function') {
+          showConfirmationMessage(tFmt('popup.map_code_copied', { code }, `Map code ${code} copied`));
+        }
+        
+      } catch {
+        if (typeof showWarningMessage === 'function') {
+          showWarningMessage(tFmt('popup.copy_failed', {}, 'Failed to copy map code'));
+        }
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    overlay.addEventListener('click', handleActivate);
+  }
+}
+
+async function openSearchDetailsModal(r) {
+  if (!r) return;
+  ensureSearchDetailsModal();
+
+  const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
+  const esc = (s) => String(s ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const fmt = (n)=> typeof n==="number" ? new Intl.NumberFormat().format(n) : String(n ?? "0");
+  const star5 = (val=0)=> {
+    const on = Math.max(0, Math.min(5, Math.round(Number(val)||0)));
+    return "★★★★★".slice(0,on) + "☆☆☆☆☆".slice(0,5-on);
+  };
+  const diffSlug = (d='') => {
+    const L = String(d).toLowerCase();
+    if (L.startsWith('very hard')) return 'veryhard';
+    if (L.startsWith('extreme'))   return 'extreme';
+    if (L.startsWith('hell'))      return 'hell';
+    if (L.startsWith('hard'))      return 'hard';
+    if (L.startsWith('medium'))    return 'medium';
+    return 'easy';
+  };
+  const setCompletedChip = (el, isDone)=>{
+    if (!el) return;
+    if (isDone) {
+      el.className = 'inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-300 ring-1 ring-emerald-400/30';
+      el.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-400"></span> ' + esc(tSafe('card.completed','Completed'));
+    } else {
+      el.className = 'inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/80 ring-1 ring-white/15';
+      el.innerHTML = '<span class="h-2 w-2 rounded-full bg-white/60"></span> ' + esc(tSafe('card.not_completed','Not completed'));
+    }
+  };
+  const mountPills = (container, items=[]) => {
+    container.innerHTML = '';
+    items.filter(Boolean).forEach(txt=>{
+      const s = document.createElement('span');
+      s.className = 'inline-flex items-center rounded-full border border-white/10 bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-white/85';
+      s.textContent = txt;
+      container.appendChild(s);
+    });
+  };
+
+  // data
+  const mapNameKey = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g,'');
+  const cover = r.map_banner || `assets/banners/${mapNameKey}.png`;
+  const names = (typeof pickCreatorNames === 'function' ? pickCreatorNames(r) : []).filter(Boolean);
+  const typeText = Array.isArray(r.category) ? r.category.join(', ') : (r.category || 'Classic');
+  const difficulty = r.difficulty || 'Easy';
+  const qualityRaw = r.ratings!=null ? r.ratings : r.quality;
+  const qualityStars = qualityRaw!=null ? star5(qualityRaw) : '—';
+  const medalGold   = r.medals?.gold   ?? r.gold   ?? '—';
+  const medalSilver = r.medals?.silver ?? r.silver ?? '—';
+  const medalBronze = r.medals?.bronze ?? r.bronze ?? '—';
+  const code = r.code || '';
+  const desc = r.description || r.desc || tSafe('no_description','No description available');
+  const checkpoints = r.checkpoints ?? '—';
+  const upvotes = r.upvotes ?? '—';
+  const hasNonNullTime = r.time!=null && String(r.time).trim().toLowerCase()!=='null';
+  const completed = Boolean(window.user_id) && (r.user_has_completion || r.user_has_record || r.user_completed || hasNonNullTime);
+
+  let mechanics = Array.isArray(r.mechanics) ? r.mechanics : [];
+  let restrictions = Array.isArray(r.restrictions) ? r.restrictions : [];
+  if (typeof CURRENT_LANG!=='undefined' && CURRENT_LANG==='cn') {
+    mechanics = mechanics.map(o=> (typeof t==='function' ? (t(`mechanics.${String(o).toLowerCase().replace(/ /g,'_')}`) || o) : o));
+    restrictions = restrictions.map(o=> (typeof t==='function' ? (t(`restrictions.${String(o).toLowerCase().replace(/ /g,'_')}`) || o) : o));
+  }
+
+  const img = document.getElementById('mapModalCover');
+  if (img) {
+    img.src = cover;
+    const fb = `assets/banners/${mapNameKey}.png`;
+    img.addEventListener('error', ()=>{ if (img.src !== fb) img.src = fb; }, { once:true });
+  }
+
+  setCompletedChip(document.getElementById('mapCompleted'), completed);
+
+  const g = (id, v)=> { const el=document.getElementById(id); if (el) el.textContent = v; };
+  g('mapCode', code || '—');
+  g('mapGold', medalGold);
+  g('mapSilver', medalSilver);
+  g('mapBronze', medalBronze);
+  g('mapDescription', desc);
+  mountPills(document.getElementById('mapMechanics'), mechanics);
+  mountPills(document.getElementById('mapRestrictions'), restrictions);
+
+  g('mapCreator', names.join(', ') || 'N/A');
+  g('mapCheckpoints', fmt(checkpoints));
+  g('mapUpvotes', fmt(upvotes));
+  g('mapTypeDetail', typeText || '—');
+  g('mapDiffDetail', difficulty || '—');
+  g('mapQualityDetail', qualityStars);
+
+  const chartHost = document.getElementById('chartContainer');
+  if (chartHost) {
+    try {
+      showProgressionLoading();
+      const [stats, progressionData] = await Promise.all([
+        fetchMapCompletionStatistics(r.code),
+        fetchProgression(r.code),
+      ]);
+      renderProgressionChart(progressionData, stats);
+    } catch (e) {
+      console.error(e);
+      chartHost.innerHTML = `<p class="text-center font-semibold text-red-500">An error occurred. Please try again later.</p>`;
+    }
+  }
+
+  const overlay = document.getElementById('detailsModalOverlay');
+  const gradientWrap = overlay.querySelector('.bg-gradient-to-tr');
+  overlay.classList.remove('hidden'); overlay.classList.add('flex');
+  requestAnimationFrame(() => {
+    overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100');
+    gradientWrap.classList.remove('translate-y-3','opacity-0'); gradientWrap.classList.add('translate-y-0','opacity-100');
+  });
+
+  const closeBtn = document.getElementById('modalCloseBtn');
+  const close = () => {
+    overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100');
+    gradientWrap.classList.add('translate-y-3','opacity-0'); gradientWrap.classList.remove('translate-y-0','opacity-100');
+    setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
+    document.removeEventListener('keydown', onEsc);
+    overlay.removeEventListener('pointerdown', onOutside, true);
+  };
+  const onEsc = (e)=> { if (e.key==='Escape') close(); };
+  const onOutside = (e)=> { const box = document.getElementById('detailsModalBox'); if (!box.contains(e.target)) close(); };
+
+  closeBtn?.addEventListener('click', close, { once:true });
+  document.addEventListener('keydown', onEsc);
+  overlay.addEventListener('pointerdown', onOutside, true);
 }
 
 /* =========================
    RENDER PERSONAL RECORDS
    ========================= */
-async function displayPersonalRecordsResults(results) {
-  if (!window.__gridCSS_personal_records) {
-    __addRule(
-      '.grid-personal_records',
-      'display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;column-gap:20px'
-    );
-    __addRule('.minw-personal_records', 'min-width:920px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    window.__gridCSS_personal_records = true;
+function prAccentColor(row) {
+  const d = difficultyColors[normalizeDifficulty(row.difficulty || '')];
+  return d || '#3b82f6';
+}
+const __prAxCache = new Map();
+function prAccentClass(color) {
+  const hex = String(color || '#3b82f6')
+    .toLowerCase()
+    .replace(/[^a-f0-9#]/g, '');
+  if (!__prAxCache.has(hex)) {
+    const cls = `pr-ax-${hex.replace(/#/g, '') || 'x'}`;
+    __addRule(`.${cls}`, `--accent:${hex}`);
+    __prAxCache.set(hex, cls);
+  }
+  return __prAxCache.get(hex);
+}
+async function displayPersonalRecordsResultsCards(rowsInput) {
+  const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'personal');
+  const filtered = rows.filter((r) => r && r.code && r.code !== 'N/A');
+
+  if (filtered.length === 0) {
+    renderMessage(t('popup.no_results'));
+    clearFilters();
+    applyFilters({});
+    return;
   }
 
+  const iconClock  = '<svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20Zm1 5v5.2l3 1.8a1 1 0 1 1-1 1.7l-3.6-2.1A1 1 0 0 1 10.5 13V7a1 1 0 1 1 2 0Z"/></svg>';
+  const iconMedal  = '<svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8 3-6h8l3 6-5-2-4 2-5-2Z"/></svg>';
+  const iconDiff   = '<svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M4 4h16v2H4zm0 7h16v2H4zm0 7h16v2H4z"/></svg>';
+  const iconRank   = '<svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M7 17h10v2H7zM9 7h6v8H9z"/></svg>';
+  const iconCheck  = '<svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+  const iconCopy   = '<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><rect x="3" y="3" width="13" height="13" rx="2"></rect></svg>';
+  const iconPlay   = '<svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
+
+  const cardsHTML = filtered.map((r) => {
+    const code = r.code || 'N/A';
+    const nickname = r.name || r.nickname || 'N/A';
+    const also = r.also_known_as || r.discord_tag || '';
+    const uid = r.user_id ? String(r.user_id) : '';
+    const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : '#';
+    const avatarFB = defaultAvatarFromId(uid || '0');
+
+    const isCompletion = r.completion === true;
+    const timeDisplay = isCompletion ? (t('completion') || 'Completion') : (r.time != null ? String(r.time) : 'N/A');
+    const medal = r.medal || '—';
+    const diff  = r.difficulty || 'N/A';
+    const rank  = r.rank != null ? String(r.rank) : null;
+    const verified = r.verified === true;
+
+    const accent = prAccentColor(r);
+    const accentCls = prAccentClass(accent);
+
+    const medalBadge =
+      (String(medal).toLowerCase() === 'gold')   ? 'mx-card--gold'   :
+      (String(medal).toLowerCase() === 'silver') ? 'mx-card--silver' :
+      (String(medal).toLowerCase() === 'bronze') ? 'mx-card--bronze' : '';
+
+    const medalKeyNorm = String(medal).trim().toLowerCase();
+    const medalIcon =
+      medalKeyNorm === 'gold'   ? '/assets/medals/gold.png'   :
+      medalKeyNorm === 'silver' ? '/assets/medals/silver.png' :
+      medalKeyNorm === 'bronze' ? '/assets/medals/bronze.png' : null;
+
+    const videoBtn = r.video
+      ? `<a href="${escAttr(r.video)}" target="_blank" rel="noopener" class="pr-btn" title="${escAttr(t('watch')||'Watch')}">${iconPlay}<span>${esc(t('watch')||'Watch')}</span></a>`
+      : '';
+
+    return `
+      <article class="pr-card ${medalBadge} ${accentCls}">
+        <span class="pr-accent" aria-hidden="true"></span>
+
+        <!-- Header -->
+        <div class="pr-hd">
+          <a href="${escAttr(profileHref)}" title="${escAttr(nickname)}">
+            <img class="pr-avatar" src="${escAttr(avatarFB)}" alt="" loading="lazy" decoding="async"
+                 referrerpolicy="no-referrer" data-avatar-id="${escAttr(uid)}" data-avatar-size="64"
+                 data-fallback-src="${escAttr(avatarFB)}"/>
+          </a>
+          <div class="pr-names">
+            <div class="pr-title" data-sf="${escAttr(nickname)}">${esc(nickname)}</div>
+            ${also ? `<div class="pr-sub">${esc(also)}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="pr-stats">
+          <div class="pr-tile">
+            <div class="pr-tk">${iconClock}<span>${esc(t('thead.mapTime')||'Time')}</span></div>
+            <div class="pr-tv" data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</div>
+          </div>
+          <div class="pr-tile">
+            <div class="pr-tk">${iconMedal}<span>${esc(t('thead.mapMedal')||'Medal')}</span></div>
+            <div class="pr-tv">
+              <span class="inline-flex items-center gap-1.5">
+                ${medalIcon ? `<img src="${escAttr(medalIcon)}" alt="${escAttr(medal)}"
+                                    class="h-4 w-4 object-contain rounded-[3px]" loading="lazy" decoding="async">` : ''}
+                <span data-sf="${escAttr(medal)}">${esc(medal)}</span>
+              </span>
+            </div>
+          </div>
+          <div class="pr-tile">
+            <div class="pr-tk">${iconDiff}<span>${esc(t('thead.mapDifficulty')||'Difficulty')}</span></div>
+            <div class="pr-tv"><span data-sf="${escAttr(diff)}">${esc(diff)}</span></div>
+          </div>
+          ${rank ? `
+          <div class="pr-tile">
+            <div class="pr-tk">${iconRank}<span>Rank</span></div>
+            <div class="pr-tv">#${esc(rank)}</div>
+          </div>` : `
+          <div class="pr-tile">
+            <div class="pr-tk">${iconCheck}<span>${esc(t('thead.mapVerified')||'Verified')}</span></div>
+            <div class="pr-tv">${verified ? '✓' : '—'}</div>
+          </div>`}
+        </div>
+
+        <!-- Bottom -->
+        <div class="pr-bottom">
+          <div class="pr-actions">
+            ${videoBtn}
+          </div>
+          <button type="button" class="pr-btn copy-map-code" data-code="${escAttr(code)}"
+                  aria-label="${escAttr(t('popup.copy_map_code')||'Copy code')}" title="${escAttr(t('popup.copy_map_code')||'Copy code')}">
+            ${iconCopy}<span class="pr-code" data-sf="${escAttr(code)}">${esc(code)}</span>
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  const shell = `
+    <section class="mx-wrap">
+      <div class="pr-grid">
+        ${cardsHTML}
+      </div>
+    </section>
+  `;
+  setResultsHTML(shell);
+
+  const root = document.getElementById('resultsContainer');
+
+  refreshAvatarLazyLoading(root);
+  root.querySelectorAll('img[data-fallback-src]').forEach((img) => {
+    const fb = img.getAttribute('data-fallback-src');
+    img.addEventListener('error', () => { if (img.src !== fb) img.src = fb; }, { once:true });
+  });
+
+  applySplitFlap(root);
+
+  if (root && root.dataset.copyDelegated !== '1') {
+    root.dataset.copyDelegated = '1';
+    root.addEventListener('click', (e) => {
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
+      e.preventDefault();
+      const code = btn.getAttribute('data-code') || btn.textContent.trim();
+      if (code && code !== 'N/A') copyMapCode(code);
+    });
+    root.addEventListener('keydown', (e) => {
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const code = btn.getAttribute('data-code') || btn.textContent.trim();
+        if (code && code !== 'N/A') copyMapCode(code);
+      }
+    });
+  }
+
+  Array.from(root.querySelectorAll('.pr-card')).forEach((el, i) =>
+    setTimeout(() => el.classList.add('is-in'), 24 * i)
+  );
+}
+
+
+// ================== TABLE DISPLAY ============== //
+async function displayPersonalRecordsResults(results) {
   const rows = Array.isArray(results.results) ? results.results : [];
   const filtered = rows.filter((r) => r.code && r.code !== 'N/A');
 
@@ -2545,6 +3260,13 @@ async function displayPersonalRecordsResults(results) {
     const nickname = r.name || r.nickname || 'N/A';
     const also = r.also_known_as || r.discord_tag || 'N/A';
 
+    const medalText = r.medal || 'N/A';
+    const medalKey = String(medalText).trim().toLowerCase();
+    const medalIcon =
+      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
+      medalKey === 'silver' ? '/assets/medals/silver.png' :
+      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+
     const mapCodeCell = r.code
       ? `
         <button type="button"
@@ -2552,7 +3274,7 @@ async function displayPersonalRecordsResults(results) {
                  text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                  w-[6.5rem]"
           data-code="${escAttr(r.code)}"
-          title="${escAttr(t('popup.click_to_copy_map_code'))}">
+          title="${escAttr(t('popup.copy_map_code'))}">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="9" y="9" width="13" height="13" rx="2"></rect>
             <rect x="3" y="3" width="13" height="13" rx="2"></rect>
@@ -2594,7 +3316,13 @@ async function displayPersonalRecordsResults(results) {
           </span>
         </div>
         <div class="min-w-0"><span data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</span></div>
-        <div class="min-w-0"><span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span></div>
+        <div class="min-w-0">
+          <span class="inline-flex items-center gap-1.5">
+            ${medalIcon ? `<img src="${escAttr(medalIcon)}" alt="${escAttr(medalText)}"
+                                class="h-4 w-4 object-contain rounded-[3px]" loading="lazy" decoding="async">` : ''}
+            <span data-sf="${escAttr(medalText)}">${esc(medalText)}</span>
+          </span>
+        </div>
       </div>`;
   }).join('');
 
@@ -2627,51 +3355,159 @@ async function displayPersonalRecordsResults(results) {
 /* =========================
    RENDER COMPLETIONS
    ========================= */
-async function displayCompletionsResults(results) {
-  if (!window.__gridCSS_completions) {
-    __addRule(
-      '.grid-completions',
-      'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;column-gap:20px'
-    );
-    __addRule('.minw-completions', 'min-width:1024px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    window.__gridCSS_completions = true;
+// ================== CARDS DISPLAY ============== //
+async function displayCompletionsResultsCards(rowsInput){
+  const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput,'completion');
+  const filtered = rows.filter(r => (r.map_code||r.code) && (r.map_code||r.code) !== 'N/A');
+
+  if (filtered.length === 0){ renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
+
+  const cardsHTML = filtered.map((r, idx) => {
+    const code = r.map_code || r.code || 'N/A';
+    const name = r.map_name || code;
+    const nameKey = (r.map_name || code || 'default').toLowerCase().replace(/[()\s']/g,'');
+    const banner = r.map_banner || `assets/banners/${nameKey}.png`;
+    const fbBanner = `assets/banners/${nameKey}.png`;
+
+    const uid = r.user_id ? String(r.user_id) : '';
+    const nickname = r.nickname || r.name || 'N/A';
+    const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : '#';
+    const fbAvatar = defaultAvatarFromId(uid || '0');
+
+    const isCompletion = r.completion === true;
+    const timeDisplay = isCompletion ? (t('completion') || 'Completion') : (r.time != null ? String(r.time) : 'N/A');
+
+    const medalKey = String(r.medal || '').toLowerCase();
+    const medalBadge =
+      medalKey === 'gold'   ? 'mx-card--gold'   :
+      medalKey === 'silver' ? 'mx-card--silver' :
+      medalKey === 'bronze' ? 'mx-card--bronze' : '';
+    const medalChip =
+      medalKey === 'gold'   ? 'c-medal c-medal--gold'   :
+      medalKey === 'silver' ? 'c-medal c-medal--silver' :
+      medalKey === 'bronze' ? 'c-medal c-medal--bronze' : 'c-medal c-medal--neutral';
+    const medalIcon =
+      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
+      medalKey === 'silver' ? '/assets/medals/silver.png' :
+      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+
+    const diffTxt = r.difficulty || 'N/A';
+    const diffColor = difficultyColors[normalizeDifficulty(diffTxt)] || '#e5e7eb';
+
+    const videoBtn = r.video ? `
+      <a href="${escAttr(r.video)}" target="_blank" rel="noopener" class="mx-icon" title="${escAttr(t('watch')||'Watch')}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+      </a>` : '';
+
+    const icClock = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20Zm1 5v5.2l3 1.8a1 1 0 11-1 1.7l-3.6-2.1A1 1 0 0 1 10.5 13V7a1 1 0 1 1 2 0Z"/></svg>';
+    const icDiff  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 4h16v2H4zm0 7h16v2H4zm0 7h16v2H4z"/></svg>';
+
+    return `
+      <article class="mx-card ${medalBadge}">
+        <div class="mx-hero is-loading">
+          <div class="mx-skel"></div>
+          <img src="${escAttr(banner)}" alt="" data-fallback-src="${escAttr(fbBanner)}"/>
+          <div class="mx-grain"></div>
+
+          <div class="c-topbar">
+            <div class="c-chiprow">
+              <span class="c-chip">${icClock}<span class="truncate">${esc(timeDisplay)}</span></span>
+              <span class="c-chip">${icDiff}<span class="${__clsTextColor(diffColor)} truncate">${esc(diffTxt)}</span></span>
+            </div>
+          </div>
+
+          <div class="mx-titlebar"><div class="mx-head"></div></div>
+
+          <div class="mx-actions-vert">
+            ${videoBtn}
+            <button type="button" class="mx-icon cursor-pointer js-open-completion-details" data-index="${idx}"
+                    title="${escAttr(t('thead.mapView')||'View details')}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div class="mx-bottom">
+            <div class="mx-b-left">
+              <a href="${escAttr(profileHref)}" title="${escAttr(nickname)}">
+                <img class="mx-avatar" src="${escAttr(fbAvatar)}" alt="" loading="lazy" decoding="async"
+                     referrerpolicy="no-referrer" data-avatar-id="${escAttr(uid)}" data-avatar-size="64"
+                     data-fallback-src="${escAttr(fbAvatar)}"/>
+              </a>
+              <span class="truncate">${esc(nickname)}</span>
+            </div>
+            <div class="mx-b-right">
+              <button type="button" class="mx-code-inline copy-map-code" data-code="${escAttr(code)}"
+                aria-label="${escAttr(t('popup.copy_map_code')||'Copy code')}" title="${escAttr(t('popup.copy_map_code')||'Copy code')}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+                </svg>
+                <span data-sf="${escAttr(code)}"></span>
+              </button>
+              <div class="${medalChip} inline-flex items-center gap-1.5" title="${escAttr(t('thead.mapMedal')||'Medal')}">
+                ${medalIcon ? `<img src="${escAttr(medalIcon)}" alt="${escAttr(r.medal||'')}"
+                                  class="h-4 w-4 object-contain rounded-[3px]" loading="lazy" decoding="async">` : ''}
+                <span>${esc(r.medal || '—')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+
+  const shell = `<section class="mx-wrap"><div class="mx-grid mx-stagger">${cardsHTML}</div></section>`;
+  setResultsHTML(shell);
+
+  const root = document.getElementById('resultsContainer');
+
+  ensureCompletionsDetailsModal();
+  root.querySelectorAll('.js-open-completion-details').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = Number(btn.getAttribute('data-index'));
+      openCompletionsDetailsModal(filtered[idx]);
+    });
+  });
+
+  root.querySelectorAll('.mx-hero').forEach(hero=>{
+    const img = hero.querySelector('img'); if (!img) return;
+    const fb = img.getAttribute('data-fallback-src');
+    if (img.complete && img.naturalWidth>0) hero.classList.remove('is-loading');
+    else img.addEventListener('load', ()=> hero.classList.remove('is-loading'), { once:true });
+    img.addEventListener('error', ()=>{ if (fb && img.src!==fb) img.src = fb; }, { once:true });
+  });
+
+  refreshAvatarLazyLoading(root);
+  applySplitFlap(root);
+
+  if (root && root.dataset.copyDelegated !== '1'){
+    root.dataset.copyDelegated = '1';
+    root.addEventListener('click', e=>{
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
+      e.preventDefault();
+      const code = btn.getAttribute('data-code') || btn.textContent.trim();
+      if (code && code !== 'N/A') copyMapCode(code);
+    });
+    root.addEventListener('keydown', e=>{
+      const btn = e.target.closest('.copy-map-code'); if (!btn) return;
+      if (e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        const code = btn.getAttribute('data-code') || btn.textContent.trim();
+        if (code && code !== 'N/A') copyMapCode(code);
+      }
+    });
   }
 
+  Array.from(root.querySelectorAll('.mx-card')).forEach((el,i)=> setTimeout(()=> el.classList.add('is-in'), 24*i));
+}
+
+// ================== TABLE DISPLAY ============== //
+async function displayCompletionsResults(results){
   const rows = Array.isArray(results.results) ? results.results : [];
-  const filtered = rows.filter((r) => (r.map_code || r.code) && (r.map_code || r.code) !== 'N/A');
+  const filtered = rows.filter(r => (r.map_code||r.code) && (r.map_code||r.code) !== 'N/A');
 
-  if (filtered.length === 0) {
-    renderMessage(t('popup.no_results'));
-    clearFilters();
-    applyFilters({});
-    return;
-  }
+  if (filtered.length === 0){ renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
 
   const currentUid = window.user_id ? String(window.user_id) : null;
-
-  // Modal
-  if (!document.getElementById('detailsModalOverlay')) {
-    const shell = document.createElement('div');
-    shell.innerHTML = `
-      <div id="detailsModalOverlay"
-        class="fixed inset-0 z-[70] hidden flex items-center justify-center
-               bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-200"
-        role="dialog" aria-modal="true">
-        <div id="detailsModalBox"
-          class="relative w-[min(96vw,1080px)] max-h-[90vh] overflow-y-auto min-h-[620px]
-                 translate-y-3 opacity-0 transition-all duration-200
-                 rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-900/95 shadow-2xl ring-1 ring-white/5">
-          <div id="modalDetailsContainer" class="p-0"></div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(shell.firstElementChild);
-  }
-
-  const overlay = document.getElementById('detailsModalOverlay');
-  const box = document.getElementById('detailsModalBox');
-  const container = document.getElementById('modalDetailsContainer');
 
   const headerHTML = `
     <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
@@ -2682,65 +3518,61 @@ async function displayCompletionsResults(results) {
       <div class="whitespace-nowrap">${t('thead.mapMedal')}</div>
       <div class="whitespace-nowrap">${t('thead.mapVideo')}</div>
       <div class="whitespace-nowrap">${t('thead.mapDetails')}</div>
-    </div>
-  `;
+    </div>`;
 
-  const rowsHTML = filtered.map((r, idx) => {
+  const rowsHTML = filtered.map((r, idx)=>{
     const mapCode = r.map_code || r.code || 'N/A';
     const isCompletion = r.completion === true;
-    const timeDisplay = isCompletion ? t('completion') || 'Completion'
-                                     : r.time != null ? String(r.time) : 'N/A';
-
+    const timeDisplay = isCompletion ? t('completion') || 'Completion' : (r.time!=null ? String(r.time) : 'N/A');
     const uid = r.user_id ? String(r.user_id) : null;
     const fallback = defaultAvatarFromId(uid || '0');
-
     const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
-
     const nickname = r.nickname || r.name || 'N/A';
     const also = r.also_known_as ?? r.discord_tag ?? 'N/A';
 
-    const codeCell = mapCode !== 'N/A'
-      ? `
-        <button type="button"
-          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
-                 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
-                 w-[6.5rem]"
-          data-code="${escAttr(mapCode)}"
-          title="${escAttr(t('popup.click_to_copy_map_code'))}">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-            <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-          </svg>
-          <span data-sf="${escAttr(mapCode)}"></span>
-        </button>`
-      : `<span data-sf="N/A">N/A</span>`;
+    const codeCell = mapCode !== 'N/A' ? `
+      <button type="button"
+        class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
+               text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+               w-[6.5rem]"
+        data-code="${escAttr(mapCode)}" title="${escAttr(t('popup.copy_map_code'))}">
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+          <rect x="3" y="3" width="13" height="13" rx="2"></rect>
+        </svg>
+        <span data-sf="${escAttr(mapCode)}"></span>
+      </button>` : `<span data-sf="N/A">N/A</span>`;
 
-    const nicknameBlock = profileHref
-      ? `
-        <a href="${escAttr(profileHref)}"
-          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
-          title="${currentUid && uid && currentUid === uid ? t('popup.you') : escAttr(nickname)}">
-          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-              alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-              src="${escAttr(fallback)}"
-              data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
-              data-fallback-src="${escAttr(fallback)}"/>
-          <span data-sf="${escAttr(nickname)}"></span>
-        </a>`
-      : `
-        <div class="flex items-center gap-2">
-          <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
-              alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
-              src="${escAttr(fallback)}"
-              data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
-              data-fallback-src="${escAttr(fallback)}"/>
-          <span data-sf="${escAttr(nickname)}"></span>
-        </div>`;
+    const nicknameBlock = profileHref ? `
+      <a href="${escAttr(profileHref)}"
+         class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+         title="${currentUid && uid && currentUid===uid ? t('popup.you') : escAttr(nickname)}">
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+             alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+             src="${escAttr(fallback)}"
+             data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
+             data-fallback-src="${escAttr(fallback)}"/>
+        <span data-sf="${escAttr(nickname)}"></span>
+      </a>` : `
+      <div class="flex items-center gap-2">
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+             alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
+             src="${escAttr(fallback)}"
+             data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
+             data-fallback-src="${escAttr(fallback)}"/>
+        <span data-sf="${escAttr(nickname)}"></span>
+      </div>`;
 
     const videoCell = r.video
       ? `<a data-sf="Watch" href="${escAttr(r.video)}" target="_blank" rel="noopener"
            class="text-brand-300 hover:text-brand-200 underline">${esc(t('watch'))}</a>`
       : `<span data-sf="N/A">N/A</span>`;
+
+    const medalKey = String(r.medal || '').trim().toLowerCase();
+    const medalIcon =
+      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
+      medalKey === 'silver' ? '/assets/medals/silver.png' :
+      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
 
     return `
       <div class="grid grid-completions bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
@@ -2748,12 +3580,17 @@ async function displayCompletionsResults(results) {
         <div class="min-w-0">${nicknameBlock}</div>
         <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(also)}">${esc(also)}</span></div>
         <div class="min-w-0"><span data-sf="${escAttr(timeDisplay)}">${esc(timeDisplay)}</span></div>
-        <div class="min-w-0"><span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span></div>
+        <div class="min-w-0">
+          <span class="inline-flex items-center gap-1.5">
+            ${medalIcon ? `<img src="${escAttr(medalIcon)}" alt="${escAttr(r.medal||'')}"
+                                class="h-4 w-4 object-contain rounded-[3px]" loading="lazy" decoding="async">` : ''}
+            <span data-sf="${escAttr(r.medal || 'N/A')}">${esc(r.medal || 'N/A')}</span>
+          </span>
+        </div>
         <div class="min-w-0">${videoCell}</div>
         <div class="min-w-0">
-          <button
-            class="js-open-completion-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
-            data-index="${idx}">
+          <button class="js-open-completion-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
+                  data-index="${idx}">
             ${esc(t('thead.mapView') || 'View')}
           </button>
         </div>
@@ -2765,232 +3602,357 @@ async function displayCompletionsResults(results) {
       <div class="overflow-auto">
         <div class="minw-completions">
           ${headerHTML}
-          <div class="row-gap-y">
-            ${rowsHTML}
-          </div>
+          <div class="row-gap-y">${rowsHTML}</div>
         </div>
       </div>
-    </div>
-  `;
-
+    </div>`;
   setResultsHTML(shell);
-  refreshAvatarLazyLoading(document.getElementById('resultsContainer'));
 
   const root = document.getElementById('resultsContainer');
-  applySplitFlap(root);
-  if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(root);
 
-  root.querySelectorAll('img[data-fallback-src]').forEach((img) => {
-    const fallback = img.getAttribute('data-fallback-src');
-    img.addEventListener('error', () => { if (img.src !== fallback) img.src = fallback; }, { once: true });
+  ensureCompletionsDetailsModal();
+  root.querySelectorAll('.js-open-completion-details').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = Number(btn.getAttribute('data-index'));
+      openCompletionsDetailsModal(filtered[idx]);
+    });
   });
 
-  function openCompletionDetails(index) {
-    const r = filtered[index];
-    if (!r) return;
+  refreshAvatarLazyLoading(root);
+  applySplitFlap(root);
+  if (typeof registerMapCodeCopyTargets==='function') registerMapCodeCopyTargets(root);
 
-    const mapCode = r.map_code || r.code || 'N/A';
-    const mapNameKey = (r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
-    const bannerPath = r.map_banner || `assets/banners/${mapNameKey}.png`;
-    const fallbackBanner = `assets/banners/${mapNameKey}.png`;
+  root.querySelectorAll('img[data-fallback-src]').forEach(img=>{
+    const fallback = img.getAttribute('data-fallback-src');
+    img.addEventListener('error', ()=>{ if (img.src !== fallback) img.src = fallback; }, { once:true });
+  });
+}
 
-    const diffColor = difficultyColors[normalizeDifficulty(r.difficulty || '')] || '#ffffff';
-    const diffClass = difficultyClasses(r.difficulty || '').chip;
+/* =========================
+   COMPLETIONS — DETAILS MODAL
+   ========================= */
+function ensureCompletionsDetailsModal(){
+  let overlay = document.getElementById('completionModalOverlay');
 
-    const medalKey = (r.medal || '').toLowerCase();
-    const medalImg = ['gold','silver','bronze'].includes(medalKey) ? `assets/medals/${medalKey}.png` : null;
+  const TT = (k, fb='') => {
+    const v = (typeof t === 'function') ? t(k) : null;
+    return (typeof v === 'string' && v !== k) ? v : fb;
+  };
 
-    const linkOrNA = (url, text) =>
-      url ? `<a href="${escAttr(url)}" target="_blank" rel="noopener" class="text-brand-300 hover:text-brand-200 underline">${esc(text || url)}</a>` : 'N/A';
+  if (overlay && !overlay.querySelector('#completionCode')) { overlay.remove(); overlay = null; }
 
-    container.innerHTML = `
-      <div class="relative">
-        <div class="h-40 sm:h-52 w-full rounded-t-3xl overflow-hidden bg-zinc-900">
-          <img id="modalBannerImg" src="${escAttr(bannerPath)}" alt="" class="h-full w-full object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/40 to-transparent"></div>
-          <div class="absolute inset-0 pointer-events-none banner-bottom-mask"></div>
-        </div>
+  if (!overlay){
+    const tpl = document.createElement('div');
+    tpl.innerHTML = `
+    <div id="completionModalOverlay"
+         class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200"
+         role="dialog" aria-modal="true" aria-labelledby="completionModalTitle">
 
-        <!-- TOP-LEFT -->
-        <div class="absolute top-4 left-5 right-1">
-          <div class="flex flex-wrap justify-start gap-2">
-            ${mapCode !== 'N/A' ? `
-            <button type="button"
-              class="copy-map-code inline-flex items-center gap-2 rounded-full cursor-pointer border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-              data-code="${escAttr(mapCode)}"
-              title="${escAttr(t('popup.click_to_copy_map_code'))}">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                <rect x="3" y="3" width="13" height="13" rx="2"></rect>
-              </svg>
-              <span class="font-semibold">${esc(t('thead.mapCode'))}</span> ${esc(mapCode)}
-            </button>` : ''}
+      <div class="mx-4 w-[min(96vw,980px)] max-h-[90vh] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
+        <div id="completionModalBox"
+             class="relative min-h-[520px] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
 
-            <span class="inline-flex items-center gap-2 rounded-full bg-zinc-900/60 px-3 py-1 text-xs ring-1 ring-inset ring-white/10">
-              <span class="font-semibold">${esc(t('thead.mapDifficulty'))}:</span>
-              <span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span>
-            </span>
-          </div>
-        </div>
+          <!-- cover -->
+          <div class="relative h-56 overflow-hidden rounded-t-3xl">
+            <img id="completionModalCover" alt="" class="h-full w-full object-cover opacity-80">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-zinc-900/80"></div>
 
-        <!-- TOP-RIGHT -->
-        <div class="absolute top-4 right-5">
-          <div class="flex flex-wrap justify-end gap-2">
-            ${medalImg ? `
-            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs">
-              <img src="${escAttr(medalImg)}" alt="${escAttr(r.medal)} medal" class="h-4 w-4"/>
-              <span class="sr-only">${esc(r.medal)}</span>
-            </span>` : ''}
+            <div class="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
+              <span id="completionStatus"
+                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/80 ring-1 ring-white/15">
+                <span class="h-2 w-2 rounded-full bg-white/60"></span>
+                ${TT('completion','Completion')}
+              </span>
 
-            ${r.video ? `
-            <a href="${escAttr(r.video)}" target="_blank" rel="noopener"
-              class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/60 px-3 py-1 text-xs text-brand-300 hover:text-brand-200 underline">
-              ${esc(t('watch') || 'Watch')}
-            </a>` : ''}
-          </div>
-        </div>
-      </div>
-
-      <div class="px-5 pb-7 pt-4 space-y-6">
-        <div class="grid gap-6 md:grid-cols-2">
-          <div class="space-y-4">
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
-              <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('thead.mapDetails') || 'Details')}</h3>
-              <dl class="grid grid-cols-1 gap-2 text-sm">
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapNickname'))}</dt><dd class="text-right text-zinc-100">${esc(r.nickname || r.name || 'N/A')}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapDiscordTag'))}</dt><dd class="text-right text-zinc-100">${esc(r.also_known_as ?? r.discord_tag ?? 'N/A')}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapTime'))}</dt><dd class="text-right text-zinc-100">${r.completion ? esc(t('completion') || 'Completion') : r.time != null ? esc(String(r.time)) : 'N/A'}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">Rank</dt><dd class="text-right text-zinc-100">${r.rank != null ? esc(String(r.rank)) : 'N/A'}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">Verified</dt><dd class="text-right text-zinc-100">${r.verified === true ? '✓' : 'N/A'}</dd></div>
-                <div class="flex justify-between gap-3"><dt class="text-zinc-400">${esc(t('thead.mapVideo'))}</dt><dd class="text-right text-zinc-100">${linkOrNA(r.video, t('watch') || 'Watch')}</dd></div>
-              </dl>
+              <button type="button" id="completionModalCloseBtn"
+                class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                aria-label="${TT('popup.close','Close')}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-4 ring-1 ring-white/5">
-            <h3 class="text-sm font-semibold text-zinc-200 mb-3">${esc(t('screenshot') || 'Screenshot')}</h3>
-            <div class="flex items-center justify-center rounded-xl bg-zinc-950/60 ring-1 ring-white/5 min-h-[110px] px-3 py-5">
-              ${
-                r.screenshot
-                  ? `
-                  <div class="w-full">
-                    <div id="ssSkeleton" class="skel skel-img"></div>
+          <!-- contenu -->
+          <div class="grid gap-6 p-6 md:grid-cols-12">
+            <!-- gauche -->
+            <div class="md:col-span-7 space-y-6">
 
-                    <a id="ssLink" href="${escAttr(r.screenshot)}" target="_blank" rel="noopener" class="block">
-                      <img id="completionScreenshotImg" src="${escAttr(r.screenshot)}" alt="Screenshot"
-                          class="mx-auto max-h-64 w-auto object-contain rounded-lg ring-1 ring-white/10 hidden"/>
-                    </a>
+              <!-- Map + Code -->
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="text-xs uppercase tracking-widest text-white/60" id="completionMapLabel">${TT('thead.mapName','Name')}</div>
+                  <div id="completionMapName" class="mt-1 font-semibold text-lg truncate">—</div>
+                  <div class="mt-2 text-xs uppercase tracking-widest text-white/60" id="completionCodeLabel">${TT('thead.mapCode','Code')}</div>
+                  <div id="completionCode" class="mt-1 font-mono text-lg break-all">—</div>
+                </div>
+                <div class="flex flex-col gap-2 shrink-0">
+                  <a id="btnOpenCompletionVideo" href="#" target="_blank" rel="noopener"
+                     class="hidden inline-flex items-center justify-center rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 ring-1 ring-white/15 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                    <svg viewBox="0 0 24 24" class="mr-2 h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                    <span>${TT('watch','Watch')}</span>
+                  </a>
+                  <button id="btnCopyCompletionCode"
+                          class="inline-flex items-center justify-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 cursor-pointer"
+                          title="${TT('popup.copy_map_code','Copy map code')}" aria-label="${TT('popup.copy_map_code','Copy map code')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>${TT('popup.copy_map_code','Copy map code')}</span>
+                  </button>
+                </div>
+              </div>
 
-                    <a id="ssFallbackLink" href="${escAttr(r.screenshot)}" target="_blank" rel="noopener"
-                      class="hidden mt-2 block text-center text-sm text-brand-300 hover:text-brand-200 underline">
-                      ${esc(t('open_screenshot') || 'Open screenshot')}
-                    </a>
-                  </div>`
-                  : `<span class="text-sm text-zinc-400">N/A</span>`
-              }
+              <!-- Screenshot -->
+              <div id="completionProofSection" class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4" hidden>
+                <div class="text-xs uppercase tracking-widest text-white/60" id="completionProofLabel">${TT('screenshot','Screenshot')}</div>
+                <button id="completionProofZoom" type="button"
+                        class="group mt-2 relative w-full overflow-hidden rounded-xl bg-black/30 aspect-[16/9] ring-1 ring-white/10 hover:ring-emerald-400/40 focus:outline-none cursor-pointer hover:cursor-zoom-in">
+                  <img id="completionProofImg" alt="" class="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-200" />
+                  <span class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <span class="rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white/90">${TT('open_screenshot','Open screenshot')}</span>
+                  </span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- droite -->
+            <div class="md:col-span-5 space-y-6">
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-white/60">${TT('thead.mapDetails','Details')}</div>
+                <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                  <dt class="text-xs text-white/60">${TT('filters.player_name','Player')}</dt><dd id="completionPlayer" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${TT('thead.mapTime','Time')}</dt><dd id="completionTime" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${TT('thead.mapMedal','Medal')}</dt><dd id="completionMedal" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${TT('thead.mapDifficulty','Difficulty')}</dt><dd id="completionDifficulty" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${TT('thead.mapType','Type')}</dt><dd id="completionCategory" class="text-sm font-medium text-white/90">—</dd>
+                </dl>
+              </div>
             </div>
           </div>
+
         </div>
       </div>
-    `;
 
-    const bannerImg = document.getElementById('modalBannerImg');
-    if (bannerImg) {
-      bannerImg.addEventListener('error', () => { if (bannerImg.src !== fallbackBanner) bannerImg.src = fallbackBanner; }, { once: true });
-    }
-    if (typeof registerMapCodeCopyTargets === 'function') registerMapCodeCopyTargets(container);
-
-    const ssImg = container.querySelector('#completionScreenshotImg');
-    const ssSkeleton = container.querySelector('#ssSkeleton');
-    const ssFallbackLink = container.querySelector('#ssFallbackLink');
-    const ssLinkEl = container.querySelector('#ssLink');
-
-    if (ssImg) {
-      ssImg.addEventListener('load', () => {
-        if (ssSkeleton) ssSkeleton.remove();
-        ssImg.classList.remove('hidden');
-        ssImg.dataset.loaded = '1';
-      }, { once: true });
-
-      ssImg.addEventListener('error', () => {
-        if (ssSkeleton) ssSkeleton.remove();
-        if (ssFallbackLink) ssFallbackLink.classList.remove('hidden');
-        ssImg.remove();
-      }, { once: true });
-
-      if (ssLinkEl) {
-        ssLinkEl.addEventListener('click', (e) => {
-          if (ssImg.dataset.loaded === '1') {
-            e.preventDefault();
-            openImageLightbox(ssImg.src, 'Screenshot');
-          }
-        });
-      }
-    }
-    if (ssImg) {
-      ssImg.addEventListener('error', () => {
-        const link = container.querySelector('#ssFallbackLink');
-        if (link) link.classList.remove('hidden');
-        ssImg.remove();
-      }, { once: true });
-    }
-
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
-    requestAnimationFrame(() => {
-      overlay.classList.remove('opacity-0');
-      overlay.classList.add('opacity-100');
-      box.classList.remove('translate-y-3', 'opacity-0');
-      box.classList.add('translate-y-0', 'opacity-100');
-    });
-
-    const onEsc = (e) => { if (e.key === 'Escape') closeDetailsModal(); };
-    const onOutside = (e) => { if (!box.contains(e.target)) closeDetailsModal(); };
-    document.addEventListener('keydown', onEsc);
-    overlay.addEventListener('pointerdown', onOutside, true);
-
-    function closeDetailsModal() {
-      document.removeEventListener('keydown', onEsc);
-      overlay.removeEventListener('pointerdown', onOutside, true);
-
-      overlay.classList.add('opacity-0');
-      overlay.classList.remove('opacity-100');
-      box.classList.add('translate-y-3', 'opacity-0');
-      box.classList.remove('translate-y-0', 'opacity-100');
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
-      }, 180);
-    }
+      <!-- Lightbox -->
+      <div id="imgZoomOverlay"
+           class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200">
+        <button id="imgZoomClose"
+                class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-black/50 ring-1 ring-white/20 text-white/90 hover:bg-black/70"
+                aria-label="${TT('popup.close','Close')}" title="${TT('popup.close','Close')}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+        <img id="imgZoomTarget" alt="" class="max-h-[92vh] max-w-[92vw] rounded-2xl shadow-2xl ring-1 ring-white/10"/>
+      </div>
+    </div>`;
+    document.body.appendChild(tpl.firstElementChild);
+    overlay = document.getElementById('completionModalOverlay');
   }
 
-  root.querySelectorAll('.js-open-completion-details').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.getAttribute('data-index'));
-      openCompletionDetails(idx);
+  if (!overlay.__copyBound){
+    overlay.__copyBound = true;
+
+    const tFmt = (key, params={}, fallback='')=>{
+      let s = (typeof t==='function') ? t(key, params) : null;
+      if (typeof s!=='string' || s===key) s = fallback || key;
+      return s.replace(/\{(\w+)\}/g,(_,p)=> (params[p]!=null?params[p]:''));
+    };
+
+    const getCode = ()=> (document.getElementById('completionCode')?.textContent || '').trim();
+
+    const setBtnState = ()=>{
+      const btn = document.getElementById('btnCopyCompletionCode'); if (!btn) return;
+      const code = getCode(); const ok = !!code && code!=='—' && code!=='N/A';
+      btn.disabled = !ok; btn.setAttribute('aria-disabled', ok?'false':'true');
+      btn.title = ok
+        ? tFmt('popup.copy_map_code', {}, 'Copy map code')
+        : tFmt('popup.map_code_required', {}, 'Enter a map code');
+    };
+
+    const codeEl = document.getElementById('completionCode');
+    if (window.MutationObserver && codeEl){
+      const mo = new MutationObserver(setBtnState);
+      mo.observe(codeEl, { childList:true, subtree:true, characterData:true });
+    }
+    setBtnState();
+
+    const doCopy = async(code)=>{
+      if (navigator.clipboard?.writeText){ await navigator.clipboard.writeText(code); return; }
+      const ta = document.createElement('textarea'); ta.value = code; ta.setAttribute('readonly','');
+      ta.style.position='absolute'; ta.style.left='-9999px'; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+    };
+
+    let inFlight = false;
+    overlay.addEventListener('click', async (ev)=>{
+      const btn = ev.target.closest('#btnCopyCompletionCode'); if (!btn) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (inFlight) return; inFlight = true;
+      const code = getCode();
+      if (!code || code==='—' || code==='N/A'){
+        if (typeof showWarningMessage==='function'){
+          showWarningMessage(tFmt('popup.map_code_required',{},'Enter a map code'));
+        }
+        inFlight=false; return;
+      }
+      try{
+        await doCopy(code);
+        if (typeof showConfirmationMessage==='function'){
+          showConfirmationMessage(tFmt('popup.map_code_copied',{code},`Map code ${code} copied`));
+        }
+      }catch{
+        if (typeof showWarningMessage==='function'){
+          showWarningMessage(tFmt('popup.copy_failed',{},'Failed to copy map code'));
+        }
+      }finally{ inFlight = false; }
     });
+  }
+
+  const zoomOverlay = document.getElementById('imgZoomOverlay');
+  if (!zoomOverlay.__bound){
+    zoomOverlay.__bound = true;
+
+    const openZoom = (src)=>{
+      const img = document.getElementById('imgZoomTarget');
+      const ov  = document.getElementById('imgZoomOverlay');
+      const modalOverlay = document.getElementById('completionModalOverlay');
+      img.src = src;
+      modalOverlay.dataset.zoom = '1';
+      ov.classList.remove('hidden'); ov.classList.add('flex');
+      requestAnimationFrame(()=>{ ov.classList.remove('opacity-0'); ov.classList.add('opacity-100'); });
+      const onEsc = (e)=>{ if (e.key==='Escape') closeZoom(); };
+      ov.__esc = onEsc; document.addEventListener('keydown', onEsc);
+    };
+
+    const closeZoom = ()=>{
+      const ov = document.getElementById('imgZoomOverlay');
+      const modalOverlay = document.getElementById('completionModalOverlay');
+      ov.classList.add('opacity-0'); ov.classList.remove('opacity-100');
+      setTimeout(()=>{ ov.classList.add('hidden'); ov.classList.remove('flex'); }, 160);
+      if (ov.__esc){ document.removeEventListener('keydown', ov.__esc); ov.__esc = null; }
+      delete modalOverlay.dataset.zoom;
+    };
+
+    zoomOverlay.addEventListener('click', (e)=>{
+      if (e.target.id==='imgZoomClose' || !e.target.closest('#imgZoomTarget')) closeZoom();
+    });
+    zoomOverlay.addEventListener('pointerdown', (e)=> e.stopPropagation(), true);
+
+    overlay.addEventListener('click', (e)=>{
+      const btn = e.target.closest('#completionProofZoom'); if (!btn) return;
+      const src = btn.dataset.zoomSrc; if (!src) return;
+      openZoom(src);
+    });
+  }
+}
+
+function openCompletionsDetailsModal(r){
+  if (!r) return;
+  ensureCompletionsDetailsModal();
+
+  const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
+  const esc = (s) => String(s ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const arrToText = (v)=> Array.isArray(v) ? v.filter(Boolean).join(', ') : (v || '—');
+
+  const nameKey = (r.map_name || r.map_code || r.code || 'default').toLowerCase().replace(/[()\s']/g,'');
+  const cover = r.map_banner || `assets/banners/${nameKey}.png`;
+  const imgCover = document.getElementById('completionModalCover');
+  if (imgCover){
+    const fb = `assets/banners/${nameKey}.png`;
+    imgCover.src = cover;
+    imgCover.addEventListener('error', ()=>{ if (imgCover.src!==fb) imgCover.src = fb; }, { once:true });
+  }
+
+  const el = id => document.getElementById(id);
+  el('completionMapLabel').textContent   = tSafe('thead.mapName','Map');
+  el('completionCodeLabel').textContent  = tSafe('thead.mapCode','Code');
+  el('completionProofLabel').textContent = tSafe('screenshot','Screenshot');
+  el('completionStatus').innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400"></span> ${esc(tSafe('completion','Completion'))}`;
+
+  const mapName = r.map_name || r.map || r.map_code || r.code || '—';
+  const code    = r.map_code || r.code || '—';
+  el('completionMapName').textContent = mapName;
+  el('completionCode').textContent    = code;
+
+  const player = r.nickname || r.name || 'N/A';
+  const isCompletion = r.completion === true;
+  const timeDisplay  = isCompletion ? tSafe('completion','Completion') : (r.time != null ? String(r.time) : 'N/A');
+  const medal        = r.medal || '—';
+  const difficulty   = r.difficulty || '—';
+  const category     = arrToText(Array.isArray(r.category) ? r.category : r.category);
+  el('completionPlayer').textContent     = player;
+  el('completionTime').textContent       = timeDisplay;
+  el('completionMedal').textContent      = medal;
+  el('completionDifficulty').textContent = difficulty;
+  el('completionCategory').textContent   = category;
+
+  const videoBtn = el('btnOpenCompletionVideo');
+  if (videoBtn){
+    if (r.video){ videoBtn.href = r.video; videoBtn.classList.remove('hidden'); videoBtn.querySelector('span').textContent = tSafe('watch','Watch'); }
+    else { videoBtn.classList.add('hidden'); }
+  }
+
+  const proofSection = el('completionProofSection');
+  const proofImg  = el('completionProofImg');
+  const proofBtn  = el('completionProofZoom');
+
+  let proof = (r.screenshot || r.proof || r.image || r.screenshot_url || r.proof_url || '').trim();
+  const looksLikeImg = proof && (/^data:image\//.test(proof) || /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?.*)?$/i.test(proof));
+
+  proofSection.hidden = true;
+  proofImg.src = ''; proofImg.classList.add('opacity-0');
+  if (proofBtn) proofBtn.dataset.zoomSrc = '';
+
+  if (looksLikeImg){
+    proofSection.hidden = false;
+    const onLoad  = ()=>{ proofImg.classList.remove('opacity-0'); if (proofBtn) proofBtn.dataset.zoomSrc = proof; };
+    const onError = ()=>{ proofSection.hidden = true; };
+    proofImg.addEventListener('load', onLoad, { once:true });
+    proofImg.addEventListener('error', onError, { once:true });
+    proofImg.src = proof;
+  }
+
+  const modalOverlay = document.getElementById('completionModalOverlay');
+  const gradientWrap = modalOverlay.querySelector('.bg-gradient-to-tr');
+  modalOverlay.classList.remove('hidden'); modalOverlay.classList.add('flex');
+  requestAnimationFrame(()=>{
+    modalOverlay.classList.remove('opacity-0'); modalOverlay.classList.add('opacity-100');
+    gradientWrap.classList.remove('translate-y-3','opacity-0'); gradientWrap.classList.add('translate-y-0','opacity-100');
   });
+
+  const closeBtn = document.getElementById('completionModalCloseBtn');
+  const close = ()=>{
+    modalOverlay.classList.add('opacity-0'); modalOverlay.classList.remove('opacity-100');
+    gradientWrap.classList.add('translate-y-3','opacity-0'); gradientWrap.classList.remove('translate-y-0','opacity-100');
+    setTimeout(()=>{ modalOverlay.classList.add('hidden'); modalOverlay.classList.remove('flex'); }, 180);
+    document.removeEventListener('keydown', onEsc);
+    modalOverlay.removeEventListener('pointerdown', onOutside, true);
+  };
+  const onEsc = e=>{ if (e.key==='Escape') close(); };
+
+  const onOutside = (e)=>{
+    if (modalOverlay.dataset.zoom === '1') return;
+    if (e.target.closest('#imgZoomOverlay')) return;
+    const box = document.getElementById('completionModalBox');
+    if (!box.contains(e.target)) close();
+  };
+
+  closeBtn?.addEventListener('click', close, { once:true });
+  document.addEventListener('keydown', onEsc);
+  modalOverlay.addEventListener('pointerdown', onOutside, true);
 }
 
 /* =========================
    RENDER GUIDES
    ========================= */
 function displayGuideResults(results) {
-  if (!window.__gridCSS_guide) {
-    __addRule(
-      '.grid-guide',
-      'display:grid;grid-template-columns:minmax(0,1fr);align-items:start;justify-items:stretch'
-    );
-    __addRule('.minw-guide', 'min-width:640px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    __addRule('.video-embed','position:relative;overflow:hidden;border-radius:12px;background:black;aspect-ratio:16/9');
-    __addRule('.video-embed > iframe','position:absolute;inset:0;width:100% !important;height:100% !important;display:block');
-    __addRule('.banner-bottom-mask',
-      'background:radial-gradient(60% 60% at 50% 100%, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 100%)'
-    );
-    window.__gridCSS_guide = true;
-  }
-
   const rows = Array.isArray(results.results) ? results.results : [];
   const filtered = rows.filter((r) => r.url);
 
@@ -3105,14 +4067,14 @@ function ensureSkeletonCSS() {
 }
 
 function showProgressionLoading() {
-  ensureSkeletonCSS();
-  const cc = document.getElementById('chartContainer');
-  if (!cc) return;
-  cc.innerHTML = `
+  const el = document.getElementById('chartContainer');
+  if (!el) return;
+  el.innerHTML = `
     <div class="rounded-xl bg-zinc-900/60 ring-1 ring-white/10 p-4">
-      <div class="skel skel-graph-250"></div>
-    </div>
-  `;
+      <div class="h-[280px] w-full grid place-items-center text-white/60 text-sm">
+        ${typeof t==='function' ? t('labels.loading') : 'Loading…'}
+      </div>
+    </div>`;
 }
 
 const __skelW = new Map();
@@ -3167,15 +4129,81 @@ function skeletonTableShell(headHTML, bodyRowsHTML, colgroupHTML = '') {
   `;
 }
 
+function renderMapSearchCardsSkeleton(count = Math.min(pageSize || 12, 12)) {
+  const oneCard = () => `
+    <article class="mx-card overflow-hidden rounded-2xl border border-white/10 bg-white/5 ring-1 ring-white/5">
+      <div class="mx-hero relative">
+        <div class="absolute inset-0 animate-pulse bg-white/5"></div>
+
+        <div class="mx-titlebar absolute inset-x-0 top-0 p-3 sm:p-1">
+          <div class="mx-head flex items-center justify-between gap-3">
+            <h3 class="mx-title">
+              <span class="block h-5 w-40 rounded bg-white/20 animate-pulse"></span>
+            </h3>
+            <span class="mx-status inline-flex items-center gap-2 rounded-full bg-white/15 px-2.5 py-1 text-xs ring-1 ring-white/20">
+              <i class="mx-dot h-2 w-2 rounded-full bg-white/70"></i>
+              <span class="block h-3 w-16 rounded bg-white/30 animate-pulse"></span>
+            </span>
+          </div>
+          <div class="mx-meta mt-2">
+            <span class="mx-meta-item inline-flex items-center gap-2 text-sm">
+              <svg viewBox="0 0 24 24" class="h-4 w-4 text-white/60" aria-hidden="true">
+                <path fill="currentColor" d="M5 3a1 1 0 0 0-1 1v16l7-3 7 3V4a1 1 0 0 0-1-1H5z"/>
+              </svg>
+              <span class="h-3 w-10 rounded bg-white/20 animate-pulse"></span>
+              <span class="sep text-white/40">•</span>
+              <span class="h-3 w-14 rounded bg-white/20 animate-pulse"></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="mx-actions-vert absolute right-2 top-2 flex flex-col gap-2">
+          <span class="mx-icon h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
+          <span class="mx-icon mx-icon--primary h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
+        </div>
+
+        <div class="mx-bottom absolute inset-x-0 bottom-0 p-1 sm:p-1">
+          <div class="flex items-center justify-between gap-3">
+
+            <div class="mx-b-left flex min-w-0 items-center gap-2">
+              <div class="flex -space-x-2">
+                <span class="h-6 w-6 rounded-full bg-white/20 ring-1 ring-white/10 animate-pulse"></span>
+              </div>
+              <span class="ml-1 h-4 w-24 rounded bg-white/20 animate-pulse"></span>
+            </div>
+
+            <div class="mx-b-right flex items-center gap-2">
+              <span class="mx-code-inline inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5">
+                <span class="h-4 w-16 rounded bg-white/20 animate-pulse"></span>
+              </span>
+              <span class="mx-diff inline-flex h-4 w-12 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/10 animate-pulse"></span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+
+  const grid = `
+    <section class="mx-wrap px-2 sm:px-3">
+      <div class="mx-grid mx-stagger grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-4">
+        ${Array.from({ length: count }, oneCard).join('')}
+      </div>
+    </section>
+  `;
+
+  setResultsHTML(grid);
+
+  const root = document.getElementById('resultsContainer');
+  Array.from(root.querySelectorAll('.mx-card')).forEach((el, i) =>
+    setTimeout(() => el.classList.add('is-in'), 22 * i)
+  );
+}
+
+
 function renderMapSearchSkeleton(rows = 8) {
   ensureSkeletonCSS();
-  if (!window.__gridCSS_map_search) {
-    __addRule('.grid-map_search','display:grid;grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;align-items:center;column-gap:20px');
-    __addRule('.minw-map_search', 'min-width:1024px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    window.__gridCSS_map_search = true;
-  }
-
   const headerHTML = `
     <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
       <div>${t('thead.mapCode')}</div>
@@ -3217,17 +4245,91 @@ function renderMapSearchSkeleton(rows = 8) {
   setResultsHTML(shell);
 }
 
+const __PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+function isDefaultBannerURL(u) {
+  return /(?:^|\/)(?:default|placeholder|no(?:-|_)banner)\.(?:png|webp|jpe?g|gif)$/i.test(String(u||''));
+}
+
+function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
+  const oneCard = () => `
+    <article class="mx-card overflow-hidden rounded-2xl border border-white/10 bg-white/5 ring-1 ring-white/5">
+      <div class="mx-hero relative">
+        <!-- Hero skeleton (aucune image réelle ici) -->
+        <div class="absolute inset-0 animate-pulse bg-white/5"></div>
+        <div class="mx-grain pointer-events-none"></div>
+
+        <!-- Barre supérieure : chips (temps + difficulté) -->
+        <div class="c-topbar">
+          <div class="c-chiprow">
+            <span class="c-chip">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="opacity-80">
+                <path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20Zm1 5v5.2l3 1.8a1 1 0 11-1 1.7l-3.6-2.1A1 1 0 0 1 10.5 13V7a1 1 0 1 1 2 0Z"/>
+              </svg>
+              <span class="block h-3 w-16 rounded bg-white/20 animate-pulse"></span>
+            </span>
+            <span class="c-chip">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="opacity-80">
+                <path fill="currentColor" d="M4 4h16v2H4zm0 7h16v2H4zm0 7h16v2H4z"/>
+              </svg>
+              <span class="block h-3 w-14 rounded bg-white/20 animate-pulse"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Titlebar (présente dans la vraie vue, on garde la structure) -->
+        <div class="mx-titlebar">
+          <div class="mx-head"></div>
+        </div>
+
+        <!-- Actions verticales (placeholders d'icônes) -->
+        <div class="mx-actions-vert flex flex-col gap-2">
+          <span class="mx-icon h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
+          <span class="mx-icon h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
+        </div>
+
+        <!-- Footer -->
+        <div class="mx-bottom p-1 sm:p-1">
+          <div class="flex items-center justify-between gap-3">
+            <!-- Left: avatar + nickname -->
+            <div class="mx-b-left flex min-w-0 items-center gap-2">
+              <span class="h-6 w-6 rounded-full bg-white/20 ring-1 ring-white/10 animate-pulse"></span>
+              <span class="ml-1 h-4 w-24 rounded bg-white/20 animate-pulse"></span>
+            </div>
+
+            <!-- Right: code + médaille -->
+            <div class="mx-b-right flex items-center gap-2">
+              <span class="mx-code-inline inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5">
+                <span class="h-4 w-16 rounded bg-white/20 animate-pulse"></span>
+              </span>
+              <span class="c-medal inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/10 px-3 ring-0">
+                <span class="h-3 w-10 rounded bg-white/20 animate-pulse"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+
+  const grid = `
+    <section class="mx-wrap px-2 sm:px-3">
+      <div class="mx-grid mx-stagger grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-4">
+        ${Array.from({ length: count }, oneCard).join('')}
+      </div>
+    </section>
+  `;
+
+  setResultsHTML(grid);
+
+  const root = document.getElementById('resultsContainer');
+  Array.from(root.querySelectorAll('.mx-card')).forEach((el, i) =>
+    setTimeout(() => el.classList.add('is-in'), 22 * i)
+  );
+}
+
 function renderCompletionsSkeleton(rows = 8) {
   ensureSkeletonCSS();
-  if (!window.__gridCSS_completions) {
-    __addRule(
-      '.grid-completions',
-      'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;column-gap:20px'
-    );
-    __addRule('.minw-completions', 'min-width:1024px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    window.__gridCSS_completions = true;
-  }
 
   const headerHTML = `
     <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
@@ -3270,17 +4372,59 @@ function renderCompletionsSkeleton(rows = 8) {
   setResultsHTML(shell);
 }
 
+function renderPersonalRecordsSkeletonCards(count = 8) {
+  const card = () => `
+    <article class="skel-card">
+      <span class="pr-accent"></span>
+
+      <!-- header -->
+      <div class="skel-sec">
+        <div class="skel-row">
+          <div class="skel-avatar skel-anim"></div>
+          <div class="skel-col skel-minw-0">
+            <div class="skel-line skel-anim skel-w-70"></div>
+            <div class="skel-line sm skel-anim skel-w-50"></div>
+          </div>
+          <div class="skel-chiprow">
+            <div class="skel-pill skel-anim skel-wp-64"></div>
+            <div class="skel-pill skel-anim skel-wp-64"></div>
+            <div class="skel-pill skel-anim skel-wp-64"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stats -->
+      <div class="skel-sec skel-pt-8">
+        <div class="skel-grid-2">
+          <div class="skel-tile skel-anim"></div>
+          <div class="skel-tile skel-anim"></div>
+          <div class="skel-tile skel-anim"></div>
+          <div class="skel-tile skel-anim"></div>
+        </div>
+      </div>
+
+      <!-- bottom -->
+      <div class="skel-bottom">
+        <div class="skel-row skel-gap-8">
+          <div class="skel-pill skel-anim skel-wp-96"></div> <!-- watch -->
+        </div>
+        <div class="skel-pill skel-anim skel-wp-140"></div>   <!-- code -->
+      </div>
+    </article>
+  `;
+
+  const html = `
+    <section class="mx-wrap">
+      <div class="skel-grid">
+        ${Array.from({length: count}).map(card).join('')}
+      </div>
+    </section>
+  `;
+  setResultsHTML(html);
+}
+
 function renderPersonalRecordsSkeleton(rows = 8) {
   ensureSkeletonCSS();
-  if (!window.__gridCSS_personal_records) {
-    __addRule(
-      '.grid-personal_records',
-      'display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;column-gap:20px'
-    );
-    __addRule('.minw-personal_records', 'min-width:920px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    window.__gridCSS_personal_records = true;
-  }
 
   const headerHTML = `
     <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
@@ -3323,18 +4467,6 @@ function renderPersonalRecordsSkeleton(rows = 8) {
 
 function renderGuidesSkeleton(rows = 2) {
   ensureSkeletonCSS();
-  if (!window.__gridCSS_guide) {
-   __addRule(
-     '.grid-guide',
-     'display:grid;grid-template-columns:minmax(0,1fr);align-items:start;justify-items:stretch'
-   );
-    __addRule('.minw-guide', 'min-width:640px');
-    __addRule('.row-gap-y', 'display:flex;flex-direction:column;gap:0.25rem');
-    __addRule('.video-embed','position:relative;overflow:hidden;border-radius:12px;aspect-ratio:16/9');
-    __addRule('.video-embed > iframe','position:absolute;inset:0;width:100% !important;height:100% !important;display:block');
-    __addRule('.video-embed > .skel-vid','position:absolute;inset:0;width:100%;height:100%');
-    window.__gridCSS_guide = true;
-  }
 
   const headerHTML = `
     <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-guide px-3 py-2">
@@ -3373,12 +4505,80 @@ function renderGuidesSkeleton(rows = 2) {
 }
 
 function renderSkeletonForSection(sectionId) {
-  switch (sectionId) {
-    case 'map_search':        return renderMapSearchSkeleton();
-    case 'completions':       return renderCompletionsSkeleton();
-    case 'guide':             return renderGuidesSkeleton();
-    case 'personal_records':  return renderPersonalRecordsSkeleton();
-    default:                  return renderMapSearchSkeleton();
+  const rc = document.getElementById('resultsContainer');
+  if (!rc) return;
+  rc.innerHTML = '';
+
+  const view = getSectionView(sectionId);
+
+  const basicFallback = () => {
+    setResultsHTML(`
+      <div class="grid gap-2">
+        ${Array.from({ length: 10 }, () =>
+          `<div class="h-10 rounded-lg bg-white/10 animate-pulse"></div>`
+        ).join('')}
+      </div>
+    `);
+  };
+
+  if (sectionId === 'map_search') {
+    if (view === 'cards' && typeof renderMapSearchCardsSkeleton === 'function') {
+      renderMapSearchCardsSkeleton();
+      return;
+    }
+    if (typeof renderMapSearchSkeleton === 'function') {
+      renderMapSearchSkeleton();
+      return;
+    }
+    basicFallback();
+    return;
+  }
+
+  if (sectionId === 'completions') {
+
+    if (view === 'cards' && typeof renderCompletionsSkeletonCards === 'function') {
+      renderCompletionsSkeletonCards(8);
+      return;
+    }
+
+    if (typeof renderCompletionsSkeleton === 'function') {
+      renderCompletionsSkeleton();
+      return;
+    }
+    basicFallback();
+    return;
+  }
+
+  if (sectionId === 'personal_records') {
+
+    if (view === 'cards' && typeof renderPersonalRecordsSkeletonCards === 'function') {
+      renderPersonalRecordsSkeletonCards(8);
+      return;
+    }
+
+    if (typeof renderPersonalRecordsSkeleton === 'function') {
+      renderPersonalRecordsSkeleton();
+      return;
+    }
+    basicFallback();
+    return;
+  }
+
+  if (sectionId === 'guide') {
+    if (typeof renderGuidesSkeleton === 'function') {
+      renderGuidesSkeleton();
+      return;
+    }
+    basicFallback();
+    return;
+  }
+
+  if (view === 'cards' && typeof renderMapSearchCardsSkeleton === 'function') {
+    renderMapSearchCardsSkeleton();
+  } else if (typeof renderMapSearchSkeleton === 'function') {
+    renderMapSearchSkeleton();
+  } else {
+    basicFallback();
   }
 }
 
@@ -3522,8 +4722,8 @@ async function copyTextToClipboard(text) {
 }
 
 function copyMapCode(code) {
-  const msgOk = t('popup.map_code_copied', { code }) || t('popup.copied') || 'Map code copié !';
-  const msgKo = t('popup.copy_failed') || 'Impossible de copier ce code.';
+  const msgOk = t('popup.map_code_copied', { code }) || t('popup.copied');
+  const msgKo = t('popup.copy_failed');
 
   copyTextToClipboard(code).then((ok) => {
     if (ok) showConfirmationMessage(msgOk);
@@ -3729,6 +4929,33 @@ function openImageLightbox(src, alt = '') {
 /* =========================
    HELPERS MAP SEARCH
    ========================= */
+function renderMapSearchResultsByMode(rows) {
+  lastMapRows = Array.isArray(rows) ? rows : [];
+  if (mapSearchView === 'table') {
+    displayMapSearchResultsTable(lastMapRows);
+  } else {
+    displayMapSearchResultsCards(lastMapRows);
+  }
+}
+
+function renderCompletionsResultsByMode(resultsContainer) {
+  const container = normalizeToRowsContainer(resultsContainer);
+  lastCompletionsRows = container.results || [];
+  if (completionsView === 'cards') {
+    return displayCompletionsResultsCards(container.results);
+  }
+  return displayCompletionsResults(container);
+}
+
+function renderPersonalRecordsResultsByMode(resultsContainer) {
+  const container = normalizeToRowsContainer(resultsContainer);
+  lastPersonalRows = container.results || [];
+  if (personalRecordsView === 'cards') {
+    return displayPersonalRecordsResultsCards(container.results);
+  }
+  return displayPersonalRecordsResults(container);
+}
+
 async function fetchMapCompletionStatistics(mapCode) {
   try {
     const url = `/api/community/statistics/maps/completions?code=${encodeURIComponent(mapCode)}`;
@@ -3750,16 +4977,11 @@ async function fetchProgression(mapCode) {
   try {
     const chartContainer = document.getElementById('chartContainer');
     if (!chartContainer) return [];
-
     showProgressionLoading();
 
     const uid = typeof window !== 'undefined' && window.user_id ? String(window.user_id) : null;
-
     if (!uid) {
-      chartContainer.innerHTML = `
-        <p class="text-center font-semibold text-red-400">
-          ⚠️ ${t('popup.login_required_progression')}
-        </p>`;
+      chartContainer.innerHTML = `<p class="text-center font-semibold text-red-400">⚠️ ${t('popup.login_required_progression')}</p>`;
       return [];
     }
 
@@ -3767,45 +4989,33 @@ async function fetchProgression(mapCode) {
     const response = await fetch(url, { headers: { Accept: 'application/json' } });
 
     let data = null;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
+    try { data = await response.json(); } catch { data = null; }
 
     if (!response.ok) {
       const msg = data && data.message ? data.message : 'An error occurred. Please try again';
-      chartContainer.innerHTML = `
-        <p class="text-center font-semibold text-red-400">${msg}</p>`;
+      chartContainer.innerHTML = `<p class="text-center font-semibold text-red-400">${msg}</p>`;
       return [];
     }
 
     if (!Array.isArray(data) || data.length === 0) {
-      chartContainer.innerHTML = `
-        <p class="text-center font-semibold text-zinc-100">
-          ${t('popup.no_results')}
-        </p>`;
+      chartContainer.innerHTML = `<p class="text-center font-semibold text-zinc-100">${t('popup.no_results')}</p>`;
       return [];
     }
 
     const sorted = data
       .map((item) => ({
         time: parseFloat(item.time),
-        timestamp: new Date(item.inserted_at).toLocaleString(),
+        label: new Date(item.inserted_at).toLocaleString(),
         inserted_at: new Date(item.inserted_at),
       }))
       .sort((a, b) => a.inserted_at - b.inserted_at);
 
-    renderProgressionChart(sorted);
     return sorted;
   } catch (error) {
     console.error('Error fetching progression data:', error);
     const chartContainer = document.getElementById('chartContainer');
     if (chartContainer) {
-      chartContainer.innerHTML = `
-        <p class="text-center font-semibold text-red-500">
-          An error occurred. Please try again later.
-        </p>`;
+      chartContainer.innerHTML = `<p class="text-center font-semibold text-red-500">An error occurred. Please try again later.</p>`;
     }
     return [];
   }
@@ -3820,99 +5030,129 @@ function renderProgressionChart(data, stats = { min: null, max: null, avg: null 
   `;
 
   if (!Array.isArray(data) || data.length === 0) {
-    chartContainer.innerHTML = `
-      <p class="text-center font-semibold text-zinc-100">
-        No valid progression data available to display
-      </p>`;
+    chartContainer.innerHTML = `<p class="text-center font-semibold text-zinc-100">No valid progression data available to display</p>`;
+    return;
+  }
+  if (typeof Chart === 'undefined') {
+    chartContainer.innerHTML = `<p class="text-center font-semibold text-red-400">Chart.js missing</p>`;
     return;
   }
 
-  const recent = data.slice(-5);
-  const maxX = recent.length === 1 ? 1 : recent.length - 1;
-  const labels = Array.from({ length: maxX + 1 }, (_, i) => `${i}`);
+  const recent = data.slice(-20);
+  let labels = recent.map(d => d.label || new Date(d.inserted_at).toLocaleString());
+  let times  = recent.map(d => Number(d.time)).filter(v => Number.isFinite(v));
 
-  let times = recent.map((d) => d.time);
-  if (recent.length === 1) times = [times[0], times[0]];
+  if (times.length === 1) { times = [times[0], times[0]]; labels = [labels[0], labels[0]]; }
 
   const { min, max, avg } = stats || {};
-  const lineOf = (val) => (val != null ? new Array(labels.length).fill(val) : []);
-  const datasets = [
-    {
-      label: t('chart.user_record_progression'),
-      data: times,
-      borderColor: 'rgba(75, 192, 192, 1)',
-      backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      borderWidth: 2,
-      tension: 0.25,
-    },
-    {
-      label: t('chart.average_time'),
-      data: lineOf(avg),
-      borderColor: 'rgba(255,205,86,1)',
-      borderDash: [5, 5],
-      borderWidth: 2,
-      fill: false,
-    },
-    {
-      label: t('chart.min_time'),
-      data: lineOf(min),
-      borderColor: 'rgba(54,162,235,1)',
-      borderDash: [5, 5],
-      borderWidth: 2,
-      fill: false,
-    },
-    {
-      label: t('chart.max_time'),
-      data: lineOf(max),
-      borderColor: 'rgba(255,99,132,1)',
-      borderDash: [5, 5],
-      borderWidth: 2,
-      fill: false,
-    },
-  ].filter((d) => d.data.length > 0);
+  const lineOf = (val, len) => (val != null ? new Array(len).fill(val) : []);
 
   const ctx = document.getElementById('progressionChart').getContext('2d');
+
+  const fmtTime = (s) => {
+    if (s == null || isNaN(s)) return '—';
+    const ms = Math.round((s % 1) * 100);
+    const total = Math.floor(s);
+    const m = Math.floor(total / 60);
+    const sec = total % 60;
+    return `${m}:${String(sec).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+  };
+
+  const old = Chart.getChart(ctx.canvas);
+  if (old) old.destroy();
+
+  const datasets = [];
+
+  times.forEach((v, i) => {
+    const isLatest = i === times.length - 1;
+    datasets.push({
+      label: isLatest ? t('chart.user_record_progression') : '',
+      data: lineOf(v, labels.length),
+      borderColor: isLatest ? 'rgba(16,185,129,0.95)' : 'rgba(16,185,129,0.20)',
+      borderWidth: isLatest ? 2 : 1,
+      borderDash: isLatest ? [] : [],
+      pointRadius: 0,
+      fill: false,
+    });
+  });
+
+  const addRef = (val, label, color) => {
+    if (val == null) return;
+    datasets.push({
+      label,
+      data: lineOf(val, labels.length),
+      borderColor: color,
+      borderDash: [6, 6],
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+    });
+  };
+  addRef(avg, t('chart.average_time'), 'rgba(234,179,8,1)'); // amber-500
+  addRef(min, t('chart.min_time'),     'rgba(59,130,246,1)'); // blue-500
+  addRef(max, t('chart.max_time'),     'rgba(239,68,68,1)');  // red-500
+
   new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
     options: {
+      maintainAspectRatio: false,
       responsive: true,
-      interaction: { mode: 'nearest', axis: 'y' },
+      interaction: { mode: 'nearest', intersect: false },
+      layout: { padding: { left: 4, right: 8, top: 6, bottom: 0 } },
       plugins: {
         legend: {
           display: true,
           position: 'top',
           labels: {
-            color: '#FFFFFF',
+            color: '#E5E7EB',
             font: { family: 'Inter, ui-sans-serif, system-ui', weight: '600', size: 12 },
             padding: 16,
+            usePointStyle: true,
+            boxWidth: 8,
+            filter: (item) => !!item.text,
           },
         },
-        title: {
-          display: true,
-          text: t('chart.record_progression_time'),
-          color: '#FFFFFF',
-          font: { family: 'Inter, ui-sans-serif, system-ui', weight: '800', size: 16 },
-          padding: { top: 6, bottom: 10 },
+        tooltip: {
+          backgroundColor: 'rgba(24,24,27,0.95)',
+          titleColor: '#fff',
+          bodyColor: '#E5E7EB',
+          borderColor: 'rgba(255,255,255,0.12)',
+          borderWidth: 1,
+          padding: 10,
+          displayColors: true,
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (ctx)   => `${ctx.dataset.label || t('chart.user_record_progression')}: ${fmtTime(ctx.parsed.y)}`,
+          },
         },
-        tooltip: { callbacks: { title: () => null } },
+        title: { display: false },
+      },
+      elements: {
+        point: { radius: 0 },
+        line:  { stepped: false },
       },
       scales: {
         y: {
           beginAtZero: true,
-          ticks: { color: '#FFFFFF', font: { family: 'Inter', weight: '600', size: 12 } },
-          grid: { display: false },
-          border: { display: true, color: '#FFFFFF' },
+          ticks: {
+            color: '#E5E7EB',
+            font: { family: 'Inter, ui-sans-serif, system-ui', weight: 600, size: 12 },
+            callback: (v) => fmtTime(v),
+          },
+          grid: { color: 'rgba(255,255,255,0.06)', drawBorder: false },
+          border: { display: false },
         },
         x: {
           ticks: {
-            color: '#FFFFFF',
-            font: { family: 'Inter', weight: '600', size: 12 },
-            padding: 0,
+            color: '#E5E7EB',
+            font: { family: 'Inter, ui-sans-serif, system-ui', weight: 600, size: 12 },
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 6,
           },
           grid: { display: false },
-          border: { display: true, color: '#FFFFFF' },
-          min: 0,
+          border: { display: false },
         },
       },
     },

@@ -105,6 +105,7 @@ return [
       'completed'     => 'Completed',
       'not_completed' => 'Not completed',
       'mapped_by'     => 'Mapped by',
+      'like'          => 'Like',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -245,8 +246,8 @@ return [
         'delete_username' => 'Delete username',
         'no_username_set' => 'No username set',
         'confirm_button' => 'Confirm',
-        'click_to_copy_map_code' => 'Click to copy map code',
-        'map_code_copied' => 'Map code copied to clipboard',
+        'copy_map_code' => 'Copy map code',
+        'map_code_copied' => 'Map code {code} copied',
         'copy_failed' => 'Failed to copy map code',
     ],
 
@@ -332,5 +333,7 @@ return [
         'mapMechanics' => 'Mechanics',
         'mapRestrictions' => 'Restrictions',
         'mapDescription' => 'Description',
+        'mapUpvotes' => 'Upvotes',
+        'mapVerified' => 'Verified',
     ],
 ];

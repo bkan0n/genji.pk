@@ -92,11 +92,11 @@
           <div id="dynamicFilters" class="filter-section">
             <div id="filtersContainer" class="filters-container flex flex-wrap gap-2"></div>
           </div>
-              {{-- Résultats --}}
-          <section class="relative pt-2 pb-10 sm:pb-16">
+          {{-- Résultats --}}
+          <section class="relative pt-2 pb-10 sm:pb-2">
             <div class="mx-auto max-w-7xl">
               <div class="overflow-hidden rounded-2xl">
-                <div id="resultsContainer" class="results-container overflow-auto"></div>
+                <div id="resultsContainer" class="results-container overflow-auto" data-loading="1"></div>
               </div>
             </div>
           </section>
@@ -111,7 +111,7 @@
         {{-- Pagination --}}
     <div
       id="paginationContainer"
-      class="pagination-container mt-4 flex items-center justify-center gap-2"
+      class="pagination-container mt-4 flex items-center justify-center gap-2 sm:pb-4"
     ></div>
   </main>
 @endsection
