@@ -21,6 +21,12 @@ return [
         'map'      => 'Submit map',
     ],
 
+    'notice' => [
+        'title' => 'Before you submit',
+        'pending_accept' => "Your submission won't count towards official records until the map is accepted.",
+        'mutable_difficulty' => 'The difficulty may change at any time until the map is finished.',
+    ],
+
     // ──────────────────────────────────────────────────────────────────────
     // RECORD (Submit Record tab)
     // ──────────────────────────────────────────────────────────────────────
@@ -42,6 +48,7 @@ return [
         'confirm' => 'Your record was submitted successfully.',
 
         'time_hint' => 'Invalid time format: up to 5 digits before the dot and 2 after (e.g. 12345.67).',
+        'view_modal' => 'View playtest',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -111,7 +118,7 @@ return [
         'votes'                => 'Votes',
         'difficulty_rating'    => 'Difficulty rating',
         'rating_sub'           => 'Based on community votes',
-        'question_difficulty'  => 'How difficult was this map for you?',
+        'question_difficulty'  => 'Vote map difficulty',
         'complete_to_vote'     => 'Submit a completion to be able to vote',
         'vote_recorded'        => 'Your vote has been submitted',
         'vote_updated'         => 'Your vote has been updated',

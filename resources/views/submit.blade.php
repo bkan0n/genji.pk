@@ -61,6 +61,29 @@
         id="submitRecordSection"
         class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
       >
+      <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4">
+        <div class="flex items-start gap-3">
+          <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor"
+              d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
+          </svg>
+          <div class="min-w-0">
+            <div class="font-semibold text-amber-300">
+              {{ __('submit.notice.title') }}
+            </div>
+            <ul class="mt-1.5 space-y-1 text-sm text-amber-100">
+              <li class="flex items-start gap-2">
+                <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300"></span>
+                <span>{{ __('submit.notice.pending_accept') }}</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300"></span>
+                <span>{{ __('submit.notice.mutable_difficulty') }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
         <form id="submitRecordForm" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-2">
           @csrf
 
@@ -188,7 +211,7 @@
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div id="srActionBar" class="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
                 class="sr-reveal inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 [--sr-delay:605ms] hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:[animation-delay:var(--sr-delay)]"

@@ -1384,14 +1384,10 @@ function setupForms() {
         document.querySelector('.cancel-btn[form="submitRecordForm"]') ||
         submitRecordForm.querySelector('.cancel-btn');
 
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.dataset.loading = '1';
-      }
-      if (cancelBtn) {
-        cancelBtn.disabled = true;
-        cancelBtn.dataset.loading = '1';
-      }
+      const submittedCode = (document.getElementById('mapCodeInput')?.value || '').trim();
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.dataset.loading = '1'; }
+      if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.dataset.loading = '1'; }
 
       try {
         const result = await sendCompletionToApi();
@@ -1401,6 +1397,7 @@ function setupForms() {
         }
         showConfirmationMessage(t('record.confirm'));
         resetForms(submitRecordForm);
+        if (submittedCode) ensureViewModalButtonForLastCode(submittedCode);
       } catch (err) {
         console.error(err);
         showErrorMessage(t('errors.server_unreachable') || 'Erreur réseau');
@@ -2850,6 +2847,88 @@ function disableBrowserAutocompleteInSubmitRecord() {
   });
 }
 
+async function openPlaytestModalForCode(code) {
+  const c = (code || '').trim();
+  if (!c) { showErrorMessage(t('errors.invalid_form') || 'Invalid code'); return; }
+
+  const data = await fetchFreshMapByCode(c);
+  if (!data) { showErrorMessage(t('errors.map_not_found') || 'Map not found'); return; }
+
+  const modal = document.getElementById('playtestModal');
+  const inner = document.getElementById('playtestModalInner');
+  if (!modal || !inner) return;
+
+  if (typeof renderPlaytestModal === 'function') {
+    inner.innerHTML = renderPlaytestModal(data);
+  } else {
+    inner.innerHTML = `
+      <div class="p-4 space-y-2">
+        <div class="text-lg font-semibold text-zinc-100">${data.name || data.code || 'Map'}</div>
+        <div class="text-sm text-zinc-300">Code: ${data.code || '—'}</div>
+        <div class="text-sm text-zinc-400">Modal renderer missing.</div>
+      </div>
+    `;
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('pt-anim');
+  inner.classList.add('pt-anim');
+
+  void modal.offsetWidth;
+  requestAnimationFrame(() => {
+    modal.classList.add('pt-in');
+    inner.classList.add('pt-in');
+  });
+
+  modal.querySelector('.playtest-modal-backdrop')
+    ?.addEventListener('click', hidePlaytestModal, { once: true });
+
+  try { registerMapCodeCopyTargets(modal); } catch {}
+  try { setupRatingDropdown(); } catch {}
+  try { await hydratePlaytestModalCreatorAvatar(modal); } catch {}
+  try {
+    const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
+    const pre = await preloadVoters(voterIds);
+    injectVotersGrid(modal, pre, voterIds);
+    registerVoterInteractions(modal);
+  } catch {}
+
+  const initialAvg =
+    Number.isFinite(data.playtest_vote_average) ? data.playtest_vote_average :
+    Number.isFinite(data.difficulty_value)     ? data.difficulty_value     : null;
+
+  try { updateDifficultyChartInModal(initialAvg); } catch {}
+  try { mountModeratorActions(inner, data); } catch {}
+}
+
+function ensureViewModalButtonForLastCode(code) {
+  const bar =
+    document.getElementById('srActionBar') ||
+    document.querySelector('#submitRecordForm button[type="submit"]')?.parentElement;
+  if (!bar) return;
+
+  let btn = document.getElementById('viewPlaytestModalBtn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'viewPlaytestModalBtn';
+    btn.type = 'button';
+    btn.className =
+      'inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5 ml-auto';
+    btn.textContent = t('record.view_modal') || 'View playtest';
+  } else {
+    btn.classList.add('ml-auto');
+  }
+
+  btn.style.marginLeft = 'auto';
+
+  btn.dataset.code = code;
+  btn.disabled = false;
+  btn.onclick = () => openPlaytestModalForCode(code);
+
+  if (btn.parentElement !== bar) bar.appendChild(btn);
+  else bar.appendChild(btn);
+}
+
 /* =========================
    SEND COMPLETION FORM
    ========================= */
@@ -4051,11 +4130,53 @@ async function fetchUserPrimaryName(user_id) {
 function hidePlaytestModal() {
   const modal = document.getElementById('playtestModal');
   const modalInner = document.getElementById('playtestModalInner');
-  modal.classList.add('hidden');
-  modalInner.innerHTML = '';
-  closeGlobalDropdown();
+  if (!modal) return;
+
+  if (modal.dataset.closing === '1') return;
+  modal.dataset.closing = '1';
+
+  modal.classList.remove('pt-in');
+  modalInner?.classList.remove('pt-in');
+
+  const DURATION = 240;
+  setTimeout(() => {
+    modal.classList.add('hidden');
+    modal.dataset.closing = '0';
+    if (modalInner) modalInner.innerHTML = '';
+    closeGlobalDropdown();
+  }, DURATION + 20);
 }
 
+function animatePtOpen() {
+  const modal = document.getElementById('playtestModal');
+  const inner = document.getElementById('playtestModalInner');
+  if (!modal || !inner) return;
+
+  modal.classList.remove('hidden');
+  modal.classList.add('pt-anim');
+  inner.classList.add('pt-anim');
+
+  modal.offsetWidth;
+
+  requestAnimationFrame(() => {
+    modal.classList.add('pt-in');
+    inner.classList.add('pt-in');
+  });
+}
+
+function animatePtClose(duration = 240) {
+  const modal = document.getElementById('playtestModal');
+  const inner = document.getElementById('playtestModalInner');
+  if (!modal) return;
+
+  modal.classList.remove('pt-in');
+  if (inner) inner.classList.remove('pt-in');
+
+  setTimeout(() => {
+    modal.classList.add('hidden');
+    if (inner) inner.innerHTML = '';
+  }, duration + 20);
+}
 
 function copyUserId(userId) {
   const msgOk = t('popup.user_id_copied', { id: userId });
@@ -4462,91 +4583,112 @@ function mountModeratorActions(modalEl, playtest) {
   root.innerHTML = `
     <h3 class="mb-2 text-sm font-semibold text-emerald-300">Moderator actions</h3>
 
-    <div class="grid min-w-0 gap-2 sm:grid-cols-2">
-      <!-- Approve -->
-      <button type="button" id="ptModApprove"
-        class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-        Approve (verifier = me)
-      </button>
-
-      <!-- Force Accept -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0">
-        <div class="relative w-full sm:w-auto min-w-0">
-          <div id="ptmod-diffbutton"
-            class="ptmod-diffbutton group flex w-full sm:w-[12rem] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
-            role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
-            <div class="inline-flex items-center gap-2 min-w-0">
-              <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20 shrink-0"></span>
-              <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
-            </div>
-            <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform shrink-0" viewBox="0 0 22 22" aria-hidden="true">
-              <path fill="currentColor" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
-            </svg>
-          </div>
-
-          <!-- Menu au-dessus -->
-          <div id="ptmod-diffmenu"
-            class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] top-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5 w-full"
-            role="menu" aria-label="Select difficulty">
-            ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
-              <div
-                class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none rounded-lg"
-                data-value="${o.value}" data-raw="${o.raw}" role="menuitem" tabindex="${i === 0 ? 0 : -1}">
-                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-white/20"></span>
-                <span class="truncate">${o.text()}</span>
-              </div>
-            `).join('')}
-          </div>
+    <div class="ptmod-grid">
+      <!-- Card: Approve -->
+      <section class="ptmod-card">
+        <h4>Approve</h4>
+        <p class="text-xs text-zinc-400">Marks the playtest as approved and sets you as verifier.</p>
+        <div class="ptmod-actions">
+          <button type="button" id="ptModApprove"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Approve (verifier = me)
+          </button>
         </div>
+      </section>
 
-        <button type="button" id="ptModForceAccept"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Force Accept
-        </button>
-      </div>
+      <!-- Card: Force Accept -->
+      <section class="ptmod-card">
+        <h4>Force accept</h4>
+        <p class="text-xs text-zinc-400">Force a difficulty and accept the playtest.</p>
+        <div class="ptmod-actions">
+          <div class="relative min-w-[180px]">
+            <div id="ptmod-diffbutton"
+              class="ptmod-diffbutton group flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
+              role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
+              <div class="inline-flex items-center gap-2 min-w-0">
+                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20 shrink-0"></span>
+                <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
+              </div>
+              <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform shrink-0" viewBox="0 0 22 22" aria-hidden="true">
+                <path fill="currentColor" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
+              </svg>
+            </div>
 
-      <!-- Force Deny -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
-        <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <button type="button" id="ptModForceDeny"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Force Deny
-        </button>
-      </div>
+            <div id="ptmod-diffmenu"
+              class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
+              role="menu" aria-label="Select difficulty">
+              ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
+                <div
+                  class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none rounded-lg"
+                  data-value="${o.value}" data-raw="${o.raw}" role="menuitem" tabindex="${i === 0 ? 0 : -1}">
+                  <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-white/20"></span>
+                  <span class="truncate">${o.text()}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
 
-      <!-- Reset -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
-        <input id="ptModResetReason" type="text" placeholder="Reset reason…"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <label class="text-sm text-zinc-300 inline-flex items-center gap-1 shrink-0">
-          <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
-        </label>
-        <label class="text-sm text-zinc-300 inline-flex items-center gap-1 shrink-0">
-          <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
-        </label>
-        <button type="button" id="ptModReset"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Reset Playtest
-        </button>
-      </div>
+          <button type="button" id="ptModForceAccept"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Force Accept
+          </button>
+        </div>
+      </section>
 
-      <!-- Votes -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
-        <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <button type="button" id="ptModDeleteVote"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Delete user vote
-        </button>
-        <button type="button" id="ptModDeleteAllVotes"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Delete all votes
-        </button>
-      </div>
+      <!-- Card: Force Deny -->
+      <section class="ptmod-card">
+        <h4>Force deny</h4>
+        <p class="text-xs text-zinc-400">Reject the playtest with an explicit reason.</p>
+        <div class="ptmod-actions">
+          <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <button type="button" id="ptModForceDeny"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Force Deny
+          </button>
+        </div>
+      </section>
+
+      <!-- Card: Reset -->
+      <section class="ptmod-card">
+        <h4>Reset playtest</h4>
+        <p class="text-xs text-zinc-400">Reset state and optionally remove votes/completions.</p>
+        <div class="ptmod-actions">
+          <input id="ptModResetReason" type="text" placeholder="Reset reason…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+            <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
+          </label>
+          <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+            <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
+          </label>
+          <button type="button" id="ptModReset"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Reset Playtest
+          </button>
+        </div>
+      </section>
+
+      <!-- Card: Votes -->
+      <section class="ptmod-card">
+        <h4>Votes</h4>
+        <p class="text-xs text-zinc-400">Remove one user vote or purge all votes.</p>
+        <div class="ptmod-actions">
+          <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <button type="button" id="ptModDeleteVote"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Delete user vote
+          </button>
+          <button type="button" id="ptModDeleteAllVotes"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Delete all votes
+          </button>
+        </div>
+      </section>
     </div>
   `;
 
@@ -5093,7 +5235,7 @@ async function initializePlaytestCards(userId) {
         if (!data) return;
 
         modalInner.innerHTML = renderPlaytestModal(data);
-        modal.classList.remove('hidden');
+        animatePtOpen();
 
         registerMapCodeCopyTargets(modal);
         setupRatingDropdown();
