@@ -4872,7 +4872,14 @@ function mountModeratorActions(modalEl, playtest) {
 
     try {
       setBusy(btn, true);
-      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/votes/${encodeURIComponent(uid)}/delete`, {});
+      const r = await fetch(
+        `/api/mods/playtests/${encodeURIComponent(threadId)}/vote/${encodeURIComponent(uid)}`,
+        {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        }
+      );
       const j = await (async () => { try { return await r.json(); } catch { return null; } })();
       if (r.ok) { showConfirmationMessage('Vote deleted.'); await refreshModal(); }
       else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
@@ -4895,7 +4902,14 @@ function mountModeratorActions(modalEl, playtest) {
     const btn = ev.currentTarget;
     try {
       setBusy(btn, true);
-      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/votes/delete_all`, {});
+      const r = await fetch(
+        `/api/mods/playtests/${encodeURIComponent(threadId)}/vote`,
+        {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        }
+      );
       const j = await (async () => { try { return await r.json(); } catch { return null; } })();
       if (r.ok) { showConfirmationMessage('All votes deleted.'); await refreshModal(); }
       else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
