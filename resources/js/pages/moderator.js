@@ -624,7 +624,7 @@ function wireAutocomplete(input, { kind, onPick }) {
 
   const list = document.createElement('div');
   list.className =
-    'ac-list absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur max-h-56 overflow-auto hidden';
+    'ac-list absolute left-0 right-0 top-full z-[9999] mt-1 rounded-lg border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur max-h-56 overflow-auto hidden';
   input.parentElement.appendChild(list);
 
   const inMapsPanel = !!input.closest(

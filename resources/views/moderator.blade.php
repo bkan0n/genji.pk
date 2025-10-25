@@ -29,7 +29,7 @@
       @else
         <div class="grid gap-6 lg:grid-cols-12">
           {{-- Left --}}
-          <div class="lg:col-span-8">
+          <div class="lg:col-span-8 relative z-20">
             {{-- Onglets niveau 1 --}}
             <div class="mb-6 flex flex-wrap gap-2" id="modTabs">
               <button
@@ -3536,7 +3536,7 @@
 
           {{-- Right: Activity --}}
           <aside class="lg:col-span-4">
-            <div class="sticky top-20 rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div class="sticky top-20 z-0 rounded-2xl border border-white/10 bg-white/5 p-6">
               <div class="mb-3 flex items-center justify-between">
                 <h3 class="font-semibold">Activity</h3>
                 <button
