@@ -229,7 +229,8 @@ const MARKERS = {
       'Map Data <---- INSERT YOUR MAP DATA HERE',
       'Map Data     <---- INSERT YOUR MAP DATA HERE"',
       'Map Data - 数据录入 <---- INSERT HERE / 在这输入',
-      '맵 데이터 <---- 입력은 여기에'
+      '맵 데이터 <---- 입력은 여기에',
+      'Map Data     <---- INSERT YOUR MAP DATA HERE',
     ],
     credits: [
       '☞ Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入',
@@ -237,6 +238,7 @@ const MARKERS = {
       '<tx0C00000000044B55><fg0FFFFFFF> Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE',
       'Credits here - 作者名字 <---- INSERT HERE / 在这入力',
       'Credits here - 作者名字 <---- INSERT HERE / 在这输入',
+      'Credits here <---- INSERT YOUR NAME HERE',
     ],
     addons: [
       'Addon | Custom difficulty hud  - 自定义难度hud <---- INSERT HERE / 在这输入',
