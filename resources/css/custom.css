@@ -889,6 +889,10 @@ img.avatar-loaded{animation:none!important;background:none!important}
 #playtestModalInner .ptmod-card .ptmod-actions>*{flex:1 1 120px}
 #playtestModalInner .ptmod-card .ptmod-btn{width:100%}
 @media (max-width:420px){#playtestModalInner .ptmod-grid{grid-template-columns:1fr}}
+/* Chevron */
+@keyframes pt-chev-bob {0%, 100% { transform: translateY(0); }50%      { transform: translateY(4px); }}
+.pt-chev-bob { animation: pt-chev-bob 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {.pt-chev-bob { animation: none; }}
 /* ─── Help submenus ───────────────── */
 #helpTabs .help-group { position: relative; }
 #helpTabs .help-submenu{position: absolute;right: 0;left: auto;bottom: calc(100% + 8px);z-index: 60;width: max-content;

@@ -3453,6 +3453,144 @@ function closeGlobalDropdown() {
 /* =========================
    HELPERS PLAYTEST MODAL
    ========================= */
+function setupPlaytestCtaDown() {
+  const wrap   = document.getElementById('ptCtaWrap');
+  const btn    = document.getElementById('ptCtaDown');
+  const hint   = document.getElementById('ptDifficultySection');
+  if (!wrap || !btn) return;
+
+  if (wrap.__ctaDownCleanup) wrap.__ctaDownCleanup();
+
+  const preferred = document.getElementById('playtestModalInner');
+  const rootModal = document.getElementById('playtestModal');
+  const TH = 8;
+
+  const isScrollable = (el) => {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    const oy = cs.overflowY;
+    const scrollableAxis = /(auto|scroll|overlay)/.test(oy);
+    return scrollableAxis && (el.scrollHeight - el.clientHeight > 1);
+  };
+
+  const findScrollPort = (startEl) => {
+    if (isScrollable(preferred)) return preferred;
+    let p = startEl?.parentElement;
+    while (p && p !== document.body) {
+      if (isScrollable(p)) return p;
+      p = p.parentElement;
+    }
+    if (isScrollable(rootModal)) return rootModal;
+    return document.scrollingElement || document.documentElement;
+  };
+
+  const scroller = findScrollPort(wrap);
+
+  const show = () => {
+    wrap.classList.remove('opacity-0', 'translate-y-1', 'pointer-events-none', 'hidden');
+    btn.tabIndex = 0;
+  };
+  const hide = () => {
+    wrap.classList.add('opacity-0', 'translate-y-1', 'pointer-events-none');
+    btn.tabIndex = -1;
+  };
+
+  let lastVisible;
+  const computeVisibility = () => {
+    let sh, ch, st;
+    const isDoc = (scroller === document.scrollingElement) || (scroller === document.documentElement);
+    if (isDoc) {
+      sh = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      );
+      ch = window.innerHeight;
+      st = window.pageYOffset || document.documentElement.scrollTop || 0;
+    } else {
+      sh = scroller.scrollHeight;
+      ch = scroller.clientHeight;
+      st = scroller.scrollTop;
+    }
+    const canScroll = sh - ch > TH;
+    const atBottom  = st >= (sh - ch - TH);
+    return canScroll && !atBottom;
+  };
+
+  const update = () => {
+    const next = computeVisibility();
+    if (next === lastVisible) return;
+    lastVisible = next;
+    next ? show() : hide();
+  };
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { update(); ticking = false; });
+  };
+  const onResize = () => update();
+
+  const isDoc = (scroller === document.scrollingElement) || (scroller === document.documentElement);
+  if (isDoc) window.addEventListener('scroll', onScroll, { passive: true });
+  else scroller.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onResize);
+
+  const ro = ('ResizeObserver' in window) ? new ResizeObserver(update) : null;
+  if (ro) {
+    if (isDoc) {
+      ro.observe(document.body);
+    } else {
+      ro.observe(scroller);
+      scroller.lastElementChild && ro.observe(scroller.lastElementChild);
+    }
+  }
+  const mo = new MutationObserver(update);
+  mo.observe(isDoc ? document.body : scroller, { childList: true, subtree: true });
+
+  const timers = [
+    setTimeout(update, 0),
+    setTimeout(update, 120),
+    setTimeout(update, 400),
+  ];
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const pad = 12;
+
+    if (isDoc) {
+      if (hint) {
+        const top = hint.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0) - pad;
+        window.scrollTo({ top, behavior: 'smooth' });
+      } else {
+        window.scrollBy({ top: Math.max(200, window.innerHeight * 0.8), behavior: 'smooth' });
+      }
+      return;
+    }
+
+    if (hint) {
+      const top =
+        hint.getBoundingClientRect().top
+        - scroller.getBoundingClientRect().top
+        + scroller.scrollTop
+        - pad;
+      scroller.scrollTo({ top, behavior: 'smooth' });
+    } else {
+      scroller.scrollBy({ top: Math.max(200, scroller.clientHeight * 0.8), behavior: 'smooth' });
+    }
+  });
+
+  update();
+
+  wrap.__ctaDownCleanup = () => {
+    timers.forEach(clearTimeout);
+    if (isDoc) window.removeEventListener('scroll', onScroll);
+    else scroller.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', onResize);
+    mo.disconnect();
+    ro && ro.disconnect();
+  };
+}
 
 function _difficultyColors() {
   return [
@@ -4153,31 +4291,59 @@ function hidePlaytestModal() {
   }, DURATION + 20);
 }
 
-function animatePtOpen() {
+function animatePtOpen({ animate = false } = {}) {
   const modal = document.getElementById('playtestModal');
   const inner = document.getElementById('playtestModalInner');
   if (!modal || !inner) return;
 
+  const backdrop = modal.querySelector('.playtest-modal-backdrop');
+
   modal.classList.remove('hidden');
+
+  if (!animate) {
+    const els = [modal, inner, backdrop].filter(Boolean);
+    els.forEach(el => { el.style.transition = 'none'; });
+
+    modal.classList.add('pt-anim', 'pt-in');
+    inner.classList.add('pt-anim', 'pt-in');
+
+    if (backdrop) {
+      backdrop.classList.add('pt-in');
+      backdrop.style.opacity = '1';
+      backdrop.style.pointerEvents = 'auto';
+    }
+
+    void modal.offsetWidth;
+    els.forEach(el => { el.style.transition = ''; });
+    return;
+  }
+
   modal.classList.add('pt-anim');
   inner.classList.add('pt-anim');
-
-  modal.offsetWidth;
-
   requestAnimationFrame(() => {
     modal.classList.add('pt-in');
     inner.classList.add('pt-in');
+    if (backdrop) backdrop.classList.add('pt-in');
   });
 }
 
-function animatePtClose(duration = 240) {
+function animatePtClose({ animate = false, duration = 240 } = {}) {
   const modal = document.getElementById('playtestModal');
   const inner = document.getElementById('playtestModalInner');
   if (!modal) return;
+  const backdrop = modal.querySelector('.playtest-modal-backdrop');
+
+  if (!animate) {
+    modal.classList.remove('pt-in');
+    inner?.classList.remove('pt-in');
+    backdrop?.classList.remove('pt-in');
+    modal.classList.add('hidden');
+    if (inner) inner.innerHTML = '';
+    return;
+  }
 
   modal.classList.remove('pt-in');
-  if (inner) inner.classList.remove('pt-in');
-
+  inner?.classList.remove('pt-in');
   setTimeout(() => {
     modal.classList.add('hidden');
     if (inner) inner.innerHTML = '';
@@ -5023,7 +5189,9 @@ function renderPlaytestModal(data) {
       : `<span class="rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-200">—</span>`;
 
   const votersMount = `
-    <div id="votersMount" class="mt-3 max-h-[300px] w-full overflow-y-auto overflow-x-hidden pr-1 pt-2">
+    <div id="votersMount"
+     class="mt-3 max-h-[300px] w-full overflow-y-hidden overflow-x-hidden pr-1 pt-2 overscroll-contain"
+     style="scrollbar-gutter: stable;">
       <div class="max-h-[160px] overflow-hidden">
         <div class="space-y-2.5" aria-busy="true" aria-live="polite">
           <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>
@@ -5159,8 +5327,20 @@ function renderPlaytestModal(data) {
       </aside>
     </div>
 
+    <div id="ptCtaWrap"
+        class="sticky bottom-3 z-[5] flex justify-center transition-all duration-200 opacity-0 translate-y-1 pointer-events-none">
+      <button
+        id="ptCtaDown"
+        type="button"
+        class="pointer-events-auto cursor-pointer inline-flex items-center justify-center rounded-full border border-white/10 bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-3 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/60 pt-chev-bob">
+        <svg class="h-5 w-5 text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M7.41 8.59 12 13.17 16.59 8.59 18 10l-6 6-6-6z"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- CONTAINER 4 : difficulty rating -->
-    <div class="mt-4 rounded-2xl border border-white/10 bg-white/5">
+    <div id="ptDifficultySection" class="mt-4 rounded-2xl border border-white/10 bg-white/5">
       <div class="flex items-center justify-between gap-3 border-b border-white/10 p-3">
         <div>
           <div class="text-sm font-semibold text-zinc-100">${t('playtest.difficulty_rating')}</div>
@@ -5255,7 +5435,8 @@ async function initializePlaytestCards(userId) {
         if (!data) return;
 
         modalInner.innerHTML = renderPlaytestModal(data);
-        animatePtOpen();
+        animatePtOpen({ animate: false });
+        try { setupPlaytestCtaDown(); } catch {}
 
         registerMapCodeCopyTargets(modal);
         setupRatingDropdown();
