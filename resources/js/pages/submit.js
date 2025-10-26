@@ -5190,8 +5190,7 @@ function renderPlaytestModal(data) {
 
   const votersMount = `
     <div id="votersMount"
-     class="mt-3 max-h-[300px] w-full overflow-y-hidden overflow-x-hidden pr-1 pt-2 overscroll-contain"
-     style="scrollbar-gutter: stable;">
+     class="mt-3 max-h-[300px] w-full overflow-y-hidden overflow-x-hidden pr-1 pt-2 overscroll-contain scrollbar-stable">
       <div class="max-h-[160px] overflow-hidden">
         <div class="space-y-2.5" aria-busy="true" aria-live="polite">
           <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>

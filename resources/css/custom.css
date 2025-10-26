@@ -840,6 +840,8 @@ img.avatar-loaded{animation:none!important;background:none!important}
 }
 
 /* ================= SUBMIT ================= */
+.scrollbar-stable { scrollbar-gutter: stable; }
+@supports (scrollbar-gutter: stable both-edges) {.scrollbar-stable { scrollbar-gutter: stable both-edges; }}
 #submitRecordSection{will-change:opacity,transform}
 #submitRecordSection.sr-enter{opacity:0;transform:translateY(12px) scale(.985);filter:saturate(.9)}
 #submitRecordSection.sr-enter.sr-in{opacity:1;transform:none;filter:none;transition:transform .42s cubic-bezier(.22,.68,0,1),opacity .36s ease,filter .36s ease}
