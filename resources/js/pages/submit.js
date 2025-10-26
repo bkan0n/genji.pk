@@ -132,19 +132,25 @@ function __enter(el) {
     el.classList.add('x-enter-active');
     el.classList.remove('x-enter');
   });
-  setTimeout(() => {
-    el.classList.remove('x-enter-active');
-  }, 260);
+  const done = () => {
+    el.classList.remove('x-enter-active', 'x-anim');
+    el.removeEventListener('transitionend', done);
+  };
+  el.addEventListener('transitionend', done);
+  setTimeout(done, 400);
 }
-function __exit(el, done) {
-  if (!el) return done && done();
+function __exit(el, after) {
+  if (!el) { after && after(); return; }
   el.classList.add('x-anim', 'x-exit');
   requestAnimationFrame(() => el.classList.add('x-exit-active'));
-  setTimeout(() => {
+  const done = () => {
     __hide(el);
-    el.classList.remove('x-exit', 'x-exit-active');
-    done && done();
-  }, 220);
+    el.classList.remove('x-exit', 'x-exit-active', 'x-anim');
+    el.removeEventListener('transitionend', done);
+    after && after();
+  };
+  el.addEventListener('transitionend', done);
+  setTimeout(done, 320);
 }
 
 /* =========================
@@ -6422,6 +6428,803 @@ document.addEventListener(
   },
   true
 );
+
+/* =========================
+   HELP – Toggle submenus & modal listeners
+   ========================= */
+(function setupHelpMenus(){
+  const get = (id) => document.getElementById(id);
+  const groups = [
+    { main: 'helpMapInfoMainBtn', sub: 'helpMapInfoSub' },
+    { main: 'helpRankMainBtn',    sub: 'helpRankSub'    },
+  ];
+
+  const closeAll = () => groups.forEach(g=>{
+    const main = get(g.main), sub = get(g.sub);
+    if (main && sub){
+      sub.classList.add('hidden');
+      sub.style.display = 'none';
+      main.setAttribute('aria-expanded','false');
+    }
+  });
+  closeAll();
+
+  groups.forEach(g=>{
+    const main = get(g.main), sub = get(g.sub);
+    if (!main || !sub) return;
+    main.addEventListener('click', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      const willOpen = sub.classList.contains('hidden');
+      closeAll();
+      if (willOpen){
+        sub.classList.remove('hidden');
+        sub.style.display = '';
+        main.setAttribute('aria-expanded','true');
+      }
+    });
+  });
+
+  document.addEventListener('click', (e)=>{
+    const wrap = get('helpTabs');
+    if (!wrap?.contains(e.target)) closeAll();
+  });
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape') closeAll();
+  });
+
+  // Map submission info
+  get('helpHowToSubmitBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('how_to_submit'); });
+  get('helpPlaytestingInfoBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('playtesting_info'); });
+  (get('helpDifficultyTechsInfoBtn') || get('helpDifficultyInfoBtn'))?.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('difficulty_techs_info');
+  });
+
+  // Rank promotion
+  get('helpRankHowToSubmitBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('rank_how_to_submit'); });
+  get('helpRankSubmissionRulesBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('rank_submission_rules'); });
+  get('helpRankInfoThresholdsBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('rank_info_thresholds'); });
+  get('helpMedalsInfoThresholdsBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeAll(); openHelpModal('rank_medals_thresholds'); });
+})();
+
+(function extendHelpTitles(){
+  const originalOpen = openHelpModal;
+  window.openHelpModal = function(kind='how_to_submit'){
+    const titleByKind = {
+      how_to_submit: t?.('help_modal.how_to_submit.title') || 'How to submit',
+      playtesting_info: t?.('help_modal.playtesting_info.title') || 'Playtesting Info',
+      difficulty_techs_info: t?.('help_modal.difficulty_techs_info.title') || 'Difficulty & Techs',
+
+      rank_how_to_submit: t?.('help_modal.rank_promotion.how_to_submit.title') || 'Rank promotion · How to submit?',
+      rank_submission_rules: t?.('help_modal.rank_promotion.submission_rules.title') || 'Rank promotion · Submission Rules',
+      rank_info_thresholds: t?.('help_modal.rank_promotion.rank_info_thresholds.title') || 'Rank info & Thresholds',
+      rank_medals_thresholds: t?.('help_modal.rank_promotion.medals_info_thresholds.title') || 'Medals info & Thresholds',
+    };
+
+    const modalTitle = document.getElementById('helpModalTitle');
+    if (modalTitle) modalTitle.textContent = titleByKind[kind] || (t?.('help_modal.common.title') || 'Help');
+    return originalOpen(kind);
+  };
+})();
+
+/* =========================
+   HELPERS MODALS BUTTONS
+   ========================= */
+function openHelpModal(kind = 'how_to_submit') {
+  const modal = document.getElementById('helpModal');
+  const inner = document.getElementById('helpModalInner');
+  const title = document.getElementById('helpModalTitle');
+  const body  = document.getElementById('helpModalBody');
+  const closeBtn = document.getElementById('helpModalClose');
+  if (!modal || !inner || !title || !body || !closeBtn) return;
+
+  const titleByKind = {
+    how_to_submit: t?.('help_modal.how_to_submit.title') || 'How to submit',
+    playtesting_info: t?.('help_modal.playtesting_info.title') || 'Playtesting Info',
+    difficulty_techs_info: t?.('help_modal.difficulty_techs_info.title') || 'Difficulty & Techs',
+  };
+  title.textContent = titleByKind[kind] || (t?.('help_modal.common.title') || 'Help');
+
+  closeBtn.textContent = t?.('help_modal.common.close_label') || 'Close';
+  body.innerHTML = renderMapHelpContent(kind);
+
+  const isRank = typeof kind === 'string' && /^rank_/.test(kind);
+  body.innerHTML = isRank ? renderRankHelpContent(kind) : renderMapHelpContent(kind);
+
+  modal.classList.remove('hidden');
+  inner.classList.remove('hidden');
+  __enter(inner);
+
+  const stopInside = (e) => e.stopPropagation();
+  inner.addEventListener('click', stopInside);
+
+  const close = () => {
+    inner.removeEventListener('click', stopInside);
+    closeHelpModal();
+  };
+
+  setTimeout(() => {
+    modal.querySelector('.help-modal-backdrop')?.addEventListener('click', close, { once: true });
+    closeBtn.addEventListener('click', close, { once: true });
+
+    const onEsc = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); close(); document.removeEventListener('keydown', onEsc, true); }
+    };
+    document.addEventListener('keydown', onEsc, true);
+  }, 0);
+}
+
+{
+  const diffBtn = document.getElementById('helpDifficultyTechsInfoBtn') || document.getElementById('helpDifficultyInfoBtn');
+  diffBtn?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation(); openHelpModal('difficulty_techs_info');
+  });
+}
+
+function closeHelpModal() {
+  const modal = document.getElementById('helpModal');
+  const inner = document.getElementById('helpModalInner');
+  if (!modal || !inner) return;
+  __exit(inner, () => modal.classList.add('hidden'));
+}
+
+/* =========================
+   RANK PROMOTION – content renderer
+   ========================= */
+function renderRankHelpContent(kind) {
+  const tf = (key, fb) => (typeof t === 'function' ? (t(key) ?? fb) : fb);
+
+  const li = (txt) => `
+    <li class="help-li">
+      <span class="dot"></span>
+      <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+    </li>
+  `;
+  const card = (title, content) => `
+    <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.03] p-4 sm:p-5 space-y-2">
+      <div class="flex items-center gap-2">
+        <svg class="h-4 w-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/></svg>
+        <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+      </div>
+      ${content}
+    </section>
+  `;
+  const callout = (text) => `
+    <div class="rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-200 px-3 py-2 text-sm font-medium leading-relaxed">
+      ${text}
+    </div>
+  `;
+
+  if (kind === 'rank_how_to_submit') {
+    const title = tf('help_modal.rank_promotion.how_to_submit.title', 'Rank promotion · How to submit?');
+
+    const intro = callout(
+      tf('help_modal.rank_promotion.how_to_submit.intro',
+         'To request a rank promotion, you must submit a completion (“record”) on a valid map and provide a quality rating.')
+    );
+
+    const req = card(
+      tf('help_modal.rank_promotion.how_to_submit.requirements.title', 'Requirements'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.rank_promotion.how_to_submit.requirements.map_in_pool',
+                  'Complete a Genji Parkour map that is in the current map pool.'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.requirements.map_code_note',
+                  "Note: Maps that aren't currently accepted won't appear in the map code field."))}
+        </ul>
+      `
+    );
+
+    const steps = card(
+      tf('help_modal.rank_promotion.how_to_submit.steps.title', 'Steps'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.open_tab','Open the “Submit completion” tab.'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.enter_code','Enter the map code and your record time.'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.upload_screenshot','Upload a screenshot (required) and optionally a video URL.'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.select_quality','Select a quality rating (1–6).'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.submit','Click “Submit record”.'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.verification','Your submission will go through a verification process.'))}
+          ${li(tf('help_modal.rank_promotion.how_to_submit.steps.notification',"Once verified, you'll receive a notification."))}
+        </ul>
+      `
+    );
+
+    const quality = card(
+      tf('help_modal.rank_promotion.how_to_submit.quality.title','Quality rating scale'),
+      `
+        <div class="grid gap-2 sm:grid-cols-2">
+          <div class="pt-req"><span>${tf('help_modal.rank_promotion.how_to_submit.quality.six','6: Excellent')}</span></div>
+          <div class="pt-req"><span>${tf('help_modal.rank_promotion.how_to_submit.quality.five','5: Great')}</span></div>
+          <div class="pt-req"><span>${tf('help_modal.rank_promotion.how_to_submit.quality.four','4: Good')}</span></div>
+          <div class="pt-req"><span>${tf('help_modal.rank_promotion.how_to_submit.quality.three','3: Average')}</span></div>
+          <div class="pt-req"><span>${tf('help_modal.rank_promotion.how_to_submit.quality.two','2: Subpar')}</span></div>
+          <div class="pt-req"><span>${tf('help_modal.rank_promotion.how_to_submit.quality.one','1: Poor')}</span></div>
+        </div>
+      `
+    );
+
+    return `
+      <div class="space-y-4">
+        ${intro}
+        ${req}
+        ${steps}
+        ${quality}
+      </div>
+    `;
+  }
+
+  if (kind === 'rank_submission_rules') {
+    const tf = (key, fb) => (typeof t === 'function' ? (t(key) ?? fb) : fb);
+
+    const li = (txt) => `
+      <li class="help-li">
+        <span class="dot"></span>
+        <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+      </li>
+    `;
+    const card = (title, content) => `
+      <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.03] p-4 sm:p-5 space-y-2">
+        <div class="flex items-center gap-2">
+          <svg class="h-4 w-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/></svg>
+          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+        </div>
+        ${content}
+      </section>
+    `;
+    const warn = (text) => `
+      <div class="rounded-lg border border-amber-400/30 bg-amber-400/10 text-amber-200 px-3 py-2 text-sm font-medium leading-relaxed">
+        ${text}
+      </div>
+    `;
+
+    const completion = card(
+      tf('help_modal.rank_promotion.submission_rules.completion.title', 'Completion Requirements/Guidelines'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.rank_promotion.submission_rules.completion.li_code_match',
+                  'Map code in the screenshot must match the map code in the bot.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.completion.li_time_display',
+                  'Time must be displayed in either the Top 5 leaderboard or as the announcement in the middle of the screen. For video submissions, it must show both.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.completion.li_no_edit_map',
+                  'You cannot edit the map in any way using Custom Game settings, Workshop Settings, or any other Workshop code. This includes but is not limited to changing tech bans, gravity, etc.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.completion.li_no_scripts',
+                  'You are not allowed to use scripts, macros, or anything similar to complete any portion of a map.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.completion.li_no_banned_tech',
+                  'You may not use a banned tech (restricted via map author / listed in @GenjiBot#9209) where the ban is non-functional due to Workshop bugs.'))}
+        </ul>
+      `
+    );
+
+    const records = card(
+      tf('help_modal.rank_promotion.submission_rules.records.title', 'Records Only'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.rank_promotion.submission_rules.records.li_time_visible',
+                  'Time must be fully visible from 0.00 to the finish. Do not fade in or out while the timer is running.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.records.li_video_required',
+                  'Video proof is required for World Records and Medals.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.records.li_no_cuts',
+                  'Cuts in the video are not allowed (between 0.00 and finish).'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.records.li_sound_not_required',
+                  'Game sound is not required.'))}
+          ${li(tf('help_modal.rank_promotion.submission_rules.records.li_editing_ok_but_no_interfere',
+                  'Editing before and after is allowed, but it cannot interfere with the timer or any ability to validate the submission.'))}
+        </ul>
+      `
+    );
+
+    const disclaimer = warn(
+      tf('help_modal.rank_promotion.submission_rules.reserve_rights',
+        'Senseis reserve the right to deny any submission for any reason, regardless if it is listed here or not.')
+    );
+
+    return `
+      <div class="space-y-4">
+        ${completion}
+        ${records}
+        ${disclaimer}
+      </div>
+    `;
+  }
+
+  if (kind === 'rank_info_thresholds') {
+    const info = card(
+      tf('help_modal.rank_promotion.rank_info_thresholds.info.title','Ranks Info'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.rank_promotion.rank_info_thresholds.info.li_no_order',
+                  'Ranks do not need to be acquired in order.'))}
+          ${li(tf('help_modal.rank_promotion.rank_info_thresholds.info.li_requirement',
+                  'To receive a rank you must complete the required amount of maps for that difficulty/rank.'))}
+          ${li(tf('help_modal.rank_promotion.rank_info_thresholds.info.li_thresholds',
+                  'See chart below for rank thresholds.'))}
+        </ul>
+      `
+    );
+
+    const F = (k, fb) => tf(`filters.${k}`, fb);
+    const R = (k, p, fb) => tf(`help_modal.rank_promotion.rank_info_thresholds.rows.${k}.${p}`, fb);
+    const CL = tf('help_modal.rank_promotion.rank_info_thresholds.table.completions_label','completions');
+    const NA = tf('help_modal.rank_promotion.rank_info_thresholds.table.na','N/A');
+
+    const ranks = [
+      { key:'ninja',        diff:F('beginner','Beginner'),  count:null, img:R('ninja','image','/assets/ranks/ninja.webp') },
+      { key:'jumper',       diff:F('easy','Easy'),          count:10,   img:R('jumper','image','/assets/ranks/jumper.webp') },
+      { key:'skilled',      diff:F('medium','Medium'),      count:10,   img:R('skilled','image','/assets/ranks/skilled.webp') },
+      { key:'pro',          diff:F('hard','Hard'),          count:10,   img:R('pro','image','/assets/ranks/pro.webp') },
+      { key:'master',       diff:F('very_hard','Very Hard'),count:10,   img:R('master','image','/assets/ranks/master.webp') },
+      { key:'grand_master', diff:F('extreme','Extreme'),    count:7,    img:R('grand_master','image','/assets/ranks/grand_master.webp') },
+      { key:'god',          diff:F('hell','Hell'),          count:3,    img:R('god','image','/assets/ranks/god.webp') },
+    ];
+
+    const cardRank = (r) => `
+      <div class="rank-card">
+        <img src="${r.img}" alt="${R(r.key,'name',r.key)} badge" class="rank-img" loading="lazy">
+        <div class="rank-name">${R(r.key,'name',r.key)}</div>
+        <div class="rank-diff">${r.diff}</div>
+        <div class="rank-count">
+          ${r.count == null
+            ? `<span class="opacity-70">— ${NA}</span>`
+            : `<strong class="text-zinc-100">${r.count}</strong> <span class="opacity-80">${CL}</span>`}
+        </div>
+      </div>
+    `;
+
+    const grid = card(
+      tf('help_modal.rank_promotion.rank_info_thresholds.table.title','Rank & Difficulty chart'),
+      `<div class="rank-grid">${ranks.map(cardRank).join('')}</div>`
+    );
+
+    return `<div class="space-y-4">${info}${grid}</div>`;
+  }
+
+  if (kind === 'rank_medals_thresholds') {
+    const info = card(
+      tf('help_modal.rank_promotion.medals_info_thresholds.info.title','Medals Info'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.rank_promotion.medals_info_thresholds.info.li_plus_explain',
+                  'To get a +, ++ or +++ rank, you must obtain the same amount of Bronze, Silver, or Gold medals as the rank normally requires (see chart below).'))}
+          ${li(tf('help_modal.rank_promotion.medals_info_thresholds.info.li_time_and_video_required',
+                  'You must post a completion which includes a time and a video URL showing your run.'))}
+          ${li(tf('help_modal.rank_promotion.medals_info_thresholds.info.li_icon_next_to_name',
+                  'You will get an icon next to your name if you have a plus (+, ++, +++) rank!'))}
+          ${li(tf('help_modal.rank_promotion.medals_info_thresholds.info.li_auto_receive',
+                  "Once verified, you'll automatically receive your medal."))}
+          ${li(tf('help_modal.rank_promotion.medals_info_thresholds.info.li_retroactive_credit',
+                  'If medals are added to a map after you have already submitted, you will still get credit.'))}
+        </ul>
+      `
+    );
+
+    const D = {
+      beginner: tf('filters.beginner','Beginner'),
+      easy: tf('filters.easy','Easy'),
+      medium: tf('filters.medium','Medium'),
+      hard: tf('filters.hard','Hard'),
+      very_hard: tf('filters.very_hard','Very Hard'),
+      extreme: tf('filters.extreme','Extreme'),
+      hell: tf('filters.hell','Hell'),
+    };
+    const DIFF_KEYS = ['beginner','easy','medium','hard','very_hard','extreme','hell'];
+
+    const COUNTS = { beginner: null, easy: 10, medium: 10, hard: 10, very_hard: 10, extreme: 7, hell: 3 };
+
+    const medalImg = (k) =>
+      tf(`help_modal.rank_promotion.medals_info_thresholds.images.${k}`, `/assets/medals/${k}.png`);
+
+    const ML = tf('help_modal.rank_promotion.medals_info_thresholds.table.completions_label','medals');
+    const NA = tf('help_modal.rank_promotion.medals_info_thresholds.table.na','N/A');
+
+    const MEDALS = [
+      { key:'gold',   label: tf('help_modal.rank_promotion.medals_info_thresholds.table.medal_gold','Gold'),   src: medalImg('gold')   },
+      { key:'silver', label: tf('help_modal.rank_promotion.medals_info_thresholds.table.medal_silver','Silver'), src: medalImg('silver') },
+      { key:'bronze', label: tf('help_modal.rank_promotion.medals_info_thresholds.table.medal_bronze','Bronze'), src: medalImg('bronze') },
+    ];
+
+    const head = DIFF_KEYS.map(k => `<div class="tech-hcell">${D[k]}</div>`).join('');
+    const cell = (count) =>
+      `<div class="tech-cell text-sm text-zinc-200">${count==null ? `<span class="opacity-70">${NA}</span>` : `<strong class="text-zinc-100">${count}</strong> <span class="opacity-80">${ML}</span>`}</div>`;
+
+    const rows = MEDALS.map(m => `
+      <div class="tech-rlabel flex items-center gap-2">
+        <img src="${m.src}" alt="${m.label}" class="h-5 w-5 object-contain" loading="lazy">
+        <span>${m.label}</span>
+      </div>
+      ${DIFF_KEYS.map(k => cell(COUNTS[k])).join('')}
+    `).join('');
+
+    const table = card(
+      tf('help_modal.rank_promotion.medals_info_thresholds.table.title','Medal thresholds by difficulty'),
+      `
+        <div class="tech-grid">
+          <div></div>${head}
+          ${rows}
+        </div>
+      `
+    );
+
+    return `<div class="space-y-4">${info}${table}</div>`;
+  }
+
+  return `
+    <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
+      ${tf('help_modal.common.soon','Coming soon.')}
+    </div>
+  `;
+}
+
+/* =========================
+   HELPERS CONTENT RENDER
+   ========================= */
+function renderMapHelpContent(kind) {
+  const tf = (key, fallback) => (typeof t === 'function' ? (t(key) ?? fallback) : fallback);
+
+  // ── PLAYTESTING INFO ─────────────────────────────────────────
+  if (kind === 'playtesting_info') {
+    const li = (txt) => `
+      <li class="help-li">
+        <span class="dot"></span>
+        <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+      </li>
+    `;
+
+    const card = (title, content) => `
+      <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.03] p-4 sm:p-5 space-y-2">
+        <div class="flex items-center gap-2">
+          <svg class="h-4 w-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/></svg>
+          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+        </div>
+        ${content}
+      </section>
+    `;
+
+    const callout = (text) => `
+      <div class="rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-200 px-3 py-2 text-sm font-medium leading-relaxed">
+        ${text}
+      </div>
+    `;
+
+    const eligibility = callout(
+      tf('help_modal.playtesting_info.must_submit_completion',
+         'You must have submitted a completion for the map to vote!')
+    );
+
+    const rules = card(
+      tf('help_modal.playtesting_info.rules.title', 'Playtesting rules'),
+      `
+        <ul class="mt-1 space-y-2">
+          ${li(tf('help_modal.playtesting_info.rules.needs_votes_and_completions',
+                  'Each difficulty requires a specific amount of votes and completion submissions.'))}
+          ${li(tf('help_modal.playtesting_info.rules.creator_cannot_vote',
+                  'Creators cannot vote for their own map; their map submission contains their best estimate of difficulty.'))}
+          ${li(tf('help_modal.playtesting_info.rules.playtesters_give_tips',
+                  'Playtesters will provide tips to the creator on how to improve the map, or what must change if there are glaring issues.'))}
+        </ul>
+      `
+    );
+
+    const V  = (k, fb) => tf(`help_modal.playtesting_info.votes.${k}`, fb);
+    const VC = (k, fb) => tf(`help_modal.playtesting_info.votes.counts.${k}`, fb);
+    const voteRow = (lk, lf, ck, cf) => `
+      <div class="pt-req">
+        <span class="text-sm">${V(lk, lf)}</span>
+        <strong class="text-sm">${VC(ck, cf)}</strong>
+      </div>
+    `;
+
+    const votes = card(
+      V('title','Required votes'),
+      `
+        <div class="grid gap-2">
+          ${voteRow('beginner_to_hard','Beginner → Hard','beginner_to_hard',`5 ${V('votes','votes')}`)}
+          ${voteRow('very_hard','Very Hard','very_hard',`3 ${V('votes','votes')}`)}
+          ${voteRow('extreme','Extreme','extreme',`2 ${V('votes','votes')}`)}
+          ${voteRow('hell','Hell','hell',`1 ${V('vote','vote')}`)}
+        </div>
+      `
+    );
+
+    const rulesAndVotes = `
+      <div class="grid gap-4 lg:grid-cols-5">
+        <div class="lg:col-span-3">${rules}</div>
+        <div class="lg:col-span-2">${votes}</div>
+      </div>
+    `;
+
+    const P  = (k, fb) => tf(`help_modal.playtesting_info.process.${k}`, fb);
+    const PS = (k, fb) => tf(`help_modal.playtesting_info.process.steps.${k}`, fb);
+    const PN = (k, fb) => tf(`help_modal.playtesting_info.process.notes.${k}`, fb);
+
+    const process = card(
+      P('title', 'Process'),
+      `
+      <div class="help-pt pt-grid">
+        <!-- Creation -->
+        <div class="pt-phase">
+          <div class="pt-phase-title">${P('creation','Creation Phase')}</div>
+          <div class="pt-card">
+            <div class="pt-step">${PS('map_is_made','Map is made')}</div>
+            <div class="pt-step">${PS('map_submission_form','Map submission form')}</div>
+            <div class="pt-note">${PN('change_only_by_sensei','Changing map details can only be done via a Sensei (restrictions, code, etc.).')}</div>
+          </div>
+        </div>
+
+        <div class="pt-arrow" aria-hidden="true"></div>
+
+        <!-- Testing -->
+        <div class="pt-phase">
+          <div class="pt-phase-title">${P('testing','Testing Phase')}</div>
+          <div class="pt-card">
+            <div class="pt-step">${PS('creator_suggests_difficulty','Creator suggests difficulty')}</div>
+            <div class="pt-step">${PS('testers_submit_completion','Testers submit completion')}</div>
+            <div class="pt-step">${PS('testers_vote_on_difficulty','Testers vote on difficulty')}</div>
+            <div class="pt-step">${PS('creator_finalizes_submission','Creator finalizes submission')}</div>
+          </div>
+        </div>
+
+        <div class="pt-arrow" aria-hidden="true"></div>
+
+        <!-- Verification -->
+        <div class="pt-phase">
+          <div class="pt-phase-title">${P('verification','Verification Phase')}</div>
+          <div class="pt-card">
+            <div class="pt-step">${PS('sensei_receive_submission_notification','Sensei receive submission notification')}</div>
+            <div class="pt-step flex items-center gap-2">
+              <span class="pt-chip pt-chip-accept">${PS('accept','accept')}</span>
+              <span class="pt-chip pt-chip-reject">${PS('reject','reject')}</span>
+            </div>
+            <div class="pt-step">${PS('map_sent_back_previous_step','Map is sent back to a previous step*')}</div>
+            <div class="pt-note">${PN('verification_removal','* Completions and votes may be removed at this step.')}</div>
+          </div>
+        </div>
+
+        <div class="pt-arrow" aria-hidden="true"></div>
+
+        <!-- Acceptance -->
+        <div class="pt-phase">
+          <div class="pt-phase-title">${P('acceptance','Acceptance')}</div>
+          <div class="pt-card">
+            <div class="pt-step">${PS('map_accepted','Map accepted')}</div>
+            <div class="pt-step">${PS('map_added_to_pool','Map added to map pool')}</div>
+            <div class="pt-step">${PS('testers_granted_completion_without_time','Testers granted completion (without time)')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+        <span class="inline-flex items-center gap-1">
+          <span class="pt-chip pt-chip-accept"> ${PS('accept','accept')} </span>
+          <span class="ml-1">= Sensei approval</span>
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <span class="pt-chip pt-chip-reject"> ${PS('reject','reject')} </span>
+          <span class="ml-1">= ${PS('map_sent_back_previous_step','Map is sent back to a previous step*')}</span>
+        </span>
+      </div>
+
+      <p class="mt-2 text-xs text-zinc-400">${PN('sensei_power','At any point, a Sensei has the ability to manually force any outcome or revert to any step.')}</p>
+      `
+    );
+
+    return `
+      <div class="space-y-4">
+        ${eligibility}
+        ${rulesAndVotes}
+        ${process}
+      </div>
+    `;
+  }
+
+  // ── HOW TO SUBMIT ─────────────────────────────────
+  if (kind === 'how_to_submit') {
+    const li = (txt) => `
+      <li class="help-li">
+        <span class="dot"></span>
+        <span class="text-sm text-zinc-200">${txt}</span>
+      </li>
+    `;
+
+    const section = (title, content) => `
+      <section class="helpsec rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.03] p-4 sm:p-5 space-y-2">
+        <div class="flex items-center gap-2">
+          <svg class="h-4 w-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/></svg>
+          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+        </div>
+        ${content}
+      </section>
+    `;
+
+    const callout = (text) => `
+      <div class="rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-200 px-3 py-2 text-sm">
+        ${text}
+      </div>
+    `;
+
+    const intro = `${tf('help_modal.how_to_submit.intro','This dialog walks you through every step of the “Submit map” section.') ? callout(tf('help_modal.how_to_submit.intro','This dialog walks you through every step of the “Submit map” section.')) : ''}`;
+    const meta = section(
+      tf('help_modal.how_to_submit.meta.title','1) Metadata (map & creators)'),
+      `<ul class="mt-1 space-y-1.5">
+        ${li(tf('help_modal.how_to_submit.meta.li_creator','Main creator: it is auto-filled from your session. You can change it (and add co-creators if the option is visible).'))}
+        ${li(tf('help_modal.how_to_submit.meta.li_code','Map code: click “Edit” next to the “Code” field. The code must be unique (we check if it already exists).'))}
+        ${li(tf('help_modal.how_to_submit.meta.li_name','Map name: click “Edit” next to “Map name” and pick a name via autocomplete.'))}
+        ${li(tf('help_modal.how_to_submit.meta.li_checkpoints','Checkpoints: click “Edit” and enter a strictly positive number.'))}
+      </ul>`
+    );
+    const required = section(
+      tf('help_modal.how_to_submit.required.title','2) Required fields'),
+      `<p class="text-sm text-zinc-300">${tf('help_modal.how_to_submit.required.p1','These fields must be provided before you can submit:')}</p>
+       <ul class="mt-2 space-y-1.5">
+        ${li(tf('help_modal.how_to_submit.required.li_difficulty','Difficulty: choose a value (Easy → Hell).'))}
+        ${li(tf('help_modal.how_to_submit.required.li_category','Category / Map type: choose a type (e.g., Classic, Increasing Difficulty).'))}
+        ${li(tf('help_modal.how_to_submit.required.li_mechanics','Mechanics: select at least one.'))}
+        ${li(tf('help_modal.how_to_submit.required.li_restrictions','Restrictions: select at least one.'))}
+       </ul>`
+    );
+    const medals = section(
+      tf('help_modal.how_to_submit.medals.title','3) Medals (optional but validated if present)'),
+      `<p class="text-sm text-zinc-300">${tf('help_modal.how_to_submit.medals.p1','You may define times (in seconds) for Gold, Silver, and Bronze.')}</p>
+       <div class="mt-2 rounded-md border border-white/10 bg-zinc-900/50 p-3 text-xs text-zinc-300">
+         <div class="font-medium mb-1">${tf('help_modal.how_to_submit.medals.li_rules','If you set one medal, you must set all three.')}</div>
+         <div class="grid gap-2 sm:grid-cols-3">
+           <div class="rounded-md border border-white/10 bg-white/5 px-2 py-1.5"><span class="text-amber-500 font-semibold">Bronze</span> &gt; <span class="text-zinc-200">Silver</span> &gt; <span class="text-yellow-300">Gold</span></div>
+           <div class="rounded-md border border-white/10 bg-white/5 px-2 py-1.5"><code class="text-xs text-zinc-200">${tf('help_modal.how_to_submit.medals.li_pattern','Format: 1–5 digits, optionally “.” and 1–2 decimals (e.g., 5550.23). Non-negative values.')}</code></div>
+           <div class="rounded-md border border-white/10 bg-white/5 px-2 py-1.5">${tf('help_modal.how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold (Bronze greater than Silver, which is greater than Gold).')}</div>
+         </div>
+       </div>`
+    );
+    const optional = section(
+      tf('help_modal.how_to_submit.optional.title','4) Optional'),
+      `<ul class="mt-1 space-y-1.5">
+        ${li(tf('help_modal.how_to_submit.optional.li_title','Title: short optional title (max 128 chars).'))}
+        ${li(tf('help_modal.how_to_submit.optional.li_banner','Custom banner: drag & drop or click to upload (JPG/PNG/WebP/AVIF), size ≤ 8MB. 16:9 recommended.'))}
+        ${li(tf('help_modal.how_to_submit.optional.li_description','Description: free text (if empty, “N/A” is shown).'))}
+        ${li(tf('help_modal.how_to_submit.optional.li_guide','Guide URL(s): one URL per line. The first valid URL is used.'))}
+       </ul>`
+    );
+    const submit = section(
+      tf('help_modal.how_to_submit.submit.title','5) Submit'),
+      `<ul class="mt-1 space-y-1.5">
+        ${li(tf('help_modal.how_to_submit.submit.li_validation','Click “Submit”. The form validates: main creator, unique code, map name, checkpoints > 0, difficulty, category, ≥1 mechanic and ≥1 restriction, and medal consistency if present.'))}
+        ${li(tf('help_modal.how_to_submit.submit.li_confirmation','On success, a confirmation toast appears and the form resets.'))}
+       </ul>`
+    );
+    const tips = section(
+      tf('help_modal.how_to_submit.tips.title','Tips'),
+      `<ul class="mt-1 space-y-1.5">
+        ${li(tf('help_modal.how_to_submit.tips.li_edit','Fields with an “Edit” button can be quickly corrected inline.'))}
+        ${li(tf('help_modal.how_to_submit.tips.li_guest','If you are not logged in, submission is locked and a “Login required” message is shown.'))}
+        ${li(tf('help_modal.how_to_submit.tips.li_support','If banner upload fails, try again (≤ 8MB) or contact support.'))}
+       </ul>`
+    );
+
+    return `
+      <div class="space-y-4">
+        ${intro}
+        ${meta}
+        ${required}
+        ${medals}
+        ${optional}
+        ${submit}
+        ${tips}
+      </div>
+    `;
+  }
+
+  // ── DIFFICULTY & TECHS INFO ───────────────────────────────────
+  if (kind === 'difficulty_techs_info') {
+    const tf = (key, fb) => (typeof t === 'function' ? (t(key) ?? fb) : fb);
+
+    const D = {
+      beginner:  tf('filters.beginner',  tf('help_modal.difficulty_techs_info.labels.beginner',  'Beginner')),
+      easy:      tf('filters.easy',      tf('help_modal.difficulty_techs_info.labels.easy',      'Easy')),
+      medium:    tf('filters.medium',    tf('help_modal.difficulty_techs_info.labels.medium',    'Medium')),
+      hard:      tf('filters.hard',      tf('help_modal.difficulty_techs_info.labels.hard',      'Hard')),
+      very_hard: tf('filters.very_hard', tf('help_modal.difficulty_techs_info.labels.very_hard', 'Very Hard')),
+      extreme:   tf('filters.extreme',   tf('help_modal.difficulty_techs_info.labels.extreme',   'Extreme')),
+      hell:      tf('filters.hell',      tf('help_modal.difficulty_techs_info.labels.hell',      'Hell')),
+    };
+    const DIFF_KEYS = ['beginner','easy','medium','hard','very_hard','extreme','hell'];
+
+    const T = (k, fb) => tf(`help_modal.difficulty_techs_info.techs.${k}`, fb);
+    const ROWS = [
+      { name: T('basics','Basics*'),         lv: [1,2,3,3,3,3,3] },
+      { name: T('bhop','Bhop**'),            lv: [0,1,2,3,3,3,3] },
+      { name: T('edge_climb','Edge Climb'),  lv: [0,1,2,3,3,3,3] },
+      { name: T('stall','Stall'),            lv: [0,0,1,2,3,3,3] },
+      { name: T('crouch_edge','Crouch Edge'),lv: [0,0,1,2,3,3,3] },
+      { name: T('save_climb','Save Climb'),  lv: [0,0,1,2,3,3,3] },
+      { name: T('distance_edge','Distance Edge'), lv: [0,0,0,1,2,3,3] },
+      { name: T('high_edge','High Edge'),    lv: [0,0,0,1,2,3,3] },
+      { name: T('multi_climb','Multi Climb'),lv: [0,0,0,0,1,2,3] },
+      { name: T('create_bhop','Create Bhop'),lv: [0,0,0,0,1,2,3] },
+    ];
+
+    const legendCard = (cls, title, text) => `
+      <div class="tech-legend-card">
+        <span class="tick ${cls}" aria-hidden="true">✓</span>
+        <div class="space-y-0.5">
+          <div class="text-sm font-semibold text-zinc-100">${title}</div>
+          <div class="text-xs text-zinc-300">${text}</div>
+        </div>
+      </div>
+    `;
+
+    const legend = `
+      <div class="grid gap-3 sm:grid-cols-3">
+        ${legendCard('lv1',
+          tf('help_modal.difficulty_techs_info.legend.lv1_title','Simple / priority use'),
+          tf('help_modal.difficulty_techs_info.legend.lv1_desc','Simple and easy use of the technique with priority on it.')
+        )}
+        ${legendCard('lv2',
+          tf('help_modal.difficulty_techs_info.legend.lv2_title','Common / sometimes advanced'),
+          tf('help_modal.difficulty_techs_info.legend.lv2_desc','Frequent use of the common technique and rare use of advanced forms.')
+        )}
+        ${legendCard('lv3',
+          tf('help_modal.difficulty_techs_info.legend.lv3_title','Advanced / demanding'),
+          tf('help_modal.difficulty_techs_info.legend.lv3_desc','Complex and demanding use of the technique.')
+        )}
+      </div>
+    `;
+
+    const headCells = DIFF_KEYS.map(k => `<div class="tech-hcell">${D[k]}</div>`).join('');
+    const mark = (n) => n
+      ? `<div class="tech-cell"><span class="tick ${n===1?'lv1':n===2?'lv2':'lv3'}" aria-hidden="true">✓</span></div>`
+      : `<div class="tech-cell"></div>`;
+
+    const rowsHtml = ROWS.map(r => `
+      <div class="tech-rlabel">${r.name}</div>
+      ${r.lv.map(mark).join('')}
+    `).join('');
+
+    const table = `
+      <div class="tech-grid">
+        <div></div>${headCells}
+        ${rowsHtml}
+      </div>
+    `;
+
+    const notes = `
+      <div class="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-zinc-300">
+        <div><span class="font-semibold">*</span> ${tf('help_modal.difficulty_techs_info.notes.star','Double Jump / Slide / Wall Climb')}</div>
+        <div><span class="font-semibold">**</span> ${tf('help_modal.difficulty_techs_info.notes.double_star','Late Bhop / First Bhop / Emote Savebhop / Deathbhop')}</div>
+      </div>
+    `;
+
+    const card = (title, content) => `
+      <section class="helpsec rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.03] p-4 sm:p-5 space-y-3">
+        <div class="flex items-center gap-2">
+          <svg class="h-4 w-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/></svg>
+          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+        </div>
+        ${content}
+      </section>
+    `;
+
+    return `
+      <div class="space-y-4">
+        ${card(tf('help_modal.difficulty_techs_info.legend_title','Legend'), legend)}
+        ${card(tf('help_modal.difficulty_techs_info.matrix_title','Techniques by difficulty'), table + notes)}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
+      ${tf('help_modal.common.soon','Coming soon.')}
+    </div>
+  `;
+}
+
+document.getElementById('helpHowToSubmitBtn')?.addEventListener('click', (e) => {
+  e.preventDefault(); e.stopPropagation(); openHelpModal('how_to_submit');
+});
+document.getElementById('helpPlaytestingInfoBtn')?.addEventListener('click', (e) => {
+  e.preventDefault(); e.stopPropagation(); openHelpModal('playtesting_info');
+});
+document.getElementById('helpDifficultyTechsInfoBtn')?.addEventListener('click', (e) => {
+  e.preventDefault(); e.stopPropagation(); openHelpModal('difficulty_techs_info');
+});
 
 /* =========================
    GLOBAL INITS

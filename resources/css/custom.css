@@ -889,6 +889,72 @@ img.avatar-loaded{animation:none!important;background:none!important}
 #playtestModalInner .ptmod-card .ptmod-actions>*{flex:1 1 120px}
 #playtestModalInner .ptmod-card .ptmod-btn{width:100%}
 @media (max-width:420px){#playtestModalInner .ptmod-grid{grid-template-columns:1fr}}
+/* ─── Help submenus ───────────────── */
+#helpTabs .help-group { position: relative; }
+#helpTabs .help-submenu{position: absolute;right: 0;left: auto;bottom: calc(100% + 8px);z-index: 60;width: max-content;
+  max-width: min(88vw, 720px);display: inline-flex;flex-wrap: wrap;gap: .25rem;box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06);}
+/* ------ How to submit? Modal ------ */
+/* Overlay */
+#helpModal{display:none;position:fixed;inset:0;padding:1rem}
+#helpModal:not(.hidden){display:grid;place-items:center}
+#helpModal .help-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);opacity:1;transition:opacity .2s ease;z-index:0}
+/* Sign */
+#helpModalInner{position:relative;z-index:1;width:min(960px,92vw);max-height:80vh;overflow:hidden;border-radius:1rem;border:1px solid rgba(255,255,255,.1);background:#0b0b0d;box-shadow:0 20px 50px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+/* Header */
+#helpModalInner>header{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(20,20,22,.95),rgba(20,20,22,.86))}
+#helpModalTitle{font-weight:600;color:#fafafa;font-size:.95rem}
+/* Close */
+#helpModalClose{cursor:pointer;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e5e5e5;border-radius:.5rem;padding:.4rem .65rem;font-size:.875rem;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+#helpModalClose:hover{background:rgba(255,255,255,.12)}
+#helpModalClose:active{transform:translateY(1px)}
+#helpModalClose:focus-visible{outline:2px solid rgba(16,185,129,.7);outline-offset:2px}
+/* Corps + scrollbars */
+#helpModalBody{padding:1rem;max-height:calc(80vh - 52px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent}
+#helpModalBody::-webkit-scrollbar{width:10px;height:10px}
+#helpModalBody::-webkit-scrollbar-track{background:transparent}
+#helpModalBody::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:9999px;border:2px solid transparent;background-clip:content-box}
+#helpModalBody:hover::-webkit-scrollbar-thumb{background:rgba(255,255,255,.46)}
+/* Animations */
+#helpModalInner.x-anim{opacity:0;transform:translateY(6px) scale(.995)}
+#helpModalInner.x-anim.x-enter-active{opacity:1;transform:translateY(0) scale(1);transition:transform .22s cubic-bezier(.4,0,.2,1),opacity .22s cubic-bezier(.4,0,.2,1)}
+#helpModalInner.x-anim.x-exit{opacity:1;transform:translateY(0) scale(1)}
+#helpModalInner.x-anim.x-exit-active{opacity:0;transform:translateY(6px) scale(.995);transition:transform .18s ease,opacity .18s ease}
+/* Responsive */
+@media (prefers-reduced-motion:reduce){#helpModalInner.x-anim,#helpModalInner.x-anim.x-enter-active,#helpModalInner.x-anim.x-exit-active{transition:none}}
+@media (max-height:720px){#helpModalInner{max-height:86vh}#helpModalBody{max-height:calc(86vh - 52px)}}
+#helpMapInfoSub.hidden,
+#helpRankSub.hidden { display: none !important; }
+/* ------ Playtesting info Modal ------ */ 
+.help-li{display:flex;align-items:flex-start;gap:.5rem}.help-li .dot{width:6px;height:6px;border-radius:9999px;background:rgba(244,244,245,.8);margin-top:.5rem;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.help-pt .pt-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.75rem;align-items:stretch}.help-pt .pt-phase{grid-column:auto / span 1}.help-pt .pt-arrow{display:grid;place-items:center;opacity:.9}.help-pt .pt-arrow::after{content:"→";font-weight:700;font-size:1.1rem;color:rgba(250,250,250,.85)}
+.help-pt .pt-phase .pt-phase-title{font-size:.8rem;font-weight:700;letter-spacing:.02em;color:#e5e7eb;margin-bottom:.4rem}.help-pt .pt-card{border-radius:.75rem;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));padding:.75rem;display:flex;flex-direction:column;gap:.5rem;box-shadow:0 1px 0 0 rgba(255,255,255,.05) inset}.help-pt .pt-step{background:rgba(12,12,14,.6);border:1px solid rgba(255,255,255,.1);border-radius:.6rem;padding:.5rem .6rem;font-size:.825rem;color:#e5e5e5}.help-pt .pt-note{font-size:.75rem;color:#a1a1aa}
+.help-pt .pt-chip{display:inline-flex;align-items:center;justify-content:center;padding:.25rem .5rem;border-radius:9999px;font-size:.75rem;font-weight:700;letter-spacing:.02em}.help-pt .pt-chip-accept{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.25)}.help-pt .pt-chip-reject{background:rgba(244,63,94,.15);color:#fb7185;border:1px solid rgba(244,63,94,.25)}
+.pt-req{display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1px solid rgba(255,255,255,.1);background:rgba(18,18,20,.6);padding:.6rem .75rem}
+.pt-req span{color:#e5e5e5;font-size:.9rem}
+.pt-req strong{font-size:.95rem}
+/* Responsive */
+@media (max-width: 1024px){ .help-pt .pt-grid{grid-template-columns:1fr;}.help-pt .pt-arrow{display:none}}
+/* ------ Difficulty & Techs Modal ------ */
+.tech-legend-card{display:flex;gap:.6rem;align-items:flex-start;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);border-radius:.75rem;padding:.6rem .7rem}
+/* Grid */
+.tech-grid{display:grid;grid-template-columns: 200px repeat(7, minmax(70px,1fr));gap:.5rem;align-items:stretch}
+@media (max-width: 720px){.tech-grid{grid-template-columns: 150px repeat(7,minmax(52px,1fr))}}
+.tech-hcell{font-size:.75rem;font-weight:700;letter-spacing:.02em;color:#e5e7eb;text-align:center;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);padding:.4rem .3rem;border-radius:.5rem}
+.tech-rlabel{display:flex;align-items:center;font-size:.875rem;font-weight:600;color:#e5e5e5;border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));padding:.5rem .6rem;border-radius:.6rem}
+.tech-cell{display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);background:rgba(12,12,14,.5);border-radius:.6rem;min-height:34px}
+.tick{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:9999px;font-weight:900;line-height:1; font-size:.9rem;
+  border-width:2px;border-style:solid;box-shadow:0 0 0 3px rgba(255,255,255,.06);}
+.tick.lv1{color:#34d399;border-color:#34d399;background:rgba(16,185,129,.12)}
+.tick.lv2{color:#fde047;border-color:#fde047;background:rgba(234,179,8,.12)}
+.tick.lv3{color:#fb923c;border-color:#fb923c;background:rgba(251,146,60,.12)}
+/* Rank & thresholds */
+.rank-grid{display:grid;grid-template-columns: repeat( auto-fit, minmax(150px,1fr) );gap:.75rem;}
+.rank-card{display:flex; flex-direction:column; align-items:center; text-align:center;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);border-radius:.75rem; padding:.8rem;}
+.rank-img{ width:64px; height:64px; object-fit:contain; margin-bottom:.35rem }
+.rank-name{ font-weight:700; color:#e5e7eb; margin-top:.1rem }
+.rank-diff{ font-size:.85rem; color:#cbd5e1 }
+.rank-count{ margin-top:.25rem; font-size:.85rem; color:#e5e5e5 }
 /* ================= LOOTBOX ================= */
 #infoModal .modal-infos{max-height:80svh;overflow-y:auto;overscroll-behavior:contain}
 @supports not (height:1svh){#infoModal .modal-infos{max-height:80vh}}

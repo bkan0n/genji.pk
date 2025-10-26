@@ -28,29 +28,115 @@
     </section>
 
     <div class="mx-auto min-h-[80vh] max-w-7xl px-4 pt-6 pb-0 sm:px-6 sm:pt-1 lg:px-8">
-      <!-- Onglets -->
-      <div class="mt-1">
-        <div id="mainTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+    <!-- Tabs -->
+    <div class="mt-1 flex flex-wrap items-center gap-2">
+      <div id="mainTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+        <button
+          id="submitRecordBtn"
+          class="tab-btn cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+        >
+          {{ __('submit.tabs.record') }}
+        </button>
+        <button
+          id="playtestBtn"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          {{ __('submit.tabs.playtest') }}
+        </button>
+        <button
+          id="submitMapBtn"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          {{ __('submit.tabs.map') }}
+        </button>
+      </div>
+
+      <!-- Help Tabs -->
+      <div id="helpTabs" class="ml-auto flex flex-wrap items-center gap-2">
+        <!-- Group 1: Map submission info -->
+        <div class="help-group inline-flex items-center gap-2">
           <button
-            id="submitRecordBtn"
-            class="tab-btn cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+            type="button"
+            id="helpMapInfoMainBtn"
+            class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 border border-white/10 bg-white/5"
+            aria-expanded="false"
+            aria-controls="helpMapInfoSub"
           >
-            {{ __('submit.tabs.record') }}
+            {{ __('submit.help_groups.map_submission_info') }}
           </button>
+
+          <div id="helpMapInfoSub"
+            class="help-submenu hidden inline-flex rounded-xl border border-white/10 bg-white/5 p-1 gap-1">
+            <button
+              type="button"
+              id="helpHowToSubmitBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.how_to_submit') }}
+            </button>
+            <button
+              type="button"
+              id="helpPlaytestingInfoBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.playtesting_info') }}
+            </button>
+            <button
+              type="button"
+              id="helpDifficultyTechsInfoBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.difficulty_techs_info') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 2: Rank promotion -->
+        <div class="help-group inline-flex items-center gap-2">
           <button
-            id="playtestBtn"
-            class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            type="button"
+            id="helpRankMainBtn"
+            class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 border border-white/10 bg-white/5"
+            aria-expanded="false"
+            aria-controls="helpRankSub"
           >
-            {{ __('submit.tabs.playtest') }}
+            {{ __('submit.help_groups.rank_promotion') }}
           </button>
-          <button
-            id="submitMapBtn"
-            class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-          >
-            {{ __('submit.tabs.map') }}
-          </button>
+
+          <div id="helpRankSub"
+            class="help-submenu hidden inline-flex rounded-xl border border-white/10 bg-white/5 p-1 gap-1">
+            <button
+              type="button"
+              id="helpRankHowToSubmitBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.rank_how_to_submit') }}
+            </button>
+            <button
+              type="button"
+              id="helpRankSubmissionRulesBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.rank_submission_rules') }}
+            </button>
+            <button
+              type="button"
+              id="helpRankInfoThresholdsBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.rank_info_thresholds') }}
+            </button>
+            <button
+              type="button"
+              id="helpMedalsInfoThresholdsBtn"
+              class="tab-btn cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {{ __('submit.help.medals_info_thresholds') }}
+            </button>
+          </div>
         </div>
       </div>
+    </div>
 
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
@@ -271,6 +357,24 @@
         id="submitMapSection"
         class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
       ></div>
+    </div>
+    
+    <!-- Help modal -->
+    <div id="helpModal" class="fixed inset-0 z-[400] hidden">
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm help-modal-backdrop"></div>
+
+      <div id="helpModalInner"
+          class="relative mx-auto my-8 w-[min(960px,92vw)] max-h-[80vh] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 ring-1 ring-white/10 shadow-2xl x-anim hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+          <h3 id="helpModalTitle" class="text-sm font-semibold text-zinc-100"></h3>
+          <button type="button" id="helpModalClose"
+                  class="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-zinc-200 hover:bg-white/10">
+            {{ __('help.common.close_label') }}
+          </button>
+        </header>
+
+        <div id="helpModalBody" class="px-4 py-3 overflow-y-auto"></div>
+      </div>
     </div>
 
     <!-- Loading + Pagination -->
