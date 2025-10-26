@@ -55,6 +55,7 @@ return [
             [
                 Keyword::SELF,
                 'data:',
+                'blob:',
                 'https://cdn.discordapp.com',
                 'https://media.discordapp.net',
                 'https://tenor.com',
