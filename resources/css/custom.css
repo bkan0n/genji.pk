@@ -311,6 +311,17 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .avatar-img.avatar-loaded{opacity:1}
 /* No select */
 .lb-head,.lb-head *{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:default}
+/* --- Skeleton --- */
+.skel-ch-2  { width: 2ch; }
+.skel-ch-3  { width: 3ch; }
+.skel-ch-7  { width: 7ch; }
+.skel-ch-16 { width:16ch; }
+.skel-ch-18 { width:18ch; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+.skel-pill{display:inline-block;vertical-align:middle;height:1.25rem;border-radius:9999px;border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.12),rgba(255,255,255,.06));background-size:200% 100%;animation:skelShimmer 1.1s linear infinite;}
+.skel-pill-w-16 { width:4rem; }
+.skel-pill-w-20 { width:5rem; }
 
 /* ================= SEARCH ================= */
 .tab-buttons button.active {background-color: rgba(255, 255, 255, 0.06);border-color: rgba(255, 255, 255, 0.16);color: #e5e7eb;}

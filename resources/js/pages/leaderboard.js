@@ -937,22 +937,56 @@ function renderSkeletonRows(count = pageSize) {
     row.className = `lb-row lb-grid ${__clsAnimDelay(__clamp(i * 30, 0, 250))} tr-sf-enter`;
 
     row.innerHTML = `
-      <div class="col-idx px-2 py-2"><span class="skel skel-sm skel-w-8"></span></div>
+      <!-- # -->
+      <div class="col-idx px-2 py-2 tabular-nums">
+        <span class="skel skel-sm skel-ch-2"></span>
+      </div>
 
+      <!-- Nickname + avatar : même markup/tailles que le vrai -->
       <div class="col-nickname px-2 py-2">
-        <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5">
-          <span class="skel skel-circle h-8 w-8 rounded-full ring-1 ring-white/10"></span>
-          <span class="skel skel-md skel-w-36"></span>
+        <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5 max-w-full">
+          <span class="avatar-shell ring-1 ring-white/10">
+            <img
+              src="${BLANK_IMG}"
+              alt=""
+              class="avatar-img avatar-lazy h-8 w-8 rounded-full object-cover shrink-0"
+              loading="lazy" decoding="async" referrerpolicy="no-referrer"
+            />
+          </span>
+          <span class="skel skel-md skel-ch-16"></span>
         </div>
       </div>
 
-      <div class="col-xp px-2 py-2"><span class="skel skel-sm skel-w-20"></span></div>
-      <div class="col-tier px-2 py-2"><span class="skel skel-sm skel-w-20"></span></div>
-      <div class="col-skill-rank px-2 py-2"><span class="skel skel-sm skel-w-20"></span></div>
-      <div class="col-wr px-2 py-2"><span class="skel skel-sm skel-w-12"></span></div>
-      <div class="col-maps px-2 py-2"><span class="skel skel-sm skel-w-12"></span></div>
-      <div class="col-playtest px-2 py-2"><span class="skel skel-sm skel-w-12"></span></div>
-      <div class="col-discord px-2 py-2"><span class="skel skel-sm skel-w-28"></span></div>
+      <!-- XP (tabular nums pour largeur stable) -->
+      <div class="col-xp px-2 py-2 font-semibold tabular-nums">
+        <span class="skel skel-sm skel-ch-7"></span>
+      </div>
+
+      <!-- Tier pill : skeleton à la même hauteur/padding qu’une .pill -->
+      <div class="col-tier px-2 py-2">
+        <span class="skel skel-pill skel-pill-w-20"></span>
+      </div>
+
+      <!-- Skill rank pill -->
+      <div class="col-skill-rank px-2 py-2">
+        <span class="skel skel-pill skel-pill-w-16"></span>
+      </div>
+
+      <!-- WR / Maps / Playtest (tabular) -->
+      <div class="col-wr px-2 py-2 tabular-nums">
+        <span class="skel skel-sm skel-ch-3"></span>
+      </div>
+      <div class="col-maps px-2 py-2 tabular-nums">
+        <span class="skel skel-sm skel-ch-3"></span>
+      </div>
+      <div class="col-playtest px-2 py-2 tabular-nums">
+        <span class="skel skel-sm skel-ch-3"></span>
+      </div>
+
+      <!-- Discord tag -->
+      <div class="col-discord px-2 py-2">
+        <span class="skel skel-sm skel-ch-18"></span>
+      </div>
     `;
 
     rowsEl.appendChild(row);
