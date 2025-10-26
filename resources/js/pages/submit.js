@@ -1508,6 +1508,9 @@ function resetForms(form) {
     dropdown.removeAttribute('data-open');
   });
 
+  const qRoot = document.getElementById('qualityDropdown');
+  if (qRoot) resetQualitySlider(qRoot);
+
   hideAllSuggestions();
   form.reset();
 
@@ -3099,16 +3102,121 @@ function dragAndDrop() {
   });
 }
 
-function qualityDropdown() {
-  const container = document.getElementById('qualityDropdown');
-  if (!container) return;
-  const btn = getDropdownBtnEl(container);
+function qualitySlider() {
+  const root = document.getElementById('qualityDropdown');
+  if (!root) return;
+
+  const L = [
+    (typeof t === 'function' && t('record.quality_1')) || 'Very poor',
+    (typeof t === 'function' && t('record.quality_2')) || 'Poor',
+    (typeof t === 'function' && t('record.quality_3')) || 'Fair',
+    (typeof t === 'function' && t('record.quality_4')) || 'Good',
+    (typeof t === 'function' && t('record.quality_5')) || 'Very good',
+    (typeof t === 'function' && t('record.quality_6')) || 'Perfect',
+  ];
   const placeholder =
-    (btn && (btn.getAttribute('data-placeholder') || btn.textContent.trim())) ||
+    (typeof t === 'function' && t('record.select_quality')) || 'Select quality';
+
+  root.innerHTML = `
+    <div class="quality-wrap">
+      <div class="quality-head">
+        <span class="quality-title">${placeholder}</span>
+        <span class="quality-badge" aria-live="polite">—</span>
+      </div>
+
+      <div class="quality-range-wrap">
+        <div class="quality-track">
+          <div class="quality-fill pct-0"></div>
+        </div>
+        <input
+          type="range"
+          class="quality-range"
+          min="1" max="6" step="1" value="3"
+          aria-label="${placeholder}"
+          aria-valuemin="1" aria-valuemax="6" aria-valuenow="0"
+          aria-valuetext="${placeholder}"
+        />
+      </div>
+
+      <input type="hidden" id="qualityInput" name="quality" value="">
+    </div>
+  `;
+
+  const range  = root.querySelector('.quality-range');
+  const fill   = root.querySelector('.quality-fill');
+  const badge  = root.querySelector('.quality-badge');
+  const title  = root.querySelector('.quality-title');
+  const hidden = root.querySelector('#qualityInput');
+
+  const pctMap = { 1:'pct-0', 2:'pct-20', 3:'pct-40', 4:'pct-60', 5:'pct-80', 6:'pct-100' };
+  const pctClassFor   = (v) => pctMap[v] || 'pct-0';
+  const colorClassFor = (v) => `qcolor-${v}`;
+
+  function update(v, committed=false) {
+    const val = Math.max(1, Math.min(6, Number(v) || 1));
+
+    fill.className = `quality-fill ${pctClassFor(val)} ${colorClassFor(val)}`;
+
+    badge.textContent = L[val-1];
+
+    root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
+    root.classList.add(`qv-${val}`);
+
+    range.setAttribute('aria-valuenow', String(val));
+    range.setAttribute('aria-valuetext', L[val-1]);
+
+    if (committed) hidden.value = String(val);
+  }
+
+  update(1, false);
+  badge.textContent = '—';
+
+  range.addEventListener('input', (e) => update(e.target.value, false));
+  range.addEventListener('change', (e) => update(e.target.value, true));
+
+  const preset = Number(root.getAttribute('data-value'));
+  if (preset >= 1 && preset <= 6) {
+    range.value = String(preset);
+    update(preset, true);
+  }
+}
+
+function resetQualitySlider(containerOrId = 'qualityDropdown') {
+  const root = typeof containerOrId === 'string'
+    ? document.getElementById(containerOrId)
+    : containerOrId;
+  if (!root) return;
+
+  const placeholder =
+    root.getAttribute('data-placeholder') ||
     (typeof t === 'function' ? t('record.select_quality') : 'Select quality');
-  const list = getDropdownListEl(container);
-  if (list) _hideList(list);
-  setupFakeSelect('qualityDropdown', placeholder);
+
+  const hidden = root.querySelector('#qualityValue, input[type="hidden"][name="quality"]');
+  if (hidden) hidden.value = '';
+
+  const badge = root.querySelector('.quality-badge');
+  if (badge) badge.textContent = placeholder;
+
+  root.removeAttribute('data-value');
+  root.removeAttribute('data-color');
+  root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
+
+  const fill = root.querySelector('.quality-fill');
+  if (fill) {
+    fill.classList.remove('pct-20','pct-40','pct-60','pct-80','pct-100');
+    fill.classList.add('pct-0');
+  }
+
+  const range = root.querySelector('.quality-range');
+  if (range) {
+    const min = Number(range.min || 1);
+    range.value = String(min);
+    range.setAttribute('data-empty', '1');
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  root.querySelectorAll('.quality-mark--active')
+    .forEach(m => m.classList.remove('quality-mark--active'));
 }
 
 function forceDotDecimalInput(selector) {
@@ -3153,20 +3261,16 @@ function validateSubmitRecordForm(event) {
     return false;
   }
 
-  const qualityChecks = document.querySelectorAll(
-    '#qualityDropdown input[type="radio"], #qualityDropdown input[type="checkbox"]'
-  );
-  let hasQuality = false;
-  if (qualityChecks.length) {
-    hasQuality = Array.from(qualityChecks).some((c) => c.checked);
-  } else {
-    const qualityBtn = document.getElementById('qualityDropdownBtn');
-    hasQuality =
-      qualityBtn && qualityBtn.textContent && qualityBtn.textContent.trim() !== 'Select...';
+  const qHidden = document.querySelector('#qualityDropdown input[name="quality"]');
+  let hasQuality = !!(qHidden && qHidden.value);
+  if (!hasQuality) {
+    const qualityChecks = document.querySelectorAll(
+      '#qualityDropdown input[type="radio"], #qualityDropdown input[type="checkbox"]'
+    );
+    if (qualityChecks.length) hasQuality = Array.from(qualityChecks).some((c) => c.checked);
   }
   if (!hasQuality) {
-    showWarningMessage(t('record.quality_required'));
-    return false;
+    showWarningMessage(t('record.quality_required')); return false;
   }
 
   if (!window.screenshotUrl) {
@@ -7423,7 +7527,7 @@ async function initializeSubmitMap() {
 function initializeSubmitRecord() {
   attachRecordAutocompletes();
   dragAndDrop();
-  qualityDropdown();
+  qualitySlider();
 }
 
 async function initializeApp() {

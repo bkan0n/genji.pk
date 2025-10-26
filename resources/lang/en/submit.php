@@ -64,6 +64,14 @@ return [
 
         'time_hint' => 'Invalid time format: up to 5 digits before the dot and 2 after (e.g. 12345.67).',
         'view_modal' => 'View playtest',
+
+        'quality'   => 'Quality',
+        'quality_1' => '1 - Poor',
+        'quality_2' => '2 - Subpar',
+        'quality_3' => '3 - Average',
+        'quality_4' => '4 - Good',
+        'quality_5' => '5 - Great',
+        'quality_6' => '6 - Excellent',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
