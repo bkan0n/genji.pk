@@ -31,3 +31,16 @@ Sentry.init({
 });
 
 window.Sentry = Sentry;
+
+(function () {
+  if (!document.getElementById('prism')) return;
+
+  const loadPrism = () => import(/* @vite-ignore */ '/resources/js/pages/prism.js').catch(()=>{});
+  if ('requestIdleCallback' in window) requestIdleCallback(loadPrism, { timeout: 50 });
+  ['pointerdown','keydown','scroll'].forEach(evt => {
+    window.addEventListener(evt, function onFirst() {
+      window.removeEventListener(evt, onFirst, { passive: true });
+      loadPrism();
+    }, { once: true, passive: true });
+  });
+})();
