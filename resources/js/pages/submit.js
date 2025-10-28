@@ -3121,7 +3121,7 @@ function qualitySlider() {
     <div class="quality-wrap">
       <div class="quality-head">
         <span class="quality-title">${placeholder}</span>
-        <span class="quality-badge" aria-live="polite">—</span>
+        <span class="quality-badge" aria-live="polite">${placeholder}</span>
       </div>
 
       <div class="quality-range-wrap">
@@ -3131,10 +3131,11 @@ function qualitySlider() {
         <input
           type="range"
           class="quality-range"
-          min="1" max="6" step="1" value="3"
+          min="1" max="6" step="1" value="1"
+          data-empty="1"
           aria-label="${placeholder}"
-          aria-valuemin="1" aria-valuemax="6" aria-valuenow="0"
-          aria-valuetext="${placeholder}"
+          aria-valuemin="1" aria-valuemax="6" aria-valuenow="1"
+          aria-valuetext="${L[0]}"
         />
       </div>
 
@@ -3145,7 +3146,6 @@ function qualitySlider() {
   const range  = root.querySelector('.quality-range');
   const fill   = root.querySelector('.quality-fill');
   const badge  = root.querySelector('.quality-badge');
-  const title  = root.querySelector('.quality-title');
   const hidden = root.querySelector('#qualityInput');
 
   const pctMap = { 1:'pct-0', 2:'pct-20', 3:'pct-40', 4:'pct-60', 5:'pct-80', 6:'pct-100' };
@@ -3157,19 +3157,26 @@ function qualitySlider() {
 
     fill.className = `quality-fill ${pctClassFor(val)} ${colorClassFor(val)}`;
 
-    badge.textContent = L[val-1];
-
     root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
     root.classList.add(`qv-${val}`);
 
     range.setAttribute('aria-valuenow', String(val));
     range.setAttribute('aria-valuetext', L[val-1]);
 
-    if (committed) hidden.value = String(val);
+    if (committed) {
+      badge.textContent = L[val-1];
+      hidden.value = String(val);
+      range.removeAttribute('data-empty');
+    } else {
+      if (range.getAttribute('data-empty') === '1') {
+        badge.textContent = placeholder;
+      } else {
+        badge.textContent = L[val-1];
+      }
+    }
   }
 
   update(1, false);
-  badge.textContent = '—';
 
   range.addEventListener('input', (e) => update(e.target.value, false));
   range.addEventListener('change', (e) => update(e.target.value, true));
