@@ -34,7 +34,7 @@ class TranslateController extends Controller
             return response()->json(['message' => 'Translation service not configured'], 500);
         }
 
-        $url = $root . '/translate';
+        $url = $root;
         $payload = [
             'text' => $text,
             'target_lang' => $target,
