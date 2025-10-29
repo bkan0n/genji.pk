@@ -2625,9 +2625,10 @@
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Convert To Legacy Map</h3>
                     <span class="text-xs text-zinc-400">
-                      POST /api/v3/maps/{code}/convert/legacy
+                      POST /api/v3/maps/{code}/legacy?reason=...
                     </span>
                   </div>
+
                   <form
                     data-action="convert-legacy"
                     autocomplete="off"
@@ -2638,10 +2639,28 @@
                       <input
                         name="code"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="e.g. 123456"
                       />
                     </label>
+
+                    <label class="sm:col-span-2">
+                      Reason <span class="text-xs text-zinc-500">(optional)</span>
+                      <textarea
+                        name="reason"
+                        rows="2"
+                        maxlength="200"
+                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none resize-y"
+                        placeholder="Why converting this map to legacy?"
+                      ></textarea>
+                      <div class="mt-1 flex items-center justify-between text-xs text-zinc-400">
+                        <span>Sent as query (?reason=...)</span>
+                        <span data-reason-count>0/200</span>
+                      </div>
+                    </label>
+
                     <div class="sm:col-span-3">
                       <button
+                        type="submit"
                         class="w-full cursor-pointer rounded-xl border border-white/10 px-4 py-2 font-semibold hover:bg-white/5"
                       >
                         Convert
@@ -2658,7 +2677,6 @@
                     <span class="text-xs text-zinc-400">GET /api/maps?code=</span>
                   </div>
 
-                  <!-- Formulaire de recherche -->
                   <form
                     data-action="search-map"
                     autocomplete="off"
@@ -2681,7 +2699,6 @@
                     </div>
                   </form>
 
-                  <!-- Panneau résultat (même visuel que Submit) -->
                   <form
                     id="s-submitMapForm"
                     autocomplete="off"
@@ -2716,7 +2733,7 @@
                               </button>
                             </span>
 
-                            <!-- Secondary (même système, lecture seule) -->
+                            <!-- Secondary -->
                             <span
                               class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
                             >

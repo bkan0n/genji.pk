@@ -1532,18 +1532,35 @@ async function handleSubmitMap(form) {
 }
 
 async function handleConvertLegacy(form) {
-  const code = (form.code.value || '').trim();
+  const code   = (form.code?.value || '').trim();
+  const reason = (form.reason?.value || '').trim();
+
   if (!code) {
     toast('Map code required', 'warn');
+    form.code?.focus();
     return;
   }
 
-  const { ok, status, url, data } = await http(
-    'POST',
-    `${API_MODS}/maps/${encodeURIComponent(code)}/legacy`
-  );
-  logActivity({ title: 'Convert to legacy', method: 'POST', url, ok, status, data });
-  toast(ok ? 'Converted' : 'Failed', ok ? 'ok' : 'err');
+  const btn = form.querySelector('button[type="submit"]');
+  const prevLabel = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-60','cursor-not-allowed'); btn.textContent = 'Converting…'; }
+
+  const qs  = reason ? `?reason=${encodeURIComponent(reason)}` : '';
+  const url = `${API_MODS}/maps/${encodeURIComponent(code)}/legacy${qs}`;
+
+  try {
+    const { ok, status, url: reqUrl, data } = await http('POST', url);
+    logActivity({
+      title: 'Convert to legacy',
+      method: 'POST',
+      url: reqUrl || url,
+      ok, status, data,
+      meta: { code, reason }
+    });
+    toast(ok ? 'Converted' : 'Failed', ok ? 'ok' : 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-60','cursor-not-allowed'); btn.innerHTML = prevLabel; }
+  }
 }
 
 async function handleSearchMap(form) {
