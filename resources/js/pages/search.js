@@ -2389,7 +2389,7 @@ async function displayMapSearchResultsCards(rowsInput) {
 
     return `
       <article class="mx-card ${diffCls} ${medalClass}">
-        <div class="mx-hero is-loading">
+        <div class="mx-hero">
           <div class="mx-skel"></div>
           <img src="${escAttr(bannerPath)}" alt="" data-fallback-src="${escAttr(bannerFB)}" />
           <div class="mx-grain"></div>
