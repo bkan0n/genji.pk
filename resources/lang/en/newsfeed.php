@@ -37,6 +37,10 @@ return [
         'new_map' => 'New map',
         'role' => 'Role',
         'record' => 'Record',
+        'map_edit' => 'Map edit',
+        'legacy_record' => 'Legacy record',
+        'archive' => 'Archive',
+        'unarchive' => 'Unarchive',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -77,6 +81,9 @@ return [
         'mapMechanics' => 'Mechanics',
         'mapRestrictions' => 'Restrictions',
         'mapDescription' => 'Description',
+        'mapCategory' => 'Category',
+        'mapCreators' => 'Creators',
+        'mapMedals' => 'Medals',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -96,6 +103,8 @@ return [
         'upvote' => 'Upvote',
         'missing_ids' => 'Missing user or message id',
         'empty' => 'Empty',
+        'created_at' => 'Created at',
+        'updated_at' => 'Updated at',
         'medals' => [
             'gold' => 'Gold',
             'silver' => 'Silver',
@@ -180,13 +189,26 @@ return [
         'reset_filter' => 'Reset filter',
         'translate_button' => 'Translate',
         'archived_map' => '{map_code} has been archived',
+        'unarchived_map' => '{map_code} has been archived',
         'archived_description' => 'This map will not appear in the map search unless searched by map code. You cannot submit records for archived maps',
+        'unarchived_description' => 'This map is visible in search and eligible for record submissions',
         'creator' => 'Creator',
         'map_code' => 'Map code',
         'difficulty' => 'Difficulty',
         'bulk_archived' => 'Multiple maps have been archived',
         'bulk_unarchived' => 'Multiple maps have been unarchived',
-
+        'official' => 'Official',
+        'details' => 'Details',
+        'changes' => 'Changes',
+        'map_name' => 'Map name',
+        'status_unarchived' => 'Unarchived',
+        'status_archived' => 'Archived',
+        'guide_badge' => 'Guide',
+        'converted_to_legacy' => 'Converted to legacy',
+        'legacy' => 'Legacy',
+        'affected' => 'Affected',
+        'reason' => 'Reason',
+        
         'no_changes' => 'No changes.',
         'map_updated' => '{map_code} was updated',
         'record_label' => 'Record',

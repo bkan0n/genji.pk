@@ -72,6 +72,9 @@ return [
             [
                 Keyword::SELF,
                 'https://www.youtube.com',
+                'https://www.youtube-nocookie.com/',
+                'https://b23.tv/',
+                'https://www.bilibili.com/',
                 'https://tenor.com',
                 'https://media.tenor.com',
                 'https://c.tenor.com',
