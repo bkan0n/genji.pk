@@ -247,7 +247,7 @@ return [
         'no_username_set' => 'No username set',
         'confirm_button' => 'Confirm',
         'copy_map_code' => 'Copy map code',
-        'map_code_copied' => 'Map code {code} copied',
+        'map_code_copied' => 'Map code copied: {code}',
         'copy_failed' => 'Failed to copy map code',
     ],
 

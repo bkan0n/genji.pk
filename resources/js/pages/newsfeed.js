@@ -48,7 +48,7 @@ let compTotalResults = 0;
 let compTotalPages = 0;
 let currentSection = 'newsfeed';
 
-/* ===== CSP helpers (aucun inline style / event) ===== */
+/* ===== CSP helpers ===== */
 const CSP_NONCE = document.querySelector('meta[name="csp-nonce"]')?.content || '';
 const __dynStyleEl = (() => {
   const el = document.createElement('style');
@@ -117,6 +117,68 @@ document.addEventListener(
   },
   true
 );
+
+// === Copy-code logging (Utilities) ==========================================
+function normalizeMapCode(raw) {
+  return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+}
+
+let __myIpCache = { value: null, at: 0 };
+async function getClientIp(force = false) {
+  const now = Date.now();
+  if (!force && __myIpCache.value && now - __myIpCache.at < 5 * 60 * 1000) {
+    return __myIpCache.value;
+  }
+  try {
+    const res = await fetch('/api/my-ip', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const json = await res.json().catch(() => ({}));
+    const ip = json?.client_ip ?? json?.ip ?? null;
+    __myIpCache = { value: ip, at: now };
+    return ip;
+  } catch {
+    return null;
+  }
+}
+
+async function logMapCopy(code, source = 'web') {
+  try {
+    const k = `logcc:${code}`;
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(k) || 0);
+    if (now - last < 500) return;
+    sessionStorage.setItem(k, String(now));
+  } catch {}
+
+  const client_ip = await getClientIp().catch(() => null);
+
+  const payload = {
+    code: normalizeMapCode(code),
+    client_ip,
+    user_id: window.user_id ?? null,
+    source,
+  };
+
+  try {
+    await fetch('/api/utilities/log-map-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': CSRF,
+      },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {}
+}
+
+document.addEventListener('DOMContentLoaded', () => { void getClientIp(); });
 
 /* ---------- Affichage vs. type canonique ---------- */
 const FILTER_LABELS = translations?.tags
@@ -2347,6 +2409,8 @@ document.addEventListener('click', async (e) => {
   const raw    = btn.getAttribute('data-copy-code') || '';
   const toCopy = String(raw).trim().replace(/^#/, '');
 
+  void logMapCopy(toCopy, 'web');
+
   const ok = await copyTextToClipboard(toCopy);
   if (ok) notifyCodeCopied(toCopy);
   else    showErrorMessage(t('newsfeed.copy_clipboard_error'));
@@ -2907,10 +2971,12 @@ document.addEventListener('click', async (e) => {
   if (!el) return;
 
   const raw = el.getAttribute('data-copy-code')
-           || el.getAttribute('data-map-code')
-           || el.textContent
-           || '';
+            || el.getAttribute('data-map-code')
+            || el.textContent
+            || '';
   const toCopy = String(raw).trim().replace(/^#/, '');
+
+  void logMapCopy(toCopy, 'web');
 
   const ok = await copyToClipboard(toCopy);
   if (ok) notifyCodeCopied(toCopy);

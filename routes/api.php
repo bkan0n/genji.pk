@@ -81,6 +81,7 @@ use App\Http\Controllers\Utilities\Autocomplete\MapNamesController;
 use App\Http\Controllers\Utilities\Autocomplete\MapRestrictionsController;
 use App\Http\Controllers\Utilities\Autocomplete\UsersController;
 use App\Http\Controllers\Utilities\UploadImageController;
+use App\Http\Controllers\Utilities\LogMapClickController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -138,9 +139,10 @@ Route::prefix('autocomplete')->group(function () {
     );
     Route::get('users', UsersController::class)->name('api.autocomplete.users');
 });
-Route::middleware(['web'])
-    ->post('/utilities/image', UploadImageController::class)
-    ->name('utilities.image.upload');
+Route::middleware(['web'])->prefix('utilities')->name('utilities.')->group(function () {
+    Route::post('/image', UploadImageController::class)->name('image.upload');
+    Route::post('/log-map-click', [LogMapClickController::class, 'store'])->name('log_map_click');
+});
 
 /* ================== COMPLETIONS ================== */
 Route::prefix('completions')->group(function () {

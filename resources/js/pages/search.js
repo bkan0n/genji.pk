@@ -2881,6 +2881,7 @@ function ensureSearchDetailsModal() {
 
         if (typeof showConfirmationMessage === 'function') {
           showConfirmationMessage(tFmt('popup.map_code_copied', { code }, `Map code ${code} copied`));
+          void logMapCopy(code, 'web');
         }
         
       } catch {
@@ -4726,7 +4727,10 @@ function copyMapCode(code) {
   const msgKo = t('popup.copy_failed');
 
   copyTextToClipboard(code).then((ok) => {
-    if (ok) showConfirmationMessage(msgOk);
+    if (ok) {
+      showConfirmationMessage(msgOk);
+      void logMapCopy(code, 'web');
+    }
     else showToast(msgKo, false);
   });
 }
@@ -4750,6 +4754,66 @@ function registerMapCodeCopyTargets(root = document) {
     });
   });
 }
+
+// === Copy-code logging (Utilities) ==========================================
+function normalizeMapCode(raw) {
+  return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+}
+
+let __myIpCache = { value: null, at: 0 };
+async function getClientIp(force = false) {
+  const now = Date.now();
+  if (!force && __myIpCache.value && now - __myIpCache.at < 5 * 60 * 1000) return __myIpCache.value;
+  try {
+    const res = await fetch('/api/my-ip', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const json = await res.json().catch(() => ({}));
+    const ip = json?.client_ip ?? json?.ip ?? null;
+    __myIpCache = { value: ip, at: now };
+    return ip;
+  } catch {
+    return null;
+  }
+}
+
+async function logMapCopy(code, source = 'web') {
+  try {
+    const k = `logcc:${code}`;
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(k) || 0);
+    if (now - last < 500) return;
+    sessionStorage.setItem(k, String(now));
+  } catch {}
+
+  const client_ip = await getClientIp().catch(() => null);
+
+  const payload = {
+    code: normalizeMapCode(code),
+    client_ip,
+    user_id: window.user_id ?? null,
+    source,
+  };
+
+  try {
+    await fetch('/api/utilities/log-map-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': CSRF,
+      },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {}
+}
+
+document.addEventListener('DOMContentLoaded', () => { void getClientIp(); });
 
 function showToast(message, type = 'ok', opts = {}) {
   const {

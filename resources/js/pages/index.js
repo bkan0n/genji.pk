@@ -78,6 +78,66 @@
   const esc  = (s) => String(s ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  /* ---------------- Copy log helpers ---------------- */
+  let __myIpCache = { value: null, at: 0 };
+
+  async function getClientIp(force = false) {
+    const now = Date.now();
+    if (!force && __myIpCache.value && now - __myIpCache.at < 5 * 60 * 1000) {
+      return __myIpCache.value;
+    }
+    try {
+      const res = await fetch('/api/my-ip', {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      const json = await res.json().catch(() => ({}));
+      const ip = json?.client_ip ?? json?.ip ?? null;
+      __myIpCache = { value: ip, at: now };
+      return ip;
+    } catch {
+      return null;
+    }
+  }
+
+  const normalizeMapCode = (raw) =>
+    String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+
+  async function logMapCopy(code, source = 'web') {
+    try {
+      const k = `logcc:${source}:${code}`;
+      const now = Date.now();
+      const last = Number(sessionStorage.getItem(k) || 0);
+      if (now - last < 500) return;
+      sessionStorage.setItem(k, String(now));
+    } catch {}
+
+    const client_ip = await getClientIp().catch(() => null);
+    const payload = {
+      code: normalizeMapCode(code),
+      client_ip,
+      user_id: window.user_id ?? null,
+      source,
+    };
+
+    try {
+      await fetch('/api/utilities/log-map-click', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': CSRF,
+        },
+        body: JSON.stringify(payload),
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+    } catch {}
+  }
+
+  void getClientIp();
 
   /* ---------------- Animations / modal helpers ---------------- */
   function toggleModal(modalEl, show) {
@@ -308,6 +368,7 @@
 
   /* ---------------- Copy / Toast helpers ---------------- */
   function copyMapCode(code) {
+    void logMapCopy(code, 'web');
     const ok   = t('popup.map_code_copied', { code });
     const msgOk= ok === 'popup.map_code_copied' ? `Map code copied: ${code}` : ok;
 

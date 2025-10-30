@@ -77,30 +77,6 @@ window.customBannerUrl = null;
 window.screenshotFile = null;
 
 /* =========================
-   CSRF
-   ========================= */
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || null;
-
-(function patchFetchForCsrf() {
-  if (!CSRF_TOKEN || typeof window.fetch !== 'function') return;
-
-  const __origFetch = window.fetch.bind(window);
-  window.fetch = (input, init = {}) => {
-    const method = String(init.method || 'GET').toUpperCase();
-
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-      const headers = new Headers(init.headers || {});
-      if (!headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF_TOKEN);
-      if (!headers.has('X-Requested-With')) headers.set('X-Requested-With', 'XMLHttpRequest');
-      if (!init.credentials) init.credentials = 'same-origin';
-      init = { ...init, headers };
-    }
-
-    return __origFetch(input, init);
-  };
-})();
-
-/* =========================
    HELPERS Inline
    ========================= */
 const CSP_NONCE = document.querySelector('meta[name="csp-nonce"]')?.content || '';
@@ -442,14 +418,73 @@ async function copyTextToClipboard(text) {
 }
 
 function copyMapCode(code) {
-  const msgOk = t('popup.map_code_copied', { code }) || t('popup.copied') || 'Map code copié !';
-  const msgKo = t('popup.copy_failed') || 'Impossible de copier ce code.';
+  const msgOk = t('popup.map_code_copied', { code }) || t('popup.copied');
+  const msgKo = t('popup.copy_failed');
 
   copyTextToClipboard(code).then((ok) => {
-    if (ok) showConfirmationMessage(msgOk);
+    if (ok) {
+      showConfirmationMessage(msgOk);
+      void logMapCopy(code, 'web');
+    }
     else showToast(msgKo, false);
   });
 }
+
+// === Copy-code logging (Utilities) ==========================================
+let __myIpCache = { value: null, at: 0 };
+async function getClientIp(force = false) {
+  const now = Date.now();
+  if (!force && __myIpCache.value && now - __myIpCache.at < 5 * 60 * 1000) return __myIpCache.value;
+  try {
+    const res = await fetch('/api/my-ip', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const json = await res.json().catch(() => ({}));
+    const ip = json?.client_ip ?? json?.ip ?? null;
+    __myIpCache = { value: ip, at: now };
+    return ip;
+  } catch {
+    return null;
+  }
+}
+
+async function logMapCopy(code, source = 'web') {
+  try {
+    const k = `logcc:${code}`;
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(k) || 0);
+    if (now - last < 500) return;
+    sessionStorage.setItem(k, String(now));
+  } catch {}
+
+  const client_ip = await getClientIp().catch(() => null);
+
+  const payload = {
+    code: normalizeMapCode(code),
+    client_ip,
+    user_id: window.user_id ?? null,
+    source,
+  };
+
+  try {
+    await fetch('/api/utilities/log-map-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': CSRF,
+      },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {}
+}
+
+document.addEventListener('DOMContentLoaded', () => { void getClientIp(); });
 
 function registerMapCodeCopyTargets(root = document) {
   root.querySelectorAll('.copy-map-code').forEach((el) => {
@@ -4608,8 +4643,7 @@ async function postJSON(url, body, init = {}) {
   if (!isFormData && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (!headers.has('Accept')) headers.set('Accept', 'application/json');
 
-  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || null;
-  if (CSRF_TOKEN && !headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF_TOKEN);
+  if (CSRF && !headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF);
 
   const resp = await fetch(url, {
     method: 'POST',

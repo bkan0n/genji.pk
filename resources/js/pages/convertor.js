@@ -1645,7 +1645,6 @@ async function loadTemplate(lang) {
   const moduleText = `// framework-template_${lang}.js (auto)\nexport const frameworkTemplate = \`${esc}\n\`;\n`;
 
   try {
-    const tokenMeta = document.querySelector('meta[name="csrf-token"]')?.content || '';
     const xsrfFromCookie = document.cookie.split('; ').find((c) => c.startsWith('XSRF-TOKEN='))?.split('=')[1];
     const saveRes = await fetch(`/api/compile?file=framework-templates/framework-template_${lang}.js`, {
       method: 'POST',
@@ -1654,7 +1653,7 @@ async function loadTemplate(lang) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        ...(tokenMeta ? { 'X-CSRF-TOKEN': tokenMeta } : {}),
+        ...(CSRF ? { 'X-CSRF-TOKEN': CSRF } : {}),
         ...(xsrfFromCookie ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfFromCookie) } : {}),
       },
       body: JSON.stringify({ module: moduleText }),

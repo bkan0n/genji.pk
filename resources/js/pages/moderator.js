@@ -349,7 +349,6 @@ function http(method, url, { body, query, headers } = {}) {
       ).toString()
     : '';
 
-  const tokenMeta = document.querySelector('meta[name="csrf-token"]')?.content || '';
   const xsrfFromCookie = document.cookie
     .split('; ')
     .find((c) => c.startsWith('XSRF-TOKEN='))
@@ -362,7 +361,7 @@ function http(method, url, { body, query, headers } = {}) {
       Accept: 'application/json',
       ...(body ? { 'Content-Type': 'application/json' } : {}),
       'X-Requested-With': 'XMLHttpRequest',
-      ...(tokenMeta ? { 'X-CSRF-TOKEN': tokenMeta } : {}),
+      ...(tokenMeta ? { 'X-CSRF-TOKEN': CSRF } : {}),
       ...(xsrfFromCookie ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfFromCookie) } : {}),
       ...headers,
     },
