@@ -28,7 +28,7 @@ jobs:
           environment_urls: 'production|disabled,development|https://dev.genji.pk,staging|disabled'
           environment_targets: 'development'
           allow_forks: 'true'
-          admins: 'tylovejoy'
+          admins: 'tylovejoy,Aiapaec64'
           update_branch: 'disabled'
 
       - name: Checkout repository
