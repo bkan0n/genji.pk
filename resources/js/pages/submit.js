@@ -2991,6 +2991,11 @@ async function sendCompletionToApi() {
       const msg = (data && (data.error || data.message)) || `HTTP ${resp.status}`;
       return { error: msg };
     }
+
+    try {
+      const q = getSelectedQuality();
+      if (Number.isFinite(q)) await sendQualityVote(code, q);
+    } catch {}
     return data || { ok: true };
   } catch (err) {
     console.error(err);
@@ -3100,6 +3105,28 @@ function dragAndDrop() {
   fi.addEventListener('change', () => {
     if (fi.files?.[0]) acceptFile(fi.files[0]);
   });
+}
+
+async function sendQualityVote(code, qualityOverride = null) {
+  const q = Number.isFinite(qualityOverride) ? qualityOverride : getSelectedQuality();
+  if (!Number.isFinite(q)) return { skipped: true };
+
+  const resp = await fetch(`/api/maps/${encodeURIComponent(code)}/quality`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      user_id: String(user_id),
+      quality: q
+    }),
+    credentials: 'same-origin',
+  });
+
+  if (!resp.ok) {
+    let msg = `HTTP ${resp.status}`;
+    try { const j = await resp.json(); msg = j?.error || j?.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  try { return await resp.json(); } catch { return { ok: true }; }
 }
 
 function qualitySlider() {
@@ -3224,6 +3251,29 @@ function resetQualitySlider(containerOrId = 'qualityDropdown') {
 
   root.querySelectorAll('.quality-mark--active')
     .forEach(m => m.classList.remove('quality-mark--active'));
+}
+
+function getSelectedQuality() {
+  const root = document.getElementById('qualityDropdown');
+  if (!root) return null;
+
+  const hidden = root.querySelector('#qualityInput, input[name="quality"]');
+  let val = hidden && hidden.value ? Number(hidden.value) : null;
+
+  if (!Number.isFinite(val)) {
+    const range = root.querySelector('.quality-range');
+    if (range) {
+      if (range.getAttribute('data-empty') !== '1') {
+        val = Number(range.value);
+      } else {
+        const aria = Number(range.getAttribute('aria-valuenow'));
+        if (Number.isFinite(aria)) val = aria;
+      }
+    }
+  }
+
+  if (!Number.isFinite(val)) return null;
+  return Math.max(1, Math.min(6, Math.trunc(val)));
 }
 
 function forceDotDecimalInput(selector) {

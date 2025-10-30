@@ -25,6 +25,7 @@ use App\Http\Controllers\Maps\MapSearchController;
 use App\Http\Controllers\Maps\Playtests\PlaytestVoteController;
 use App\Http\Controllers\Maps\SubmitMapController;
 use App\Http\Controllers\Maps\TrendingMapsController;
+use App\Http\Controllers\Maps\QualityVoteController;
 use App\Http\Controllers\Mods\Guides\CreateGuideController;
 use App\Http\Controllers\Mods\Guides\DeleteGuideController;
 use App\Http\Controllers\Mods\Guides\EditGuideController;
@@ -117,6 +118,9 @@ Route::prefix('maps')->group(function () {
             PlaytestVoteController::class,
             'store',
         ])->name('playtests.vote.store');
+        Route::post('{code}/quality', [QualityVoteController::class, 'store'])
+            ->where('code', '[A-Za-z0-9\-]+')
+            ->name('api.maps.quality.store');
     });
 });
 
@@ -147,7 +151,7 @@ Route::prefix('completions')->group(function () {
 
     Route::middleware('web')->group(function () {
         Route::post('/', SubmitCompletionController::class)->name('api.completions.submit');
-        Route::post('all', GetAllCompletionsController::class)->name('api.completions.all');
+        Route::get('all', GetAllCompletionsController::class)->name('api.completions.all');
         Route::post('upvoting', UpvoteCompletionController::class)->name('api.completions.upvote');
     });
 });
