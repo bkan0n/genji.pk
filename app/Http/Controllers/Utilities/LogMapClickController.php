@@ -36,6 +36,12 @@ class LogMapClickController extends Controller
         $data = $v->validated();
         $data['source'] = $data['source'] ?? 'web';
 
+        if (array_key_exists('user_id', $data) && $data['user_id'] !== null && $data['user_id'] !== '') {
+            $data['user_id'] = (int) $data['user_id'];
+        } else {
+            $data['user_id'] = null;
+        }
+
         $apiRoot   = rtrim((string) config('genji_api.root', ''), '/');
         $apiKey    = (string) config('genji_api.key', '');
         $sslVerify = (bool) config('genji_api.verify', true);
@@ -53,18 +59,18 @@ class LogMapClickController extends Controller
                     ->post($endpoint, [
                         'code'       => $data['code'],
                         'ip_address' => $data['ip_address'],
-                        'user_id'    => isset($data['user_id']) ? (string) $data['user_id'] : null,
+                        'user_id'    => $data['user_id'],
                         'source'     => $data['source'],
                     ]);
 
                 if ($resp->successful() || $resp->status() === 201) {
                     return response()
                         ->json([
-                            'status'      => 'created',
-                            'code'        => $data['code'],
-                            'ip_address'  => $data['ip_address'],
-                            'user_id'     => isset($data['user_id']) ? (string) $data['user_id'] : null,
-                            'source'      => $data['source'],
+                            'status'     => 'created',
+                            'code'       => $data['code'],
+                            'ip_address' => $data['ip_address'],
+                            'user_id'    => $data['user_id'],
+                            'source'     => $data['source'],
                         ], 201)
                         ->header('Location', $endpoint);
                 }
@@ -79,7 +85,7 @@ class LogMapClickController extends Controller
                 Log::error('log-map-click upstream exception', [
                     'code'       => $data['code'],
                     'ip_address' => $data['ip_address'],
-                    'user_id'    => $data['user_id'] ?? null,
+                    'user_id'    => $data['user_id'],
                     'source'     => $data['source'],
                     'error'      => $e->getMessage(),
                 ]);
