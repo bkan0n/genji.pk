@@ -20,7 +20,7 @@ class LogMapClickController extends Controller
         $v = Validator::make($merged, [
             'code'       => ['required', 'string', 'min:4', 'max:6', 'regex:/^[A-Z0-9]+$/'],
             'ip_address' => ['required', 'ip'],
-            'user_id'    => ['nullable', 'regex:/^\d+$/'],
+            'user_id'    => ['nullable', 'string', 'digits_between:17,20'],
             'source'     => ['nullable', 'in:web,bot'],
         ], [
             'code.regex' => 'The code must contain only A–Z and 0–9.',
@@ -36,10 +36,23 @@ class LogMapClickController extends Controller
         $data = $v->validated();
         $data['source'] = $data['source'] ?? 'web';
 
-        if (array_key_exists('user_id', $data) && $data['user_id'] !== null && $data['user_id'] !== '') {
-            $data['user_id'] = (int) $data['user_id'];
-        } else {
-            $data['user_id'] = null;
+        $userId = null;
+        if (!empty($data['user_id']) && preg_match('/^\d+$/', (string)$data['user_id'])) {
+            $userIdStr = (string)$data['user_id'];
+            if (PHP_INT_SIZE >= 8 && $userIdStr <= (string) PHP_INT_MAX) {
+                $userId = (int) $userIdStr;
+            } else {
+                $userId = $userIdStr;
+            }
+        }
+
+        $payload = [
+            'code'       => $data['code'],
+            'ip_address' => $data['ip_address'],
+            'source'     => $data['source'],
+        ];
+        if ($userId !== null) {
+            $payload['user_id'] = $userId;
         }
 
         $apiRoot   = rtrim((string) config('genji_api.root', ''), '/');
@@ -56,22 +69,12 @@ class LogMapClickController extends Controller
                         'X-API-KEY'    => $apiKey,
                     ])
                     ->withOptions(['verify' => $sslVerify])
-                    ->post($endpoint, [
-                        'code'       => $data['code'],
-                        'ip_address' => $data['ip_address'],
-                        'user_id'    => $data['user_id'],
-                        'source'     => $data['source'],
-                    ]);
+                    ->asJson()
+                    ->post($endpoint, $payload);
 
                 if ($resp->successful() || $resp->status() === 201) {
                     return response()
-                        ->json([
-                            'status'     => 'created',
-                            'code'       => $data['code'],
-                            'ip_address' => $data['ip_address'],
-                            'user_id'    => $data['user_id'],
-                            'source'     => $data['source'],
-                        ], 201)
+                        ->json(array_merge(['status' => 'created'], $payload), 201)
                         ->header('Location', $endpoint);
                 }
 
@@ -82,13 +85,9 @@ class LogMapClickController extends Controller
                 ], $resp->status() ?: 502);
 
             } catch (\Throwable $e) {
-                Log::error('log-map-click upstream exception', [
-                    'code'       => $data['code'],
-                    'ip_address' => $data['ip_address'],
-                    'user_id'    => $data['user_id'],
-                    'source'     => $data['source'],
-                    'error'      => $e->getMessage(),
-                ]);
+                Log::error('log-map-click upstream exception', array_merge($payload, [
+                    'error' => $e->getMessage(),
+                ]));
 
                 return response()->json([
                     'message' => 'Upstream exception',
@@ -96,6 +95,7 @@ class LogMapClickController extends Controller
                 ], 502);
             }
         }
+        return response()->json(array_merge(['status' => 'created'], $payload), 201);
     }
 
     private function resolveClientIp(Request $request): string
