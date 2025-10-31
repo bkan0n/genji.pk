@@ -360,7 +360,7 @@
     </div>
     
     <!-- Help modal -->
-    <div id="helpModal" class="fixed inset-0 z-[400] hidden">
+    <div id="helpModal" class="fixed inset-0 z-[9999] hidden">
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm help-modal-backdrop"></div>
 
       <div id="helpModalInner"

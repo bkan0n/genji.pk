@@ -5321,12 +5321,12 @@ function renderPlaytestModal(data) {
     const g = data.guide_urls;
     if (g == null) return '';
 
-    const btn = (href, i = null) => `
-      <a href="${esc(href)}" target="_blank" rel="noopener"
-        class="rounded-md border border-sky-300/25 bg-sky-400/10 px-2 py-0.5 text-[11px] text-sky-200 hover:text-sky-100 hover:bg-sky-400/20 transition"
-        title="${t('map.guide_label') || 'Guide'}">
-        ${t('map.guide_label') || 'Guide'}${i != null ? ` ${i}` : ''}
-      </a>`;
+  const btn = (href, i = null) => `
+    <a href="${esc(href)}" target="_blank" rel="noopener"
+      class="inline-flex h-8 items-center justify-center rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 text-xs text-sky-200 leading-none hover:text-sky-100 hover:bg-sky-400/20 focus:outline-none focus:ring-1 focus:ring-sky-300/40 transition"
+      title="${t('map.guide_label') || 'Guide'}">
+      ${t('map.guide_label') || 'Guide'}${i != null ? ` ${i}` : ''}
+    </a>`;
 
     if (Array.isArray(g)) {
       return g
@@ -5374,14 +5374,14 @@ function renderPlaytestModal(data) {
   const codeBadge =
     data.code && String(data.code).trim() !== ''
       ? `
-      <button type="button"
-              class="copy-map-code cursor-pointer rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-200 hover:text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/40 transition"
-              data-code="${esc(data.code)}"
-              title="${t('popup.click_to_copy_map_code') || 'Click to copy'}"
-              aria-label="${t('popup.click_to_copy_map_code') || 'Click to copy'}">
-        ${esc(data.code)}
-      </button>`
-      : `<span class="rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-200">—</span>`;
+        <button type="button"
+                class="copy-map-code inline-flex h-8 items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 text-xs font-mono text-emerald-200 leading-none cursor-pointer hover:text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/40 transition"
+                data-code="${esc(data.code)}"
+                title="${t('popup.click_to_copy_map_code') || 'Click to copy'}"
+                aria-label="${t('popup.click_to_copy_map_code') || 'Click to copy'}">
+          ${esc(data.code)}
+        </button>`
+      : `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">—</span>`;
 
   const votersMount = `
     <div id="votersMount"
@@ -5440,7 +5440,9 @@ function renderPlaytestModal(data) {
           <div class="flex shrink-0 items-center gap-2">
             ${codeBadge}
             ${guideBadges}
-            ${data.category ? `<span class="rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-200">${esc(data.category)}</span>` : ''}
+            ${data.category ? `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">
+              ${esc(data.category)}
+            </span>` : ''}
           </div>
         </div>
 
