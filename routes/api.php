@@ -141,7 +141,7 @@ Route::prefix('autocomplete')->group(function () {
 });
 Route::middleware(['web'])->prefix('utilities')->name('utilities.')->group(function () {
     Route::post('/image', UploadImageController::class)->name('image.upload');
-    Route::post('/log-map-click', [LogMapClickController::class, 'store'])->name('log_map_click');
+    Route::post('/log-map-click', LogMapClickController::class)->name('utilities.log_map_click');
 });
 
 /* ================== COMPLETIONS ================== */

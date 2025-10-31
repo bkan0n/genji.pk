@@ -4,122 +4,86 @@ namespace App\Http\Controllers\Utilities;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Validator;
+use Throwable;
 
 class LogMapClickController extends Controller
 {
-    public function store(Request $request)
+    public function __invoke(Request $request)
     {
-        $ip = $this->resolveClientIp($request);
-        $merged = array_merge(['ip_address' => $ip, 'source' => 'web'], $request->all());
+        $input = $request->all();
+        $payload = [
+            'code'       => strtoupper((string)($input['code'] ?? '')),
+            'ip_address' => (string)($input['ip_address'] ?? $this->resolveClientIp($request)),
+            'source'     => (string)($input['source'] ?? 'web'),
+        ];
+        if (isset($input['user_id']) && $input['user_id'] !== '' && $input['user_id'] !== null) {
+            $payload['user_id'] = (int) $input['user_id'];
+        }
 
-        $v = Validator::make($merged, [
+        $request->merge($payload);
+        $validated = $request->validate([
             'code'       => ['required', 'string', 'min:4', 'max:6', 'regex:/^[A-Z0-9]+$/'],
             'ip_address' => ['required', 'ip'],
-            'user_id'    => ['nullable', 'string', 'digits_between:17,20'],
-            'source'     => ['nullable', 'in:web,bot'],
+            'source'     => ['required', 'in:web,bot'],
+            'user_id'    => ['nullable', 'integer'],
         ], [
             'code.regex' => 'The code must contain only A–Z and 0–9.',
         ]);
 
-        if ($v->fails()) {
-            return response()->json([
-                'message' => 'Bad request',
-                'errors'  => $v->errors(),
-            ], 400);
+        $cfg    = Config::get('services.genji_api', []);
+        $apiKey = (string) ($cfg['key'] ?? '');
+        $apiRoot = (string) ($cfg['root'] ?? '');
+        $verify  = filter_var($cfg['verify'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+        if ($apiKey === '' || $apiRoot === '') {
+            return response()->json(['error' => 'Missing upstream API configuration'], 500);
         }
 
-        $data = $v->validated();
-        $data['source'] = $data['source'] ?? 'web';
+        $url = $apiRoot . '/api/v3/utilities/log-map-click';
 
-        $userId = null;
-        if (!empty($data['user_id']) && preg_match('/^\d+$/', (string)$data['user_id'])) {
-            $userIdStr = (string)$data['user_id'];
-            if (PHP_INT_SIZE >= 8 && $userIdStr <= (string) PHP_INT_MAX) {
-                $userId = (int) $userIdStr;
-            } else {
-                $userId = $userIdStr;
+        try {
+            $resp = Http::withOptions(['verify' => $verify, 'timeout' => 15])
+                ->withHeaders([
+                    'X-API-KEY'     => $apiKey,
+                    'Accept'        => 'application/json',
+                    'Content-Type'  => 'application/json',
+                ])
+                ->post($url, $validated);
+
+            $data = $resp->json();
+            $data = is_array($data) ? $data : [];
+
+            $out = response()->json($data, $resp->status());
+
+            if ($location = $resp->header('Location')) {
+                $out->header('Location', $location);
             }
+
+            return $out;
+        } catch (Throwable $e) {
+            Log::error('utilities.log_map_click', [
+                'code'  => $validated['code'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Internal server error'], 500);
         }
-
-        $payload = [
-            'code'       => $data['code'],
-            'ip_address' => $data['ip_address'],
-            'source'     => $data['source'],
-        ];
-        if ($userId !== null) {
-            $payload['user_id'] = $userId;
-        }
-
-        $apiRoot   = rtrim((string) config('genji_api.root', ''), '/');
-        $apiKey    = (string) config('genji_api.key', '');
-        $sslVerify = (bool) config('genji_api.verify', true);
-
-        if ($apiRoot !== '') {
-            $endpoint = $apiRoot . '/api/v3/utilities/log-map-click';
-
-            try {
-                $resp = Http::withHeaders([
-                        'Accept'       => 'application/json',
-                        'Content-Type' => 'application/json',
-                        'X-API-KEY'    => $apiKey,
-                    ])
-                    ->withOptions(['verify' => $sslVerify])
-                    ->asJson()
-                    ->post($endpoint, $payload);
-
-                if ($resp->successful() || $resp->status() === 201) {
-                    return response()
-                        ->json(array_merge(['status' => 'created'], $payload), 201)
-                        ->header('Location', $endpoint);
-                }
-
-                return response()->json([
-                    'message' => 'Upstream error',
-                    'status'  => $resp->status(),
-                    'error'   => $resp->json() ?: $resp->body(),
-                ], $resp->status() ?: 502);
-
-            } catch (\Throwable $e) {
-                Log::error('log-map-click upstream exception', array_merge($payload, [
-                    'error' => $e->getMessage(),
-                ]));
-
-                return response()->json([
-                    'message' => 'Upstream exception',
-                    'error'   => $e->getMessage(),
-                ], 502);
-            }
-        }
-        return response()->json(array_merge(['status' => 'created'], $payload), 201);
     }
 
     private function resolveClientIp(Request $request): string
     {
-        $cfcip = $request->header('CF-Connecting-IP');
-        if ($cfcip && filter_var($cfcip, FILTER_VALIDATE_IP)) {
-            return $cfcip;
+        if ($v = $request->header('CF-Connecting-IP')) {
+            return trim(explode(',', $v)[0]);
         }
-
-        $xff = $request->header('X-Forwarded-For');
-        if ($xff) {
-            foreach (explode(',', $xff) as $part) {
-                $ip = trim($part);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
-            }
+        if ($v = $request->header('X-Forwarded-For')) {
+            return trim(explode(',', $v)[0]);
         }
-
-        $real = $request->header('X-Real-IP');
-        if ($real && filter_var($real, FILTER_VALIDATE_IP)) {
-            return $real;
+        if ($v = $request->header('X-Real-IP')) {
+            return trim($v);
         }
-
-        return $request->ip();
+        return (string) $request->ip();
     }
 }
