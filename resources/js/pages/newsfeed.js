@@ -2848,7 +2848,7 @@ function watchPillHtml(videoUrl) {
 }
 
 async function renderCompletionCard(item) {
-  const nickname = item?.name || 'Unknown';
+  const nickname = item?.nickname || 'Unknown';
   const akaRaw = item?.also_known_as;
   const akaText = Array.isArray(akaRaw)
     ? akaRaw.filter(Boolean).join(', ')
