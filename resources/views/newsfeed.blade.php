@@ -156,8 +156,8 @@
           <div
             id="communityPicksCard"
             class="rounded-2xl border border-white/10 bg-white/5 p-4"
-            data-endpoint="{{ url('/api/maps/trending?limit=3') }}"
-            data-full-endpoint="{{ url('/api/maps/trending?limit=25') }}"
+            data-endpoint="/api/maps/trending?limit=3"
+            data-full-endpoint="/api/maps/trending?limit=25"
           >
             <div class="flex items-center justify-between">
               <h3 class="font-semibold">{{ __('newsfeed.sidebar.community_picks') }}</h3>

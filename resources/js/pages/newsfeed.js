@@ -3288,8 +3288,11 @@ function closeChangelogsModal() {
   const card = document.getElementById('communityPicksCard');
   if (!card) return;
 
-  const endpoint     = card.dataset.endpoint;
-  const fullEndpoint = card.dataset.fullEndpoint || endpoint.replace(/limit=\d+/, 'limit=25');
+  const raw = card.dataset.endpoint;
+  const endpoint = new URL(raw, window.location.origin).href;
+
+  const rawFull = card.dataset.fullEndpoint || raw.replace(/limit=\d+/, 'limit=25');
+  const fullEndpoint = new URL(rawFull, window.location.origin).href;
 
   const _i18n = window.NEWSFEED_I18N || {};
   const t = (path, params = {}) => {
