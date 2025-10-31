@@ -4982,7 +4982,7 @@ function mountModeratorActions(modalEl, playtest) {
             </div>
 
             <div id="ptmod-diffmenu"
-              class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
+              class="ptmod-diffmenu absolute left-0 right-0 top-[calc(100%+8px)] bottom-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
               role="menu" aria-label="Select difficulty">
               ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
                 <div
