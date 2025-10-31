@@ -8,7 +8,7 @@
       </div>
 
       <nav>
-        <div class="mb-2 text-xs font-semibold text-zinc-300">
+        <div class="mb-3 pb-1 border-b border-white/10 text-xs font-semibold text-zinc-300">
           {{ __('footer.discover_title') }}
         </div>
         <ul class="space-y-1 text-xs leading-5">
@@ -19,19 +19,18 @@
       </nav>
 
       <nav>
-        <div class="mb-2 text-xs font-semibold text-zinc-300">
+        <div class="mb-3 pb-1 border-b border-white/10 text-xs font-semibold text-zinc-300">
           {{ __('footer.contribute_title') }}
         </div>
         <ul class="space-y-1 text-xs leading-5">
           <li><a class="text-zinc-300 hover:text-white" href="{{ url('/submit') }}">{{ __('footer.contribute.submit') }}</a></li>
           <li><a class="text-zinc-300 hover:text-white" href="{{ url('/convertor') }}">{{ __('footer.contribute.convertor') }}</a></li>
-          {{-- IMPORTANT : déclenche l’ouverture de la modale Credits --}}
           <li><a href="#" data-open="credits" class="text-zinc-300 hover:text-white">{{ __('footer.contribute.credits') }}</a></li>
         </ul>
       </nav>
 
       <div>
-        <div class="mb-2 text-xs font-semibold text-zinc-300">{{ __('footer.follow_title') }}</div>
+        <div class="mb-3 pb-1 border-b border-white/10 text-xs font-semibold text-zinc-300">{{ __('footer.follow_title') }}</div>
         <div class="flex gap-2">
           <a
             href="https://dsc.gg/genjiparkour"
