@@ -839,6 +839,15 @@ img.avatar-loaded{animation:none!important;background:none!important}
   .is-skeleton [data-skel="img"]{animation:none}
 }
 
+/* Map search table clip fix */
+.gp-wrap{ overflow:visible; }
+.results-xscroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable both-edges;
+  touch-action:pan-x;overscroll-behavior-x:contain;padding-bottom:2px;}
+.minw-map_search{display:inline-block;min-width:1024px;width:max-content;max-width:none;}
+.minw-map_search > .grid-map_search,
+.minw-map_search .row-gap-y > .grid-map_search{width:max-content;}
+.grid-map_search{grid-template-columns: 110px minmax(200px, max-content) minmax(180px, max-content) minmax(220px, max-content) 120px 140px max-content;}
+
 /* ================= SUBMIT ================= */
 .scrollbar-stable { scrollbar-gutter: stable; }
 @supports (scrollbar-gutter: stable both-edges) {.scrollbar-stable { scrollbar-gutter: stable both-edges; }}

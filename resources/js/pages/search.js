@@ -456,7 +456,6 @@ async function initializeApp() {
   await loadDynamicOptions();
   initializeToolbarButtons();
   hideOnClickOutside();
-  mountToolbarAnimation();
   if (fa) showFlex(fa);
 }
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -590,31 +589,6 @@ function hideOnClickOutside() {
   });
 }
 
-function attachButtonListeners() {
-  const buttons = document.querySelectorAll('.toolbar-button');
-  if (buttons.length === 0) {
-    setTimeout(attachButtonListeners, 100);
-    return;
-  }
-
-  buttons.forEach((button) => {
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-
-      const optionsContainer = button.querySelector('.custom-options');
-      if (optionsContainer) showDropdown(optionsContainer);
-
-      document
-        .querySelectorAll('.toolbar-button')
-        .forEach((btn) => btn.classList.remove('selected'));
-      button.classList.add('selected');
-
-      const circle = button.querySelector('.selection-circle');
-      if (circle) circle.classList.add('circle-visible');
-    });
-  });
-}
-
 function showDropdown(el) {
   if (!el) return;
 
@@ -630,15 +604,6 @@ function showDropdown(el) {
 
   openDropdownAnimated(el, anchor);
 }
-
-const observer = new MutationObserver(attachButtonListeners);
-document.addEventListener('DOMContentLoaded', () => {
-  const tb = document.querySelector('.toolbar');
-  if (tb) {
-    observer.observe(tb, { childList: true, subtree: true });
-    attachButtonListeners();
-  }
-});
 
 function hideAllFilters(exceptEl = null) {
   document.querySelectorAll('.filter-input.u-d-block, .custom-options.u-d-block').forEach((el) => {
@@ -2623,8 +2588,8 @@ async function displayMapSearchResultsTable(rowsInput) {
   }).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-      <div class="overflow-auto">
+    <div class="rounded-2xl border border-white/10 bg-white/5 gp-wrap">
+      <div class="results-xscroll" tabindex="0">
         <div class="minw-map_search">
           ${headerHTML}
           <div class="row-gap-y">
