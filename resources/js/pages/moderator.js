@@ -361,7 +361,7 @@ function http(method, url, { body, query, headers } = {}) {
       Accept: 'application/json',
       ...(body ? { 'Content-Type': 'application/json' } : {}),
       'X-Requested-With': 'XMLHttpRequest',
-      ...(tokenMeta ? { 'X-CSRF-TOKEN': CSRF } : {}),
+      ...(CSRF ? { 'X-CSRF-TOKEN': CSRF } : {}),
       ...(xsrfFromCookie ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfFromCookie) } : {}),
       ...headers,
     },

@@ -460,11 +460,11 @@ async function logMapCopy(code, source = 'web') {
     sessionStorage.setItem(k, String(now));
   } catch {}
 
-  const client_ip = await getClientIp().catch(() => null);
+  const ip_address = await getClientIp().catch(() => null);
 
   const payload = {
     code: normalizeMapCode(code),
-    client_ip,
+    ip_address,
     user_id: window.user_id ?? null,
     source,
   };
