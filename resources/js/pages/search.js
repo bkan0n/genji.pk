@@ -778,9 +778,9 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
           case 'difficulty_exact':  labelId = 'difficulty'; break;
           case 'mechanics':         labelId = 'mechanics'; break;
           case 'restrictions':      labelId = 'restrictions'; break;
-          case 'onlyPlaytest':      labelId = 'only playtest'; break;
-          case 'ignoreCompletions': labelId = 'ignore completions'; break;
-          case 'onlyMedals':        labelId = 'only medals'; break;
+          case 'onlyPlaytest':      labelId = 'in playtest'; break;
+          case 'ignoreCompletions': labelId = 'completed'; break;
+          case 'onlyMedals':        labelId = 'medals'; break;
           default:                  labelId = id.replace('Options', '');
         }
 
@@ -818,6 +818,101 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
   const rawKey = id.replace('Options', '');
   syncOptionsWithFilters(optionsContainer, rawKey);
   return optionsContainer;
+}
+
+function openPlaytestStatusPanel(button) {
+  const labelInProgress = (typeof t === 'function' && t('filters_toolbar.in_progress')) || 'In Progress';
+  const labelApproved   = (typeof t === 'function' && t('filters_toolbar.approved'))   || 'Approved';
+  const labelStatus     = (typeof t === 'function' && t('filters_toolbar.playtest_status')) || 'Playtest status';
+  const hintTxt         = (typeof t === 'function' && t('filters_toolbar.unchecked_is_approved')) || 'Unchecked = Approved';
+
+  let opts = document.getElementById('playtestStatusOptions');
+  if (!opts) {
+    opts = document.createElement('div');
+    opts.id = 'playtestStatusOptions';
+    opts.className =
+      'custom-options opacity-0 translate-y-1 transition p-3 mt-0 z-45 bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-white/10 rounded-lg w-56';
+    opts.dataset.filterKeyRaw = 'playtestStatus';
+    opts.dataset.anchorId = button.id;
+
+    opts.innerHTML = `
+      <label for="playtestStatusCheckbox" class="flex items-center justify-between gap-3 select-none">
+        <span data-role="pt-status-label" class="text-sm text-zinc-200">${labelInProgress}</span>
+        <span class="relative inline-flex items-center">
+          <input id="playtestStatusCheckbox" type="checkbox" class="peer sr-only" />
+          <span
+            role="switch"
+            aria-checked="false"
+            class="relative h-5 w-9 rounded-full bg-zinc-700 transition-colors duration-200 ease-in-out
+                   peer-checked:bg-emerald-500
+                   after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:translate-x-0 after:rounded-full after:bg-white
+                   after:transition-transform after:duration-200 after:ease-in-out after:content-['']
+                   peer-checked:after:translate-x-4 active:after:scale-95">
+          </span>
+        </span>
+      </label>
+    `;
+    document.body.appendChild(opts);
+
+    const input   = opts.querySelector('#playtestStatusCheckbox');
+    const track   = opts.querySelector('[role="switch"]');
+    const lblNode = opts.querySelector('[data-role="pt-status-label"]');
+
+    const currentOn = () =>
+      String(activeFilters.playtest_status || persistentFilters.playtest_status || 'In Progress')
+        .toLowerCase()
+        .includes('progress');
+
+    const applyState = (on) => {
+      input.checked = on;
+      track.setAttribute('aria-checked', String(on));
+      lblNode.textContent = on ? labelInProgress : labelApproved;
+      track.setAttribute('aria-label', on ? labelInProgress : labelApproved);
+    };
+
+    applyState(currentOn());
+
+    input.addEventListener('change', () => {
+      const isOn        = input.checked;
+      const canonical   = isOn ? 'In Progress' : 'Approved';
+      const displayName = isOn ? labelInProgress : labelApproved;
+
+      activeFilters.playtest_status = canonical;
+      persistentFilters.playtest_status = canonical;
+
+      applyState(isOn);
+      updateActiveFilters();
+      updateToolbarButtonStates();
+      showConfirmationMessage(`${labelStatus}: ${displayName}`);
+    });
+
+    track.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        input.checked = !input.checked;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    track.tabIndex = 0;
+  } else {
+    opts.dataset.anchorId = button.id;
+
+    const input   = opts.querySelector('#playtestStatusCheckbox');
+    const track   = opts.querySelector('[role="switch"]');
+    const lblNode = opts.querySelector('[data-role="pt-status-label"]');
+
+    const on = String(activeFilters.playtest_status || persistentFilters.playtest_status || 'In Progress')
+      .toLowerCase()
+      .includes('progress');
+
+    input.checked = on;
+    track.setAttribute('aria-checked', String(on));
+    lblNode.textContent = on ? labelInProgress : labelApproved;
+    track.setAttribute('aria-label', on ? labelInProgress : labelApproved);
+  }
+
+  positionInputOrDropdown(null, opts);
+  showDropdown(opts);
 }
 
 function difficultyClasses(label, value) {
@@ -1222,7 +1317,6 @@ function initializeToolbarButtons() {
           optionsContainer = showOptionsContainer(
             'completionFilterOptions',
             [
-              { text: 'All', value: 'All', raw: 'All' },
               { text: 'True', value: 'With', raw: 'With' },
               { text: 'False', value: 'Without', raw: 'Without' },
             ],
@@ -1234,7 +1328,6 @@ function initializeToolbarButtons() {
           optionsContainer = showOptionsContainer(
             'medalFilterOptions',
             [
-              { text: 'All', value: 'All', raw: 'All' },
               { text: 'True', value: 'With', raw: 'With' },
               { text: 'False', value: 'Without', raw: 'Without' },
             ],
@@ -1243,16 +1336,7 @@ function initializeToolbarButtons() {
           );
           break;
         case 'playtest_status':
-          optionsContainer = showOptionsContainer(
-            'playtestStatusOptions',
-            [
-              { text: 'Approved', value: 'Approved', raw: 'Approved' },
-              { text: 'In Progress', value: 'In Progress', raw: 'In Progress' },
-              { text: 'Rejected', value: 'Rejected', raw: 'Rejected' },
-            ],
-            button,
-            false
-          );
+          openPlaytestStatusPanel(button);
           break;
         case 'apply_filters':
           applyFilters(activeFilters);
@@ -1321,6 +1405,16 @@ function updateActiveFilters() {
           delete activeFilters[mappedFilterId];
         }
       }, 0);
+      return;
+    }
+
+    if (filterId === 'playtestStatus') {
+      const cb = optionsContainer.querySelector('#playtestStatusCheckbox');
+      if (cb) {
+        activeFilters[mappedFilterId] = cb.checked ? 'In Progress' : 'Approved';
+      } else {
+        delete activeFilters[mappedFilterId];
+      }
       return;
     }
 
@@ -1468,6 +1562,22 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
     return;
   }
 
+  if (mapped === 'playtest_status') {
+    const cb = optionsContainer.querySelector('#playtestStatusCheckbox');
+    if (cb) {
+      const on = String(val).toLowerCase().includes('progress');
+      cb.checked = on;
+      const track = optionsContainer.querySelector('.mx-switch');
+      const knob  = optionsContainer.querySelector('.mx-knob');
+      if (track && knob) {
+        track.classList.toggle('bg-emerald-600/60', on);
+        track.classList.toggle('border-emerald-500/30', on);
+        knob.style.transform = on ? 'translateX(16px)' : 'translateX(0px)';
+      }
+    }
+    return;
+  }
+
   optionsContainer.querySelectorAll('.custom-option').forEach((opt) => {
     const raw = opt.getAttribute('data-raw-value');
     const match = String(val) === raw;
@@ -1540,6 +1650,10 @@ async function applyFilters(filters) {
     if (!hasFilters && !hasActiveMapCode) {
       activeFilters.map_code = '008EX';
     }
+  }
+
+  if (currentSection === 'map_search' && !activeFilters.playtest_status) {
+    activeFilters.playtest_status = 'Approved';
   }
 
   renderSkeletonForSection(currentSection);
