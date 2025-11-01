@@ -2878,6 +2878,142 @@ function getVideoUrl() {
   return v;
 }
 
+function ensureNoticeHost() {
+  const sec  = document.getElementById('submitRecordSection');
+  if (!sec) return null;
+
+  let host = document.getElementById('srNoticeHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'srNoticeHost';
+    const form = sec.querySelector('#submitRecordForm');
+    if (form) sec.insertBefore(host, form);
+    else      sec.insertBefore(host, sec.firstChild);
+  }
+  return host;
+}
+
+function bannerHTML() {
+  const title  = (typeof t === 'function' && t('notice.title'))              || 'Notice';
+  const li1    = (typeof t === 'function' && t('notice.pending_accept'))     || 'Your completion may remain pending until it’s accepted.';
+  const li2    = (typeof t === 'function' && t('notice.mutable_difficulty')) || 'Difficulty may change while the map is in playtesting.';
+  return `
+    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice" id="srPlaytestingNotice" role="status" aria-live="polite">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
+        </svg>
+        <div class="min-w-0">
+          <div class="font-semibold text-amber-300">${title}</div>
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${li1}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${li2}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+function showNotice() {
+  const host = ensureNoticeHost();
+  if (!host) return;
+  if (!document.getElementById('srPlaytestingNotice')) {
+    host.insertAdjacentHTML('afterbegin', bannerHTML());
+    const el = document.getElementById('srPlaytestingNotice');
+    requestAnimationFrame(() => el.classList.add('is-visible'));
+  }
+}
+
+function hideNotice() {
+  const el = document.getElementById('srPlaytestingNotice');
+  if (!el) return;
+  el.classList.remove('is-visible');
+  const done = () => el.remove();
+  el.addEventListener('transitionend', done, { once: true });
+  setTimeout(done, 260);
+}
+
+async function fetchMapByCode(code) {
+  if (!code) return null;
+  try {
+    const resp = await fetch(`/api/maps?code=${encodeURIComponent(code)}`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json().catch(() => null);
+    if (!data) return null;
+
+    const norm = (v) => normalizeMapCode(v || '');
+    if (Array.isArray(data)) {
+      return data.find(m => norm(m?.code || m?.map_code) === norm(code)) || data[0] || null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function isInProgress(map) {
+  const v = String(map?.playtesting ?? map?.status ?? '').toLowerCase();
+  return v.includes('progress');
+}
+
+async function evaluateNoticeForInput() {
+  const sec = document.getElementById('submitRecordSection');
+  if (!sec || sec.classList.contains('hidden')) return;
+
+  const input = document.getElementById('mapCodeInput');
+  const raw   = (input?.value || '').trim();
+  const code  = normalizeMapCode(raw);
+
+  if (!code || code.length < 4) { hideNotice(); return; }
+
+  const map = await fetchMapByCode(code);
+  if (map && isInProgress(map)) showNotice();
+  else hideNotice();
+}
+
+function bindWatcher() {
+  const input = document.getElementById('mapCodeInput');
+  if (!input || input.dataset.noticeBound === '1') return;
+  input.dataset.noticeBound = '1';
+
+  let debounce;
+  const run = () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(evaluateNoticeForInput, 250);
+  };
+  input.addEventListener('input', run);
+  input.addEventListener('blur', run);
+  input.addEventListener('change', run);
+
+  requestAnimationFrame(evaluateNoticeForInput);
+}
+
+const _origAnimateSR = typeof animateSubmitRecordSection === 'function' ? animateSubmitRecordSection : null;
+window.animateSubmitRecordSection = function () {
+  _origAnimateSR && _origAnimateSR();
+  ensureNoticeHost();
+  bindWatcher();
+  setTimeout(evaluateNoticeForInput, 120);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  if ((params.get('section') || 'playtest') === 'submit_record') {
+    ensureNoticeHost();
+    bindWatcher();
+  }
+});
+
 function disableBrowserAutocompleteInSubmitRecord() {
   const form = document.getElementById('submitRecordForm') || document.querySelector('#submitRecordSection form');
   if (!form) return;
