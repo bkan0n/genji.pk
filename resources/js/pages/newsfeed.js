@@ -1491,7 +1491,6 @@ async function createNewsCard(item) {
             </h3>
             ${reason ? `<p class="mt-1 text-xs text-zinc-300"><span class="text-zinc-400">${hasFn(t)?(t('common.reason')||'Reason'):'Reason'}:</span> ${esc(reason)}</p>` : ''}
           </div>
-          <span class="rounded-full px-2 py-0.5 text-[11px] ${theme.badge}">${esc(typeLabel(type))}</span>
         </header>
           ${ count
             ? `<ul class="grid [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))] gap-2 p-3 sm:p-4">${chips}</ul>`

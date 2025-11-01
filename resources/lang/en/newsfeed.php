@@ -41,6 +41,8 @@ return [
         'legacy_record' => 'Legacy record',
         'archive' => 'Archive',
         'unarchive' => 'Unarchive',
+        'bulk_archive' => 'Bulk archive',
+        'bulk_unarchive' => 'Bulk unarchive',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
