@@ -17,7 +17,8 @@
           "*.svg",
           "*.webp",
           "*.woff",
-          "*.woff2"
+          "*.woff2",
+          "*.avif"
         ]
       },
       "action": {
