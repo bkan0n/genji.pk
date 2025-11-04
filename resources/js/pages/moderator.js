@@ -2867,40 +2867,74 @@ function openImageLightbox(src) {
   );
 })();
 
+// ——— Permissions
+const CALIB_ALLOWED_USER_ID = "681391478605479948";
+
+// ——— Auto Verify
+const AUTO_VERIFY_USER_ID = "1120786151452717106";
+import AutoVerifyWorkerUrl from "../components/auto-verify.worker.js?worker&url";
+
+let _autoVerifyWorker = null;
+function getAutoVerifyWorker() {
+  if (_autoVerifyWorker) return _autoVerifyWorker;
+  _autoVerifyWorker = new Worker(AutoVerifyWorkerUrl, { type: "module" });
+  try { pushRoisToWorker(_autoVerifyWorker); } catch {}
+  return _autoVerifyWorker;
+}
+
+function parseSec(v) {
+  if (v == null) return null;
+  const n = Number(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+/* =========================
+   RENDER SUBMISSION CARD
+   ========================= */
 function renderSubmissionCard(item) {
-  const rid = String(item?.id ?? '');
-  const verId = item?.verification_id == null ? '' : String(item.verification_id);
-  const shot = item?.screenshot ? String(item.screenshot) : '';
-  const timeVal = item?.time == null ? '' : String(item.time);
-  const codeVal = item?.code == null ? '' : String(item.code);
+  const rid    = String(item?.id ?? '');
+  const verId  = item?.verification_id == null ? '' : String(item.verification_id);
+  const shot   = item?.screenshot ? String(item.screenshot) : '';
+  const timeVal= item?.time == null ? '' : String(item.time);
+  const codeVal= item?.code == null ? '' : String(item.code);
 
   const wrap = document.createElement('article');
   wrap.className =
     'rounded-2xl border border-white/10 bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16';
-  wrap.dataset.recordId = rid;
+  wrap.dataset.recordId       = rid;
   wrap.dataset.verificationId = verId;
-  wrap.dataset.screenshot = shot;
-  wrap.dataset.time = timeVal;
-  wrap.dataset.code = codeVal;
+  wrap.dataset.screenshot     = shot;
+  wrap.dataset.time           = timeVal;
+  wrap.dataset.code           = codeVal;
+  wrap.dataset.name           = item?.name ? String(item.name) : "";
 
   const imgHtml = shot
     ? `
-    <div class="space-y-1">
-      <button type="button" data-enlarge="${escapeHtml(shot)}"
-              class="relative cursor-pointer group block overflow-hidden rounded-xl border border-white/10 ring-1 ring-white/10 bg-black/20">
-        <img src="${escapeHtml(shot)}" alt="screenshot"
-             class="w-full h-full object-cover max-h-[240px] md:max-h-[360px] transition-transform duration-200 group-hover:scale-[1.02]">
-        <span class="pointer-events-none absolute inset-0 rounded-xl ring-0 group-hover:ring-2 group-hover:ring-emerald-400/40"></span>
-      </button>
-      <div class="text-[11px] text-zinc-400 text-right">
-        <a href="${escapeHtml(shot)}" target="_blank" class="hover:underline decoration-dotted">Open original</a>
+      <div class="space-y-1">
+        <button type="button" data-enlarge="${escapeHtml(shot)}"
+                class="relative cursor-pointer group block overflow-hidden rounded-xl border border-white/10 ring-1 ring-white/10 bg-black/20">
+          <img src="${escapeHtml(shot)}" alt="screenshot"
+               class="w-full h-full object-cover max-h-[240px] md:max-h-[360px] transition-transform duration-200 group-hover:scale-[1.02]">
+          <span class="pointer-events-none absolute inset-0 rounded-xl ring-0 group-hover:ring-2 group-hover:ring-emerald-400/40"></span>
+        </button>
+        <div class="text-[11px] text-zinc-400 text-right">
+          <a href="${escapeHtml(shot)}" target="_blank" class="hover:underline decoration-dotted">Open original</a>
+        </div>
       </div>
-    </div>
-  `
+    `
     : `
-    <div class="w-full h-[200px] md:h-[280px] rounded-xl border border-white/10 bg-zinc-900/40 grid place-items-center text-xs text-zinc-400">
-      No screenshot
-    </div>`;
+      <div class="w-full h-[200px] md:h-[280px] rounded-xl border border-white/10 bg-zinc-900/40 grid place-items-center text-xs text-zinc-400">
+        No screenshot
+      </div>`;
+
+  const meId = (typeof window.user_id !== "undefined" && window.user_id) ? String(window.user_id) : "";
+  const canCalibrate = meId === CALIB_ALLOWED_USER_ID;
+  const calibrateBtnHtml = canCalibrate
+    ? `
+      <button class="btn-calibrate-ocr cursor-pointer rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 font-medium hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+        Calibrate OCR
+      </button>`
+    : ``;
 
   wrap.innerHTML = `
     <div class="flex flex-col md:flex-row items-stretch gap-5">
@@ -2912,22 +2946,22 @@ function renderSubmissionCard(item) {
         </div>
 
         <div class="grid gap-1.5">
-          ${kvRow('user_id', item?.user_id == null ? '—' : String(item.user_id))}
-          ${kvRow('time', item?.time)}
-          ${kvRow('code', item?.code)}
-          ${kvRow('map_name', item?.map_name)}
-          ${kvRow('difficulty', item?.difficulty)}
-          ${kvRow('name', item?.name)}
-          ${kvRow('also_known_as', item?.also_known_as)}
-          ${kvRow('verified', boolChip(item?.verified), { rawHtml: true })}
-          ${kvRow('completion', boolChip(item?.completion), { rawHtml: true })}
-          ${kvRow('inserted_at', item?.inserted_at)}
-          ${kvRow('hypothetical_rank', item?.hypothetical_rank)}
+          ${kvRow('user_id',        item?.user_id == null ? '—' : String(item.user_id))}
+          ${kvRow('time',           item?.time)}
+          ${kvRow('code',           item?.code)}
+          ${kvRow('map_name',       item?.map_name)}
+          ${kvRow('difficulty',     item?.difficulty)}
+          ${kvRow('name',           item?.name)}
+          ${kvRow('also_known_as',  item?.also_known_as)}
+          ${kvRow('verified',       boolChip(item?.verified), { rawHtml: true })}
+          ${kvRow('completion',     boolChip(item?.completion), { rawHtml: true })}
+          ${kvRow('inserted_at',    item?.inserted_at)}
+          ${kvRow('hypothetical_rank',  item?.hypothetical_rank)}
           ${kvRow('hypothetical_medal', item?.hypothetical_medal)}
-          ${kvRow('verified_by', item?.verified_by == null ? '—' : String(item.verified_by))}
-          ${kvRow('message_id', item?.message_id == null ? '—' : String(item.message_id))}
-          ${kvRow('suspicious', boolChip(item?.suspicious), { rawHtml: true })}
-          ${kvRow('video', linkOrDash(item?.video), { rawHtml: true })}
+          ${kvRow('verified_by',    item?.verified_by == null ? '—' : String(item.verified_by))}
+          ${kvRow('message_id',     item?.message_id == null ? '—' : String(item.message_id))}
+          ${kvRow('suspicious',     boolChip(item?.suspicious), { rawHtml: true })}
+          ${kvRow('video',          linkOrDash(item?.video), { rawHtml: true })}
         </div>
       </div>
 
@@ -2937,14 +2971,18 @@ function renderSubmissionCard(item) {
       </div>
     </div>
 
-    <!-- BARRE D’ACTIONS EN BAS À DROITE -->
+    <!-- ACTIONS -->
     <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
       <button class="btn-verify cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 font-semibold hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
         Verify
       </button>
+
       <button class="btn-auto-verify cursor-pointer rounded-lg bg-emerald-700 text-white px-3 py-1.5 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/40">
         Auto verify
       </button>
+
+      ${calibrateBtnHtml}
+
       <button class="btn-deny cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">
         Deny
       </button>
@@ -2954,6 +2992,9 @@ function renderSubmissionCard(item) {
   return wrap;
 }
 
+/* =========================
+   REMOVE CARD
+   ========================= */
 function removeCardFromVerifList(card) {
   if (!card) return;
   const container = card.parentElement;
@@ -2983,6 +3024,9 @@ function removeCardFromVerifList(card) {
   );
 }
 
+/* =========================
+   DENY DIALOG
+   ========================= */
 function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (optional)' } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -3020,42 +3064,83 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
     overlay.querySelector('.btn-cancel')?.addEventListener('click', () => close(true));
     overlay.querySelector('.btn-confirm')?.addEventListener('click', () => close(false));
     textarea?.focus();
-    document.addEventListener(
-      'keydown',
-      function onKey(ev) {
-        if (ev.key === 'Escape') {
-          ev.preventDefault();
-          close(true);
-          document.removeEventListener('keydown', onKey);
-        }
-        if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'enter') {
-          ev.preventDefault();
-          close(false);
-          document.removeEventListener('keydown', onKey);
-        }
-      },
-      { once: true }
-    );
+
+    const onKey = (ev) => {
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        close(true);
+        document.removeEventListener('keydown', onKey);
+      }
+      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'enter') {
+        ev.preventDefault();
+        close(false);
+        document.removeEventListener('keydown', onKey);
+      }
+    };
+    document.addEventListener('keydown', onKey, { once: true });
   });
 }
 
+/* =========================
+   CLICK HANDLER (verify/deny/auto)
+   ========================= */
 document.addEventListener('click', async (e) => {
-  const btnAuto = e.target.closest('.btn-auto-verify');
+  const btnAuto   = e.target.closest('.btn-auto-verify');
   const btnVerify = e.target.closest('.btn-verify');
-  const btnDeny = e.target.closest('.btn-deny');
+  const btnDeny   = e.target.closest('.btn-deny');
+  const btnCalib  = e.target.closest('.btn-calibrate-ocr');
+
+  if (btnCalib) {
+    e.preventDefault();
+    const meId = (typeof window.user_id !== "undefined" && window.user_id) ? String(window.user_id) : "";
+    if (meId !== CALIB_ALLOWED_USER_ID) {
+      toast("You are not allowed to calibrate OCR.", "warn");
+      return;
+    }
+    const card = e.target.closest('[data-record-id]');
+    const url = card?.dataset?.screenshot;
+    if (!url) return toast("No screenshot", "warn");
+    const rois = await openRoiEditor(url);
+    if (rois) {
+      saveRois(rois);
+      pushRoisToWorker(getAutoVerifyWorker(), rois);
+      console.group("[OCR] ROIs saved");
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = url;
+        await img.decode();
+        const W = img.naturalWidth, H = img.naturalHeight;
+        const px = {};
+        for (const k of Object.keys(rois)) {
+          const [x1,y1,x2,y2] = rois[k];
+          px[k] = [x1*W, y1*H, x2*W, y2*H].map(v => Math.round(v));
+        }
+        console.log("normalized:", rois);
+        console.log("pixels:", px, "size:", { W, H });
+      } catch {
+        console.log("normalized:", rois);
+      }
+      console.groupEnd();
+      toast("ROIs updated", "ok");
+    }
+    return;
+  }
+
   if (!btnVerify && !btnDeny && !btnAuto) return;
 
   const card = e.target.closest('[data-record-id]');
   if (!card) return;
 
-  // --- Auto verify via worker ---
+  // Auto verify
   if (btnAuto) {
     e.preventDefault();
     return void autoVerifyCard(card);
   }
 
+  // Manual verify / deny
   const record_id = card.dataset.recordId;
-  const verified = !!btnVerify;
+  const verified  = !!btnVerify;
   let reason = null;
 
   if (!verified && btnDeny) {
@@ -3064,20 +3149,14 @@ document.addEventListener('click', async (e) => {
     reason = (r ?? '').trim() || null;
   }
 
-  if (verified) {
-    reason = null;
-  }
+  if (verified) reason = null;
 
   if (!MOD_USER_ID) {
     toast('Missing moderator id (meta[name="mod-user-id"])', 'warn');
     return;
   }
 
-  const body = {
-    verified,
-    verified_by: MOD_USER_ID,
-    reason,
-  };
+  const body = { verified, verified_by: MOD_USER_ID, reason };
 
   const { ok, status, url, data } = await http(
     'PUT',
@@ -3102,32 +3181,18 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// ———————————————————————————————————————————————————————————————
-// Auto Verify
-const AUTO_VERIFY_USER_ID = "1120786151452717106";
-import AutoVerifyWorkerUrl from "../components/auto-verify.worker.js?worker&url";
-
-let _autoVerifyWorker = null;
-function getAutoVerifyWorker() {
-  if (_autoVerifyWorker) return _autoVerifyWorker;
-  _autoVerifyWorker = new Worker(AutoVerifyWorkerUrl, { type: "module" });
-  return _autoVerifyWorker;
-}
-
-function parseSec(v) {
-  if (v == null) return null;
-  const n = Number(String(v).replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
-
+/* =========================
+   AUTO VERIFY FLOW
+   ========================= */
 async function autoVerifyCard(card) {
-  const record_id = card?.dataset?.recordId;
-  const code = card?.dataset?.code || "";
-  const time = parseSec(card?.dataset?.time);
-  const screenshot = card?.dataset?.screenshot || "";
+  const record_id  = card?.dataset?.recordId;
+  const code       = (card?.dataset?.code || "").toString();
+  const time       = parseSec(card?.dataset?.time);
+  const screenshot = (card?.dataset?.screenshot || "").toString();
+  const mapName    = (card?.dataset?.name || "").toString();
 
-  if (!record_id) return toast("Missing record_id", "warn");
-  if (!screenshot) return toast("No screenshot to verify", "warn");
+  if (!record_id)   return toast("Missing record_id", "warn");
+  if (!screenshot)  return toast("No screenshot to verify", "warn");
   if (!code || time == null) return toast("Missing code/time on card", "warn");
 
   const btn = card.querySelector(".btn-auto-verify");
@@ -3139,7 +3204,20 @@ async function autoVerifyCard(card) {
   }
 
   const w = getAutoVerifyWorker();
+  pushRoisToWorker(w);
+
   const jobId = `${record_id}:${Date.now()}`;
+  const payloadRaw = {
+    screenshotUrl: screenshot,
+    code,
+    time: Number.isFinite(time) ? Number(time) : null,
+    mapName,
+    apiBase: (window.API_ROOT || window.X_API_ROOT || location.origin),
+    debug: true
+  };
+
+  let msg = { op: "VERIFY", id: jobId, payload: payloadRaw };
+  try { msg = structuredClone(msg); } catch { msg = JSON.parse(JSON.stringify(msg)); }
 
   const result = await new Promise((resolve) => {
     const onMsg = (e) => {
@@ -3149,11 +3227,7 @@ async function autoVerifyCard(card) {
       resolve({ result, error });
     };
     w.addEventListener("message", onMsg);
-    w.postMessage({
-      op: "VERIFY",
-      id: jobId,
-      payload: { screenshotUrl: screenshot, code, time },
-    });
+    w.postMessage(msg);
   });
 
   if (btn) {
@@ -3190,81 +3264,184 @@ async function autoVerifyCard(card) {
     return;
   }
 
-  const body = {
-    verified: true,
-    verified_by: AUTO_VERIFY_USER_ID,
-    reason: "auto verify matched code & time",
-  };
-
+  const body = { verified: true, verified_by: AUTO_VERIFY_USER_ID, reason: "auto verify matched code & time" };
   const { ok, status, url, data } = await http(
     "PUT",
     `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
     { body }
   );
 
-  logActivity({
-    title: "Verify completion (auto)",
-    method: "PUT",
-    url,
-    ok,
-    status,
-    data,
-  });
-
-  if (ok) {
-    toast("Verified (auto)", "ok");
-    removeCardFromVerifList(card);
-  } else {
-    toast("Auto verify: API failed", "err");
-  }
+  logActivity({ title: "Verify completion (auto)", method: "PUT", url, ok, status, data });
+  if (ok) { toast("Verified (auto)", "ok"); removeCardFromVerifList(card); }
+  else { toast("Auto verify: API failed", "err"); }
 }
 
-// ———————————————————————————————————————————————————————————————
-// LOOTBOX
-function showConfirmActiveKeyType() {
-  return new Promise((resolve) => {
-    const overlay = document.createElement('div');
-    overlay.className =
-      'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
+/* =========================
+   ROI STORAGE + EDITOR
+   ========================= */
+const ROI_LS_KEY = "gp_ocr_rois";
+
+const DEFAULT_ROIS = {
+  TOPLEFT:    [0.010, 0.020, 0.360, 0.300],
+  BANNER:     [0.240, 0.230, 0.760, 0.380],
+  TOPRIGHT:   [0.800, 0.170, 0.985, 0.470],
+  BOTTOMLEFT: [0.070, 0.895, 0.260, 0.980],
+};
+
+function loadRois() {
+  try { return { ...DEFAULT_ROIS, ...(JSON.parse(localStorage.getItem(ROI_LS_KEY)) || {}) }; }
+  catch { return { ...DEFAULT_ROIS }; }
+}
+function saveRois(r) { localStorage.setItem(ROI_LS_KEY, JSON.stringify(r)); }
+function pushRoisToWorker(worker, rois = loadRois()) {
+  worker.postMessage({ op: "SET_ROIS", rois });
+}
+
+async function openRoiEditor(imageUrl) {
+  return new Promise(async (resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "fixed inset-0 z-[500] bg-black/70 backdrop-blur-sm p-6 flex items-center justify-center";
     overlay.innerHTML = `
-      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
-        <div class="px-4 py-3 border-b border-white/10">
-          <h3 class="font-semibold text-sm">Confirm change</h3>
-        </div>
-        <div class="p-4 space-y-4">
-          <p class="text-sm text-zinc-200">Are you sure you want to modify the global active key type ?</p>
-          <div class="flex justify-end gap-2">
-            <button class="btn-confirm cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400">I know what I'm doing</button>
-            <button class="btn-cancel cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">Cancel</button>
+      <div class="relative bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-4">
+        <div class="text-sm text-zinc-300 pb-2 flex items-center justify-between gap-4">
+          <b>ROI Calibrator</b>
+          <div class="space-x-2">
+            <button id="roiReset"  class="px-2 py-1 rounded bg-white/10">Reset</button>
+            <button id="roiCancel" class="px-2 py-1 rounded bg-white/10">Cancel</button>
+            <button id="roiSave"   class="px-3 py-1 rounded bg-emerald-600 text-white">Save</button>
           </div>
         </div>
+        <div class="relative overflow-auto max-w-[90vw] max-h-[78vh]">
+          <div id="roiStage" class="relative inline-block"></div>
+        </div>
+        <div class="pt-3 text-[11px] text-zinc-400">Tip: drag to move, grab a side/corner to resize. Values are saved normalized (0..1).</div>
       </div>
     `;
     document.body.appendChild(overlay);
 
-    const close = (val) => {
-      overlay.remove();
-      resolve(val);
-    };
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) close(false);
+    const stage = overlay.querySelector("#roiStage");
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = imageUrl;
+    await img.decode();
+    stage.style.width  = img.naturalWidth + "px";
+    stage.style.height = img.naturalHeight + "px";
+    stage.appendChild(img);
+
+    const COLORS = { TOPLEFT:"#22d3ee", BANNER:"#a855f7", TOPRIGHT:"#ef4444", BOTTOMLEFT:"#10b981" };
+    let rois = loadRois();
+    const boxes = {};
+
+    function addBox(name) {
+      const d = document.createElement("div");
+      d.className = "absolute select-none";
+      d.style.boxShadow = `0 0 0 2px ${COLORS[name]} inset`;
+      d.style.outline = `1px dashed ${COLORS[name]}55`;
+      d.dataset.name = name;
+
+      const label = document.createElement("div");
+      label.textContent = name;
+      label.style.position="absolute"; label.style.left="2px"; label.style.top="-18px";
+      label.style.fontSize="11px"; label.style.color=COLORS[name];
+      d.appendChild(label);
+
+      const hs = ["n","s","e","w","ne","nw","se","sw"];
+      hs.forEach(h=>{
+        const hdl = document.createElement("div");
+        hdl.dataset.handle=h;
+        hdl.style.position="absolute"; hdl.style.width="10px"; hdl.style.height="10px";
+        hdl.style.background=COLORS[name]; hdl.style.opacity="0.8"; hdl.style.borderRadius="2px";
+        const pos = { n:["50%","-5px"], s:["50%","calc(100% - 5px)"], e:["calc(100% - 5px)","50%"], w:["-5px","50%"],
+                      ne:["calc(100% - 5px)","-5px"], nw:["-5px","-5px"], se:["calc(100% - 5px)","calc(100% - 5px)"], sw:["-5px","calc(100% - 5px)"] };
+        hdl.style.left = pos[h][0]; hdl.style.top = pos[h][1];
+        hdl.style.transform = /n|s/.test(h) ? "translateX(-50%)" : /e|w/.test(h) ? "translateY(-50%)" : "";
+        d.appendChild(hdl);
+      });
+
+      stage.appendChild(d);
+      boxes[name] = d;
+    }
+
+    function placeFromRois() {
+      const W = img.naturalWidth, H = img.naturalHeight;
+      for (const k of Object.keys(COLORS)) {
+        if (!boxes[k]) addBox(k);
+        const [x1,y1,x2,y2] = rois[k];
+        const d = boxes[k];
+        d.style.left = (x1*W) + "px";
+        d.style.top  = (y1*H) + "px";
+        d.style.width  = Math.max(1,(x2-x1)*W) + "px";
+        d.style.height = Math.max(1,(y2-y1)*H) + "px";
+      }
+    }
+
+    let cur = null;
+    stage.addEventListener("pointerdown", (ev)=>{
+      const box = ev.target.closest("[data-name]");
+      if (!box) return;
+      cur = {
+        box,
+        name: box.dataset.name,
+        startX: ev.clientX, startY: ev.clientY,
+        handle: ev.target.dataset.handle || null
+      };
+      box.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
     });
-    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => close(false));
-    overlay.querySelector('.btn-confirm')?.addEventListener('click', () => close(true));
-    document.addEventListener(
-      'keydown',
-      function onKey(ev) {
-        if (ev.key === 'Escape') {
-          close(false);
-          document.removeEventListener('keydown', onKey);
-        }
-        if (ev.key === 'Enter') {
-          close(true);
-          document.removeEventListener('keydown', onKey);
-        }
-      },
-      { once: true }
-    );
+
+    stage.addEventListener("pointermove", (ev)=>{
+      if (!cur) return;
+      const box = cur.box;
+      const st = box.style;
+      const dx = ev.clientX - cur.startX;
+      const dy = ev.clientY - cur.startY;
+
+      let left = parseFloat(st.left) || 0;
+      let top  = parseFloat(st.top)  || 0;
+      let width  = parseFloat(st.width)  || 0;
+      let height = parseFloat(st.height) || 0;
+
+      const h = cur.handle;
+      if (!h) { left += dx; top += dy; }
+      else {
+        if (h.includes("e")) width  += dx;
+        if (h.includes("s")) height += dy;
+        if (h.includes("w")) { left += dx; width  -= dx; }
+        if (h.includes("n")) { top  += dy; height -= dy; }
+        width = Math.max(6, width);
+        height= Math.max(6, height);
+      }
+
+      left  = Math.max(0, Math.min(left,  stage.clientWidth  - width));
+      top   = Math.max(0, Math.min(top,   stage.clientHeight - height));
+
+      st.left   = left + "px";
+      st.top    = top  + "px";
+      st.width  = width  + "px";
+      st.height = height + "px";
+
+      cur.startX = ev.clientX; cur.startY = ev.clientY;
+    });
+
+    stage.addEventListener("pointerup", ()=>{
+      if (!cur) return;
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const st = cur.box.style;
+      const x = parseFloat(st.left), y = parseFloat(st.top),
+            w = parseFloat(st.width), h = parseFloat(st.height);
+      rois[cur.name] = [x/W, y/H, (x+w)/W, (y+h)/H];
+      cur = null;
+    });
+
+    placeFromRois();
+
+    overlay.querySelector("#roiReset").onclick  = () => { rois = { ...DEFAULT_ROIS }; placeFromRois(); };
+    overlay.querySelector("#roiCancel").onclick = () => { overlay.remove(); resolve(null); };
+    overlay.querySelector("#roiSave").onclick   = () => {
+      saveRois(rois);
+      overlay.remove();
+      resolve(rois);
+    };
   });
 }
 
