@@ -178,6 +178,19 @@
       opacity: 0.7;
     }
   }
+  @keyframes gp-heartbeat-slow {
+    0%, 100% { transform: scale(1); }
+    12%      { transform: scale(1.18); }
+    22%      { transform: scale(1); }
+    32%      { transform: scale(1.12) translateY(-0.5px); }
+    42%      { transform: scale(1); }
+  }
+  .gp-heart { transform-origin: center; }
+  .group:hover .gp-heart { animation: gp-heartbeat-slow 2.4s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .group:hover .gp-heart { animation: none; }
+  }
 
   /* ===========================
      UTILS
