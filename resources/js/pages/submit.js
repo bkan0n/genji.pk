@@ -4235,7 +4235,7 @@ function setupRatingDropdown() {
           method: 'POST',
           headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ code: String(code || ''), difficulty: difficultyValue }),
+          body: JSON.stringify({ difficulty: difficultyValue }),
         }
       );
 
