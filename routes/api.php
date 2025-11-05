@@ -82,6 +82,7 @@ use App\Http\Controllers\Utilities\Autocomplete\MapRestrictionsController;
 use App\Http\Controllers\Utilities\Autocomplete\UsersController;
 use App\Http\Controllers\Utilities\UploadImageController;
 use App\Http\Controllers\Utilities\LogMapClickController;
+use App\Http\Controllers\Utilities\OcrController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -143,7 +144,7 @@ Route::middleware(['web'])->prefix('utilities')->name('utilities.')->group(funct
     Route::post('/image', UploadImageController::class)->name('image.upload');
     Route::post('/log-map-click', LogMapClickController::class)->name('utilities.log_map_click');
 });
-
+Route::post('/ocr/extract', [OcrController::class, 'extract']);
 /* ================== COMPLETIONS ================== */
 Route::prefix('completions')->group(function () {
     Route::get('/', UserCompletionsController::class)->name('api.completions.user');

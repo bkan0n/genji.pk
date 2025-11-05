@@ -339,7 +339,7 @@ function logActivity({ title, method, url, ok, status, data }) {
 })();
 
 // --- HTTP ---
-function http(method, url, { body, query, headers } = {}) {
+async function http(method, url, { body, query, headers } = {}) {
   const qs = query
     ? '?' +
       new URLSearchParams(
@@ -2878,7 +2878,6 @@ let _autoVerifyWorker = null;
 function getAutoVerifyWorker() {
   if (_autoVerifyWorker) return _autoVerifyWorker;
   _autoVerifyWorker = new Worker(AutoVerifyWorkerUrl, { type: "module" });
-  try { pushRoisToWorker(_autoVerifyWorker); } catch {}
   return _autoVerifyWorker;
 }
 
@@ -3103,26 +3102,15 @@ document.addEventListener('click', async (e) => {
     const rois = await openRoiEditor(url);
     if (rois) {
       saveRois(rois);
-      pushRoisToWorker(getAutoVerifyWorker(), rois);
-      console.group("[OCR] ROIs saved");
+      console.group("[OCR] ROIs saved (reference only; server-side OCR)");
       try {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = url;
-        await img.decode();
-        const W = img.naturalWidth, H = img.naturalHeight;
-        const px = {};
-        for (const k of Object.keys(rois)) {
-          const [x1,y1,x2,y2] = rois[k];
-          px[k] = [x1*W, y1*H, x2*W, y2*H].map(v => Math.round(v));
-        }
-        console.log("normalized:", rois);
-        console.log("pixels:", px, "size:", { W, H });
-      } catch {
-        console.log("normalized:", rois);
-      }
+        const img = new Image(); img.crossOrigin = "anonymous"; img.src = url; await img.decode();
+        const W = img.naturalWidth, H = img.naturalHeight; const px = {};
+        for (const k of Object.keys(rois)) { const [x1,y1,x2,y2] = rois[k]; px[k] = [x1*W,y1*H,x2*W,y2*H].map(Math.round); }
+        console.log("normalized:", rois); console.log("pixels:", px, "size:", { W, H });
+      } catch { console.log("normalized:", rois); }
       console.groupEnd();
-      toast("ROIs updated", "ok");
+      toast("ROIs updated (local)", "ok");
     }
     return;
   }
@@ -3186,70 +3174,57 @@ document.addEventListener('click', async (e) => {
    ========================= */
 async function autoVerifyCard(card) {
   const record_id  = card?.dataset?.recordId;
-  const code       = (card?.dataset?.code || "").toString();
+  const code       = (card?.dataset?.code || "").toString().toUpperCase();
   const time       = parseSec(card?.dataset?.time);
   const screenshot = (card?.dataset?.screenshot || "").toString();
-  const mapName    = (card?.dataset?.name || "").toString();
 
-  if (!record_id)   return toast("Missing record_id", "warn");
-  if (!screenshot)  return toast("No screenshot to verify", "warn");
+  if (!record_id)  return toast("Missing record_id", "warn");
+  if (!screenshot) return toast("No screenshot to verify", "warn");
   if (!code || time == null) return toast("Missing code/time on card", "warn");
 
   const btn = card.querySelector(".btn-auto-verify");
   const original = btn?.textContent;
   if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Auto verifying…";
+    btn.disabled = true; btn.textContent = "Auto verifying…";
     btn.classList.add("opacity-70", "cursor-wait");
   }
 
   const w = getAutoVerifyWorker();
-  pushRoisToWorker(w);
 
-  const jobId = `${record_id}:${Date.now()}`;
-  const payloadRaw = {
-    screenshotUrl: screenshot,
-    code,
-    time: Number.isFinite(time) ? Number(time) : null,
-    mapName,
-    apiBase: (window.API_ROOT || window.X_API_ROOT || location.origin),
-    debug: true
-  };
-
-  let msg = { op: "VERIFY", id: jobId, payload: payloadRaw };
-  try { msg = structuredClone(msg); } catch { msg = JSON.parse(JSON.stringify(msg)); }
-
-  const result = await new Promise((resolve) => {
+  const { result, error } = await new Promise((resolve) => {
     const onMsg = (e) => {
-      const { op, id, result, error } = e.data || {};
-      if (op !== "RESULT" || id !== jobId) return;
       w.removeEventListener("message", onMsg);
-      resolve({ result, error });
+      const data = e.data || {};
+      if (!data.ok) return resolve({ result: null, error: data.error || "worker error" });
+      resolve({ result: data.extracted, error: null });
     };
     w.addEventListener("message", onMsg);
-    w.postMessage(msg);
+    w.postMessage({ screenshotUrl: screenshot });
   });
 
   if (btn) {
-    btn.disabled = false;
-    btn.textContent = original || "Auto verify";
+    btn.disabled = false; btn.textContent = original || "Auto verify";
     btn.classList.remove("opacity-70", "cursor-wait");
   }
 
-  if (result.error) {
-    logActivity({
-      title: `Auto verify OCR (error) #${record_id}`,
-      method: "WORKER",
-      url: "auto-verify.worker",
-      ok: false,
-      status: "-",
-      data: { error: result.error },
-    });
+  if (error) {
+    logActivity({ title: `Auto verify OCR (error) #${record_id}`, method: "WORKER", url: "auto-verify.worker", ok: false, status: "-", data: { error } });
     toast("Auto verify failed (load/OCR error)", "err");
     return;
   }
 
-  const { verified, extracted, reasons } = result.result || {};
+  const extracted = result || {};
+  const reasons = [];
+  const tol = 0.15;
+
+  const matchCode = extracted.code && extracted.code.toUpperCase() === code;
+  if (!matchCode) reasons.push(`Code mismatch (extracted ${extracted.code || 'null'}, expected ${code})`);
+
+  const matchTime = Number.isFinite(extracted.time) && Math.abs(extracted.time - time) <= tol;
+  if (!matchTime) reasons.push(`Time mismatch (found ${extracted.time ?? 'null'}, expected ${time})`);
+
+  const verified = matchCode && matchTime;
+
   logActivity({
     title: `Auto verify OCR #${record_id}`,
     method: "WORKER",
@@ -3265,15 +3240,11 @@ async function autoVerifyCard(card) {
   }
 
   const body = { verified: true, verified_by: AUTO_VERIFY_USER_ID, reason: "auto verify matched code & time" };
-  const { ok, status, url, data } = await http(
-    "PUT",
-    `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
-    { body }
-  );
+  const { ok, status, url, data } = await http("PUT", `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`, { body });
 
   logActivity({ title: "Verify completion (auto)", method: "PUT", url, ok, status, data });
   if (ok) { toast("Verified (auto)", "ok"); removeCardFromVerifList(card); }
-  else { toast("Auto verify: API failed", "err"); }
+  else    { toast("Auto verify: API failed", "err"); }
 }
 
 /* =========================
