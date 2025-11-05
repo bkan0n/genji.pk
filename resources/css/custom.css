@@ -1014,6 +1014,21 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .rank-name{ font-weight:700; color:#e5e7eb; margin-top:.1rem }
 .rank-diff{ font-size:.85rem; color:#cbd5e1 }
 .rank-count{ margin-top:.25rem; font-size:.85rem; color:#e5e5e5 }
+/* View playtest */
+@keyframes gp-shimmer-cta {0%   { background-position: 0% 50%;   opacity: .65; }85%  { background-position: 180% 50%; opacity: .65; }100% { background-position: 200% 50%; opacity: 0; }}
+@keyframes gp-cta-pulse {0%   { box-shadow: 0 0 0 0 rgba(245,158,11,.45); }70%  { box-shadow: 0 0 0 12px rgba(245,158,11,0); }100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }}
+@keyframes gp-shimmer { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+@keyframes gp-shimmer-cta {0%   { background-position: 0% 50%;   opacity: .65; }85%  { background-position: 180% 50%; opacity: .65; }100% { background-position: 200% 50%; opacity: 0; }}
+.gp-enter{opacity:0;transform:translateY(6px) scale(1);animation:gp-enter .45s cubic-bezier(.22,.9,.24,1) forwards}
+.gp-cta{position:relative;isolation:isolate}
+.gp-cta-once{animation:gp-cta-pulse 1.8s ease-out 0s 2}
+.gp-cta::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(90deg, rgba(245,158,11,.50), rgba(255,255,255,.36), rgba(245,158,11,.50));background-size:200% 100%;opacity:0;
+  transition:opacity .28s ease,filter .28s ease;padding:1px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;}
+.gp-cta:hover::after{opacity:.6;animation:gp-shimmer 2.2s linear infinite;filter:drop-shadow(0 0 6px rgba(245,158,11,.35));}
+.gp-cta.gp-auto::after{opacity:.6;animation:gp-shimmer-cta 2s linear 0s 1 forwards;filter:drop-shadow(0 0 6px rgba(245,158,11,.35));}
+@media (prefers-reduced-motion: reduce){.gp-enter{animation:none;opacity:1;transform:none}.gp-cta-once{animation:none}.gp-cta:hover::after{animation:none}.gp-cta.gp-auto::after{animation:none;opacity:0}}
+#srPlaytestingNotice.sr-notice {opacity: 0;transform: none;filter: none;transition: opacity .5s ease, transform 0.5s ease;will-change: opacity;}
+#srPlaytestingNotice.sr-notice.is-visible {opacity: 1;transform: none;filter: none;}
 /* ================= LOOTBOX ================= */
 #infoModal .modal-infos{max-height:80svh;overflow-y:auto;overscroll-behavior:contain}
 @supports not (height:1svh){#infoModal .modal-infos{max-height:80vh}}

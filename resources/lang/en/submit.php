@@ -37,7 +37,7 @@ return [
     ],
 
     'notice' => [
-        'title' => 'Before you submit',
+        'title' => 'Playtest submission',
         'pending_accept' => "Your submission won't count towards official records until the map is accepted.",
         'mutable_difficulty' => 'The difficulty may change at any time until the map is finished.',
     ],

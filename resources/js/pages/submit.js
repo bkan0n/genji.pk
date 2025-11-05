@@ -2974,11 +2974,20 @@ async function evaluateNoticeForInput() {
   const raw   = (input?.value || '').trim();
   const code  = normalizeMapCode(raw);
 
-  if (!code || code.length < 4) { hideNotice(); return; }
+  if (!code || code.length < 4) {
+    hideNotice();
+    try { removeViewPlaytestButton(); } catch {}
+    return;
+  }
 
   const map = await fetchMapByCode(code);
-  if (map && isInProgress(map)) showNotice();
-  else hideNotice();
+  if (map && isInProgress(map)) {
+    showNotice();
+    try { ensureViewModalButtonForLastCode(code); } catch {}
+  } else {
+    hideNotice();
+    try { removeViewPlaytestButton(); } catch {}
+  }
 }
 
 function bindWatcher() {
@@ -2996,6 +3005,11 @@ function bindWatcher() {
   input.addEventListener('change', run);
 
   requestAnimationFrame(evaluateNoticeForInput);
+  try {
+    const v = (input.value || '').trim();
+    const c = typeof normalizeMapCode === 'function' ? normalizeMapCode(v) : v;
+    if (c && c.length >= 4) ensureViewModalButtonForLastCode(c);
+  } catch {}
 }
 
 const _origAnimateSR = typeof animateSubmitRecordSection === 'function' ? animateSubmitRecordSection : null;
@@ -3081,32 +3095,93 @@ async function openPlaytestModalForCode(code) {
   try { mountModeratorActions(inner, data); } catch {}
 }
 
+function removeViewPlaytestButton() {
+  const btn = document.getElementById('viewPlaytestModalBtn');
+  if (btn && btn.parentElement) btn.parentElement.removeChild(btn);
+  const fb = document.getElementById('srActionBarFallback');
+  if (fb && !fb.querySelector('#viewPlaytestModalBtn')) fb.remove();
+}
+
 function ensureViewModalButtonForLastCode(code) {
-  const bar =
-    document.getElementById('srActionBar') ||
-    document.querySelector('#submitRecordForm button[type="submit"]')?.parentElement;
-  if (!bar) return;
+  if (!code) { removeViewPlaytestButton(); return; }
+
+  if (document.readyState === 'loading' || !document.body) {
+    document.addEventListener('DOMContentLoaded', () => ensureViewModalButtonForLastCode(code), { once: true });
+    return;
+  }
+
+  const bar = (() => {
+    let el = document.getElementById('srActionBar');
+    if (el) return el;
+
+    const form = document.getElementById('submitRecordForm') || document.querySelector('#submitRecordForm');
+    if (form) {
+      el = document.createElement('div');
+      el.id = 'srActionBar';
+      el.className = 'mt-3 flex items-center gap-2';
+      form.appendChild(el);
+      return el;
+    }
+    el = document.getElementById('srActionBarFallback');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'srActionBarFallback';
+      el.className = 'fixed bottom-4 right-4 z-[120]';
+      document.body.appendChild(el);
+    }
+    return el;
+  })();
 
   let btn = document.getElementById('viewPlaytestModalBtn');
+  if (btn && btn.parentElement !== bar) { try { btn.remove(); } catch {} btn = null; }
+
+  const baseClasses = [
+    'gp-cta',
+    'inline-flex','items-center','justify-center','cursor-pointer','ml-auto',
+    'rounded-lg','px-3','py-2','text-sm',
+    'border','border-amber-500/30','bg-amber-500/10','text-amber-200',
+    'hover:bg-amber-500/15','hover:text-white',
+    'focus:outline-none','focus-visible:ring-2','focus-visible:ring-amber-400/60'
+  ].join(' ');
+
+  let isNew = false;
   if (!btn) {
     btn = document.createElement('button');
     btn.id = 'viewPlaytestModalBtn';
     btn.type = 'button';
-    btn.className =
-      'inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5 ml-auto';
-    btn.textContent = t('record.view_modal') || 'View playtest';
+    btn.className = baseClasses + ' gp-enter';
+    btn.textContent = (typeof t === 'function' ? t('record.view_modal') : 'View playtest');
+
+    btn.style.opacity = '0';
+    btn.style.transform = 'translateY(4px)';
+    btn.style.transition = 'opacity .28s ease, transform .28s ease';
+
+    bar.appendChild(btn);
+    requestAnimationFrame(() => {
+      btn.style.opacity = '1';
+      btn.style.transform = 'none';
+    });
+    isNew = true;
   } else {
-    btn.classList.add('ml-auto');
+    btn.className = baseClasses;
+    if (!btn.isConnected) bar.appendChild(btn);
   }
 
-  btn.style.marginLeft = 'auto';
-
-  btn.dataset.code = code;
-  btn.disabled = false;
+  btn.dataset.code = String(code);
   btn.onclick = () => openPlaytestModalForCode(code);
 
-  if (btn.parentElement !== bar) bar.appendChild(btn);
-  else bar.appendChild(btn);
+  const last = btn.getAttribute('data-last-code') || '';
+  if (last !== String(code)) {
+    btn.setAttribute('data-last-code', String(code));
+    btn.classList.remove('gp-cta-once'); // reset
+    requestAnimationFrame(() => btn.classList.add('gp-cta-once'));
+  }
+
+  if (isNew || !btn.__autoArmed) {
+    btn.__autoArmed = true;
+    btn.classList.add('gp-auto');
+    setTimeout(() => btn.classList.remove('gp-auto'), 2000);
+  }
 }
 
 /* =========================
