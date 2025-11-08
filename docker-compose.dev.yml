@@ -43,7 +43,20 @@ services:
 
     networks:
       - genji-network
-
+  ocr:
+    build: ./ocr
+    container_name: genji_ocr
+    restart: unless-stopped
+    ports: ["8004:8000"]
+    environment:
+    - FLAGS_use_mkldnn=0
+    - OCR_FORCE_V3=1
+    - ONEDNN_MAX_CPU_ISA=AVX2
+    - DNNL_MAX_CPU_ISA=AVX2
+    - OPENBLAS_CORETYPE=HASWELL
+    - OPENBLAS_NUM_THREADS=1
+    - OMP_NUM_THREADS=1
+    - MKL_NUM_THREADS=1
 networks:
   genji-network:
     external: true
