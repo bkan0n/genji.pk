@@ -145,6 +145,7 @@ Route::middleware(['web'])->prefix('utilities')->name('utilities.')->group(funct
     Route::post('/log-map-click', LogMapClickController::class)->name('utilities.log_map_click');
 });
 Route::post('/ocr/extract', [OcrController::class, 'extract']);
+
 /* ================== COMPLETIONS ================== */
 Route::prefix('completions')->group(function () {
     Route::get('/', UserCompletionsController::class)->name('api.completions.user');

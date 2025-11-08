@@ -43,11 +43,7 @@ services:
 
     networks:
       - genji-network
-  ocr:
-    build: ./ocr
-    container_name: genji_ocr
-    restart: unless-stopped
-    ports: ["8004:8000"]
+
 networks:
   genji-network:
     external: true
