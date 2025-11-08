@@ -106,7 +106,7 @@ return [
     'card' => [
       'completed'     => 'Completed',
       'not_completed' => 'Not completed',
-      'mapped_by'     => 'Mapped by',
+      'mapped_by'     => 'Creator(s)',
       'like'          => 'Like',
     ],
 
