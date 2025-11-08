@@ -3882,12 +3882,15 @@ function setupPlaytestCtaDown() {
 
   const findScrollPort = (startEl) => {
     if (isScrollable(preferred)) return preferred;
+
     let p = startEl?.parentElement;
     while (p && p !== document.body) {
       if (isScrollable(p)) return p;
       p = p.parentElement;
     }
+
     if (isScrollable(rootModal)) return rootModal;
+
     return document.scrollingElement || document.documentElement;
   };
 
@@ -3905,7 +3908,10 @@ function setupPlaytestCtaDown() {
   let lastVisible;
   const computeVisibility = () => {
     let sh, ch, st;
-    const isDoc = (scroller === document.scrollingElement) || (scroller === document.documentElement);
+    const isDoc =
+      (scroller === document.scrollingElement) ||
+      (scroller === document.documentElement);
+
     if (isDoc) {
       sh = Math.max(
         document.body.scrollHeight,
@@ -3938,9 +3944,15 @@ function setupPlaytestCtaDown() {
   };
   const onResize = () => update();
 
-  const isDoc = (scroller === document.scrollingElement) || (scroller === document.documentElement);
-  if (isDoc) window.addEventListener('scroll', onScroll, { passive: true });
-  else scroller.addEventListener('scroll', onScroll, { passive: true });
+  const isDoc =
+    (scroller === document.scrollingElement) ||
+    (scroller === document.documentElement);
+
+  if (isDoc) {
+    window.addEventListener('scroll', onScroll, { passive: true });
+  } else {
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+  }
   window.addEventListener('resize', onResize);
 
   const ro = ('ResizeObserver' in window) ? new ResizeObserver(update) : null;
@@ -3949,9 +3961,12 @@ function setupPlaytestCtaDown() {
       ro.observe(document.body);
     } else {
       ro.observe(scroller);
-      scroller.lastElementChild && ro.observe(scroller.lastElementChild);
+      if (scroller.lastElementChild) {
+        ro.observe(scroller.lastElementChild);
+      }
     }
   }
+
   const mo = new MutationObserver(update);
   mo.observe(isDoc ? document.body : scroller, { childList: true, subtree: true });
 
@@ -3965,25 +3980,39 @@ function setupPlaytestCtaDown() {
     e.preventDefault();
     const pad = 12;
 
-    if (isDoc) {
+    const targetScroller = findScrollPort(wrap);
+    const targetIsDoc =
+      targetScroller === document.scrollingElement ||
+      targetScroller === document.documentElement;
+
+    if (targetIsDoc) {
       if (hint) {
-        const top = hint.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0) - pad;
+        const top =
+          hint.getBoundingClientRect().top +
+          (window.pageYOffset || document.documentElement.scrollTop || 0) -
+          pad;
         window.scrollTo({ top, behavior: 'smooth' });
       } else {
-        window.scrollBy({ top: Math.max(200, window.innerHeight * 0.8), behavior: 'smooth' });
+        window.scrollBy({
+          top: Math.max(200, window.innerHeight * 0.8),
+          behavior: 'smooth',
+        });
       }
       return;
     }
 
     if (hint) {
       const top =
-        hint.getBoundingClientRect().top
-        - scroller.getBoundingClientRect().top
-        + scroller.scrollTop
-        - pad;
-      scroller.scrollTo({ top, behavior: 'smooth' });
+        hint.getBoundingClientRect().top -
+        targetScroller.getBoundingClientRect().top +
+        targetScroller.scrollTop -
+        pad;
+      targetScroller.scrollTo({ top, behavior: 'smooth' });
     } else {
-      scroller.scrollBy({ top: Math.max(200, scroller.clientHeight * 0.8), behavior: 'smooth' });
+      targetScroller.scrollBy({
+        top: Math.max(200, targetScroller.clientHeight * 0.8),
+        behavior: 'smooth',
+      });
     }
   });
 
@@ -3991,11 +4020,14 @@ function setupPlaytestCtaDown() {
 
   wrap.__ctaDownCleanup = () => {
     timers.forEach(clearTimeout);
-    if (isDoc) window.removeEventListener('scroll', onScroll);
-    else scroller.removeEventListener('scroll', onScroll);
+    if (isDoc) {
+      window.removeEventListener('scroll', onScroll);
+    } else {
+      scroller.removeEventListener('scroll', onScroll);
+    }
     window.removeEventListener('resize', onResize);
     mo.disconnect();
-    ro && ro.disconnect();
+    if (ro) ro.disconnect();
   };
 }
 
