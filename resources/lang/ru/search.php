@@ -1,0 +1,341 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Search (RU)
+    |--------------------------------------------------------------------------
+    */
+
+    // ──────────────────────────────────────────────────────────────────────
+    // META / PAGE
+    // ──────────────────────────────────────────────────────────────────────
+    'page_title' => 'Поиск',
+    'og_title' => 'Genji Parkour - Поиск',
+    'og_description' => 'Найдите карты, завершения, руководства и личные записи.',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // HEADER
+    // ──────────────────────────────────────────────────────────────────────
+    'title' => 'Карты',
+    'subtitle' => 'поиск · завершения · руководства · личные записи',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // TABS
+    // ──────────────────────────────────────────────────────────────────────
+    'map_search' => 'Поиск карт',
+    'completions' => 'Завершения',
+    'guides' => 'Руководства',
+    'personal_records' => 'Личные записи',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // TOOLBAR & HELPERS
+    // ──────────────────────────────────────────────────────────────────────
+    'select_mode' => 'Выберите режим поиска',
+    'add_filter_hint' => 'Добавьте фильтр или нажмите ✔',
+    'screenshot' => 'Скриншот',
+    'open_screenshot' => 'Открыть скриншот',
+    'no_description' => 'Нет описания',
+    'watch' => 'Смотреть',
+    'na' => 'N/A',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // PLACEHOLDERS
+    // ──────────────────────────────────────────────────────────────────────
+    'map_name_placeholder' => 'Название карты',
+    'map_code_placeholder' => 'Код карты',
+    'nickname_placeholder' => 'Никнейм',
+    'completion' => 'Завершение',
+
+    // ──────────────────────────────────────────────────────────────────────
+    // FILTERS TOOLBAR (UI toolbar options)
+    // ──────────────────────────────────────────────────────────────────────
+    'filters_toolbar' => [
+        'creator' => 'Создатель',
+        'enter_creator' => 'Введите создателя',
+        'map_name' => 'Название карты',
+        'enter_map_name' => 'Введите название карты',
+        'user' => 'Имя пользователя',
+        'enter_nickname' => 'Введите имя пользователя',
+        'code' => 'Код карты',
+        'enter_map_code' => 'Введите код карты',
+        'difficulty_exact' => 'Сложность',
+        'beginner' => 'Начинающий',
+        'easy' => 'Легкий',
+        'medium' => 'Средний',
+        'hard' => 'Сложный',
+        'very_hard' => 'Очень сложный',
+        'extreme' => 'Экстремальный',
+        'hell' => 'Ад',
+        'category' => 'Тип карты',
+        'classic' => 'Классический',
+        'increasing_difficulty' => 'Увеличение сложности',
+        'tournament' => 'Турнир',
+        'mechanics' => 'Механика',
+        'restrictions' => 'Ограничения',
+        'playtest_status' => 'В тестировании',
+        'in_progress' => 'В процессе',
+        'approved' => 'Одобрено',
+        'only_true' => 'True',
+        'only_false' => 'False',
+        'completion_filter' => 'Завершено',
+        'medal_filter' => 'Медали',
+        'participation_filter' => 'Фильтр участия',
+        'participated_yes' => 'Участвовал',
+        'participated_no' => 'Не участвовал',
+        'apply_filters' => 'Применить фильтры',
+        'clear_filters' => 'Сбросить фильтры',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // FILTERS (common labels used across views)
+    // ──────────────────────────────────────────────────────────────────────
+    'filters' => [
+        'map_name' => 'Название карты',
+        'map_code' => 'Код карты',
+        'difficulty' => 'Сложность карты',
+        'creator' => 'Создатель карты',
+        'mechanics' => 'Механика',
+        'restrictions' => 'Ограничения',
+        'only_playtest' => 'Только тестирование',
+        'only_maps_with_medals' => 'Только карты с медалями',
+        'ignore_completions' => 'Игнорировать завершения',
+        'player_name' => 'Имя игрока',
+    ],
+
+    'card' => [
+      'completed'     => 'Завершено',
+      'not_completed' => 'Не завершено',
+      'mapped_by'     => 'Сопоставлено с',
+      'like'          => 'Нравится',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // MECHANICS
+    // ──────────────────────────────────────────────────────────────────────
+    'mechanics' => [
+        'edge_climb' => 'Edge Climb',
+        'bhop' => 'Bhop',
+        'crouch_edge' => 'Crouch Edge',
+        'save_climb' => 'Save Climb',
+        'bhop_first' => 'Bhop First',
+        'high_edge' => 'High Edge',
+        'distance_edge' => 'Distance Edge',
+        'quick_climb' => 'Quick Climb',
+        'slide' => 'Slide',
+        'stall' => 'Stall',
+        'dash' => 'Dash',
+        'ultimate' => 'Ultimate',
+        'emote_save_bhop' => 'Emote Save Bhop',
+        'death_bhop' => 'Death Bhop',
+        'triple_jump' => 'Triple Jump',
+        'multi_climb' => 'Multi Climb',
+        'vertical_multi_climb' => 'Vertical Multi Climb',
+        'create_bhop' => 'Create Bhop',
+        'standing_create_bhop' => 'Standing Create Bhop',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // RESTRICTIONS
+    // ──────────────────────────────────────────────────────────────────────
+    'restrictions' => [
+        'dash_start' => 'Dash Start',
+        'triple_jump' => 'Triple Jump',
+        'emote_save_bhop' => 'Emote Save Bhop',
+        'death_bhop' => 'Death Bhop',
+        'multi_climb' => 'Multi Climb',
+        'standing_create_bhop' => 'Standing Create Bhop',
+        'create_bhop' => 'Create Bhop',
+        'wall_climb' => 'Wall Climb',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP TYPE
+    // ──────────────────────────────────────────────────────────────────────
+    'map_type' => [
+        'classic' => 'Classic',
+        'increasing_difficulty' => 'Increasing Difficulty',
+        'tournament' => 'Tournament',
+        'practice' => 'Practice',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP NAME (canonical list)
+    // ──────────────────────────────────────────────────────────────────────
+    'map_name' => [
+        'aatlis' => 'Aatlis',
+        'ayutthaya' => 'Ayutthaya',
+        'black_forest' => 'Black Forest',
+        'blizzard_world' => 'Blizzard World',
+        'busan' => 'Busan',
+        'castillo' => 'Castillo',
+        'chateau_guillard' => 'Chateau Guillard',
+        'circuit_royal' => 'Circuit Royal',
+        'colosseo' => 'Colosseo',
+        'dorado' => 'Dorado',
+        'ecopoint_antarctica' => 'Ecopoint: Antarctica',
+        'eichenwalde' => 'Eichenwalde',
+        'esperanca' => 'Esperanca',
+        'hanamura' => 'Hanamura',
+        'havana' => 'Havana',
+        'hollywood' => 'Hollywood',
+        'horizon_lunar_colony' => 'Horizon Lunar Colony',
+        'ilios' => 'Ilios',
+        'junkertown' => 'Junkertown',
+        'kanezaka' => 'Kanezaka',
+        'kings_row' => 'King\'s Row',
+        'lijiang_tower' => 'Lijiang Tower',
+        'malevento' => 'Malevento',
+        'midtown' => 'Midtown',
+        'necropolis' => 'Necropolis',
+        'nepal' => 'Nepal',
+        'new_queen_street' => 'New Queen Street',
+        'numbani' => 'Numbani',
+        'oasis' => 'Oasis',
+        'paraiso' => 'Paraiso',
+        'paris' => 'Paris',
+        'petra' => 'Petra',
+        'practice_range' => 'Practice Range',
+        'rialto' => 'Rialto',
+        'route_66' => 'Route 66',
+        'temple_of_anubis' => 'Temple of Anubis',
+        'volskaya_industries' => 'Volskaya Industries',
+        'watchpoint_gibraltar' => 'Watchpoint: Gibraltar',
+        'workshop_chamber' => 'Workshop Chamber',
+        'workshop_expanse' => 'Workshop Expanse',
+        'workshop_green_screen' => 'Workshop Green Screen',
+        'workshop_island' => 'Workshop Island',
+        'framework' => 'Framework',
+        'tools' => 'Tools',
+        'shambali' => 'Shambali',
+        'chateau_guillard_halloween' => 'Chateau Guillard (Halloween)',
+        'eichenwalde_halloween' => 'Eichenwalde (Halloween)',
+        'hollywood_halloween' => 'Hollywood (Halloween)',
+        'black_forest_winter' => 'Black Forest (Winter)',
+        'blizzard_world_winter' => 'Blizzard World (Winter)',
+        'ecopoint_antarctica_winter' => 'Ecopoint: Antarctica (Winter)',
+        'hanamura_winter' => 'Hanamura (Winter)',
+        'kings_row_winter' => 'King\'s Row (Winter)',
+        'busan_lunar_new_year' => 'Busan (Lunar New Year)',
+        'lijiang_tower_lunar_new_year' => 'Lijiang Tower (Lunar New Year)',
+        'antarctic_peninsula' => 'Antarctic Peninsula',
+        'suravasa' => 'Suravasa',
+        'new_junk_city' => 'New Junk City',
+        'samoa' => 'Samoa',
+        'hanaoka' => 'Hanaoka',
+        'runasapi' => 'Runasapi',
+        'throne_of_anubis' => 'Throne of Anubis',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // POPUP / MISC
+    // ──────────────────────────────────────────────────────────────────────
+    'popup' => [
+        'login_required_btn' => 'Login required',
+        'login_required_msg' => 'Login is required on this page',
+        'login_required_pr' => 'Login is required to use this functionality',
+        'login_required_filter' => 'Login is required to use this filter',
+        'login_required_progression' => 'Please login to see your progression',
+        'map_code_required' => 'Enter a map code',
+        'no_results' => 'No results found',
+        'filter_applied' => 'Filter applied for {filterId}: {value}',
+        'filters_cleared' => 'All filters have been cleared',
+        'enter_username' => 'Enter a valid username',
+        'username_updated' => 'Your username has been updated',
+        'primary_username_updated' => 'Primary username updated',
+        'already_exist_username' => 'Username already exist',
+        'set_primary_username' => 'Set as primary username',
+        'delete_username' => 'Delete username',
+        'no_username_set' => 'No username set',
+        'confirm_button' => 'Confirm',
+        'copy_map_code' => 'Copy map code',
+        'map_code_copied' => 'Map code copied: {code}',
+        'copy_failed' => 'Failed to copy map code',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // PAGINATION
+    // ──────────────────────────────────────────────────────────────────────
+    'pagination' => [
+        'first' => '« First',
+        'prev' => '‹ Prev',
+        'next' => 'Next ›',
+        'last' => 'Last »',
+        'page_of' => 'Page {current} of {total}',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // CHARTS
+    // ──────────────────────────────────────────────────────────────────────
+    'chart' => [
+        'mapDifficultyDistribution' => 'Map difficulty Distribution',
+        'amountOfMaps' => 'Amount of maps',
+        'difficultyLevel' => 'Difficulty level',
+        'popularCreators' => 'Map creators by Average quality',
+        'mapAmountLogScale' => 'Amount of maps (Log Scale)',
+        'averageQuality' => 'Average quality',
+        'topMapsFor' => 'Most popular maps for difficulty {difficulty}',
+        'mapCodes' => 'Map codes',
+        'completions' => 'Completions',
+        'rank' => 'Rank',
+        'playersIn' => 'Players in {tier}',
+        'map' => 'Maps',
+        'quality' => 'Quality',
+        'completionsTooltip' => '{map}: {completions} Completions, Quality: {quality}',
+        'playersInTier' => '{amount} players in {tier}',
+        'tooltipLabel' => '{creator} - Maps : {mapCount}, Quality : {quality}',
+        'tierRank' => 'Tier rank',
+        'skillRank' => 'Skill rank',
+        'easy' => 'Easy',
+        'medium' => 'Medium',
+        'hard' => 'Hard',
+        'very hard' => 'Very Hard',
+        'extreme' => 'Extreme',
+        'hell' => 'Hell',
+        'mapsTooltip' => '{count} maps',
+        'record_progression_time' => 'Record progression over time',
+        'user_record_progression' => 'Your progression',
+        'average_time' => 'Average time',
+        'min_time' => 'Minimum time',
+        'max_time' => 'Maximum time',
+        'amount' => 'Amount',
+        'quantity' => 'Quantity',
+        'total_amount_time' => 'Total in hours',
+        'time_played_per_difficulty' => 'Time played per difficulty',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // TABLE HEADERS
+    // ──────────────────────────────────────────────────────────────────────
+    'thead' => [
+        'mapCode' => 'Code',
+        'mapName' => 'Name',
+        'mapType' => 'Type',
+        'mapCreator' => 'Creator',
+        'mapDifficulty' => 'Difficulty',
+        'mapCheckpoints' => 'Checkpoints',
+        'mapQuality' => 'Quality',
+        'mapGold' => 'Gold',
+        'mapSilver' => 'Silver',
+        'mapBronze' => 'Bronze',
+        'mapDetails' => 'Details',
+        'mapView' => 'View',
+        'mapNickname' => 'Nickname',
+        'mapDiscordTag' => 'Discord Tag',
+        'mapTime' => 'Time',
+        'mapMedal' => 'Medal',
+        'mapVideo' => 'Video',
+        'mapXP' => 'XP',
+        'mapSkillRank' => 'Skill Rank',
+        'mapWR' => 'World Records',
+        'mapMade' => 'Maps Made',
+        'mapPlaytestsVotes' => 'Playtest Votes',
+        'mapTierRank' => 'Tier',
+        'mapRankDistribution' => 'Ranks distribution',
+        'mapMechanics' => 'Mechanics',
+        'mapRestrictions' => 'Restrictions',
+        'mapDescription' => 'Description',
+        'mapUpvotes' => 'Upvotes',
+        'mapVerified' => 'Verified',
+    ],
+];
