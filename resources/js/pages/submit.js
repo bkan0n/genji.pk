@@ -1020,6 +1020,13 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   function render(list) {
     const box = suggestions();
     box.innerHTML = '';
+
+    if (!list.length) {
+      box.classList.add('hidden');
+      box.style.display = 'none';
+      return;
+    }
+
     list.forEach((s) => {
       const d = document.createElement('div');
       d.className =
@@ -1033,7 +1040,9 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
       });
       box.appendChild(d);
     });
-    box.classList.toggle('hidden', !list.length);
+
+    box.classList.remove('hidden', 'opacity-0', 'translate-y-2', 'scale-95');
+    box.style.display = 'block';
   }
 
   function fetchAndRender(q) {
