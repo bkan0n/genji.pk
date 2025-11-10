@@ -1463,13 +1463,13 @@ async function createNewsCard(item) {
 
           <div class="ml-auto flex shrink-0 items-center gap-2">
             <button type="button"
-              class="inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
               data-copy-code="${escAttr(code)}" title="Copy">
               ${icon.copy}
             </button>
 
             <button type="button"
-              class="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+              class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
               data-open-map-details data-map-code="${escAttr(code)}">
               Details
             </button>
@@ -1530,7 +1530,7 @@ async function createNewsCard(item) {
 
             <div class="ml-auto flex shrink-0 items-center gap-2">
               <button type="button"
-                class="inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
                 data-copy-code="${escAttr(code)}"
                 title="${hasFn(t)? (t('sidebar.copy_code') || 'Copy') : 'Copy'}">
                 ${typeof icon !== 'undefined' && icon.copy
@@ -1540,7 +1540,7 @@ async function createNewsCard(item) {
 
               ${code ? `
                 <button type="button"
-                  class="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+                  class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
                   data-open-map-details data-map-code="${escAttr(code)}">
                   ${hasFn(t)? (t('newsfeed.details') || t('newsfeed.click_here') || 'Details') : 'Details'}
                 </button>` : ''}
@@ -1670,7 +1670,7 @@ async function createNewsCard(item) {
             </span>
             ${medalChip}
             ${ code ? `
-              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/60 px-2.5 py-1 text-xs hover:bg-zinc-800"
+              <button type="button" class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/60 px-2.5 py-1 text-xs hover:bg-zinc-800"
                       data-copy-code="${escAttr(code)}" aria-label="Copy code ${escAttr(code)}">
                 ${icon.copy}<span>#${esc(code)}</span>
               </button>` : '' }
