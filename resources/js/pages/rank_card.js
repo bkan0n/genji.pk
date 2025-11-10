@@ -204,12 +204,15 @@ async function initRankCard() {
     badgeMasteryContent.innerHTML = '';
     badgeMasteryContent.dataset.loadedFor = '';
 
-    renderRankCardSkeleton();
+    rankCardContent.innerHTML = '';
+    rankCardContent.dataset.loadedFor = '';
+
     showLoadingBar();
 
     if (wasBadgesTab) {
       hideRankCardContainer();
     } else {
+      renderRankCardSkeleton();
       await loadRankCardContent();
     }
 
