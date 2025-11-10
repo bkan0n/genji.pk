@@ -136,7 +136,7 @@
             </a>
           </div>
 
-          <form method="POST" action="{{ route('logout') }}" class="mt-3">
+          <form method="POST" action="/logout"class="mt-3">
             @csrf
             <button
               type="submit"
