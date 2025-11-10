@@ -273,22 +273,33 @@ const OW_BASE = '/api/users';
     true
   );
 })();
-const btn = document.getElementById('logoutBtn');
-btn?.addEventListener('click', async (e) => {
+document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  const logoutUrl = new URL('/logout', window.location.origin).toString();
 
-  const res = await fetch(logoutUrl, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'X-CSRF-TOKEN': CSRF,
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-    body: new URLSearchParams({ _token: CSRF }).toString(),
-    keepalive: true,
-  });
+  const logoutUrl = '/logout';
 
-  if (res.ok) window.location.assign('/');
+  try {
+    const res = await fetch(logoutUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-CSRF-TOKEN': CSRF,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: new URLSearchParams({ _token: CSRF }).toString(),
+      redirect: 'follow',
+      keepalive: true,
+    });
+
+    if (res.ok || res.status === 204 || res.redirected) {
+      window.location.assign('/');
+    } else {
+      console.error('Logout failed:', res.status, await res.text());
+      alert('Logout failed (' + res.status + '). Check console.');
+    }
+  } catch (err) {
+    console.error('Fetch error:', err);
+    alert('Network/CSP error. See console.');
+  }
 });
