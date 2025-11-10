@@ -258,11 +258,14 @@ function renderRankHelpContent(kind) {
     `;
 
     const info = `
-      <ul class="mt-1 space-y-2 cursor-default">
-        ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_no_order', 'Ranks do not need to be acquired in order.'))}
-        ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_requirement', 'To receive a rank you must complete the required amount of maps for that difficulty/rank.'))}
-        ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_thresholds', 'See chart below for rank thresholds.'))}
-      </ul>
+      <div class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+                p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
+        <ul class="mt-1 space-y-2 cursor-default">
+          ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_no_order', 'Ranks do not need to be acquired in order.'))}
+          ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_requirement', 'To receive a rank you must complete the required amount of maps for that difficulty/rank.'))}
+          ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_thresholds', 'See chart below for rank thresholds.'))}
+        </ul>
+      </div>
     `;
 
     const F = (k, fb) => t(`filters.${k}`, fb);
@@ -327,13 +330,16 @@ function renderRankHelpContent(kind) {
     `;
 
     const info = `
-      <ul class="mt-1 space-y-2 cursor-default">
-        ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_plus_explain','To get a +, ++ or +++ rank, you must obtain the same amount of Bronze, Silver, or Gold medals as the rank normally requires (see chart below).'))}
-        ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_time_and_video_required','You must post a completion that includes a time and a video URL showing your run.'))}
-        ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_icon_next_to_name','You’ll get an icon next to your name if you have a + / ++ / +++ rank.'))}
-        ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_auto_receive',"Once verified, you'll automatically receive your medal."))}
-        ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_retroactive_credit','If medals are added to a map later, you still get credit.'))}
-      </ul>
+      <div class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+               p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
+        <ul class="mt-1 space-y-2 cursor-default">
+          ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_plus_explain','To get a +, ++ or +++ rank, you must obtain the same amount of Bronze, Silver, or Gold medals as the rank normally requires (see chart below).'))}
+          ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_time_and_video_required','You must post a completion that includes a time and a video URL showing your run.'))}
+          ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_icon_next_to_name','You’ll get an icon next to your name if you have a + / ++ / +++ rank.'))}
+          ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_auto_receive',"Once verified, you'll automatically receive your medal."))}
+          ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_retroactive_credit','If medals are added to a map later, you still get credit.'))}
+        </ul>
+      </div>
     `;
 
     const D = {
@@ -461,7 +467,7 @@ function renderMapHelpContent(kind) {
       P('title', 'Process'),
       `
       <div class="help-pt pt-grid cursor-default">
-        <div class="pt-phase bg-zinc-900/60">
+        <div class="pt-phase bg-zinc-900/40">
           <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('creation','Creation Phase')}</div>
           <div class="pt-card mt-2 space-y-1.5">
             <div class="pt-step text-sm text-zinc-200">${PS('map_is_made','Map is made')}</div>
@@ -472,7 +478,7 @@ function renderMapHelpContent(kind) {
 
         <div class="pt-arrow" aria-hidden="true"></div>
 
-        <div class="pt-phase bg-zinc-900/60">
+        <div class="pt-phase bg-zinc-900/40">
           <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('testing','Testing Phase')}</div>
           <div class="pt-card mt-2 space-y-1.5">
             <div class="pt-step text-sm text-zinc-200">${PS('creator_suggests_difficulty','Creator suggests difficulty')}</div>
@@ -484,7 +490,7 @@ function renderMapHelpContent(kind) {
 
         <div class="pt-arrow" aria-hidden="true"></div>
 
-        <div class="pt-phase bg-zinc-900/60">
+        <div class="pt-phase bg-zinc-900/40">
           <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('verification','Verification Phase')}</div>
           <div class="pt-card mt-2 space-y-1.5">
             <div class="pt-step text-sm text-zinc-200">${PS('sensei_receive_submission_notification','Sensei receive submission notification')}</div>
@@ -499,7 +505,7 @@ function renderMapHelpContent(kind) {
 
         <div class="pt-arrow" aria-hidden="true"></div>
 
-        <div class="pt-phase bg-zinc-900/60">
+        <div class="pt-phase bg-zinc-900/40">
           <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('acceptance','Acceptance')}</div>
           <div class="pt-card mt-2 space-y-1.5">
             <div class="pt-step text-sm text-zinc-200">${PS('map_accepted','Map accepted')}</div>
