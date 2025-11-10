@@ -11,13 +11,7 @@ return [
     'directives' => [
         [Directive::BASE, [Keyword::SELF]],
         [Directive::DEFAULT, [Keyword::SELF]],
-        [Directive::FORM_ACTION, 
-            [
-                Keyword::SELF,
-                'https://dev.genji.pk',
-                'https://genji.pk',
-            ]
-        ],
+        [Directive::FORM_ACTION, [Keyword::SELF]],
         [Directive::OBJECT, [Keyword::NONE]],
         [Directive::FRAME_ANCESTORS, [Keyword::NONE]],
 

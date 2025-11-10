@@ -273,3 +273,22 @@ const OW_BASE = '/api/users';
     true
   );
 })();
+const btn = document.getElementById('logoutBtn');
+btn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const logoutUrl = btn.dataset.logoutUrl;
+
+  const res = await fetch(logoutUrl, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'X-CSRF-TOKEN': CSRF,
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: new URLSearchParams({ _token: CSRF }).toString(),
+    keepalive: true,
+  });
+
+  if (res.ok) window.location.assign('/');
+});
