@@ -167,6 +167,12 @@
                 {{ __('navbar.submit_map') }}
               </a>
             </li>
+            <li>
+              <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                href="{{ url('/infos') }}">
+                {{ __('navbar.infos') }}
+              </a>
+            </li>
           </ul>
         </div>
 

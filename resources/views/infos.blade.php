@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-  <section class="relative overflow-visible">
+  <section class="relative overflow-visible min-h-[100vh]">
     <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       {{-- Hero --}}
       <div class="mb-10 space-y-4 sm:mb-12">

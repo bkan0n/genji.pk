@@ -26,6 +26,7 @@ return [
     'submit_record' => 'Completion',
     'submit_playtest' => 'Playtest',
     'submit_map' => 'Map',
+    'infos' => 'Infos',
 
     // ──────────────────────────────────────────────────────────────────────
     // AUTH & PROFILE
