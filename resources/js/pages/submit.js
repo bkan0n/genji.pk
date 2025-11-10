@@ -1600,6 +1600,144 @@ function resetForms(form) {
 /* =========================
    HELPERS SEND MAP
    ========================= */
+function initSubmitHelpPopovers(scopeEl = document) {
+  const H = (p, fb='') => (typeof t === 'function' ? (t(p) ?? fb) : fb);
+
+  const RENDER = {
+    meta() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.meta.title','1) Metadata')}</div>
+          <ul class="space-y-1.5">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_creator','Main creator...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_code','Map code...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_name','Map name...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_checkpoints','Checkpoints...')}</li>
+          </ul>
+        </div>`;
+    },
+    required() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.required.title','2) Required fields')}</div>
+          <p class="text-sm text-zinc-300">${H('how_to_submit.required.p1','These fields must be provided...')}</p>
+          <ul class="space-y-1.5 mt-1">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_difficulty','Difficulty...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_category','Category...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_mechanics','Mechanics...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_restrictions','Restrictions...')}</li>
+          </ul>
+        </div>`;
+    },
+    medals() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.medals.title','3) Medals')}</div>
+          <p class="text-sm text-zinc-300">${H('how_to_submit.medals.p1','You may define times...')}</p>
+          <ul class="space-y-1.5 mt-1">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_rules','If you set one medal...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_pattern','Format: 1–5 digits...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold')}</li>
+          </ul>
+        </div>`;
+    },
+    optional() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.optional.title','4) Optional')}</div>
+          <ul class="space-y-1.5">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_title','Title...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_banner','Custom banner...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_description','Description...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_guide','Guide URL(s)...')}</li>
+          </ul>
+        </div>`;
+    }
+  };
+
+  const btns = scopeEl.querySelectorAll('.gp-help-btn');
+  const pops = scopeEl.querySelectorAll('.gp-help-pop');
+
+  const applyPosHidden = (pop, pos) => {
+    pop.classList.remove('top-12','bottom-12','origin-top-right','origin-bottom-right','translate-y-1','-translate-y-1');
+    if (pos === 'top') {
+      pop.classList.add('bottom-24','origin-bottom-right','-translate-y-1');
+    } else {
+      pop.classList.add('top-12','origin-top-right','translate-y-1');
+    }
+  };
+  const applyPosShown = (pop) => {
+    pop.classList.remove('translate-y-1','-translate-y-1');
+    pop.classList.add('translate-y-0');
+  };
+
+  const showPop = (pop, btn) => {
+    const key = btn.getAttribute('data-help-key');
+    const contentEl = pop.querySelector('[data-help-content]');
+    if (contentEl && RENDER[key]) contentEl.innerHTML = RENDER[key]();
+
+    pop.setAttribute('data-open', 'true');
+    pop.setAttribute('aria-hidden', 'false');
+    btn.setAttribute('aria-expanded', 'true');
+
+    pop.classList.remove('opacity-0','scale-95','pointer-events-none');
+    applyPosShown(pop);
+    pop.classList.add('opacity-100','scale-100','pointer-events-auto');
+  };
+
+  const hidePop = (pop, btn) => {
+    const pos = pop.getAttribute('data-help-pos') === 'top' ? 'top' : 'bottom';
+    pop.setAttribute('data-open', 'false');
+    pop.setAttribute('aria-hidden', 'true');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+
+    pop.classList.add('opacity-0','scale-95','pointer-events-none');
+    pop.classList.remove('opacity-100','scale-100','translate-y-0','pointer-events-auto');
+    applyPosHidden(pop, pos);
+  };
+
+  const hideAll = () => {
+    pops.forEach((p) => {
+      const k = p.getAttribute('data-help-for');
+      const b = scopeEl.querySelector(`.gp-help-btn[data-help-key="${k}"]`);
+      hidePop(p, b);
+    });
+  };
+
+  pops.forEach((p) => {
+    p.classList.add('transition','duration-200','ease-out','will-change-transform','will-change-opacity');
+    p.setAttribute('aria-hidden', 'true');
+    p.setAttribute('data-open', 'false');
+    p.classList.add('opacity-0','scale-95','pointer-events-none');
+  });
+
+  btns.forEach((btn) => {
+    const key = btn.getAttribute('data-help-key');
+    const pos = (btn.getAttribute('data-help-pos') || 'bottom').toLowerCase();
+    const pop = scopeEl.querySelector(`.gp-help-pop[data-help-for="${key}"]`);
+    if (!pop) return;
+
+    pop.setAttribute('data-help-pos', pos);
+    pop.classList.remove('top-12','bottom-12','origin-top-right','origin-bottom-right','translate-y-1','-translate-y-1','translate-y-0');
+    applyPosHidden(pop, pos);
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = pop.getAttribute('data-open') === 'true';
+      hideAll();
+      if (!isOpen) showPop(pop, btn);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.gp-help-pop, .gp-help-btn')) hideAll();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideAll();
+  });
+}
+
 function difficultyDotClass(label) {
   const L = String(label).toLowerCase();
   if (L.startsWith('easy')) return 'bg-emerald-400';
@@ -1898,34 +2036,44 @@ function hideAllSuggestions() {
 async function loadMainCreatorFromUserId(user_id) {
   const main = document.getElementById('metaCreatorMain');
   if (!main) return;
-  if (!user_id) {
+
+  const reset = () => {
     main.textContent = 'N/A';
     main.removeAttribute('data-raw-id');
-    return;
-  }
+  };
+
+  if (!user_id) return reset();
+
   try {
-    const resp = await fetch(`/api/users/${encodeURIComponent(user_id)}/overwatch`, {
+    const resp = await fetch(`/api/users/${encodeURIComponent(user_id)}`, {
       headers: { Accept: 'application/json' },
     });
-    const data = await resp.json();
 
-    if (data && typeof data.primary === 'string' && data.primary.trim()) {
-      main.textContent = data.primary.trim();
+    if (!resp.ok) return reset();
+
+    const data = await resp.json();
+    if (!data || typeof data !== 'object') return reset();
+
+    const pick = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+    const nickname        = pick(data.nickname);
+    const coalesced       = pick(data.coalesced_name);
+    const globalName      = pick(data.global_name);
+    const fromOWUsernames = Array.isArray(data.overwatch_usernames) && data.overwatch_usernames.length
+      ? pick(data.overwatch_usernames[0])
+      : null;
+
+    const chosen = nickname || coalesced || globalName || fromOWUsernames;
+
+    if (chosen) {
+      main.textContent = chosen;
       main.setAttribute('data-raw-id', String(user_id));
       return;
     }
+  } catch (_) {
+  }
 
-    if (data && Array.isArray(data.usernames) && data.usernames.length > 0) {
-      const unameObj = data.usernames.find((u) => u.is_primary) || data.usernames[0];
-      if (unameObj && unameObj.username) {
-        main.textContent = unameObj.username;
-        main.setAttribute('data-raw-id', String(user_id));
-        return;
-      }
-    }
-  } catch (e) {}
-  main.textContent = 'N/A';
-  main.removeAttribute('data-raw-id');
+  reset();
 }
 
 async function primeMainCreatorFromSession() {
@@ -2558,12 +2706,40 @@ async function sendMapToApi() {
 function renderSubmitMapSection() {
   const host = document.getElementById('submitMapSection');
   if (!host) return;
+
+  const helpBtn = (key, pos = 'bottom') => `
+    <button type="button"
+      class="gp-help-btn cursor-pointer absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+      aria-haspopup="dialog" aria-expanded="false" data-help-key="${key}" data-help-pos="${pos}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 15a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 17Zm1.35-4.9v.1a1 1 0 0 1-2 0 2.85 2.85 0 0 1 1.64-2.59 1.72 1.72 0 0 0 .99-1.46 1.9 1.9 0 0 0-3.8.05 1 1 0 0 1-2 0 3.9 3.9 0 0 1 7.8-.13 3.67 3.67 0 0 1-2.63 3.6 1 1 0 0 0-.99.93Z"/>
+      </svg>
+      <span class="sr-only">${t('common.more_info') || 'More info'}</span>
+    </button>
+    <div
+      class="gp-help-pop absolute right-3 z-50 w-80
+             rounded-xl border border-white/10 bg-zinc-900/95 p-3 shadow-2xl backdrop-blur
+             supports-[backdrop-filter]:bg-zinc-900/80
+             transition ease-out origin-top-right
+             will-change-transform will-change-opacity
+             opacity-0 scale-95 pointer-events-none"
+      role="dialog"
+      aria-label="${t('common.information') || 'Information'}"
+      aria-hidden="true"
+      data-open="false"
+      data-help-for="${key}"
+    >
+      <div class="text-sm text-zinc-200 leading-relaxed" data-help-content></div>
+    </div>
+  `;
+
   host.innerHTML = `
     <form id="submitMapForm" class="space-y-6">
-      <!-- META CARD -->
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+
+      <!-- META -->
+      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in" data-card="meta">
+        ${helpBtn('meta')}
         <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Creators -->
           <div class="sm:col-span-2">
             <span class="block text-xs text-zinc-400 mb-1">${t('map.meta.creator')}</span>
             <div id="metaCreatorsCol" class="flex flex-wrap items-center gap-2">
@@ -2573,40 +2749,31 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Map Code -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="text-[11px] text-zinc-400">${t('map.meta.code')}</div>
             <div class="flex items-center gap-2">
               <div id="metaCode" class="text-sm text-zinc-200">N/A</div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="metaCode">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaCode">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <!-- Map Name -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="text-[11px] text-zinc-400">${t('map.meta.name')}</div>
             <div class="flex items-center gap-2">
               <div id="metaMap" class="text-sm text-zinc-200">N/A</div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="metaMap">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaMap">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <!-- Checkpoints -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="text-[11px] text-zinc-400">${t('map.meta.checkpoints')}</div>
             <div class="flex items-center gap-2">
               <div id="metaCheckpoints" class="text-sm text-zinc-200">N/A</div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="metaCheckpoints">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaCheckpoints">
                 ${t('map.meta.edit')}
               </button>
             </div>
@@ -2614,18 +2781,16 @@ function renderSubmitMapSection() {
         </div>
       </div>
 
-      <!-- REQUIRED CARD -->
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
+      <!-- REQUIRED -->
+      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="required">
+        ${helpBtn('required')}
         <h3 class="text-sm font-semibold text-zinc-200">${t('map.required_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Difficulty -->
           <div>
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_difficulty')}</label>
             <div id="difficultyDropdown" class="custom-multiselect relative">
-              <button type="button" id="difficultyDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_difficulty')}">
+              <button type="button" id="difficultyDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_difficulty')}">
                 ${t('map.dropdown.select_difficulty')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2633,13 +2798,10 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Category -->
           <div>
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_category')}</label>
             <div id="categoryDropdown" class="custom-multiselect relative">
-              <button type="button" id="categoryDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_category')}">
+              <button type="button" id="categoryDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_category')}">
                 ${t('map.dropdown.select_category')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2647,13 +2809,10 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Mechanics -->
           <div class="sm:col-span-1">
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_mechanics')}</label>
             <div id="mechanicsDropdown" class="custom-multiselect relative">
-              <button type="button" id="mechanicsDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_mechanics')}">
+              <button type="button" id="mechanicsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_mechanics')}">
                 ${t('map.dropdown.select_mechanics')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2661,13 +2820,10 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Restrictions -->
           <div class="sm:col-span-1">
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_restrictions')}</label>
             <div id="restrictionsDropdown" class="custom-multiselect relative">
-              <button type="button" id="restrictionsDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_restrictions')}">
+              <button type="button" id="restrictionsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_restrictions')}">
                 ${t('map.dropdown.select_restrictions')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2677,24 +2833,22 @@ function renderSubmitMapSection() {
         </div>
       </div>
 
-      <!-- OPTIONAL CARD -->
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
+      <!-- OPTIONAL -->
+      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="optional">
+        ${helpBtn('optional')}
         <h3 class="text-sm font-semibold text-zinc-200">${t('map.optional_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Title -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <label class="block text-[11px] text-zinc-400 mb-1" for="optTitleInput">${t('map.title_label') || 'Title'}</label>
             <input id="optTitleInput" type="text" maxlength="128"
-                   class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                   placeholder="${t('map.title_placeholder') || 'Optional short title (max 128 chars)'}">
+              class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+              placeholder="${t('map.title_placeholder') || 'Optional short title (max 128 chars)'}">
           </div>
 
-          <!-- Custom banner (drag & drop) -->
           <div>
             <div class="text-[11px] text-zinc-400 mb-1">${t('map.custom_banner') || 'Custom banner'}</div>
-            <div id="bannerDrop"
-                 class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
+            <div id="bannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
               <input id="bannerInput" type="file" accept="image/*" class="hidden">
               <div id="bannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
                 ${t('record.drag_and_drop') || 'Drag & drop or click to upload'}
@@ -2703,116 +2857,81 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Description -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-[11px] text-zinc-400">${t('map.description_label')}</div>
                 <div id="optDescription" class="text-sm text-zinc-200">N/A</div>
               </div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="optDescription">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="optDescription">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <!-- Guide URL(s) -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-[11px] text-zinc-400">${t('map.guide_label')}</div>
                 <div id="optGuide" class="text-sm text-zinc-200">N/A</div>
               </div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="optGuide">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="optGuide">
                 ${t('map.meta.edit')}
               </button>
             </div>
             <p class="mt-2 text-xs text-zinc-400">${t('map.guide_hint') || 'One URL per line; first valid URL is used.'}</p>
           </div>
-          <!-- Medals -->
-          <div class="sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <div class="text-[11px] text-zinc-400 mb-2">Medals</div>
 
+          <!-- MEDALS -->
+          <div class="relative sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2" data-card="medals">
+            ${helpBtn('medals','top')}
+            <div class="text-[11px] text-zinc-400 mb-2">Medals</div>
             <div class="grid gap-3 sm:grid-cols-3">
-              <!-- Gold -->
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/gold.png" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
                   <span class="text-sm text-zinc-200">Gold</span>
                 </span>
-                <input
-                  id="medalGoldInput"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="\\d{1,5}(?:\\.\\d{1,2})?"
-                  placeholder="e.g. 5550.23"
-                  class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                >
+                <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
-
-              <!-- Silver -->
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/silver.png" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
                   <span class="text-sm text-zinc-200">Silver</span>
                 </span>
-                <input
-                  id="medalSilverInput"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="\\d{1,5}(?:\\.\\d{1,2})?"
-                  placeholder="e.g. 7599.33"
-                  class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                >
+                <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
-
-              <!-- Bronze -->
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/bronze.png" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
                   <span class="text-sm text-zinc-200">Bronze</span>
                 </span>
-                <input
-                  id="medalBronzeInput"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="\\d{1,5}(?:\\.\\d{1,2})?"
-                  placeholder="e.g. 8066.75"
-                  class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                >
+                <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
             </div>
-
-            <p class="mt-2 text-xs text-zinc-400">
-              ${t('map.medals_hint')}
-            </p>
+            <p class="mt-2 text-xs text-zinc-400">${t('map.medals_hint')}</p>
           </div>
         </div>
       </div>
 
-      <!-- ACTION BAR -->
       <div class="flex items-center gap-2">
-        <button type="submit"
-                class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
+        <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
           ${t('map.submit_label')}
         </button>
-        <button type="button"
-                class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
-                form="submitMapForm">
+        <button type="button" class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5" form="submitMapForm">
           ${t('record.cancel')}
         </button>
       </div>
     </form>
   `;
+
   bindSubmitMapEditButtons(host);
-  if (IS_GUEST) {
+  if (typeof IS_GUEST !== 'undefined' && IS_GUEST) {
     lockSectionById('submitMapSection');
     ensureGuestLockPersistence('submitMapSection');
   }
+
+  initSubmitHelpPopovers(host);
 }
 
 /* =========================
