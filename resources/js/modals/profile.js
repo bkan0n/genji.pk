@@ -276,7 +276,7 @@ const OW_BASE = '/api/users';
 const btn = document.getElementById('logoutBtn');
 btn?.addEventListener('click', async (e) => {
   e.preventDefault();
-  const logoutUrl = btn.dataset.logoutUrl;
+  const logoutUrl = new URL('/logout', window.location.origin).toString();
 
   const res = await fetch(logoutUrl, {
     method: 'POST',

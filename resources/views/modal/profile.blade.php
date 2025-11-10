@@ -138,7 +138,6 @@
           <div class="mt-3">
             <button
               id="logoutBtn"
-              data-logout-url="{{ url('/logout') }}"
               class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-rose-400/40 bg-rose-500/20 px-4 py-2.5 text-sm font-semibold text-rose-100 hover:border-rose-300/60 hover:bg-rose-500/30"
             >
               <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
