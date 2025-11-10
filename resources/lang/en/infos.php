@@ -25,17 +25,18 @@ return [
     'hero' => [
         'badge'    => 'Rules · Ranks · Help',
         'title'    => 'Information & rules',
-        'subtitle' => 'Learn how rank promotions work, how to submit maps and completions, how playtesting is handled, and how techniques are distributed across difficulties.',
+        'subtitle' => 'rank up · playtesting · submit maps & completions · techniques',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
     // TABS
     // ──────────────────────────────────────────────────────────────────────
     'tabs' => [
-        'ranks'    => 'Ranks',
-        'playtesting'    => 'Playtesting',
-        'submit_map'    => 'Submit map',
-        'techs' => 'Techs & difficulties',
+        'ranking_process'  => 'Ranking process',
+        'ranks_threshold'  => 'Ranks threshold',
+        'playtesting'      => 'Playtesting',
+        'submit_map'       => 'Submit map',
+        'techs'            => 'Techs & difficulties',
     ],
 
 
@@ -66,8 +67,8 @@ return [
             // HOW TO SUBMIT (RANK PROMOTION COMPLETION)
             // ──────────────────────────────────────────────────────────────
             'how_to_submit' => [
-                'title' => 'Rank promotion · How to submit?',
-                'intro' => 'To request a rank promotion, you must submit a completion (“record”) on a valid map and provide a quality rating.',
+                'title' => 'How to rank up',
+                'intro' => 'To rank up, you must submit completions (records) on a valid maps and provide a quality rating.',
 
                 'requirements' => [
                     'title'         => 'Requirements',
@@ -105,7 +106,7 @@ return [
 
                 'completion' => [
                     'title'             => 'Completion Requirements/Guidelines',
-                    'li_code_match'     => 'Map code in the screenshot must match the map code in the bot.',
+                    'li_code_match'     => 'Map code in the screenshot must match the map code in the bot/website.',
                     'li_time_display'   => 'Time must be displayed in either the Top 5 leaderboard or as the announcement in the middle of the screen. For video submissions, it must show both.',
                     'li_no_edit_map'    => 'You cannot edit the map in any way using Custom Game settings, Workshop Settings, or any other Workshop code. This includes but is not limited to changing tech bans, gravity, etc.',
                     'li_no_scripts'     => 'You are not allowed to use scripts, macros, or anything similar to complete any portion of a map.',
@@ -113,7 +114,7 @@ return [
                 ],
 
                 'records' => [
-                    'title'                         => 'Records Only',
+                    'title'                         => 'Videos Records',
                     'li_time_visible'               => 'Time must be fully visible from 0.00 to the finish. Do not fade in or out while the timer is running.',
                     'li_video_required'             => 'Video proof is required for World Records and Medals.',
                     'li_no_cuts'                    => 'Cuts in the video are not allowed (between 0.00 and finish).',

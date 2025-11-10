@@ -9,85 +9,72 @@
 @endpush
 
 @section('content')
-  <section class="relative overflow-visible min-h-[100vh]">
-    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-      {{-- Hero --}}
-      <div class="mb-10 space-y-4 sm:mb-12">
-        <div class="space-y-3">
-          <h1 class="text-3xl font-black tracking-tight sm:text-4xl">
-            {{ __('infos.hero.title') }}
-          </h1>
-          <p class="max-w-2xl text-sm text-zinc-300 sm:text-base">
-            {{ __('infos.hero.subtitle') }}
-          </p>
-        </div>
-      </div>
+<section class="relative overflow-visible min-h-[100vh]">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
 
-      {{-- Tabs --}}
-      <div class="mb-8 flex flex-wrap gap-2 text-xs sm:text-sm">
-        <button
-          type="button"
-          class="infos-tab cursor-pointer inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-medium text-zinc-300 hover:border-emerald-400/40"
-          data-infos-tab="rank"
-          data-active="true"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-          <span>{{ __('infos.tabs.ranks') }}</span>
-        </button>
-        <button
-          type="button"
-          class="infos-tab cursor-pointer inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-medium text-zinc-300 hover:border-emerald-400/40"
-          data-infos-tab="playtesting"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span>
-          <span>{{ __('infos.tabs.playtesting') }}</span>
-        </button>
-        <button
-          type="button"
-          class="infos-tab cursor-pointer inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-medium text-zinc-300 hover:border-emerald-400/40"
-          data-infos-tab="submit"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-sky-400"></span>
-          <span>{{ __('infos.tabs.submit_map') }}</span>
-        </button>
-        <button
-          type="button"
-          class="infos-tab cursor-pointer inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-medium text-zinc-300 hover:border-emerald-400/40"
-          data-infos-tab="techs"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
-          <span>{{ __('infos.tabs.techs') }}</span>
-        </button>
-      </div>
-
-      {{-- Content --}}
-      <div class="space-y-10">
-        {{-- Rank tab: 4 sections --}}
-        <div data-infos-kind="rank_how_to_submit" data-infos-group="rank" class="space-y-4"></div>
-
-        <div data-infos-kind="rank_submission_rules" data-infos-group="rank" class="space-y-4"></div>
-
-        <div data-infos-kind="rank_info_thresholds" data-infos-group="rank" class="space-y-4"></div>
-
-        <div data-infos-kind="rank_medals_thresholds" data-infos-group="rank" class="space-y-4"></div>
-
-        {{-- Playtesting tab --}}
-        <div data-infos-kind="playtesting_info" data-infos-group="playtesting" class="space-y-4" hidden></div>
-
-        {{-- Submit map tab --}}
-        <div data-infos-kind="how_to_submit" data-infos-group="submit" class="space-y-4" hidden></div>
-
-        {{-- Techs & difficulty tab --}}
-        <div data-infos-kind="difficulty_techs_info" data-infos-group="techs" class="space-y-4" hidden></div>
+  {{-- Hero --}}
+  <div class="mb-6 sm:mb-8">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
+          {{ __('infos.hero.title') }}
+          <span class="block text-sm font-medium text-zinc-300 sm:text-base">
+            {{ __('infos.hero.subtitle') ?? 'ranks · submissions · playtesting · techniques' }}
+          </span>
+        </h1>
       </div>
     </div>
-  </section>
+  </div>
+
+    {{-- Tabs --}}
+    <div class="mb-8">
+      <div id="infosTabs" class="relative inline-flex rounded-xl border border-white/10 bg-white/5 p-1 text-xs sm:text-sm">
+        <div id="tabHighlight" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] rounded-lg bg-white transition-all duration-300 ease-out will-change-transform"></div>
+
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="ranking_process" data-active="true">
+          {{ __('infos.tabs.ranking_process') }}
+        </button>
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="ranks_threshold">
+          {{ __('infos.tabs.ranks_threshold') }}
+        </button>
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="playtesting">
+          {{ __('infos.tabs.playtesting') }}
+        </button>
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="submit">
+          {{ __('infos.tabs.submit_map') }}
+        </button>
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="techs">
+          {{ __('infos.tabs.techs') }}
+        </button>
+      </div>
+    </div>
+
+    {{-- Content --}}
+    <div class="space-y-10">
+      {{-- Ranking process --}}
+      <div data-infos-kind="rank_how_to_submit"     data-infos-group="ranking_process" class="space-y-4"></div>
+      <div data-infos-kind="rank_submission_rules"  data-infos-group="ranking_process" class="space-y-4"></div>
+      {{-- Ranks thresholds --}}
+      <div data-infos-kind="rank_info_thresholds"   data-infos-group="ranks_threshold" class="space-y-4" hidden></div>
+      <div data-infos-kind="rank_medals_thresholds" data-infos-group="ranks_threshold" class="space-y-4" hidden></div>
+
+      {{-- Playtesting tab --}}
+      <div data-infos-kind="playtesting_info" data-infos-group="playtesting" class="space-y-4" hidden></div>
+
+      {{-- Submit map tab --}}
+      <div data-infos-kind="how_to_submit" data-infos-group="submit" class="space-y-4" hidden></div>
+
+      {{-- Techs & difficulty tab --}}
+      <div data-infos-kind="difficulty_techs_info" data-infos-group="techs" class="space-y-4" hidden></div>
+    </div>
+  </div>
+</section>
 @endsection
 
 @push('scripts')
-  <script nonce="{{ $nonce }}">
-    document.documentElement.lang = @json(app()->getLocale());
-    window.INFOS_I18N = @json(\Illuminate\Support\Facades\Lang::get('infos'));
-  </script>
-  @vite('resources/js/pages/infos.js')
+<script nonce="{{ $nonce }}">
+  document.documentElement.lang = @json(app()->getLocale());
+  window.INFOS_I18N = @json(\Illuminate\Support\Facades\Lang::get('infos'));
+</script>
+@vite('resources/js/pages/infos.js')
 @endpush
