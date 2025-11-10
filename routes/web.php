@@ -26,6 +26,7 @@ Route::view('lootbox', 'lootbox')->name('lootbox');
 Route::view('submit', 'submit')->name('submit');
 Route::view('game', 'game')->name('game');
 Route::view('dashboard', 'dashboard')->name('dashboard');
+Route::view('infos', 'infos')->name('infos');
 Route::view('moderator', 'moderator')->middleware('discord.moderator')->name('moderator.panel');
 Route::view('/ip', 'ip-temp');
 
