@@ -1441,13 +1441,18 @@ function setupForms() {
 
       try {
         const result = await sendCompletionToApi();
-        if (!result || result.error) {
-          showErrorMessage(result?.error || t('errors.server_unreachable') || 'Erreur serveur');
+
+        const msg400 =
+          result?.error ||
+          result?.response?.error ||
+          (typeof result?.message === 'string' ? result.message : null);
+
+        if (!result || msg400) {
+          showErrorMessage(msg400 || t('errors.server_unreachable') || 'Erreur serveur');
           return;
         }
         showConfirmationMessage(t('record.confirm'));
         resetForms(submitRecordForm);
-        if (submittedCode) ensureViewModalButtonForLastCode(submittedCode);
       } catch (err) {
         console.error(err);
         showErrorMessage(t('errors.server_unreachable') || 'Erreur réseau');
@@ -1489,8 +1494,14 @@ function setupForms() {
       if (!ok) return;
       try {
         const result = await sendMapToApi();
-        if (result?.error) {
-          showErrorMessage(result.error);
+
+        const msg400 =
+          result?.error ||
+          result?.response?.error ||
+          (typeof result?.message === 'string' ? result.message : null);
+
+        if (msg400) {
+          showErrorMessage(msg400);
           return;
         }
         showConfirmationMessage(t('map.confirm'));
