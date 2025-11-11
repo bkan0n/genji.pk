@@ -1045,6 +1045,20 @@ async function loadNewsfeed(append = false) {
     totalResults = Number(raw?.total_results ?? raw?.total ?? items.length) || 0;
     totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
 
+    const serverTotal = Number(raw?.total_results ?? raw?.total);
+    const hasMoreFromApi = typeof raw?.has_more === 'boolean' ? raw.has_more : null;
+    const hasMoreFallback = items.length === pageSize;
+
+    if (Number.isFinite(serverTotal)) {
+      totalResults = serverTotal;
+      totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
+    } else {
+      totalResults = currentPage * pageSize + (hasMoreFallback ? 1 : 0);
+      totalPages = hasMoreFromApi === true || hasMoreFallback ? currentPage + 1 : currentPage;
+    }
+
+    window.__nfHasMore = hasMoreFromApi === null ? hasMoreFallback : hasMoreFromApi;
+
     const cardsHtml = await Promise.all(items.map(createNewsCard));
 
     const container = document.getElementById('newsfeedContainer');
@@ -2091,19 +2105,24 @@ function mountAllGuideVideos(root = document) {
 function renderPaginationButtons() {
   const loadMore = document.getElementById('nf-loadmore');
   if (loadMore) {
-    loadMore.classList.toggle('hidden', currentPage >= totalPages);
+    const hasKnownTotal = Number.isFinite(Number(totalResults));
+    const showByPages   = currentPage < totalPages;
+    const showByHasMore = !!window.__nfHasMore;
+
+    const shouldShow = hasKnownTotal ? showByPages : showByHasMore;
+    loadMore.classList.toggle('hidden', !shouldShow);
+
     loadMore.onclick = () => {
-      if (currentPage < totalPages) {
-        currentPage += 1;
-        loadNewsfeed(true);
-      }
+      if (!shouldShow) return;
+      currentPage += 1;
+      loadNewsfeed(true);
     };
   }
 
   const pag = document.getElementById('paginationContainer');
   if (!pag) return;
   pag.innerHTML = '';
-  if (totalPages <= 1) return;
+  if (!Number.isFinite(Number(totalResults)) || totalPages <= 1) return;
 
   const mkBtn = (label, disabled, cb) => {
     const b = document.createElement('button');
@@ -2373,7 +2392,6 @@ function applySearchFilter() {
   const loadMore = document.getElementById('nf-loadmore');
 
   if (emptyEl) emptyEl.classList.toggle('hidden', !isEmpty);
-  if (loadMore) loadMore.classList.toggle('hidden', isEmpty);
 }
 
 /* ---------- Clipboard for map-code ---------- */
