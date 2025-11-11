@@ -34,9 +34,9 @@ Route::view('/ip', 'ip-temp');
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
 
 // Discord OAuth
-Route::get('login', [DiscordAuthController::class, 'redirect'])->name('discord.redirect');
-Route::get('discord/callback', [DiscordAuthController::class, 'callback'])->name('discord.callback',);
-Route::post('logout', [DiscordAuthController::class, 'logout'])->name('logout')->middleware('web');
+Route::get('/login',    [DiscordAuthController::class, 'redirect'])->name('login');
+Route::get('/callback', [DiscordAuthController::class, 'callback'])->name('callback');
+Route::post('/logout',  [DiscordAuthController::class, 'logout'])->name('logout');
 
 //IP 
 Route::get('/api/my-ip', function (Request $request) {

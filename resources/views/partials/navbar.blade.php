@@ -302,7 +302,7 @@
           </div>
         @else
           <a
-            href="{{ route('discord.redirect') }}"
+            href="{{ route('login') }}"
             class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
           >
             {{ __('navbar.login') }}

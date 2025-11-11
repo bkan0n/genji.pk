@@ -656,7 +656,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 }
 .grid-completions{
   display:grid;
-  grid-template-columns:repeat(7,minmax(0,1fr)); /* 7 colonnes : code, nick, discord, time, medal, video, details */
+  grid-template-columns:repeat(7,minmax(0,1fr));
   align-items:center;column-gap:20px;
 }
 .grid-personal_records{
@@ -666,7 +666,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 }
 .grid-guide{
   display:grid;
-  grid-template-columns:minmax(0,1fr); /* 1 colonne pour la vue Guides */
+  grid-template-columns:minmax(0,1fr);
   align-items:start;justify-items:stretch;
 }
 
@@ -676,7 +676,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .minw-personal_records{min-width:920px}
 .minw-guide{min-width:640px}
 
-/* Colonne d’actions alignée à droite (7e col) */
+/* Colonne d’actions */
 .grid-map_search > :nth-child(7),
 .grid-completions > :nth-child(7){justify-self:end;text-align:right}
 

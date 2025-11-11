@@ -32,7 +32,7 @@ return [
     'discord' => [
         'client_id' => env('DISCORD_CLIENT_ID', ''),
         'client_secret' => env('DISCORD_CLIENT_SECRET', ''),
-        'redirect' => env('DISCORD_REDIRECT_URI', ''),
+        'redirect'      => env('DISCORD_REDIRECT_URI', rtrim(env('APP_URL', ''), '/') . '/callback'),
         'authorize_url' => 'https://discord.com/api/oauth2/authorize',
         'token_url' => 'https://discord.com/api/oauth2/token',
         'scope' => 'identify guilds guilds.members.read',
