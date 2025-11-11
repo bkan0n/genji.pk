@@ -193,6 +193,7 @@ const FILTER_LABELS = translations?.tags
       legacy_record: translations.tags.legacy_record,
       archive: translations.tags.archive,
       unarchive: translations.tags.unarchive,
+      linked_map: translations.tags.linked_map,
     }
   : {
       all: 'All',
@@ -205,9 +206,10 @@ const FILTER_LABELS = translations?.tags
       legacy_record: 'Legacy record',
       archive: 'Archive',
       unarchive: 'Unarchive',
+      linked_map: 'Linked map',
     };
 
-const FILTER_ORDER = ['all', 'new_map', 'announcement', 'role', 'record', 'guide', 'map_edit', 'legacy_record', 'archive', 'unarchive'];
+const FILTER_ORDER = ['all', 'new_map', 'announcement', 'role', 'record', 'guide', 'map_edit', 'legacy_record', 'archive', 'unarchive', 'linked_map'];
 
 const TYPE_CANON = {
   all: 'all',
@@ -220,6 +222,7 @@ const TYPE_CANON = {
   legacy_record: 'legacy_record',
   archive: 'archive',
   unarchive: 'unarchive',
+  linked_map: 'linked_map',
 };
 
 /* ---------- i18n ---------- */
@@ -1150,6 +1153,7 @@ async function createNewsCard(item) {
     role:           { ring:'ring-fuchsia-400/30', glow:'bg-fuchsia-500/15', badge:'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200' },
     record:         { ring:'ring-rose-400/30',    glow:'bg-rose-500/15',    badge:'border-rose-400/30 bg-rose-500/10 text-rose-200' },
     legacy_record:  { ring:'ring-yellow-400/30',  glow:'bg-yellow-500/15',  badge:'border-yellow-400/30 bg-yellow-500/10 text-yellow-200' },
+    linked_map:     { ring:'ring-teal-400/30',    glow:'bg-teal-500/15',    badge:'border-teal-400/30 bg-teal-500/10 text-teal-200' },
     unknown:        { ring:'ring-white/15',       glow:'bg-white/10',       badge:'border-white/15 bg-white/10 text-zinc-100' },
   };
 
@@ -1790,8 +1794,74 @@ async function createNewsCard(item) {
     `;
   }
 
+  if (type === 'linked_map') {
+    const off  = p?.official_code   || '';
+    const unof = p?.unofficial_code || '';
+    const ptId = p?.playtest_id ?? null;
+
+    const codeChip = (label, code) => `
+      <div class="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
+        <div class="flex items-center gap-2">
+          ${ code
+            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`
+          }
+          <div class="ml-auto flex items-center gap-2">
+            ${ code ? `
+              <button type="button"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                data-copy-code="${escAttr(code)}" title="Copy">
+                ${icon.copy}
+              </button>
+            ` : '' }
+            ${ code ? `
+              <button type="button"
+                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10"
+                data-open-map-details data-map-code="${escAttr(code)}">Details</button>
+            ` : '' }
+          </div>
+        </div>
+      </div>
+    `;
+
+    html += `
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+              ${typeof t === 'function'
+                ? (t('newsfeed.linked_map_title') || 'Linked maps')
+                : 'Linked maps'}
+            </h3>
+            ${ ptId != null ? `
+              <p class="mt-1 text-xs text-zinc-300">
+                ${typeof t === 'function'
+                  ? (t('newsfeed.playtest_id', { id: ptId }) || `Playtest ID: ${ptId}`)
+                  : `Playtest ID: ${ptId}`}
+              </p>` : '' }
+          </div>
+        </header>
+
+        <div class="p-3 sm:p-4">
+          <div class="grid gap-3 sm:grid-cols-2">
+            ${codeChip((typeof t === 'function' ? (t('newsfeed.official_code') || 'Official code') : 'Official code'),   off)}
+            ${codeChip((typeof t === 'function' ? (t('newsfeed.unofficial_code') || 'Unofficial code') : 'Unofficial code'), unof)}
+          </div>
+
+          ${ (off && unof) ? `
+            <div class="mt-3 rounded-lg border border-teal-400/20 bg-teal-500/10 p-2.5 text-xs text-teal-200">
+              ${typeof t === 'function'
+                ? (t('newsfeed.linked_map_hint') || 'These two map codes are now linked together.')
+                : 'These two map codes are now linked together.'}
+            </div>` : '' }
+        </div>
+      </article>
+    `;
+  }
+
   // Fallback
-  if (!/^(announcement|new_map|map_edit|bulk_archive|bulk_unarchive|guide|record|archive|unarchive|role|legacy_record)$/.test(type)) {
+  if (!/^(announcement|new_map|map_edit|bulk_archive|bulk_unarchive|guide|record|archive|unarchive|role|legacy_record|linked_map)$/.test(type)) {
     html += `<div class="flex items-center justify-between">
       <p class="text-sm text-zinc-300">Unknown event <code class="text-zinc-200">${esc(type)}</code></p>
       <span class="rounded-full px-2 py-0.5 text-[11px] ${THEME.unknown.badge}">${esc(typeLabel('unknown'))}</span>

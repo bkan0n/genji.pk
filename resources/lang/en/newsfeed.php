@@ -32,17 +32,18 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'tags' => [
         'all' => 'All',
-        'announcement' => 'Announcement',
-        'guide' => 'Guide',
-        'new_map' => 'New map',
-        'role' => 'Role',
-        'record' => 'Record',
-        'map_edit' => 'Map edit',
-        'legacy_record' => 'Legacy record',
-        'archive' => 'Archive',
-        'unarchive' => 'Unarchive',
-        'bulk_archive' => 'Bulk archive',
-        'bulk_unarchive' => 'Bulk unarchive',
+        'announcement'    => 'Announcement',
+        'guide'           => 'Guide',
+        'new_map'         => 'New map',
+        'role'            => 'Role',
+        'record'          => 'Record',
+        'map_edit'        => 'Map edit',
+        'legacy_record'   => 'Legacy record',
+        'archive'         => 'Archive',
+        'unarchive'       => 'Unarchive',
+        'bulk_archive'    => 'Bulk archive',
+        'bulk_unarchive'  => 'Bulk unarchive',
+        'linked_map'      => 'Linked map',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -217,6 +218,11 @@ return [
         'video_label' => 'Video',
         'translation_failed' => 'Translation failed.',
         'translation_error' => 'Error occurred during translation.',
+        'linked_map_title' => 'Linked map codes',
+        'playtest_id' => 'Playtest ID: :id',
+        'official_code' => 'Official code',
+        'unofficial_code' => 'Unofficial code',
+        'linked_map_hint' => 'These two map codes are now linked together.',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
