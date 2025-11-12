@@ -32,7 +32,7 @@ function renderRankHelpContent(kind) {
     </li>
   `;
 
-  const card = (title, content, { showIcon = true } = {}) => `
+  const card = (title, content, { showIcon = false } = {}) => `
     <section
       class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
              p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20"
@@ -141,7 +141,7 @@ function renderRankHelpContent(kind) {
       </li>
     `;
 
-    const cardInner = (title, content) => card(title, content, { showIcon: true });
+    const cardInner = (title, content) => card(title, content, { showIcon: false });
 
     const warn = (text) => `
       <div
@@ -301,11 +301,6 @@ function renderRankHelpContent(kind) {
     const grid = `
       <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
         <div class="flex items-center gap-2">
-          <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-            <svg class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/>
-            </svg>
-          </div>
           <h4 class="text-sm font-semibold text-zinc-100">${t('help_modal.rank_promotion.rank_info_thresholds.table.title','Rank & Difficulty chart')}</h4>
         </div>
         <div class="rank-grid mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -387,11 +382,6 @@ function renderRankHelpContent(kind) {
     const table = `
       <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
         <div class="flex items-center gap-2">
-          <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-            <svg class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/>
-            </svg>
-          </div>
           <h4 class="text-sm font-semibold text-zinc-100">${t('help_modal.rank_promotion.medals_info_thresholds.table.title','Medal thresholds by difficulty')}</h4>
         </div>
         <div class="infos-scroll-x mt-2">
@@ -438,11 +428,6 @@ function renderMapHelpContent(kind) {
                p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20"
       >
         <div class="flex items-center gap-2">
-          <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-            <svg class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/>
-            </svg>
-          </div>
           <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
         </div>
         ${content}
@@ -581,11 +566,6 @@ function renderMapHelpContent(kind) {
                p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20"
       >
         <div class="flex items-center gap-2">
-          <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-            <svg class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/>
-            </svg>
-          </div>
           <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
         </div>
         ${content}
@@ -791,11 +771,6 @@ function renderMapHelpContent(kind) {
     const cardSection = (title, content) => `
       <section class="helpsec rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-3 shadow-sm shadow-black/20">
         <div class="flex items-center gap-2">
-          <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-            <svg class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/>
-            </svg>
-          </div>
           <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
         </div>
         ${content}
