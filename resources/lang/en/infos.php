@@ -35,7 +35,7 @@ return [
         'ranking_process'  => 'Ranking process',
         'ranks_threshold'  => 'Ranks threshold',
         'playtesting'      => 'Playtesting',
-        'submit_map'       => 'Submit map',
+        'submit_map'       => 'Map submissions',
         'techs'            => 'Techs & difficulties',
     ],
 
