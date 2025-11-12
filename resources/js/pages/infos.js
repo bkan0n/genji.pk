@@ -823,37 +823,70 @@ function renderMapHelpContent(kind) {
    ========================= */
 function initInfosTabs() {
   const tabsContainer = document.getElementById('infosTabs');
-  const highlight = document.getElementById('tabHighlight');
-  const tabs = document.querySelectorAll('[data-infos-tab]');
-  const panels = document.querySelectorAll('[data-infos-group]');
+  if (!tabsContainer) return;
 
-  if (!tabs.length || !highlight || !tabsContainer) return;
-
-  function moveHighlightTo(btn) {
-    const rect = btn.getBoundingClientRect();
-    const containerRect = tabsContainer.getBoundingClientRect();
-    const left = rect.left - containerRect.left;
-    const width = rect.width;
-    highlight.style.transform = `translateX(${left}px)`;
-    highlight.style.width = `${width}px`;
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
   }
 
-  function setActiveTab(group, { updateUrl = true } = {}) {
+  const tabs   = Array.from(document.querySelectorAll('[data-infos-tab]'));
+  const panels = Array.from(document.querySelectorAll('[data-infos-group]'));
+  if (!tabs.length) return;
+
+  let highlight = document.getElementById('tabHighlight');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.id = 'tabHighlight';
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      background: 'white',
+      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      transform: 'translate3d(0,0,0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0'
+    });
+    tabsContainer.appendChild(highlight);
+  }
+
+  tabs.forEach(btn => {
+    btn.classList.add('cursor-pointer');
+    btn.style.position = 'relative';
+    btn.style.zIndex = '1';
+  });
+
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
+  const setActiveTab = (group, { updateUrl = true } = {}) => {
     tabs.forEach((btn) => {
       const isActive = btn.getAttribute('data-infos-tab') === group;
       if (isActive) {
         btn.classList.remove('text-white', 'hover:bg-white/10');
-        btn.classList.add('text-zinc-900', 'cursor-pointer');
+        btn.classList.add('text-zinc-900');
         moveHighlightTo(btn);
       } else {
         btn.classList.remove('text-zinc-900');
-        btn.classList.add('text-white', 'hover:bg-white/10', 'cursor-pointer');
+        btn.classList.add('text-white', 'hover:bg-white/10');
       }
     });
 
     panels.forEach((panel) => {
-      const g = panel.getAttribute('data-infos-group');
-      panel.hidden = g !== group;
+      panel.hidden = panel.getAttribute('data-infos-group') !== group;
     });
 
     if (updateUrl) {
@@ -861,21 +894,17 @@ function initInfosTabs() {
       url.hash = `tab=${encodeURIComponent(group)}`;
       history.replaceState(null, '', url.toString());
     }
-  }
+  };
 
-  function getDesiredTab() {
+  const getDesiredTab = () => {
     const hash = new URL(window.location.href).hash || '';
     const m = hash.match(/tab=([^&]+)/);
     if (m && m[1]) return decodeURIComponent(m[1]);
-
     const params = new URLSearchParams(window.location.search);
-    const q = params.get('tab');
-    if (q) return q;
-    return null;
-  }
+    return params.get('tab');
+  };
 
   tabs.forEach((btn) => {
-    btn.classList.add('cursor-pointer');
     btn.addEventListener('click', () => {
       const group = btn.getAttribute('data-infos-tab');
       if (group) setActiveTab(group, { updateUrl: true });
@@ -883,19 +912,28 @@ function initInfosTabs() {
   });
 
   const desired = getDesiredTab();
-  const initial =
+  const initialBtn =
     (desired && document.querySelector(`[data-infos-tab="${desired}"]`)) ||
     document.querySelector('[data-infos-tab][data-active="true"]') ||
     tabs[0];
 
-  if (initial) {
-    moveHighlightTo(initial);
-    setActiveTab(initial.getAttribute('data-infos-tab'), { updateUrl: !!desired });
-  }
-
-  window.addEventListener('resize', () => {
-    const active = document.querySelector('.infos-tab.text-zinc-900') || initial;
-    if (active) moveHighlightTo(active);
+  requestAnimationFrame(() => {
+    if (initialBtn) {
+      setActiveTab(initialBtn.getAttribute('data-infos-tab'), { updateUrl: !!desired });
+      moveHighlightTo(initialBtn);
+    }
+    const recalc = () => {
+      const active =
+        document.querySelector('[data-infos-tab].text-zinc-900') ||
+        initialBtn;
+      if (active) moveHighlightTo(active);
+    };
+    window.addEventListener('resize', recalc);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(recalc);
+    } else {
+      setTimeout(recalc, 60);
+    }
   });
 }
 

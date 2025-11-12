@@ -162,6 +162,138 @@ function t(path, params = {}) {
 /* =========================
    TAB SYSTEM
    ========================= */
+function initMainTabs(defaultTab = 'record') {
+  const tabsContainer = document.getElementById('mainTabs');
+  if (!tabsContainer) return;
+
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
+  }
+
+  const btnToGroup = new Map([
+    ['submitRecordBtn', 'record'],
+    ['playtestBtn',     'playtest'],
+    ['submitMapBtn',    'map'],
+  ]);
+  const groupToPanelId = {
+    record:  'submitRecordSection',
+    playtest:'playtestSection',
+    map:     'submitMapSection',
+  };
+
+  const buttons = Array.from(tabsContainer.querySelectorAll('.tab-btn'))
+    .filter(b => btnToGroup.has(b.id));
+  if (!buttons.length) return;
+
+  let highlight = tabsContainer.querySelector('#mainTabsHighlight');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.id = 'mainTabsHighlight';
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      background: 'white',
+      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      transform: 'translate3d(0,0,0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0'
+    });
+    tabsContainer.appendChild(highlight);
+  }
+
+  buttons.forEach(b => {
+    b.style.position = 'relative';
+    b.style.zIndex = '1';
+    b.classList.add('cursor-pointer');
+  });
+
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
+  const showPanel = (group) => {
+    Object.entries(groupToPanelId).forEach(([g, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden', g !== group);
+    });
+  };
+
+  const setActive = (group, { updateUrl = true } = {}) => {
+    let activeBtn = null;
+    buttons.forEach((btn) => {
+      const g = btnToGroup.get(btn.id);
+      const isActive = g === group;
+      if (isActive) activeBtn = btn;
+
+      btn.classList.toggle('bg-white', isActive);
+      btn.classList.toggle('text-zinc-900', isActive);
+
+      btn.classList.toggle('text-white', !isActive);
+      btn.classList.toggle('hover:bg-white/10', !isActive);
+    });
+
+    moveHighlightTo(activeBtn);
+    showPanel(group);
+
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      url.hash = `main=${encodeURIComponent(group)}`;
+      history.replaceState(null, '', url.toString());
+    }
+  };
+
+  const getDesired = () => {
+    const hash = new URL(window.location.href).hash || '';
+    const hm = hash.match(/main=([^&]+)/);
+    if (hm && hm[1]) return decodeURIComponent(hm[1]);
+    const q = new URLSearchParams(window.location.search).get('main');
+    return q || null;
+  };
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const group = btnToGroup.get(btn.id);
+      if (group) setActive(group, { updateUrl: true });
+    });
+  });
+
+  const desired = getDesired();
+  const initialGroup = desired || defaultTab;
+  requestAnimationFrame(() => {
+    setActive(initialGroup, { updateUrl: !!desired });
+
+    const recalc = () => {
+      const current =
+        buttons.find(b => b.classList.contains('bg-white')) ||
+        buttons.find(b => btnToGroup.get(b.id) === initialGroup) ||
+        buttons[0];
+      moveHighlightTo(current);
+    };
+
+    window.addEventListener('resize', recalc);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(recalc);
+    } else {
+      setTimeout(recalc, 60);
+    }
+  });
+
+  window.setMainTab = (group) => setActive(group, { updateUrl: true });
+}
+
 function bindTabButtons() {
   document
     .getElementById('submitRecordBtn')
@@ -7421,6 +7553,7 @@ function initializeSubmitRecord() {
 
 async function initializeApp() {
   //showLoadingBar();
+  initMainTabs();
   fillMechanicsAndRestrictions().catch(() => {});
   setupTabs();
   setupForms();

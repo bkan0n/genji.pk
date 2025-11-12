@@ -368,15 +368,116 @@ async function loadDynamicOptions() {
 /* =========================
    TAB SYSTEM
    ========================= */
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.tab-buttons button[data-section]').forEach((btn) => {
+function initSearchTabs(defaultSection = 'map_search') {
+  const tabsContainer = document.getElementById('searchTabs');
+  const highlight = document.getElementById('searchTabsHighlight');
+  if (!tabsContainer || !highlight) return;
+
+  const buttons = Array.from(tabsContainer.querySelectorAll('.search-tab'));
+  if (!buttons.length) return;
+
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
+  }
+  Object.assign(highlight.style, {
+    position: 'absolute',
+    top: '2px',
+    bottom: '2px',
+    left: '0',
+    width: '0',
+    borderRadius: '0.625rem',
+    background: 'white',
+    boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+    transform: 'translate3d(0,0,0)',
+    transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+    willChange: 'transform,width',
+    zIndex: '0'
+  });
+  buttons.forEach(b => { b.style.position = 'relative'; b.style.zIndex = '1'; });
+
+  const selectedModeEl = document.getElementById('selectedMode');
+
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
+  const setActive = (section, { updateUrl = true, triggerLoad = true } = {}) => {
+    let activeBtn = buttons.find(b => b.getAttribute('data-section') === section) || buttons[0];
+    const activeSection = activeBtn?.getAttribute('data-section') || section;
+
+    buttons.forEach((btn) => {
+      const isActive = btn === activeBtn;
+      btn.classList.toggle('bg-white', isActive);
+      btn.classList.toggle('text-zinc-900', isActive);
+      btn.classList.toggle('text-white', !isActive);
+      btn.classList.toggle('hover:bg-white/10', !isActive);
+    });
+
+    moveHighlightTo(activeBtn);
+
+    if (selectedModeEl) {
+      const label = activeBtn?.textContent?.trim() || '';
+      selectedModeEl.textContent = label || (window.SEARCH_I18N?.select_mode ?? 'Select a mode');
+    }
+
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', activeSection);
+      history.replaceState({ section: activeSection }, '', url.pathname + '?' + url.searchParams.toString() + url.hash);
+    }
+
+    if (triggerLoad && typeof window.selectSection === 'function') {
+      window.selectSection(activeSection, { push: false, replace: true });
+    }
+  };
+
+  const getDesired = () => {
+    const hash = new URL(window.location.href).hash || '';
+    const hm = hash.match(/section=([^&]+)/);
+    if (hm && hm[1]) return decodeURIComponent(hm[1]);
+    const q = new URLSearchParams(window.location.search).get('section');
+    if (q) return q;
+    return defaultSection;
+  };
+
+  buttons.forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const section = btn.dataset.section;
-      if (window.selectSection) selectSection(section);
+      const section = btn.getAttribute('data-section');
+      if (section) setActive(section, { updateUrl: true, triggerLoad: true });
     });
   });
-});
+
+  const desired = getDesired();
+  const initialBtn = buttons.find(b => b.getAttribute('data-section') === desired) || buttons[0];
+
+  requestAnimationFrame(() => {
+    moveHighlightTo(initialBtn);
+    setActive(initialBtn.getAttribute('data-section'), {
+      updateUrl: !new URLSearchParams(window.location.search).get('section'),
+      triggerLoad: true
+    });
+
+    const recalc = () => {
+      const active = buttons.find(b => b.classList.contains('bg-white')) || initialBtn;
+      moveHighlightTo(active);
+    };
+    window.addEventListener('resize', recalc);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(recalc);
+    } else {
+      setTimeout(recalc, 60);
+    }
+  });
+}
 
 async function selectSection(sectionId, opts = {}) {
   const { push = true, replace = false } = opts;
@@ -452,6 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeApp() {
   const fa = document.getElementById('filterActions');
   if (fa) hideEl(fa);
+  initSearchTabs();
   initializeIcons();
   await loadDynamicOptions();
   initializeToolbarButtons();
