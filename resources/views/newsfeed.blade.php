@@ -77,7 +77,7 @@
               </div>
 
               <div class="flex flex-wrap gap-2" id="nf-tags">
-                @php($tags = ['all', 'announcement', 'guide', 'new_map', 'role', 'record', 'map_edit', 'legacy_record', 'archive', 'unarchive', 'linked_map'])
+                @php($tags = ['all', 'announcement', 'guide', 'new_map', 'role', 'record', 'map_edit', 'legacy_record', 'archive', 'unarchive', 'linked_map', 'unlinked_map'])
                 @foreach ($tags as $i => $tag)
                   <button
                     class="nf-chip {{ $i === 0 ? 'bg-white/10' : '' }} inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
