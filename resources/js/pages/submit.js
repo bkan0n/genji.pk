@@ -162,7 +162,7 @@ function t(path, params = {}) {
 /* =========================
    TAB SYSTEM
    ========================= */
-function initMainTabs(defaultTab = 'record') {
+function initMainTabs(defaultTab = 'submit_record') {
   const tabsContainer = document.getElementById('mainTabs');
   if (!tabsContainer) return;
 
@@ -170,19 +170,20 @@ function initMainTabs(defaultTab = 'record') {
     tabsContainer.style.position = 'relative';
   }
 
-  const btnToGroup = new Map([
-    ['submitRecordBtn', 'record'],
+  const btnToSection = new Map([
+    ['submitRecordBtn', 'submit_record'],
     ['playtestBtn',     'playtest'],
-    ['submitMapBtn',    'map'],
+    ['submitMapBtn',    'submit_map'],
   ]);
-  const groupToPanelId = {
-    record:  'submitRecordSection',
-    playtest:'playtestSection',
-    map:     'submitMapSection',
+
+  const sectionToPanelId = {
+    submit_record: 'submitRecordSection',
+    playtest:      'playtestSection',
+    submit_map:    'submitMapSection',
   };
 
   const buttons = Array.from(tabsContainer.querySelectorAll('.tab-btn'))
-    .filter(b => btnToGroup.has(b.id));
+    .filter(b => btnToSection.has(b.id));
   if (!buttons.length) return;
 
   let highlight = tabsContainer.querySelector('#mainTabsHighlight');
@@ -224,18 +225,20 @@ function initMainTabs(defaultTab = 'record') {
     });
   };
 
-  const showPanel = (group) => {
-    Object.entries(groupToPanelId).forEach(([g, id]) => {
+  const showPanel = (section) => {
+    Object.entries(sectionToPanelId).forEach(([sec, id]) => {
       const el = document.getElementById(id);
-      if (el) el.classList.toggle('hidden', g !== group);
+      if (el) el.classList.toggle('hidden', sec !== section);
     });
   };
 
-  const setActive = (group, { updateUrl = true } = {}) => {
+  const setActive = (section, { updateUrl = true } = {}) => {
+    if (!sectionToPanelId[section]) section = defaultTab;
+
     let activeBtn = null;
     buttons.forEach((btn) => {
-      const g = btnToGroup.get(btn.id);
-      const isActive = g === group;
+      const sec = btnToSection.get(btn.id);
+      const isActive = sec === section;
       if (isActive) activeBtn = btn;
 
       btn.classList.toggle('bg-white', isActive);
@@ -246,39 +249,54 @@ function initMainTabs(defaultTab = 'record') {
     });
 
     moveHighlightTo(activeBtn);
-    showPanel(group);
+    showPanel(section);
 
     if (updateUrl) {
       const url = new URL(window.location.href);
-      url.hash = `main=${encodeURIComponent(group)}`;
+      url.pathname = '/submit';
+      url.search = `?section=${encodeURIComponent(section)}`;
       history.replaceState(null, '', url.toString());
     }
   };
 
-  const getDesired = () => {
-    const hash = new URL(window.location.href).hash || '';
-    const hm = hash.match(/main=([^&]+)/);
-    if (hm && hm[1]) return decodeURIComponent(hm[1]);
-    const q = new URLSearchParams(window.location.search).get('main');
-    return q || null;
+  const getDesiredSection = () => {
+    const q = new URLSearchParams(window.location.search).get('section');
+    if (q && sectionToPanelId[q]) return q;
+
+    const m = (new URL(window.location.href).hash || '').match(/main=([^&]+)/);
+    if (m && m[1]) {
+      const alias = decodeURIComponent(m[1]);
+      if (alias === 'record')  return 'submit_record';
+      if (alias === 'playtest')return 'playtest';
+      if (alias === 'map')     return 'submit_map';
+    }
+    return null;
   };
 
   buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const group = btnToGroup.get(btn.id);
-      if (group) setActive(group, { updateUrl: true });
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = btnToSection.get(btn.id);
+      if (!section) return;
+
+      setActive(section, { updateUrl: true });
+
+      if (typeof selectSection === 'function') {
+        selectSection(section);
+      }
     });
   });
 
-  const desired = getDesired();
-  const initialGroup = desired || defaultTab;
+  const desired = getDesiredSection();
+  const initial = desired || defaultTab;
+
   requestAnimationFrame(() => {
-    setActive(initialGroup, { updateUrl: !!desired });
+    setActive(initial, { updateUrl: !!desired });
 
     const recalc = () => {
       const current =
         buttons.find(b => b.classList.contains('bg-white')) ||
-        buttons.find(b => btnToGroup.get(b.id) === initialGroup) ||
+        buttons.find(b => btnToSection.get(b.id) === initial) ||
         buttons[0];
       moveHighlightTo(current);
     };
@@ -291,7 +309,7 @@ function initMainTabs(defaultTab = 'record') {
     }
   });
 
-  window.setMainTab = (group) => setActive(group, { updateUrl: true });
+  window.setMainTab = (section) => setActive(section, { updateUrl: true });
 }
 
 function bindTabButtons() {
