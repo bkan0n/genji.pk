@@ -44,6 +44,7 @@ return [
         'bulk_archive'    => 'Bulk archive',
         'bulk_unarchive'  => 'Bulk unarchive',
         'linked_map'      => 'Linked map',
+        'unlinked_map'    => 'Unlinked map',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -223,6 +224,9 @@ return [
         'official_code' => 'Official code',
         'unofficial_code' => 'Unofficial code',
         'linked_map_hint' => 'These two map codes are now linked together.',
+        'unlinked_map_title' => 'Unlinked map codes',
+        "unlinked_map_hint" => 'These two map codes are no longer linked.',
+        "unlinked_map_partial" => 'One of the codes is missing.',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
