@@ -1157,7 +1157,11 @@ async function createNewsCard(item) {
     record:         { ring:'ring-rose-400/30',    glow:'bg-rose-500/15',    badge:'border-rose-400/30 bg-rose-500/10 text-rose-200' },
     legacy_record:  { ring:'ring-yellow-400/30',  glow:'bg-yellow-500/15',  badge:'border-yellow-400/30 bg-yellow-500/10 text-yellow-200' },
     linked_map:     { ring:'ring-teal-400/30',    glow:'bg-teal-500/15',    badge:'border-teal-400/30 bg-teal-500/10 text-teal-200' },
+<<<<<<< HEAD
     unlinked_map:   { ring:'ring-indigo-400/30',  glow:'bg-indigo-500/15',  badge:'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' },
+=======
+    unlinked_map:   { ring:'ring-indigo-400/30', glow:'bg-indigo-500/15', badge:'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' },
+>>>>>>> 1c5ec85f3ebed3ccd303b633808e24ecef405531
     unknown:        { ring:'ring-white/15',       glow:'bg-white/10',       badge:'border-white/15 bg-white/10 text-zinc-100' },
   };
 
