@@ -134,6 +134,16 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // MAP BANNER UNOFFICIAL NOTICE
+    // ──────────────────────────────────────────────────────────────────────
+    'unofficial_notice' => [
+        'title' => 'Unofficial map submission',
+        'li1'   => "This is an unofficial map so it will not go through playtest and you will not gain ranks or XP for completions.",
+        'li2'   => "If a map code is created on non CN servers, we can proceed through playtest by linking the code.",
+        'li3'   => "For completions to count towards ranks and XP, it must be played on non CN servers.",
+        'li4'   => "Please put who 'owns' the CN code in the description so we can ping them if a map changes.",
+    ],
+    // ──────────────────────────────────────────────────────────────────────
     // HELP MODALS (full texts for modals)
     // ──────────────────────────────────────────────────────────────────────
 
@@ -275,7 +285,7 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
-    // ERRORS (used in JS)
+    // ERRORS
     // ──────────────────────────────────────────────────────────────────────
     'errors' => [
         'server_unreachable'      => 'Server unreachable. Please try again.',

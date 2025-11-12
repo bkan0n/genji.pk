@@ -54,6 +54,7 @@ let icons = [];
 let currentSection = 'playtest';
 let toolbarDebounce;
 let secondaryCreators = [];
+let mapOfficial = true;
 const activeFilters = {};
 const filterKeyMap = {
   map_code: 'code',
@@ -1611,6 +1612,163 @@ function resetForms(form) {
 /* =========================
    HELPERS SEND MAP
    ========================= */
+function insertUnofficialBanner() {
+  const host = document.getElementById('submitMapSection');
+  if (!host || document.getElementById('srMapSubmitNotice')) return;
+
+  const html = `
+    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice is-visible"
+        id="srMapSubmitNotice" role="status" aria-live="polite">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z"></path>
+        </svg>
+        <div class="min-w-0">
+          <div class="font-semibold text-amber-300">${t('unofficial_notice.title')}</div>
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li1')}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li2')}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li3')}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li4')}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>`;
+  host.insertAdjacentHTML('afterbegin', html);
+}
+
+function toggleUnofficialBanner() {
+  const el = document.getElementById('srMapSubmitNotice');
+  if (!el) return;
+  el.classList.toggle('hidden', !!mapOfficial);
+}
+
+function updateOfficialUI() {
+  document.querySelectorAll('#officialSwitch .ofc-btn').forEach((btn) => {
+    const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
+    btn.classList.toggle('bg-white', isOn);
+    btn.classList.toggle('text-zinc-900', isOn);
+    btn.classList.toggle('text-white', !isOn);
+    btn.classList.toggle('hover:bg-white/10', !isOn);
+  });
+  const wrap = document.getElementById('officialSwitch');
+  if (wrap) wrap.dataset.selected = mapOfficial ? '1' : '0';
+  const editBtn = document.getElementById('editCreatorBtn');
+  if (editBtn) editBtn.classList.toggle('hidden', !!mapOfficial);
+}
+
+function setupOfficialSwitch() {
+  const wrap = document.getElementById('officialSwitch');
+  if (!wrap || wrap.dataset.bound === '1') return;
+  wrap.dataset.bound = '1';
+
+  if (getComputedStyle(wrap).position === 'static') {
+    wrap.style.position = 'relative';
+  }
+
+  let highlight = wrap.querySelector('[data-ofc-highlight]');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.setAttribute('data-ofc-highlight', '1');
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      background: 'white',
+      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      transform: 'translateX(0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0'
+    });
+    wrap.appendChild(highlight);
+  }
+
+  wrap.querySelectorAll('.ofc-btn').forEach(btn => {
+    btn.style.position = 'relative';
+    btn.style.zIndex = '1';
+  });
+
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = wrap.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
+  window.mapOfficial = typeof window.mapOfficial === 'boolean' ? window.mapOfficial : true;
+
+  function updateOfficialUI() {
+    wrap.querySelectorAll('.ofc-btn').forEach((btn) => {
+      const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
+      btn.classList.toggle('bg-white', isOn);
+      btn.classList.toggle('text-zinc-900', isOn);
+      btn.classList.toggle('text-white', !isOn);
+      btn.classList.toggle('hover:bg-white/10', !isOn);
+      if (isOn) moveHighlightTo(btn);
+    });
+
+    wrap.dataset.selected = mapOfficial ? '1' : '0';
+
+    const editBtn = document.getElementById('editCreatorBtn');
+    if (editBtn) editBtn.classList.toggle('hidden', !!mapOfficial);
+
+    if (typeof toggleUnofficialBanner === 'function') {
+      toggleUnofficialBanner();
+    }
+  }
+
+  wrap.addEventListener('click', (e) => {
+    const b = e.target.closest('.ofc-btn');
+    if (!b) return;
+    const next = b.getAttribute('data-official') === '1';
+    if (next === mapOfficial) return;
+
+    mapOfficial = next;
+    updateOfficialUI();
+
+    if (typeof primeMainCreatorFromSession === 'function') {
+      primeMainCreatorFromSession();
+    }
+  });
+
+  requestAnimationFrame(() => {
+    updateOfficialUI();
+    setTimeout(() => {
+      const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
+      moveHighlightTo(active);
+    }, 60);
+  });
+
+  const onResize = () => {
+    const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
+    moveHighlightTo(active);
+  };
+  window.addEventListener('resize', onResize);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(onResize);
+}
+
 function initSubmitHelpPopovers(scopeEl = document) {
   const H = (p, fb='') => (typeof t === 'function' ? (t(p) ?? fb) : fb);
 
@@ -2453,10 +2611,22 @@ function editInline(field) {
 
   const editBtnEl = document.querySelector(`[data-edit-target="${CSS.escape(field)}"]`);
 
-  const hostRow = editBtnEl
+  let hostRow = editBtnEl
     ? findCommonAncestor(label, editBtnEl) || label.parentElement
     : label.parentElement;
-  const hostParent = hostRow?.parentElement || label.parentElement;
+  let hostParent = hostRow?.parentElement || label.parentElement;
+
+  if (field === 'metaCreatorMain') {
+    const mainRow = document.querySelector('#metaCreatorsCol .main-creator-row');
+    if (mainRow) {
+      hostRow = mainRow;
+      hostParent = mainRow;
+      if (!mainRow.dataset._origClass) {
+        mainRow.dataset._origClass = mainRow.className;
+      }
+      mainRow.classList.add('flex', 'flex-col', 'items-start', 'gap-2');
+    }
+  }
 
   let input, suggestionsDropdown;
 
@@ -2493,8 +2663,8 @@ function editInline(field) {
       'focus:outline-none focus:ring-2 focus:ring-emerald-500/60',
     ].join(' ');
 
-    if (field === 'metaCreator' || field === 'metaMap') {
-      input.id = field === 'metaCreator' ? 'creatorInputInline' : 'mapInputInline';
+    if (field === 'metaCreator' || field === 'metaCreatorMain' || field === 'metaMap') {
+      input.id = (field === 'metaCreator' || field === 'metaCreatorMain') ? 'creatorInputInline' : 'mapInputInline';
       suggestionsDropdown = document.createElement('div');
       suggestionsDropdown.className = [
         'suggestions-dropdown',
@@ -2557,7 +2727,9 @@ function editInline(field) {
 
   label.style.display = 'none';
   if (editBtnEl) editBtnEl.style.display = 'none';
-  if (hostRow && hostRow.parentNode) {
+  if (field === 'metaCreatorMain' && hostRow) {
+    hostRow.appendChild(container);
+  } else if (hostRow && hostRow.parentNode) {
     hostRow.insertAdjacentElement('afterend', container);
   } else {
     label.parentNode.insertBefore(container, label.nextSibling);
@@ -2580,6 +2752,14 @@ function editInline(field) {
         return;
       }
     }
+    if (field === 'metaCreator' || field === 'metaCreatorMain') {
+      const rawId = input.getAttribute('data-raw-value');
+      if (rawId) {
+        label.setAttribute('data-raw-id', String(rawId));
+      } else {
+        label.removeAttribute('data-raw-id');
+      }
+    }
     if (field === 'optGuide' && newValue === '') newValue = 'N/A';
     if (field === 'optDescription' && newValue === '') newValue = t('map.no_description');
     if (field === 'metaCheckpoints') {
@@ -2597,6 +2777,19 @@ function editInline(field) {
     label.style.display = '';
     if (editBtnEl) editBtnEl.style.display = '';
     label.classList.remove('editing');
+
+    if (field === 'metaCreatorMain') {
+      const mainRow = document.querySelector('#metaCreatorsCol .main-creator-row');
+      if (mainRow) {
+        if (mainRow.dataset._origClass) {
+          mainRow.className = mainRow.dataset._origClass;
+          delete mainRow.dataset._origClass;
+        } else {
+          mainRow.classList.remove('flex', 'flex-col', 'items-start', 'gap-2');
+        }
+      }
+    }
+
     container.remove();
   }
 
@@ -2611,7 +2804,7 @@ function editInline(field) {
     if (e.key === 'Escape') closeEdit();
   });
 
-  if (field === 'metaCreator') {
+  if (field === 'metaCreator' || field === 'metaCreatorMain') {
     setupAutocompleteInline(input, suggestionsDropdown, { type: 'creator' });
   } else if (field === 'metaMap') {
     setupAutocompleteInline(input, suggestionsDropdown, { type: 'map' });
@@ -2677,7 +2870,7 @@ async function sendMapToApi() {
     map_name: name,
     archived: false,
     hidden: false,
-    official: false,
+    official: !!mapOfficial,
     playtesting: 'In Progress',
     guide_url: guide_url ?? null,
   };
@@ -2750,12 +2943,33 @@ function renderSubmitMapSection() {
       <!-- META -->
       <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in" data-card="meta">
         ${helpBtn('meta')}
+
+        <!-- Toggle Official / Unofficial -->
+        <div class="mb-3">
+          <div id="officialSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+            <button type="button" data-official="1"
+              class="ofc-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
+              Official
+            </button>
+            <button type="button" data-official="0"
+              class="ofc-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10">
+              Unofficial
+            </button>
+          </div>
+        </div>
+
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="sm:col-span-2">
             <span class="block text-xs text-zinc-400 mb-1">${t('map.meta.creator')}</span>
             <div id="metaCreatorsCol" class="flex flex-wrap items-center gap-2">
               <span class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5">
                 <span id="metaCreatorMain" class="text-sm text-zinc-200">N/A</span>
+                <!-- Edit btn -->
+                <button type="button" id="editCreatorBtn"
+                  class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10 hidden"
+                  data-edit-target="metaCreatorMain">
+                  ${t('map.meta.edit')}
+                </button>
               </span>
             </div>
           </div>
@@ -3158,14 +3372,6 @@ window.animateSubmitRecordSection = function () {
   bindWatcher();
   setTimeout(evaluateNoticeForInput, 120);
 };
-
-document.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(location.search);
-  if ((params.get('section') || 'playtest') === 'submit_record') {
-    ensureNoticeHost();
-    bindWatcher();
-  }
-});
 
 function disableBrowserAutocompleteInSubmitRecord() {
   const form = document.getElementById('submitRecordForm') || document.querySelector('#submitRecordSection form');
@@ -7193,6 +7399,9 @@ document.addEventListener(
    ========================= */
 async function initializeSubmitMap() {
   renderSubmitMapSection();
+  setupOfficialSwitch();
+  insertUnofficialBanner();
+  toggleUnofficialBanner();
   await primeMainCreatorFromSession();
   setupBannerDropzone();
   setupAllCustomDropdowns();
@@ -7204,6 +7413,8 @@ async function initializeSubmitMap() {
 
 function initializeSubmitRecord() {
   attachRecordAutocompletes();
+  ensureNoticeHost();
+  bindWatcher();
   dragAndDrop();
   qualitySlider();
 }
