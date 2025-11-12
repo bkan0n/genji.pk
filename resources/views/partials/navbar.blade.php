@@ -353,19 +353,19 @@
           </summary>
           <div class="mt-1 ml-2 grid">
             <a
-              href="{{ url('/maps') }}"
+              href="{{ url('/search') }}?section=map_search"
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.maps') }}
             </a>
             <a
-              href="{{ url('/guides') }}"
+              href="{{ url('/search') }}?section=guide"
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.guides') }}
             </a>
             <a
-              href="{{ url('/completions') }}"
+              href="{{ url('/search') }}?section=completions"
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.completions') }}
@@ -388,13 +388,6 @@
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.newsfeed') }}
-            </a>
-            <a
-              href="{{ url('/newsfeed') }}?type=announcements"
-              data-follow-href
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-            >
-              {{ __('navbar.announcements') }}
             </a>
             <a
               href="{{ url('/tutorials') }}"
