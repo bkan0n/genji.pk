@@ -67,6 +67,7 @@ let __mechRestrCache = null;
 let __mechRestrInFlight = null;
 const COMPLETION_SUBMIT_ENDPOINT = '/api/completions';
 const IMAGE_UPLOAD_ENDPOINT = '/api/utilities/image';
+const OCR_ENDPOINT = '/api/ocr/extract';
 const TIME_REGEX = /^\d{1,5}(?:\.\d{1,2})?$/;
 window.customBannerFile = null;
 
@@ -1168,6 +1169,14 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
     if (el) el.classList.add('hidden');
   };
 
+  function shouldSkipAutocompleteOnce() {
+    if (input.dataset.skipNextAutocomplete === '1') {
+      input.dataset.skipNextAutocomplete = '0';
+      return true;
+    }
+    return false;
+  }
+
   function render(list) {
     const box = suggestions();
     box.innerHTML = '';
@@ -1218,6 +1227,11 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   }
 
   input.addEventListener('input', () => {
+    if (shouldSkipAutocompleteOnce()) {
+      hide();
+      return;
+    }
+
     const q = input.value.trim();
     clearTimeout(debounce);
     if (q.length < minChars) return hide();
@@ -1225,6 +1239,11 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   });
 
   input.addEventListener('focus', () => {
+    if (shouldSkipAutocompleteOnce()) {
+      hide();
+      return;
+    }
+
     const q = input.value.trim();
     if (q.length >= minChars) fetchAndRender(q);
   });
@@ -3761,6 +3780,76 @@ function dragAndDrop() {
       r.readAsDataURL(file);
     });
 
+  //OCR
+  async function runOcrFromFile(file) {
+    try {
+      const dataUrl = await readAsDataURL(file);
+      let b64 = '';
+
+      if (typeof dataUrl === 'string') {
+        const parts = dataUrl.split(',');
+        b64 = parts[1] || '';
+      }
+
+      if (!b64) {
+        console.warn('OCR: empty base64 payload');
+        return;
+      }
+
+      const resp = await fetch(OCR_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ image_b64: b64 }),
+      });
+
+      if (!resp.ok) {
+        let errJson = null;
+        try { errJson = await resp.json(); } catch {}
+        console.warn('OCR HTTP error', resp.status, errJson);
+        return;
+      }
+
+      const json = await resp.json().catch(() => null);
+      const extracted = json?.extracted || {};
+      if (!extracted) return;
+
+      const { time, code } = extracted;
+
+      const mapCodeInput = document.getElementById('mapCodeInput');
+      const inputTime = document.getElementById('inputTime');
+
+      if (
+        mapCodeInput &&
+        !mapCodeInput.value.trim() &&
+        typeof code === 'string' &&
+        code.trim()
+      ) {
+        mapCodeInput.dataset.skipNextAutocomplete = '1';
+        mapCodeInput.value = String(code).toUpperCase();
+        mapCodeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        mapCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      if (
+        inputTime &&
+        !inputTime.value.trim() &&
+        typeof time === 'number' &&
+        Number.isFinite(time)
+      ) {
+        inputTime.value = String(time).replace(',', '.');
+        inputTime.dispatchEvent(new Event('input', { bubbles: true }));
+        inputTime.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } catch (err) {
+      console.error('OCR failed', err);
+    }
+  }
+  // ---------------------------------------------------------------------------
+
   function resetScreenshotDropzone() {
     dz.innerHTML = `
       <input type="file" id="screenshotInput" name="screenshot" accept="image/*" class="hidden">
@@ -3821,6 +3910,8 @@ function dragAndDrop() {
     window.screenshotFile = file;
     setPreview(file);
     try { autoUploadScreenshot(file); } catch {}
+    // NOUVEAU : lancer l’OCR en arrière-plan
+    try { runOcrFromFile(file); } catch {}
   }
 
   dz.addEventListener('click', (e) => {

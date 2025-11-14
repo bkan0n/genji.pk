@@ -43,6 +43,13 @@ return [
         'avatar_default_extension' => env('DISCORD_EXTENSION_DEFAULT', 'png'),
     ],
 
+    'ocr' => [
+        'base_url' => in_array(env('APP_ENV'), ['local', 'testing'], true)
+            ? 'http://localhost:8000'
+            : 'http://genjishimada-ocr:8000',
+        'timeout'  => env('OCR_TIMEOUT', 10),
+    ],
+
     'tenor' => [
         'key' => env('TENOR_API_KEY', ''),
     ],

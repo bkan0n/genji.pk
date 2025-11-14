@@ -2869,6 +2869,7 @@ function openImageLightbox(src) {
 
 // ——— Permissions
 const CALIB_ALLOWED_USER_ID = "681391478605479948";
+const AUTO_VERIFY_ALLOWED_USER_ID = "681391478605479948";
 
 // ——— Auto Verify
 const AUTO_VERIFY_USER_ID = "1120786151452717106";
@@ -2929,12 +2930,25 @@ function renderSubmissionCard(item) {
 
   const meId = (typeof window.user_id !== "undefined" && window.user_id) ? String(window.user_id) : "";
   const canCalibrate = meId === CALIB_ALLOWED_USER_ID;
+  const canAutoVerify  = meId === AUTO_VERIFY_ALLOWED_USER_ID;
+
   const calibrateBtnHtml = canCalibrate
     ? `
       <button class="btn-calibrate-ocr cursor-pointer rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 font-medium hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
         Calibrate OCR
       </button>`
     : ``;
+
+  const autoVerifyBtnHtml = canAutoVerify
+  ? `
+    <button class="btn-auto-verify cursor-pointer rounded-lg bg-emerald-700 text-white px-3 py-1.5 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/40">
+      Auto verify
+    </button>`
+  : `
+    <button class="btn-auto-verify rounded-lg bg-zinc-800 text-zinc-400 px-3 py-1.5 font-semibold opacity-60 cursor-not-allowed" disabled
+            title="Auto verify is restricted to specific moderators.">
+      Auto verify
+    </button>`;
 
   wrap.innerHTML = `
     <div class="flex flex-col md:flex-row items-stretch gap-5">
@@ -2977,10 +2991,7 @@ function renderSubmissionCard(item) {
         Verify
       </button>
 
-      <button class="btn-auto-verify cursor-pointer rounded-lg bg-emerald-700 text-white px-3 py-1.5 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/40">
-        Auto verify
-      </button>
-
+      ${autoVerifyBtnHtml}
       ${calibrateBtnHtml}
 
       <button class="btn-deny cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">
@@ -3094,7 +3105,7 @@ document.addEventListener('click', async (e) => {
     e.preventDefault();
     const meId = (typeof window.user_id !== "undefined" && window.user_id) ? String(window.user_id) : "";
     if (meId !== CALIB_ALLOWED_USER_ID) {
-      toast("You are not allowed to calibrate OCR.", "warn");
+      toast("Calibrate OCR is restricted to devs.", "warn");
       return;
     }
     const card = e.target.closest('[data-record-id]');
@@ -3135,6 +3146,11 @@ document.addEventListener('click', async (e) => {
   // Auto verify
   if (btnAuto) {
     e.preventDefault();
+    const meId = (typeof window.user_id !== "undefined" && window.user_id) ? String(window.user_id) : "";
+    if (meId !== AUTO_VERIFY_ALLOWED_USER_ID) {
+      toast("Auto verify is restricted to devs.", "warn");
+      return;
+    }
     return void autoVerifyCard(card);
   }
 

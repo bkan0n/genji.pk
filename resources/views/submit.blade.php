@@ -173,7 +173,7 @@
 
               <!-- Zone responsive + anti-overflow -->
               <div id="screenshotDrop"
-                   class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60">
+                  class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60">
                 <input
                   id="screenshotInput"
                   name="screenshot"
@@ -182,7 +182,7 @@
                   class="hidden"
                 />
                 <div id="screenshotPlaceholder"
-                     class="px-2 text-center text-sm text-zinc-300 whitespace-normal break-words">
+                    class="px-2 text-center text-sm text-zinc-300 whitespace-normal break-words">
                   {{ __('submit.record.drag_and_drop') }}
                 </div>
               </div>
@@ -206,6 +206,33 @@
             </div>
           </div>
         </form>
+
+        <div
+          class="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice"
+          id="srOcrNotice"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-start gap-3">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
+            </svg>
+            <div class="min-w-0">
+              <div class="font-semibold text-amber-300">{{ __('submit.ocr.title') }}</div>
+              <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+                <li class="flex items-center gap-2">
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+                  <span>{{ __('submit.ocr.li1') }}</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+                  <span>{{ __('submit.ocr.li2') }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- CONTENU ONGLET : Playtest -->
