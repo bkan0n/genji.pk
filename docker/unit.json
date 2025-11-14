@@ -1,5 +1,14 @@
 {
-  "listeners": { "*:8080": { "pass": "routes" } },
+"listeners": {
+    "*:8080": {
+        "pass": "routes",
+        "forwarded": {
+        "client_ip": "X-Forwarded-For",
+        "protocol": "X-Forwarded-Proto",
+        "source": ["0.0.0.0/0", "::/0"]
+        }
+    }
+    },
   "routes": [
     {
       "match": {
