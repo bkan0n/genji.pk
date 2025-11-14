@@ -51,7 +51,7 @@ return [
                 'local', 'testing'      => 'http://localhost:8000',
                 'development'           => 'http://genjishimada-ocr-dev:8000',
                 'production'            => 'http://genjishimada-ocr:8000',
-                default                 => 'http://genjishimada-ocr:8000',
+                default                 => 'http://genjishimada-ocr-dev:8000',
             };
         })(),
         'timeout'  => env('OCR_TIMEOUT', 10),
