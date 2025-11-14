@@ -45,13 +45,12 @@ return [
 
     'ocr' => [
         'base_url' => (function () {
-            $env = env('APP_ENV');
-
+            $env = config('app.env');
             return match ($env) {
                 'local', 'testing'      => 'http://localhost:8000',
                 'development'           => 'http://genjishimada-ocr-dev:8000',
                 'production'            => 'http://genjishimada-ocr:8000',
-                default                 => 'http://genjishimada-ocr-dev:8000',
+                default                 => 'http://genjishimada-ocr:8000',
             };
         })(),
         'timeout'  => env('OCR_TIMEOUT', 10),
