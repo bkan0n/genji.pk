@@ -3755,7 +3755,6 @@ async function sendCompletionToApi() {
       time,
       user_id: String(user_id),
       video,
-      completion: !hasVideo,
     };
 
     const resp = await fetch(COMPLETION_SUBMIT_ENDPOINT, {
