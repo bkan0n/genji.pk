@@ -4315,11 +4315,11 @@ function normalizePlaytest(item) {
 function buildPlaytestParams(extra = {}, page = currentPage) {
   const params = new URLSearchParams({
     archived: 'false',
-    official: 'false',
     hidden: 'false',
     page_number: String(page),
     page_size: String(itemsPerPage),
     playtest_status: 'In Progress',
+    playtest_filter: 'Only',
   });
 
   if (
