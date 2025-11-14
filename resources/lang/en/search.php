@@ -48,6 +48,14 @@ return [
     'completion' => 'Completion',
 
     // ──────────────────────────────────────────────────────────────────────
+    // UNOFFICIAL NOTICE
+    // ──────────────────────────────────────────────────────────────────────
+    'unofficial_notice' => [
+        'title' => 'Unofficial code search',
+        'li1'   => 'Unofficial codes are playable only on CN servers.',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // FILTERS TOOLBAR (UI toolbar options)
     // ──────────────────────────────────────────────────────────────────────
     'filters_toolbar' => [

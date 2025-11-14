@@ -28,6 +28,7 @@ let lastCompletionsRows = [];
 const PERSONAL_RECORDS_VIEW_LS_KEY = 'personal_records_view';
 let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
 let lastPersonalRows = [];
+const OFFICIAL_NOTICE_ID = 'officialCodeNotice';
 
 const VIEW_LS_KEYS = {
   map_search: MAP_VIEW_LS_KEY,
@@ -375,12 +376,17 @@ function initSearchTabs(defaultSection = 'map_search') {
   const highlight = document.getElementById('searchTabsHighlight');
   if (!tabsContainer || !highlight) return;
 
+  if (highlight.parentElement !== tabsContainer) {
+    tabsContainer.appendChild(highlight);
+  }
+
   const buttons = Array.from(tabsContainer.querySelectorAll('.search-tab'));
   if (!buttons.length) return;
 
   if (getComputedStyle(tabsContainer).position === 'static') {
     tabsContainer.style.position = 'relative';
   }
+
   Object.assign(highlight.style, {
     position: 'absolute',
     top: '2px',
@@ -433,7 +439,11 @@ function initSearchTabs(defaultSection = 'map_search') {
     if (updateUrl) {
       const url = new URL(window.location.href);
       url.searchParams.set('section', activeSection);
-      history.replaceState({ section: activeSection }, '', url.pathname + '?' + url.searchParams.toString() + url.hash);
+      history.replaceState(
+        { section: activeSection },
+        '',
+        url.pathname + '?' + url.searchParams.toString() + url.hash
+      );
     }
 
     if (triggerLoad && typeof window.selectSection === 'function') {
@@ -1282,6 +1292,58 @@ function getSectionView(section) {
   return v === 'table' ? 'table' : 'cards';
 }
 
+function ensureOfficialNoticeElement() {
+  let el = document.getElementById(OFFICIAL_NOTICE_ID);
+  if (el) return el;
+
+  const tabs = document.getElementById('searchTabs');
+  if (!tabs || !tabs.parentElement) return null;
+
+  el = document.createElement('div');
+  el.id = OFFICIAL_NOTICE_ID;
+  el.className = [
+    'mt-3 sm:mt-0 sm:ml-4',
+    'inline-flex items-stretch gap-3',
+    'rounded-xl border border-amber-400/30 bg-amber-500/10',
+    'px-3 py-2 sm:px-3.5 sm:py-2.5',
+    'ring-1 ring-amber-400/20',
+    'text-sm'
+  ].join(' ');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.style.display = 'none';
+
+  el.innerHTML = `
+    <div class="flex items-start gap-2">
+      <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z"></path>
+      </svg>
+      <div class="min-w-0">
+        <div class="font-semibold text-amber-300 text-xs sm:text-sm">
+          ${t('unofficial_notice.title')}
+        </div>
+        <div class="mt-0.5 text-[11px] sm:text-xs leading-5 text-amber-100">
+          ${t('unofficial_notice.li1')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  tabs.insertAdjacentElement('afterend', el);
+  return el;
+}
+
+function updateOfficialNotice() {
+  const el = ensureOfficialNoticeElement();
+  if (!el) return;
+
+  const isUnofficial =
+    currentSection === 'map_search' &&
+    String((activeFilters && activeFilters.official) || '').toLowerCase() === 'false';
+
+  el.style.display = isUnofficial ? '' : 'none';
+}
+
 /* =========================
    TOOLBAR INIT
    ========================= */
@@ -1749,12 +1811,16 @@ function clearFilters(silent = false) {
   if (hasActiveFilters && !silent) {
     showWarningMessage(t('popup.filters_cleared'));
   }
+
+  updateOfficialNotice();
 }
 
 async function applyFilters(filters) {
   cachedPages = {};
   currentPage = 1;
   activeFilters = { ...persistentFilters, ...filters };
+
+  updateOfficialNotice();
 
   if (currentSection === 'guide') {
     const hasFilters = filters && Object.keys(filters).length > 0;

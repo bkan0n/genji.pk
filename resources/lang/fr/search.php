@@ -48,6 +48,14 @@ return [
     'completion'           => 'Completion',
 
     // ──────────────────────────────────────────────────────────────────────
+    // UNOFFICIAL NOTICE
+    // ──────────────────────────────────────────────────────────────────────
+    'unofficial_notice' => [
+        'title' => 'Recherche de code non officiel',
+        'li1'   => 'Les codes non officiels ne sont jouables que sur les serveurs CN.',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // FILTERS TOOLBAR (UI toolbar options)
     // ──────────────────────────────────────────────────────────────────────
     'filters_toolbar' => [
