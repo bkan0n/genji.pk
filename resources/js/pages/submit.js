@@ -7056,6 +7056,8 @@ async function applyFilters(page = 1) {
     }
   });
 
+  const hasActiveFilters = Object.keys(extraFilters).length > 0;
+
   const qs = buildPlaytestParams(extraFilters, currentPage);
   const container = document.getElementById('playtestCardContainer');
   if (container) {
@@ -7076,7 +7078,7 @@ async function applyFilters(page = 1) {
       raw?.total_results ?? raw?.total ?? raw?.meta?.total ?? raw?.count ?? 0
     );
 
-    if (arr.length === 0) {
+    if (arr.length === 0 && hasActiveFilters) {
       showWarningMessage(t('popup.no_results'));
       clearFilters();
       applyFilters();
