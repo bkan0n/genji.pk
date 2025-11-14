@@ -83,6 +83,7 @@ return [
         'participation_filter' => 'Фильтр участия',
         'participated_yes' => 'Участвовал',
         'participated_no' => 'Не участвовал',
+        'official' => 'Официальная',
         'apply_filters' => 'Применить фильтры',
         'clear_filters' => 'Сбросить фильтры',
     ],
@@ -309,6 +310,8 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'thead' => [
         'mapCode' => 'Код',
+        'unofficialCode' => 'Неофициальный код',
+        'officialCode'   => 'Официальный код',
         'mapName' => 'Название',
         'mapType' => 'Тип',
         'mapCreator' => 'Создатель',

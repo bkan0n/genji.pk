@@ -83,6 +83,7 @@ return [
         'participation_filter' => 'Filtre de participation',
         'participated_yes'     => 'A participé',
         'participated_no'      => 'N’a pas participé',
+        'official'             => 'Officiel',
         'apply_filters'        => 'Appliquer les filtres',
         'clear_filters'        => 'Réinitialiser les filtres',
     ],
@@ -309,6 +310,8 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'thead' => [
         'mapCode'              => 'Code',
+        'unofficialCode'       => 'Code non-officiel',
+        'officialCode'         => 'Code officiel',
         'mapName'              => 'Nom',
         'mapType'              => 'Type',
         'mapCreator'           => 'Créateur',
