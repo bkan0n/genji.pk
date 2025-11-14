@@ -12,28 +12,22 @@ class OcrController extends Controller
     public function extract(Request $request)
     {
         $data = $request->validate([
-            'image_b64' => ['required', 'string'],
+            'image_url' => ['required', 'string', 'url'],
         ]);
 
-        $b64 = $data['image_b64'] ?? '';
+        $url = trim($data['image_url'] ?? '');
 
-        if (str_starts_with($b64, 'data:')) {
-            $b64 = explode(',', $b64, 2)[1] ?? '';
-        }
-
-        $b64 = trim($b64);
-
-        if ($b64 === '') {
+        if ($url === '') {
             return response()->json([
-                'error'   => 'invalid_base64',
-                'message' => 'Empty base64 payload after normalization.',
+                'error'   => 'invalid_image_url',
+                'message' => 'Empty image_url after normalization.',
             ], 400);
         }
 
-        if (! preg_match('~^[A-Za-z0-9+/=]+$~', $b64)) {
+        if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
             return response()->json([
-                'error'   => 'invalid_base64',
-                'message' => 'Base64 payload contains invalid characters.',
+                'error'   => 'invalid_image_url',
+                'message' => 'image_url must start with http:// or https://.',
             ], 400);
         }
 
@@ -47,7 +41,7 @@ class OcrController extends Controller
         $resp = Http::acceptJson()
             ->timeout((int) config('services.ocr.timeout', 10))
             ->post($endpoint, [
-                'image_b64' => $b64,
+                'image_url' => $url,
             ]);
 
         if (! $resp->successful()) {

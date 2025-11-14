@@ -3805,16 +3805,20 @@ function dragAndDrop() {
   //OCR
   async function runOcrFromFile(file) {
     try {
-      const dataUrl = await readAsDataURL(file);
-      let b64 = '';
+      let imageUrl = window.screenshotUrl;
 
-      if (typeof dataUrl === 'string') {
-        const parts = dataUrl.split(',');
-        b64 = parts[1] || '';
+      if (!imageUrl) {
+        if (typeof uploadScreenshot === 'function') {
+          imageUrl = await uploadScreenshot(file);
+          window.screenshotUrl = imageUrl;
+        } else {
+          console.warn('OCR: uploadScreenshot is not available and no screenshotUrl is set');
+          return;
+        }
       }
 
-      if (!b64) {
-        console.warn('OCR: empty base64 payload');
+      if (!imageUrl) {
+        console.warn('OCR: missing image URL');
         return;
       }
 
@@ -3825,7 +3829,7 @@ function dragAndDrop() {
           Accept: 'application/json',
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ image_b64: b64 }),
+        body: JSON.stringify({ image_url: imageUrl }),
       });
 
       if (!resp.ok) {
