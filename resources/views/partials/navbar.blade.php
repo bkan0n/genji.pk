@@ -199,10 +199,14 @@
             class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition dark:bg-zinc-900/95"
           >
             @foreach ($languages as $code => $data)
+              @if (empty($data['translated']))
+                @continue
+              @endif
+
               <li>
                 <a
                   href="{{ route('lang.switch', $code) }}"
-                  class="{{ ! empty($data['translated']) ? '' : 'unavailable' }} flex items-center gap-2 px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
                   data-message="{{ $data['modalMessage'] ?? 'This language is not fully translated yet.' }}"
                   data-close-text="{{ $data['closeButtonText'] ?? 'Close' }}"
                 >
