@@ -87,6 +87,8 @@ return [
             'add_creator'       => 'Add creator',
             'search_creator'    => 'Search a creator…',
             'search_map_name'   => 'Search a map name…',
+            'official'          => 'Official',
+            'unofficial'        => 'Unofficial',
         ],
 
         'required_title'          => 'Required',
@@ -269,6 +271,7 @@ return [
         'difficulty'        => 'Difficulty',
         'checkpoints'       => 'Checkpoints',
         'quality'           => 'Quality',
+        'medals'            => 'Medals',
         'medal_gold'        => 'Gold',
         'medal_silver'      => 'Silver',
         'medal_bronze'      => 'Bronze',

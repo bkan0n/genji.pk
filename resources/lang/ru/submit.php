@@ -87,6 +87,8 @@ return [
             'add_creator'       => 'Добавить создателя',
             'search_creator'    => 'Поиск создателя…',
             'search_map_name'   => 'Поиск названия карты…',
+            'official'          => 'Официальная',
+            'unofficial'        => 'Неофициальная',
         ],
 
         'required_title'          => 'Обязательно',
@@ -269,6 +271,7 @@ return [
         'difficulty'        => 'Сложность',
         'checkpoints'       => 'Чекпоинты',
         'quality'           => 'Качество',
+        'medals'    => 'Медали',
         'medal_gold'        => 'Золото',
         'medal_silver'      => 'Серебро',
         'medal_bronze'      => 'Бронза',

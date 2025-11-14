@@ -3141,11 +3141,11 @@ function renderSubmitMapSection() {
           <div id="officialSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
             <button type="button" data-official="1"
               class="ofc-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
-              Official
+              ${t('map.meta.official') || 'Official'}
             </button>
             <button type="button" data-official="0"
               class="ofc-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10">
-              Unofficial
+              ${t('map.meta.unofficial') || 'Unofficial'}
             </button>
           </div>
         </div>
@@ -3302,26 +3302,26 @@ function renderSubmitMapSection() {
           <!-- MEDALS -->
           <div class="relative sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2" data-card="medals">
             ${helpBtn('medals','top')}
-            <div class="text-[11px] text-zinc-400 mb-2">Medals</div>
+            <div class="text-[11px] text-zinc-400 mb-2">${t('table.medals') || 'Medals'}</div>
             <div class="grid gap-3 sm:grid-cols-3">
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/gold.png" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
-                  <span class="text-sm text-zinc-200">Gold</span>
+                  <span class="text-sm text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
                 </span>
                 <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/silver.png" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
-                  <span class="text-sm text-zinc-200">Silver</span>
+                  <span class="text-sm text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
                 </span>
                 <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/bronze.png" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
-                  <span class="text-sm text-zinc-200">Bronze</span>
+                  <span class="text-sm text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
                 </span>
                 <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
