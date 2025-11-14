@@ -14,7 +14,7 @@ return [
         'title' => 'Genji Parkour - Таблица лидеров',
         'og' => [
             'title' => 'Таблица лидеров — Genji Parkour',
-            'description' => 'Просмотр рейтингов: XP, тиры, ранги навыков и многое другое.',
+            'description' => 'Просмотр рейтингов: опыт, тиры, ранги навыков и многое другое.',
         ],
     ],
 
@@ -23,7 +23,7 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'header' => [
         'title' => 'Таблица лидеров',
-        'subtitle' => 'xp · тиры · ранги навыков',
+        'subtitle' => 'опыт · тиры · ранги навыков',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -35,22 +35,22 @@ return [
 
         'sort_label' => 'Сортировать по',
         'sort_options' => [
-            'xp' => 'XP',
-            'wr' => 'Мировые рекорды',
+            'xp'   => 'Опыт',
+            'wr'   => 'Мировые рекорды',
             'maps' => 'Созданные карты',
-            'votes' => 'Голосование за плейтест',
+            'votes'=> 'Голоса в плейтесте',
         ],
 
         'rank_label' => 'Поиск по рангу',
         'rank_options' => [
-            'all' => 'All ranks',
-            'ninja' => 'Ninja',
-            'jumper' => 'Jumper',
-            'skilled' => 'Skilled',
-            'pro' => 'Pro',
-            'master' => 'Master',
-            'grandmaster' => 'Grandmaster',
-            'god' => 'God',
+            'all'        => 'Все ранги',
+            'ninja'      => 'Ninja',
+            'jumper'     => 'Jumper',
+            'skilled'    => 'Skilled',
+            'pro'        => 'Pro',
+            'master'     => 'Master',
+            'grandmaster'=> 'Grandmaster',
+            'god'        => 'God',
         ],
 
         'reset' => 'Сбросить фильтры',
@@ -60,14 +60,14 @@ return [
     // TABLE
     // ──────────────────────────────────────────────────────────────────────
     'table' => [
-        'number' => '#',
-        'nickname' => 'Никнейм',
-        'xp' => 'XP',
-        'tier' => 'Тир',
-        'skill_rank' => 'Ранг навыков',
-        'world_records' => 'Мировые рекорды',
-        'maps_made' => 'Созданные карты',
-        'playtest_votes' => 'Голосование за плейтест',
-        'discord_tag' => 'Тэг',
+        'number'         => '#',
+        'nickname'       => 'Никнейм',
+        'xp'             => 'Опыт',
+        'tier'           => 'Тир',
+        'skill_rank'     => 'Ранг навыков',
+        'world_records'  => 'Мировые рекорды',
+        'maps_made'      => 'Созданные карты',
+        'playtest_votes' => 'Голоса в плейтесте',
+        'discord_tag'    => 'Discord-тег',
     ],
 ];

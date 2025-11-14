@@ -60,14 +60,14 @@ return [
     // TABLE
     // ──────────────────────────────────────────────────────────────────────
     'table' => [
-        'number' => '#',
-        'nickname' => 'Nickname',
-        'xp' => 'XP',
-        'tier' => 'Tier',
-        'skill_rank' => 'Skill rank',
-        'world_records' => 'World records',
-        'maps_made' => 'Maps made',
+        'number'         => '#',
+        'nickname'       => 'Nickname',
+        'xp'             => 'XP',
+        'tier'           => 'Tier',
+        'skill_rank'     => 'Skill rank',
+        'world_records'  => 'World records',
+        'maps_made'      => 'Maps made',
         'playtest_votes' => 'Playtest votes',
-        'discord_tag' => 'Discord tag',
+        'discord_tag'    => 'Discord tag',
     ],
 ];

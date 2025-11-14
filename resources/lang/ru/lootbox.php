@@ -11,10 +11,10 @@ return [
     // META
     // ──────────────────────────────────────────────────────────────────────
     'meta' => [
-        'title' => 'Genji Parkour - Lootbox',
+        'title' => 'Genji Parkour - Лутбокс',
         'og' => [
-            'title' => 'Lootbox — Genji Parkour',
-            'description' => 'Open packs, earn rewards, and collect cosmetics.',
+            'title' => 'Лутбокс — Genji Parkour',
+            'description' => 'Открывайте боксы, получайте награды, и собирайте косметику.',
         ],
     ],
 
@@ -22,8 +22,8 @@ return [
     // HEADER
     // ──────────────────────────────────────────────────────────────────────
     'header' => [
-        'title' => 'Lootbox',
-        'subtitle' => 'Open packs · Earn rewards · Collect cosmetics',
+        'title' => 'Лутбокс',
+        'subtitle' => 'Открывайте боксы · Получайте награды · Собирайте косметику',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ return [
         'rewards_types' => [
             'spray' => 'Спрей',
             'skin' => 'Скин',
-            'pose' => 'Позу',
+            'pose' => 'Поза',
             'background' => 'Фон',
             'coins' => 'Монеты',
         ],

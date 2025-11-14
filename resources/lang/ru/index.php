@@ -11,7 +11,7 @@ return [
     // META (PAGE <HEAD>)
     // ──────────────────────────────────────────────────────────────────────
     'meta' => [
-        'title' => 'Genji Parkour - Home',
+        'title' => 'Genji Parkour - Главная',
         'og' => [
             'title' => 'Genji Parkour',
             'description' => 'Официальный сайт Genji Parkour. Найдите карты Genji Parkour, открывайте лутбоксы и многое другое!',
@@ -47,8 +47,8 @@ return [
         'copied'   => 'Скопировано ✓',
 
         'score'       => 'Очки',
-        'completions' => 'Завершения',
-        'upvotes'     => 'Голосов за',
+        'completions' => 'Прохождения',
+        'upvotes'     => 'Голосов',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -58,12 +58,12 @@ return [
         'overview'    => 'Обзор',
         'category'    => 'Категория',
         'difficulty'  => 'Сложность',
-        'checkpoints' => 'Контрольные точки',
+        'checkpoints' => 'Чекпоинты',
         'official'    => 'Официальный',
         'yes'         => 'Да',
         'no'          => 'Нет',
         'playtesting' => 'Тестирование',
-        'mechanics'   => 'Механика',
+        'mechanics'   => 'Механики',
         'restrictions'=> 'Ограничения',
         'creators'    => 'Создатели',
     ],

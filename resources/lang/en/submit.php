@@ -143,10 +143,19 @@ return [
         'li3'   => "For completions to count towards ranks and XP, it must be played on non CN servers.",
         'li4'   => "Please put who 'owns' the CN code in the description so we can ping them if a map changes.",
     ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // OCR NOTICE
+    // ──────────────────────────────────────────────────────────────────────
+    'ocr' => [
+        'title' => 'Screenshot OCR',
+        'li1'   => "When you upload a screenshot, we try to automatically detect the map code and time.",
+        'li2'   => "Always double-check the values before submitting your record.",
+    ],
+
     // ──────────────────────────────────────────────────────────────────────
     // HELP MODALS (full texts for modals)
     // ──────────────────────────────────────────────────────────────────────
-
     'how_to_submit' => [
         'title' => 'How to submit a map?',
         'intro' => 'This dialog walks you through every step of the “Submit map” section.',

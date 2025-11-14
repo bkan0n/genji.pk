@@ -132,19 +132,41 @@ function ensureLeaderboard() {
   if (!table) return;
 
   table.classList.add('lb');
+
+  const tt = (key, fallback) =>
+    typeof t === 'function' ? t(key) || fallback : fallback;
+
   if (!table.querySelector('.lb-inner')) {
     table.innerHTML = `
       <div class="lb-inner">
         <div class="lb-head lb-grid bg-zinc-900/60 text-zinc-300 rounded-lg mb-1 px-2 py-2">
-          <div class="col-idx px-2 font-semibold">#</div>
-          <div class="col-nickname px-2 font-semibold">Nickname</div>
-          <div class="col-xp px-2 font-semibold">XP</div>
-          <div class="col-tier px-2 font-semibold">Tier</div>
-          <div class="col-skill-rank px-2 font-semibold">Skill rank</div>
-          <div class="col-wr px-2 font-semibold">World records</div>
-          <div class="col-maps px-2 font-semibold">Maps made</div>
-          <div class="col-playtest px-2 font-semibold">Playtest votes</div>
-          <div class="col-discord px-2 font-semibold">Discord tag</div>
+          <div class="col-idx px-2 font-semibold">
+            ${tt('leaderboard.table.number', '#')}
+          </div>
+          <div class="col-nickname px-2 font-semibold">
+            ${tt('leaderboard.table.nickname', 'Nickname')}
+          </div>
+          <div class="col-xp px-2 font-semibold">
+            ${tt('leaderboard.table.xp', 'XP')}
+          </div>
+          <div class="col-tier px-2 font-semibold">
+            ${tt('leaderboard.table.tier', 'Tier')}
+          </div>
+          <div class="col-skill-rank px-2 font-semibold">
+            ${tt('leaderboard.table.skill_rank', 'Skill rank')}
+          </div>
+          <div class="col-wr px-2 font-semibold">
+            ${tt('leaderboard.table.world_records', 'World records')}
+          </div>
+          <div class="col-maps px-2 font-semibold">
+            ${tt('leaderboard.table.maps_made', 'Maps made')}
+          </div>
+          <div class="col-playtest px-2 font-semibold">
+            ${tt('leaderboard.table.playtest_votes', 'Playtest votes')}
+          </div>
+          <div class="col-discord px-2 font-semibold">
+            ${tt('leaderboard.table.discord_tag', 'Discord tag')}
+          </div>
         </div>
         <div class="lb-rows"></div>
       </div>
