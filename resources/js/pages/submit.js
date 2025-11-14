@@ -1177,6 +1177,16 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
     return false;
   }
 
+  function isFilledByOcr() {
+    return input.dataset.filledByOcr === '1';
+  }
+
+  function clearFilledByOcr() {
+    if (input.dataset.filledByOcr === '1') {
+      input.dataset.filledByOcr = '0';
+    }
+  }
+
   function render(list) {
     const box = suggestions();
     box.innerHTML = '';
@@ -1226,7 +1236,14 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
       .catch(() => hide());
   }
 
-  input.addEventListener('input', () => {
+  input.addEventListener('input', (ev) => {
+    if (!ev.isTrusted) {
+      hide();
+      return;
+    }
+
+    clearFilledByOcr();
+
     if (shouldSkipAutocompleteOnce()) {
       hide();
       return;
@@ -1239,6 +1256,11 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   });
 
   input.addEventListener('focus', () => {
+    if (isFilledByOcr()) {
+      hide();
+      return;
+    }
+
     if (shouldSkipAutocompleteOnce()) {
       hide();
       return;
@@ -1251,6 +1273,7 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hide();
   });
+
   document.addEventListener(
     'pointerdown',
     (e) => {
@@ -3830,7 +3853,6 @@ function dragAndDrop() {
       ) {
         mapCodeInput.dataset.skipNextAutocomplete = '1';
         mapCodeInput.value = String(code).toUpperCase();
-        mapCodeInput.dispatchEvent(new Event('input', { bubbles: true }));
         mapCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
       }
 
@@ -3910,7 +3932,6 @@ function dragAndDrop() {
     window.screenshotFile = file;
     setPreview(file);
     try { autoUploadScreenshot(file); } catch {}
-    // NOUVEAU : lancer l’OCR en arrière-plan
     try { runOcrFromFile(file); } catch {}
   }
 
