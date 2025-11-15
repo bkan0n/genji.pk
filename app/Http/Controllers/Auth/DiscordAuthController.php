@@ -15,13 +15,15 @@ use Throwable;
 
 class DiscordAuthController extends Controller
 {
+    
+    private function discordRedirectUri(): string
+    {
+        $base = (string) config('app.url', url('/'));
+        return rtrim($base, '/') . '/callback';
+    }
     public function redirect(Request $request)
     {
-        $redirectUri = (string) (
-            env('DISCORD_REDIRECT_URI')
-            ?: config('services.discord.redirect')
-            ?: route('discord.callback')
-        );
+        $redirectUri = $this->discordRedirectUri();
 
         $scopeStr = (string) config('services.discord.scope', 'identify guilds.members.read');
         $scopes = $this->normalizeScopes($scopeStr);
@@ -37,12 +39,7 @@ class DiscordAuthController extends Controller
 
     public function callback(Request $request)
     {
-        $redirectUri = (string) (
-            env('DISCORD_REDIRECT_URI')
-            ?: config('services.discord.redirect')
-            ?: route('discord.callback')
-        );
-
+        $redirectUri = $this->discordRedirectUri();
         $scopeStr = (string) config('services.discord.scope', 'identify guilds.members.read');
         $scopes = $this->normalizeScopes($scopeStr);
 

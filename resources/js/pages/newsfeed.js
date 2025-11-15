@@ -48,7 +48,7 @@ let compTotalResults = 0;
 let compTotalPages = 0;
 let currentSection = 'newsfeed';
 
-/* ===== CSP helpers (aucun inline style / event) ===== */
+/* ===== CSP helpers ===== */
 const CSP_NONCE = document.querySelector('meta[name="csp-nonce"]')?.content || '';
 const __dynStyleEl = (() => {
   const el = document.createElement('style');
@@ -118,6 +118,68 @@ document.addEventListener(
   true
 );
 
+// === Copy-code logging (Utilities) ==========================================
+function normalizeMapCode(raw) {
+  return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+}
+
+let __myIpCache = { value: null, at: 0 };
+async function getClientIp(force = false) {
+  const now = Date.now();
+  if (!force && __myIpCache.value && now - __myIpCache.at < 5 * 60 * 1000) {
+    return __myIpCache.value;
+  }
+  try {
+    const res = await fetch('/api/my-ip', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const json = await res.json().catch(() => ({}));
+    const ip = json?.client_ip ?? json?.ip ?? null;
+    __myIpCache = { value: ip, at: now };
+    return ip;
+  } catch {
+    return null;
+  }
+}
+
+async function logMapCopy(code, source = 'web') {
+  try {
+    const k = `logcc:${code}`;
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(k) || 0);
+    if (now - last < 500) return;
+    sessionStorage.setItem(k, String(now));
+  } catch {}
+
+  const ip_address = await getClientIp().catch(() => null);
+
+  const payload = {
+    code: normalizeMapCode(code),
+    ip_address,
+    user_id: window.user_id ?? null,
+    source,
+  };
+
+  try {
+    await fetch('/api/utilities/log-map-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': CSRF,
+      },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {}
+}
+
+document.addEventListener('DOMContentLoaded', () => { void getClientIp(); });
+
 /* ---------- Affichage vs. type canonique ---------- */
 const FILTER_LABELS = translations?.tags
   ? {
@@ -127,6 +189,12 @@ const FILTER_LABELS = translations?.tags
       record: translations.tags.record,
       guide: translations.tags.guide,
       new_map: translations.tags.new_map,
+      map_edit: translations.tags.map_edit,
+      legacy_record: translations.tags.legacy_record,
+      archive: translations.tags.archive,
+      unarchive: translations.tags.unarchive,
+      linked_map: translations.tags.linked_map,
+      unlinked_map: translations.tags.unlinked_map,
     }
   : {
       all: 'All',
@@ -135,24 +203,29 @@ const FILTER_LABELS = translations?.tags
       record: 'Records',
       guide: 'Guides',
       new_map: 'New maps',
+      map_edit: 'Map edit',
+      legacy_record: 'Legacy record',
+      archive: 'Archive',
+      unarchive: 'Unarchive',
+      linked_map: 'Linked map',
+      unlinked_map: 'Unlinked map',
     };
 
-const FILTER_ORDER = ['all', 'new_map', 'announcement', 'role', 'record', 'guide'];
+const FILTER_ORDER = ['all', 'new_map', 'announcement', 'role', 'record', 'guide', 'map_edit', 'legacy_record', 'archive', 'unarchive', 'linked_map', 'unlinked_map'];
 
 const TYPE_CANON = {
   all: 'all',
   announcement: 'announcement',
-  announcements: 'announcement',
-  annnouncement: 'announcement',
-  annnouncements: 'announcement',
   role: 'role',
-  roles: 'role',
   record: 'record',
-  records: 'record',
   guide: 'guide',
-  guides: 'guide',
   new_map: 'new_map',
-  'new maps': 'new_map',
+  map_edit: 'map_edit',
+  legacy_record: 'legacy_record',
+  archive: 'archive',
+  unarchive: 'unarchive',
+  linked_map: 'linked_map',
+  unlinked_map: 'unlinked_map',
 };
 
 /* ---------- i18n ---------- */
@@ -477,30 +550,69 @@ function twModalStyleShell() {
 }
 
 function twModalOpen() {
-  const overlay = document.getElementById('detailsModalOverlay');
+  const overlay = ensureDetailsModalShell();
   const box = document.getElementById('detailsModalBox');
   if (!overlay || !box) return;
+
   overlay.classList.remove('hidden');
   overlay.classList.add('flex');
+  document.body.classList.add('overflow-hidden');
+
+  box.classList.add('opacity-0', 'scale-95');
+
   requestAnimationFrame(() => {
     box.classList.remove('opacity-0', 'scale-95');
     box.classList.add('opacity-100', 'scale-100');
   });
+
+  const closeBtn = overlay.querySelector('[data-close-details]');
+  closeBtn?.focus({ preventScroll: true });
 }
 
 function twModalClose() {
   const overlay = document.getElementById('detailsModalOverlay');
   const box = document.getElementById('detailsModalBox');
   if (!overlay || !box) return;
+
   box.classList.add('opacity-0', 'scale-95');
   box.classList.remove('opacity-100', 'scale-100');
+
   setTimeout(() => {
     overlay.classList.add('hidden');
     overlay.classList.remove('flex');
-  }, 200);
+    document.body.classList.remove('overflow-hidden');
+  }, 50);
 }
 
 /* ---------- Modal Map Details (PATCH) ---------- */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-close-details]')) {
+    closeDetailsModal();
+    return;
+  }
+
+  const overlay = document.getElementById('detailsModalOverlay');
+  const box = document.getElementById('detailsModalBox');
+  if (!overlay || !box) return;
+  if (overlay.classList.contains('hidden')) return;
+
+  if (e.target === overlay) {
+    closeDetailsModal();
+  }
+});
+
+function closeDetailsModal() {
+  twModalClose();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDetailsModal();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  ensureDetailsModalShell();
+});
+
 document.addEventListener('click', (e) => {
   const a = e.target.closest('[data-open-map-details]');
   if (!a) return;
@@ -509,313 +621,405 @@ document.addEventListener('click', (e) => {
   if (code) openMapDetailsModal(code);
 });
 
+async function _fetchMapDetailsByCode(mapCode) {
+  const enc = encodeURIComponent(mapCode || '');
+  const url = `/api/maps?code=${enc}`;
+  const r = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+    cache: 'no-store',
+  });
+  const ct = r.headers.get('content-type') || '';
+  if (!r.ok) throw new Error(`HTTP ${r.status} ${await r.text().catch(()=> '')}`);
+  return ct.includes('application/json') ? r.json() : JSON.parse(await r.text());
+}
+
+const __mm = {
+  esc: (s) =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;'),
+  orNA: (v) => (v == null || v === '' ? (typeof t === 'function' ? t('common.na') : 'N/A') : v),
+  secondsToText: (n) => {
+    if (n == null || isNaN(Number(n))) return typeof t === 'function' ? t('common.na') : 'N/A';
+    const s = Math.floor(Number(n));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${String(r).padStart(2, '0')}`;
+  },
+  fmtDate: (iso) => {
+    if (!iso) return typeof t === 'function' ? t('common.na') : 'N/A';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString(document.documentElement.lang || 'en', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return iso;
+    }
+  },
+  starBar: (score, max = 6) => {
+    const n = Math.max(0, Math.min(max, Number(score) || 0));
+    const full = Math.floor(n);
+    const half = n - full >= 0.5 ? 1 : 0;
+    const empty = max - full - half;
+    return (
+      `<span class="text-amber-300">${'★'.repeat(full)}</span>` +
+      (half ? `<span class="text-amber-300/60">★</span>` : '') +
+      `<span class="text-zinc-600">${'☆'.repeat(empty)}</span>` +
+      `<span class="ml-2 text-xs text-zinc-400 align-[1px]">(${n.toFixed(2)}/${max})</span>`
+    );
+  },
+  badge: (label, tone = 'zinc') => {
+    const toneMap = {
+      emerald: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
+      sky: 'border-sky-400/30 bg-sky-500/10 text-sky-200',
+      amber: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
+      red: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
+      violet: 'border-violet-400/30 bg-violet-500/10 text-violet-200',
+      zinc: 'border-white/10 bg-white/10 text-zinc-200',
+    };
+    const cls = toneMap[tone] || toneMap.zinc;
+    return `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${cls}">${label}</span>`;
+  },
+  diffTint: (label) => {
+    const k = (label || '').replace(/\s*[+-]$/, '').trim();
+    return difficultyTextClasses?.[k] || 'text-zinc-200';
+  },
+  listChips: (arr) =>
+    (arr || [])
+      .map(
+        (s) =>
+          `<span class="rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-200">${__mm.esc(
+            s
+          )}</span>`
+      )
+      .join(''),
+};
+
+/* --- Shell / styles --- */
+function ensureDetailsModalShell() {
+  let overlay = document.getElementById('detailsModalOverlay');
+  if (overlay) return overlay;
+
+  overlay = document.createElement('div');
+  overlay.id = 'detailsModalOverlay';
+  overlay.className = 'hidden';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  overlay.innerHTML = `
+    <div id="detailsModalBox" class="relative pointer-events-auto">
+      <button type="button"
+              class="absolute right-4 top-4 z-10 inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              data-close-details aria-label="Close">✕</button>
+      <div id="modalDetailsContainer"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  twModalStyleShell();
+  return overlay;
+}
+
+document.addEventListener('DOMContentLoaded', ensureDetailsModalShell);
+
+/* --- Open modal --- */
 function openMapDetailsModal(mapCode) {
-  const overlay = document.getElementById('detailsModalOverlay');
-  const box = document.getElementById('detailsModalBox');
+  ensureDetailsModalShell();
+  twModalStyleShell();
+
+  const overlay   = document.getElementById('detailsModalOverlay');
+  const box       = document.getElementById('detailsModalBox');
   const container = document.getElementById('modalDetailsContainer');
   if (!overlay || !box || !container) return;
 
-  overlay.classList.add(
-    'fixed',
-    'inset-0',
-    'z-50',
-    'bg-black/60',
-    'backdrop-blur-sm',
-    'p-4',
-    'flex',
-    'items-center',
-    'justify-center'
-  );
-  box.classList.add(
-    'w-full',
-    'max-w-4xl',
-    'transition',
-    'duration-200',
-    'ease-out',
-    'opacity-0',
-    'scale-95'
-  );
-  container.className =
-    'w-full rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl ring-1 ring-white/10 overflow-hidden';
+  box.classList.add('w-full','max-w-4xl','max-h-[86vh]','flex','flex-col');
+  container.classList.remove('overflow-hidden');
+  container.classList.add('max-h-[78vh]','overflow-y-auto');
 
   container.innerHTML = `
-    <header class="sticky top-0 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80 backdrop-blur border-b border-white/10 px-4 sm:px-5 py-3 flex items-center justify-between">
-      <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2">
-        <span class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5">
-          <svg class="h-3.5 w-3.5 text-zinc-300" viewBox="0 0 24 24"><path fill="currentColor" d="M20 6H4v12h16V6Zm-2 2v2h-5V8h5ZM6 8h5v2H6V8Zm12 4v4h-5v-4h5ZM6 12h5v4H6v-4Z"/></svg>
-        </span>
-        ${t('thead.mapDetails')}
-      </h2>
-    </header>
-
-    <div class="p-4 sm:p-5">
-      <div class="animate-pulse space-y-4">
-        <div class="h-5 w-2/3 rounded-md bg-white/5"></div>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <div class="h-4 w-5/6 rounded bg-white/5"></div>
-            <div class="h-4 w-4/6 rounded bg-white/5"></div>
-            <div class="h-4 w-3/6 rounded bg-white/5"></div>
-            <div class="h-4 w-5/6 rounded bg-white/5"></div>
-          </div>
-          <div class="h-40 w-full rounded-xl border border-white/10 bg-white/5"></div>
+    <div class="relative">
+      <header class="relative">
+        <div class="relative h-56 sm:h-64 md:h-72 lg:h-80 w-full overflow-hidden">
+          <div class="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04))] bg-[length:200%_100%]"></div>
         </div>
+      </header>
+
+      <div class="p-5 space-y-6">
+        <div class="space-y-2">
+          <div class="h-7 w-56 rounded bg-white/10 animate-pulse"></div>
+          <div class="h-4 w-40 rounded bg-white/10 animate-pulse"></div>
+        </div>
+
+        <section class="grid gap-3 sm:grid-cols-3">
+          <div class="h-16 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-16 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-16 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+        </section>
+
+        <section class="grid gap-5 lg:grid-cols-3">
+          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+        </section>
+
+        <section class="grid gap-5 md:grid-cols-2">
+          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+        </section>
+
+        <section class="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div class="h-5 w-24 rounded bg-white/10 animate-pulse"></div>
+          <div class="mt-3 h-20 rounded bg-white/10 animate-pulse"></div>
+        </section>
       </div>
     </div>
   `;
 
-  overlay.classList.remove('hidden');
-  overlay.style.display = 'flex';
-  requestAnimationFrame(() => {
-    box.classList.remove('opacity-0', 'scale-95');
-    box.classList.add('opacity-100', 'scale-100');
-  });
+  twModalOpen();
 
-  const getStars = (quality, max = 6) => {
-    const q = quality == null ? null : Number(quality);
-    if (q == null || Number.isNaN(q)) return t('common.na');
-    const full = Math.max(0, Math.min(max, Math.floor(q)));
-    const empty = Math.max(0, max - full);
-    return `<span class="text-amber-300">${'★'.repeat(full)}</span><span class="text-zinc-600">${'☆'.repeat(empty)}</span>`;
-  };
-
-  const medal = (label, src, time) => `
-    <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-      <img src="${src}" alt="${label}" class="h-6 w-6 rounded-md object-cover"/>
-      <div class="text-xs">
-        <div class="font-semibold">${label}</div>
-        <div class="text-zinc-400">${time}</div>
+  const medalItemSafe = (name, img, timeText) => `
+    <div class="medal-item grid grid-cols-[auto,1fr] items-start gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 overflow-hidden">
+      <img src="${img}" alt="${name}" class="h-6 w-6 shrink-0 rounded object-contain"/>
+      <div class="min-w-0 text-left">
+        <div class="font-semibold text-xs whitespace-normal break-words normal-case leading-tight">${name}</div>
+        <div class="text-[11px] text-zinc-400 whitespace-normal break-words normal-case leading-tight">${timeText}</div>
       </div>
     </div>
   `;
 
-  const safeFirst = (res) => {
-    if (typeof pickFirstMapFromSearch === 'function') return pickFirstMapFromSearch(res);
-    if (Array.isArray(res)) return res[0] || null;
-    const numericKeys = Object.keys(res || {})
-      .filter((k) => /^\d+$/.test(k))
-      .sort((a, b) => Number(a) - Number(b));
-    if (numericKeys.length) return res[numericKeys[0]];
-    if (res && typeof res === 'object' && Array.isArray(res.data)) return res.data[0] || null;
-    return null;
-  };
+  _fetchMapDetailsByCode(mapCode)
+    .then((json) => {
+      const map = Array.isArray(json) ? json[0] : json?.data?.[0] || json;
+      if (!map) throw new Error('Map not found');
 
-  fetch('/api/maps', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': CSRF, },
-    body: JSON.stringify({ map_code: mapCode }),
-    credentials: 'same-origin',
-    cache: 'no-store',
-  })
-    .then(async (r) => {
-      const ct = r.headers.get('content-type') || '';
-      if (!r.ok) {
-        const body = await r.text().catch(() => '');
-        throw new Error(`HTTP ${r.status} – ${body.slice(0, 400)}`);
-      }
-      if (ct.includes('application/json')) return r.json();
-      const txt = await r.text();
-      try {
-        return JSON.parse(txt);
-      } catch {
-        throw new Error(`Invalid JSON response: ${txt.slice(0, 400)}`);
-      }
-    })
-    .then((res) => {
-      if (res?.error) {
-        container.innerHTML = `
-          <div class="p-4 sm:p-5">
-            <p class="text-sm text-rose-300">${t('common.error')}: ${res.error}</p>
-          </div>`;
-        return;
-      }
+      const name        = __mm.orNA(map.map_name);
+      const code        = __mm.orNA(map.code ?? map.map_code);
+      const category    = __mm.orNA(map.category);
+      const difficulty  = __mm.orNA(map.difficulty);
+      const diffTint    = __mm.diffTint(map.difficulty);
+      const cp          = map.checkpoints ?? (typeof t === 'function' ? t('common.na') : 'N/A');
+      const rating      = map.ratings ?? null;
+      const rawDiff     = map.raw_difficulty ?? null;
+      const official    = !!map.official;
+      const playtesting = map.playtesting || null;
+      const archived    = !!map.archived;
+      const hidden      = !!map.hidden;
+      const banner =
+        map.map_banner ||
+        map.banner_url ||
+        `assets/banners/${String(map.map_name || '').toLowerCase().replace(/[^a-z0-9]/g,'')}.png`;
+      const mechanics    = Array.isArray(map.mechanics) ? map.mechanics : [];
+      const restrictions = Array.isArray(map.restrictions) ? map.restrictions : [];
+      const desc =
+        (map.description && String(map.description).trim()) ||
+        (typeof t === 'function' ? t('common.no_description') : 'No description');
+      const createdAt = map.created_at ? __mm.fmtDate(map.created_at) : null;
+      const updatedAt = map.updated_at ? __mm.fmtDate(map.updated_at) : null;
 
-      const map = safeFirst(res) || res[0] || null;
-      if (!map) {
-        container.innerHTML = `
-          <div class="p-4 sm:p-5">
-            <p class="text-sm text-rose-300">${t('common.error')}: ${t('common.not_found')}</p>
-          </div>`;
-        return;
-      }
+      const creators = (Array.isArray(map.creators) ? map.creators : [])
+        .map((c) => {
+          const star = c.is_primary ? '⭐ ' : '';
+          return `<span class="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[12px] text-zinc-200">${star}${__mm.esc(
+            c.name || c.id || ''
+          )}</span>`;
+        })
+        .join('');
 
-      const lang = document.documentElement.lang || 'en';
+      const badges = [
+        category ? __mm.badge(__mm.esc(category), 'sky') : '',
+        difficulty ? __mm.badge(`<span class="${diffTint}">${__mm.esc(difficulty)}</span>`, 'zinc') : '',
+        official ? __mm.badge('Official', 'emerald') : '',
+        playtesting ? __mm.badge(__mm.esc(playtesting), playtesting === 'Approved' ? 'emerald' : 'amber') : '',
+        archived ? __mm.badge('Archived', 'amber') : '',
+        hidden ? __mm.badge('Hidden', 'red') : '',
+      ].filter(Boolean).join('');
 
-      let mechanics = map.mechanics ?? [];
-      let restrictions = map.restrictions ?? [];
-      if (typeof mechanics === 'string')
-        mechanics = mechanics
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-      if (typeof restrictions === 'string')
-        restrictions = restrictions
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
+      const gold   = map.medals?.gold ?? null;
+      const silver = map.medals?.silver ?? null;
+      const bronze = map.medals?.bronze ?? null;
 
-      if (lang === 'cn') {
-        mechanics = mechanics.map((o) => t(`mechanics.${o.toLowerCase().replace(/ /g, '_')}`) || o);
-        restrictions = restrictions.map(
-          (o) => t(`restrictions.${o.toLowerCase().replace(/ /g, '_')}`) || o
-        );
-      }
+      const medalsHtml = `
+        ${gold   != null ? medalItemSafe('Gold',   '/assets/medals/gold.png',   __mm.secondsToText(gold))   : ''}
+        ${silver != null ? medalItemSafe('Silver', '/assets/medals/silver.png', __mm.secondsToText(silver)) : ''}
+        ${bronze != null ? medalItemSafe('Bronze', '/assets/medals/bronze.png', __mm.secondsToText(bronze)) : ''}
+      `;
 
-      const mechText = mechanics.length ? mechanics.join(', ') : t('common.na');
-      const restText = restrictions.length ? restrictions.join(', ') : t('common.na');
-      const desc = map.desc || t('common.no_description');
-      const bannerPath = `assets/banners/${(map.map_name || '').toLowerCase().replace(/[\s()]+/g, '')}.png`;
-      const diffClass =
-        typeof difficultyTextClasses !== 'undefined' && difficultyTextClasses
-          ? difficultyTextClasses[normalizeDifficulty(map.difficulty)] || 'text-zinc-200'
-          : 'text-zinc-200';
-
-      const medals = [];
-      if (map.gold && map.gold !== 'N/A')
-        medals.push(medal(t('common.medals.gold'), 'assets/verifications/gold_wr.gif', map.gold));
-      if (map.silver && map.silver !== 'N/A')
-        medals.push(medal(t('common.medals.silver'), 'assets/verifications/silver_wr.gif', map.silver));
-      if (map.bronze && map.bronze !== 'N/A')
-        medals.push(medal(t('common.medals.bronze'), 'assets/verifications/bronze_wr.gif', map.bronze));
+      const firstGuide = Array.isArray(map.guides) && map.guides.length ? String(map.guides[0]) : '';
+      const vidId = `videoContainer-modal-${__mm.esc(code).replace(/[^a-z0-9_-]/gi,'')}`;
 
       container.innerHTML = `
-        <header class="sticky top-0 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80 backdrop-blur border-b border-white/10 px-4 sm:px-5 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5">
-              <svg class="h-3.5 w-3.5 text-zinc-300" viewBox="0 0 24 24"><path fill="currentColor" d="M20 6H4v12h16V6Zm-2 2v2h-5V8h5ZM6 8h5v2H6V8Zm12 4v4h-5v-4h5ZM6 12h5v4H6v-4Z"/></svg>
-            </span>
-            <div class="text-sm">
-              <div class="font-semibold leading-tight">${map.map_name || t('common.na')}</div>
-              <div class="text-[11px] text-zinc-400">${map.map_code || ''}</div>
+        <div class="relative">
+          <!-- Bandeau : uniquement la bannière -->
+          <header class="relative">
+            <div class="relative h-56 sm:h-64 md:h-72 lg:h-80 w-full overflow-hidden">
+              <img src="${__mm.esc(banner)}" alt="${__mm.esc(name)} Banner"
+                   class="absolute inset-0 h-full w-full object-cover" data-hide-on-error>
+              <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent"></div>
             </div>
-          </div>
-          <div class="flex items-center gap-2">
-            ${map.difficulty ? `<span class="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs ${diffClass}">${map.difficulty}</span>` : ''}
-            ${
-              Array.isArray(map.map_type) && map.map_type.length
-                ? map.map_type
-                    .map(
-                      (tp) =>
-                        `<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">${tp}</span>`
-                    )
-                    .join('')
-                : map.map_type
-                  ? `<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">${map.map_type}</span>`
-                  : ''
-            }
-          </div>
-        </header>
+          </header>
 
-        <div class="p-4 sm:p-5 space-y-4">
-          <div class="grid sm:grid-cols-2 gap-4">
-            <!-- Infos -->
-            <div class="space-y-3 text-sm">
-              <div class="flex flex-wrap gap-2">
-                ${
-                  map.creators
-                    ? (Array.isArray(map.creators) ? map.creators : [map.creators])
-                        .map(
-                          (c) => `
-                        <span class="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1">
-                          <svg class="h-3.5 w-3.5 text-zinc-400" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5Z"/></svg>
-                          <span>${c}</span>
-                        </span>
-                      `
-                        )
-                        .join('')
-                    : ''
-                }
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <div class="text-[11px] text-zinc-400">${t('thead.mapCheckpoints')}</div>
-                  <div class="font-semibold">${map.checkpoints ?? t('common.na')}</div>
-                </div>
-                <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <div class="text-[11px] text-zinc-400">${t('thead.mapQuality')}</div>
-                  <div class="font-semibold">${getStars(map.quality)}</div>
+          <!-- Contenu scrollable -->
+          <div class="p-5 space-y-6">
+            <!-- Titre + code + badges -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <h2 class="text-2xl font-bold tracking-tight text-zinc-100">${__mm.esc(name)}</h2>
+                <div class="mt-1 flex items-center gap-2 text-sm">
+                  <code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200"
+                        data-copy-code="${__mm.esc(code)}">#${__mm.esc(code)}</code>
+                  <span class="text-zinc-500">·</span>
+                  <span class="text-zinc-300">
+                    ${(typeof t === 'function' ? t('thead.mapCheckpoints') : 'Checkpoints')}:
+                    <strong class="text-zinc-100">${__mm.esc(cp)}</strong>
+                  </span>
                 </div>
               </div>
+              <div class="flex flex-wrap items-center gap-2">${badges}</div>
+            </div>
 
-              <div>
-                <div class="text-[11px] text-zinc-400 mb-1">${t('thead.mapMechanics')}</div>
+            <!-- Stats principales -->
+            <section class="grid gap-3 sm:grid-cols-3">
+              ${statCard((typeof t === 'function' ? t('thead.mapQuality') : 'Rating'), __mm.starBar(rating ?? 0))}
+              ${statCard('Raw diff.', rawDiff == null ? __mm.orNA(null) : `<span class="font-mono">${Number(rawDiff).toFixed(2)}</span>`)}
+              ${statCard((typeof t === 'function' ? t('thead.mapCategory') : 'Category'), __mm.esc(category))}
+            </section>
+
+            <!-- Créateurs + Médailles + Vidéo -->
+            <section class="grid gap-5 lg:grid-cols-3">
+              <!-- Créateurs -->
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                  ${(typeof t === 'function' ? t('thead.mapCreators') : 'Creators')}
+                </div>
                 ${
-                  mechText !== t('common.na')
-                    ? `<div class="flex flex-wrap gap-1.5">
-                        ${mechText
-                          .split(',')
-                          .map((s) => s.trim())
-                          .filter(Boolean)
-                          .map(
-                            (s) => `
-                          <span class="rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-200">${s}</span>
-                        `
-                          )
-                          .join('')}
-                       </div>`
-                    : `<div class="text-sm text-zinc-400">${t('common.na')}</div>`
+                  creators
+                    ? `<div class="flex flex-wrap gap-2">${creators}</div>`
+                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
 
-              <div>
-                <div class="text-[11px] text-zinc-400 mb-1">${t('thead.mapRestrictions')}</div>
+              <!-- Médailles (overflow-safe) -->
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                  ${(typeof t === 'function' ? t('thead.mapMedals') : 'Medals')}
+                </div>
                 ${
-                  restText !== t('common.na')
-                    ? `<div class="flex flex-wrap gap-1.5">
-                        ${restText
-                          .split(',')
-                          .map((s) => s.trim())
-                          .filter(Boolean)
-                          .map(
-                            (s) => `
-                          <span class="rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-200">${s}</span>
-                        `
-                          )
-                          .join('')}
-                       </div>`
-                    : `<div class="text-sm text-zinc-400">${t('common.na')}</div>`
+                  (gold != null || silver != null || bronze != null)
+                    ? `<div class="grid grid-cols-3 gap-2">${medalsHtml}</div>`
+                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
 
-              <div>
-                <div class="text-[11px] text-zinc-400">${t('thead.mapDescription')}</div>
-                <p class="mt-1 whitespace-pre-wrap leading-relaxed text-zinc-200">${map.desc || t('common.no_description')}</p>
+              <!-- Guide vidéo -->
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                  ${(typeof t === 'function' ? t('newsfeed.video_label') : 'Video')}
+                </div>
+                ${
+                  firstGuide
+                    ? `
+                      <div id="${vidId}"
+                           class="relative aspect-video overflow-hidden rounded-lg border border-white/10 bg-zinc-900/60"
+                           data-video-url="${__mm.esc(firstGuide)}">
+                        <div class="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04))] bg-[length:200%_100%]"></div>
+                      </div>
+                      <div class="mt-2">
+                        <a href="${__mm.esc(firstGuide)}" target="_blank" rel="noopener"
+                           class="inline-flex items-center justify-center rounded-md border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200 hover:bg-sky-500/20">
+                          ${(typeof t === 'function' ? t('newsfeed.watch_guide') : 'Watch guide')}
+                        </a>
+                      </div>
+                    `
+                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                }
               </div>
-            </div>
+            </section>
 
-            <!-- Image + médailles -->
-            <div class="space-y-3">
-              <img src="${bannerPath}" alt="${map.map_name} Banner"
-                  class="w-full rounded-xl border border-white/10 bg-zinc-900/50 object-cover"
-                  data-hide-on-error>
-              ${medals.length ? `<div class="grid grid-cols-3 gap-2">${medals.join('')}</div>` : ''}
-            </div>
+            <!-- Mécaniques & Restrictions -->
+            <section class="grid gap-5 md:grid-cols-2">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                  ${(typeof t === 'function' ? t('thead.mapMechanics') : 'Mechanics')}
+                </div>
+                ${
+                  mechanics.length
+                    ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(mechanics)}</div>`
+                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                }
+              </div>
+
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                  ${(typeof t === 'function' ? t('thead.mapRestrictions') : 'Restrictions')}
+                </div>
+                ${
+                  restrictions.length
+                    ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(restrictions)}</div>`
+                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                }
+              </div>
+            </section>
+
+            <!-- Description -->
+            <section class="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                ${(typeof t === 'function' ? t('thead.mapDescription') : 'Description')}
+              </div>
+              <p class="whitespace-pre-wrap leading-relaxed text-zinc-200 break-words">${__mm.esc(desc)}</p>
+            </section>
+
+            <!-- Footer dates -->
+            <footer class="flex flex-wrap items-center gap-3 border-t border-white/10 pt-3 text-[12px] text-zinc-400">
+              ${createdAt ? `<span>${(typeof t === 'function' ? t('common.created_at') : 'Created')}: ${__mm.esc(createdAt)}</span>` : ''}
+              ${updatedAt ? `<span>${(typeof t === 'function' ? t('common.updated_at') : 'Updated')}: ${__mm.esc(updatedAt)}</span>` : ''}
+            </footer>
           </div>
         </div>
       `;
+
+      if (firstGuide && typeof mountAllGuideVideos === 'function') {
+        const scope = container.querySelector(`#${vidId}`)?.parentElement || container;
+        mountAllGuideVideos(scope);
+      }
     })
     .catch((err) => {
       container.innerHTML = `
-        <div class="p-4 sm:p-5">
-          <p class="text-sm text-rose-300">${t('common.error')} fetching map details</p>
-          <pre class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-zinc-900/60 p-3 text-[12px] text-zinc-300">${String(err)}</pre>
-        </div>`;
+        <div class="p-5">
+          <p class="text-sm text-rose-300">${(typeof t === 'function' ? t('common.error') : 'Error')} fetching map details</p>
+          <pre class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-zinc-900/60 p-3 text-[12px] text-zinc-300">${__mm.esc(String(err))}</pre>
+        </div>
+      `;
       console.error(err);
     });
 }
 
-function closeDetailsModal() {
-  twModalClose();
+/* --- small pieces --- */
+function statCard(label, valueHtml) {
+  return `
+    <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+      <div class="text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
+      <div class="mt-1 text-sm text-zinc-100">${valueHtml}</div>
+    </div>`;
 }
-
-document.getElementById('detailsModalOverlay')?.addEventListener('click', (e) => {
-  const box = document.getElementById('detailsModalBox');
-  if (box && !box.contains(e.target)) closeDetailsModal();
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDetailsModal();
-});
+function medalItem(name, img, timeText) {
+  return `
+    <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2">
+      <img src="${img}" alt="${name}" class="h-6 w-6 rounded object-cover"/>
+      <div class="text-xs">
+        <div class="font-semibold">${name}</div>
+        <div class="text-zinc-400">${timeText}</div>
+      </div>
+    </div>`;
+}
 
 /* ---------- API + render ---------- */
 async function loadNewsfeed(append = false) {
@@ -847,6 +1051,20 @@ async function loadNewsfeed(append = false) {
     totalResults = Number(raw?.total_results ?? raw?.total ?? items.length) || 0;
     totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
 
+    const serverTotal = Number(raw?.total_results ?? raw?.total);
+    const hasMoreFromApi = typeof raw?.has_more === 'boolean' ? raw.has_more : null;
+    const hasMoreFallback = items.length === pageSize;
+
+    if (Number.isFinite(serverTotal)) {
+      totalResults = serverTotal;
+      totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
+    } else {
+      totalResults = currentPage * pageSize + (hasMoreFallback ? 1 : 0);
+      totalPages = hasMoreFromApi === true || hasMoreFallback ? currentPage + 1 : currentPage;
+    }
+
+    window.__nfHasMore = hasMoreFromApi === null ? hasMoreFallback : hasMoreFromApi;
+
     const cardsHtml = await Promise.all(items.map(createNewsCard));
 
     const container = document.getElementById('newsfeedContainer');
@@ -854,6 +1072,7 @@ async function loadNewsfeed(append = false) {
 
     if (append) container.insertAdjacentHTML('beforeend', cardsHtml.join(''));
     else container.innerHTML = cardsHtml.join('');
+    mountAllGuideVideos(container);
 
     __cspInit();
 
@@ -876,16 +1095,6 @@ async function loadNewsfeed(append = false) {
       animateCards(container.querySelectorAll('.news-card'));
     }
 
-    items.forEach((it) => {
-      const p = it?.payload || it?.data || {};
-      const evType = (it?.event_type || p?.type || it?.type || '').toLowerCase();
-      const guideUrl = p?.map?.guide?.[0] || p?.guide?.[0] || p?.video || p?.url;
-      const key = p?.map_code || p?.code || p?.map?.map_code || it?.id;
-      if (evType === 'guide' && guideUrl && key) {
-        createEmbeddedVideo(`videoContainer-${key}`, guideUrl);
-      }
-    });
-
     updateTimestamps();
     renderPaginationButtons();
     applySearchFilter();
@@ -897,244 +1106,892 @@ async function loadNewsfeed(append = false) {
 }
 
 async function createNewsCard(item) {
-  const p = item?.payload || item?.data || {};
+  // ================== Helpers ==================
+  const esc = (s)=>String(s??'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  const escAttr = (s)=>String(s??'').replace(/["&<]/g,(m)=>({'"':'&quot;','&':'&amp;','<':'&lt;'}[m]));
+  const hasFn = (fn)=> typeof fn === 'function';
+  const pretty = (v)=>{
+    if (v == null) return '<span class="text-zinc-400">N/A</span>';
+    if (Array.isArray(v)) return esc(v.join(', '));
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    if (typeof v === 'number') return String(v);
+    return esc(String(v));
+  };
+  const labelCase = (s)=> String(s||'').replace(/[_-]+/g,' ').replace(/\b\w/g, m=>m.toUpperCase());
+
+  const formatTime = (raw)=>{
+    if (raw == null || raw==='') return '';
+    const n = Number(raw); if (Number.isNaN(n)) return esc(String(raw));
+    const ms = Math.round((n%1)*1000);
+    const total = Math.floor(n);
+    const m = Math.floor(total/60);
+    const s = total%60;
+    const frac = String(ms).padStart(3,'0');
+    return m>0 ? `${m}:${String(s).padStart(2,'0')}.${frac}` : `${s}.${frac}`;
+  };
+
+  const DIFF = {
+    Easy:        { text:'text-lime-200',     ring:'ring-lime-400/30',     bg:'from-lime-400/10 via-lime-500/5 to-transparent',       glow:'bg-lime-500/20' },
+    Medium:      { text:'text-yellow-200',   ring:'ring-yellow-400/30',   bg:'from-yellow-400/10 via-yellow-500/5 to-transparent',    glow:'bg-yellow-500/20' },
+    Hard:        { text:'text-orange-200',   ring:'ring-orange-400/30',   bg:'from-orange-400/10 via-orange-500/5 to-transparent',    glow:'bg-orange-500/20' },
+    Veryhard:    { text:'text-orange-300',   ring:'ring-orange-500/30',   bg:'from-orange-500/10 via-orange-600/5 to-transparent',    glow:'bg-orange-600/20' },
+    Extreme:     { text:'text-red-200',      ring:'ring-red-500/35',      bg:'from-red-500/10 via-red-600/5 to-transparent',          glow:'bg-red-600/25' },
+    Hell:        { text:'text-fuchsia-200',  ring:'ring-fuchsia-500/35',  bg:'from-fuchsia-500/10 via-fuchsia-600/5 to-transparent',  glow:'bg-fuchsia-600/25' },
+  };
+  const diffStyleFor = (d)=> DIFF[d] || { text:'text-zinc-200', ring:'ring-white/15', bg:'from-white/5 via-transparent to-transparent', glow:'bg-white/10' };
+  const diffKeyOf = (val)=> hasFn(normalizeDifficulty) ? normalizeDifficulty(val) : String(val||'').toLowerCase();
+  const formatImageName = (label) =>!label? 'default.png' : `${String(label).toLowerCase().replace(/[\s\-+]+/g, '')}.png`;
+
+  const THEME = {
+    announcement:   { ring:'ring-emerald-400/30', glow:'bg-emerald-500/15', badge:'border-emerald-400/30 bg-emerald-500/10 text-emerald-200' },
+    new_map:        { ring:'ring-sky-400/30',     glow:'bg-sky-500/15',     badge:'border-sky-400/30 bg-sky-500/10 text-sky-200' },
+    map_edit:       { ring:'ring-violet-400/30',  glow:'bg-violet-500/15',  badge:'border-violet-400/30 bg-violet-500/10 text-violet-200' },
+    bulk_archive:   { ring:'ring-orange-400/30',  glow:'bg-orange-500/15',  badge:'border-orange-400/30 bg-orange-500/10 text-orange-200' },
+    bulk_unarchive: { ring:'ring-lime-400/30',    glow:'bg-lime-500/15',    badge:'border-lime-400/30 bg-lime-500/10 text-lime-200' },
+    guide:          { ring:'ring-cyan-400/30',    glow:'bg-cyan-500/15',    badge:'border-cyan-400/30 bg-cyan-500/10 text-cyan-200' },
+    archive:        { ring:'ring-amber-400/30',   glow:'bg-amber-500/15',   badge:'border-amber-400/30 bg-amber-500/10 text-amber-200' },
+    unarchive:      { ring:'ring-green-400/30',   glow:'bg-green-500/15',   badge:'border-green-400/30 bg-green-500/10 text-green-200' },
+    role:           { ring:'ring-fuchsia-400/30', glow:'bg-fuchsia-500/15', badge:'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200' },
+    record:         { ring:'ring-rose-400/30',    glow:'bg-rose-500/15',    badge:'border-rose-400/30 bg-rose-500/10 text-rose-200' },
+    legacy_record:  { ring:'ring-yellow-400/30',  glow:'bg-yellow-500/15',  badge:'border-yellow-400/30 bg-yellow-500/10 text-yellow-200' },
+    linked_map:     { ring:'ring-teal-400/30',    glow:'bg-teal-500/15',    badge:'border-teal-400/30 bg-teal-500/10 text-teal-200' },
+    unlinked_map:   { ring:'ring-indigo-400/30',  glow:'bg-indigo-500/15',  badge:'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' },
+    unknown:        { ring:'ring-white/15',       glow:'bg-white/10',       badge:'border-white/15 bg-white/10 text-zinc-100' },
+  };
+
+  const typeLabel = (k)=>{
+    const key = String(k||'unknown').toLowerCase();
+    if (typeof t === 'function') {
+      return t(`tags.${key}`) || t(`newsfeed.type_${key}`) || labelCase(key);
+    }
+    return labelCase(key);
+  };
+
+  const icon = {
+    crown:'<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l5 4 4-6 4 6 5-4v11H3V7z"/></svg>',
+    play:'<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    copy:'<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>',
+  };
+
+  // ====== ROLES
+  const ROLE_ORDER = ['Ninja','Jumper','Skilled','Pro','Master','Grandmaster','God'];
+  const parseRole = (raw)=>{
+    const label = String(raw??'').trim();
+    const plus = (label.match(/\+/g)||[]).length;
+    const base = label.replace(/\s*\+.*$/,'').trim();
+    const clean = hasFn(normalizeRole) ? normalizeRole(base) : base;
+    return { base: clean, plus: Math.min(plus,3), label };
+  };
+  const roleScore = (base,plus)=> Math.max(0, ROLE_ORDER.indexOf(base))*10 + plus;
+  const roleImgFor = (base)=>{
+    const file = String(base||'').toLowerCase();
+    return `assets/ranks/${file}.webp`;
+  };
+  const renderRoleChip = (raw, isPrimary=false)=>{
+    const {base, plus, label} = parseRole(raw);
+    const img = roleImgFor(base);
+    const boost = plus===0?'': plus===1?' ring-2 ring-offset-1 ring-offset-zinc-950 shadow-sm'
+                      : plus===2?' ring-2 ring-offset-2 ring-offset-zinc-950 shadow-md'
+                                :' ring-2 ring-offset-2 ring-offset-zinc-950 shadow-lg';
+    const primary = isPrimary ? ' scale-[1.02] ring-2 shadow-lg' : '';
+    return `
+      <li class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium
+                 ring-1 shadow-sm bg-gradient-to-r from-white/10 to-transparent backdrop-blur-sm transition
+                 hover:shadow-md hover:ring-2 ring-white/15 ${boost}${primary}"
+          title="${esc(label)}" data-tier="${esc(base)}" data-plus="${plus}">
+        <img src="${escAttr(img)}" alt="${escAttr(base)}" class="h-4 w-4 object-cover"/>
+        <span class="tracking-tight">${esc(base)}</span>
+        ${plus ? `<span class="opacity-80 ml-0.5">${'+'.repeat(plus)}</span>` : ''}
+      </li>
+    `;
+  };
+
+  // ====== MEDALS
+  const medalImgFor = (medalRaw)=>{
+    const m = String(medalRaw||'').toLowerCase();
+    if (m.includes('gold'))   return 'assets/verifications/new/verification/wr_gold.avif';
+    if (m.includes('silver')) return 'assets/verifications/new/verification/wr_silver.avif';
+    if (m.includes('bronze')) return 'assets/verifications/new/verification/wr_bronze.avif';
+    return '';
+  };
+
+  const p  = item?.payload || item?.data || {};
   const typeRaw = item?.event_type || p?.type || item?.type || 'unknown';
   const type = String(typeRaw).toLowerCase();
   const ts = item?.timestamp;
 
-  const userId = p?.user?.user_id ?? null;
-  let nickname = p?.user?.nickname || 'GenjiBot';
+  const userId = p?.user?.user_id ?? p?.user_id ?? null;
+  let nickname = p?.user?.nickname || p?.name || 'GenjiBot';
   let profileImg = 'assets/profile/genjibot.png';
   if (userId === 141372217677053952) profileImg = 'assets/profile/joe.jpg';
   else if (userId === 273775694008549376) profileImg = 'assets/profile/fishofire.jpg';
 
+  let theme = THEME[type] || THEME.unknown;
+  theme.badge = theme.badge || OFFICIAL_BADGE_CLS;
+  const typeBadge = `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${theme.badge}">
+    ${esc(typeLabel(type))}
+  </span>`;
+
+  let html = `
+    <article class="news-card relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 p-4 sm:p-5 ring-1 ${theme.ring}">
+      <div class="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full ${theme.glow} blur-3xl"></div>
+  `;
+
+  // ====== NEW MAP
+  const OFFICIAL_BADGE_CLS =
+  'border border-emerald-400/50 bg-gradient-to-r from-emerald-600/25 via-emerald-500/15 to-teal-500/20 ' +
+  'text-emerald-100 ring-1 ring-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.35)] backdrop-blur-[2px]';
+
+  // ================== Header ==================
+  if (type === 'announcement') {
+    html += `
+      <header class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <img class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/10" src="${escAttr(profileImg)}" alt="${escAttr(nickname)}">
+          <div class="leading-tight">
+            <div class="font-semibold">${esc(nickname)}</div>
+            <time class="timestamp text-xs text-zinc-400" data-timestamp="${escAttr(ts)}"></time>
+          </div>
+        </div>
+        ${typeBadge}
+      </header>
+    `;
+  } else {
+    html += `
+      <header class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <img class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10" src="assets/profile/genjibot.png" alt="GenjiBot">
+          <div class="leading-tight">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold">GenjiBot</span>
+              <span class="rounded-full border border-white/10 bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-200">BOT</span>
+            </div>
+            <time class="timestamp text-xs text-zinc-400" data-timestamp="${escAttr(ts)}"></time>
+          </div>
+        </div>
+        ${typeBadge}
+      </header>
+    `;
+  }
+
+  html += `<div class="mt-3 space-y-3">`;
+
+  // ================== Types ==================
+
+  // ANNOUNCEMENT
   if (type === 'announcement') {
     let messageContent = p?.message?.content || p?.content || '';
-    messageContent = await convertTenorLinks(messageContent);
-    const formatted = await formatMessageContent(messageContent);
+    if (hasFn(convertTenorLinks))   messageContent = await convertTenorLinks(messageContent);
+    if (hasFn(formatMessageContent)) messageContent = await formatMessageContent(messageContent);
 
-    return `
-      <article class="news-card rounded-2xl border border-white/10 bg-white/5 p-4">
-        <header class="flex items-start justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <img class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/10" src="${profileImg}" alt="${nickname}">
-            <div class="leading-tight">
-              <div class="font-semibold">${nickname}</div>
-              <time class="timestamp text-xs text-zinc-400" data-timestamp="${ts}"></time>
+    html += `
+      <p class="announcement-content text-sm text-zinc-200 leading-relaxed">${messageContent}</p>
+      <div id="loadingIndicator" class="loading-bar hidden items-center gap-2 text-xs text-zinc-400">
+        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" stroke-width="4" opacity=".25"/><path d="M22 12a10 10 0 0 1-10 10" fill="none" stroke="currentColor" stroke-width="4"/></svg>
+        ${hasFn(t)? (t('common.loading')||'Loading...') : 'Loading...'}
+      </div>
+      <div class="flex gap-2">
+        <button class="translate-button inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5">
+          ${hasFn(t)? t('newsfeed.translate_button') : 'Translate'}
+        </button>
+      </div>
+      <p class="translated-text text-sm text-zinc-300"></p>
+    `;
+  }
+
+  // NEW_MAP
+  if (type === 'new_map') {
+    const code = p?.code || '';
+    const mapName = p?.map_name || '';
+    const diffRaw = p?.difficulty || '';
+    const diffKey = diffKeyOf(diffRaw);
+    const diffTextCls = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKey]) || 'text-zinc-200';
+    const bannerSrc = p?.banner_url || `assets/banners/${(mapName||'').toLowerCase().replace(/\s+/g,'-')}.png`;
+    const creators = Array.isArray(p?.creators) ? p.creators.join(', ') : (p?.creators || '');
+    const isOfficial = !!p?.official;
+
+    html += `
+      <div class="mb-2 text-sm text-zinc-300">
+        ${hasFn(t)? t('newsfeed.new_map', {
+          nickname: nickname,
+          difficulty: `<span class="${diffTextCls} font-semibold">${esc(diffRaw || (t('common.na')||'N/A'))}</span>`,
+          map_name: esc(mapName || (t('common.na')||'N/A')),
+        }) : `New map by ${esc(nickname)}: ${esc(mapName)} (${esc(diffRaw)})`}
+      </div>
+
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <div class="relative">
+          <img class="h-44 w-full object-cover md:h-56" src="${escAttr(bannerSrc)}" alt="${escAttr(mapName)} Banner" loading="lazy" data-hide-on-error />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
+
+          <div class="absolute left-3 top-3 flex flex-wrap items-center gap-2">
+              ${isOfficial
+                ? `<span
+                      class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${OFFICIAL_BADGE_CLS}"
+                      data-badge="official">
+                      <span class="inline-block h-1.5 w-1.5 rounded-full bg-current shadow-[0_0_10px_currentColor]"></span>
+                      ${(hasFn(t)? (t('newsfeed.official')||'Official') : 'Official')}
+                  </span>`
+                : ''}
+          </div>
+
+          <div class="absolute right-3 top-3 rounded-lg bg-zinc-900/30 p-1 ring-1 ring-white/10 backdrop-blur-sm shadow-sm">
+            <img
+              class="h-8 w-8 rounded-md"
+              src="assets/ranks/${escAttr(formatImageName(p?.difficulty||''))}"
+              alt="${escAttr(diffRaw || '—')}"
+              loading="lazy"
+            />
+          </div>
+
+          <div class="absolute left-3 right-3 bottom-3">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+              <div class="min-w-0">
+                <div class="max-w-full overflow-hidden inline-block rounded-lg bg-zinc-900/20 ring-1 ring-white/10 backdrop-blur-sm px-3 py-2 shadow-sm">
+                  <h3 class="truncate text-lg font-bold text-zinc-100">
+                    ${esc(mapName || (hasFn(t)? t('common.na'):'N/A'))}
+                  </h3>
+                  ${ creators ? `
+                    <p class="truncate text-sm text-zinc-300">
+                      <span class="text-zinc-400 mr-1">
+                        ${hasFn(t)? (t('newsfeed.creator')||'Creator') : 'Creator'}:
+                      </span>${esc(creators)}
+                    </p>` : '' }
+                </div>
+              </div>
+
+              <div class="flex shrink-0 items-center gap-2">
+                ${ code ? `
+                  <button type="button" class="map-code cursor-pointer rounded-md border border-white/15 bg-black/40 px-2 py-1 text-[12px] font-mono text-emerald-200 shadow-sm"
+                          title="${hasFn(t)? (t('newsfeed.copy_code')||'Copy code') : 'Copy code'}"
+                          data-copy-code="${escAttr(code)}">#${esc(code)}</button>` : '' }
+
+                ${ code ? `
+                <button class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-sm text-zinc-100 hover:bg-white/20"
+                        data-open-map-details data-map-code="${escAttr(code)}">
+                  ${(hasFn(t)? (t('newsfeed.details')||t('newsfeed.click_here')||'Details') : 'Details')}
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M7 4l6 6-6 6"></path></svg>
+                </button>` : '' }
+              </div>
             </div>
           </div>
-          <span class="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">${t('tags.announcement')}</span>
-        </header>
-
-        <div class="mt-3 space-y-3">
-          <p class="announcement-content text-sm text-zinc-200 leading-relaxed">${formatted}</p>
-
-          <div id="loadingIndicator" class="loading-bar hidden items-center gap-2 text-xs text-zinc-400">
-            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" stroke-width="4" opacity=".25"/><path d="M22 12a10 10 0 0 1-10 10" fill="none" stroke="currentColor" stroke-width="4"/></svg>
-            ${t('common.loading') || 'Loading...'}
-          </div>
-
-          <div class="flex gap-2">
-            <button class="translate-button inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5">
-              ${t('newsfeed.translate_button')}
-            </button>
-          </div>
-          <p class="translated-text text-sm text-zinc-300"></p>
         </div>
       </article>
     `;
   }
 
-  // En-tête "GenjiBot"
-  let html = `
-    <article class="news-card rounded-2xl border border-white/10 bg-white/5 p-4">
-      <header class="flex items-center gap-3">
-        <img class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10" src="assets/profile/genjibot.png" alt="GenjiBot">
-        <div class="leading-tight">
-          <div class="flex items-center gap-2">
-            <span class="font-semibold">GenjiBot</span>
-            <span class="rounded-full border border-white/10 bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-200">BOT</span>
-          </div>
-          <time class="timestamp text-xs text-zinc-400" data-timestamp="${ts}"></time>
-        </div>
-      </header>
-      <div class="mt-3 space-y-3">
-  `;
-
-  // NEW_MAP (v3)
-  if (type === 'new_map') {
-    const code = p?.code || '';
-    const mapName = p?.map_name || '';
-    const diffRaw = p?.difficulty || '';
-    const diffClass = difficultyTextClasses[normalizeDifficulty(diffRaw)] || 'text-zinc-200';
-    const bannerSrc = p?.banner_url || `assets/banners/${formatMapName(mapName)}.png`;
-    const creators = Array.isArray(p?.creators) ? p.creators.join(', ') : p?.creators || '';
-
-    html += `
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold">
-          ${t('newsfeed.new_map', {
-            nickname: nickname,
-            difficulty: `<span class="${diffClass}">${diffRaw || t('common.na')}</span>`,
-            map_name: mapName || t('common.na'),
-          })}
-        </h3>
-        <img class="h-9 w-9 rounded-md ring-1 ring-white/10" src="assets/ranks/${formatImageName(diffRaw)}" alt="${diffRaw}">
-      </div>
-      <p class="text-sm">
-        ${creators ? `<span class="text-zinc-400 mr-1">${t('newsfeed.creator') || 'Creator'}:</span> ${creators}<br>` : ''}
-        ${t('newsfeed.details_command')}
-        <code class="map-code cursor-pointer rounded border border-white/10 bg-zinc-900/60 px-2 py-0.5 text-[12px] font-mono text-emerald-200"
-              data-map-code="/map-search map_code:${code}">/map-search map_code:${code}</code>
-        <a class="text-brand-300 hover:text-brand-200 text-sm"
-           href="#" data-open-map-details data-map-code="${code}">
-          ${t('newsfeed.click_here')}
-        </a>
-      </p>
-      <img class="mt-2 w-full rounded-xl border border-white/10 bg-zinc-900/50 object-cover"
-          src="${bannerSrc}" alt="${mapName} Banner" data-hide-on-error>
-    `;
-  }
-
-  // MAP_EDIT (v3)
+  // MAP_EDIT
   if (type === 'map_edit') {
-    const code = p?.code || '';
+    const code    = p?.code || '';
     const changes = Array.isArray(p?.changes) ? p.changes : [];
-    const reason = p?.reason || '';
+    const reason  = (p?.reason || '').trim();
 
-    const list = changes
-      .map((ch) => {
-        const field = nfEscapeHtml(ch?.field ?? '');
-        const oldV = nfPrettyVal(ch?.old);
-        const newV = nfPrettyVal(ch?.new);
+    const list = changes.map((ch) => {
+      const field = esc(ch?.field ?? '');
+      const oldV  = pretty(ch?.old);
+      const newV  = pretty(ch?.new);
+
+      if (/^medals?$/i.test(field)) {
+        const parsed = parseMedalsText(String(ch?.new || ''));
+
+        const chips = (parsed.length ? parsed : __MEDAL_ORDER.map(k => ({ kind: k, timeText: null })))
+          .map(({ kind, timeText }) => {
+            const img   = medalVerifiedImgFor(kind);
+            const label = kind.charAt(0).toUpperCase() + kind.slice(1);
+            const val   = (timeText == null || timeText === '')
+              ? (typeof t === 'function' ? t('common.na') : 'N/A')
+              : timeText;
+
+            return `
+              <div class="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2 py-1">
+                <img src="${escAttr(img)}" alt="${escAttr(label)}" class="h-5 w-5 rounded object-cover"/>
+                <span class="text-xs text-zinc-200">${esc(label)}</span>
+                <span class="ml-auto font-mono text-sm">${esc(val)}</span>
+              </div>
+            `;
+          }).join('');
+
         return `
-        <li class="flex items-start gap-2">
-          <span class="mt-2 h-1.5 w-1.5 rounded-full bg-white/70"></span>
-          <p class="text-sm leading-relaxed">
-            <span class="font-semibold underline decoration-white/20">${field}</span>
-            &nbsp;${oldV}
-            <span class="mx-1 text-zinc-500">→</span>
-            <span class="font-medium text-zinc-100">${newV}</span>
-          </p>
+          <li class="rounded-lg border border-white/10 bg-zinc-900/50 p-2.5">
+            <div class="text-[11px] uppercase tracking-wide text-zinc-400">${field}</div>
+            <div class="mt-2 grid gap-2 sm:grid-cols-3">
+              ${chips}
+            </div>
+          </li>
+        `;
+      }
+
+      const isDiff = /(^|\s)diffic/i.test(field);
+      const diffCls = isDiff
+        ? ((typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKeyOf(ch?.new)]) || '')
+        : '';
+
+      return `
+        <li class="rounded-lg border border-white/10 bg-zinc-900/50 p-2.5">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-400">${field}</div>
+          <div class="mt-1 flex flex-wrap items-center gap-2 text-sm leading-relaxed">
+            <span class="line-through text-zinc-400/90">${oldV}</span>
+            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" aria-hidden="true">
+              <path fill="currentColor" d="M7 4l6 6-6 6"></path>
+            </svg>
+            <span class="font-medium text-zinc-100 ${diffCls}">${newV}</span>
+          </div>
         </li>
       `;
-      })
-      .join('');
+    }).join('');
 
     html += `
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold">${t('newsfeed.map_updated', { map_code: nfEscapeHtml(code) })}</h3>
-        <img src="assets/verifications/new/icons/warning.avif"
-            alt="warning" class="h-11 w-11 rounded-full ring-1 ring-white/10 select-none">
-      </div>
-
-      <hr class="my-2 border-white/10">
-
-      ${
-        reason
-          ? `
-        <p class="text-sm text-zinc-300">
-          <span class="text-zinc-400">${t('common.reason')}</span> ${nfEscapeHtml(reason)}
-        </p>`
-          : ''
-      }
-
-      ${
-        list
-          ? `<ul class="mt-2 space-y-1.5">${list}</ul>`
-          : `<p class="text-sm text-zinc-400">${t('newsfeed.no_changes')}</p>`
-      }
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+              ${typeof t === 'function' ? t('newsfeed.map_updated', { map_code: esc(code) }) : `Map updated: ${esc(code)}`}
+            </h3>
+            ${ reason ? `
+              <p class="mt-1 text-xs text-zinc-300">
+                <span class="text-zinc-400">${typeof t === 'function' ? (t('common.reason')||'Reason') : 'Reason'}:</span> ${esc(reason)}
+              </p>` : '' }
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            ${ code ? `
+              <button class="cursor-pointer rounded-md border border-white/15 bg-black/40 px-2 py-1 text-[12px] font-mono text-emerald-200"
+                      title="${typeof t === 'function' ? (t('newsfeed.copy_code')||'Copy code') : 'Copy code'}"
+                      data-copy-code="${escAttr(code)}">${esc(code)}</button>` : '' }
+          </div>
+        </header>
+        <div class="p-3 sm:p-4">
+          ${ list ? `<ul class="grid gap-2 sm:gap-3">${list}</ul>` : `<p class="text-sm text-zinc-400">${typeof t === 'function' ? t('newsfeed.no_changes') : 'No changes'}</p>` }
+        </div>
+      </article>
     `;
   }
 
-  // BULK ARCHIVE / UNARCHIVE (compatible v3)
+  // BULK ARCHIVE / UNARCHIVE
   if (type === 'bulk_archive' || type === 'bulk_unarchive') {
-    const actionText =
-      type === 'bulk_archive' ? t('newsfeed.bulk_archived') : t('newsfeed.bulk_unarchived');
-    const bulk = Array.isArray(p?.bulk) ? p.bulk : Array.isArray(p?.items) ? p.items : [];
-    const bulkList = bulk
-      .map(
-        (x) =>
-          `<li class="px-2 py-1 rounded-md border border-white/10 bg-white/5 text-xs">${x?.map_code || x?.code || String(x)}</li>`
-      )
-      .join('');
+    const raw =
+      (Array.isArray(p?.codes) && p.codes) ||
+      (Array.isArray(p?.bulk) && p.bulk) ||
+      (Array.isArray(p?.items) && p.items) || [];
+    const codes = [...new Set(raw.map((x)=> typeof x === 'string' ? x : (x?.map_code || x?.code || '')).filter(Boolean))];
+    const reason = (p?.reason || '').trim();
+    const count  = codes.length;
+
+    const chips = codes.map((code) => `
+      <li class="group">
+        <div class="w-full max-w-full overflow-hidden flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+          <code class="min-w-0 truncate rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200">#${esc(code)}</code>
+
+          <div class="ml-auto flex shrink-0 items-center gap-2">
+            <button type="button"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+              data-copy-code="${escAttr(code)}" title="Copy">
+              ${icon.copy}
+            </button>
+
+            <button type="button"
+              class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+              data-open-map-details data-map-code="${escAttr(code)}">
+              Details
+            </button>
+          </div>
+        </div>
+      </li>
+    `).join('');
+
     html += `
-      <h3 class="text-lg font-bold">${actionText}</h3>
-      <ul class="grid grid-cols-2 sm:grid-cols-3 gap-2">${bulkList}</ul>
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+              ${ hasFn(t)
+                  ? (type === 'bulk_unarchive' ? (t('newsfeed.bulk_unarchived', { count }) || `Unarchived (${count})`)
+                                               : (t('newsfeed.bulk_archived',   { count }) || `Archived (${count})`))
+                  : (type === 'bulk_unarchive' ? `Unarchived (${count})` : `Archived (${count})`) }
+              <span class="ml-2 text-xs text-zinc-400">(${count})</span>
+            </h3>
+            ${reason ? `<p class="mt-1 text-xs text-zinc-300"><span class="text-zinc-400">${hasFn(t)?(t('common.reason')||'Reason'):'Reason'}:</span> ${esc(reason)}</p>` : ''}
+          </div>
+        </header>
+          ${ count
+            ? `<ul class="grid [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))] gap-2 p-3 sm:p-4">${chips}</ul>`
+            : `<div class="p-4 text-sm text-zinc-400">${hasFn(t)? (t('newsfeed.no_items')||'No items') : 'No items'}</div>`
+          }
+      </article>
     `;
   }
 
-  // GUIDE (fallback v3)
+  // LEGACY RECORD
+  if (type === 'legacy_record') {
+    const code     = p?.code || '';
+    const affected = Number.isFinite(+p?.affected_count) ? +p.affected_count : 0;
+    const reason   = (p?.reason || '').trim();
+
+    html += `
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+              ${hasFn(t) ? (t('newsfeed.converted_to_legacy') || 'Converted to legacy') : 'Converted to legacy'}
+            </h3>
+            ${reason ? `
+              <p class="mt-1 text-xs text-zinc-300">
+                <span class="text-zinc-400">${hasFn(t)? (t('common.reason') || 'Reason') : 'Reason'}:</span>
+                ${esc(reason)}
+              </p>` : ''}
+          </div>
+
+        </header>
+
+        <div class="p-3 sm:p-4">
+          <div class="w-full max-w-full overflow-hidden flex flex-wrap sm:flex-nowrap items-center gap-2">
+            <code class="min-w-0 truncate rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200">
+              #${esc(code || (hasFn(t)? t('common.na') : 'N/A'))}
+            </code>
+
+            <div class="ml-auto flex shrink-0 items-center gap-2">
+              <button type="button"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                data-copy-code="${escAttr(code)}"
+                title="${hasFn(t)? (t('sidebar.copy_code') || 'Copy') : 'Copy'}">
+                ${typeof icon !== 'undefined' && icon.copy
+                  ? icon.copy
+                  : '<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M5 5h7a2 2 0 0 1 2 2v7H7a2 2 0 0 1-2-2V5z"></path><path fill="currentColor" d="M7 7h7v7h2V7a4 4 0 0 0-4-4H7v2z"></path></svg>'}
+              </button>
+
+              ${code ? `
+                <button type="button"
+                  class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+                  data-open-map-details data-map-code="${escAttr(code)}">
+                  ${hasFn(t)? (t('newsfeed.details') || t('newsfeed.click_here') || 'Details') : 'Details'}
+                </button>` : ''}
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  // GUIDE
   if (type === 'guide') {
     const code = p?.map_code || p?.code || '';
-    const video = p?.map?.guide?.[0] || p?.guide?.[0] || p?.video || p?.url || '';
-    html += `
-      <h3 class="text-lg font-bold">${t('newsfeed.has_posted_guide', { nickname, map_code: code })}</h3>
-      ${video ? `<a class="text-brand-300 hover:text-brand-200 text-sm" href="${video}" target="_blank">${t('newsfeed.watch_guide')}</a>` : ''}
-      <div id="videoContainer-${code || item.id}" class="aspect-video overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50"></div>
-    `;
-  }
+    const videoUrl =
+      p?.guide_url ||
+      (Array.isArray(p?.map?.guide) && p.map.guide[0]) ||
+      (Array.isArray(p?.guide) && p.guide[0]) ||
+      p?.video || p?.url || '';
+    const poster = (p?.name || p?.author || nickname || '').trim();
 
-  // RECORD (fallback v3)
-  if (type === 'record') {
-    const mapName = p?.map_name || p?.map?.map_name || '';
-    const code = p?.map_code || p?.code || p?.map?.map_code || '';
-    const record = p?.record?.record ?? p?.record ?? p?.time ?? '';
-    const video = p?.record?.video ?? p?.video ?? '';
+    const platform = (() => {
+      if (!videoUrl) return '';
+      try {
+        const host = new URL(videoUrl).hostname.replace(/^www\./,'');
+        if (host.includes('youtube') || host.includes('youtu.be')) return 'YouTube';
+        if (host.includes('twitch')) return 'Twitch';
+        if (host.includes('bilibili') || host.includes('b23.tv')) return 'Bilibili';
+        if (host.includes('vimeo')) return 'Vimeo';
+        return host;
+      } catch { return ''; }
+    })();
+
+    const videoContainerId = `videoContainer-${(code || Math.random().toString(36).slice(2)).replace(/[^a-z0-9_-]/gi,'')}`;
+
+    const platformBadge = platform
+      ? `<span class="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-300">${esc(platform)}</span>`
+      : '';
+    const codeChip = code
+      ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+      : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`;
+
+    const watchBtn = videoUrl
+      ? `<a href="${escAttr(videoUrl)}" target="_blank" rel="noopener"
+            class="inline-flex items-center justify-center rounded-md border ${theme.ring.replace('ring-','border-')} ${theme.glow.replace('bg-','bg-').replace('/15','/10')} px-2.5 py-1 text-xs hover:bg-white/10">
+          ${hasFn(t)? (t('newsfeed.watch_guide') || 'Watch guide') : 'Watch guide'}
+        </a>` : '';
+
+    const detailsBtn = code
+      ? `<button type="button"
+            class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-zinc-200 hover:bg-white/10"
+            data-open-map-details data-map-code="${escAttr(code)}">Details</button>`
+      : '';
+
     html += `
-      <h3 class="text-lg font-bold">${t('newsfeed.new_wr', { nickname })}</h3>
-      <p class="text-sm text-zinc-300"><strong>${t('newsfeed.new_wr_info', { map_name: mapName, creators: p?.creators || '', map_code: code })}</strong></p>
-      <div class="grid sm:grid-cols-2 gap-2 text-sm">
-        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-          <span class="text-zinc-400 mr-1">${t('newsfeed.record_label')}:</span> ${record || t('common.na')}
-          <img class="inline h-5 w-5 align-[-3px]" src="assets/verifications/new_wr.gif" alt="VRF">
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+              ${hasFn(t)? t('newsfeed.has_posted_guide', { nickname: esc(poster||nickname), map_code: esc(code|| (t('common.na')||'N/A')) })
+                         : `${esc(poster||nickname)} posted a guide (#${esc(code||'N/A')})`}
+            </h3>
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+              ${platformBadge}${codeChip}
+            </div>
+          </div>
+        </header>
+
+        <div class="flex items-center gap-2 p-3 sm:p-4 pt-3">${watchBtn}${detailsBtn}</div>
+        <div class="p-3 sm:p-4 pt-0">
+          <div id="${escAttr(videoContainerId)}" class="relative aspect-video overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50"
+               ${videoUrl ? `data-video-url="${escAttr(videoUrl)}"` : ''}>
+            <div class="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04))] bg-[length:200%_100%]"></div>
+          </div>
         </div>
-        ${
-          video
-            ? `
-        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-          <span class="text-zinc-400 mr-1">${t('newsfeed.video_label')}:</span>
-          <a class="text-brand-300 hover:text-brand-200" href="${video}" target="_blank">${t('newsfeed.link')}</a>
-        </div>`
-            : ``
-        }
-      </div>
+      </article>
     `;
   }
 
-  // ARCHIVE (fallback v3)
-  if (type === 'archive') {
-    const code = p?.map_code || p?.code || '';
-    const creators = Array.isArray(p?.creators) ? p.creators.join(', ') : p?.creators || '';
-    const diffRaw = p?.difficulty || p?.map?.difficulty || '';
+  // RECORD
+  if (type === 'record') {
+    const mapName   = p?.map_name || p?.map?.map_name || '';
+    const code      = p?.map_code || p?.code || p?.map?.map_code || '';
+    const recordRaw = p?.record?.record ?? p?.record ?? p?.time ?? '';
+    const recordTxt = formatTime(recordRaw) || (hasFn(t)? t('common.na') : 'N/A');
+    const video     = p?.record?.video ?? p?.video ?? '';
+    const rankNum   = Number(p?.rank_num) || 0;
+    const medal     = p?.medal || '';
+    const diffLabel = p?.difficulty || '';
+    const nickLocal = p?.name || p?.user?.nickname || nickname;
+
+    // NOTE: on garde la couleur de TYPE au niveau carte, la difficulté colore les panneaux internes.
+    const d = diffStyleFor(diffLabel);
+
+    const crown = rankNum === 1
+      ? `<span class="inline-flex items-center justify-center rounded-full bg-white/10 ring-1 ${d.ring} p-1 text-amber-300">${icon.crown}</span>`
+      : '';
+
+    const medalImg = medalImgFor(medal);
+    const medalChip = medalImg ? `
+      <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px]">
+        <img src="${escAttr(medalImg)}" alt="${escAttr(medal)}" class="h-4 w-4 rounded object-cover"/>
+        <span class="text-zinc-200">${esc(medal)}</span>
+      </span>` : '';
+
     html += `
-      <h3 class="text-lg font-bold">${t('newsfeed.archived_map', { map_code: code })}</h3>
-      <p class="text-sm text-zinc-300">${t('newsfeed.archived_description')}</p>
-      <div class="mt-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
-        <p><span class="text-zinc-400">${t('newsfeed.map_code')}:</span> ${code}</p>
-        ${creators ? `<p><span class="text-zinc-400">${t('newsfeed.creator')}:</span> ${creators}</p>` : ``}
-        ${diffRaw ? `<p><span class="text-zinc-400">${t('newsfeed.difficulty')}:</span> ${diffRaw}</p>` : ``}
+      <h3 class="text-lg font-bold flex items-center gap-2">${crown}${hasFn(t)? t('newsfeed.new_wr', { nickname: nickLocal }) : `${esc(nickLocal)} set a new WR`}</h3>
+      <p class="text-sm text-zinc-300"><strong>${
+        hasFn(t)? t('newsfeed.new_wr_info', { map_name: mapName, creators: p?.creators || '', map_code: code })
+                : `${esc(mapName)} (#${esc(code)})`
+      }</strong></p>
+
+      <div class="grid gap-2 sm:grid-cols-3">
+        <div class="rounded-xl border border-white/10 bg-gradient-to-r ${d.bg} px-3 py-2 ring-1 ${d.ring}">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs text-zinc-400 mr-1">${hasFn(t)? t('newsfeed.record_label'):'Record'}:</span>
+              <span class="font-mono text-base">${recordTxt}</span>
+            </div>
+            <img class="inline h-5 w-5 align-[-3px]" src="assets/verifications/new/verification/wr_full.avif" alt="VRF" />
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[11px] ring-1 ${d.ring} ${d.text}">
+              ${esc(diffLabel || (hasFn(t)? t('common.na'):'N/A'))}
+            </span>
+            ${medalChip}
+            ${ code ? `
+              <button type="button" class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/60 px-2.5 py-1 text-xs hover:bg-zinc-800"
+                      data-copy-code="${escAttr(code)}" aria-label="Copy code ${escAttr(code)}">
+                ${icon.copy}<span>#${esc(code)}</span>
+              </button>` : '' }
+          </div>
+        </div>
+
+        ${ video ? `
+        <a class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition flex items-center gap-2"
+           href="${escAttr(video)}" target="_blank" rel="noopener noreferrer">
+          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ring-1 ${theme.ring}">${icon.play}</span>
+          <span class="text-sm ${d.text}">${hasFn(t)? t('newsfeed.video_label'):'Video'}</span>
+        </a>` : `
+        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-400">
+          ${hasFn(t)? t('newsfeed.video_label'):'Video'}: ${hasFn(t)? t('common.na'):'N/A'}
+        </div>` }
       </div>
     `;
   }
 
-  // ROLE (v3)
+  // ARCHIVE / UNARCHIVE
+  if (type === 'archive' || type === 'unarchive') {
+    const code     = p?.map_code || p?.code || '';
+    const mapName  = p?.map_name || '';
+    const creators = Array.isArray(p?.creators) ? p.creators.join(', ') : (p?.creators || '');
+    const diffRaw  = p?.difficulty || p?.map?.difficulty || '';
+    const reason   = (p?.reason || '').trim();
+
+    const diffCls  = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKeyOf(diffRaw)]) || 'text-zinc-200';
+    const rankIcon = diffRaw ? `assets/ranks/${formatImageName(diffRaw)}` : '';
+
+    html += `
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+              ${ type === 'unarchive'
+                  ? (hasFn(t)? t('newsfeed.unarchived_map', { map_code: esc(code) }) : `Unarchived #${esc(code)}`)
+                  : (hasFn(t)? t('newsfeed.archived_map',   { map_code: esc(code) }) : `Archived #${esc(code)}`) }
+            </h3>
+            <p class="mt-1 text-xs text-zinc-300">${
+              type === 'unarchive' ? (hasFn(t)? (t('newsfeed.unarchived_description')||'') : '')
+                                   : (hasFn(t)? (t('newsfeed.archived_description')  ||'') : '')
+            }</p>
+          </div>
+          <span class="rounded-full px-2 py-0.5 text-[11px] ${theme.badge}">${esc(typeLabel(type))}</span>
+        </header>
+
+        <div class="p-3 sm:p-4">
+          <div class="grid gap-2 sm:gap-3">
+            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.map_code')||'Map code') : 'Map code'}:</span>
+              <span class="font-medium text-zinc-100">${esc(code || (hasFn(t)? t('common.na'):'N/A'))}</span>
+            </div>
+
+            ${ mapName ? `
+            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.map_name')||'Map name') : 'Map name'}:</span>
+              <span class="font-medium text-zinc-100 truncate">${esc(mapName)}</span>
+            </div>` : '' }
+
+            ${ creators ? `
+            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.creator')||'Creator') : 'Creator'}:</span>
+              <span class="font-medium text-zinc-100 truncate">${esc(creators)}</span>
+            </div>` : '' }
+
+            ${ diffRaw ? `
+            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.difficulty')||'Difficulty') : 'Difficulty'}:</span>
+              <span class="inline-flex items-center gap-2 font-medium text-zinc-100">
+                ${ rankIcon ? `<img class="h-5 w-5 rounded ring-1 ring-white/10" src="${escAttr(rankIcon)}" alt="${escAttr(diffRaw)}">` : '' }
+                <span class="${diffCls}">${esc(diffRaw)}</span>
+              </span>
+            </div>` : '' }
+
+            ${ reason ? `
+            <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-400">${hasFn(t)? (t('common.reason')||'Reason') : 'Reason'}:</span>
+              <span class="text-zinc-200">${esc(reason)}</span>
+            </div>` : '' }
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  // ROLE
   if (type === 'role') {
-    const roles = (p?.user?.roles || p?.roles || [])
-      .map((role) => {
-        const clean = normalizeRole(role);
-        const tw = roleClasses[clean] || 'border border-white/10 bg-white/5 text-zinc-200';
-        return `<li class="px-2 py-1 rounded-md text-xs ${tw}">${role}</li>`;
-      })
-      .join('');
+    const listRaw = Array.isArray(p?.added) && p.added.length
+      ? p.added
+      : (p?.user?.roles || p?.roles || []);
+    const nickLocal = p?.name || p?.user?.nickname || nickname;
+
+    let primaryIdx = 0, best = -1;
+    listRaw.forEach((r,i)=>{ const {base,plus} = parseRole(r); const s = roleScore(base,plus); if (s>best){best=s; primaryIdx=i;} });
+    const chips = listRaw.map((r,i)=> renderRoleChip(r, i===primaryIdx)).join('');
+
     html += `
-      <h3 class="text-lg font-bold">${t('newsfeed.promoted', { nickname })}</h3>
-      <ul class="flex flex-wrap gap-2">${roles}</ul>
+      <h3 class="text-lg font-bold">${hasFn(t)? t('newsfeed.promoted', { nickname: nickLocal }) : `${esc(nickLocal)} has been promoted`}</h3>
+      <div class="flex items-center justify-between">
+        <ul class="flex flex-wrap items-center gap-2">${chips}</ul>
+      </div>
     `;
+  }
+
+  if (type === 'linked_map') {
+    const off  = p?.official_code   || '';
+    const unof = p?.unofficial_code || '';
+    const ptId = p?.playtest_id ?? null;
+
+    const codeChip = (label, code) => `
+      <div class="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
+        <div class="flex items-center gap-2">
+          ${ code
+            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`
+          }
+          <div class="ml-auto flex items-center gap-2">
+            ${ code ? `
+              <button type="button"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                data-copy-code="${escAttr(code)}" title="Copy">
+                ${icon.copy}
+              </button>
+            ` : '' }
+            ${ code ? `
+              <button type="button"
+                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10"
+                data-open-map-details data-map-code="${escAttr(code)}">Details</button>
+            ` : '' }
+          </div>
+        </div>
+      </div>
+    `;
+
+    html += `
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+              ${typeof t === 'function'
+                ? (t('newsfeed.linked_map_title') || 'Linked maps')
+                : 'Linked maps'}
+            </h3>
+            ${ ptId != null ? `
+              <p class="mt-1 text-xs text-zinc-300">
+                ${typeof t === 'function'
+                  ? (t('newsfeed.playtest_id', { id: ptId }) || `Playtest ID: ${ptId}`)
+                  : `Playtest ID: ${ptId}`}
+              </p>` : '' }
+          </div>
+        </header>
+
+        <div class="p-3 sm:p-4">
+          <div class="grid gap-3 sm:grid-cols-2">
+            ${codeChip((typeof t === 'function' ? (t('newsfeed.official_code') || 'Official code') : 'Official code'),   off)}
+            ${codeChip((typeof t === 'function' ? (t('newsfeed.unofficial_code') || 'Unofficial code') : 'Unofficial code'), unof)}
+          </div>
+
+          ${ (off && unof) ? `
+            <div class="mt-3 rounded-lg border border-teal-400/20 bg-teal-500/10 p-2.5 text-xs text-teal-200">
+              ${typeof t === 'function'
+                ? (t('newsfeed.linked_map_hint') || 'These two map codes are now linked together.')
+                : 'These two map codes are now linked together.'}
+            </div>` : '' }
+        </div>
+      </article>
+    `;
+  }
+
+  if (type === 'unlinked_map') {
+    const off    = p?.official_code   || '';
+    const unof   = p?.unofficial_code || '';
+    const reason = (p?.reason || '').trim();
+
+    const codeChip = (label, code) => `
+      <div class="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
+        <div class="flex items-center gap-2">
+          ${ code
+            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`
+          }
+          <div class="ml-auto flex items-center gap-2">
+            ${ code ? `
+              <button type="button"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                data-copy-code="${escAttr(code)}" title="Copy">
+                ${icon.copy}
+              </button>` : '' }
+            ${ code ? `
+              <button type="button"
+                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10"
+                data-open-map-details data-map-code="${escAttr(code)}">Details</button>` : '' }
+          </div>
+        </div>
+      </div>
+    `;
+
+    html += `
+      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+          <div class="min-w-0">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+              ${typeof t === 'function'
+                ? (t('newsfeed.unlinked_map_title') || 'Unlinked maps')
+                : 'Unlinked maps'}
+            </h3>
+            ${ reason ? `
+              <p class="mt-1 text-xs text-zinc-300">
+                <span class="text-zinc-400">${hasFn(t)? (t('common.reason')||'Reason') : 'Reason'}:</span>
+                ${esc(reason)}
+              </p>` : '' }
+          </div>
+          <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${theme.badge}">
+            ${esc(typeLabel(type))}
+          </span>
+        </header>
+
+        <div class="p-3 sm:p-4">
+          <div class="grid gap-3 sm:grid-cols-2">
+            ${codeChip((hasFn(t)? (t('newsfeed.official_code')   || 'Official code')   : 'Official code'),   off)}
+            ${codeChip((hasFn(t)? (t('newsfeed.unofficial_code') || 'Unofficial code') : 'Unofficial code'), unof)}
+          </div>
+
+          ${(off && unof) ? `
+            <div class="mt-3 rounded-lg border border-red-400/20 bg-red-500/10 p-2.5 text-xs text-red-200">
+              ${hasFn(t)
+                ? (t('newsfeed.unlinked_map_hint') || 'These two map codes are no longer linked.')
+                : 'These two map codes are no longer linked.'}
+            </div>` : `
+            <div class="mt-3 rounded-lg border border-white/10 bg-white/5 p-2.5 text-xs text-zinc-300">
+              ${hasFn(t)? (t('newsfeed.unlinked_map_partial') || 'One of the codes is missing.') : 'One of the codes is missing.'}
+            </div>`}
+        </div>
+      </article>
+    `;
+  }
+
+  // Fallback
+  if (!/^(announcement|new_map|map_edit|bulk_archive|bulk_unarchive|guide|record|archive|unarchive|role|legacy_record|linked_map|unlinked_map)$/.test(type)) {
+    html += `<div class="flex items-center justify-between">
+      <p class="text-sm text-zinc-300">Unknown event <code class="text-zinc-200">${esc(type)}</code></p>
+      <span class="rounded-full px-2 py-0.5 text-[11px] ${THEME.unknown.badge}">${esc(typeLabel('unknown'))}</span>
+    </div>`;
   }
 
   html += `</div></article>`;
   return html;
+}
+
+/* ---------- Medals ---------- */
+const __MEDAL_ID_TO_KIND = {
+  '1406302950443192320': 'gold',
+  '1406302952263782466': 'silver',
+  '1406300035624341604': 'bronze',
+};
+const __MEDAL_ORDER = ['gold','silver','bronze'];
+
+function medalVerifiedImgFor(kind) {
+  switch (String(kind).toLowerCase()) {
+    case 'gold':   return 'assets/verifications/new/verification/verified_gold.avif';
+    case 'silver': return 'assets/verifications/new/verification/verified_silver.avif';
+    case 'bronze': return 'assets/verifications/new/verification/verified_bronze.avif';
+    default:       return '';
+  }
+}
+
+function parseMedalsText(text) {
+  const out = [];
+  if (!text) return out;
+
+  const re = /<a:[^:>]*:(\d+)>:\s*([0-9]+(?:\.[0-9]+)?)\s*/gi;
+  let m;
+  while ((m = re.exec(text))) {
+    const id = m[1];
+    const timeText = (m[2] ?? '').trim();
+    const kind = __MEDAL_ID_TO_KIND[id] || '';
+    if (kind) out.push({ kind, timeText });
+  }
+  if (out.length) {
+    out.sort((a,b)=> __MEDAL_ORDER.indexOf(a.kind) - __MEDAL_ORDER.indexOf(b.kind));
+    return out;
+  }
+
+  const lines = String(text).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  for (const line of lines) {
+    const m2 = line.match(/(gold|silver|bronze)\s*:\s*([0-9]+(?:\.[0-9]+)?)/i);
+    if (m2) out.push({ kind: m2[1].toLowerCase(), timeText: m2[2] });
+  }
+  if (out.length) {
+    out.sort((a,b)=> __MEDAL_ORDER.indexOf(a.kind) - __MEDAL_ORDER.indexOf(b.kind));
+    return out;
+  }
+
+  const nums = (String(text).match(/([0-9]+(?:\.[0-9]+)?)/g) || []);
+  __MEDAL_ORDER.forEach((k, i) => { if (nums[i]) out.push({ kind: k, timeText: nums[i] }); });
+  return out;
 }
 
 /* ---------- Discord message formatting ---------- */
@@ -1310,55 +2167,105 @@ function nfPrettyVal(v) {
 /* ---------- Video embed ---------- */
 function createEmbeddedVideo(containerId, videoUrl) {
   const container = document.getElementById(containerId);
-  if (!container) return;
+  if (!container || !videoUrl) return;
 
   let embedUrl = '';
-  try {
-    const url = new URL(videoUrl);
-    const host = url.host;
-    if (host.includes('youtube.com') || host.includes('youtu.be')) {
-      const id = url.searchParams.get('v') || url.pathname.split('/')[1];
-      if (id) embedUrl = `https://www.youtube.com/embed/${id}`;
-    } else if (host.includes('bilibili.com')) {
-      const seg = url.pathname.split('/')[1];
-      if (seg) embedUrl = `https://player.bilibili.com/player.html?bvid=${seg}`;
-    }
-  } catch {}
+  let node = null;
 
+  let u;
+  try { u = new URL(videoUrl); } catch { u = null; }
+  if (!u) {
+    container.innerHTML = `<p class="p-3 text-sm text-rose-300">${t('common.video_embed_failed')}</p>`;
+    return;
+  }
+
+  const host = u.hostname.replace(/^www\./, '');
+
+  if (host.includes('youtube') || host === 'youtu.be') {
+    let id = u.searchParams.get('v');
+    if (!id && host === 'youtu.be') id = u.pathname.split('/')[1];
+    if (!id && u.pathname.startsWith('/shorts/')) id = u.pathname.split('/')[2];
+    if (id) embedUrl = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+  }
+
+  else if (host.includes('vimeo.com')) {
+    const vid = (u.pathname.match(/\/(\d+)/) || [])[1];
+    if (vid) embedUrl = `https://player.vimeo.com/video/${vid}`;
+  }
+
+  else if (host.includes('twitch.tv')) {
+    const parent = location.hostname;
+    const clip  = (u.pathname.match(/\/clip\/([^/?]+)/) || [])[1];
+    const video = (u.pathname.match(/\/videos\/(\d+)/) || [])[1];
+    const channel = (!clip && !video) ? (u.pathname.split('/').filter(Boolean)[0] || '') : '';
+
+    if (clip)   embedUrl = `https://clips.twitch.tv/embed?clip=${encodeURIComponent(clip)}&parent=${encodeURIComponent(parent)}`;
+    else if (video) embedUrl = `https://player.twitch.tv/?video=${encodeURIComponent(video)}&parent=${encodeURIComponent(parent)}&autoplay=false`;
+    else if (channel) embedUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${encodeURIComponent(parent)}&autoplay=false`;
+  }
+
+  else if (host.includes('bilibili.com') || host.includes('b23.tv')) {
+    const bv = (videoUrl.match(/(BV[0-9A-Za-z]+)/) || [])[1];
+    const p = u.searchParams.get('p');
+    if (bv) embedUrl = `https://player.bilibili.com/player.html?bvid=${bv}${p ? `&page=${encodeURIComponent(p)}` : ''}`;
+  }
+
+  else if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(u.pathname)) {
+    node = document.createElement('video');
+    node.src = videoUrl;
+    node.controls = true;
+    node.playsInline = true;
+    node.className = 'absolute inset-0 h-full w-full';
+  }
+
+  container.innerHTML = '';
+  if (node) {
+    container.appendChild(node);
+    return;
+  }
   if (embedUrl) {
     const iframe = document.createElement('iframe');
     iframe.src = embedUrl;
-    iframe.setAttribute(
-      'allow',
-      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-    );
-    iframe.setAttribute('allowFullscreen', 'true');
-    iframe.className = 'w-full h-full';
-    container.innerHTML = '';
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    iframe.className = 'absolute inset-0 h-full w-full';
     container.appendChild(iframe);
   } else {
-    container.innerHTML =
-      `<p class="text-sm text-rose-300">${t('common.video_embed_failed')}</p>`;
+    container.innerHTML = `<p class="p-3 text-sm text-rose-300">${t('common.video_embed_failed')}</p>`;
   }
+}
+
+function mountAllGuideVideos(root = document) {
+  const nodes = root.querySelectorAll('[id^="videoContainer-"][data-video-url]');
+  nodes.forEach((el) => {
+    if (el.querySelector('iframe, video')) return;
+    createEmbeddedVideo(el.id, el.getAttribute('data-video-url'));
+  });
 }
 
 /* ---------- Pagination / Load more ---------- */
 function renderPaginationButtons() {
   const loadMore = document.getElementById('nf-loadmore');
   if (loadMore) {
-    loadMore.classList.toggle('hidden', currentPage >= totalPages);
+    const hasKnownTotal = Number.isFinite(Number(totalResults));
+    const showByPages   = currentPage < totalPages;
+    const showByHasMore = !!window.__nfHasMore;
+
+    const shouldShow = hasKnownTotal ? showByPages : showByHasMore;
+    loadMore.classList.toggle('hidden', !shouldShow);
+
     loadMore.onclick = () => {
-      if (currentPage < totalPages) {
-        currentPage += 1;
-        loadNewsfeed(true);
-      }
+      if (!shouldShow) return;
+      currentPage += 1;
+      loadNewsfeed(true);
     };
   }
 
   const pag = document.getElementById('paginationContainer');
   if (!pag) return;
   pag.innerHTML = '';
-  if (totalPages <= 1) return;
+  if (!Number.isFinite(Number(totalResults)) || totalPages <= 1) return;
 
   const mkBtn = (label, disabled, cb) => {
     const b = document.createElement('button');
@@ -1628,7 +2535,6 @@ function applySearchFilter() {
   const loadMore = document.getElementById('nf-loadmore');
 
   if (emptyEl) emptyEl.classList.toggle('hidden', !isEmpty);
-  if (loadMore) loadMore.classList.toggle('hidden', isEmpty);
 }
 
 /* ---------- Clipboard for map-code ---------- */
@@ -1657,18 +2563,17 @@ async function copyToClipboard(text) {
 }
 
 document.addEventListener('click', async (e) => {
-  const el = e.target.closest('.map-code');
-  if (!el) return;
+  const btn = e.target.closest('[data-copy-code]');
+  if (!btn) return;
 
-  const text = el.dataset.mapCode || el.textContent || '';
+  const raw    = btn.getAttribute('data-copy-code') || '';
+  const toCopy = String(raw).trim().replace(/^#/, '');
 
-  const ok = await copyToClipboard(text);
+  void logMapCopy(toCopy, 'web');
 
-  if (ok) {
-    showConfirmationMessage(t('newsfeed.copy_clipboard'));
-  } else {
-    showErrorMessage(t('newsfeed.copy_clipboard_error'));
-  }
+  const ok = await copyTextToClipboard(toCopy);
+  if (ok) notifyCodeCopied(toCopy);
+  else    showErrorMessage(t('newsfeed.copy_clipboard_error'));
 });
 
 /* ---------- Translate button (Laravel API, anti-spam + cache) ---------- */
@@ -1737,6 +2642,37 @@ document.addEventListener('click', async (event) => {
 
 // ———————————————————————————————————————————————————————————————
 // COMPLETIONS
+function extractCompletions(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  if (Array.isArray(payload.data?.results)) return payload.data.results;
+  if (Array.isArray(payload.data?.items))   return payload.data.items;
+  if (Array.isArray(payload.data))          return payload.data;
+  if (Array.isArray(payload.items))         return payload.items;
+  if (Array.isArray(payload.results))       return payload.results;
+
+  const numeric = Object.keys(payload)
+    .filter(k => /^\d+$/.test(k))
+    .sort((a,b)=>(+a)-(+b))
+    .map(k => payload[k])
+    .filter(v => v && typeof v === 'object');
+  return numeric;
+}
+
+function extractTotalCount(payload, items) {
+  if (Array.isArray(items) && items.length) {
+    const n = Number(items[0]?.total_results);
+    if (Number.isFinite(n)) return n;
+  }
+  const p = payload || {};
+  const candidates = [p.total_results, p.total, p.count, p.data?.total_results, p.data?.total];
+  for (const c of candidates) {
+    const n = Number(c);
+    if (Number.isFinite(n)) return n;
+  }
+  return items.length;
+}
+
 async function loadCompletions(append = false) {
   const container = document.getElementById('completionsContainer');
   if (!container) return;
@@ -1751,28 +2687,25 @@ async function loadCompletions(append = false) {
     });
 
     const payload = await fetchJsonStrict(`/api/completions/all?${params}`, {
-      method: 'POST',
+      method: 'GET',
       headers: { Accept: 'application/json', 'X-CSRF-TOKEN': CSRF },
       cache: 'no-store',
       credentials: 'same-origin',
     });
 
-    const items = Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : [];
+    const items = extractCompletions(payload);
 
-    const firstTotal = Number(items?.[0]?.total_results);
-    compTotalResults = Number.isFinite(firstTotal)
-      ? firstTotal
-      : Number(payload?.total_results ?? payload?.total ?? items.length) || items.length;
+    compTotalResults = extractTotalCount(payload, items);
+    compTotalPages   = Math.max(1, Math.ceil(compTotalResults / compPageSize));
 
-    compTotalPages = Math.max(1, Math.ceil(compTotalResults / compPageSize));
-
-    const cards = await Promise.all(items.map(renderCompletionCard));
+    const cards = [];
+    for (const it of items) {
+      try {
+        cards.push(await renderCompletionCard(it));
+      } catch (err) {
+        console.warn('renderCompletionCard failed for item:', it, err);
+      }
+    }
     const html = cards.join('');
 
     if (append) removeCompSkeleton();
@@ -2075,12 +3008,14 @@ function watchPillHtml(videoUrl) {
 }
 
 async function renderCompletionCard(item) {
-  const nickname = item?.name || 'Unknown';
-  const aka = item?.also_known_as || '';
-  const akaText = [aka].filter(Boolean).join(', ');
+  const nickname = item?.nickname || 'Unknown';
+  const akaRaw = item?.also_known_as;
+  const akaText = Array.isArray(akaRaw)
+    ? akaRaw.filter(Boolean).join(', ')
+    : String(akaRaw ?? '').trim();
   const mapName = item?.map_name || 'Unknown map';
   const mapDifficulty = item?.difficulty || 'Unknown difficulty';
-  const code = item?.code || '';
+  const code = String(item?.code ?? item?.map_code ?? '').trim();
   const timeFmt = formatSecondsRaw(item?.time);
   const sshot = safeUrl(item?.screenshot);
   const video = safeUrl(item?.video);
@@ -2192,16 +3127,29 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-copy-code]');
-  if (!btn) return;
-  const val = btn.getAttribute('data-copy-code') || '';
-  const ok = await copyTextToClipboard(val);
-  if (ok) {
-    showConfirmationMessage(t?.('newsfeed.copy_clipboard'));
-  } else {
-    showErrorMessage(t?.('newsfeed.copy_clipboard_error'));
-  }
+  const el = e.target.closest('.map-code');
+  if (!el) return;
+
+  const raw = el.getAttribute('data-copy-code')
+            || el.getAttribute('data-map-code')
+            || el.textContent
+            || '';
+  const toCopy = String(raw).trim().replace(/^#/, '');
+
+  void logMapCopy(toCopy, 'web');
+
+  const ok = await copyToClipboard(toCopy);
+  if (ok) notifyCodeCopied(toCopy);
+  else    showErrorMessage(t('newsfeed.copy_clipboard_error'));
 });
+
+function notifyCodeCopied(raw) {
+  const code = String(raw || '').trim().replace(/^#/, '');
+  const msg  = typeof t === 'function'
+    ? t('newsfeed.copy_code', { code })
+    : `Map code copied : ${code}`;
+  showConfirmationMessage(msg);
+}
 
 document.addEventListener('error', (e) => {
   const t = e.target;
@@ -2500,8 +3448,11 @@ function closeChangelogsModal() {
   const card = document.getElementById('communityPicksCard');
   if (!card) return;
 
-  const endpoint     = card.dataset.endpoint;
-  const fullEndpoint = card.dataset.fullEndpoint || endpoint.replace(/limit=\d+/, 'limit=25');
+  const raw = card.dataset.endpoint;
+  const endpoint = new URL(raw, window.location.origin).href;
+
+  const rawFull = card.dataset.fullEndpoint || raw.replace(/limit=\d+/, 'limit=25');
+  const fullEndpoint = new URL(rawFull, window.location.origin).href;
 
   const _i18n = window.NEWSFEED_I18N || {};
   const t = (path, params = {}) => {

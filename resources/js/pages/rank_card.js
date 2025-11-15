@@ -204,12 +204,15 @@ async function initRankCard() {
     badgeMasteryContent.innerHTML = '';
     badgeMasteryContent.dataset.loadedFor = '';
 
-    renderRankCardSkeleton();
+    rankCardContent.innerHTML = '';
+    rankCardContent.dataset.loadedFor = '';
+
     showLoadingBar();
 
     if (wasBadgesTab) {
       hideRankCardContainer();
     } else {
+      renderRankCardSkeleton();
       await loadRankCardContent();
     }
 
@@ -263,30 +266,6 @@ async function initRankCard() {
   enableButtons();
   updateButtonContainerVisibility();
 }
-
-/* =========================
-   CSRF
-   ========================= */
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || null;
-
-(function patchFetchForCsrf() {
-  if (!CSRF_TOKEN || typeof window.fetch !== 'function') return;
-
-  const __origFetch = window.fetch.bind(window);
-  window.fetch = (input, init = {}) => {
-    const method = String(init.method || 'GET').toUpperCase();
-
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-      const headers = new Headers(init.headers || {});
-      if (!headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF_TOKEN);
-      if (!headers.has('X-Requested-With')) headers.set('X-Requested-With', 'XMLHttpRequest');
-      if (!init.credentials) init.credentials = 'same-origin';
-      init = { ...init, headers };
-    }
-
-    return __origFetch(input, init);
-  };
-})();
 
 /* =========================
    HELPERS

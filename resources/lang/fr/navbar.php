@@ -10,39 +10,40 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     // NAVIGATION
     // ──────────────────────────────────────────────────────────────────────
-    'home' => 'Accueil',
-    'leaderboard' => 'Classement',
-    'search' => 'Recherche',
-    'maps' => 'Cartes',
-    'guides' => 'Guides',
-    'completions' => 'Completions',
-    'community' => 'Communauté',
-    'news' => 'Actus',
-    'newsfeed' => 'Newsfeed',
-    'announcements' => 'Annonces',
-    'tutorial' => 'Tutoriels',
-    'statistics' => 'Statistiques',
-    'submit' => 'Soumettre',
-    'submit_record' => 'Record',
-    'submit_playtest' => 'Vote playtest',
-    'submit_map' => 'Carte',
+    'home'            => 'Accueil',
+    'leaderboard'     => 'Classement',
+    'search'          => 'Recherche',
+    'maps'            => 'Cartes',
+    'guides'          => 'Guides',
+    'completions'     => 'Completions',
+    'community'       => 'Communauté',
+    'news'            => 'Actualités',
+    'newsfeed'        => 'Newsfeed',
+    'announcements'   => 'Annonces',
+    'tutorial'        => 'Tutoriels',
+    'statistics'      => 'Statistiques',
+    'submit'          => 'Soumettre',
+    'submit_record'   => 'Completion',
+    'submit_playtest' => 'Playtest',
+    'submit_map'      => 'Carte',
+    'infos'           => 'Infos',
 
     // ──────────────────────────────────────────────────────────────────────
     // AUTH & PROFILE
     // ──────────────────────────────────────────────────────────────────────
-    'login' => 'Connexion',
-    'logout' => 'Déconnexion',
-    'lootbox' => 'Lootbox',
-    'profile' => 'Profil',
-    'language' => 'Langue',
-    'rank_card' => 'Carte de rang',
+    'login'     => 'Connexion',
+    'logout'    => 'Déconnexion',
+    'lootbox'   => 'Lootbox',
+    'profile'   => 'Profil',
+    'language'  => 'Langue',
+    'rank_card' => 'Rank Card',
     'dashboard' => 'Tableau de bord',
-    'settings' => 'Paramètres',
-    'submit' => 'Soumettre',
+    'settings'  => 'Paramètres',
+    'submit'    => 'Soumettre',
 
     // ──────────────────────────────────────────────────────────────────────
     // BRAND
     // ──────────────────────────────────────────────────────────────────────
-    'brand_title' => 'GENJI PARKOUR',
+    'brand_title'   => 'GENJI PARKOUR',
     'brand_tagline' => 'communauté & outils',
 ];

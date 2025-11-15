@@ -28,29 +28,29 @@
     </section>
 
     <div class="mx-auto min-h-[80vh] max-w-7xl px-4 pt-6 pb-0 sm:px-6 sm:pt-1 lg:px-8">
-      <!-- Onglets -->
-      <div class="mt-1">
-        <div id="mainTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
-          <button
-            id="submitRecordBtn"
-            class="tab-btn cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
-          >
-            {{ __('submit.tabs.record') }}
-          </button>
-          <button
-            id="playtestBtn"
-            class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-          >
-            {{ __('submit.tabs.playtest') }}
-          </button>
-          <button
-            id="submitMapBtn"
-            class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-          >
-            {{ __('submit.tabs.map') }}
-          </button>
-        </div>
+    <!-- Tabs -->
+    <div class="mt-1 flex flex-wrap items-center gap-2">
+      <div id="mainTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+        <button
+          id="submitRecordBtn"
+          class="tab-btn cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+        >
+          {{ __('submit.tabs.record') }}
+        </button>
+        <button
+          id="playtestBtn"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          {{ __('submit.tabs.playtest') }}
+        </button>
+        <button
+          id="submitMapBtn"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          {{ __('submit.tabs.map') }}
+        </button>
       </div>
+    </div>
 
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
@@ -173,7 +173,7 @@
 
               <!-- Zone responsive + anti-overflow -->
               <div id="screenshotDrop"
-                   class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60">
+                  class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60">
                 <input
                   id="screenshotInput"
                   name="screenshot"
@@ -182,13 +182,13 @@
                   class="hidden"
                 />
                 <div id="screenshotPlaceholder"
-                     class="px-2 text-center text-sm text-zinc-300 whitespace-normal break-words">
+                    class="px-2 text-center text-sm text-zinc-300 whitespace-normal break-words">
                   {{ __('submit.record.drag_and_drop') }}
                 </div>
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div id="srActionBar" class="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
                 class="sr-reveal inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 [--sr-delay:605ms] hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:[animation-delay:var(--sr-delay)]"
@@ -206,6 +206,33 @@
             </div>
           </div>
         </form>
+
+        <div
+          class="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice"
+          id="srOcrNotice"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-start gap-3">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
+            </svg>
+            <div class="min-w-0">
+              <div class="font-semibold text-amber-300">{{ __('submit.ocr.title') }}</div>
+              <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+                <li class="flex items-center gap-2">
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+                  <span>{{ __('submit.ocr.li1') }}</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+                  <span>{{ __('submit.ocr.li2') }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- CONTENU ONGLET : Playtest -->
@@ -248,6 +275,24 @@
         id="submitMapSection"
         class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
       ></div>
+    </div>
+    
+    <!-- Help modal -->
+    <div id="helpModal" class="fixed inset-0 z-[9999] hidden">
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm help-modal-backdrop"></div>
+
+      <div id="helpModalInner"
+          class="relative mx-auto my-8 w-[min(960px,92vw)] max-h-[80vh] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 ring-1 ring-white/10 shadow-2xl x-anim hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+          <h3 id="helpModalTitle" class="text-sm font-semibold text-zinc-100"></h3>
+          <button type="button" id="helpModalClose"
+                  class="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-zinc-200 hover:bg-white/10">
+            {{ __('help.common.close_label') }}
+          </button>
+        </header>
+
+        <div id="helpModalBody" class="px-4 py-3 overflow-y-auto"></div>
+      </div>
     </div>
 
     <!-- Loading + Pagination -->

@@ -17,7 +17,7 @@ return [
         'fr' => [
             'name' => 'FR',
             'flag' => 'flag-france',
-            'translated' => false,
+            'translated' => true,
             'modalMessage' => "La traduction pour cette langue n'est pas encore disponible. Si vous souhaitez contribuer, contactez <strong>.aiapaec</strong> sur Discord.",
             'closeButtonText' => 'Fermer',
         ],
@@ -31,7 +31,7 @@ return [
         'ru' => [
             'name' => 'RU',
             'flag' => 'flag-russia',
-            'translated' => false,
+            'translated' => true,
             'modalMessage' => 'Перевод для этого языка еще не доступен. Если вы хотите помочь с переводом, свяжитесь с <strong>.aiapaec</strong> в Discord.',
             'closeButtonText' => 'Закрыть',
         ],
@@ -45,7 +45,7 @@ return [
         'jp' => [
             'name' => 'JP',
             'flag' => 'flag-japan',
-            'translated' => true,
+            'translated' => false,
             'modalMessage' => 'この言語の翻訳はまだ利用できません。翻訳に協力したい場合は、Discord で <strong>.aiapaec</strong> に連絡してください。',
             'closeButtonText' => '閉じる',
         ],

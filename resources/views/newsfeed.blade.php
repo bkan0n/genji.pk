@@ -46,7 +46,7 @@
   </div>
 
   <!-- ========== PANEL: NEWSFEED ========== -->
-  <div id="panel-newsfeed" class="mt-6 space-y-6">
+  <div id="panel-newsfeed" class="mt-6 space-y-6 min-h-[100vh]">
     <!-- Filters / search -->
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -77,7 +77,7 @@
               </div>
 
               <div class="flex flex-wrap gap-2" id="nf-tags">
-                @php($tags = ['all', 'announcement', 'guide', 'new_map', 'role', 'record'])
+                @php($tags = ['all', 'announcement', 'guide', 'new_map', 'role', 'record', 'map_edit', 'legacy_record', 'archive', 'unarchive', 'linked_map', 'unlinked_map'])
                 @foreach ($tags as $i => $tag)
                   <button
                     class="nf-chip {{ $i === 0 ? 'bg-white/10' : '' }} inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
@@ -156,8 +156,8 @@
           <div
             id="communityPicksCard"
             class="rounded-2xl border border-white/10 bg-white/5 p-4"
-            data-endpoint="{{ url('/api/maps/trending?limit=3') }}"
-            data-full-endpoint="{{ url('/api/maps/trending?limit=25') }}"
+            data-endpoint="/api/maps/trending?limit=3"
+            data-full-endpoint="/api/maps/trending?limit=25"
           >
             <div class="flex items-center justify-between">
               <h3 class="font-semibold">{{ __('newsfeed.sidebar.community_picks') }}</h3>
@@ -245,22 +245,6 @@
               <div id="nf-changelogs" class="mt-3 space-y-3 text-sm text-zinc-300"></div>
             </div>
 
-            <!-- Submit your map -->
-            <div
-              class="from-brand-700/20 rounded-2xl border border-white/10 bg-gradient-to-br to-white/5 p-4"
-            >
-              <h3 class="font-semibold">{{ __('newsfeed.sidebar.submit_title') }}</h3>
-              <p class="mt-1 text-sm text-zinc-300">{{ __('newsfeed.sidebar.submit_desc') }}</p>
-              <a
-                href="{{ url('/submit?section=submit_map') }}"
-                class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
-              >
-                {{ __('newsfeed.sidebar.submit_cta') }}
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M14 3l7 7-7 7v-4H3v-6h11V3z" />
-                </svg>
-              </a>
-            </div>
           </aside>
         </div>
       </div>
@@ -287,7 +271,7 @@
   </div>
 
   <!-- ========== PANEL: COMPLETIONS ========== -->
-  <div id="panel-completions" class="mt-6 hidden">
+  <div id="panel-completions" class="mt-6 hidden min-h-[100vh]">
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 min-h-[100vh]">
         <div class="rounded-2xl border border-white/10 bg-white/5 p-4">

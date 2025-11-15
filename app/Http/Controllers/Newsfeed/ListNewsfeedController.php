@@ -15,7 +15,7 @@ class ListNewsfeedController extends Controller
         $validated = $request->validate([
             'page_size' => 'nullable|integer|in:10,20,25,50',
             'page_number' => 'nullable|integer|min:1',
-            'type' => 'nullable|string|in:new_map,record,archive,unarchive,bulk_archive,bulk_unarchive,guide,legacy_record,map_edit,role,announcement',
+            'type' => 'nullable|string|in:new_map,record,archive,unarchive,bulk_archive,bulk_unarchive,guide,legacy_record,map_edit,role,announcement,linked_map,unlinked_map',
         ]);
 
         $pageSize = $validated['page_size'] ?? 10;

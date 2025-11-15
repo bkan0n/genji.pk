@@ -10,8 +10,8 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     // BRAND & TAGLINE
     // ──────────────────────────────────────────────────────────────────────
-    'brand' => 'Genji Parkour',
-    'tagline' => 'Site communautaire non officiel. Overwatch™ est la propriété de ses détenteurs respectifs.',
+    'brand'   => 'Genji Parkour',
+    'tagline' => 'Site communautaire non officiel. Overwatch™ appartient à ses propriétaires respectifs.',
 
     // ──────────────────────────────────────────────────────────────────────
     // DISCOVER
@@ -19,8 +19,8 @@ return [
     'discover_title' => 'Découvrir',
     'discover' => [
         'leaderboard' => 'Classement',
-        'maps' => 'Cartes',
-        'guides' => 'Guides',
+        'maps'        => 'Cartes',
+        'guides'      => 'Guides',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -28,9 +28,18 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'contribute_title' => 'Contribuer',
     'contribute' => [
-        'submit' => 'Soumettre une carte',
+        'submit'    => 'Proposer une carte',
         'convertor' => 'Convertisseur',
-        'credits' => 'Crédits',
+        'credits'   => 'Crédits',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // SUPPORT
+    // ──────────────────────────────────────────────────────────────────────
+    'support_title' => 'Soutenir Genji Parkour',
+    'support' => [
+        'text'   => 'Aidez-nous à héberger, maintenir et améliorer le site.',
+        'donate' => 'Faire un don',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -41,5 +50,6 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     // COPYRIGHT
     // ──────────────────────────────────────────────────────────────────────
-    'copyright_line' => '© :year :brand — Tous droits réservés.',
+    'copyright_line' =>
+        '© :year :brand — Tous droits réservés.',
 ];

@@ -54,6 +54,7 @@ let icons = [];
 let currentSection = 'playtest';
 let toolbarDebounce;
 let secondaryCreators = [];
+let mapOfficial = true;
 const activeFilters = {};
 const filterKeyMap = {
   map_code: 'code',
@@ -66,6 +67,7 @@ let __mechRestrCache = null;
 let __mechRestrInFlight = null;
 const COMPLETION_SUBMIT_ENDPOINT = '/api/completions';
 const IMAGE_UPLOAD_ENDPOINT = '/api/utilities/image';
+const OCR_ENDPOINT = '/api/ocr/extract';
 const TIME_REGEX = /^\d{1,5}(?:\.\d{1,2})?$/;
 window.customBannerFile = null;
 
@@ -75,30 +77,6 @@ const BANNER_MAX_BYTES = 8 * 1024 * 1024;
 window.screenshotUrl = null;
 window.customBannerUrl = null;
 window.screenshotFile = null;
-
-/* =========================
-   CSRF
-   ========================= */
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || null;
-
-(function patchFetchForCsrf() {
-  if (!CSRF_TOKEN || typeof window.fetch !== 'function') return;
-
-  const __origFetch = window.fetch.bind(window);
-  window.fetch = (input, init = {}) => {
-    const method = String(init.method || 'GET').toUpperCase();
-
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-      const headers = new Headers(init.headers || {});
-      if (!headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF_TOKEN);
-      if (!headers.has('X-Requested-With')) headers.set('X-Requested-With', 'XMLHttpRequest');
-      if (!init.credentials) init.credentials = 'same-origin';
-      init = { ...init, headers };
-    }
-
-    return __origFetch(input, init);
-  };
-})();
 
 /* =========================
    HELPERS Inline
@@ -132,19 +110,25 @@ function __enter(el) {
     el.classList.add('x-enter-active');
     el.classList.remove('x-enter');
   });
-  setTimeout(() => {
-    el.classList.remove('x-enter-active');
-  }, 260);
+  const done = () => {
+    el.classList.remove('x-enter-active', 'x-anim');
+    el.removeEventListener('transitionend', done);
+  };
+  el.addEventListener('transitionend', done);
+  setTimeout(done, 400);
 }
-function __exit(el, done) {
-  if (!el) return done && done();
+function __exit(el, after) {
+  if (!el) { after && after(); return; }
   el.classList.add('x-anim', 'x-exit');
   requestAnimationFrame(() => el.classList.add('x-exit-active'));
-  setTimeout(() => {
+  const done = () => {
     __hide(el);
-    el.classList.remove('x-exit', 'x-exit-active');
-    done && done();
-  }, 220);
+    el.classList.remove('x-exit', 'x-exit-active', 'x-anim');
+    el.removeEventListener('transitionend', done);
+    after && after();
+  };
+  el.addEventListener('transitionend', done);
+  setTimeout(done, 320);
 }
 
 /* =========================
@@ -179,6 +163,156 @@ function t(path, params = {}) {
 /* =========================
    TAB SYSTEM
    ========================= */
+function initMainTabs(defaultTab = 'submit_record') {
+  const tabsContainer = document.getElementById('mainTabs');
+  if (!tabsContainer) return;
+
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
+  }
+
+  const btnToSection = new Map([
+    ['submitRecordBtn', 'submit_record'],
+    ['playtestBtn',     'playtest'],
+    ['submitMapBtn',    'submit_map'],
+  ]);
+
+  const sectionToPanelId = {
+    submit_record: 'submitRecordSection',
+    playtest:      'playtestSection',
+    submit_map:    'submitMapSection',
+  };
+
+  const buttons = Array.from(tabsContainer.querySelectorAll('.tab-btn'))
+    .filter(b => btnToSection.has(b.id));
+  if (!buttons.length) return;
+
+  let highlight = tabsContainer.querySelector('#mainTabsHighlight');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.id = 'mainTabsHighlight';
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      background: 'white',
+      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      transform: 'translate3d(0,0,0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0'
+    });
+    tabsContainer.appendChild(highlight);
+  }
+
+  buttons.forEach(b => {
+    b.style.position = 'relative';
+    b.style.zIndex = '1';
+    b.classList.add('cursor-pointer');
+  });
+
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
+  const showPanel = (section) => {
+    Object.entries(sectionToPanelId).forEach(([sec, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden', sec !== section);
+    });
+  };
+
+  const setActive = (section, { updateUrl = true } = {}) => {
+    if (!sectionToPanelId[section]) section = defaultTab;
+
+    let activeBtn = null;
+    buttons.forEach((btn) => {
+      const sec = btnToSection.get(btn.id);
+      const isActive = sec === section;
+      if (isActive) activeBtn = btn;
+
+      btn.classList.toggle('bg-white', isActive);
+      btn.classList.toggle('text-zinc-900', isActive);
+
+      btn.classList.toggle('text-white', !isActive);
+      btn.classList.toggle('hover:bg-white/10', !isActive);
+    });
+
+    moveHighlightTo(activeBtn);
+    showPanel(section);
+
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      url.pathname = '/submit';
+      url.search = `?section=${encodeURIComponent(section)}`;
+      history.replaceState(null, '', url.toString());
+    }
+  };
+
+  const getDesiredSection = () => {
+    const q = new URLSearchParams(window.location.search).get('section');
+    if (q && sectionToPanelId[q]) return q;
+
+    const m = (new URL(window.location.href).hash || '').match(/main=([^&]+)/);
+    if (m && m[1]) {
+      const alias = decodeURIComponent(m[1]);
+      if (alias === 'record')  return 'submit_record';
+      if (alias === 'playtest')return 'playtest';
+      if (alias === 'map')     return 'submit_map';
+    }
+    return null;
+  };
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = btnToSection.get(btn.id);
+      if (!section) return;
+
+      setActive(section, { updateUrl: true });
+
+      if (typeof selectSection === 'function') {
+        selectSection(section);
+      }
+    });
+  });
+
+  const desired = getDesiredSection();
+  const initial = desired || defaultTab;
+
+  requestAnimationFrame(() => {
+    setActive(initial, { updateUrl: !!desired });
+
+    const recalc = () => {
+      const current =
+        buttons.find(b => b.classList.contains('bg-white')) ||
+        buttons.find(b => btnToSection.get(b.id) === initial) ||
+        buttons[0];
+      moveHighlightTo(current);
+    };
+
+    window.addEventListener('resize', recalc);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(recalc);
+    } else {
+      setTimeout(recalc, 60);
+    }
+  });
+
+  window.setMainTab = (section) => setActive(section, { updateUrl: true });
+}
+
 function bindTabButtons() {
   document
     .getElementById('submitRecordBtn')
@@ -436,14 +570,73 @@ async function copyTextToClipboard(text) {
 }
 
 function copyMapCode(code) {
-  const msgOk = t('popup.map_code_copied', { code }) || t('popup.copied') || 'Map code copié !';
-  const msgKo = t('popup.copy_failed') || 'Impossible de copier ce code.';
+  const msgOk = t('popup.map_code_copied', { code }) || t('popup.copied');
+  const msgKo = t('popup.copy_failed');
 
   copyTextToClipboard(code).then((ok) => {
-    if (ok) showConfirmationMessage(msgOk);
+    if (ok) {
+      showConfirmationMessage(msgOk);
+      void logMapCopy(code, 'web');
+    }
     else showToast(msgKo, false);
   });
 }
+
+// === Copy-code logging (Utilities) ==========================================
+let __myIpCache = { value: null, at: 0 };
+async function getClientIp(force = false) {
+  const now = Date.now();
+  if (!force && __myIpCache.value && now - __myIpCache.at < 5 * 60 * 1000) return __myIpCache.value;
+  try {
+    const res = await fetch('/api/my-ip', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const json = await res.json().catch(() => ({}));
+    const ip = json?.client_ip ?? json?.ip ?? null;
+    __myIpCache = { value: ip, at: now };
+    return ip;
+  } catch {
+    return null;
+  }
+}
+
+async function logMapCopy(code, source = 'web') {
+  try {
+    const k = `logcc:${code}`;
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(k) || 0);
+    if (now - last < 500) return;
+    sessionStorage.setItem(k, String(now));
+  } catch {}
+
+  const ip_address = await getClientIp().catch(() => null);
+
+  const payload = {
+    code: normalizeMapCode(code),
+    ip_address,
+    user_id: window.user_id ?? null,
+    source,
+  };
+
+  try {
+    await fetch('/api/utilities/log-map-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': CSRF,
+      },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {}
+}
+
+document.addEventListener('DOMContentLoaded', () => { void getClientIp(); });
 
 function registerMapCodeCopyTargets(root = document) {
   root.querySelectorAll('.copy-map-code').forEach((el) => {
@@ -976,9 +1169,34 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
     if (el) el.classList.add('hidden');
   };
 
+  function shouldSkipAutocompleteOnce() {
+    if (input.dataset.skipNextAutocomplete === '1') {
+      input.dataset.skipNextAutocomplete = '0';
+      return true;
+    }
+    return false;
+  }
+
+  function isFilledByOcr() {
+    return input.dataset.filledByOcr === '1';
+  }
+
+  function clearFilledByOcr() {
+    if (input.dataset.filledByOcr === '1') {
+      input.dataset.filledByOcr = '0';
+    }
+  }
+
   function render(list) {
     const box = suggestions();
     box.innerHTML = '';
+
+    if (!list.length) {
+      box.classList.add('hidden');
+      box.style.display = 'none';
+      return;
+    }
+
     list.forEach((s) => {
       const d = document.createElement('div');
       d.className =
@@ -992,7 +1210,9 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
       });
       box.appendChild(d);
     });
-    box.classList.toggle('hidden', !list.length);
+
+    box.classList.remove('hidden', 'opacity-0', 'translate-y-2', 'scale-95');
+    box.style.display = 'block';
   }
 
   function fetchAndRender(q) {
@@ -1016,7 +1236,19 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
       .catch(() => hide());
   }
 
-  input.addEventListener('input', () => {
+  input.addEventListener('input', (ev) => {
+    if (!ev.isTrusted) {
+      hide();
+      return;
+    }
+
+    clearFilledByOcr();
+
+    if (shouldSkipAutocompleteOnce()) {
+      hide();
+      return;
+    }
+
     const q = input.value.trim();
     clearTimeout(debounce);
     if (q.length < minChars) return hide();
@@ -1024,6 +1256,16 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   });
 
   input.addEventListener('focus', () => {
+    if (isFilledByOcr()) {
+      hide();
+      return;
+    }
+
+    if (shouldSkipAutocompleteOnce()) {
+      hide();
+      return;
+    }
+
     const q = input.value.trim();
     if (q.length >= minChars) fetchAndRender(q);
   });
@@ -1031,6 +1273,7 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hide();
   });
+
   document.addEventListener(
     'pointerdown',
     (e) => {
@@ -1384,19 +1627,21 @@ function setupForms() {
         document.querySelector('.cancel-btn[form="submitRecordForm"]') ||
         submitRecordForm.querySelector('.cancel-btn');
 
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.dataset.loading = '1';
-      }
-      if (cancelBtn) {
-        cancelBtn.disabled = true;
-        cancelBtn.dataset.loading = '1';
-      }
+      const submittedCode = (document.getElementById('mapCodeInput')?.value || '').trim();
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.dataset.loading = '1'; }
+      if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.dataset.loading = '1'; }
 
       try {
         const result = await sendCompletionToApi();
-        if (!result || result.error) {
-          showErrorMessage(result?.error || t('errors.server_unreachable') || 'Erreur serveur');
+
+        const msg400 =
+          result?.error ||
+          result?.response?.error ||
+          (typeof result?.message === 'string' ? result.message : null);
+
+        if (!result || msg400) {
+          showErrorMessage(msg400 || t('errors.server_unreachable') || 'Erreur serveur');
           return;
         }
         showConfirmationMessage(t('record.confirm'));
@@ -1442,8 +1687,14 @@ function setupForms() {
       if (!ok) return;
       try {
         const result = await sendMapToApi();
-        if (result?.error) {
-          showErrorMessage(result.error);
+
+        const msg400 =
+          result?.error ||
+          result?.response?.error ||
+          (typeof result?.message === 'string' ? result.message : null);
+
+        if (msg400) {
+          showErrorMessage(msg400);
           return;
         }
         showConfirmationMessage(t('map.confirm'));
@@ -1505,6 +1756,9 @@ function resetForms(form) {
     dropdown.removeAttribute('data-open');
   });
 
+  const qRoot = document.getElementById('qualityDropdown');
+  if (qRoot) resetQualitySlider(qRoot);
+
   hideAllSuggestions();
   form.reset();
 
@@ -1550,6 +1804,301 @@ function resetForms(form) {
 /* =========================
    HELPERS SEND MAP
    ========================= */
+function insertUnofficialBanner() {
+  const host = document.getElementById('submitMapSection');
+  if (!host || document.getElementById('srMapSubmitNotice')) return;
+
+  const html = `
+    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice is-visible"
+        id="srMapSubmitNotice" role="status" aria-live="polite">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z"></path>
+        </svg>
+        <div class="min-w-0">
+          <div class="font-semibold text-amber-300">${t('unofficial_notice.title')}</div>
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li1')}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li2')}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li3')}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${t('unofficial_notice.li4')}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>`;
+  host.insertAdjacentHTML('afterbegin', html);
+}
+
+function toggleUnofficialBanner() {
+  const el = document.getElementById('srMapSubmitNotice');
+  if (!el) return;
+  el.classList.toggle('hidden', !!mapOfficial);
+}
+
+function updateOfficialUI() {
+  document.querySelectorAll('#officialSwitch .ofc-btn').forEach((btn) => {
+    const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
+    btn.classList.toggle('bg-white', isOn);
+    btn.classList.toggle('text-zinc-900', isOn);
+    btn.classList.toggle('text-white', !isOn);
+    btn.classList.toggle('hover:bg-white/10', !isOn);
+  });
+  const wrap = document.getElementById('officialSwitch');
+  if (wrap) wrap.dataset.selected = mapOfficial ? '1' : '0';
+  const editBtn = document.getElementById('editCreatorBtn');
+  if (editBtn) editBtn.classList.toggle('hidden', !!mapOfficial);
+}
+
+function setupOfficialSwitch() {
+  const wrap = document.getElementById('officialSwitch');
+  if (!wrap || wrap.dataset.bound === '1') return;
+  wrap.dataset.bound = '1';
+
+  if (getComputedStyle(wrap).position === 'static') {
+    wrap.style.position = 'relative';
+  }
+
+  let highlight = wrap.querySelector('[data-ofc-highlight]');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.setAttribute('data-ofc-highlight', '1');
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      background: 'white',
+      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      transform: 'translateX(0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0'
+    });
+    wrap.appendChild(highlight);
+  }
+
+  wrap.querySelectorAll('.ofc-btn').forEach(btn => {
+    btn.style.position = 'relative';
+    btn.style.zIndex = '1';
+  });
+
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = wrap.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
+  window.mapOfficial = typeof window.mapOfficial === 'boolean' ? window.mapOfficial : true;
+
+  function updateOfficialUI() {
+    wrap.querySelectorAll('.ofc-btn').forEach((btn) => {
+      const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
+      btn.classList.toggle('bg-white', isOn);
+      btn.classList.toggle('text-zinc-900', isOn);
+      btn.classList.toggle('text-white', !isOn);
+      btn.classList.toggle('hover:bg-white/10', !isOn);
+      if (isOn) moveHighlightTo(btn);
+    });
+
+    wrap.dataset.selected = mapOfficial ? '1' : '0';
+
+    const editBtn = document.getElementById('editCreatorBtn');
+    if (editBtn) editBtn.classList.toggle('hidden', !!mapOfficial);
+
+    if (typeof toggleUnofficialBanner === 'function') {
+      toggleUnofficialBanner();
+    }
+  }
+
+  wrap.addEventListener('click', (e) => {
+    const b = e.target.closest('.ofc-btn');
+    if (!b) return;
+    const next = b.getAttribute('data-official') === '1';
+    if (next === mapOfficial) return;
+
+    mapOfficial = next;
+    updateOfficialUI();
+
+    if (typeof primeMainCreatorFromSession === 'function') {
+      primeMainCreatorFromSession();
+    }
+  });
+
+  requestAnimationFrame(() => {
+    updateOfficialUI();
+    setTimeout(() => {
+      const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
+      moveHighlightTo(active);
+    }, 60);
+  });
+
+  const onResize = () => {
+    const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
+    moveHighlightTo(active);
+  };
+  window.addEventListener('resize', onResize);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(onResize);
+}
+
+function initSubmitHelpPopovers(scopeEl = document) {
+  const H = (p, fb='') => (typeof t === 'function' ? (t(p) ?? fb) : fb);
+
+  const RENDER = {
+    meta() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.meta.title','1) Metadata')}</div>
+          <ul class="space-y-1.5">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_creator','Main creator...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_code','Map code...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_name','Map name...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_checkpoints','Checkpoints...')}</li>
+          </ul>
+        </div>`;
+    },
+    required() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.required.title','2) Required fields')}</div>
+          <p class="text-sm text-zinc-300">${H('how_to_submit.required.p1','These fields must be provided...')}</p>
+          <ul class="space-y-1.5 mt-1">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_difficulty','Difficulty...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_category','Category...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_mechanics','Mechanics...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_restrictions','Restrictions...')}</li>
+          </ul>
+        </div>`;
+    },
+    medals() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.medals.title','3) Medals')}</div>
+          <p class="text-sm text-zinc-300">${H('how_to_submit.medals.p1','You may define times...')}</p>
+          <ul class="space-y-1.5 mt-1">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_rules','If you set one medal...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_pattern','Format: 1–5 digits...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold')}</li>
+          </ul>
+        </div>`;
+    },
+    optional() {
+      return `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.optional.title','4) Optional')}</div>
+          <ul class="space-y-1.5">
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_title','Title...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_banner','Custom banner...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_description','Description...')}</li>
+            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_guide','Guide URL(s)...')}</li>
+          </ul>
+        </div>`;
+    }
+  };
+
+  const btns = scopeEl.querySelectorAll('.gp-help-btn');
+  const pops = scopeEl.querySelectorAll('.gp-help-pop');
+
+  const applyPosHidden = (pop, pos) => {
+    pop.classList.remove('top-12','bottom-12','origin-top-right','origin-bottom-right','translate-y-1','-translate-y-1');
+    if (pos === 'top') {
+      pop.classList.add('bottom-24','origin-bottom-right','-translate-y-1');
+    } else {
+      pop.classList.add('top-12','origin-top-right','translate-y-1');
+    }
+  };
+  const applyPosShown = (pop) => {
+    pop.classList.remove('translate-y-1','-translate-y-1');
+    pop.classList.add('translate-y-0');
+  };
+
+  const showPop = (pop, btn) => {
+    const key = btn.getAttribute('data-help-key');
+    const contentEl = pop.querySelector('[data-help-content]');
+    if (contentEl && RENDER[key]) contentEl.innerHTML = RENDER[key]();
+
+    pop.setAttribute('data-open', 'true');
+    pop.setAttribute('aria-hidden', 'false');
+    btn.setAttribute('aria-expanded', 'true');
+
+    pop.classList.remove('opacity-0','scale-95','pointer-events-none');
+    applyPosShown(pop);
+    pop.classList.add('opacity-100','scale-100','pointer-events-auto');
+  };
+
+  const hidePop = (pop, btn) => {
+    const pos = pop.getAttribute('data-help-pos') === 'top' ? 'top' : 'bottom';
+    pop.setAttribute('data-open', 'false');
+    pop.setAttribute('aria-hidden', 'true');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+
+    pop.classList.add('opacity-0','scale-95','pointer-events-none');
+    pop.classList.remove('opacity-100','scale-100','translate-y-0','pointer-events-auto');
+    applyPosHidden(pop, pos);
+  };
+
+  const hideAll = () => {
+    pops.forEach((p) => {
+      const k = p.getAttribute('data-help-for');
+      const b = scopeEl.querySelector(`.gp-help-btn[data-help-key="${k}"]`);
+      hidePop(p, b);
+    });
+  };
+
+  pops.forEach((p) => {
+    p.classList.add('transition','duration-200','ease-out','will-change-transform','will-change-opacity');
+    p.setAttribute('aria-hidden', 'true');
+    p.setAttribute('data-open', 'false');
+    p.classList.add('opacity-0','scale-95','pointer-events-none');
+  });
+
+  btns.forEach((btn) => {
+    const key = btn.getAttribute('data-help-key');
+    const pos = (btn.getAttribute('data-help-pos') || 'bottom').toLowerCase();
+    const pop = scopeEl.querySelector(`.gp-help-pop[data-help-for="${key}"]`);
+    if (!pop) return;
+
+    pop.setAttribute('data-help-pos', pos);
+    pop.classList.remove('top-12','bottom-12','origin-top-right','origin-bottom-right','translate-y-1','-translate-y-1','translate-y-0');
+    applyPosHidden(pop, pos);
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = pop.getAttribute('data-open') === 'true';
+      hideAll();
+      if (!isOpen) showPop(pop, btn);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.gp-help-pop, .gp-help-btn')) hideAll();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideAll();
+  });
+}
+
 function difficultyDotClass(label) {
   const L = String(label).toLowerCase();
   if (L.startsWith('easy')) return 'bg-emerald-400';
@@ -1848,34 +2397,44 @@ function hideAllSuggestions() {
 async function loadMainCreatorFromUserId(user_id) {
   const main = document.getElementById('metaCreatorMain');
   if (!main) return;
-  if (!user_id) {
+
+  const reset = () => {
     main.textContent = 'N/A';
     main.removeAttribute('data-raw-id');
-    return;
-  }
+  };
+
+  if (!user_id) return reset();
+
   try {
-    const resp = await fetch(`/api/users/${encodeURIComponent(user_id)}/overwatch`, {
+    const resp = await fetch(`/api/users/${encodeURIComponent(user_id)}`, {
       headers: { Accept: 'application/json' },
     });
-    const data = await resp.json();
 
-    if (data && typeof data.primary === 'string' && data.primary.trim()) {
-      main.textContent = data.primary.trim();
+    if (!resp.ok) return reset();
+
+    const data = await resp.json();
+    if (!data || typeof data !== 'object') return reset();
+
+    const pick = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+    const nickname        = pick(data.nickname);
+    const coalesced       = pick(data.coalesced_name);
+    const globalName      = pick(data.global_name);
+    const fromOWUsernames = Array.isArray(data.overwatch_usernames) && data.overwatch_usernames.length
+      ? pick(data.overwatch_usernames[0])
+      : null;
+
+    const chosen = nickname || coalesced || globalName || fromOWUsernames;
+
+    if (chosen) {
+      main.textContent = chosen;
       main.setAttribute('data-raw-id', String(user_id));
       return;
     }
+  } catch (_) {
+  }
 
-    if (data && Array.isArray(data.usernames) && data.usernames.length > 0) {
-      const unameObj = data.usernames.find((u) => u.is_primary) || data.usernames[0];
-      if (unameObj && unameObj.username) {
-        main.textContent = unameObj.username;
-        main.setAttribute('data-raw-id', String(user_id));
-        return;
-      }
-    }
-  } catch (e) {}
-  main.textContent = 'N/A';
-  main.removeAttribute('data-raw-id');
+  reset();
 }
 
 async function primeMainCreatorFromSession() {
@@ -2244,10 +2803,22 @@ function editInline(field) {
 
   const editBtnEl = document.querySelector(`[data-edit-target="${CSS.escape(field)}"]`);
 
-  const hostRow = editBtnEl
+  let hostRow = editBtnEl
     ? findCommonAncestor(label, editBtnEl) || label.parentElement
     : label.parentElement;
-  const hostParent = hostRow?.parentElement || label.parentElement;
+  let hostParent = hostRow?.parentElement || label.parentElement;
+
+  if (field === 'metaCreatorMain') {
+    const mainRow = document.querySelector('#metaCreatorsCol .main-creator-row');
+    if (mainRow) {
+      hostRow = mainRow;
+      hostParent = mainRow;
+      if (!mainRow.dataset._origClass) {
+        mainRow.dataset._origClass = mainRow.className;
+      }
+      mainRow.classList.add('flex', 'flex-col', 'items-start', 'gap-2');
+    }
+  }
 
   let input, suggestionsDropdown;
 
@@ -2284,8 +2855,8 @@ function editInline(field) {
       'focus:outline-none focus:ring-2 focus:ring-emerald-500/60',
     ].join(' ');
 
-    if (field === 'metaCreator' || field === 'metaMap') {
-      input.id = field === 'metaCreator' ? 'creatorInputInline' : 'mapInputInline';
+    if (field === 'metaCreator' || field === 'metaCreatorMain' || field === 'metaMap') {
+      input.id = (field === 'metaCreator' || field === 'metaCreatorMain') ? 'creatorInputInline' : 'mapInputInline';
       suggestionsDropdown = document.createElement('div');
       suggestionsDropdown.className = [
         'suggestions-dropdown',
@@ -2348,7 +2919,9 @@ function editInline(field) {
 
   label.style.display = 'none';
   if (editBtnEl) editBtnEl.style.display = 'none';
-  if (hostRow && hostRow.parentNode) {
+  if (field === 'metaCreatorMain' && hostRow) {
+    hostRow.appendChild(container);
+  } else if (hostRow && hostRow.parentNode) {
     hostRow.insertAdjacentElement('afterend', container);
   } else {
     label.parentNode.insertBefore(container, label.nextSibling);
@@ -2371,6 +2944,14 @@ function editInline(field) {
         return;
       }
     }
+    if (field === 'metaCreator' || field === 'metaCreatorMain') {
+      const rawId = input.getAttribute('data-raw-value');
+      if (rawId) {
+        label.setAttribute('data-raw-id', String(rawId));
+      } else {
+        label.removeAttribute('data-raw-id');
+      }
+    }
     if (field === 'optGuide' && newValue === '') newValue = 'N/A';
     if (field === 'optDescription' && newValue === '') newValue = t('map.no_description');
     if (field === 'metaCheckpoints') {
@@ -2388,6 +2969,19 @@ function editInline(field) {
     label.style.display = '';
     if (editBtnEl) editBtnEl.style.display = '';
     label.classList.remove('editing');
+
+    if (field === 'metaCreatorMain') {
+      const mainRow = document.querySelector('#metaCreatorsCol .main-creator-row');
+      if (mainRow) {
+        if (mainRow.dataset._origClass) {
+          mainRow.className = mainRow.dataset._origClass;
+          delete mainRow.dataset._origClass;
+        } else {
+          mainRow.classList.remove('flex', 'flex-col', 'items-start', 'gap-2');
+        }
+      }
+    }
+
     container.remove();
   }
 
@@ -2402,7 +2996,7 @@ function editInline(field) {
     if (e.key === 'Escape') closeEdit();
   });
 
-  if (field === 'metaCreator') {
+  if (field === 'metaCreator' || field === 'metaCreatorMain') {
     setupAutocompleteInline(input, suggestionsDropdown, { type: 'creator' });
   } else if (field === 'metaMap') {
     setupAutocompleteInline(input, suggestionsDropdown, { type: 'map' });
@@ -2468,7 +3062,7 @@ async function sendMapToApi() {
     map_name: name,
     archived: false,
     hidden: false,
-    official: false,
+    official: !!mapOfficial,
     playtesting: 'In Progress',
     guide_url: guide_url ?? null,
   };
@@ -2508,55 +3102,95 @@ async function sendMapToApi() {
 function renderSubmitMapSection() {
   const host = document.getElementById('submitMapSection');
   if (!host) return;
+
+  const helpBtn = (key, pos = 'bottom') => `
+    <button type="button"
+      class="gp-help-btn cursor-pointer absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+      aria-haspopup="dialog" aria-expanded="false" data-help-key="${key}" data-help-pos="${pos}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 15a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 17Zm1.35-4.9v.1a1 1 0 0 1-2 0 2.85 2.85 0 0 1 1.64-2.59 1.72 1.72 0 0 0 .99-1.46 1.9 1.9 0 0 0-3.8.05 1 1 0 0 1-2 0 3.9 3.9 0 0 1 7.8-.13 3.67 3.67 0 0 1-2.63 3.6 1 1 0 0 0-.99.93Z"/>
+      </svg>
+      <span class="sr-only">${t('common.more_info') || 'More info'}</span>
+    </button>
+    <div
+      class="gp-help-pop absolute right-3 z-50 w-80
+             rounded-xl border border-white/10 bg-zinc-900/95 p-3 shadow-2xl backdrop-blur
+             supports-[backdrop-filter]:bg-zinc-900/80
+             transition ease-out origin-top-right
+             will-change-transform will-change-opacity
+             opacity-0 scale-95 pointer-events-none"
+      role="dialog"
+      aria-label="${t('common.information') || 'Information'}"
+      aria-hidden="true"
+      data-open="false"
+      data-help-for="${key}"
+    >
+      <div class="text-sm text-zinc-200 leading-relaxed" data-help-content></div>
+    </div>
+  `;
+
   host.innerHTML = `
     <form id="submitMapForm" class="space-y-6">
-      <!-- META CARD -->
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+
+      <!-- META -->
+      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in" data-card="meta">
+        ${helpBtn('meta')}
+
+        <!-- Toggle Official / Unofficial -->
+        <div class="mb-3">
+          <div id="officialSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+            <button type="button" data-official="1"
+              class="ofc-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
+              ${t('map.meta.official') || 'Official'}
+            </button>
+            <button type="button" data-official="0"
+              class="ofc-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10">
+              ${t('map.meta.unofficial') || 'Unofficial'}
+            </button>
+          </div>
+        </div>
+
         <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Creators -->
           <div class="sm:col-span-2">
             <span class="block text-xs text-zinc-400 mb-1">${t('map.meta.creator')}</span>
             <div id="metaCreatorsCol" class="flex flex-wrap items-center gap-2">
               <span class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5">
                 <span id="metaCreatorMain" class="text-sm text-zinc-200">N/A</span>
+                <!-- Edit btn -->
+                <button type="button" id="editCreatorBtn"
+                  class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10 hidden"
+                  data-edit-target="metaCreatorMain">
+                  ${t('map.meta.edit')}
+                </button>
               </span>
             </div>
           </div>
 
-          <!-- Map Code -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="text-[11px] text-zinc-400">${t('map.meta.code')}</div>
             <div class="flex items-center gap-2">
               <div id="metaCode" class="text-sm text-zinc-200">N/A</div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="metaCode">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaCode">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <!-- Map Name -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="text-[11px] text-zinc-400">${t('map.meta.name')}</div>
             <div class="flex items-center gap-2">
               <div id="metaMap" class="text-sm text-zinc-200">N/A</div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="metaMap">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaMap">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <!-- Checkpoints -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="text-[11px] text-zinc-400">${t('map.meta.checkpoints')}</div>
             <div class="flex items-center gap-2">
               <div id="metaCheckpoints" class="text-sm text-zinc-200">N/A</div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="metaCheckpoints">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaCheckpoints">
                 ${t('map.meta.edit')}
               </button>
             </div>
@@ -2564,18 +3198,16 @@ function renderSubmitMapSection() {
         </div>
       </div>
 
-      <!-- REQUIRED CARD -->
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
+      <!-- REQUIRED -->
+      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="required">
+        ${helpBtn('required')}
         <h3 class="text-sm font-semibold text-zinc-200">${t('map.required_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Difficulty -->
           <div>
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_difficulty')}</label>
             <div id="difficultyDropdown" class="custom-multiselect relative">
-              <button type="button" id="difficultyDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_difficulty')}">
+              <button type="button" id="difficultyDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_difficulty')}">
                 ${t('map.dropdown.select_difficulty')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2583,13 +3215,10 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Category -->
           <div>
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_category')}</label>
             <div id="categoryDropdown" class="custom-multiselect relative">
-              <button type="button" id="categoryDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_category')}">
+              <button type="button" id="categoryDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_category')}">
                 ${t('map.dropdown.select_category')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2597,13 +3226,10 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Mechanics -->
           <div class="sm:col-span-1">
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_mechanics')}</label>
             <div id="mechanicsDropdown" class="custom-multiselect relative">
-              <button type="button" id="mechanicsDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_mechanics')}">
+              <button type="button" id="mechanicsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_mechanics')}">
                 ${t('map.dropdown.select_mechanics')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2611,13 +3237,10 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Restrictions -->
           <div class="sm:col-span-1">
             <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_restrictions')}</label>
             <div id="restrictionsDropdown" class="custom-multiselect relative">
-              <button type="button" id="restrictionsDropdownBtn"
-                      class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
-                      data-placeholder="${t('map.dropdown.select_restrictions')}">
+              <button type="button" id="restrictionsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_restrictions')}">
                 ${t('map.dropdown.select_restrictions')}
                 <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
@@ -2627,24 +3250,22 @@ function renderSubmitMapSection() {
         </div>
       </div>
 
-      <!-- OPTIONAL CARD -->
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
+      <!-- OPTIONAL -->
+      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="optional">
+        ${helpBtn('optional')}
         <h3 class="text-sm font-semibold text-zinc-200">${t('map.optional_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Title -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <label class="block text-[11px] text-zinc-400 mb-1" for="optTitleInput">${t('map.title_label') || 'Title'}</label>
             <input id="optTitleInput" type="text" maxlength="128"
-                   class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                   placeholder="${t('map.title_placeholder') || 'Optional short title (max 128 chars)'}">
+              class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+              placeholder="${t('map.title_placeholder') || 'Optional short title (max 128 chars)'}">
           </div>
 
-          <!-- Custom banner (drag & drop) -->
           <div>
             <div class="text-[11px] text-zinc-400 mb-1">${t('map.custom_banner') || 'Custom banner'}</div>
-            <div id="bannerDrop"
-                 class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
+            <div id="bannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
               <input id="bannerInput" type="file" accept="image/*" class="hidden">
               <div id="bannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
                 ${t('record.drag_and_drop') || 'Drag & drop or click to upload'}
@@ -2653,116 +3274,81 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <!-- Description -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-[11px] text-zinc-400">${t('map.description_label')}</div>
                 <div id="optDescription" class="text-sm text-zinc-200">N/A</div>
               </div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="optDescription">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="optDescription">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <!-- Guide URL(s) -->
           <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-[11px] text-zinc-400">${t('map.guide_label')}</div>
                 <div id="optGuide" class="text-sm text-zinc-200">N/A</div>
               </div>
-              <button type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
-                      data-edit-target="optGuide">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="optGuide">
                 ${t('map.meta.edit')}
               </button>
             </div>
             <p class="mt-2 text-xs text-zinc-400">${t('map.guide_hint') || 'One URL per line; first valid URL is used.'}</p>
           </div>
-          <!-- Medals -->
-          <div class="sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <div class="text-[11px] text-zinc-400 mb-2">Medals</div>
 
+          <!-- MEDALS -->
+          <div class="relative sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2" data-card="medals">
+            ${helpBtn('medals','top')}
+            <div class="text-[11px] text-zinc-400 mb-2">${t('table.medals') || 'Medals'}</div>
             <div class="grid gap-3 sm:grid-cols-3">
-              <!-- Gold -->
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/gold.png" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
-                  <span class="text-sm text-zinc-200">Gold</span>
+                  <span class="text-sm text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
                 </span>
-                <input
-                  id="medalGoldInput"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="\\d{1,5}(?:\\.\\d{1,2})?"
-                  placeholder="e.g. 5550.23"
-                  class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                >
+                <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
-
-              <!-- Silver -->
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/silver.png" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
-                  <span class="text-sm text-zinc-200">Silver</span>
+                  <span class="text-sm text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
                 </span>
-                <input
-                  id="medalSilverInput"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="\\d{1,5}(?:\\.\\d{1,2})?"
-                  placeholder="e.g. 7599.33"
-                  class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                >
+                <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
-
-              <!-- Bronze -->
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="assets/medals/bronze.png" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
-                  <span class="text-sm text-zinc-200">Bronze</span>
+                  <span class="text-sm text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
                 </span>
-                <input
-                  id="medalBronzeInput"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="\\d{1,5}(?:\\.\\d{1,2})?"
-                  placeholder="e.g. 8066.75"
-                  class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                >
+                <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
             </div>
-
-            <p class="mt-2 text-xs text-zinc-400">
-              ${t('map.medals_hint')}
-            </p>
+            <p class="mt-2 text-xs text-zinc-400">${t('map.medals_hint')}</p>
           </div>
         </div>
       </div>
 
-      <!-- ACTION BAR -->
       <div class="flex items-center gap-2">
-        <button type="submit"
-                class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
+        <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
           ${t('map.submit_label')}
         </button>
-        <button type="button"
-                class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
-                form="submitMapForm">
+        <button type="button" class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5" form="submitMapForm">
           ${t('record.cancel')}
         </button>
       </div>
     </form>
   `;
+
   bindSubmitMapEditButtons(host);
-  if (IS_GUEST) {
+  if (typeof IS_GUEST !== 'undefined' && IS_GUEST) {
     lockSectionById('submitMapSection');
     ensureGuestLockPersistence('submitMapSection');
   }
+
+  initSubmitHelpPopovers(host);
 }
 
 /* =========================
@@ -2837,6 +3423,148 @@ function getVideoUrl() {
   return v;
 }
 
+function ensureNoticeHost() {
+  const sec  = document.getElementById('submitRecordSection');
+  if (!sec) return null;
+
+  let host = document.getElementById('srNoticeHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'srNoticeHost';
+    const form = sec.querySelector('#submitRecordForm');
+    if (form) sec.insertBefore(host, form);
+    else      sec.insertBefore(host, sec.firstChild);
+  }
+  return host;
+}
+
+function bannerHTML() {
+  const title  = (typeof t === 'function' && t('notice.title'))              || 'Notice';
+  const li1    = (typeof t === 'function' && t('notice.pending_accept'))     || 'Your completion may remain pending until it’s accepted.';
+  const li2    = (typeof t === 'function' && t('notice.mutable_difficulty')) || 'Difficulty may change while the map is in playtesting.';
+  return `
+    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice" id="srPlaytestingNotice" role="status" aria-live="polite">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
+        </svg>
+        <div class="min-w-0">
+          <div class="font-semibold text-amber-300">${title}</div>
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${li1}</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span>${li2}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+function showNotice() {
+  const host = ensureNoticeHost();
+  if (!host) return;
+  if (!document.getElementById('srPlaytestingNotice')) {
+    host.insertAdjacentHTML('afterbegin', bannerHTML());
+    const el = document.getElementById('srPlaytestingNotice');
+    requestAnimationFrame(() => el.classList.add('is-visible'));
+  }
+}
+
+function hideNotice() {
+  const el = document.getElementById('srPlaytestingNotice');
+  if (!el) return;
+  el.classList.remove('is-visible');
+  const done = () => el.remove();
+  el.addEventListener('transitionend', done, { once: true });
+  setTimeout(done, 260);
+}
+
+async function fetchMapByCode(code) {
+  if (!code) return null;
+  try {
+    const resp = await fetch(`/api/maps?code=${encodeURIComponent(code)}`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json().catch(() => null);
+    if (!data) return null;
+
+    const norm = (v) => normalizeMapCode(v || '');
+    if (Array.isArray(data)) {
+      return data.find(m => norm(m?.code || m?.map_code) === norm(code)) || data[0] || null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function isInProgress(map) {
+  const v = String(map?.playtesting ?? map?.status ?? '').toLowerCase();
+  return v.includes('progress');
+}
+
+async function evaluateNoticeForInput() {
+  const sec = document.getElementById('submitRecordSection');
+  if (!sec || sec.classList.contains('hidden')) return;
+
+  const input = document.getElementById('mapCodeInput');
+  const raw   = (input?.value || '').trim();
+  const code  = normalizeMapCode(raw);
+
+  if (!code || code.length < 4) {
+    hideNotice();
+    try { removeViewPlaytestButton(); } catch {}
+    return;
+  }
+
+  const map = await fetchMapByCode(code);
+  if (map && isInProgress(map)) {
+    showNotice();
+    try { ensureViewModalButtonForLastCode(code); } catch {}
+  } else {
+    hideNotice();
+    try { removeViewPlaytestButton(); } catch {}
+  }
+}
+
+function bindWatcher() {
+  const input = document.getElementById('mapCodeInput');
+  if (!input || input.dataset.noticeBound === '1') return;
+  input.dataset.noticeBound = '1';
+
+  let debounce;
+  const run = () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(evaluateNoticeForInput, 250);
+  };
+  input.addEventListener('input', run);
+  input.addEventListener('blur', run);
+  input.addEventListener('change', run);
+
+  requestAnimationFrame(evaluateNoticeForInput);
+  try {
+    const v = (input.value || '').trim();
+    const c = typeof normalizeMapCode === 'function' ? normalizeMapCode(v) : v;
+    if (c && c.length >= 4) ensureViewModalButtonForLastCode(c);
+  } catch {}
+}
+
+const _origAnimateSR = typeof animateSubmitRecordSection === 'function' ? animateSubmitRecordSection : null;
+window.animateSubmitRecordSection = function () {
+  _origAnimateSR && _origAnimateSR();
+  ensureNoticeHost();
+  bindWatcher();
+  setTimeout(evaluateNoticeForInput, 120);
+};
+
 function disableBrowserAutocompleteInSubmitRecord() {
   const form = document.getElementById('submitRecordForm') || document.querySelector('#submitRecordSection form');
   if (!form) return;
@@ -2848,6 +3576,149 @@ function disableBrowserAutocompleteInSubmitRecord() {
     el.setAttribute('autocapitalize', 'off');
     el.setAttribute('spellcheck', 'false');
   });
+}
+
+async function openPlaytestModalForCode(code) {
+  const c = (code || '').trim();
+  if (!c) { showErrorMessage(t('errors.invalid_form') || 'Invalid code'); return; }
+
+  const data = await fetchFreshMapByCode(c);
+  if (!data) { showErrorMessage(t('errors.map_not_found') || 'Map not found'); return; }
+
+  const modal = document.getElementById('playtestModal');
+  const inner = document.getElementById('playtestModalInner');
+  if (!modal || !inner) return;
+
+  if (typeof renderPlaytestModal === 'function') {
+    inner.innerHTML = renderPlaytestModal(data);
+  } else {
+    inner.innerHTML = `
+      <div class="p-4 space-y-2">
+        <div class="text-lg font-semibold text-zinc-100">${data.name || data.code || 'Map'}</div>
+        <div class="text-sm text-zinc-300">Code: ${data.code || '—'}</div>
+        <div class="text-sm text-zinc-400">Modal renderer missing.</div>
+      </div>
+    `;
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('pt-anim');
+  inner.classList.add('pt-anim');
+
+  void modal.offsetWidth;
+  requestAnimationFrame(() => {
+    modal.classList.add('pt-in');
+    inner.classList.add('pt-in');
+  });
+
+  modal.querySelector('.playtest-modal-backdrop')
+    ?.addEventListener('click', hidePlaytestModal, { once: true });
+
+  try { registerMapCodeCopyTargets(modal); } catch {}
+  try { setupRatingDropdown(); } catch {}
+  try { await hydratePlaytestModalCreatorAvatar(modal); } catch {}
+  try {
+    const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
+    const pre = await preloadVoters(voterIds);
+    injectVotersGrid(modal, pre, voterIds);
+    registerVoterInteractions(modal);
+  } catch {}
+
+  const initialAvg =
+    Number.isFinite(data.playtest_vote_average) ? data.playtest_vote_average :
+    Number.isFinite(data.difficulty_value)     ? data.difficulty_value     : null;
+
+  try { updateDifficultyChartInModal(initialAvg); } catch {}
+  try { mountModeratorActions(inner, data); } catch {}
+}
+
+function removeViewPlaytestButton() {
+  const btn = document.getElementById('viewPlaytestModalBtn');
+  if (btn && btn.parentElement) btn.parentElement.removeChild(btn);
+  const fb = document.getElementById('srActionBarFallback');
+  if (fb && !fb.querySelector('#viewPlaytestModalBtn')) fb.remove();
+}
+
+function ensureViewModalButtonForLastCode(code) {
+  if (!code) { removeViewPlaytestButton(); return; }
+
+  if (document.readyState === 'loading' || !document.body) {
+    document.addEventListener('DOMContentLoaded', () => ensureViewModalButtonForLastCode(code), { once: true });
+    return;
+  }
+
+  const bar = (() => {
+    let el = document.getElementById('srActionBar');
+    if (el) return el;
+
+    const form = document.getElementById('submitRecordForm') || document.querySelector('#submitRecordForm');
+    if (form) {
+      el = document.createElement('div');
+      el.id = 'srActionBar';
+      el.className = 'mt-3 flex items-center gap-2';
+      form.appendChild(el);
+      return el;
+    }
+    el = document.getElementById('srActionBarFallback');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'srActionBarFallback';
+      el.className = 'fixed bottom-4 right-4 z-[120]';
+      document.body.appendChild(el);
+    }
+    return el;
+  })();
+
+  let btn = document.getElementById('viewPlaytestModalBtn');
+  if (btn && btn.parentElement !== bar) { try { btn.remove(); } catch {} btn = null; }
+
+  const baseClasses = [
+    'gp-cta',
+    'inline-flex','items-center','justify-center','cursor-pointer','ml-auto',
+    'rounded-lg','px-3','py-2','text-sm',
+    'border','border-amber-500/30','bg-amber-500/10','text-amber-200',
+    'hover:bg-amber-500/15','hover:text-white',
+    'focus:outline-none','focus-visible:ring-2','focus-visible:ring-amber-400/60'
+  ].join(' ');
+
+  let isNew = false;
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'viewPlaytestModalBtn';
+    btn.type = 'button';
+    btn.className = baseClasses + ' gp-enter';
+    btn.textContent = (typeof t === 'function' ? t('record.view_modal') : 'View playtest');
+
+    btn.style.opacity = '0';
+    btn.style.transform = 'translateY(4px)';
+    btn.style.transition = 'opacity .28s ease, transform .28s ease';
+
+    bar.appendChild(btn);
+    requestAnimationFrame(() => {
+      btn.style.opacity = '1';
+      btn.style.transform = 'none';
+    });
+    isNew = true;
+  } else {
+    btn.className = baseClasses;
+    if (!btn.isConnected) bar.appendChild(btn);
+  }
+
+  btn.dataset.code = String(code);
+  btn.onclick = () => openPlaytestModalForCode(code);
+
+  const last = btn.getAttribute('data-last-code') || '';
+  if (last !== String(code)) {
+    btn.setAttribute('data-last-code', String(code));
+    btn.classList.remove('gp-cta-once'); // reset
+    requestAnimationFrame(() => btn.classList.add('gp-cta-once'));
+  }
+
+  if (isNew || !btn.__autoArmed) {
+    btn.__autoArmed = true;
+    btn.classList.add('gp-auto');
+    setTimeout(() => btn.classList.remove('gp-auto'), 2000);
+  }
 }
 
 /* =========================
@@ -2884,7 +3755,6 @@ async function sendCompletionToApi() {
       time,
       user_id: String(user_id),
       video,
-      completion: !hasVideo,
     };
 
     const resp = await fetch(COMPLETION_SUBMIT_ENDPOINT, {
@@ -2903,6 +3773,11 @@ async function sendCompletionToApi() {
       const msg = (data && (data.error || data.message)) || `HTTP ${resp.status}`;
       return { error: msg };
     }
+
+    try {
+      const q = getSelectedQuality();
+      if (Number.isFinite(q)) await sendQualityVote(code, q);
+    } catch {}
     return data || { ok: true };
   } catch (err) {
     console.error(err);
@@ -2926,6 +3801,79 @@ function dragAndDrop() {
       r.onerror = rej;
       r.readAsDataURL(file);
     });
+
+  //OCR
+  async function runOcrFromFile(file) {
+    try {
+      let imageUrl = window.screenshotUrl;
+
+      if (!imageUrl) {
+        if (typeof uploadScreenshot === 'function') {
+          imageUrl = await uploadScreenshot(file);
+          window.screenshotUrl = imageUrl;
+        } else {
+          console.warn('OCR: uploadScreenshot is not available and no screenshotUrl is set');
+          return;
+        }
+      }
+
+      if (!imageUrl) {
+        console.warn('OCR: missing image URL');
+        return;
+      }
+
+      const resp = await fetch(OCR_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ image_url: imageUrl }),
+      });
+
+      if (!resp.ok) {
+        let errJson = null;
+        try { errJson = await resp.json(); } catch {}
+        console.warn('OCR HTTP error', resp.status, errJson);
+        return;
+      }
+
+      const json = await resp.json().catch(() => null);
+      const extracted = json?.extracted || {};
+      if (!extracted) return;
+
+      const { time, code } = extracted;
+
+      const mapCodeInput = document.getElementById('mapCodeInput');
+      const inputTime = document.getElementById('inputTime');
+
+      if (
+        mapCodeInput &&
+        !mapCodeInput.value.trim() &&
+        typeof code === 'string' &&
+        code.trim()
+      ) {
+        mapCodeInput.dataset.skipNextAutocomplete = '1';
+        mapCodeInput.value = String(code).toUpperCase();
+        mapCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      if (
+        inputTime &&
+        !inputTime.value.trim() &&
+        typeof time === 'number' &&
+        Number.isFinite(time)
+      ) {
+        inputTime.value = String(time).replace(',', '.');
+        inputTime.dispatchEvent(new Event('input', { bubbles: true }));
+        inputTime.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } catch (err) {
+      console.error('OCR failed', err);
+    }
+  }
+  // ---------------------------------------------------------------------------
 
   function resetScreenshotDropzone() {
     dz.innerHTML = `
@@ -2987,6 +3935,7 @@ function dragAndDrop() {
     window.screenshotFile = file;
     setPreview(file);
     try { autoUploadScreenshot(file); } catch {}
+    try { runOcrFromFile(file); } catch {}
   }
 
   dz.addEventListener('click', (e) => {
@@ -3014,16 +3963,173 @@ function dragAndDrop() {
   });
 }
 
-function qualityDropdown() {
-  const container = document.getElementById('qualityDropdown');
-  if (!container) return;
-  const btn = getDropdownBtnEl(container);
+async function sendQualityVote(code, qualityOverride = null) {
+  const q = Number.isFinite(qualityOverride) ? qualityOverride : getSelectedQuality();
+  if (!Number.isFinite(q)) return { skipped: true };
+
+  const resp = await fetch(`/api/maps/${encodeURIComponent(code)}/quality`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      user_id: String(user_id),
+      quality: q
+    }),
+    credentials: 'same-origin',
+  });
+
+  if (!resp.ok) {
+    let msg = `HTTP ${resp.status}`;
+    try { const j = await resp.json(); msg = j?.error || j?.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  try { return await resp.json(); } catch { return { ok: true }; }
+}
+
+function qualitySlider() {
+  const root = document.getElementById('qualityDropdown');
+  if (!root) return;
+
+  const L = [
+    (typeof t === 'function' && t('record.quality_1')) || 'Very poor',
+    (typeof t === 'function' && t('record.quality_2')) || 'Poor',
+    (typeof t === 'function' && t('record.quality_3')) || 'Fair',
+    (typeof t === 'function' && t('record.quality_4')) || 'Good',
+    (typeof t === 'function' && t('record.quality_5')) || 'Very good',
+    (typeof t === 'function' && t('record.quality_6')) || 'Perfect',
+  ];
   const placeholder =
-    (btn && (btn.getAttribute('data-placeholder') || btn.textContent.trim())) ||
+    (typeof t === 'function' && t('record.select_quality')) || 'Select quality';
+
+  root.innerHTML = `
+    <div class="quality-wrap">
+      <div class="quality-head">
+        <span class="quality-title">${placeholder}</span>
+        <span class="quality-badge" aria-live="polite">${placeholder}</span>
+      </div>
+
+      <div class="quality-range-wrap">
+        <div class="quality-track">
+          <div class="quality-fill pct-0"></div>
+        </div>
+        <input
+          type="range"
+          class="quality-range"
+          min="1" max="6" step="1" value="1"
+          data-empty="1"
+          aria-label="${placeholder}"
+          aria-valuemin="1" aria-valuemax="6" aria-valuenow="1"
+          aria-valuetext="${L[0]}"
+        />
+      </div>
+
+      <input type="hidden" id="qualityInput" name="quality" value="">
+    </div>
+  `;
+
+  const range  = root.querySelector('.quality-range');
+  const fill   = root.querySelector('.quality-fill');
+  const badge  = root.querySelector('.quality-badge');
+  const hidden = root.querySelector('#qualityInput');
+
+  const pctMap = { 1:'pct-0', 2:'pct-20', 3:'pct-40', 4:'pct-60', 5:'pct-80', 6:'pct-100' };
+  const pctClassFor   = (v) => pctMap[v] || 'pct-0';
+  const colorClassFor = (v) => `qcolor-${v}`;
+
+  function update(v, committed=false) {
+    const val = Math.max(1, Math.min(6, Number(v) || 1));
+
+    fill.className = `quality-fill ${pctClassFor(val)} ${colorClassFor(val)}`;
+
+    root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
+    root.classList.add(`qv-${val}`);
+
+    range.setAttribute('aria-valuenow', String(val));
+    range.setAttribute('aria-valuetext', L[val-1]);
+
+    if (committed) {
+      badge.textContent = L[val-1];
+      hidden.value = String(val);
+      range.removeAttribute('data-empty');
+    } else {
+      if (range.getAttribute('data-empty') === '1') {
+        badge.textContent = placeholder;
+      } else {
+        badge.textContent = L[val-1];
+      }
+    }
+  }
+
+  update(1, false);
+
+  range.addEventListener('input', (e) => update(e.target.value, false));
+  range.addEventListener('change', (e) => update(e.target.value, true));
+
+  const preset = Number(root.getAttribute('data-value'));
+  if (preset >= 1 && preset <= 6) {
+    range.value = String(preset);
+    update(preset, true);
+  }
+}
+
+function resetQualitySlider(containerOrId = 'qualityDropdown') {
+  const root = typeof containerOrId === 'string'
+    ? document.getElementById(containerOrId)
+    : containerOrId;
+  if (!root) return;
+
+  const placeholder =
+    root.getAttribute('data-placeholder') ||
     (typeof t === 'function' ? t('record.select_quality') : 'Select quality');
-  const list = getDropdownListEl(container);
-  if (list) _hideList(list);
-  setupFakeSelect('qualityDropdown', placeholder);
+
+  const hidden = root.querySelector('#qualityValue, input[type="hidden"][name="quality"]');
+  if (hidden) hidden.value = '';
+
+  const badge = root.querySelector('.quality-badge');
+  if (badge) badge.textContent = placeholder;
+
+  root.removeAttribute('data-value');
+  root.removeAttribute('data-color');
+  root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
+
+  const fill = root.querySelector('.quality-fill');
+  if (fill) {
+    fill.classList.remove('pct-20','pct-40','pct-60','pct-80','pct-100');
+    fill.classList.add('pct-0');
+  }
+
+  const range = root.querySelector('.quality-range');
+  if (range) {
+    const min = Number(range.min || 1);
+    range.value = String(min);
+    range.setAttribute('data-empty', '1');
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  root.querySelectorAll('.quality-mark--active')
+    .forEach(m => m.classList.remove('quality-mark--active'));
+}
+
+function getSelectedQuality() {
+  const root = document.getElementById('qualityDropdown');
+  if (!root) return null;
+
+  const hidden = root.querySelector('#qualityInput, input[name="quality"]');
+  let val = hidden && hidden.value ? Number(hidden.value) : null;
+
+  if (!Number.isFinite(val)) {
+    const range = root.querySelector('.quality-range');
+    if (range) {
+      if (range.getAttribute('data-empty') !== '1') {
+        val = Number(range.value);
+      } else {
+        const aria = Number(range.getAttribute('aria-valuenow'));
+        if (Number.isFinite(aria)) val = aria;
+      }
+    }
+  }
+
+  if (!Number.isFinite(val)) return null;
+  return Math.max(1, Math.min(6, Math.trunc(val)));
 }
 
 function forceDotDecimalInput(selector) {
@@ -3068,20 +4174,16 @@ function validateSubmitRecordForm(event) {
     return false;
   }
 
-  const qualityChecks = document.querySelectorAll(
-    '#qualityDropdown input[type="radio"], #qualityDropdown input[type="checkbox"]'
-  );
-  let hasQuality = false;
-  if (qualityChecks.length) {
-    hasQuality = Array.from(qualityChecks).some((c) => c.checked);
-  } else {
-    const qualityBtn = document.getElementById('qualityDropdownBtn');
-    hasQuality =
-      qualityBtn && qualityBtn.textContent && qualityBtn.textContent.trim() !== 'Select...';
+  const qHidden = document.querySelector('#qualityDropdown input[name="quality"]');
+  let hasQuality = !!(qHidden && qHidden.value);
+  if (!hasQuality) {
+    const qualityChecks = document.querySelectorAll(
+      '#qualityDropdown input[type="radio"], #qualityDropdown input[type="checkbox"]'
+    );
+    if (qualityChecks.length) hasQuality = Array.from(qualityChecks).some((c) => c.checked);
   }
   if (!hasQuality) {
-    showWarningMessage(t('record.quality_required'));
-    return false;
+    showWarningMessage(t('record.quality_required')); return false;
   }
 
   if (!window.screenshotUrl) {
@@ -3213,11 +4315,11 @@ function normalizePlaytest(item) {
 function buildPlaytestParams(extra = {}, page = currentPage) {
   const params = new URLSearchParams({
     archived: 'false',
-    official: 'false',
     hidden: 'false',
     page_number: String(page),
     page_size: String(itemsPerPage),
     playtest_status: 'In Progress',
+    playtest_filter: 'Only',
   });
 
   if (
@@ -3368,6 +4470,176 @@ function closeGlobalDropdown() {
 /* =========================
    HELPERS PLAYTEST MODAL
    ========================= */
+function setupPlaytestCtaDown() {
+  const wrap   = document.getElementById('ptCtaWrap');
+  const btn    = document.getElementById('ptCtaDown');
+  const hint   = document.getElementById('ptDifficultySection');
+  if (!wrap || !btn) return;
+
+  if (wrap.__ctaDownCleanup) wrap.__ctaDownCleanup();
+
+  const preferred = document.getElementById('playtestModalInner');
+  const rootModal = document.getElementById('playtestModal');
+  const TH = 8;
+
+  const isScrollable = (el) => {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    const oy = cs.overflowY;
+    const scrollableAxis = /(auto|scroll|overlay)/.test(oy);
+    return scrollableAxis && (el.scrollHeight - el.clientHeight > 1);
+  };
+
+  const findScrollPort = (startEl) => {
+    if (isScrollable(preferred)) return preferred;
+
+    let p = startEl?.parentElement;
+    while (p && p !== document.body) {
+      if (isScrollable(p)) return p;
+      p = p.parentElement;
+    }
+
+    if (isScrollable(rootModal)) return rootModal;
+
+    return document.scrollingElement || document.documentElement;
+  };
+
+  const scroller = findScrollPort(wrap);
+
+  const show = () => {
+    wrap.classList.remove('opacity-0', 'translate-y-1', 'pointer-events-none', 'hidden');
+    btn.tabIndex = 0;
+  };
+  const hide = () => {
+    wrap.classList.add('opacity-0', 'translate-y-1', 'pointer-events-none');
+    btn.tabIndex = -1;
+  };
+
+  let lastVisible;
+  const computeVisibility = () => {
+    let sh, ch, st;
+    const isDoc =
+      (scroller === document.scrollingElement) ||
+      (scroller === document.documentElement);
+
+    if (isDoc) {
+      sh = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      );
+      ch = window.innerHeight;
+      st = window.pageYOffset || document.documentElement.scrollTop || 0;
+    } else {
+      sh = scroller.scrollHeight;
+      ch = scroller.clientHeight;
+      st = scroller.scrollTop;
+    }
+    const canScroll = sh - ch > TH;
+    const atBottom  = st >= (sh - ch - TH);
+    return canScroll && !atBottom;
+  };
+
+  const update = () => {
+    const next = computeVisibility();
+    if (next === lastVisible) return;
+    lastVisible = next;
+    next ? show() : hide();
+  };
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { update(); ticking = false; });
+  };
+  const onResize = () => update();
+
+  const isDoc =
+    (scroller === document.scrollingElement) ||
+    (scroller === document.documentElement);
+
+  if (isDoc) {
+    window.addEventListener('scroll', onScroll, { passive: true });
+  } else {
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+  }
+  window.addEventListener('resize', onResize);
+
+  const ro = ('ResizeObserver' in window) ? new ResizeObserver(update) : null;
+  if (ro) {
+    if (isDoc) {
+      ro.observe(document.body);
+    } else {
+      ro.observe(scroller);
+      if (scroller.lastElementChild) {
+        ro.observe(scroller.lastElementChild);
+      }
+    }
+  }
+
+  const mo = new MutationObserver(update);
+  mo.observe(isDoc ? document.body : scroller, { childList: true, subtree: true });
+
+  const timers = [
+    setTimeout(update, 0),
+    setTimeout(update, 120),
+    setTimeout(update, 400),
+  ];
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const pad = 12;
+
+    const targetScroller = findScrollPort(wrap);
+    const targetIsDoc =
+      targetScroller === document.scrollingElement ||
+      targetScroller === document.documentElement;
+
+    if (targetIsDoc) {
+      if (hint) {
+        const top =
+          hint.getBoundingClientRect().top +
+          (window.pageYOffset || document.documentElement.scrollTop || 0) -
+          pad;
+        window.scrollTo({ top, behavior: 'smooth' });
+      } else {
+        window.scrollBy({
+          top: Math.max(200, window.innerHeight * 0.8),
+          behavior: 'smooth',
+        });
+      }
+      return;
+    }
+
+    if (hint) {
+      const top =
+        hint.getBoundingClientRect().top -
+        targetScroller.getBoundingClientRect().top +
+        targetScroller.scrollTop -
+        pad;
+      targetScroller.scrollTo({ top, behavior: 'smooth' });
+    } else {
+      targetScroller.scrollBy({
+        top: Math.max(200, targetScroller.clientHeight * 0.8),
+        behavior: 'smooth',
+      });
+    }
+  });
+
+  update();
+
+  wrap.__ctaDownCleanup = () => {
+    timers.forEach(clearTimeout);
+    if (isDoc) {
+      window.removeEventListener('scroll', onScroll);
+    } else {
+      scroller.removeEventListener('scroll', onScroll);
+    }
+    window.removeEventListener('resize', onResize);
+    mo.disconnect();
+    if (ro) ro.disconnect();
+  };
+}
 
 function _difficultyColors() {
   return [
@@ -3680,7 +4952,7 @@ function setupRatingDropdown() {
           method: 'POST',
           headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ code: String(code || ''), difficulty: difficultyValue }),
+          body: JSON.stringify({ difficulty: difficultyValue }),
         }
       );
 
@@ -4051,11 +5323,81 @@ async function fetchUserPrimaryName(user_id) {
 function hidePlaytestModal() {
   const modal = document.getElementById('playtestModal');
   const modalInner = document.getElementById('playtestModalInner');
-  modal.classList.add('hidden');
-  modalInner.innerHTML = '';
-  closeGlobalDropdown();
+  if (!modal) return;
+
+  if (modal.dataset.closing === '1') return;
+  modal.dataset.closing = '1';
+
+  modal.classList.remove('pt-in');
+  modalInner?.classList.remove('pt-in');
+
+  const DURATION = 240;
+  setTimeout(() => {
+    modal.classList.add('hidden');
+    modal.dataset.closing = '0';
+    if (modalInner) modalInner.innerHTML = '';
+    closeGlobalDropdown();
+  }, DURATION + 20);
 }
 
+function animatePtOpen({ animate = false } = {}) {
+  const modal = document.getElementById('playtestModal');
+  const inner = document.getElementById('playtestModalInner');
+  if (!modal || !inner) return;
+
+  const backdrop = modal.querySelector('.playtest-modal-backdrop');
+
+  modal.classList.remove('hidden');
+
+  if (!animate) {
+    const els = [modal, inner, backdrop].filter(Boolean);
+    els.forEach(el => { el.style.transition = 'none'; });
+
+    modal.classList.add('pt-anim', 'pt-in');
+    inner.classList.add('pt-anim', 'pt-in');
+
+    if (backdrop) {
+      backdrop.classList.add('pt-in');
+      backdrop.style.opacity = '1';
+      backdrop.style.pointerEvents = 'auto';
+    }
+
+    void modal.offsetWidth;
+    els.forEach(el => { el.style.transition = ''; });
+    return;
+  }
+
+  modal.classList.add('pt-anim');
+  inner.classList.add('pt-anim');
+  requestAnimationFrame(() => {
+    modal.classList.add('pt-in');
+    inner.classList.add('pt-in');
+    if (backdrop) backdrop.classList.add('pt-in');
+  });
+}
+
+function animatePtClose({ animate = false, duration = 240 } = {}) {
+  const modal = document.getElementById('playtestModal');
+  const inner = document.getElementById('playtestModalInner');
+  if (!modal) return;
+  const backdrop = modal.querySelector('.playtest-modal-backdrop');
+
+  if (!animate) {
+    modal.classList.remove('pt-in');
+    inner?.classList.remove('pt-in');
+    backdrop?.classList.remove('pt-in');
+    modal.classList.add('hidden');
+    if (inner) inner.innerHTML = '';
+    return;
+  }
+
+  modal.classList.remove('pt-in');
+  inner?.classList.remove('pt-in');
+  setTimeout(() => {
+    modal.classList.add('hidden');
+    if (inner) inner.innerHTML = '';
+  }, duration + 20);
+}
 
 function copyUserId(userId) {
   const msgOk = t('popup.user_id_copied', { id: userId });
@@ -4154,8 +5496,7 @@ async function postJSON(url, body, init = {}) {
   if (!isFormData && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (!headers.has('Accept')) headers.set('Accept', 'application/json');
 
-  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || null;
-  if (CSRF_TOKEN && !headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF_TOKEN);
+  if (CSRF && !headers.has('X-CSRF-TOKEN')) headers.set('X-CSRF-TOKEN', CSRF);
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -4462,91 +5803,112 @@ function mountModeratorActions(modalEl, playtest) {
   root.innerHTML = `
     <h3 class="mb-2 text-sm font-semibold text-emerald-300">Moderator actions</h3>
 
-    <div class="grid min-w-0 gap-2 sm:grid-cols-2">
-      <!-- Approve -->
-      <button type="button" id="ptModApprove"
-        class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-        Approve (verifier = me)
-      </button>
-
-      <!-- Force Accept -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0">
-        <div class="relative w-full sm:w-auto min-w-0">
-          <div id="ptmod-diffbutton"
-            class="ptmod-diffbutton group flex w-full sm:w-[12rem] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
-            role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
-            <div class="inline-flex items-center gap-2 min-w-0">
-              <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20 shrink-0"></span>
-              <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
-            </div>
-            <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform shrink-0" viewBox="0 0 22 22" aria-hidden="true">
-              <path fill="currentColor" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
-            </svg>
-          </div>
-
-          <!-- Menu au-dessus -->
-          <div id="ptmod-diffmenu"
-            class="ptmod-diffmenu absolute left-0 right-0 bottom-[calc(100%+8px)] top-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5 w-full"
-            role="menu" aria-label="Select difficulty">
-            ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
-              <div
-                class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none rounded-lg"
-                data-value="${o.value}" data-raw="${o.raw}" role="menuitem" tabindex="${i === 0 ? 0 : -1}">
-                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-white/20"></span>
-                <span class="truncate">${o.text()}</span>
-              </div>
-            `).join('')}
-          </div>
+    <div class="ptmod-grid">
+      <!-- Card: Approve -->
+      <section class="ptmod-card">
+        <h4>Approve</h4>
+        <p class="text-xs text-zinc-400">Marks the playtest as approved and sets you as verifier.</p>
+        <div class="ptmod-actions">
+          <button type="button" id="ptModApprove"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Approve (verifier = me)
+          </button>
         </div>
+      </section>
 
-        <button type="button" id="ptModForceAccept"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Force Accept
-        </button>
-      </div>
+      <!-- Card: Force Accept -->
+      <section class="ptmod-card">
+        <h4>Force accept</h4>
+        <p class="text-xs text-zinc-400">Force a difficulty and accept the playtest.</p>
+        <div class="ptmod-actions">
+          <div class="relative min-w-[180px]">
+            <div id="ptmod-diffbutton"
+              class="ptmod-diffbutton group flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
+              role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
+              <div class="inline-flex items-center gap-2 min-w-0">
+                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20 shrink-0"></span>
+                <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
+              </div>
+              <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform shrink-0" viewBox="0 0 22 22" aria-hidden="true">
+                <path fill="currentColor" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
+              </svg>
+            </div>
 
-      <!-- Force Deny -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
-        <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <button type="button" id="ptModForceDeny"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Force Deny
-        </button>
-      </div>
+            <div id="ptmod-diffmenu"
+              class="ptmod-diffmenu absolute left-0 right-0 top-[calc(100%+8px)] bottom-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
+              role="menu" aria-label="Select difficulty">
+              ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
+                <div
+                  class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none rounded-lg"
+                  data-value="${o.value}" data-raw="${o.raw}" role="menuitem" tabindex="${i === 0 ? 0 : -1}">
+                  <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-white/20"></span>
+                  <span class="truncate">${o.text()}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
 
-      <!-- Reset -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
-        <input id="ptModResetReason" type="text" placeholder="Reset reason…"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <label class="text-sm text-zinc-300 inline-flex items-center gap-1 shrink-0">
-          <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
-        </label>
-        <label class="text-sm text-zinc-300 inline-flex items-center gap-1 shrink-0">
-          <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
-        </label>
-        <button type="button" id="ptModReset"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Reset Playtest
-        </button>
-      </div>
+          <button type="button" id="ptModForceAccept"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Force Accept
+          </button>
+        </div>
+      </section>
 
-      <!-- Votes -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:col-span-2 min-w-0">
-        <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          class="flex-1 min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-        <button type="button" id="ptModDeleteVote"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Delete user vote
-        </button>
-        <button type="button" id="ptModDeleteAllVotes"
-          class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15 shrink-0">
-          Delete all votes
-        </button>
-      </div>
+      <!-- Card: Force Deny -->
+      <section class="ptmod-card">
+        <h4>Force deny</h4>
+        <p class="text-xs text-zinc-400">Reject the playtest with an explicit reason.</p>
+        <div class="ptmod-actions">
+          <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <button type="button" id="ptModForceDeny"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Force Deny
+          </button>
+        </div>
+      </section>
+
+      <!-- Card: Reset -->
+      <section class="ptmod-card">
+        <h4>Reset playtest</h4>
+        <p class="text-xs text-zinc-400">Reset state and optionally remove votes/completions.</p>
+        <div class="ptmod-actions">
+          <input id="ptModResetReason" type="text" placeholder="Reset reason…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+            <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
+          </label>
+          <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+            <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
+          </label>
+          <button type="button" id="ptModReset"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Reset Playtest
+          </button>
+        </div>
+      </section>
+
+      <!-- Card: Votes -->
+      <section class="ptmod-card">
+        <h4>Votes</h4>
+        <p class="text-xs text-zinc-400">Remove one user vote or purge all votes.</p>
+        <div class="ptmod-actions">
+          <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <button type="button" id="ptModDeleteVote"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Delete user vote
+          </button>
+          <button type="button" id="ptModDeleteAllVotes"
+            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            Delete all votes
+          </button>
+        </div>
+      </section>
     </div>
   `;
 
@@ -4730,7 +6092,14 @@ function mountModeratorActions(modalEl, playtest) {
 
     try {
       setBusy(btn, true);
-      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/votes/${encodeURIComponent(uid)}/delete`, {});
+      const r = await fetch(
+        `/api/mods/playtests/${encodeURIComponent(threadId)}/vote/${encodeURIComponent(uid)}`,
+        {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        }
+      );
       const j = await (async () => { try { return await r.json(); } catch { return null; } })();
       if (r.ok) { showConfirmationMessage('Vote deleted.'); await refreshModal(); }
       else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
@@ -4753,7 +6122,14 @@ function mountModeratorActions(modalEl, playtest) {
     const btn = ev.currentTarget;
     try {
       setBusy(btn, true);
-      const r = await postJSON(`/api/mods/playtests/${encodeURIComponent(threadId)}/votes/delete_all`, {});
+      const r = await fetch(
+        `/api/mods/playtests/${encodeURIComponent(threadId)}/vote`,
+        {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        }
+      );
       const j = await (async () => { try { return await r.json(); } catch { return null; } })();
       if (r.ok) { showConfirmationMessage('All votes deleted.'); await refreshModal(); }
       else { showErrorMessage(j?.message || `HTTP ${r.status}`); }
@@ -4798,12 +6174,12 @@ function renderPlaytestModal(data) {
     const g = data.guide_urls;
     if (g == null) return '';
 
-    const btn = (href, i = null) => `
-      <a href="${esc(href)}" target="_blank" rel="noopener"
-        class="rounded-md border border-sky-300/25 bg-sky-400/10 px-2 py-0.5 text-[11px] text-sky-200 hover:text-sky-100 hover:bg-sky-400/20 transition"
-        title="${t('map.guide_label') || 'Guide'}">
-        ${t('map.guide_label') || 'Guide'}${i != null ? ` ${i}` : ''}
-      </a>`;
+  const btn = (href, i = null) => `
+    <a href="${esc(href)}" target="_blank" rel="noopener"
+      class="inline-flex h-8 items-center justify-center rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 text-xs text-sky-200 leading-none hover:text-sky-100 hover:bg-sky-400/20 focus:outline-none focus:ring-1 focus:ring-sky-300/40 transition"
+      title="${t('map.guide_label') || 'Guide'}">
+      ${t('map.guide_label') || 'Guide'}${i != null ? ` ${i}` : ''}
+    </a>`;
 
     if (Array.isArray(g)) {
       return g
@@ -4851,17 +6227,18 @@ function renderPlaytestModal(data) {
   const codeBadge =
     data.code && String(data.code).trim() !== ''
       ? `
-      <button type="button"
-              class="copy-map-code cursor-pointer rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-200 hover:text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/40 transition"
-              data-code="${esc(data.code)}"
-              title="${t('popup.click_to_copy_map_code') || 'Click to copy'}"
-              aria-label="${t('popup.click_to_copy_map_code') || 'Click to copy'}">
-        ${esc(data.code)}
-      </button>`
-      : `<span class="rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-200">—</span>`;
+        <button type="button"
+                class="copy-map-code inline-flex h-8 items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 text-xs font-mono text-emerald-200 leading-none cursor-pointer hover:text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/40 transition"
+                data-code="${esc(data.code)}"
+                title="${t('popup.click_to_copy_map_code') || 'Click to copy'}"
+                aria-label="${t('popup.click_to_copy_map_code') || 'Click to copy'}">
+          ${esc(data.code)}
+        </button>`
+      : `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">—</span>`;
 
   const votersMount = `
-    <div id="votersMount" class="mt-3 max-h-[300px] w-full overflow-y-auto overflow-x-hidden pr-1 pt-2">
+    <div id="votersMount"
+     class="mt-3 max-h-[300px] w-full overflow-y-hidden overflow-x-hidden pr-1 pt-2 overscroll-contain scrollbar-stable">
       <div class="max-h-[160px] overflow-hidden">
         <div class="space-y-2.5" aria-busy="true" aria-live="polite">
           <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>
@@ -4916,7 +6293,9 @@ function renderPlaytestModal(data) {
           <div class="flex shrink-0 items-center gap-2">
             ${codeBadge}
             ${guideBadges}
-            ${data.category ? `<span class="rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-200">${esc(data.category)}</span>` : ''}
+            ${data.category ? `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">
+              ${esc(data.category)}
+            </span>` : ''}
           </div>
         </div>
 
@@ -4997,8 +6376,20 @@ function renderPlaytestModal(data) {
       </aside>
     </div>
 
+    <div id="ptCtaWrap"
+        class="sticky bottom-3 z-[5] flex justify-center transition-all duration-200 opacity-0 translate-y-1 pointer-events-none">
+      <button
+        id="ptCtaDown"
+        type="button"
+        class="pointer-events-auto cursor-pointer inline-flex items-center justify-center rounded-full border border-white/10 bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-3 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/60 pt-chev-bob">
+        <svg class="h-5 w-5 text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M7.41 8.59 12 13.17 16.59 8.59 18 10l-6 6-6-6z"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- CONTAINER 4 : difficulty rating -->
-    <div class="mt-4 rounded-2xl border border-white/10 bg-white/5">
+    <div id="ptDifficultySection" class="mt-4 rounded-2xl border border-white/10 bg-white/5">
       <div class="flex items-center justify-between gap-3 border-b border-white/10 p-3">
         <div>
           <div class="text-sm font-semibold text-zinc-100">${t('playtest.difficulty_rating')}</div>
@@ -5093,7 +6484,8 @@ async function initializePlaytestCards(userId) {
         if (!data) return;
 
         modalInner.innerHTML = renderPlaytestModal(data);
-        modal.classList.remove('hidden');
+        animatePtOpen({ animate: false });
+        try { setupPlaytestCtaDown(); } catch {}
 
         registerMapCodeCopyTargets(modal);
         setupRatingDropdown();
@@ -5779,6 +7171,8 @@ async function applyFilters(page = 1) {
     }
   });
 
+  const hasActiveFilters = Object.keys(extraFilters).length > 0;
+
   const qs = buildPlaytestParams(extraFilters, currentPage);
   const container = document.getElementById('playtestCardContainer');
   if (container) {
@@ -5799,7 +7193,7 @@ async function applyFilters(page = 1) {
       raw?.total_results ?? raw?.total ?? raw?.meta?.total ?? raw?.count ?? 0
     );
 
-    if (arr.length === 0) {
+    if (arr.length === 0 && hasActiveFilters) {
       showWarningMessage(t('popup.no_results'));
       clearFilters();
       applyFilters();
@@ -6272,6 +7666,9 @@ document.addEventListener(
    ========================= */
 async function initializeSubmitMap() {
   renderSubmitMapSection();
+  setupOfficialSwitch();
+  insertUnofficialBanner();
+  toggleUnofficialBanner();
   await primeMainCreatorFromSession();
   setupBannerDropzone();
   setupAllCustomDropdowns();
@@ -6283,12 +7680,15 @@ async function initializeSubmitMap() {
 
 function initializeSubmitRecord() {
   attachRecordAutocompletes();
+  ensureNoticeHost();
+  bindWatcher();
   dragAndDrop();
-  qualityDropdown();
+  qualitySlider();
 }
 
 async function initializeApp() {
   //showLoadingBar();
+  initMainTabs();
   fillMechanicsAndRestrictions().catch(() => {});
   setupTabs();
   setupForms();

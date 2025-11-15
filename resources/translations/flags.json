@@ -17,7 +17,7 @@
     "ru": {
       "name": "RU",
       "flag": "flag-russia",
-      "translated": false,
+      "translated": true,
       "modalMessage": "Перевод для этого языка еще не доступен. Если вы хотите помочь с переводом, свяжитесь с <strong>.aiapaec</strong> в Discord.",
       "closeButtonText": "Закрыть"
     },

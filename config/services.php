@@ -32,15 +32,28 @@ return [
     'discord' => [
         'client_id' => env('DISCORD_CLIENT_ID', ''),
         'client_secret' => env('DISCORD_CLIENT_SECRET', ''),
-        'redirect' => env('DISCORD_REDIRECT_URI', ''),
+        'redirect'      => env('DISCORD_REDIRECT_URI', rtrim(env('APP_URL', ''), '/') . '/callback'),
         'authorize_url' => 'https://discord.com/api/oauth2/authorize',
         'token_url' => 'https://discord.com/api/oauth2/token',
-        'scope' => ['identify', 'guilds', 'guilds.members.read'],
+        'scope' => 'identify guilds guilds.members.read',
         'bot_token' => env('DISCORD_BOT_TOKEN', ''),
         'guild_id' => env('DISCORD_GUILD_ID'),
         'mod_roles' => array_filter(explode(',', (string) env('DISCORD_MODERATOR_ROLE_IDS'))),
         'allow_gif_avatars' => (bool) env('DISCORD_AVATAR_GIF', true),
         'avatar_default_extension' => env('DISCORD_EXTENSION_DEFAULT', 'png'),
+    ],
+
+    'ocr' => [
+        'base_url' => (function () {
+            $env = config('app.env');
+            return match ($env) {
+                'local', 'testing'      => 'http://localhost:8000',
+                'development'           => 'http://genjishimada-ocr-dev:8000',
+                'production'            => 'http://genjishimada-ocr:8000',
+                default                 => 'http://genjishimada-ocr:8000',
+            };
+        })(),
+        'timeout'  => env('OCR_TIMEOUT', 10),
     ],
 
     'tenor' => [

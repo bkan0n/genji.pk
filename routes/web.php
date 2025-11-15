@@ -26,6 +26,7 @@ Route::view('lootbox', 'lootbox')->name('lootbox');
 Route::view('submit', 'submit')->name('submit');
 Route::view('game', 'game')->name('game');
 Route::view('dashboard', 'dashboard')->name('dashboard');
+Route::view('infos', 'infos')->name('infos');
 Route::view('moderator', 'moderator')->middleware('discord.moderator')->name('moderator.panel');
 Route::view('/ip', 'ip-temp');
 
@@ -33,11 +34,9 @@ Route::view('/ip', 'ip-temp');
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
 
 // Discord OAuth
-Route::get('discord/login', [DiscordAuthController::class, 'redirect'])->name('discord.redirect');
-Route::get('discord/callback', [DiscordAuthController::class, 'callback'])->name(
-    'discord.callback',
-);
-Route::post('discord/logout', [DiscordAuthController::class, 'logout'])->name('discord.logout');
+Route::get('/login',    [DiscordAuthController::class, 'redirect'])->name('login');
+Route::get('/callback', [DiscordAuthController::class, 'callback'])->name('callback');
+Route::post('/logout',  [DiscordAuthController::class, 'logout'])->name('logout');
 
 //IP 
 Route::get('/api/my-ip', function (Request $request) {

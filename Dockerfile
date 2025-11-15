@@ -72,8 +72,8 @@ COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --retries=10 \
-    CMD sh -lc 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n" >&3 && head -n1 <&3 | grep -q "HTTP/1.1"'
+HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
+    CMD sh -c "curl --insecure --silent --location --show-error --fail http://localhost:8080 || exit 1"
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["unitd","--no-daemon"]

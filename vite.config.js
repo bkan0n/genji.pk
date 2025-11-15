@@ -21,6 +21,7 @@ export default defineConfig({
         'resources/js/pages/game.js',
         'resources/js/pages/moderator.js',
         'resources/js/pages/dashboard.js',
+        'resources/js/pages/infos.js',
         'resources/js/pages/prism.js',
       ],
       refresh: true,

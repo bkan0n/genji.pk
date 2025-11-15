@@ -77,9 +77,9 @@
           <div
             id="topMapsCard"
             class="relative rounded-2xl border border-white/10 bg-white/5 p-2 shadow-2xl"
-            data-endpoint="{{ url('api/maps/trending?limit=3') }}"
-            data-full-endpoint="{{ url('api/maps/trending?limit=25') }}"
-            data-map-endpoint="{{ url('api/maps') }}"
+            data-endpoint="/api/maps/trending?limit=3"
+            data-full-endpoint="/api/maps/trending?limit=25"
+            data-map-endpoint="/api/maps"
             data-play-label="{{ __('index.top_maps.play') }}"
             data-copied-label="{{ __('index.top_maps.copied')}}"
             data-score-label="{{ __('index.top_maps.score') }}"

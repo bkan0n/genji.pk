@@ -27,7 +27,7 @@
       rel="stylesheet"
     />
 
-    @vite(['resources/js/app.js', 'resources/js/pages/prism.js'])
+    @vite(['resources/js/app.js'])
 
     @stack('head')
 

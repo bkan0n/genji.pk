@@ -25,6 +25,7 @@ use App\Http\Controllers\Maps\MapSearchController;
 use App\Http\Controllers\Maps\Playtests\PlaytestVoteController;
 use App\Http\Controllers\Maps\SubmitMapController;
 use App\Http\Controllers\Maps\TrendingMapsController;
+use App\Http\Controllers\Maps\QualityVoteController;
 use App\Http\Controllers\Mods\Guides\CreateGuideController;
 use App\Http\Controllers\Mods\Guides\DeleteGuideController;
 use App\Http\Controllers\Mods\Guides\EditGuideController;
@@ -80,6 +81,8 @@ use App\Http\Controllers\Utilities\Autocomplete\MapNamesController;
 use App\Http\Controllers\Utilities\Autocomplete\MapRestrictionsController;
 use App\Http\Controllers\Utilities\Autocomplete\UsersController;
 use App\Http\Controllers\Utilities\UploadImageController;
+use App\Http\Controllers\Utilities\LogMapClickController;
+use App\Http\Controllers\Utilities\OcrController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -117,6 +120,9 @@ Route::prefix('maps')->group(function () {
             PlaytestVoteController::class,
             'store',
         ])->name('playtests.vote.store');
+        Route::post('{code}/quality', [QualityVoteController::class, 'store'])
+            ->where('code', '[A-Za-z0-9\-]+')
+            ->name('api.maps.quality.store');
     });
 });
 
@@ -134,9 +140,11 @@ Route::prefix('autocomplete')->group(function () {
     );
     Route::get('users', UsersController::class)->name('api.autocomplete.users');
 });
-Route::middleware(['web'])
-    ->post('/utilities/image', UploadImageController::class)
-    ->name('utilities.image.upload');
+Route::middleware(['web'])->prefix('utilities')->name('utilities.')->group(function () {
+    Route::post('/image', UploadImageController::class)->name('image.upload');
+    Route::post('/log-map-click', LogMapClickController::class)->name('utilities.log_map_click');
+});
+Route::post('/ocr/extract', [OcrController::class, 'extract'])->name('ocr.extract');
 
 /* ================== COMPLETIONS ================== */
 Route::prefix('completions')->group(function () {
@@ -147,7 +155,7 @@ Route::prefix('completions')->group(function () {
 
     Route::middleware('web')->group(function () {
         Route::post('/', SubmitCompletionController::class)->name('api.completions.submit');
-        Route::post('all', GetAllCompletionsController::class)->name('api.completions.all');
+        Route::get('all', GetAllCompletionsController::class)->name('api.completions.all');
         Route::post('upvoting', UpvoteCompletionController::class)->name('api.completions.upvote');
     });
 });
