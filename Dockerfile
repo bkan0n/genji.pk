@@ -72,6 +72,8 @@ COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8080
+HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
+    CMD sh -c "curl --insecure --silent --location --show-error --fail http://localhost:8080 || exit 1"
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["unitd","--no-daemon"]
