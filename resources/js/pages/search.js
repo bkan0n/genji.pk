@@ -1599,21 +1599,21 @@ function updateActiveFilters() {
   const codeInput = document.getElementById('mapCodeInput');
   if (codeInput) {
     const raw = codeInput.getAttribute('data-selected-raw-value') || codeInput.value.trim();
-    if (raw) activeFilters.code = encodeURIComponent(raw);
+    if (raw) activeFilters.code = raw;
     else delete activeFilters.code;
   }
 
   const mapNameInput = document.getElementById('mapNameInput');
   if (mapNameInput) {
     const raw = mapNameInput.getAttribute('data-selected-raw-value') || mapNameInput.value.trim();
-    if (raw) activeFilters.map_name = encodeURIComponent(raw);
+    if (raw) activeFilters.map_name = raw;
     else delete activeFilters.map_name;
   }
 
   const userInput = document.getElementById('userNicknameInput');
   if (userInput) {
     const raw = userInput.getAttribute('data-selected-raw-value') || '';
-    if (raw) activeFilters.user_id = encodeURIComponent(raw);
+    if (raw) activeFilters.user_id = raw;
     else delete activeFilters.user_id;
   }
 
@@ -1622,10 +1622,10 @@ function updateActiveFilters() {
     const selectedId = creatorInput.getAttribute('data-selected-raw-value');
     const typed = creatorInput.value.trim();
     if (selectedId) {
-      activeFilters.creator_ids = encodeURIComponent(selectedId);
+      activeFilters.creator_ids = selectedId;
       delete activeFilters.creator_names;
     } else if (typed) {
-      activeFilters.creator_names = encodeURIComponent(typed);
+      activeFilters.creator_names = typed;
       delete activeFilters.creator_ids;
     } else {
       delete activeFilters.creator_ids;
@@ -1696,7 +1696,7 @@ function updateToolbarButtonStates() {
     } else if (typeof value === 'boolean') {
       text = value ? 'ON' : 'OFF';
     } else if (typeof value === 'string') {
-      const v = decodeURIComponent(value);
+      const v = value;
       text = v.length > 6 ? v.slice(0, 6) + '…' : v;
     }
 
