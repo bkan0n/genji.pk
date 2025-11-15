@@ -1885,7 +1885,8 @@ function parseGlobalACheckpoints(fullText) {
   const checkpoints = [];
   const teleportMap = {};
 
-  const regexGlobalA = /(?:Global|全局|グローバル)\.A\s*=\s*(?:Array|Matriz|数组|配列)\s*\(\s*/;
+  const regexGlobalA = /(?:(?:Global|全局|グローバル)\.A\s*=\s*(?:Array|Matriz|数组|配列)\s*\(|设置全局变量\s*\(\s*A\s*,\s*(?:Array|Matriz|数组|配列)\s*\()/;
+
   const matchGA = fullText.match(regexGlobalA);
   if (!matchGA) {
     return { checkpoints, teleportMap };
@@ -1894,8 +1895,9 @@ function parseGlobalACheckpoints(fullText) {
   let level = 1;
   let i = matchGA.index + matchGA[0].length;
   for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
+    const ch = fullText[i];
+    if (ch === '(') level++;
+    else if (ch === ')') {
       level--;
       if (level === 0) break;
     }
@@ -1903,8 +1905,8 @@ function parseGlobalACheckpoints(fullText) {
   const inside = fullText.slice(matchGA.index + matchGA[0].length, i);
 
   const elements = [];
-  let current = '',
-    depth = 0;
+  let current = '';
+  let depth = 0;
   for (const c of inside) {
     if (c === '(') {
       depth++;
@@ -1965,19 +1967,41 @@ function parseGlobalACheckpoints(fullText) {
   return { checkpoints, teleportMap };
 }
 
+function buildGlobalArrayRegex(varName) {
+  const name = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const patterns = [
+    `(?:Global|全局|グローバル)\\.${name}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`,
+    `设置全局变量\\s*\\(\\s*${name}\\s*,\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
+  ];
+
+  return new RegExp(patterns.join('|'));
+}
+
+function buildGlobalEmptyArrayRegex(varName) {
+  const name = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`设置全局变量\\s*\\(\\s*${name}\\s*,\\s*空数组\\s*\\)`);
+}
+
 function parseGlobalArrayNumbers(fullText, varName) {
-  const regex = new RegExp(
-    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
-  );
+  const regex = buildGlobalArrayRegex(varName);
   const match = fullText.match(regex);
-  if (!match) return [];
+
+  if (!match) {
+    const emptyRegex = buildGlobalEmptyArrayRegex(varName);
+    if (emptyRegex.test(fullText)) {
+      return [];
+    }
+    return [];
+  }
 
   const startIdx = match.index + match[0].length;
   let level = 1;
   let i = startIdx;
   for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
+    const ch = fullText[i];
+    if (ch === '(') level++;
+    else if (ch === ')') {
       level--;
       if (level === 0) break;
     }
@@ -1994,18 +2018,21 @@ function parseGlobalArrayNumbers(fullText, varName) {
 
 function parseGlobalArrayVectors(fullText, varName) {
   const results = [];
-  const regex = new RegExp(
-    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
-  );
+  const regex = buildGlobalArrayRegex(varName);
   const match = fullText.match(regex);
-  if (!match) return results;
+  if (!match) {
+    const emptyRegex = buildGlobalEmptyArrayRegex(varName);
+    if (emptyRegex.test(fullText)) return results;
+    return results;
+  }
 
   const startIdx = match.index + match[0].length;
   let level = 1;
   let i = startIdx;
   for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
+    const ch = fullText[i];
+    if (ch === '(') level++;
+    else if (ch === ')') {
       level--;
       if (level === 0) break;
     }
@@ -2016,6 +2043,7 @@ function parseGlobalArrayVectors(fullText, varName) {
   const inside = fullText.slice(startIdx, endIdx);
   const regexVector =
     /(?:Vector|矢量|ベクトル|Vetor)\s*\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/g;
+
   let m;
   while ((m = regexVector.exec(inside)) !== null) {
     const x = parseFloat(m[1]);
@@ -2030,18 +2058,21 @@ function parseGlobalArrayVectors(fullText, varName) {
 
 function parseGlobalArrayBooleans(fullText, varName) {
   const results = [];
-  const regex = new RegExp(
-    `(?:Global|全局|グローバル)\\.${varName}\\s*=\\s*(?:Array|Matriz|数组|配列)\\s*\\(`
-  );
+  const regex = buildGlobalArrayRegex(varName);
   const match = fullText.match(regex);
-  if (!match) return results;
+  if (!match) {
+    const emptyRegex = buildGlobalEmptyArrayRegex(varName);
+    if (emptyRegex.test(fullText)) return results;
+    return results;
+  }
 
   const startIdx = match.index + match[0].length;
   let level = 1;
   let i = startIdx;
   for (; i < fullText.length; i++) {
-    if (fullText[i] === '(') level++;
-    else if (fullText[i] === ')') {
+    const ch = fullText[i];
+    if (ch === '(') level++;
+    else if (ch === ')') {
       level--;
       if (level === 0) break;
     }
@@ -2055,9 +2086,8 @@ function parseGlobalArrayBooleans(fullText, varName) {
     const lower = t.toLowerCase();
     if (lower === 'true' || lower === '真') results.push(true);
     else if (lower === 'false' || lower === '假') results.push(false);
-    else if (lower === 'verdadeiro' || lower === 'falso') {
-      results.push(lower === 'verdadeiro');
-    }
+    else if (lower === 'verdadeiro') results.push(true);
+    else if (lower === 'falso') results.push(false);
   });
   return results;
 }
@@ -2958,25 +2988,63 @@ function extractModeMapNames(fullText) {
     const enabledRegex =
       /(?:enabled\s+maps|mapas\s+habilitados|mapas\s+ativados|verfügbare\s+karten|启用地图|有効なマップ)\s*\{\s*([\s\S]*?)\s*\}/i;
     const enabledMatch = modeBlockContent.match(enabledRegex);
-    if (enabledMatch) {
-      const insideEnabled = enabledMatch[1].trim();
-      const lines = insideEnabled.split(/\r?\n/);
-      for (let rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) continue;
-        const tokens = line.split(/\s+/);
-        if (tokens.length < 2) continue;
-        const possibleId = tokens[tokens.length - 1];
-        if (/^\d{8,}$/.test(possibleId)) {
-          const fullMapEntry = tokens.join(' ');
-          result[modeNameRaw] = fullMapEntry;
-          break;
-        }
+    if (!enabledMatch) continue;
+
+    const insideEnabled = enabledMatch[1].trim();
+    const lines = insideEnabled.split(/\r?\n/);
+
+    for (let rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      const tokens = line.split(/\s+/);
+      const lastToken = tokens[tokens.length - 1];
+
+      if (tokens.length >= 2 && /^\d{8,}$/.test(lastToken)) {
+        const fullMapEntry = tokens.join(' ');
+        result[modeNameRaw] = fullMapEntry;
+        break;
       }
+
+      const mapNameOnly = line;
+      const mapId = findMapIdFromName(mapNameOnly, CURRENT_LANG);
+
+      if (mapId && /^\d{8,}$/.test(mapId)) {
+        const fullMapEntry = `${mapNameOnly} ${mapId}`;
+        result[modeNameRaw] = fullMapEntry;
+        break;
+      }
+
     }
   }
 
   return result;
+}
+
+function findMapIdFromName(localizedName, lang = CURRENT_LANG) {
+  if (!localizedName || !mapNamesTranslations) return null;
+
+  const targetLangs = [lang, 'zh-CN', 'en-US'];
+
+  for (const [key, entry] of Object.entries(mapNamesTranslations)) {
+    if (!entry || typeof entry !== 'object') continue;
+
+    const matches = targetLangs.some((lng) => entry[lng] === localizedName);
+    if (!matches) continue;
+
+    let id = null;
+    if (entry.variants && entry.variants.default) {
+      id = String(entry.variants.default).trim();
+    } else if (entry.guid) {
+      id = String(entry.guid).trim();
+    }
+
+    if (id && /^\d{8,}$/.test(id)) {
+      return id;
+    }
+  }
+
+  return null;
 }
 
 function findModeKey(localizedName, lang) {
