@@ -32,43 +32,43 @@
         </div>
       </div>
     </section>
+    
 
-    {{-- Tabs + Toolbar container --}}
+    {{-- Toolbar & résultats --}}
     <section class="relative pb-3">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
-          {{-- Tabs --}}
-          <div class="tab-buttons grid grid-cols-2 gap-2 sm:grid-cols-4">
+
+        <div class="relative mb-4">
+          <div id="searchTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
             <button
-              id="map_searchBtn"
+              id="tabMapSearch"
+              class="search-tab cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
               data-section="map_search"
-              class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm font-medium hover:bg-white/5"
-            >
-              {{ __('search.map_search') }}
-            </button>
+            >{{ __('search.map_search') }}</button>
+
             <button
-              id="completionsBtn"
+              id="tabCompletions"
+              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
               data-section="completions"
-              class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm font-medium hover:bg-white/5"
-            >
-              {{ __('search.completions') }}
-            </button>
+            >{{ __('search.completions') }}</button>
+
             <button
-              id="guideBtn"
+              id="tabGuide"
+              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
               data-section="guide"
-              class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm font-medium hover:bg-white/5"
-            >
-              {{ __('search.guides') }}
-            </button>
+            >{{ __('search.guides') }}</button>
+
             <button
-              id="personal_recordsBtn"
+              id="tabPersonalRecords"
+              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
               data-section="personal_records"
-              class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm font-medium hover:bg-white/5"
-            >
-              {{ __('search.personal_records') }}
-            </button>
+            >{{ __('search.personal_records') }}</button>
           </div>
 
+          <span id="searchTabsHighlight" class="pointer-events-none absolute" aria-hidden="true"></span>
+        </div>
+
+        <div class="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
           {{-- Selected mode / Toolbar --}}
           <div class="selected-mode-container">
             <div
@@ -92,11 +92,12 @@
           <div id="dynamicFilters" class="filter-section">
             <div id="filtersContainer" class="filters-container flex flex-wrap gap-2"></div>
           </div>
-              {{-- Résultats --}}
-          <section class="relative pt-2 pb-10 sm:pb-16">
+
+          {{-- Résultats --}}
+          <section class="relative pt-2 pb-10 sm:pb-2">
             <div class="mx-auto max-w-7xl">
               <div class="overflow-hidden rounded-2xl">
-                <div id="resultsContainer" class="results-container overflow-auto"></div>
+                <div id="resultsContainer" class="results-container overflow-auto" data-loading="1"></div>
               </div>
             </div>
           </section>
@@ -108,10 +109,11 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
     </div>
-        {{-- Pagination --}}
+
+    {{-- Pagination --}}
     <div
       id="paginationContainer"
-      class="pagination-container mt-4 flex items-center justify-center gap-2"
+      class="pagination-container mt-4 flex items-center justify-center gap-2 sm:pb-4"
     ></div>
   </main>
 @endsection

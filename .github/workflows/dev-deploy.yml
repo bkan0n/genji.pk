@@ -1,6 +1,11 @@
 name: Dev Deployment
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to deploy (defaults to main)'
+        required: false
+        default: 'main'
   issue_comment:
     types: [created]
 
@@ -13,12 +18,13 @@ permissions:
 
 jobs:
   dev-deploy:
-    if: ${{ github.event.issue.pull_request }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && github.event.issue.pull_request) }}
     runs-on: ubuntu-latest
     environment: development
     steps:
       - name: branch-deploy
         id: branch-deploy
+        if: ${{ github.event_name == 'issue_comment' }}
         uses: github/branch-deploy@v11.0.0
         with:
           trigger: '.deploy'
@@ -31,10 +37,18 @@ jobs:
           admins: 'tylovejoy,Aiapaec64'
           update_branch: 'disabled'
 
-      - name: Checkout repository
+      - name: Checkout repository (PR comment)
+        if: ${{ github.event_name == 'issue_comment' }}
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.branch-deploy.outputs.sha }}
+
+      # Checkout for manual dispatch flow (uses input ref; defaults to main)
+      - name: Checkout repository (manual dispatch)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Set up SSH key
         run: |
@@ -71,7 +85,6 @@ jobs:
           X_API_ROOT: ${{ secrets.X_API_ROOT }}
           X_API_VERIFY: ${{ secrets.X_API_VERIFY }}
           X_API_KEY: ${{ secrets.X_API_KEY }}
-          DISCORD_REDIRECT_URI: ${{ secrets.DISCORD_REDIRECT_URI }}
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
@@ -92,6 +105,3 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           SESSION_SECURE_COOKIE: ${{ secrets.SESSION_SECURE_COOKIE }}
           SESSION_DOMAIN: ${{ secrets.SESSION_DOMAIN }}
-          REDIRECT_URL_LOCAL: ${{ secrets.REDIRECT_URL_LOCAL }}
-          REDIRECT_URL_TEST: ${{ secrets.REDIRECT_URL_TEST }}
-          REDIRECT_URL_PROD: ${{ secrets.REDIRECT_URL_PROD }}

@@ -13,8 +13,8 @@ return [
     'meta' => [
         'title' => 'Genji Parkour - Classement',
         'og' => [
-            'title' => 'Classement — Genji Parkour',
-            'description' => 'Parcourez les classements : XP, rangs, niveaux de compétence, et plus.',
+            'title'       => 'Classement — Genji Parkour',
+            'description' => 'Parcourez les classements : XP, niveaux, rangs de compétence et plus.',
         ],
     ],
 
@@ -22,35 +22,35 @@ return [
     // HEADER
     // ──────────────────────────────────────────────────────────────────────
     'header' => [
-        'title' => 'Classement',
-        'subtitle' => 'xp · rangs · niveaux de compétence',
+        'title'    => 'Classement',
+        'subtitle' => 'xp · niveaux · rangs de compétence',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
     // FILTERS
     // ──────────────────────────────────────────────────────────────────────
     'filters' => [
-        'player_label' => 'Joueur',
-        'search_placeholder' => 'Rechercher un joueur…',
+        'player_label'        => 'Joueur',
+        'search_placeholder'  => 'Rechercher un joueur…',
 
         'sort_label' => 'Trier par',
         'sort_options' => [
-            'xp' => 'XP',
-            'wr' => 'Records du monde',
-            'maps' => 'Cartes créées',
-            'votes' => 'Votes de playtest',
+            'xp'    => 'XP',
+            'wr'    => 'Records du monde',
+            'maps'  => 'Maps créées',
+            'votes' => 'Votes playtest',
         ],
 
         'rank_label' => 'Rechercher un rang',
         'rank_options' => [
-            'all' => 'Tous les rangs',
-            'ninja' => 'Ninja',
-            'jumper' => 'Jumper',
-            'skilled' => 'Skilled',
-            'pro' => 'Pro',
-            'master' => 'Maître',
-            'grandmaster' => 'Grand Maître',
-            'god' => 'Dieu',
+            'all'        => 'Tous les rangs',
+            'ninja'      => 'Ninja',
+            'jumper'     => 'Jumper',
+            'skilled'    => 'Skilled',
+            'pro'        => 'Pro',
+            'master'     => 'Master',
+            'grandmaster'=> 'Grandmaster',
+            'god'        => 'God',
         ],
 
         'reset' => 'Réinitialiser les filtres',
@@ -60,14 +60,14 @@ return [
     // TABLE
     // ──────────────────────────────────────────────────────────────────────
     'table' => [
-        'number' => '#',
-        'nickname' => 'Pseudo',
-        'xp' => 'XP',
-        'tier' => 'Rang',
-        'skill_rank' => 'Niveau de compétence',
-        'world_records' => 'Records du monde',
-        'maps_made' => 'Cartes créées',
-        'playtest_votes' => 'Votes de playtest',
-        'discord_tag' => 'Tag Discord',
+        'number'         => '#',
+        'nickname'       => 'Pseudo',
+        'xp'             => 'XP',
+        'tier'           => 'Niveau',
+        'skill_rank'     => 'Rang de compétence',
+        'world_records'  => 'Records du monde',
+        'maps_made'      => 'Maps créées',
+        'playtest_votes' => 'Votes playtest',
+        'discord_tag'    => 'Tag Discord',
     ],
 ];

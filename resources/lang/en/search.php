@@ -48,6 +48,14 @@ return [
     'completion' => 'Completion',
 
     // ──────────────────────────────────────────────────────────────────────
+    // UNOFFICIAL NOTICE
+    // ──────────────────────────────────────────────────────────────────────
+    'unofficial_notice' => [
+        'title' => 'Unofficial code search',
+        'li1'   => 'Unofficial codes are playable only on CN servers.',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // FILTERS TOOLBAR (UI toolbar options)
     // ──────────────────────────────────────────────────────────────────────
     'filters_toolbar' => [
@@ -73,14 +81,17 @@ return [
         'tournament' => 'Tournament',
         'mechanics' => 'Mechanics',
         'restrictions' => 'Restrictions',
-        'playtest_status' => 'Only playtest',
+        'playtest_status' => 'In Playtest',
+        'in_progress' => 'In Progress',
+        'approved' => 'Approved',
         'only_true' => 'True',
         'only_false' => 'False',
-        'completion_filter' => 'Only completions',
-        'medal_filter' => 'Only medals',
+        'completion_filter' => 'Completed',
+        'medal_filter' => 'Medals',
         'participation_filter' => 'Participation filter',
-        'participated_yes' => 'Particapted',
+        'participated_yes' => 'Participated',
         'participated_no' => 'Not participated',
+        'official' => 'Official',
         'apply_filters' => 'Apply filters',
         'clear_filters' => 'Clear filters',
     ],
@@ -104,7 +115,8 @@ return [
     'card' => [
       'completed'     => 'Completed',
       'not_completed' => 'Not completed',
-      'mapped_by'     => 'Mapped by',
+      'mapped_by'     => 'Creator(s)',
+      'like'          => 'Like',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -245,8 +257,8 @@ return [
         'delete_username' => 'Delete username',
         'no_username_set' => 'No username set',
         'confirm_button' => 'Confirm',
-        'click_to_copy_map_code' => 'Click to copy map code',
-        'map_code_copied' => 'Map code copied to clipboard',
+        'copy_map_code' => 'Copy map code',
+        'map_code_copied' => 'Map code copied: {code}',
         'copy_failed' => 'Failed to copy map code',
     ],
 
@@ -306,6 +318,8 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'thead' => [
         'mapCode' => 'Code',
+        'unofficialCode' => 'Unofficial code',
+        'officialCode' => 'Official code',
         'mapName' => 'Name',
         'mapType' => 'Type',
         'mapCreator' => 'Creator',
@@ -332,5 +346,7 @@ return [
         'mapMechanics' => 'Mechanics',
         'mapRestrictions' => 'Restrictions',
         'mapDescription' => 'Description',
+        'mapUpvotes' => 'Upvotes',
+        'mapVerified' => 'Verified',
     ],
 ];

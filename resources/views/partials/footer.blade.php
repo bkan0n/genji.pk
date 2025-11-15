@@ -8,7 +8,7 @@
       </div>
 
       <nav>
-        <div class="mb-2 text-xs font-semibold text-zinc-300">
+        <div class="mb-3 pb-1 border-b border-white/10 text-xs font-semibold text-zinc-300">
           {{ __('footer.discover_title') }}
         </div>
         <ul class="space-y-1 text-xs leading-5">
@@ -19,19 +19,18 @@
       </nav>
 
       <nav>
-        <div class="mb-2 text-xs font-semibold text-zinc-300">
+        <div class="mb-3 pb-1 border-b border-white/10 text-xs font-semibold text-zinc-300">
           {{ __('footer.contribute_title') }}
         </div>
         <ul class="space-y-1 text-xs leading-5">
           <li><a class="text-zinc-300 hover:text-white" href="{{ url('/submit') }}">{{ __('footer.contribute.submit') }}</a></li>
           <li><a class="text-zinc-300 hover:text-white" href="{{ url('/convertor') }}">{{ __('footer.contribute.convertor') }}</a></li>
-          {{-- IMPORTANT : déclenche l’ouverture de la modale Credits --}}
           <li><a href="#" data-open="credits" class="text-zinc-300 hover:text-white">{{ __('footer.contribute.credits') }}</a></li>
         </ul>
       </nav>
 
       <div>
-        <div class="mb-2 text-xs font-semibold text-zinc-300">{{ __('footer.follow_title') }}</div>
+        <div class="mb-3 pb-1 border-b border-white/10 text-xs font-semibold text-zinc-300">{{ __('footer.follow_title') }}</div>
         <div class="flex gap-2">
           <a
             href="https://dsc.gg/genjiparkour"
@@ -57,6 +56,25 @@
             </svg>
           </a>
         </div>
+      </div>
+    </div>
+
+    <div class="mt-6 rounded-xl border border-white/10 bg-gradient-to-b from-zinc-900/70 to-zinc-900/40 p-4">
+      <div class="flex items-center justify-between gap-4">
+        <div class="text-xs text-zinc-300">
+          <div class="font-semibold">{{ __('footer.support_title') }}</div>
+          <div class="text-zinc-400/90">{{ __('footer.support.text') }}</div>
+        </div>
+        <a
+          href="https://opencollective.com/genji-parkour"
+          target="_blank" rel="noopener noreferrer"
+          class="group inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500/15"
+        >
+          <svg class="gp-heart h-4 w-4 text-red-500" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M12.1 21.35l-1.1-.98C5.14 15.24 2 12.39 2 8.9 2 6.11 4.11 4 6.9 4c1.64 0 3.21.76 4.2 1.96C12.09 4.76 13.66 4 15.3 4 18.09 4 20.2 6.11 20.2 8.9c0 3.49-3.14 6.34-8.01 11.47l-0.09.08z"/>
+          </svg>
+          <span>{{ __('footer.support.donate') }}</span>
+        </a>
       </div>
     </div>
 

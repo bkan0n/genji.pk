@@ -11,7 +11,13 @@ return [
     'directives' => [
         [Directive::BASE, [Keyword::SELF]],
         [Directive::DEFAULT, [Keyword::SELF]],
-        [Directive::FORM_ACTION, [Keyword::SELF]],
+        [Directive::FORM_ACTION, 
+            [
+                Keyword::SELF,
+                'https://dev.genji.pk',
+                'https://genji.pk',
+            ]
+        ],
         [Directive::OBJECT, [Keyword::NONE]],
         [Directive::FRAME_ANCESTORS, [Keyword::NONE]],
 
@@ -55,6 +61,7 @@ return [
             [
                 Keyword::SELF,
                 'data:',
+                'blob:',
                 'https://cdn.discordapp.com',
                 'https://media.discordapp.net',
                 'https://tenor.com',
@@ -71,6 +78,9 @@ return [
             [
                 Keyword::SELF,
                 'https://www.youtube.com',
+                'https://www.youtube-nocookie.com/',
+                'https://b23.tv/',
+                'https://www.bilibili.com/',
                 'https://tenor.com',
                 'https://media.tenor.com',
                 'https://c.tenor.com',
@@ -81,6 +91,8 @@ return [
             Directive::CONNECT,
             [
                 Keyword::SELF,
+                'https://dev.genji.pk',
+                'https://genji.pk',
                 'https://fonts.googleapis.com',
                 'https://fonts.gstatic.com',
                 'https://analytics.bkan0n.com',

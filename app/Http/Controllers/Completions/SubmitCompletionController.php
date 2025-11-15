@@ -89,11 +89,21 @@ final class SubmitCompletionController extends Controller
                     'body' => $res->body(),
                 ]);
 
+                $jsonBody = null;
+                try { $jsonBody = $res->json(); } catch (\Throwable $_) {}
+
+                if ($res->status() === 400 && is_array($jsonBody) && isset($jsonBody['error'])) {
+                    return response()->json(
+                        ['error' => (string) $jsonBody['error']],
+                        400
+                    );
+                }
+
                 return response()->json(
                     [
-                        'error' => true,
-                        'message' => "API request failed with status code {$res->status()}",
-                        'response' => $res->json() ?? $res->body(),
+                        'error'    => true,
+                        'message'  => "API request failed with status code {$res->status()}",
+                        'response' => $jsonBody ?? $res->body(),
                     ],
                     $res->status(),
                 );

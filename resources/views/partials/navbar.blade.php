@@ -167,6 +167,12 @@
                 {{ __('navbar.submit_map') }}
               </a>
             </li>
+            <li>
+              <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                href="{{ url('/infos') }}">
+                {{ __('navbar.infos') }}
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -193,10 +199,14 @@
             class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition dark:bg-zinc-900/95"
           >
             @foreach ($languages as $code => $data)
+              @if (empty($data['translated']))
+                @continue
+              @endif
+
               <li>
                 <a
                   href="{{ route('lang.switch', $code) }}"
-                  class="{{ ! empty($data['translated']) ? '' : 'unavailable' }} flex items-center gap-2 px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
                   data-message="{{ $data['modalMessage'] ?? 'This language is not fully translated yet.' }}"
                   data-close-text="{{ $data['closeButtonText'] ?? 'Close' }}"
                 >
@@ -296,7 +306,7 @@
           </div>
         @else
           <a
-            href="{{ route('discord.redirect') }}"
+            href="{{ route('login') }}"
             class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
           >
             {{ __('navbar.login') }}
@@ -347,19 +357,19 @@
           </summary>
           <div class="mt-1 ml-2 grid">
             <a
-              href="{{ url('/maps') }}"
+              href="{{ url('/search') }}?section=map_search"
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.maps') }}
             </a>
             <a
-              href="{{ url('/guides') }}"
+              href="{{ url('/search') }}?section=guide"
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.guides') }}
             </a>
             <a
-              href="{{ url('/completions') }}"
+              href="{{ url('/search') }}?section=completions"
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.completions') }}
@@ -382,13 +392,6 @@
               class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
             >
               {{ __('navbar.newsfeed') }}
-            </a>
-            <a
-              href="{{ url('/newsfeed') }}?type=announcements"
-              data-follow-href
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-            >
-              {{ __('navbar.announcements') }}
             </a>
             <a
               href="{{ url('/tutorials') }}"
