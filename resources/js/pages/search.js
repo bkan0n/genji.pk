@@ -5526,22 +5526,29 @@ function renderProgressionChart(data, stats = { min: null, max: null, avg: null 
           displayColors: true,
           callbacks: {
             title: (items) => items[0]?.label ?? '',
-            label: (ctx)   => `${ctx.dataset.label || t('chart.user_record_progression')}: ${fmtTime(ctx.parsed.y)}`,
+            label: (ctx) => {
+              const v = Number(ctx.parsed.y);
+              if (!Number.isFinite(v)) return '';
+              return `${ctx.dataset.label || t('chart.user_record_progression')}: ${v.toFixed(2)} s`;
+            },
           },
         },
         title: { display: false },
-      },
-      elements: {
-        point: { radius: 0 },
-        line:  { stepped: false },
-      },
+        },
+        elements: {
+          point: { radius: 0 },
+          line:  { stepped: false },
+        },
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
             color: '#E5E7EB',
             font: { family: 'Inter, ui-sans-serif, system-ui', weight: 600, size: 12 },
-            callback: (v) => fmtTime(v),
+            callback: (v) => {
+              const n = Number(v);
+              return Number.isFinite(n) ? `${n.toFixed(2)} s` : '';
+            },
           },
           grid: { color: 'rgba(255,255,255,0.06)', drawBorder: false },
           border: { display: false },
