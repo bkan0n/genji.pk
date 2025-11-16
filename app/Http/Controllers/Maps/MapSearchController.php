@@ -48,6 +48,7 @@ class MapSearchController extends Controller
 
         $validated = validator($payload, [
             'playtest_status' => ['nullable', 'in:Approved,In Progress,Rejected'],
+            'playtest_filter' => ['nullable', 'in:All,Only,None'],
             'archived' => ['nullable', 'boolean'],
             'hidden' => ['nullable', 'boolean'],
             'official' => ['nullable', 'boolean'],
@@ -104,7 +105,6 @@ class MapSearchController extends Controller
 
         foreach (
             [
-                'playtest_status',
                 'code',
                 'difficulty_exact',
                 'difficulty_range_min',
@@ -115,6 +115,26 @@ class MapSearchController extends Controller
         ) {
             if (! empty($validated[$k])) {
                 $query[$k] = trim((string) $validated[$k]);
+            }
+        }
+
+        if (! empty($validated['playtest_status'])) {
+        $query['playtest_status'] = trim((string) $validated['playtest_status']);
+        }
+
+        elseif (! empty($validated['playtest_filter'])) {
+            switch ($validated['playtest_filter']) {
+                case 'Only':
+                    $query['playtest_status'] = 'In Progress';
+                    break;
+
+                case 'None':
+                    $query['playtest_status'] = 'Approved';
+                    break;
+
+                case 'All':
+                default:
+                    break;
             }
         }
 
