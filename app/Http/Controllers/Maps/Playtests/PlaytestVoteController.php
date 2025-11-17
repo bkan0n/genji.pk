@@ -13,7 +13,6 @@ class PlaytestVoteController extends Controller
     public function store(Request $request, string $thread_id, string $user_id): JsonResponse
     {
         $data = $request->validate([
-            'code' => ['required', 'string', 'min:4', 'max:6', 'regex:/^[A-Z0-9]+$/'],
             'difficulty' => ['required', 'numeric'],
         ]);
 

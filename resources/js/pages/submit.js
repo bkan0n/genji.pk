@@ -7593,7 +7593,7 @@ function lockSectionById(sectionId) {
       <div class="text-sm text-zinc-200 mb-2">
         ${typeof t === 'function' ? t('popup.login_required_msg') : 'Please login to access this section'}
       </div>
-      <a href="/discord/login"
+      <a href="/login"
          class="inline-flex items-center rounded-lg bg-white text-zinc-900 px-3 py-1.5 text-sm font-semibold hover:bg-zinc-100">
         ${typeof t === 'function' ? t('popup.login') : 'Login'}
       </a>
