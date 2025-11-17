@@ -340,9 +340,9 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .gp-reveal{opacity:0;transform:translateY(6px)}
 .gp-reveal-show{opacity:1;transform:translateY(0);transition:opacity .28s ease,transform .28s ease;}
 /* --- Filters lock --- */
-.toolbar-button.is-disabled-by-code {opacity: 0.3;filter: grayscale(0.8);transform: scale(0.97);}
-.toolbar-button.is-disabled-by-code svg {opacity: 0.6;}
-.toolbar-button.is-disabled-by-code .icon-name {text-decoration: line-through;opacity: 0.8;}
+.is-disabled-by-code {opacity: 0.3;filter: grayscale(0.8);transform: scale(0.97);}
+.is-disabled-by-code svg {opacity: 0.6;}
+.is-disabled-by-code .icon-name {text-decoration: line-through;opacity: 0.8;}
 /* ================= Quality micro bar ================= */
 .qmb{display:flex;align-items:center;gap:.5rem;white-space:nowrap}
 .qmb .qmb-track{
