@@ -3045,21 +3045,36 @@ function ensureSearchDetailsModal() {
           <div class="grid gap-6 p-6 md:grid-cols-12">
             <!-- Left -->
             <div class="md:col-span-7 space-y-6">
-              <!-- Code + Copy -->
+              <!-- Code + Copy + Guide -->
               <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-center justify-between gap-4">
                 <div>
                   <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapCode')}</div>
                   <div id="mapCode" class="mt-1 font-mono text-lg">—</div>
                 </div>
-                <button id="btnCopyCode"
-                        title="${t('popup.copy_map_code')}"
-                        class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  ${t('popup.copy_map_code')}
-                </button>
+                <div class="flex items-center gap-2">
+                  <!-- Guide button -->
+                  <button id="btnGuide"
+                          type="button"
+                          class="hidden inline-flex cursor-pointer items-center rounded-xl bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40 hover:bg-indigo-500/25 hover:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+                          aria-disabled="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M4 19.5V6a2 2 0 0 1 2-2h9.5A2.5 2.5 0 0 1 18 6.5V18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="M4 8h10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="M8 22l3-3-3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    ${t('guides') || 'Guides'}
+                  </button>
+
+                  <button id="btnCopyCode"
+                          title="${t('popup.copy_map_code')}"
+                          class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    ${t('popup.copy_map_code')}
+                  </button>
+                </div>
               </div>
 
               <!-- Linked official/unofficial code -->
@@ -3218,6 +3233,17 @@ function ensureSearchDetailsModal() {
     let inFlight = false;
 
     const handleActivate = async (ev) => {
+      const btnGuide = ev.target.closest('#btnGuide');
+      if (btnGuide) {
+        const href = btnGuide.getAttribute('data-href');
+        if (href) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+        return;
+      }
+
       const btnMain   = ev.target.closest('#btnCopyCode');
       const btnLinked = ev.target.closest('#btnCopyLinkedCode');
       if (!btnMain && !btnLinked) return;
@@ -3325,6 +3351,13 @@ async function openSearchDetailsModal(r) {
     return null;
   })();
 
+  let guides = [];
+  if (Array.isArray(r.guides)) {
+    guides = r.guides.filter(Boolean);
+  } else if (typeof r.guides === 'string' && r.guides.trim() !== '') {
+    guides = [r.guides.trim()];
+  }
+
   let mechanics = Array.isArray(r.mechanics) ? r.mechanics : [];
   let restrictions = Array.isArray(r.restrictions) ? r.restrictions : [];
   if (typeof CURRENT_LANG!=='undefined' && CURRENT_LANG==='cn') {
@@ -3356,6 +3389,23 @@ async function openSearchDetailsModal(r) {
   g('mapTypeDetail', typeText || '—');
   g('mapDiffDetail', difficulty || '—');
   g('mapQualityDetail', qualityStars);
+
+  const guideBtn = document.getElementById('btnGuide');
+  if (guideBtn) {
+    if (guides.length) {
+      const href = String(guides[0]);
+      guideBtn.classList.remove('hidden');
+      guideBtn.setAttribute('data-href', href);
+      guideBtn.setAttribute('aria-disabled', 'false');
+      guideBtn.title = tSafe('card.open_guide', 'Open guide');
+    } else {
+      guideBtn.classList.add('hidden');
+      guideBtn.classList.remove('inline-flex');
+      guideBtn.removeAttribute('data-href');
+      guideBtn.setAttribute('aria-disabled', 'true');
+      guideBtn.title = '';
+    }
+  }
 
   const linkedWrap     = document.getElementById('linkedCodeContainer');
   const linkedLabelEl  = document.getElementById('linkedCodeLabel');
