@@ -1636,9 +1636,8 @@ function setupForms() {
         const result = await sendCompletionToApi();
 
         const msg400 =
-          result?.error ||
-          result?.response?.error ||
-          (typeof result?.message === 'string' ? result.message : null);
+          (typeof result?.response?.error === 'string' ? result.response.error : null) ||
+          (typeof result?.error === 'string' ? result.error : null);
 
         if (!result || msg400) {
           showErrorMessage(msg400 || t('errors.server_unreachable') || 'Erreur serveur');
@@ -1679,8 +1678,7 @@ function setupForms() {
     submitMapForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (IS_GUEST) {
-        showWarningMessage(
-          t('popup.login_required_msg'));
+        showWarningMessage(t('popup.login_required_msg'));
         return;
       }
       const ok = await validateSubmitMapForm(e);
@@ -1689,8 +1687,8 @@ function setupForms() {
         const result = await sendMapToApi();
 
         const msg400 =
-          result?.error ||
-          result?.response?.error ||
+          (typeof result?.response?.error === 'string' ? result.response.error : null) ||
+          (typeof result?.error === 'string' ? result.error : null) ||
           (typeof result?.message === 'string' ? result.message : null);
 
         if (msg400) {
@@ -3736,7 +3734,7 @@ async function sendCompletionToApi() {
     return { error: t('errors.invalid_form') || 'Formulaire invalide' };
   }
   if (!window.screenshotUrl && !window.screenshotFile) {
-    return { error: t('record.screenshot_required')};
+    return { error: t('record.screenshot_required') || 'Screenshot requis' };
   }
 
   try {
@@ -3770,18 +3768,49 @@ async function sendCompletionToApi() {
     } catch {}
 
     if (!resp.ok) {
-      const msg = (data && (data.error || data.message)) || `HTTP ${resp.status}`;
-      return { error: msg };
+      let msg = null;
+
+      if (data && typeof data === 'object') {
+
+        if (
+          data.response &&
+          typeof data.response === 'object' &&
+          typeof data.response.error === 'string' &&
+          data.response.error.trim() !== ''
+        ) {
+          msg = data.response.error.trim();
+        }
+
+        else if (typeof data.error === 'string' && data.error.trim() !== '') {
+          msg = data.error.trim();
+        }
+
+        else if (typeof data.message === 'string' && data.message.trim() !== '') {
+          msg = data.message.trim();
+        }
+      }
+
+      if (!msg) {
+        msg = `API request failed with status code ${resp.status}`;
+      }
+
+      return { error: msg, response: data, status: resp.status };
     }
 
     try {
       const q = getSelectedQuality();
       if (Number.isFinite(q)) await sendQualityVote(code, q);
     } catch {}
+
     return data || { ok: true };
   } catch (err) {
     console.error(err);
-    return { error: err?.message || t('errors.server_unreachable') || 'Erreur réseau' };
+    const fallback =
+      (err && typeof err.message === 'string' && err.message) ||
+      t('errors.server_unreachable') ||
+      'Erreur réseau';
+
+    return { error: fallback };
   }
 }
 
@@ -4320,6 +4349,7 @@ function buildPlaytestParams(extra = {}, page = currentPage) {
     page_size: String(itemsPerPage),
     playtest_status: 'In Progress',
     playtest_filter: 'Only',
+    force_filters: true,
   });
 
   if (
