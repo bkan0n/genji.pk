@@ -12,7 +12,7 @@ class MapSearchController extends Controller
     {
         $payload = (array) $request->all();
 
-        $boolish = ['archived', 'hidden', 'official', 'return_all'];
+        $boolish = ['archived', 'hidden', 'official', 'return_all', 'force_filters'];
         foreach ($boolish as $k) {
             if (array_key_exists($k, $payload)) {
                 $payload[$k] = filter_var($payload[$k], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
@@ -52,6 +52,7 @@ class MapSearchController extends Controller
             'archived' => ['nullable', 'boolean'],
             'hidden' => ['nullable', 'boolean'],
             'official' => ['nullable', 'boolean'],
+            'force_filters' => ['nullable', 'boolean'],
             'playtest_thread_id' => ['nullable', 'integer'],
             'code' => ['nullable', 'string'],
 
@@ -88,7 +89,7 @@ class MapSearchController extends Controller
 
         $query = [];
 
-        $boolKeys = ['archived', 'hidden', 'official', 'return_all'];
+        $boolKeys = ['archived', 'hidden', 'official', 'return_all', 'force_filters'];
         foreach ($boolKeys as $k) {
             if (array_key_exists($k, $validated)) {
                 $query[$k] = filter_var($validated[$k], FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
@@ -119,10 +120,8 @@ class MapSearchController extends Controller
         }
 
         if (! empty($validated['playtest_status'])) {
-        $query['playtest_status'] = trim((string) $validated['playtest_status']);
-        }
-
-        elseif (! empty($validated['playtest_filter'])) {
+            $query['playtest_status'] = trim((string) $validated['playtest_status']);
+        } elseif (! empty($validated['playtest_filter'])) {
             switch ($validated['playtest_filter']) {
                 case 'Only':
                     $query['playtest_status'] = 'In Progress';
@@ -196,11 +195,23 @@ class MapSearchController extends Controller
         $resp = $http->get($qs ? "{$endpoint}?{$qs}" : $endpoint);
 
         if (! $resp->successful()) {
+            $body = $resp->body();
+            $json = json_decode($body, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                return response()->json(
+                    $json,
+                    $resp->status(),
+                    [],
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                );
+            }
+
             return response()->json(
                 [
-                    'error' => 'upstream_failed',
-                    'status' => $resp->status(),
-                    'message' => $resp->body(),
+                    'error'   => 'upstream_failed',
+                    'status'  => $resp->status(),
+                    'message' => $body,
                 ],
                 $resp->status(),
             );
