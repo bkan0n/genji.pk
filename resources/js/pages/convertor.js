@@ -1,6 +1,16 @@
 /* =========================
    CONFIG & UTILS
    ========================= */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+
 const DEBUG_MODE = true;
 let isEditMode = false;
 let currentDataModel = null;
@@ -4457,6 +4467,7 @@ function createCheckpointCard(idx, coords, data) {
 
 function renderMapSettings(fullText) {
   const container = document.getElementById('mapSettings');
+  const previewWrapper = container.querySelector('#layoutPreviewWrapper') || document.getElementById('layoutPreviewWrapper');
   lastFullText = fullText;
 
   lastParsedWorkshopSettings = parseWorkshopSettings(fullText);
@@ -4531,11 +4542,20 @@ function renderMapSettings(fullText) {
 
   // Clean & render cards
   Array.from(container.children).forEach((child) => {
-    if (child !== globalInfos) container.removeChild(child);
+    if (child !== globalInfos && child !== previewWrapper) container.removeChild(child);
   });
 
   const dataModel = extractAllData(fullText);
   currentDataModel = dataModel;
+
+  if (previewWrapper) {
+    const next = globalInfos.nextElementSibling;
+    if (next !== previewWrapper) {
+      container.insertBefore(previewWrapper, next);
+    }
+  }
+
+  updateLayoutPreview(dataModel);
 
   if (dataModel.checkpoints.length === 0) {
     const msg = document.createElement('p');
@@ -6433,6 +6453,7 @@ function renderMapSettingsWithModel(dataModel) {
   const editModeBtn = document.getElementById('editModeBtn');
   const globalSettingsBtn = document.getElementById('globalSettingsBtn');
   const globalInfos = container.querySelector('.global-infos');
+  const previewWrapper = container.querySelector('#layoutPreviewWrapper');
 
   if (editModeBtn && editModeBtn.parentNode) {
     editModeBtn.parentNode.removeChild(editModeBtn);
@@ -6488,6 +6509,10 @@ function renderMapSettingsWithModel(dataModel) {
   container.appendChild(globalInfos);
   globalInfos.appendChild(settingsButtons);
 
+  if (previewWrapper) {
+    container.appendChild(previewWrapper);
+  }
+
   if (!dataModel.checkpoints || dataModel.checkpoints.length === 0) {
     const msg = document.createElement('p');
     msg.textContent = t('convert.mapdata_error');
@@ -6503,6 +6528,7 @@ function renderMapSettingsWithModel(dataModel) {
 
   updateCardNumbers();
   setCardEditInteractivity(isEditMode);
+  updateLayoutPreview(dataModel);
 }
 
 /* =========================
@@ -7101,7 +7127,875 @@ function initGlobalSettingsDropdowns(modalEl) {
   });
 }
 
+/* =========================
+   LAYOUT PREVIEW (THREE.JS)
+   ========================= */
+let __layoutPreview = null;
 
+function updateLayoutPreview(dataModel) {
+  const wrap = document.getElementById('layoutPreviewWrapper');
+  if (!wrap) return;
+
+  const cps = (dataModel?.checkpoints || []).filter(
+    (v) => v && Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z),
+  );
+
+  if (cps.length === 0) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+
+  const pv = ensureLayoutPreview();
+  if (!pv) return;
+
+  pv.setData({
+    checkpoints: cps,
+    teleportMap: dataModel?.teleportMap || {},
+  });
+}
+
+function ensureLayoutPreview() {
+  if (__layoutPreview) return __layoutPreview;
+
+  const host = document.getElementById('layoutPreview');
+  const canvas = document.getElementById('layoutPreviewCanvas');
+  const empty = document.getElementById('layoutPreviewEmpty');
+
+  if (!host || !canvas) return null;
+
+  const fitBtn = document.getElementById('previewFitBtn');
+  const labelsBtn = document.getElementById('previewToggleLabelsBtn');
+  const copyBtn = document.getElementById('previewCopyJsonBtn');
+
+  // --- HUD ---
+  let hud = document.getElementById('layoutPreviewHud');
+  if (!hud) {
+    hud = document.createElement('div');
+    hud.id = 'layoutPreviewHud';
+    hud.className =
+      'absolute right-3 top-3 z-10 w-[260px] select-none rounded-2xl border border-white/10 bg-black/55 p-3 text-xs text-zinc-100 shadow-lg backdrop-blur';
+    hud.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-sm font-semibold">Inspector</div>
+        <div class="inline-flex overflow-hidden rounded-full border border-white/10 bg-white/5">
+          <button id="lpView3D" class="px-2.5 py-1 font-semibold hover:bg-white/10">3D</button>
+          <button id="lpViewTop" class="px-2.5 py-1 font-semibold hover:bg-white/10">TOP</button>
+        </div>
+      </div>
+
+      <div class="mt-2 rounded-xl border border-white/10 bg-white/5 p-2">
+        <div id="lpSelTitle" class="font-semibold text-zinc-100">No selection</div>
+        <div id="lpSelCoords" class="mt-1 text-zinc-300">Click a checkpoint</div>
+
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button id="lpFocusBtn" class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold hover:bg-white/10">Focus</button>
+          <button id="lpEditBtn" class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold hover:bg-white/10">Edit</button>
+          <button id="lpCopyVecBtn" class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold hover:bg-white/10">Copy vec</button>
+        </div>
+      </div>
+
+      <div class="mt-2 rounded-xl border border-white/10 bg-white/5 p-2 text-zinc-300">
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-zinc-100">Shortcuts</span>
+          <span class="text-[11px] text-zinc-400">F fit · L labels · Esc clear</span>
+        </div>
+        <div class="mt-1 text-[11px]">
+          Hover = tooltip · Click = select · Double click = focus
+        </div>
+      </div>
+    `;
+    host.appendChild(hud);
+  }
+
+  const elView3D = document.getElementById('lpView3D');
+  const elViewTop = document.getElementById('lpViewTop');
+  const elSelTitle = document.getElementById('lpSelTitle');
+  const elSelCoords = document.getElementById('lpSelCoords');
+  const elFocusBtn = document.getElementById('lpFocusBtn');
+  const elEditBtn = document.getElementById('lpEditBtn');
+  const elCopyVecBtn = document.getElementById('lpCopyVecBtn');
+
+  // --- RENDERER ---
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+
+  if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+  if ('toneMapping' in renderer) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+  }
+
+  // --- SCENE (environment + fog) ---
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x05060a, 0.00012);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+  scene.environment = envTex;
+
+  // --- CAMERA / CONTROLS ---
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 250000);
+  camera.position.set(2200, 1600, 2200);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.075;
+  controls.screenSpacePanning = true;
+  controls.minDistance = 120;
+  controls.maxDistance = 30000;
+
+  // --- LABELS (CSS2D) ---
+  const labelRenderer = new CSS2DRenderer();
+  labelRenderer.domElement.className = 'pointer-events-none absolute inset-0';
+  labelRenderer.domElement.style.zIndex = '6';
+  host.appendChild(labelRenderer.domElement);
+
+  // --- POST FX (subtle bloom + FXAA) ---
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.35, 0.55, 0.9);
+  composer.addPass(bloomPass);
+
+  const fxaaPass = new ShaderPass(FXAAShader);
+  composer.addPass(fxaaPass);
+
+  // --- LIGHTING ---
+  scene.add(new THREE.HemisphereLight(0xbfd1ff, 0x0b0c12, 0.55));
+
+  const key = new THREE.DirectionalLight(0xffffff, 0.65);
+  key.position.set(2400, 3600, 1700);
+  scene.add(key);
+
+  const rim = new THREE.DirectionalLight(0x60a5fa, 0.25);
+  rim.position.set(-3000, 1400, -2400);
+  scene.add(rim);
+
+  // --- GRID ---
+  const gridMinor = new THREE.GridHelper(7000, 140);
+  gridMinor.material.transparent = true;
+  gridMinor.material.opacity = 0.10;
+  scene.add(gridMinor);
+
+  const gridMajor = new THREE.GridHelper(7000, 35);
+  gridMajor.material.transparent = true;
+  gridMajor.material.opacity = 0.16;
+  scene.add(gridMajor);
+
+  // --- ROOT GROUP ---
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // --- STATE ---
+  const state = {
+    labelMode: 'auto',
+    viewMode: '3d',
+    lastPayload: null,
+
+    checkpoints: [],
+    teleportMap: {},
+
+    selectedIdx: -1,
+    hoveredIdx: -1,
+
+    checkpointMeshes: [],
+    hitMeshes: [],
+    labelObjects: [],
+
+    tween: null,
+    fitCenter: new THREE.Vector3(0, 0, 0),
+    fitRadius: 1200,
+
+    pulses: [],
+  };
+
+  // --- RESIZE ---
+  const resize = () => {
+    const r = host.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(r.width));
+    const h = Math.max(1, Math.floor(r.height));
+
+    renderer.setSize(w, h, false);
+    labelRenderer.setSize(w, h);
+    composer.setSize(w, h);
+
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+
+    fxaaPass.material.uniforms.resolution.value.set(1 / w, 1 / h);
+    bloomPass.setSize(w, h);
+  };
+  const ro = new ResizeObserver(() => resize());
+  ro.observe(host);
+  resize();
+
+  // --- HELPERS ---
+  const owToThree = (v) => new THREE.Vector3(v.x, v.z, v.y);
+
+  // --- DISPOSE ---
+  const disposeObject = (obj) => {
+    if (!obj) return;
+    obj.traverse?.((o) => {
+      if (o.geometry) o.geometry.dispose?.();
+      if (o.material) {
+        if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
+        else o.material.dispose?.();
+      }
+    });
+  };
+
+  const clearGroup = () => {
+    state.checkpointMeshes = [];
+    state.hitMeshes = [];
+    state.labelObjects = [];
+    state.pulses = [];
+    state.selectedIdx = -1;
+    state.hoveredIdx = -1;
+
+    while (group.children.length) {
+      const child = group.children.pop();
+      disposeObject(child);
+    }
+  };
+
+  // --- CAMERA HELPERS ---
+  const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+  const flyTo = (target, radius) => {
+    const dist = Math.max(220, radius * 1.35);
+    const toPos =
+      state.viewMode === 'top'
+        ? target.clone().add(new THREE.Vector3(0, dist * 1.6, 0.0001))
+        : target.clone().add(new THREE.Vector3(dist, dist * 0.6, dist));
+
+    state.tween = {
+      t0: performance.now(),
+      dur: 460,
+      fromPos: camera.position.clone(),
+      toPos,
+      fromTarget: controls.target.clone(),
+      toTarget: target.clone(),
+    };
+  };
+
+  const fitToBox = (box) => {
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxSize = Math.max(size.x, size.y, size.z) || 1000;
+
+    state.fitCenter.copy(center);
+    state.fitRadius = maxSize;
+
+    flyTo(center, maxSize);
+  };
+
+  const updateViewToggleUI = () => {
+    if (!elView3D || !elViewTop) return;
+    const on = 'bg-white/10';
+
+    elView3D.className = elView3D.className.replace(on, '').trim() + (state.viewMode === '3d' ? ` ${on}` : '');
+    elViewTop.className = elViewTop.className.replace(on, '').trim() + (state.viewMode === 'top' ? ` ${on}` : '');
+  };
+
+  const applyViewMode = (mode) => {
+    state.viewMode = mode;
+
+    if (mode === 'top') {
+      controls.enableRotate = true;
+      controls.minPolarAngle = 0.001;
+      controls.maxPolarAngle = 0.35;
+      controls.enablePan = true;
+    } else {
+      controls.enableRotate = true;
+      controls.minPolarAngle = 0.001;
+      controls.maxPolarAngle = Math.PI - 0.001;
+      controls.enablePan = true;
+    }
+
+    flyTo(state.fitCenter.clone(), state.fitRadius);
+    updateViewToggleUI();
+  };
+  updateViewToggleUI();
+
+  // --- TOOLTIP (CSS2D) ---
+  const tipEl = document.createElement('div');
+  tipEl.className =
+    'hidden rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-xs text-zinc-100 shadow';
+  const tipObj = new CSS2DObject(tipEl);
+  tipObj.visible = false;
+  group.add(tipObj);
+
+  // --- RAYCAST ---
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  const setSelection = (idx) => {
+    state.selectedIdx = idx;
+
+    state.checkpointMeshes.forEach((m, i) => {
+      const sel = i === idx;
+      const hov = i === state.hoveredIdx;
+
+      const s = sel ? 1.35 : hov ? 1.18 : 1.0;
+      m.scale.setScalar(s);
+
+      if (m.material && m.material.emissive) {
+        m.material.emissiveIntensity = sel ? 1.0 : hov ? 0.7 : 0.45;
+      }
+    });
+
+    if (idx < 0) {
+      if (elSelTitle) elSelTitle.textContent = 'No selection';
+      if (elSelCoords) elSelCoords.textContent = 'Click a checkpoint';
+      return;
+    }
+
+    const ow = state.checkpoints[idx];
+    if (!ow) return;
+
+    if (elSelTitle) elSelTitle.textContent = `Checkpoint ${idx}`; // 0-based
+    if (elSelCoords) elSelCoords.textContent = `x:${Math.round(ow.x)}  y:${Math.round(ow.y)}  z(h):${Math.round(ow.z)}`;
+  };
+
+  const openSelectedEditor = () => {
+    if (state.selectedIdx < 0) return;
+    try {
+      if (typeof openEditModal === 'function') openEditModal(state.selectedIdx);
+    } catch (_) {}
+  };
+
+  const copySelectedVec = async () => {
+    if (state.selectedIdx < 0) return;
+    const v = state.checkpoints[state.selectedIdx];
+    if (!v) return;
+
+    const txt = JSON.stringify({ x: v.x, y: v.y, z: v.z });
+    try {
+      await navigator.clipboard.writeText(txt);
+      if (typeof showConfirmationMessage === 'function') showConfirmationMessage('Vector copied');
+    } catch (_) {
+      window.prompt('Copy vector:', txt);
+    }
+  };
+
+  // --- BUTTONS / SHORTCUTS ---
+  if (fitBtn && !fitBtn.dataset.bound) {
+    fitBtn.dataset.bound = '1';
+    fitBtn.addEventListener('click', () => flyTo(state.fitCenter.clone(), state.fitRadius));
+  }
+
+  if (labelsBtn && !labelsBtn.dataset.bound) {
+    labelsBtn.dataset.bound = '1';
+    const updateLabelBtnText = () =>
+      (labelsBtn.textContent = `Labels: ${String(state.labelMode).toUpperCase()}`);
+    labelsBtn.addEventListener('click', () => {
+      state.labelMode = state.labelMode === 'auto' ? 'on' : state.labelMode === 'on' ? 'off' : 'auto';
+      updateLabelBtnText();
+    });
+    updateLabelBtnText();
+  }
+
+  if (copyBtn && !copyBtn.dataset.bound) {
+    copyBtn.dataset.bound = '1';
+    copyBtn.addEventListener('click', async () => {
+      const payload = state.lastPayload;
+      if (!payload) return;
+
+      const txt = JSON.stringify(payload, null, 2);
+      try {
+        await navigator.clipboard.writeText(txt);
+        if (typeof showConfirmationMessage === 'function') showConfirmationMessage('Preview JSON copied');
+      } catch (_) {
+        window.prompt('Copy preview JSON:', txt);
+      }
+    });
+  }
+
+  if (elView3D && !elView3D.dataset.bound) {
+    elView3D.dataset.bound = '1';
+    elView3D.addEventListener('click', () => applyViewMode('3d'));
+  }
+  if (elViewTop && !elViewTop.dataset.bound) {
+    elViewTop.dataset.bound = '1';
+    elViewTop.addEventListener('click', () => applyViewMode('top'));
+  }
+  if (elFocusBtn && !elFocusBtn.dataset.bound) {
+    elFocusBtn.dataset.bound = '1';
+    elFocusBtn.addEventListener('click', () => {
+      const idx = state.selectedIdx;
+      if (idx < 0) return;
+      const p = state.checkpointMeshes[idx]?.position?.clone();
+      if (!p) return;
+      flyTo(p, Math.max(520, state.fitRadius * 0.25));
+    });
+  }
+  if (elEditBtn && !elEditBtn.dataset.bound) {
+    elEditBtn.dataset.bound = '1';
+    elEditBtn.addEventListener('click', openSelectedEditor);
+  }
+  if (elCopyVecBtn && !elCopyVecBtn.dataset.bound) {
+    elCopyVecBtn.dataset.bound = '1';
+    elCopyVecBtn.addEventListener('click', copySelectedVec);
+  }
+
+  if (!host.dataset.kbdBound) {
+    host.dataset.kbdBound = '1';
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key === 'Escape') setSelection(-1);
+      if (e.key.toLowerCase() === 'f') flyTo(state.fitCenter.clone(), state.fitRadius);
+      if (e.key.toLowerCase() === 'l') {
+        state.labelMode = state.labelMode === 'auto' ? 'on' : state.labelMode === 'on' ? 'off' : 'auto';
+        if (labelsBtn) labelsBtn.textContent = `Labels: ${String(state.labelMode).toUpperCase()}`;
+      }
+    });
+  }
+
+  // --- INTERACTION ---
+  const pick = (clientX, clientY) => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const hits = raycaster.intersectObjects(state.hitMeshes, false);
+    return hits?.[0] || null;
+  };
+
+  let isDown = false;
+  let downX = 0;
+  let downY = 0;
+  let lastUpAt = 0;
+
+  renderer.domElement.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    isDown = true;
+    downX = e.clientX;
+    downY = e.clientY;
+  });
+
+  renderer.domElement.addEventListener('pointerup', (e) => {
+    if (!isDown) return;
+    isDown = false;
+
+    const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+    if (moved > 7) return;
+
+    const hit = pick(e.clientX, e.clientY);
+    if (!hit) {
+      setSelection(-1);
+      return;
+    }
+
+    const idx = hit.object?.userData?.idx ?? -1;
+    setSelection(idx);
+
+    const now = performance.now();
+    const dbl = now - lastUpAt < 280;
+    lastUpAt = now;
+
+    if (dbl && idx >= 0) {
+      const p = state.checkpointMeshes[idx]?.position?.clone();
+      if (p) flyTo(p, Math.max(520, state.fitRadius * 0.25));
+    }
+  });
+
+  renderer.domElement.addEventListener('pointermove', (e) => {
+    const hit = pick(e.clientX, e.clientY);
+
+    if (!hit) {
+      state.hoveredIdx = -1;
+      tipObj.visible = false;
+      renderer.domElement.style.cursor = 'grab';
+      setSelection(state.selectedIdx);
+      return;
+    }
+
+    const idx = hit.object.userData.idx;
+    state.hoveredIdx = idx;
+
+    const ow = state.checkpoints[idx];
+    const pVis = state.checkpointMeshes[idx]?.position?.clone();
+
+    if (pVis) tipObj.position.copy(pVis).add(new THREE.Vector3(0, 68, 0));
+    tipEl.innerHTML = `<div class="font-semibold">Checkpoint ${idx}</div>
+      <div class="text-zinc-300">x:${Math.round(ow.x)} · y:${Math.round(ow.y)} · z(h):${Math.round(ow.z)}</div>`;
+    tipEl.classList.remove('hidden');
+    tipObj.visible = true;
+
+    renderer.domElement.style.cursor = 'pointer';
+    setSelection(state.selectedIdx);
+  });
+
+  // --- BUILD SCENE FROM DATA ---
+  const renderData = ({ checkpoints, teleportMap }) => {
+    clearGroup();
+
+    state.checkpoints = checkpoints || [];
+    state.teleportMap = teleportMap || {};
+
+    if (!state.checkpoints.length) {
+      if (empty) empty.classList.remove('hidden');
+      return;
+    }
+    if (empty) empty.classList.add('hidden');
+
+    // 1) Convert to three coords
+    const ptsRaw = state.checkpoints.map(owToThree);
+
+    // 2) Exploded view (visual only)
+    const SPREAD_XZ = 3.8;
+    const SPREAD_Y  = 1.0;
+
+    const EXPLODE_MIN_DIST = 260;
+    const EXPLODE_ITERS    = 36;
+    const EXPLODE_STRENGTH = 0.55;
+
+    const center = ptsRaw
+      .reduce((acc, p) => acc.add(p), new THREE.Vector3())
+      .multiplyScalar(1 / ptsRaw.length);
+
+    const basePts = ptsRaw.map((p) => {
+      const dx = p.x - center.x;
+      const dy = p.y - center.y;
+      const dz = p.z - center.z;
+      return new THREE.Vector3(
+        center.x + dx * SPREAD_XZ,
+        center.y + dy * SPREAD_Y,
+        center.z + dz * SPREAD_XZ,
+      );
+    });
+
+    // Repulsion in XZ to avoid overlap
+    function explodeXZ(points, { minDist, iters, strength }) {
+      const pts = points.map((p) => p.clone());
+
+      for (let it = 0; it < iters; it++) {
+        for (let i = 0; i < pts.length; i++) {
+          for (let j = i + 1; j < pts.length; j++) {
+            const a = pts[i];
+            const b = pts[j];
+
+            const dx = b.x - a.x;
+            const dz = b.z - a.z;
+
+            const dist = Math.hypot(dx, dz) || 1e-6;
+            if (dist >= minDist) continue;
+
+            const push = ((minDist - dist) / minDist) * strength * 0.5;
+            const nx = dx / dist;
+            const nz = dz / dist;
+
+            a.x -= nx * push;
+            a.z -= nz * push;
+            b.x += nx * push;
+            b.z += nz * push;
+          }
+        }
+
+        const c = new THREE.Vector3();
+        for (const p of pts) c.add(p);
+        c.multiplyScalar(1 / pts.length);
+        const offX = center.x - c.x;
+        const offZ = center.z - c.z;
+        for (const p of pts) {
+          p.x += offX;
+          p.z += offZ;
+        }
+      }
+
+      return pts;
+    }
+
+    const pts = explodeXZ(basePts, {
+      minDist: EXPLODE_MIN_DIST,
+      iters: EXPLODE_ITERS,
+      strength: EXPLODE_STRENGTH,
+    });
+
+    function applyExplodeToPoint(pBase) {
+      let sumW = 0;
+      const disp = new THREE.Vector3(0, 0, 0);
+
+      for (let i = 0; i < basePts.length; i++) {
+        const d = Math.hypot(pBase.x - basePts[i].x, pBase.z - basePts[i].z);
+        const w = 1 / Math.max(40, d);
+        sumW += w;
+
+        disp.add(
+          pts[i].clone().sub(basePts[i]).multiplyScalar(w)
+        );
+      }
+
+      if (sumW > 0) disp.multiplyScalar(1 / sumW);
+      return pBase.clone().add(disp);
+    }
+
+    // Height-based color gradient
+    const minH = Math.min(...pts.map((p) => p.y));
+    const maxH = Math.max(...pts.map((p) => p.y));
+    const denom = Math.max(1, maxH - minH);
+
+    const getColorByHeight = (h) => {
+      const t = (h - minH) / denom;
+      const c = new THREE.Color();
+      c.setHSL(0.45 - t * 0.18, 0.85, 0.56);
+      return c;
+    };
+
+    // Path mesh (tube)
+    if (pts.length >= 2) {
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.0);
+      const tube = new THREE.TubeGeometry(curve, Math.min(350, pts.length * 24) + 120, 10, 10, false);
+      const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0xe5e7eb,
+        transparent: true,
+        opacity: 0.28,
+        roughness: 0.8,
+        metalness: 0.15,
+      });
+      group.add(new THREE.Mesh(tube, tubeMat));
+    }
+
+    // Visible checkpoints
+    const visibleGeo = new THREE.SphereGeometry(18, 18, 18);
+
+    // Invisible hitboxes (bigger)
+    const hitGeo = new THREE.SphereGeometry(54, 12, 12);
+    const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false });
+    hitMat.colorWrite = false;
+
+    pts.forEach((p, i) => {
+      const col = getColorByHeight(p.y);
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: col,
+        roughness: 0.28,
+        metalness: 0.35,
+        emissive: col.clone().multiplyScalar(0.45),
+        emissiveIntensity: 0.45,
+      });
+
+      // visible mesh
+      const m = new THREE.Mesh(visibleGeo, mat);
+      m.position.copy(p);
+      m.userData = { idx: i, ow: state.checkpoints[i] };
+      group.add(m);
+      state.checkpointMeshes.push(m);
+
+      const h = new THREE.Mesh(hitGeo, hitMat);
+      h.position.copy(p);
+      h.userData = { idx: i };
+      group.add(h);
+      state.hitMeshes.push(h);
+
+      const div = document.createElement('div');
+      div.className =
+        'select-none rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white shadow';
+      div.textContent = String(i);
+
+      const label = new CSS2DObject(div);
+      label.position.copy(p).add(new THREE.Vector3(0, 46, 0));
+      group.add(label);
+      state.labelObjects.push(label);
+    });
+
+    // Start / End markers
+    if (pts.length) {
+      const start = pts[0];
+      const end = pts[pts.length - 1];
+
+      const startMesh = new THREE.Mesh(
+        new THREE.ConeGeometry(28, 76, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.35,
+          metalness: 0.2,
+          emissive: new THREE.Color(0xffffff).multiplyScalar(0.15),
+          emissiveIntensity: 0.8,
+        }),
+      );
+      startMesh.position.copy(start).add(new THREE.Vector3(0, 42, 0));
+      group.add(startMesh);
+
+      const endMesh = new THREE.Mesh(
+        new THREE.OctahedronGeometry(34),
+        new THREE.MeshStandardMaterial({
+          color: 0x60a5fa,
+          roughness: 0.35,
+          metalness: 0.25,
+          emissive: new THREE.Color(0x60a5fa).multiplyScalar(0.2),
+          emissiveIntensity: 0.9,
+        }),
+      );
+      endMesh.position.copy(end);
+      group.add(endMesh);
+    }
+
+    // Teleports beams + pulses
+    const tpKeys = Object.keys(state.teleportMap || {});
+    tpKeys.forEach((k) => {
+      const tp = state.teleportMap[k];
+      if (!tp?.start || !tp?.end) return;
+
+      const a0 = owToThree(tp.start);
+      const b0 = owToThree(tp.end);
+
+      const aBase = new THREE.Vector3(
+        center.x + (a0.x - center.x) * SPREAD_XZ,
+        center.y + (a0.y - center.y) * SPREAD_Y,
+        center.z + (a0.z - center.z) * SPREAD_XZ,
+      );
+      const bBase = new THREE.Vector3(
+        center.x + (b0.x - center.x) * SPREAD_XZ,
+        center.y + (b0.y - center.y) * SPREAD_Y,
+        center.z + (b0.z - center.z) * SPREAD_XZ,
+      );
+
+      const a = applyExplodeToPoint(aBase);
+      const b = applyExplodeToPoint(bBase);
+
+      const dir = new THREE.Vector3().subVectors(b, a);
+      const len = dir.length();
+      if (len < 1) return;
+
+      const beamGeo = new THREE.CylinderGeometry(6, 6, len, 14, 1, true);
+      const beamMat = new THREE.MeshStandardMaterial({
+        color: 0x60a5fa,
+        transparent: true,
+        opacity: 0.22,
+        roughness: 0.2,
+        metalness: 0.15,
+        emissive: new THREE.Color(0x60a5fa).multiplyScalar(0.2),
+        emissiveIntensity: 0.9,
+      });
+
+      const beam = new THREE.Mesh(beamGeo, beamMat);
+      beam.position.copy(a).add(b).multiplyScalar(0.5);
+      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+      group.add(beam);
+
+      const cone = new THREE.Mesh(
+        new THREE.ConeGeometry(14, 42, 18),
+        new THREE.MeshStandardMaterial({
+          color: 0x93c5fd,
+          roughness: 0.25,
+          metalness: 0.15,
+          emissive: new THREE.Color(0x93c5fd).multiplyScalar(0.22),
+          emissiveIntensity: 0.95,
+        }),
+      );
+      cone.position.copy(b);
+      cone.quaternion.copy(beam.quaternion);
+      group.add(cone);
+
+      const pulse = new THREE.Mesh(
+        new THREE.SphereGeometry(10, 14, 14),
+        new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.15,
+          metalness: 0.0,
+          emissive: new THREE.Color(0x93c5fd).multiplyScalar(0.55),
+          emissiveIntensity: 1.0,
+        }),
+      );
+      pulse.position.copy(a);
+      group.add(pulse);
+
+      state.pulses.push({
+        mesh: pulse,
+        a,
+        b,
+        speed: 0.35 + Math.random() * 0.25,
+        phase: Math.random(),
+      });
+    });
+
+    // Fit camera
+    const box = new THREE.Box3().setFromObject(group);
+    fitToBox(box);
+
+    // Default selection = checkpoint 0
+    setSelection(0);
+
+    // Export payload (0-based indices)
+    state.lastPayload = {
+      version: 3,
+      spread: { xz: SPREAD_XZ, y: SPREAD_Y },
+      checkpoints: state.checkpoints.map((v, i) => ({ index: i, x: v.x, y: v.y, z: v.z })),
+      teleports: tpKeys
+        .map((key) => {
+          const tp = state.teleportMap[key];
+          if (!tp?.start || !tp?.end) return null;
+          return {
+            checkpointIndex: Number(key),
+            start: { x: tp.start.x, y: tp.start.y, z: tp.start.z },
+            end: { x: tp.end.x, y: tp.end.y, z: tp.end.z },
+          };
+        })
+        .filter(Boolean),
+    };
+  };
+
+  __layoutPreview = {
+    scene,
+    camera,
+    controls,
+    group,
+    renderer,
+    labelRenderer,
+    composer,
+    setData: renderData,
+  };
+
+  // --- MAIN LOOP ---
+  const animate = () => {
+    requestAnimationFrame(animate);
+
+    if (state.tween) {
+      const now = performance.now();
+      const t = Math.min(1, (now - state.tween.t0) / state.tween.dur);
+      const k = easeInOut(t);
+
+      camera.position.lerpVectors(state.tween.fromPos, state.tween.toPos, k);
+      controls.target.lerpVectors(state.tween.fromTarget, state.tween.toTarget, k);
+      controls.update();
+
+      if (t >= 1) state.tween = null;
+    } else {
+      controls.update();
+    }
+
+    // Labels policy
+    const d = camera.position.distanceTo(controls.target);
+    const showAll = state.labelMode === 'on' || (state.labelMode === 'auto' && d < 5200);
+    state.labelObjects.forEach((lbl, i) => {
+      if (state.labelMode === 'off') return (lbl.visible = false);
+      if (showAll) return (lbl.visible = true);
+      const keep = i === 0 || i === state.labelObjects.length - 1 || i === state.selectedIdx || i === state.hoveredIdx;
+      lbl.visible = keep;
+    });
+
+    // Teleport pulses
+    if (state.pulses.length) {
+      const t = performance.now() * 0.0002;
+      for (const p of state.pulses) {
+        const u = (t * p.speed + p.phase) % 1;
+        p.mesh.position.lerpVectors(p.a, p.b, u);
+      }
+    }
+
+    composer.render();
+    labelRenderer.render(scene, camera);
+  };
+  animate();
+
+  if (empty) empty.classList.remove('hidden');
+  return __layoutPreview;
+}
 
 //IT 
 //IS

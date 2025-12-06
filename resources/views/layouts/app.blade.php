@@ -47,6 +47,14 @@
         <div id="prism" class="relative h-full w-full"></div>
       </div>
     </main>
+    @if (session('error'))
+      <div class="mx-auto max-w-7xl px-4 pt-4">
+        <div class="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+          <div class="font-extrabold">Access denied</div>
+          <div class="mt-1 text-red-100/80">{{ session('error') }}</div>
+        </div>
+      </div>
+    @endif
 
     @include('partials.footer')
 

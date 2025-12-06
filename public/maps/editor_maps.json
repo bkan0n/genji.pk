@@ -1,0 +1,16 @@
+{
+  "default": "chateau_guillard",
+  "maps": [
+    {
+      "id": "chateau_guillard",
+      "label": "Château Guillard",
+      "model_url": "https://cdn.genji.pk/web-editor/chateau_guillard.glb",
+      "ws_offset": [-200.0, 0.08, -84.51],
+      "camera": {
+        "mode": "fixed",
+        "pos": [194, 35, 146],
+        "lookAt": [0, 0, 0]
+      }
+    }
+  ]
+}

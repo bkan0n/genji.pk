@@ -15,12 +15,12 @@ use Throwable;
 
 class DiscordAuthController extends Controller
 {
-    
     private function discordRedirectUri(): string
     {
         $base = (string) config('app.url', url('/'));
         return rtrim($base, '/') . '/callback';
     }
+
     public function redirect(Request $request)
     {
         $redirectUri = $this->discordRedirectUri();
@@ -47,11 +47,9 @@ class DiscordAuthController extends Controller
             $d = $this->makeDiscordProvider($scopes, $redirectUri)->user();
         } catch (InvalidStateException $e) {
             Log::warning('Discord OAuth state invalid', ['error' => $e->getMessage()]);
-
             return redirect('/')->with('error', 'Discord login failed (state).');
         } catch (Throwable $e) {
             Log::error('Discord Socialite callback failed', ['error' => $e->getMessage()]);
-
             return redirect('/')->with('error', 'Discord login failed.');
         }
 
@@ -72,7 +70,7 @@ class DiscordAuthController extends Controller
         if ($id === '' || $accessToken === '') {
             Log::error('Discord Socialite missing essentials', [
                 'discord_id' => $id,
-                'has_token' => $accessToken !== '',
+                'has_token'  => $accessToken !== '',
             ]);
 
             return redirect('/')->with('error', 'Discord login failed (missing data).');
@@ -88,7 +86,47 @@ class DiscordAuthController extends Controller
 
         $tag = $discriminator !== '0' ? "{$username}#{$discriminator}" : $username;
 
+        // ---------------------------------------------------------------------
+        // Guild member roles check (mod + editor)
+        // ---------------------------------------------------------------------
+        $guildId       = (string) config('services.discord.guild_id');
+        $modRoleIds    = array_map('strval', (array) config('services.discord.mod_roles', []));
+        $editorRoleId  = (string) config('services.discord.editor_role_id');
+        $verify        = $this->httpVerify();
+
+        $roles = collect();
+        $canModerate = false;
+        $canEdit3D   = false;
+
+        if ($guildId !== '') {
+            try {
+                $memberResp = Http::withToken($accessToken)
+                    ->acceptJson()
+                    ->withOptions(['verify' => $verify, 'timeout' => 10])
+                    ->get("https://discord.com/api/users/@me/guilds/{$guildId}/member");
+
+                if ($memberResp->ok()) {
+                    $roles = collect($memberResp->json('roles') ?? [])
+                        ->map(fn ($r) => (string) $r);
+
+                    $canModerate = !empty($modRoleIds) && $roles->intersect($modRoleIds)->isNotEmpty();
+                    $canEdit3D   = ($editorRoleId !== '') && $roles->contains($editorRoleId);
+                } else {
+                    Log::debug('Discord member check non-OK', [
+                        'status' => $memberResp->status(),
+                        'body'   => $memberResp->json() ?: $memberResp->body(),
+                    ]);
+                }
+            } catch (Throwable $e) {
+                Log::debug('Discord member check exception', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Session
+        // ---------------------------------------------------------------------
         $request->session()->regenerate();
+
         $request->session()->put([
             'user_id' => $id,
             'username' => $username,
@@ -110,34 +148,12 @@ class DiscordAuthController extends Controller
             'discord_access_token' => $accessToken,
             'discord_refresh_token' => $refreshToken,
             'discord_token_expires' => now()->addSeconds($expiresIn),
+
+            // Permissions cache
+            'can_moderate' => $canModerate,
+            'can_edit_3d' => $canEdit3D,
+            'discord_member_checked_at' => time(),
         ]);
-
-        $guildId = (string) config('services.discord.guild_id');
-        $roleIds = (array) config('services.discord.mod_roles', []);
-        $verify = $this->httpVerify();
-
-        $canModerate = false;
-        if ($guildId && !empty($roleIds)) {
-            try {
-                $memberResp = Http::withToken($accessToken)
-                    ->acceptJson()
-                    ->withOptions(['verify' => $verify, 'timeout' => 10])
-                    ->get("https://discord.com/api/users/@me/guilds/{$guildId}/member");
-
-                if ($memberResp->ok()) {
-                    $roles = collect($memberResp->json('roles') ?? [])->map(fn ($r) => (string) $r);
-                    $canModerate = $roles->intersect($roleIds)->isNotEmpty();
-                } else {
-                    Log::debug('Discord member check non-OK', [
-                        'status' => $memberResp->status(),
-                        'body'   => $memberResp->json() ?: $memberResp->body(),
-                    ]);
-                }
-            } catch (Throwable $e) {
-                Log::debug('Discord member check exception', ['error' => $e->getMessage()]);
-            }
-        }
-        $request->session()->put('can_moderate', $canModerate);
 
         return redirect()->intended('/');
     }
@@ -146,7 +162,8 @@ class DiscordAuthController extends Controller
     {
         try {
             $verify = $this->httpVerify();
-            $accessToken  = (string) $request->session()->get('discord_access_token', '');
+            $accessToken = (string) $request->session()->get('discord_access_token', '');
+
             if ($accessToken !== '') {
                 Http::asForm()
                     ->withOptions(['verify' => $verify, 'timeout' => 10])
@@ -167,18 +184,24 @@ class DiscordAuthController extends Controller
             'discord_global_name',
             'discord_discriminator',
             'discord_tag',
+
             'user_avatar',
             'discord_avatar_url',
             'user_banner',
             'discord_banner',
+
             'user_flags',
             'discord_public_flags',
             'user_premium',
             'discord_premium_type',
+
             'discord_access_token',
             'discord_refresh_token',
             'discord_token_expires',
+
             'can_moderate',
+            'can_edit_3d',
+            'discord_member_checked_at',
         ]);
 
         $request->session()->invalidate();
@@ -199,9 +222,9 @@ class DiscordAuthController extends Controller
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
-        $cfg    = Config::get('services.genji_api', []);
-        $apiKey = (string) ($cfg['key']  ?? '');
-        $apiRoot= (string) ($cfg['root'] ?? '');
+        $cfg = Config::get('services.genji_api', []);
+        $apiKey = (string) ($cfg['key'] ?? '');
+        $apiRoot = (string) ($cfg['root'] ?? '');
         $verify = app()->isLocal()
             ? (bool) filter_var($cfg['verify'] ?? true, FILTER_VALIDATE_BOOLEAN)
             : true;
@@ -219,8 +242,8 @@ class DiscordAuthController extends Controller
             $resp = Http::withOptions(['verify' => $verify])
                 ->timeout(10)
                 ->withHeaders([
-                    'X-API-KEY'   => $apiKey,
-                    'Content-Type'=> 'application/json',
+                    'X-API-KEY'    => $apiKey,
+                    'Content-Type' => 'application/json',
                 ])
                 ->acceptJson()
                 ->get($url);

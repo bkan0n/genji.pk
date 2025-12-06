@@ -41,6 +41,7 @@ return [
         'mod_roles' => array_filter(explode(',', (string) env('DISCORD_MODERATOR_ROLE_IDS'))),
         'allow_gif_avatars' => (bool) env('DISCORD_AVATAR_GIF', true),
         'avatar_default_extension' => env('DISCORD_EXTENSION_DEFAULT', 'png'),
+        'editor_role_id' => env('DISCORD_EDITOR_ROLE_ID', 1446916739291152536),
     ],
 
     'ocr' => [

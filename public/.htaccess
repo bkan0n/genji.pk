@@ -29,4 +29,7 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+
+    # Special rule for maps
+    RewriteRule ^maps/(.*)$ index.php [L]
 </IfModule>

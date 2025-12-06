@@ -281,6 +281,51 @@
         <div class="empty-message rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
           {{ __('convertor.please_use_converter') }}
         </div>
+
+        <!-- Layout preview (wireframe) -->
+        <div id="layoutPreviewWrapper" class="mt-4 hidden">
+          <div class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/40 ring-1 ring-white/10">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+                <div class="text-sm font-semibold text-zinc-100">Layout preview (wireframe)</div>
+                <div class="text-xs text-zinc-400">checkpoints + teleports</div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button id="previewFitBtn" type="button"
+                  class="rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-zinc-200 shadow-sm transition hover:bg-zinc-800/70">
+                  Fit
+                </button>
+                <button id="previewToggleLabelsBtn" type="button"
+                  class="rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-zinc-200 shadow-sm transition hover:bg-zinc-800/70">
+                  Labels
+                </button>
+                <button id="previewCopyJsonBtn" type="button"
+                  class="rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-zinc-200 shadow-sm transition hover:bg-zinc-800/70">
+                  Copy JSON
+                </button>
+              </div>
+            </div>
+
+            <div id="layoutPreview" class="relative h-[420px] w-full bg-zinc-950/60">
+              <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_500px_at_50%_0%,rgba(16,185,129,0.16),transparent_60%),radial-gradient(700px_450px_at_80%_70%,rgba(59,130,246,0.12),transparent_55%)]"></div>
+              <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0),rgba(0,0,0,0.45))]"></div>
+              <canvas id="layoutPreviewCanvas" class="absolute inset-0 h-full w-full"></canvas>
+
+              <div id="layoutPreviewEmpty"
+                class="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-zinc-400">
+                No checkpoint vectors found.
+              </div>
+            </div>
+
+            <div class="px-4 py-3 text-xs leading-relaxed text-zinc-400">
+              Abstract 3D view generated from <code class="rounded bg-white/10 px-1 py-0.5">Global.A</code>.
+              (Not the real Overwatch environment). Workshop <code class="rounded bg-white/10 px-1 py-0.5">Z</code> is shown as height.
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
