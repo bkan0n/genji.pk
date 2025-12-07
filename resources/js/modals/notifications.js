@@ -562,6 +562,74 @@ function bindOverwatchEvents() {
   }
 }
 
+function showToast(message, type = 'ok', opts = {}) {
+  const {
+    duration = 1200,
+    enter    = 220,
+    exit     = 220,
+    easing   = 'cubic-bezier(0.4,0,0.2,1)',
+  } = opts;
+
+  let root = document.getElementById('toast-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'toast-root';
+    root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[200] flex justify-center px-3';
+    document.body.appendChild(root);
+  }
+
+  while (root.firstElementChild) {
+    const prev = root.firstElementChild;
+    try { prev.getAnimations?.().forEach(a => a.cancel()); } catch {}
+    prev.remove();
+  }
+
+  const palette =
+    type === 'ok'
+      ? 'bg-emerald-500/90 text-white'
+      : type === 'warn'
+        ? 'bg-amber-500/90 text-zinc-900'
+        : 'bg-red-600/90 text-white';
+
+  const el = document.createElement('div');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.className = [
+    'pointer-events-auto select-none rounded-xl px-4 py-2',
+    'text-sm shadow-lg text-center transform-gpu',
+    'w-auto max-w-[92vw] sm:max-w-[42rem]',
+    palette
+  ].join(' ');
+  el.textContent = message;
+
+  root.appendChild(el);
+
+  const inAnim = el.animate(
+    [{ opacity: 0, transform: 'translateY(8px)' },
+     { opacity: 1, transform: 'translateY(0)' }],
+    { duration: enter, easing, fill: 'forwards' }
+  );
+
+  const close = () => {
+    Promise.resolve(inAnim.finished).catch(() => {}).finally(() => {
+      const outAnim = el.animate(
+        [{ opacity: 1, transform: 'translateY(0)' },
+         { opacity: 0, transform: 'translateY(8px)' }],
+        { duration: exit, easing, fill: 'forwards' }
+      );
+      outAnim.finished.then(() => el.remove()).catch(() => el.remove());
+      setTimeout(() => el.remove(), exit + 120);
+    });
+  };
+
+  const timer = setTimeout(close, Math.max(duration, enter + 50));
+  el.addEventListener('click', () => { clearTimeout(timer); close(); });
+}
+
+const showConfirmationMessage = (m) => showToast(m, 'ok');
+const showErrorMessage        = (m) => showToast(m, 'error');
+const showWarningMessage      = (m) => showToast(m, 'warn');
+
 document.addEventListener('genji:settings-opened', () => {
   loadOverwatchUsername();
   bindOverwatchEvents();
