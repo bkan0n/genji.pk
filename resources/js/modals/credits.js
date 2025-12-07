@@ -1,5 +1,5 @@
 // ============================================================================
-// Helpers modaux
+// Helpers credits
 // ============================================================================
 function showCreditsModal() {
   const modal = document.getElementById('creditsModal');
@@ -58,37 +58,109 @@ function initCreditsModal() {
   populateCredits();
 }
 
-function createContributorItem({ name, avatar }) {
+// --------------------------------------------------------------------------
+// UI helpers
+// --------------------------------------------------------------------------
+function createContributorItem({ name, avatar, role, note, discord, discordLabel }) {
   const wrap = document.createElement('div');
-  wrap.className =
-    'contributor inline-flex items-center gap-3 rounded-lg bg-white/5 ' +
-    'p-2 ring-1 ring-white/10';
-  wrap.innerHTML = `
-    <img src="${avatar}" alt="${name}"
-         class="h-10 w-10 rounded-full object-cover ring-1 ring-white/10">
-    <p class="text-sm font-medium text-white/90">${name}</p>
-  `;
+
+  if (role) {
+    wrap.className = [
+      'contributor group flex items-center gap-4',
+      'rounded-2xl bg-zinc-900/80 px-4 py-3',
+      'ring-1 ring-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.7)]',
+      'hover:bg-zinc-900 hover:ring-emerald-400/40 transition'
+    ].join(' ');
+
+    wrap.innerHTML = `
+      <div class="relative h-12 w-12 shrink-0">
+        <img src="${avatar}" alt="${name}"
+             class="h-12 w-12 rounded-full object-cover ring-1 ring-white/15 shadow-md">
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <p class="truncate text-sm font-semibold text-white/95">${name}</p>
+          <span class="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5
+                       text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+            ${role}
+          </span>
+        </div>
+        <div class="mt-0.5 space-y-0.5 text-xs text-zinc-400">
+          ${note ? `<p class="line-clamp-2">${note}</p>` : ''}
+          ${discord
+            ? `<p class="font-mono text-[11px] text-zinc-500">
+                 ${(discordLabel || 'Discord')}:
+                 <span class="text-zinc-300">${discord}</span>
+               </p>`
+            : ''
+          }
+        </div>
+      </div>
+    `;
+  } else {
+    wrap.className = [
+      'contributor inline-flex items-center gap-2',
+      'rounded-full bg-white/5 px-3 py-1.5',
+      'ring-1 ring-white/10 shadow-sm'
+    ].join(' ');
+
+    wrap.innerHTML = `
+      <img src="${avatar}" alt="${name}"
+           class="h-8 w-8 rounded-full object-cover ring-1 ring-white/10">
+      <span class="text-xs font-medium text-zinc-100">${name}</span>
+    `;
+  }
+
   return wrap;
 }
 
+// --------------------------------------------------------------------------
+// Data
+// --------------------------------------------------------------------------
 function populateCredits() {
   const translators = [
-    { name: 'Vertigo', avatar: 'assets/profile/vertigo.webp' },
-    { name: 'CoralMage', avatar: 'assets/profile/coralmage.webp' },
-    { name: 'Lacepanties', avatar: 'assets/profile/lacepanties.webp' },
-    { name: '干しガキ', avatar: 'assets/profile/weds.webp' },
+    { name: 'CoralMage',   avatar: 'assets/profile/coralmage.webp' },
+    { name: 'Poiliu', avatar: 'assets/profile/poiliu.webp' },
   ];
+
+  const trEl = document.getElementById('creditsTranslations');
+  const backendRole   = trEl?.dataset.backendRole   || 'Backend';
+  const frontendRole  = trEl?.dataset.frontendRole  || 'Frontend';
+  const backendNote   = trEl?.dataset.backendNote   || 'API, data model & bot integration.';
+  const frontendNote  = trEl?.dataset.frontendNote  || 'UI/UX, map browser & OCR integration.';
+  const discordLabel  = trEl?.dataset.discordLabel  || 'Discord';
+
   const websiteCreators = [
-    { name: 'Joe', avatar: 'assets/profile/joe.jpg' },
-    { name: 'Arrow', avatar: 'assets/profile/arrow.png' },
+    {
+      name: 'Joe',
+      avatar: 'assets/profile/joe.jpg',
+      role: backendRole,
+      note: backendNote,
+      discord: 'youngnebula',
+      discordLabel,
+    },
+    {
+      name: 'Arrow',
+      avatar: 'assets/profile/arrow.png',
+      role: frontendRole,
+      note: frontendNote,
+      discord: '.aiapaec',
+      discordLabel,
+    },
   ];
 
   const translatorsList = document.getElementById('translatorsList');
   const websiteCreatorsList = document.getElementById('websiteCreatorsList');
-  translatorsList && (translatorsList.innerHTML = '');
-  websiteCreatorsList && (websiteCreatorsList.innerHTML = '');
-  translators.forEach((t) => translatorsList?.appendChild(createContributorItem(t)));
-  websiteCreators.forEach((c) => websiteCreatorsList?.appendChild(createContributorItem(c)));
+
+  if (translatorsList) translatorsList.innerHTML = '';
+  if (websiteCreatorsList) websiteCreatorsList.innerHTML = '';
+
+  websiteCreators.forEach((c) =>
+    websiteCreatorsList?.appendChild(createContributorItem(c))
+  );
+  translators.forEach((t) =>
+    translatorsList?.appendChild(createContributorItem(t))
+  );
 }
 
 document.addEventListener('DOMContentLoaded', initCreditsModal);

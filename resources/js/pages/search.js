@@ -272,7 +272,7 @@ function initializeIcons() {
     'category',
     'mechanics',
     'restrictions',
-    'playtest_status',
+    'playtest_filter',
     'completion_filter',
     'medal_filter',
     'official', 
@@ -298,7 +298,7 @@ function getIconSVG(id) {
       <path d="M12.9046 3.06005C12.6988 3 12.4659 3 12 3C11.5341 3 11.3012 3 11.0954 3.06005C10.7942 3.14794 10.5281 3.32808 10.3346 3.57511C10.2024 3.74388 10.1159 3.96016 9.94291 4.39272C9.69419 5.01452 9.00393 5.33471 8.36857 5.123L7.79779 4.93281C7.3929 4.79785 7.19045 4.73036 6.99196 4.7188C6.70039 4.70181 6.4102 4.77032 6.15701 4.9159C5.98465 5.01501 5.83376 5.16591 5.53197 5.4677C5.21122 5.78845 5.05084 5.94882 4.94896 6.13189C4.79927 6.40084 4.73595 6.70934 4.76759 7.01551C4.78912 7.2239 4.87335 7.43449 5.04182 7.85566C5.30565 8.51523 5.05184 9.26878 4.44272 9.63433L4.16521 9.80087C3.74031 10.0558 3.52786 10.1833 3.37354 10.3588C3.23698 10.5141 3.13401 10.696 3.07109 10.893C3 11.1156 3 11.3658 3 11.8663C3 12.4589 3 12.7551 3.09462 13.0088C3.17823 13.2329 3.31422 13.4337 3.49124 13.5946C3.69158 13.7766 3.96395 13.8856 4.50866 14.1035C5.06534 14.3261 5.35196 14.9441 5.16236 15.5129L4.94721 16.1584C4.79819 16.6054 4.72367 16.829 4.7169 17.0486C4.70875 17.3127 4.77049 17.5742 4.89587 17.8067C5.00015 18.0002 5.16678 18.1668 5.5 18.5C5.83323 18.8332 5.99985 18.9998 6.19325 19.1041C6.4258 19.2295 6.68733 19.2913 6.9514 19.2831C7.17102 19.2763 7.39456 19.2018 7.84164 19.0528L8.36862 18.8771C9.00393 18.6654 9.6942 18.9855 9.94291 19.6073C10.1159 20.0398 10.2024 20.2561 10.3346 20.4249C10.5281 20.6719 10.7942 20.8521 11.0954 20.94C11.3012 21 11.5341 21 12 21C12.4659 21 12.6988 21 12.9046 20.94C13.2058 20.8521 13.4719 20.6719 13.6654 20.4249C13.7976 20.2561 13.8841 20.0398 14.0571 19.6073C14.3058 18.9855 14.9961 18.6654 15.6313 18.8773L16.1579 19.0529C16.605 19.2019 16.8286 19.2764 17.0482 19.2832C17.3123 19.2913 17.5738 19.2296 17.8063 19.1042C17.9997 18.9999 18.1664 18.8333 18.4996 18.5001C18.8328 18.1669 18.9994 18.0002 19.1037 17.8068C19.2291 17.5743 19.2908 17.3127 19.2827 17.0487C19.2759 16.8291 19.2014 16.6055 19.0524 16.1584L18.8374 15.5134C18.6477 14.9444 18.9344 14.3262 19.4913 14.1035C20.036 13.8856 20.3084 13.7766 20.5088 13.5946C20.6858 13.4337 20.8218 13.2329 20.9054 13.0088C21 12.7551 21 12.4589 21 11.8663C21 11.3658 21 11.1156 20.9289 10.893C20.866 10.696 20.763 10.5141 20.6265 10.3588C20.4721 10.1833 20.2597 10.0558 19.8348 9.80087L19.5569 9.63416C18.9478 9.26867 18.6939 8.51514 18.9578 7.85558C19.1262 7.43443 19.2105 7.22383 19.232 7.01543C19.2636 6.70926 19.2003 6.40077 19.0506 6.13181C18.9487 5.94875 18.7884 5.78837 18.4676 5.46762C18.1658 5.16584 18.0149 5.01494 17.8426 4.91583C17.5894 4.77024 17.2992 4.70174 17.0076 4.71872C16.8091 4.73029 16.6067 4.79777 16.2018 4.93273L15.6314 5.12287C14.9961 5.33464 14.3058 5.0145 14.0571 4.39272C13.8841 3.96016 13.7976 3.74388 13.6654 3.57511C13.4719 3.32808 13.2058 3.14794 12.9046 3.06005Z" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     `,
     restrictions: `<path d="M12 14.5V16.5M7 10.0288C7.47142 10 8.05259 10 8.8 10H15.2C15.9474 10 16.5286 10 17 10.0288M7 10.0288C6.41168 10.0647 5.99429 10.1455 5.63803 10.327C5.07354 10.6146 4.6146 11.0735 4.32698 11.638C4 12.2798 4 13.1198 4 14.8V16.2C4 17.8802 4 18.7202 4.32698 19.362C4.6146 19.9265 5.07354 20.3854 5.63803 20.673C6.27976 21 7.11984 21 8.8 21H15.2C16.8802 21 17.7202 21 18.362 20.673C18.9265 20.3854 19.3854 19.9265 19.673 19.362C20 18.7202 20 17.8802 20 16.2V14.8C20 13.1198 20 12.2798 19.673 11.638C19.3854 11.0735 18.9265 10.6146 18.362 10.327C18.0057 10.1455 17.5883 10.0647 17 10.0288M7 10.0288V8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8V10.0288" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
-    playtest_status: `<path d="M14.2639 15.9376L12.5958 14.2835C11.7909 13.4852 11.3884 13.0861 10.9266 12.9402C10.5204 12.8119 10.0838 12.8166 9.68048 12.9537C9.22188 13.1096 8.82814 13.5173 8.04068 14.3327L4.04409 18.2802M14.2639 15.9376L14.6053 15.5991C15.4112 14.7999 15.8141 14.4003 16.2765 14.2544C16.6831 14.1262 17.12 14.1312 17.5236 14.2688C17.9824 14.4252 18.3761 14.834 19.1634 15.6515L20 16.4936M14.2639 15.9376L18.275 19.9566M18.275 19.9566C17.9176 20.0001 17.4543 20.0001 16.8 20.0001H7.2C6.07989 20.0001 5.51984 20.0001 5.09202 19.7821C4.71569 19.5904 4.40973 19.2844 4.21799 18.9081C4.12796 18.7314 4.07512 18.5322 4.04409 18.2802M18.275 19.9566C18.5293 19.9257 18.7301 19.8728 18.908 19.7821C19.2843 19.5904 19.5903 19.2844 19.782 18.9081C20 18.4803 20 17.9202 20 16.8001V16.4936M12.5 4L7.2 4.00011C6.07989 4.00011 5.51984 4.00011 5.09202 4.21809C4.71569 4.40984 4.40973 4.7158 4.21799 5.09213C4 5.51995 4 6.08 4 7.20011V16.8001C4 17.4576 4 17.9222 4.04409 18.2802M20 11.5V16.4936M14 10.0002L16.0249 9.59516C16.2015 9.55984 16.2898 9.54219 16.3721 9.5099C16.4452 9.48124 16.5146 9.44407 16.579 9.39917C16.6515 9.34859 16.7152 9.28492 16.8425 9.1576L21 5.00015C21.5522 4.44787 21.5522 3.55244 21 3.00015C20.4477 2.44787 19.5522 2.44787 19 3.00015L14.8425 7.1576C14.7152 7.28492 14.6515 7.34859 14.6009 7.42112C14.556 7.4855 14.5189 7.55494 14.4902 7.62801C14.4579 7.71033 14.4403 7.79862 14.4049 7.97518L14 10.0002Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+    playtest_filter: `<path d="M14.2639 15.9376L12.5958 14.2835C11.7909 13.4852 11.3884 13.0861 10.9266 12.9402C10.5204 12.8119 10.0838 12.8166 9.68048 12.9537C9.22188 13.1096 8.82814 13.5173 8.04068 14.3327L4.04409 18.2802M14.2639 15.9376L14.6053 15.5991C15.4112 14.7999 15.8141 14.4003 16.2765 14.2544C16.6831 14.1262 17.12 14.1312 17.5236 14.2688C17.9824 14.4252 18.3761 14.834 19.1634 15.6515L20 16.4936M14.2639 15.9376L18.275 19.9566M18.275 19.9566C17.9176 20.0001 17.4543 20.0001 16.8 20.0001H7.2C6.07989 20.0001 5.51984 20.0001 5.09202 19.7821C4.71569 19.5904 4.40973 19.2844 4.21799 18.9081C4.12796 18.7314 4.07512 18.5322 4.04409 18.2802M18.275 19.9566C18.5293 19.9257 18.7301 19.8728 18.908 19.7821C19.2843 19.5904 19.5903 19.2844 19.782 18.9081C20 18.4803 20 17.9202 20 16.8001V16.4936M12.5 4L7.2 4.00011C6.07989 4.00011 5.51984 4.00011 5.09202 4.21809C4.71569 4.40984 4.40973 4.7158 4.21799 5.09213C4 5.51995 4 6.08 4 7.20011V16.8001C4 17.4576 4 17.9222 4.04409 18.2802M20 11.5V16.4936M14 10.0002L16.0249 9.59516C16.2015 9.55984 16.2898 9.54219 16.3721 9.5099C16.4452 9.48124 16.5146 9.44407 16.579 9.39917C16.6515 9.34859 16.7152 9.28492 16.8425 9.1576L21 5.00015C21.5522 4.44787 21.5522 3.55244 21 3.00015C20.4477 2.44787 19.5522 2.44787 19 3.00015L14.8425 7.1576C14.7152 7.28492 14.6515 7.34859 14.6009 7.42112C14.556 7.4855 14.5189 7.55494 14.4902 7.62801C14.4579 7.71033 14.4403 7.79862 14.4049 7.97518L14 10.0002Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     completion_filter: `<path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     medal_filter: `<path d="M12 11L8 3H4L8.5058 12.4622M12 11L16 3H20L15.4942 12.4622M12 11C13.344 11 14.5848 11.5635 15.4942 12.4622M12 11C10.656 11 9.41518 11.5635 8.5058 12.4622M15.4942 12.4622C16.4182 13.3753 17 14.6344 17 16C17 18.7614 14.7614 21 12 21C9.23858 21 7 18.7614 7 16C7 14.6344 7.58179 13.3753 8.5058 12.4622" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`,
     official: `<path d="M12 3L5 6V12C5 16.4183 8.13401 19.5 12 21C15.866 19.5 19 16.4183 19 12V6L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M9 12L11 14L15 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
@@ -1502,8 +1502,17 @@ function initializeToolbarButtons() {
             false
           );
           break;
-        case 'playtest_status':
-          openPlaytestStatusPanel(button);
+        case 'playtest_filter':
+          optionsContainer = showOptionsContainer(
+            'playtest_filterOptions',
+            [
+              { text: t('filters_toolbar.playtest_all')  || 'All',  value: 'All',  raw: 'All' },
+              { text: t('filters_toolbar.playtest_only') || 'Only', value: 'Only', raw: 'Only' },
+              { text: t('filters_toolbar.playtest_none') || 'None', value: 'None', raw: 'None' },
+            ],
+            button,
+            false
+          );
           break;
         case 'apply_filters':
           applyFilters(activeFilters);
@@ -1547,7 +1556,7 @@ function updateActiveFilters() {
     user_id: 'user_id',
     mapDifficulty: 'difficulty_exact',
     mapQuality: 'minimum_quality',
-    playtestStatus: 'playtest_status',
+    playtest_filter: 'playtest_filter',
     medalFilter: 'medal_filter',
     mechanics: 'mechanics',
     restrictions: 'restrictions',
@@ -1562,27 +1571,22 @@ function updateActiveFilters() {
     const mappedFilterId = filterMappings[filterId] || filterId;
 
     if (filterId === 'mechanics' || filterId === 'restrictions') {
-      setTimeout(() => {
-        const checkboxes = optionsContainer.querySelectorAll('.custom-checkbox:checked');
-        if (checkboxes.length > 0) {
-          activeFilters[mappedFilterId] = Array.from(checkboxes).map((cb) => {
-            const rawValue = cb.id.replace(/^.*?_/, '').replace(/_/g, ' ');
-            return rawValue.trim();
-          });
-        } else {
-          delete activeFilters[mappedFilterId];
-        }
-      }, 0);
-      return;
-    }
+      const checkboxes = optionsContainer.querySelectorAll('.custom-checkbox:checked');
 
-    if (filterId === 'playtestStatus') {
-      const cb = optionsContainer.querySelector('#playtestStatusCheckbox');
-      if (cb) {
-        activeFilters[mappedFilterId] = cb.checked ? 'In Progress' : 'Approved';
+      if (checkboxes.length > 0) {
+        activeFilters[mappedFilterId] = Array.from(checkboxes).map((cb) => {
+          const wrapper = cb.closest('.custom-option-wrapper');
+          const label = wrapper?.querySelector('.custom-option');
+          const rawValue =
+            (label && label.getAttribute('data-raw-value')) ||
+            (label && label.textContent) ||
+            '';
+          return rawValue.trim();
+        });
       } else {
         delete activeFilters[mappedFilterId];
       }
+
       return;
     }
 
@@ -1633,7 +1637,7 @@ function updateActiveFilters() {
     }
   }
 
-  setTimeout(updateToolbarButtonStates, 0);
+  updateToolbarButtonStates();
 }
 
 function updateToolbarButtonStates() {
@@ -1643,23 +1647,41 @@ function updateToolbarButtonStates() {
   };
 
   const booleanLikeFilters = new Set(['completion_filter', 'medal_filter']);
-    const boolLabel = {
-      With: 'True',
-      Without: 'False',
-      True: 'True',
-      False: 'False',
-    };
+  const boolLabel = {
+    With: 'True',
+    Without: 'False',
+    True: 'True',
+    False: 'False',
+  };
+
+  const codeIsActive =
+    !!activeFilters.code && String(activeFilters.code).trim() !== '';
 
   const buttons = document.querySelectorAll('.toolbar-button');
   buttons.forEach((button) => {
-    const filterId = button.id.replace('FilterButton', '').toLowerCase();
+    const iconId = button.id.replace('FilterButton', '');
+    const filterId = iconId.toLowerCase();
+
     const keys = keyMap[filterId] || [filterId];
 
-    const value = keys
+    let value = keys
       .map((k) => activeFilters[k])
       .find(
-        (v) => v !== undefined && v !== null && !(Array.isArray(v) && v.length === 0) && v !== ''
+        (v) =>
+          v !== undefined &&
+          v !== null &&
+          !(Array.isArray(v) && v.length === 0) &&
+          v !== ''
       );
+
+    const isLockedByCode =
+      codeIsActive &&
+      !['code', 'apply_filters', 'clear_filters'].includes(filterId);
+
+    // reset value if locked
+    if (isLockedByCode) {
+      value = undefined;
+    }
 
     const isActive =
       value !== undefined &&
@@ -1667,8 +1689,15 @@ function updateToolbarButtonStates() {
       !(Array.isArray(value) && value.length === 0) &&
       value !== '';
 
-    if (isActive) {
-      button.classList.add('active-filter', 'border-brand-400/40', 'ring-1', 'ring-emerald-500/30');
+    const effectiveActive = !isLockedByCode && isActive;
+
+    if (effectiveActive) {
+      button.classList.add(
+        'active-filter',
+        'border-brand-400/40',
+        'ring-1',
+        'ring-emerald-500/30'
+      );
     } else {
       button.classList.remove(
         'active-filter',
@@ -1678,10 +1707,32 @@ function updateToolbarButtonStates() {
       );
     }
 
+    // ====== Lock ======
+    if (isLockedByCode) {
+      button.disabled = true;
+      button.classList.add(
+        'cursor-not-allowed',
+        'pointer-events-none',
+        'is-disabled-by-code'
+      );
+
+      button.classList.remove('selected');
+      const circle = button.querySelector('.selection-circle');
+      if (circle) circle.classList.remove('circle-visible');
+    } else {
+      button.disabled = false;
+      button.classList.remove(
+        'cursor-not-allowed',
+        'pointer-events-none',
+        'is-disabled-by-code'
+      );
+    }
+
+    // ====== Badge ======
     const badge = button.querySelector('.filter-badge');
     if (!badge) return;
 
-    if (!isActive) {
+    if (!effectiveActive) {
       badge.classList.add('hidden');
       badge.textContent = '';
       return;
@@ -1713,7 +1764,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
     difficultyExact: 'difficulty_exact',
     mechanics: 'mechanics',
     restrictions: 'restrictions',
-    playtestStatus: 'playtest_status',
+    playtest_filter: 'playtest_filter',
     completionFilter: 'completion_filter',
     medalFilter: 'medal_filter',
     official: 'official',
@@ -1733,22 +1784,6 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
       const raw = (label.getAttribute('data-raw-value') || '').toLowerCase();
       checkbox.checked = selected.has(raw);
     });
-    return;
-  }
-
-  if (mapped === 'playtest_status') {
-    const cb = optionsContainer.querySelector('#playtestStatusCheckbox');
-    if (cb) {
-      const on = String(val).toLowerCase().includes('progress');
-      cb.checked = on;
-      const track = optionsContainer.querySelector('.mx-switch');
-      const knob  = optionsContainer.querySelector('.mx-knob');
-      if (track && knob) {
-        track.classList.toggle('bg-emerald-600/60', on);
-        track.classList.toggle('border-emerald-500/30', on);
-        knob.style.transform = on ? 'translateX(16px)' : 'translateX(0px)';
-      }
-    }
     return;
   }
 
@@ -1818,7 +1853,11 @@ function clearFilters(silent = false) {
 async function applyFilters(filters) {
   cachedPages = {};
   currentPage = 1;
-  activeFilters = { ...persistentFilters, ...filters };
+  if (filters && typeof filters === 'object') {
+    activeFilters = { ...filters };
+  } else {
+    activeFilters = { ...persistentFilters };
+  }
 
   updateOfficialNotice();
 
@@ -1830,8 +1869,8 @@ async function applyFilters(filters) {
     }
   }
 
-  if (currentSection === 'map_search' && !activeFilters.playtest_status) {
-    activeFilters.playtest_status = 'Approved';
+  if (currentSection === 'map_search' && !activeFilters.playtest_filter) {
+    activeFilters.playtest_filter = 'All';
   }
 
   renderSkeletonForSection(currentSection);
@@ -2591,7 +2630,20 @@ function normalizeToRows(data /*, kind */) {
 async function displayMapSearchResultsCards(rowsInput) {
   const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'map');
   const filtered = rows.filter((r) => r && r.map_name && r.map_name !== 'N/A');
-  if (filtered.length === 0) { renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
+
+  if (filtered.length === 0) {
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
+    return;
+  }
 
   const diffSlug = (d='') => {
     const L = String(d).toLowerCase();
@@ -2777,9 +2829,16 @@ async function displayMapSearchResultsTable(rowsInput) {
   const filtered = rows.filter((r) => r && r.map_name && r.map_name !== 'N/A');
 
   if (filtered.length === 0) {
-    renderMessage(t('popup.no_results'));
-    clearFilters();
-    applyFilters({});
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
     return;
   }
 
@@ -2986,21 +3045,36 @@ function ensureSearchDetailsModal() {
           <div class="grid gap-6 p-6 md:grid-cols-12">
             <!-- Left -->
             <div class="md:col-span-7 space-y-6">
-              <!-- Code + Copy -->
+              <!-- Code + Copy + Guide -->
               <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-center justify-between gap-4">
                 <div>
                   <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapCode')}</div>
                   <div id="mapCode" class="mt-1 font-mono text-lg">—</div>
                 </div>
-                <button id="btnCopyCode"
-                        title="${t('popup.copy_map_code')}"
-                        class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  ${t('popup.copy_map_code')}
-                </button>
+                <div class="flex items-center gap-2">
+                  <!-- Guide button -->
+                  <button id="btnGuide"
+                          type="button"
+                          class="hidden inline-flex cursor-pointer items-center rounded-xl bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40 hover:bg-indigo-500/25 hover:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+                          aria-disabled="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M4 19.5V6a2 2 0 0 1 2-2h9.5A2.5 2.5 0 0 1 18 6.5V18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="M4 8h10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="M8 22l3-3-3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    ${t('guides') || 'Guides'}
+                  </button>
+
+                  <button id="btnCopyCode"
+                          title="${t('popup.copy_map_code')}"
+                          class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    ${t('popup.copy_map_code')}
+                  </button>
+                </div>
               </div>
 
               <!-- Linked official/unofficial code -->
@@ -3159,6 +3233,17 @@ function ensureSearchDetailsModal() {
     let inFlight = false;
 
     const handleActivate = async (ev) => {
+      const btnGuide = ev.target.closest('#btnGuide');
+      if (btnGuide) {
+        const href = btnGuide.getAttribute('data-href');
+        if (href) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+        return;
+      }
+
       const btnMain   = ev.target.closest('#btnCopyCode');
       const btnLinked = ev.target.closest('#btnCopyLinkedCode');
       if (!btnMain && !btnLinked) return;
@@ -3266,6 +3351,13 @@ async function openSearchDetailsModal(r) {
     return null;
   })();
 
+  let guides = [];
+  if (Array.isArray(r.guides)) {
+    guides = r.guides.filter(Boolean);
+  } else if (typeof r.guides === 'string' && r.guides.trim() !== '') {
+    guides = [r.guides.trim()];
+  }
+
   let mechanics = Array.isArray(r.mechanics) ? r.mechanics : [];
   let restrictions = Array.isArray(r.restrictions) ? r.restrictions : [];
   if (typeof CURRENT_LANG!=='undefined' && CURRENT_LANG==='cn') {
@@ -3297,6 +3389,23 @@ async function openSearchDetailsModal(r) {
   g('mapTypeDetail', typeText || '—');
   g('mapDiffDetail', difficulty || '—');
   g('mapQualityDetail', qualityStars);
+
+  const guideBtn = document.getElementById('btnGuide');
+  if (guideBtn) {
+    if (guides.length) {
+      const href = String(guides[0]);
+      guideBtn.classList.remove('hidden');
+      guideBtn.setAttribute('data-href', href);
+      guideBtn.setAttribute('aria-disabled', 'false');
+      guideBtn.title = tSafe('card.open_guide', 'Open guide');
+    } else {
+      guideBtn.classList.add('hidden');
+      guideBtn.classList.remove('inline-flex');
+      guideBtn.removeAttribute('data-href');
+      guideBtn.setAttribute('aria-disabled', 'true');
+      guideBtn.title = '';
+    }
+  }
 
   const linkedWrap     = document.getElementById('linkedCodeContainer');
   const linkedLabelEl  = document.getElementById('linkedCodeLabel');
@@ -3380,9 +3489,16 @@ async function displayPersonalRecordsResultsCards(rowsInput) {
   const filtered = rows.filter((r) => r && r.code && r.code !== 'N/A');
 
   if (filtered.length === 0) {
-    renderMessage(t('popup.no_results'));
-    clearFilters();
-    applyFilters({});
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
     return;
   }
 
@@ -3538,9 +3654,16 @@ async function displayPersonalRecordsResults(results) {
   const filtered = rows.filter((r) => r.code && r.code !== 'N/A');
 
   if (filtered.length === 0) {
-    renderMessage(t('popup.no_results'));
-    clearFilters();
-    applyFilters({});
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
     return;
   }
 
@@ -3689,7 +3812,19 @@ async function displayCompletionsResultsCards(rowsInput){
   const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput,'completion');
   const filtered = rows.filter(r => (r.map_code||r.code) && (r.map_code||r.code) !== 'N/A');
 
-  if (filtered.length === 0){ renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
+  if (filtered.length === 0) {
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
+    return;
+  }
 
   const cardsHTML = filtered.map((r, idx) => {
     const code = r.map_code || r.code || 'N/A';
@@ -3834,7 +3969,19 @@ async function displayCompletionsResults(results){
   const rows = Array.isArray(results.results) ? results.results : [];
   const filtered = rows.filter(r => (r.map_code||r.code) && (r.map_code||r.code) !== 'N/A');
 
-  if (filtered.length === 0){ renderMessage(t('popup.no_results')); clearFilters(); applyFilters({}); return; }
+  if (filtered.length === 0) {
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
+    return;
+  }
 
   const currentUid = window.user_id ? String(window.user_id) : null;
 
@@ -4286,9 +4433,16 @@ function displayGuideResults(results) {
   const filtered = rows.filter((r) => r.url);
 
   if (filtered.length === 0) {
-    renderMessage(t('popup.no_results'));
-    clearFilters();
-    applyFilters({});
+    const message = t('popup.no_results');
+    renderMessage(message);
+    const rc = document.getElementById('resultsContainer');
+    if (rc) {
+      rc.innerHTML = `
+        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+          ${message}
+        </div>
+      `;
+    }
     return;
   }
 
@@ -5526,22 +5680,29 @@ function renderProgressionChart(data, stats = { min: null, max: null, avg: null 
           displayColors: true,
           callbacks: {
             title: (items) => items[0]?.label ?? '',
-            label: (ctx)   => `${ctx.dataset.label || t('chart.user_record_progression')}: ${fmtTime(ctx.parsed.y)}`,
+            label: (ctx) => {
+              const v = Number(ctx.parsed.y);
+              if (!Number.isFinite(v)) return '';
+              return `${ctx.dataset.label || t('chart.user_record_progression')}: ${v.toFixed(2)} s`;
+            },
           },
         },
         title: { display: false },
-      },
-      elements: {
-        point: { radius: 0 },
-        line:  { stepped: false },
-      },
+        },
+        elements: {
+          point: { radius: 0 },
+          line:  { stepped: false },
+        },
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
             color: '#E5E7EB',
             font: { family: 'Inter, ui-sans-serif, system-ui', weight: 600, size: 12 },
-            callback: (v) => fmtTime(v),
+            callback: (v) => {
+              const n = Number(v);
+              return Number.isFinite(n) ? `${n.toFixed(2)} s` : '';
+            },
           },
           grid: { color: 'rgba(255,255,255,0.06)', drawBorder: false },
           border: { display: false },

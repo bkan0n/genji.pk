@@ -1739,6 +1739,55 @@ async function handleGetPendingVerifs() {
 }
 
 // ———————————————————————————————————————————————————————————————
+// LOOTBOX
+function showConfirmActiveKeyType() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className =
+      'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
+    overlay.innerHTML = `
+      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
+        <div class="px-4 py-3 border-b border-white/10">
+          <h3 class="font-semibold text-sm">Confirm change</h3>
+        </div>
+        <div class="p-4 space-y-4">
+          <p class="text-sm text-zinc-200">Are you sure you want to modify the global active key type ?</p>
+          <div class="flex justify-end gap-2">
+            <button class="btn-confirm cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400">I know what I'm doing</button>
+            <button class="btn-cancel cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const close = (val) => {
+      overlay.remove();
+      resolve(val);
+    };
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close(false);
+    });
+    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => close(false));
+    overlay.querySelector('.btn-confirm')?.addEventListener('click', () => close(true));
+    document.addEventListener(
+      'keydown',
+      function onKey(ev) {
+        if (ev.key === 'Escape') {
+          close(false);
+          document.removeEventListener('keydown', onKey);
+        }
+        if (ev.key === 'Enter') {
+          close(true);
+          document.removeEventListener('keydown', onKey);
+        }
+      },
+      { once: true }
+    );
+  });
+}
+
+// ———————————————————————————————————————————————————————————————
 // Submit map
 
 function difficultyDotClass(label) {

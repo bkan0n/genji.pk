@@ -27,6 +27,14 @@ return [
         'website_creators'         => 'Créateurs du site',
         'translation_contributors' => 'Contributeurs aux traductions',
         'close'                    => 'Fermer la fenêtre des crédits',
+
+        'role_backend'   => 'Back-end',
+        'role_frontend'  => 'Front-end',
+        'note_backend'   => 'API, modèle de données et intégration du bot.',
+        'note_frontend'  => 'UI/UX, navigateur de cartes et intégration OCR.',
+        'discord_label'  => 'Discord',
+
+        'thanks' => 'Merci à toutes les personnes qui contribuent au projet Genji Parkour.',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

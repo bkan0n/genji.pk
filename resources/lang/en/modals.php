@@ -27,6 +27,14 @@ return [
         'website_creators' => 'Website creators',
         'translation_contributors' => 'Translation contributors',
         'close' => 'Close credits modal',
+
+        'role_backend'   => 'Backend',
+        'role_frontend'  => 'Frontend',
+        'note_backend'   => 'API, data model & bot integration.',
+        'note_frontend'  => 'UI/UX, map browser & OCR integration.',
+        'discord_label'  => 'Discord',
+
+        'thanks' => 'Thanks to everyone contributing to the Genji Parkour project.',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

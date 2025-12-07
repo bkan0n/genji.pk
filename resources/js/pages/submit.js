@@ -1636,9 +1636,8 @@ function setupForms() {
         const result = await sendCompletionToApi();
 
         const msg400 =
-          result?.error ||
-          result?.response?.error ||
-          (typeof result?.message === 'string' ? result.message : null);
+          (typeof result?.response?.error === 'string' ? result.response.error : null) ||
+          (typeof result?.error === 'string' ? result.error : null);
 
         if (!result || msg400) {
           showErrorMessage(msg400 || t('errors.server_unreachable') || 'Erreur serveur');
@@ -1679,8 +1678,7 @@ function setupForms() {
     submitMapForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (IS_GUEST) {
-        showWarningMessage(
-          t('popup.login_required_msg'));
+        showWarningMessage(t('popup.login_required_msg'));
         return;
       }
       const ok = await validateSubmitMapForm(e);
@@ -1689,8 +1687,8 @@ function setupForms() {
         const result = await sendMapToApi();
 
         const msg400 =
-          result?.error ||
-          result?.response?.error ||
+          (typeof result?.response?.error === 'string' ? result.response.error : null) ||
+          (typeof result?.error === 'string' ? result.error : null) ||
           (typeof result?.message === 'string' ? result.message : null);
 
         if (msg400) {
@@ -3736,7 +3734,7 @@ async function sendCompletionToApi() {
     return { error: t('errors.invalid_form') || 'Formulaire invalide' };
   }
   if (!window.screenshotUrl && !window.screenshotFile) {
-    return { error: t('record.screenshot_required')};
+    return { error: t('record.screenshot_required') || 'Screenshot requis' };
   }
 
   try {
@@ -3770,18 +3768,49 @@ async function sendCompletionToApi() {
     } catch {}
 
     if (!resp.ok) {
-      const msg = (data && (data.error || data.message)) || `HTTP ${resp.status}`;
-      return { error: msg };
+      let msg = null;
+
+      if (data && typeof data === 'object') {
+
+        if (
+          data.response &&
+          typeof data.response === 'object' &&
+          typeof data.response.error === 'string' &&
+          data.response.error.trim() !== ''
+        ) {
+          msg = data.response.error.trim();
+        }
+
+        else if (typeof data.error === 'string' && data.error.trim() !== '') {
+          msg = data.error.trim();
+        }
+
+        else if (typeof data.message === 'string' && data.message.trim() !== '') {
+          msg = data.message.trim();
+        }
+      }
+
+      if (!msg) {
+        msg = `API request failed with status code ${resp.status}`;
+      }
+
+      return { error: msg, response: data, status: resp.status };
     }
 
     try {
       const q = getSelectedQuality();
       if (Number.isFinite(q)) await sendQualityVote(code, q);
     } catch {}
+
     return data || { ok: true };
   } catch (err) {
     console.error(err);
-    return { error: err?.message || t('errors.server_unreachable') || 'Erreur réseau' };
+    const fallback =
+      (err && typeof err.message === 'string' && err.message) ||
+      t('errors.server_unreachable') ||
+      'Erreur réseau';
+
+    return { error: fallback };
   }
 }
 
@@ -4320,6 +4349,7 @@ function buildPlaytestParams(extra = {}, page = currentPage) {
     page_size: String(itemsPerPage),
     playtest_status: 'In Progress',
     playtest_filter: 'Only',
+    force_filters: true,
   });
 
   if (
@@ -7035,16 +7065,31 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       wrapper.append(cb, label);
       container.append(wrapper);
 
-      wrapper.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cb.checked = !cb.checked;
-        if (cb.checked) {
-          if (!activeFilters[prop].includes(raw)) activeFilters[prop].push(raw);
+      const syncFromCheckbox = (checked) => {
+        let arr = Array.isArray(activeFilters[prop]) ? activeFilters[prop].slice() : [];
+
+        if (checked) {
+          if (!arr.includes(raw)) arr.push(raw);
         } else {
-          activeFilters[prop] = activeFilters[prop].filter((v) => v !== raw);
+          arr = arr.filter((v) => v !== raw);
         }
+
+        activeFilters[prop] = arr;
         updateActiveFilters();
         updateToolbarButtonStates();
+      };
+
+      cb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        syncFromCheckbox(e.target.checked);
+      });
+
+      wrapper.addEventListener('click', (e) => {
+        if (e.target === cb || e.target === label) return;
+
+        e.preventDefault();
+        cb.checked = !cb.checked;
+        syncFromCheckbox(cb.checked);
       });
     } else {
       const el = document.createElement('div');
@@ -7193,10 +7238,25 @@ async function applyFilters(page = 1) {
       raw?.total_results ?? raw?.total ?? raw?.meta?.total ?? raw?.count ?? 0
     );
 
-    if (arr.length === 0 && hasActiveFilters) {
-      showWarningMessage(t('popup.no_results'));
-      clearFilters();
-      applyFilters();
+    if (arr.length === 0) {
+      const message = t('popup.no_results');
+      showWarningMessage(message);
+
+      const cardContainer = document.getElementById('playtestCardContainer');
+      if (cardContainer) {
+        cardContainer.innerHTML = `
+          <div class="col-span-full">
+            <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+              ${message}
+            </div>
+          </div>
+        `;
+      }
+
+      totalResults = 0;
+      totalPages = 1;
+      renderPaginationButtons();
+      updateToolbarButtonStates();
       return;
     }
 
@@ -7251,47 +7311,94 @@ async function applyFilters(page = 1) {
 }
 
 function updateToolbarButtonStates() {
-  document.querySelectorAll('#playtestSection .pt-toolbar-button').forEach((button) => {
-    const rawKey = button.id.replace('FilterButton', '');
-    const key = mapFilterKey(rawKey);
-    const val = activeFilters[key];
-    const isActive = Array.isArray(val) ? val.length > 0 : val != null && val !== '';
+  const codeIsActive =
+    !!activeFilters.code && String(activeFilters.code).trim() !== '';
 
-    button.classList.remove(
-      'active-filter',
-      'border-brand-400/40',
-      'ring-1',
-      'ring-emerald-500/30',
-      'bg-zinc-900/60',
-      'border-white/10',
-      'text-zinc-200'
-    );
+  document
+    .querySelectorAll('#playtestSection .pt-toolbar-button')
+    .forEach((button) => {
+      const rawKey = button.id.replace('FilterButton', '');
+      const key = mapFilterKey(rawKey);
+      let val = activeFilters[key];
 
-    if (isActive) {
-      button.classList.add('active-filter', 'border-brand-400/40', 'ring-1', 'ring-emerald-500/30');
-    } else {
-      button.classList.add('bg-zinc-900/60', 'border-white/10', 'text-zinc-200');
-    }
+      const filterId = rawKey;
+      const isActionButton = filterId === 'apply_filters' || filterId === 'clear_filters';
 
-    const badge = button.querySelector('.active-filter-badge');
-    if (!badge) return;
-    if (isActive && rawKey !== 'apply_filters' && rawKey !== 'clear_filters') {
-      let text = '';
-      if (Array.isArray(val)) {
-        if (val.length === 1) text = val[0];
-        else if (val.length === 2) text = val.slice(0, 2).join(', ');
-        else if (val.length > 2) text = val.slice(0, 2).join(', ') + '…';
-        else text = '';
-      } else if (typeof val === 'string') {
-        text = val.length > 18 ? val.slice(0, 18) + '…' : val;
+      const isLockedByCode =
+        codeIsActive &&
+        !['map_code', 'apply_filters', 'clear_filters'].includes(filterId);
+
+      if (isLockedByCode) {
+        if (Array.isArray(val)) val = [];
+        else val = '';
       }
-      badge.textContent = text;
-      badge.classList.remove('hidden');
-    } else {
-      badge.textContent = '';
-      badge.classList.add('hidden');
-    }
-  });
+
+      const isActive = Array.isArray(val) ? val.length > 0 : val != null && val !== '';
+      const effectiveActive = !isLockedByCode && isActive;
+
+      button.classList.remove(
+        'active-filter',
+        'border-brand-400/40',
+        'ring-1',
+        'ring-emerald-500/30',
+        'bg-zinc-900/60',
+        'border-white/10',
+        'text-zinc-200',
+        'cursor-not-allowed',
+        'pointer-events-none',
+        'is-disabled-by-code'
+      );
+
+      button.classList.add('bg-zinc-900/60', 'border-white/10', 'text-zinc-200');
+
+      if (effectiveActive && !isActionButton) {
+        button.classList.add(
+          'active-filter',
+          'border-brand-400/40',
+          'ring-1',
+          'ring-emerald-500/30'
+        );
+      }
+
+      const badge = button.querySelector('.active-filter-badge');
+      if (badge) {
+        if (!effectiveActive || isActionButton) {
+          badge.textContent = '';
+          badge.classList.add('hidden');
+        } else {
+          let text = '';
+
+          const isCountOnly =
+            key === 'mechanics' || key === 'restrictions';
+
+          if (Array.isArray(val)) {
+            if (isCountOnly) {
+              text = String(val.length);
+            } else {
+              if (val.length === 1) text = String(val[0]);
+              else if (val.length === 2) text = val.slice(0, 2).join(', ');
+              else if (val.length > 2) text = val.slice(0, 2).join(', ') + '…';
+            }
+          } else if (typeof val === 'string') {
+            text = val.length > 18 ? val.slice(0, 18) + '…' : val;
+          }
+
+          badge.textContent = text;
+          badge.classList.toggle('hidden', !text);
+        }
+      }
+
+      if (isLockedByCode) {
+        button.disabled = true;
+        button.classList.add('cursor-not-allowed', 'pointer-events-none', 'is-disabled-by-code');
+
+        button.classList.remove('selected');
+        const circle = button.querySelector('.pt-selection-circle');
+        if (circle) circle.classList.remove('circle-visible');
+      } else {
+        button.disabled = false;
+      }
+    });
 }
 
 // --------- SUGGESTIONS ---------
@@ -7593,7 +7700,7 @@ function lockSectionById(sectionId) {
       <div class="text-sm text-zinc-200 mb-2">
         ${typeof t === 'function' ? t('popup.login_required_msg') : 'Please login to access this section'}
       </div>
-      <a href="/discord/login"
+      <a href="/login"
          class="inline-flex items-center rounded-lg bg-white text-zinc-900 px-3 py-1.5 text-sm font-semibold hover:bg-zinc-100">
         ${typeof t === 'function' ? t('popup.login') : 'Login'}
       </a>

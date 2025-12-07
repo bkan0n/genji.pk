@@ -1,9 +1,9 @@
-{{-- Credits Modal — CENTRÉ ÉCRAN --}}
-<div id="creditsModal" class="fixed inset-0 z-[140] flex hidden items-center justify-center p-4">
+{{-- Credits Modal --}}
+<div id="creditsModal" class="fixed inset-0 z-[140] hidden items-center justify-center p-4 sm:p-6">
   {{-- Backdrop --}}
   <button
     id="creditsBackdrop"
-    class="absolute inset-0 bg-black/70 opacity-0 transition-opacity duration-200"
+    class="absolute inset-0 bg-black/75 opacity-0 transition-opacity duration-200"
     aria-label="{{ __('modals.credits.close') }}"
   ></button>
 
@@ -13,35 +13,68 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="creditsTitle"
-    class="pointer-events-auto relative z-10 w-full max-w-md translate-y-2 scale-95 transform-gpu rounded-2xl border border-white/10 bg-zinc-900/80 p-4 opacity-0 shadow-2xl backdrop-blur transition duration-200 ease-out sm:max-w-lg"
+    class="pointer-events-auto relative z-10 w-full max-w-2xl translate-y-4 scale-95 transform-gpu
+           rounded-[1.75rem] bg-gradient-to-tr from-emerald-400/40 via-indigo-400/35 to-transparent
+           p-[1px] opacity-0 shadow-[0_28px_80px_rgba(0,0,0,0.9)] ring-1 ring-white/15
+           transition duration-200 ease-out sm:max-w-3xl"
   >
-    <div class="mb-3 flex items-center justify-between">
-      <h2 id="creditsTitle" class="text-lg font-extrabold tracking-tight text-white sm:text-xl">
-        {{ __('modals.credits.title') }}
-      </h2>
-      <button
-        id="creditsModalClose"
-        class="rounded-md p-2 text-zinc-300 hover:bg-white/10"
-        aria-label="{{ __('modals.credits.close') }}"
-      >
-        &times;
-      </button>
-    </div>
+    <div class="rounded-[1.6rem] bg-zinc-950/95 p-5 shadow-2xl sm:p-7">
+      <div class="mb-5 relative flex items-center justify-center">
+        <h2
+          id="creditsTitle"
+          class="text-lg font-semibold tracking-tight text-white sm:text-xl text-center"
+        >
+          {{ __('modals.credits.title') }}
+        </h2>
 
-    <div class="space-y-6">
-      <section>
-        <h3 class="mb-2 text-xs font-semibold text-zinc-300 sm:text-sm">
-          {{ __('modals.credits.website_creators') }}
-        </h3>
-        <div id="websiteCreatorsList" class="flex flex-wrap items-center gap-2"></div>
-      </section>
+        <button
+          id="creditsModalClose"
+          class="absolute right-0 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-zinc-300
+                shadow-sm ring-1 ring-white/10 hover:bg-white/10 hover:text-white focus:outline-none
+                focus:ring-2 focus:ring-emerald-400/70"
+          aria-label="{{ __('modals.credits.close') }}"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
 
-      <section>
-        <h3 class="mb-2 text-xs font-semibold text-zinc-300 sm:text-sm">
-          {{ __('modals.credits.translation_contributors') }}
-        </h3>
-        <div id="translatorsList" class="flex flex-wrap items-center gap-2"></div>
-      </section>
+      <div
+        id="creditsTranslations"
+        class="hidden"
+        data-backend-role="{{ __('modals.credits.role_backend') }}"
+        data-frontend-role="{{ __('modals.credits.role_frontend') }}"
+        data-backend-note="{{ __('modals.credits.note_backend') }}"
+        data-frontend-note="{{ __('modals.credits.note_frontend') }}"
+        data-discord-label="{{ __('modals.credits.discord_label') }}"
+      ></div>
+
+      <div class="space-y-6 border-t border-white/5 pt-5">
+        <section>
+          <h3 class="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400 sm:text-xs">
+            {{ __('modals.credits.website_creators') }}
+          </h3>
+          <div
+            id="websiteCreatorsList"
+            class="grid grid-cols-1 gap-3 sm:grid-cols-2"
+          ></div>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400 sm:text-xs">
+            {{ __('modals.credits.translation_contributors') }}
+          </h3>
+          <div
+            id="translatorsList"
+            class="flex flex-wrap items-center gap-2.5"
+          ></div>
+        </section>
+
+        <p class="pt-1 text-[11px] text-zinc-500 sm:text-xs text-center sm:text-left">
+          {{ __('modals.credits.thanks') }}
+        </p>
+      </div>
     </div>
   </div>
 </div>
