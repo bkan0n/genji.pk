@@ -346,9 +346,9 @@
           {{ __('navbar.leaderboard') }}
         </a>
 
-        <details class="px-2">
+        <details class="px-3 py-2">
           <summary
-            class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
           >
             <span>{{ __('navbar.search') }}</span>
             <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
@@ -377,9 +377,9 @@
           </div>
         </details>
 
-        <details class="px-2">
+        <details class="px-3 py-2">
           <summary
-            class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
           >
             <span>{{ __('navbar.community') }}</span>
             <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
@@ -408,9 +408,9 @@
           </div>
         </details>
 
-        <details class="px-2">
+        <details class="px-3 py-2">
           <summary
-            class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
           >
             <span>{{ __('navbar.submit') }}</span>
             <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
