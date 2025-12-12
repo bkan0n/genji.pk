@@ -42,6 +42,15 @@ const editorStage = document.getElementById('editorStage');
 const btnFullscreen = document.getElementById('btnFullscreen');
 const hudViewType = document.getElementById('hudViewType');
 
+const btnSnap = document.getElementById('btnSnap');
+
+const hudAddBadge = document.getElementById('hudAddBadge');
+const hudToolbar = document.getElementById('hudToolbar');
+const hudTopPanel = document.getElementById('hudTopPanel');
+const hudLeftPanel = document.getElementById('hudLeftPanel');
+const hudRightPanel = document.getElementById('hudRightPanel');
+const hudHotkeys = document.getElementById('hudHotkeys');
+
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('mapCanvas not found');
 canvas.tabIndex = 0;
 
@@ -421,11 +430,13 @@ function updateHudHelp() {
 
   const base = [
     `RMB (hold) · Look`,
-    `ZQSD · Move`,
+    `ZQSD / WASD · Move`,
     `Space · Up`,
     `Ctrl · Down`,
     `V · Speed`,
-    `A · Toggle Add`,
+    `A (AZERTY) / Q (QWERTY) · Toggle Add`,
+    `F · Fullscreen`,
+    `F1 Help · F2 Data · F3 Toolbar · F4 Mode HUD · H Shortcuts · F6 Perf`,
     `Del · Delete Selected`,
     `[ / ] · Active CP (or link CP when selected)`,
   ];
@@ -434,6 +445,7 @@ function updateHudHelp() {
   if (mode.id === 'checkpoints') {
     extra.push(`LMB · Select a checkpoint`);
     extra.push(`Add ON + LMB on map · Place checkpoint`);
+    extra.push(`G · Snap selected checkpoint to ground`);
   } else if (mode.id === 'boundarySpheres') {
     extra.push(`C / Shift+C · Radius +/-`);
     extra.push(`Selection + [ / ] · Link to CP`);
@@ -454,6 +466,11 @@ function updateHudHelp() {
     .filter(Boolean)
     .map(line => `<div>${line.replace('·', '<span class="text-white/40">·</span>')}</div>`)
     .join('');
+}
+
+function toggleHudBlock(el) {
+  if (!el) return;
+  el.classList.toggle('hidden');
 }
 
 function isFullscreen() {
@@ -541,6 +558,9 @@ let skillBansByCp = new Map();
 let collider = null;
 let addMode = false;
 
+const ADD_TOGGLE_CODE = 'KeyQ';
+const ADD_KEY_LABEL = 'A/Q';
+
 let selected = null; // marker group
 let selectedData = null; // entity object
 let selectedGizmoTarget = null;
@@ -563,13 +583,24 @@ checkpointSelect?.addEventListener('change', (e) => {
 cpPrev?.addEventListener('click', () => setActiveCheckpoint(activeCheckpoint - 1, { selectMarker: getMode().id === 'checkpoints' }));
 cpNext?.addEventListener('click', () => setActiveCheckpoint(activeCheckpoint + 1, { selectMarker: getMode().id === 'checkpoints' }));
 
-function toggleAddMode() {
-  addMode = !addMode;
+function syncAddUi() {
   if (btnAdd) {
-    btnAdd.textContent = addMode ? 'Add: ON (A)' : 'Add checkpoint (A)';
+    btnAdd.textContent = addMode ? `Add: ON (${ADD_KEY_LABEL})` : `Add: OFF (${ADD_KEY_LABEL})`;
     btnAdd.classList.toggle('bg-emerald-500/20', addMode);
     btnAdd.classList.toggle('border-emerald-400/30', addMode);
   }
+  if (hudAddBadge) {
+    hudAddBadge.innerHTML = addMode
+      ? `ADD · ON <span class="text-white/45 font-semibold">(${ADD_KEY_LABEL})</span>`
+      : `ADD · OFF <span class="text-white/45 font-semibold">(${ADD_KEY_LABEL})</span>`;
+    hudAddBadge.classList.toggle('bg-emerald-500/20', addMode);
+    hudAddBadge.classList.toggle('border-emerald-400/30', addMode);
+  }
+}
+
+function toggleAddMode(force) {
+  addMode = (typeof force === 'boolean') ? force : !addMode;
+  syncAddUi();
   updateHudAll();
 }
 
@@ -618,6 +649,15 @@ function setSelected(marker, data, gizmoTarget = marker) {
 /* ============================================================================
   HUD helpers
 ============================================================================ */
+function updateToolbarState() {
+  const canSnap = (selectedData?.type === 'checkpoints');
+  if (btnSnap) {
+    btnSnap.disabled = !canSnap;
+    btnSnap.classList.toggle('opacity-40', !canSnap);
+    btnSnap.classList.toggle('cursor-not-allowed', !canSnap);
+  }
+}
+
 function countByType(type) {
   return entities.filter((e) => e.type === type).length;
 }
@@ -757,6 +797,8 @@ function updateHudData() {
 
 function updateHudAll() {
   if (hudViewType) hudViewType.textContent = (viewType || 'all').toUpperCase();
+  updateToolbarState();
+  syncAddUi();
   updateCheckpointSelectUI();
   updateViewButtons();
   applyViewVisibility();
@@ -1251,7 +1293,7 @@ const keys = {
   lshift: false,
 };
 
-const speedMults = [0.05, 0.1, 1, 5];
+const speedMults = [0.05, 0.1, 0.5, 1];
 let speedIdx = 1;
 
 function updateHudSpeed() {
@@ -1354,6 +1396,8 @@ function consumeKey(e) {
     'Digit1', 'Digit2', 'Digit3', 'Digit4',
     'Digit5', 'Digit6', 'Digit7', 'Digit8',
     'F6', 'F7', 'F8', 'F9',
+    'F1','F2','F3','F4',
+    'KeyH','KeyG','KeyQ',
   ]);
   if (codes.has(e.code)) {
     e.preventDefault();
@@ -1404,7 +1448,8 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  if ((e.key || '').toLowerCase() === 'a') { toggleAddMode(); return; }
+  if (e.code === ADD_TOGGLE_CODE && !e.repeat) { toggleAddMode(); return; }
+  if (e.code === 'KeyG' && !e.repeat) { snapSelectedCheckpoint(); return; }
 
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
     keys.lshift = true;
@@ -1477,6 +1522,12 @@ window.addEventListener('keyup', (e) => {
   if (isTypingTarget(e.target)) return;
   consumeKey(e);
   if (e.code === 'F6') { setPerfVisible(!PERF_VISIBLE); return; }
+  
+  if (e.code === 'F1') { toggleHudBlock(hudRightPanel); return; }
+  if (e.code === 'F2') { toggleHudBlock(hudLeftPanel); return; }
+  if (e.code === 'F3') { toggleHudBlock(hudToolbar); return; }
+  if (e.code === 'F4') { toggleHudBlock(hudTopPanel); return; }
+  if (e.code === 'KeyH') { toggleHudBlock(hudHotkeys); return; }
 
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
     keys.lshift = false;
@@ -1681,6 +1732,64 @@ function flashHud(title, sub = '', ms = 900) {
   clearTimeout(hudFlashTimer);
   hudFlashTimer = setTimeout(() => updateHudAll(), ms);
 }
+
+const snapRaycaster = new THREE.Raycaster();
+const _snapUp = new THREE.Vector3(0, 1, 0);
+const _snapDir = new THREE.Vector3(0, -1, 0);
+const _snapOrigin = new THREE.Vector3();
+const _snapLift = new THREE.Vector3();
+
+function snapSelectedCheckpoint() {
+  if (!selected || !selectedData || selectedData.type !== 'checkpoints') {
+    flashHud('SNAP', 'Select a checkpoint first.');
+    return false;
+  }
+  return snapCheckpointToGround(selected, selectedData);
+}
+
+function snapCheckpointToGround(marker, ent) {
+  if (!collider || !marker || !ent || ent.type !== 'checkpoints') return false;
+
+  const base = getMarkerBaseEditorPos(marker, ent);
+
+  // cast from above -> down
+  _snapOrigin.copy(base);
+  _snapOrigin.y += 20000;
+
+  snapRaycaster.set(_snapOrigin, _snapDir);
+  snapRaycaster.far = 40000;
+
+  const hits = snapRaycaster.intersectObject(collider, true);
+  const h = hits?.[0];
+  if (!h) {
+    flashHud('SNAP FAILED', 'No ground found below.');
+    return false;
+  }
+
+  const worldNormal = h.face?.normal
+    ? h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize()
+    : _snapUp;
+
+  // keep same "floor" constraint as placement
+  if (worldNormal.dot(_snapUp) < CP_FLOOR_DOT) {
+    flashHud('SNAP FAILED', 'Ground below is not flat enough.');
+    return false;
+  }
+
+  const liftY = marker.userData?._liftY || 0;
+  _snapLift.set(0, liftY, 0);
+
+  marker.position.copy(h.point).add(_snapLift);
+  marker.quaternion.identity();
+
+  const ws = editorToWs(h.point);
+  ent.pos = [ws.x, ws.y, ws.z];
+
+  updateHudAll();
+  flashHud('SNAPPED', `CP ${ent.index} aligned to ground.`, 600);
+  return true;
+}
+btnSnap?.addEventListener('click', () => snapSelectedCheckpoint());
 
 function makeCheckpointMarker(index, hitPoint) {
   const gCore = new THREE.RingGeometry(cpInnerRadius, cpOuterRadius, 80);
@@ -2623,6 +2732,38 @@ function resize() {
 }
 new ResizeObserver(resize).observe(editorStage || renderer.domElement);
 resize();
+
+function layoutHud() {
+  if (!editorStage) return;
+  const stageRect = editorStage.getBoundingClientRect();
+
+  const bottomInStage = (el) => {
+    if (!el || el.classList.contains('hidden')) return 0;
+    const r = el.getBoundingClientRect();
+    return Math.max(0, r.bottom - stageRect.top);
+  };
+
+  const topStackBottom = Math.max(bottomInStage(hudTopPanel), bottomInStage(hudHotkeys), 24);
+  if (hudToolbar) {
+    hudToolbar.style.top = `${topStackBottom + 10}px`;
+  }
+
+  const toolbarBottom = Math.max(bottomInStage(hudToolbar), topStackBottom);
+  const panelsTop = toolbarBottom + 14;
+
+  if (hudLeftPanel)  hudLeftPanel.style.top  = `${panelsTop}px`;
+  if (hudRightPanel) hudRightPanel.style.top = `${panelsTop}px`;
+}
+
+const hudLayoutRO = new ResizeObserver(() => layoutHud());
+if (editorStage) hudLayoutRO.observe(editorStage);
+if (hudToolbar) hudLayoutRO.observe(hudToolbar);
+if (hudTopPanel) hudLayoutRO.observe(hudTopPanel);
+if (hudHotkeys) hudLayoutRO.observe(hudHotkeys);
+
+window.addEventListener('resize', layoutHud);
+document.addEventListener('fullscreenchange', () => setTimeout(layoutHud, 0));
+layoutHud();
 
 /* ============================================================================
   Loop
