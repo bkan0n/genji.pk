@@ -2564,6 +2564,37 @@ function fillDifficultyFieldsFromValue(diffValue) {
   sel.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+function insertWorkshopBlockAtRightPlace(tpl, lang, workshopBlockText) {
+  let reExtensions;
+  switch (lang) {
+    case 'es-MX': reExtensions = /^([ \t]*)extensiones\s*(?:\r?\n\s*)?\{/im; break;
+    case 'pt-BR': reExtensions = /^([ \t]*)extensões\s*(?:\r?\n\s*)?\{/im; break;
+    case 'de-DE': reExtensions = /^([ \t]*)Erweiterungen\s*(?:\r?\n\s*)?\{/im; break;
+    case 'ja-JP': reExtensions = /^([ \t]*)拡張\s*(?:\r?\n\s*)?\{/im; break;
+    case 'zh-CN': reExtensions = /^([ \t]*)扩展\s*(?:\r?\n\s*)?\{/im; break;
+    default:      reExtensions = /^([ \t]*)extensions\s*(?:\r?\n\s*)?\{/im; break;
+  }
+
+  const mExt = tpl.match(reExtensions);
+  if (mExt) {
+    const baseIndent = mExt[1] || '';
+    return tpl.slice(0, mExt.index) + workshopBlockText + tpl.slice(mExt.index);
+  }
+
+  const mSettings = tpl.match(/(^|\n)([ \t]*)settings\s*(?:\r?\n\s*)?\{/i);
+  if (mSettings) {
+    const openIdx = tpl.indexOf('{', mSettings.index + mSettings[0].length - 1);
+    if (openIdx >= 0) {
+      const closeIdx = findMatchingBrace(tpl, openIdx);
+      if (closeIdx >= 0) {
+        return tpl.slice(0, closeIdx) + '\n' + workshopBlockText + tpl.slice(closeIdx);
+      }
+    }
+  }
+
+  return workshopBlockText + tpl;
+}
+
 function ensureDifficultyHudInWorkshop(tpl, lang, difficultyIndex) {
   let idx = Number.isFinite(+difficultyIndex) ? +difficultyIndex : extractDifficultyValue(tpl);
   if (!Number.isFinite(+idx)) idx = 0;
@@ -2571,36 +2602,35 @@ function ensureDifficultyHudInWorkshop(tpl, lang, difficultyIndex) {
   const HUD_LABEL = 'Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디스플레이';
   const HUD_KEY_RE = /difficulty\s*display\s*hud/i;
 
-  const headerRe = /(^|\n)(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?\s*\{/i;
+  const headerRe = /(^|\n)[ \t]*(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?\s*\{/i;
   const m = headerRe.exec(tpl);
 
   if (!m) {
     const header = (lang === 'zh-CN') ? '地图工坊' : (lang === 'ja-JP') ? 'ワークショップ' : 'workshop';
-    const block = `${header} {\n    ${HUD_LABEL}: [${idx}]\n}\n\n`;
-    return block + tpl;
+    const block =
+      `${header}\n{\n` +
+      `    ${HUD_LABEL}: [${idx}]\n` +
+      `}\n\n`;
+
+    return insertWorkshopBlockAtRightPlace(tpl, lang, block);
   }
 
-  const openIdx = tpl.indexOf('{', m.index);
+  const openIdx = m.index + m[0].lastIndexOf('{');
   if (openIdx < 0) return tpl;
 
-  let depth = 1, i = openIdx + 1;
-  for (; i < tpl.length; i++) {
-    const ch = tpl[i];
-    if (ch === '{') depth++;
-    else if (ch === '}') { depth--; if (depth === 0) break; }
-  }
-  if (depth !== 0) return tpl;
+  const closeIdx = findMatchingBrace(tpl, openIdx);
+  if (closeIdx < 0) return tpl;
 
   const before = tpl.slice(0, openIdx + 1);
-  const body   = tpl.slice(openIdx + 1, i);
-  const after  = tpl.slice(i);
+  const body   = tpl.slice(openIdx + 1, closeIdx);
+  const after  = tpl.slice(closeIdx);
 
   const lines = body.split(/\r?\n/);
   let found = false;
 
   for (let k = 0; k < lines.length; k++) {
     const ln = lines[k];
-    if (HUD_KEY_RE.test(ln)) {
+    if (HUD_KEY_RE.test(normalizeLine(ln))) {
       const indent = (ln.match(/^\s*/) || [''])[0];
       lines[k] = `${indent}${HUD_LABEL}: [${idx}]`;
       found = true;
@@ -2609,8 +2639,9 @@ function ensureDifficultyHudInWorkshop(tpl, lang, difficultyIndex) {
   }
 
   if (!found) {
-    const indent = (body.match(/^\s+/m) || ['    '])[0];
-    lines.unshift(`${indent}${HUD_LABEL}: [${idx}]`);
+    const baseIndent = m[2] || '';
+    const innerIndent = baseIndent + '    ';
+    lines.unshift(`${innerIndent}${HUD_LABEL}: [${idx}]`);
   }
 
   return before + '\n' + lines.join('\n') + '\n' + after;
@@ -3567,7 +3598,7 @@ function insertWorkshopSettings(tpl, workshopSettingsBlock, lang = getActiveOutp
     const insertPos = mExt.index;
     return tpl.slice(0, insertPos) + workshopBlock + tpl.slice(insertPos);
   } else {
-    return workshopBlock + tpl;
+    return insertWorkshopBlockAtRightPlace(tpl, lang, workshopBlock);
   }
 }
 
