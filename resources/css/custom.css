@@ -1124,3 +1124,5 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .rank-count{margin-top:.4rem;font-size:.82rem;color:#e5e5e5;}
 /* ------ Steps (Rank promotion · How to submit?) ------ */
 [data-infos-kind="rank_how_to_submit"] ol li,#helpModalBody .helpsec ol li{position:relative;padding-left:1.75rem;}
+/* ================= EDITOR ================= */
+@keyframes loadSpin { to { transform: rotate(360deg); } }

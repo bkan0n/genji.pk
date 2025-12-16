@@ -13,7 +13,7 @@
       <p class="text-sm text-zinc-400">Click on the map to place checkpoints (0-based). Drag with gizmo to adjust.</p>
     </div>
 
-    {{-- TOOLBAR (OUTSIDE CANVAS) --}}
+    {{-- TOOLBAR --}}
     <div class="mb-3">
       <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-zinc-950/40 p-2 shadow-[0_20px_70px_-25px_rgba(0,0,0,0.9)] ring-1 ring-white/10 backdrop-blur-xl">
         {{-- LEFT GROUP --}}
@@ -36,7 +36,7 @@
             id="btnExport"
             class="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-zinc-100 hover:bg-white/10"
           >
-            Export JSON
+            Export data
           </button>
 
           <button
@@ -75,7 +75,22 @@
             <button id="cpNext" class="rounded-full px-3 py-1 text-[10px] font-extrabold text-zinc-100 hover:bg-white/10">▶</button>
           </div>
 
-          {{-- Fullscreen (still relevant here too) --}}
+          {{-- Language Selector --}}
+          <button
+            id="langDdBtn"
+            type="button"
+            class="shrink-0 inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-zinc-100 hover:bg-white/10"
+            aria-expanded="false"
+            aria-controls="langDdMenu"
+          >
+            <i class="flag flag-us"></i>
+            <span class="text-xs font-extrabold text-zinc-100" data-label>English</span>
+            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" fill="currentColor"/>
+            </svg>
+          </button>
+
+          {{-- Fullscreen --}}
           <button
             id="btnFullscreen"
             type="button"
@@ -88,6 +103,77 @@
           </button>
         </div>
       </div>
+
+      {{-- Language dropdown --}}
+      <ul
+        id="langDdMenu"
+        class="invisible pointer-events-none fixed z-[9999] mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-2xl bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+        role="listbox"
+      >
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="en-US" data-flag="flag-us">
+            <i class="flag flag-us"></i><span>English</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="zh-CN" data-flag="flag-china">
+            <i class="flag flag-china"></i><span>简体中文</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="ja-JP" data-flag="flag-japan">
+            <i class="flag flag-japan"></i><span>日本語</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="ko-KR" data-flag="flag-south-korea">
+            <i class="flag flag-south-korea"></i><span>한국어</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="ru-RU" data-flag="flag-russia">
+            <i class="flag flag-russia"></i><span>Русский</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="es-MX" data-flag="flag-mexico">
+            <i class="flag flag-mexico"></i><span>Español</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="pt-BR" data-flag="flag-brazil">
+            <i class="flag flag-brazil"></i><span>Português</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button"
+            class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+            data-code="de-DE" data-flag="flag-germany">
+            <i class="flag flag-germany"></i><span>Deutsch</span>
+          </button>
+        </li>
+      </ul>
     </div>
 
     {{-- STAGE (CANVAS + HUD) --}}
@@ -121,8 +207,7 @@
           </div>
 
           <div class="mt-2 text-[11px] font-semibold text-white/65 leading-5">
-            <div>F1 Help · F2 Data · F6 Perf</div>
-            <div class="text-white/45">Move: ZQSD / WASD · Add: A(AZERTY) / Q(QWERTY)</div>
+            <div class="text-white/45">Add: A(AZERTY) / Q(QWERTY) · Snap: G</div>
           </div>
         </div>
       </div>
@@ -193,17 +278,73 @@
       </div>
 
       {{-- RIGHT HELP --}}
-      <div id="hudRightPanel" class="absolute right-5 top-28 z-30 w-[380px] pointer-events-none">
+      <div id="hudRightPanel" class="absolute right-5 top-28 z-30 w-[380px] pointer-events-auto">
         <div class="rounded-2xl border border-white/10 bg-black/35 p-4 text-right shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_40px_-22px_rgba(0,0,0,0.9)] backdrop-blur-xl">
           <div class="mb-2 text-xs font-extrabold uppercase tracking-[0.22em] text-white/70">
             CONTROLS
           </div>
-          <div id="hudHelpBody" class="max-h-[48vh] space-y-1 overflow-hidden text-sm font-semibold text-white/75"></div>
+          <div id="hudHelpBody" class="max-h-[48vh] space-y-1 overflow-auto pr-1 text-sm font-semibold text-white/75"></div>
           <div class="mt-3 text-[11px] font-semibold text-white/45">
             Tip: hold <span class="text-white/70">RMB</span> to look
           </div>
         </div>
       </div>
+
+      {{-- HUD DOCK (bottom-left) --}}
+      <div id="hudDock" class="absolute left-5 bottom-5 z-50 pointer-events-auto">
+        <div class="flex items-center gap-1 rounded-2xl border border-white/10 bg-black/35 p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_40px_-22px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+          <button id="dockControls" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Controls (F1)">
+            CONTROLS <span class="text-white/40 font-semibold">(F1)</span>
+          </button>
+          <button id="dockData" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Data (F2)">
+            DATA <span class="text-white/40 font-semibold">(F2)</span>
+          </button>
+          <button id="dockMove" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Move Mode (F3)">
+            MOVE <span id="dockMoveLabel" class="text-white/55 font-semibold">LOOK</span> <span class="text-white/40 font-semibold">(F3)</span>
+          </button>
+          <button id="dockMode" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Mode HUD (F4)">
+            MODE <span class="text-white/40 font-semibold">(F4)</span>
+          </button>
+          <button id="dockShortcuts" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Shortcuts (H)">
+            KEYS <span class="text-white/40 font-semibold">(H)</span>
+          </button>
+          <button id="dockPerf" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Performance (F6)">
+            PERF <span class="text-white/40 font-semibold">(F6)</span>
+          </button>
+        </div>
+      </div>
+
+      {{-- QUICKBAR --}}
+      <div id="hudQuickbar" class="absolute left-1/2 bottom-5 z-50 hidden -translate-x-1/2 pointer-events-auto">
+        <div class="flex items-center gap-1 rounded-2xl border border-white/10 bg-black/35 p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_40px_-22px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+          <button id="hudQAdd" type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Add (A/Q)">
+            ADD
+          </button>
+
+          <button id="hudQSnap" type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Snap to ground (G)">
+            SNAP
+          </button>
+
+          <div class="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+            <span class="px-2 text-[10px] font-extrabold text-zinc-200">View</span>
+            <button id="hudQViewAll" type="button" class="rounded-xl px-3 py-1 text-[10px] font-extrabold text-zinc-100 hover:bg-white/10">All</button>
+            <button id="hudQViewOnly" type="button" class="rounded-xl px-3 py-1 text-[10px] font-extrabold text-zinc-100 hover:bg-white/10">Only</button>
+          </div>
+
+          <div class="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+            <button id="hudQCpPrev" type="button" class="rounded-xl px-3 py-1 text-[10px] font-extrabold text-zinc-100 hover:bg-white/10">◀</button>
+            <select id="hudQCheckpointSelect" class="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-extrabold text-zinc-100">
+              <option value="0">CP 0</option>
+            </select>
+            <button id="hudQCpNext" type="button" class="rounded-xl px-3 py-1 text-[10px] font-extrabold text-zinc-100 hover:bg-white/10">▶</button>
+          </div>
+
+          <button id="hudQHide" type="button" class="rounded-xl px-3 py-2 text-[11px] font-extrabold text-white/70 hover:bg-white/10" title="Hide quickbar (F7)">
+            ✕
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 @endsection
@@ -213,5 +354,93 @@
     document.documentElement.lang = @json(app()->getLocale());
     window.EDITOR_I18N = @json(\Illuminate\Support\Facades\Lang::get('editor'));
   </script>
+
+  <script nonce="{{ $nonce }}">
+    document.addEventListener('DOMContentLoaded', () => {
+      const ddBtn  = document.getElementById('langDdBtn');
+      const ddMenu = document.getElementById('langDdMenu');
+
+      const OPEN_CLASSES_REMOVE = ['invisible','opacity-0','translate-y-1','pointer-events-none'];
+      const OPEN_CLASSES_ADD    = ['opacity-100','translate-y-0','pointer-events-auto'];
+
+      function isOpen() {
+        return !ddMenu.classList.contains('invisible');
+      }
+
+      function placeMenu() {
+        const r = ddBtn.getBoundingClientRect();
+
+        const menuW = ddMenu.offsetWidth || 192;
+        const menuH = ddMenu.offsetHeight || 200;
+
+        let left = r.right - menuW;
+        left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
+
+        let top = r.bottom + 8;
+        if (top + menuH > window.innerHeight - 8) {
+          top = r.top - menuH - 8;
+        }
+
+        ddMenu.style.left = `${left}px`;
+        ddMenu.style.top  = `${top}px`;
+      }
+
+      function openMenu() {
+        placeMenu();
+        OPEN_CLASSES_REMOVE.forEach(c => ddMenu.classList.remove(c));
+        OPEN_CLASSES_ADD.forEach(c => ddMenu.classList.add(c));
+        ddBtn.setAttribute('aria-expanded', 'true');
+      }
+
+      function closeMenu() {
+        OPEN_CLASSES_ADD.forEach(c => ddMenu.classList.remove(c));
+        OPEN_CLASSES_REMOVE.forEach(c => ddMenu.classList.add(c));
+        ddBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      ddBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen()) closeMenu();
+        else openMenu();
+      });
+
+      ddMenu.querySelectorAll('.dd-opt').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.preventDefault();
+          const flag  = opt.dataset.flag;
+          const label = opt.querySelector('span')?.textContent?.trim() || 'English';
+
+          ddBtn.querySelector('i').className = `flag ${flag}`;
+          ddBtn.querySelector('[data-label]').textContent = label;
+
+          const code = opt.dataset.code || 'en-US';
+          localStorage.setItem('editorFrameworkLang', code);
+          document.documentElement.lang = code;
+
+          closeMenu();
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!isOpen()) return;
+        if (ddMenu.contains(e.target) || ddBtn.contains(e.target)) return;
+        closeMenu();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen()) closeMenu();
+      });
+
+      window.addEventListener('resize', () => {
+        if (isOpen()) placeMenu();
+      }, { passive: true });
+
+      window.addEventListener('scroll', () => {
+        if (isOpen()) closeMenu();
+      }, { passive: true });
+    });
+  </script>
+
   @vite('resources/js/pages/editor.js', null, ['nonce' => csp_nonce()])
 @endpush
