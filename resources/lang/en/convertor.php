@@ -42,20 +42,20 @@ return [
     'yes' => 'Yes',
     'yes_1' => 'Checkpoint positions',
     'yes_2' => 'Teleports',
-    'yes_3' => 'Bounce /kill orbs (per cp)',
+    'yes_3' => 'Bounce/kill orbs (per checkpoint)',
     'yes_4' => 'Ult and dash plugin',
     'yes_5' => 'Teams in some modes and numbers',
-    'yes_6' => 'Workshop bans and bans per cp',
+    'yes_6' => 'Workshop bans and bans per checkpoint',
 
     'maybe' => 'Maybe',
     'maybe_1' => 'Addons rules',
-    'maybe_2' => 'Sky cp’s (will load, won’t function)',
+    'maybe_2' => 'Sky checkpoints (will load, won’t function)',
 
     'no' => 'No',
     'no_1' => 'Orbs / kills that work for entire map',
     'no_2' => 'Custom added code',
-    'no_3' => 'if’s, returns or aborts in rule data',
-    'no_4' => 'everything else',
+    'no_3' => 'Specific Workshop statements (If, Return, Abort)',
+    'no_4' => 'Everything else',
 
     // ──────────────────────────────────────────────────────────────────────
     // CONTROLS

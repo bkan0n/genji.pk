@@ -38,7 +38,7 @@ return [
         'cn' => [
             'name' => 'CN',
             'flag' => 'flag-china',
-            'translated' => false,
+            'translated' => true,
             'modalMessage' => '此语言的翻译尚不可用。如果您想协助翻译，请通过 Discord 联系 <strong>.aiapaec</strong>。',
             'closeButtonText' => '关闭',
         ],
