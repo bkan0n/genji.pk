@@ -1,6 +1,7 @@
 /* =========================
    CONFIG & UTILS
    ========================= */
+import JSON5 from 'json5';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
@@ -211,7 +212,7 @@ const HERO_FILE_MAP = {
   HAZARD: 'mechanics/Hazard.opy',
 };
 
-const OVERPY_COMMIT = 'dd8fc2d25459243053f8214478e13d85fda759af';
+const OVERPY_COMMIT = 'deeafc3259f09d2eb8f1eabbccff9e3e0eb62229';
 const TS_BASE = `https://cdn.jsdelivr.net/gh/Zezombye/overpy@${OVERPY_COMMIT}/src/data/`;
 
 const TRANSLATION_FILES = [
@@ -897,9 +898,16 @@ function extractExportExpression(tsText) {
   return noComments.slice(startExpr, i + 1).trim();
 }
 
-function evalExportExpressionToValue(expr) {
-  const fn = new Function(`"use strict"; return (${expr});`);
-  return fn();
+function parseExportExpressionToValue(expr) {
+  let s = expr.trim();
+
+  if (s.startsWith('(') && s.endsWith(')')) s = s.slice(1, -1).trim();
+
+  s = s.replace(/\s+as\s+const\b/g, '');
+  s = s.replace(/\s+satisfies\s+[^;]+/g, '');
+  s = s.replace(/;+\s*$/, '');
+
+  return JSON5.parse(s);
 }
 
 async function compileTsToJson(tsName) {
@@ -907,7 +915,7 @@ async function compileTsToJson(tsName) {
 
   try {
     const expr = extractExportExpression(tsText);
-    const value = evalExportExpressionToValue(expr);
+    const value = parseExportExpressionToValue(expr);
     return JSON.stringify(value, null, 2) + '\n';
   } catch (e) {
     if (tsName === 'localizedStrings.ts' || tsText.includes('//begin-json')) {
@@ -916,10 +924,10 @@ async function compileTsToJson(tsName) {
 
       let obj;
       try {
-        obj = JSON.parse(raw);
+        obj = JSON5.parse(raw);
       } catch {
         const noTrailing = raw.replace(/,(\s*[}\]])/g, '$1');
-        obj = JSON.parse(noTrailing);
+        obj = JSON5.parse(noTrailing);
       }
       return JSON.stringify(obj, null, 2) + '\n';
     }
@@ -1631,7 +1639,7 @@ async function loadTemplate(lang) {
     if (!overpy) throw new Error('OverPy UMD not found (fallback)');
     await overpy.readyPromise;
 
-    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4D/';
+    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4E/';
     const entryFile = 'framework.opy';
     const resp = await fetch(rawBase + entryFile);
     if (!resp.ok) throw new Error(`HTTP ${resp.status} on ${entryFile}`);
