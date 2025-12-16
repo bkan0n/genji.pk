@@ -4,7 +4,11 @@
     "description": "Shorthand for the directional vector(0, 0, -1), which points backward.",
     "args": null,
     "return": {
-      "Direction": ["unsigned int", "unsigned int", "signed int"]
+      "Direction": [
+        "unsigned int",
+        "unsigned int",
+        "signed int"
+      ]
     },
     "canBePutInBoolean": false,
     "isConstant": true,
@@ -29,7 +33,11 @@
     "description": "Shorthand for the directional vector(0, -1, 0), which points downward.",
     "args": null,
     "return": {
-      "Direction": ["unsigned int", "signed int", "unsigned int"]
+      "Direction": [
+        "unsigned int",
+        "signed int",
+        "unsigned int"
+      ]
     },
     "canBePutInBoolean": false,
     "isConstant": true,
@@ -55,7 +63,11 @@
     "args": null,
     "isConstant": true,
     "return": {
-      "Direction": ["unsigned int", "unsigned int", "unsigned int"]
+      "Direction": [
+        "unsigned int",
+        "unsigned int",
+        "unsigned int"
+      ]
     },
     "canBePutInBoolean": false,
     "en-US": "Forward",
@@ -80,7 +92,11 @@
     "args": null,
     "isConstant": true,
     "return": {
-      "Direction": ["unsigned int", "unsigned int", "unsigned int"]
+      "Direction": [
+        "unsigned int",
+        "unsigned int",
+        "unsigned int"
+      ]
     },
     "canBePutInBoolean": false,
     "en-US": "Left",
@@ -105,7 +121,11 @@
     "args": null,
     "isConstant": true,
     "return": {
-      "Direction": ["signed int", "unsigned int", "unsigned int"]
+      "Direction": [
+        "signed int",
+        "unsigned int",
+        "unsigned int"
+      ]
     },
     "canBePutInBoolean": false,
     "en-US": "Right",
@@ -130,7 +150,11 @@
     "args": null,
     "isConstant": true,
     "return": {
-      "Direction": ["unsigned int", "unsigned int", "unsigned int"]
+      "Direction": [
+        "unsigned int",
+        "unsigned int",
+        "unsigned int"
+      ]
     },
     "canBePutInBoolean": false,
     "en-US": "Up",
@@ -2108,18 +2132,27 @@
       {
         "name": "value",
         "description": "The left-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"],
+        "type": [
+          "float",
+          "Vector"
+        ],
         "canReplace1ByTrue": true
       },
       {
         "name": "value",
         "description": "The right-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"],
+        "type": [
+          "float",
+          "Vector"
+        ],
         "canReplace1ByTrue": true
       }
     ],
     "isConstant": true,
-    "return": ["float", "Vector"],
+    "return": [
+      "float",
+      "Vector"
+    ],
     "en-US": "Add",
     "es-MX": "Agregar",
     "fr-FR": "Addition",
@@ -2323,7 +2356,10 @@
       {
         "name": "[0]",
         "description": "The value that will be stored in the array at index [0].",
-        "type": ["Object", "Array"],
+        "type": [
+          "Object",
+          "Array"
+        ],
         "canReplace0ByNull": true
       }
     ],
@@ -2412,7 +2448,10 @@
       {
         "name": "value",
         "description": "The left-hand side of the comparison. This may be any value type if the operation is == or !=. Otherwise, real numbers are expected.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       },
       {
         "name": "comparison",
@@ -2422,7 +2461,10 @@
       {
         "name": "value",
         "description": "The right-hand side of the comparison. This may be any value type if the operation is == or !=. Otherwise, real numbers are expected.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "isConstant": true,
@@ -2488,7 +2530,10 @@
     "description": "The current array element being considered. Only meaningful during the evaluation of values such as filtered array and sorted array.",
     "args": [],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "00000000B5B9",
     "en-US": "Current Array Element",
     "es-MX": "Elemento de matriz actual",
@@ -2510,7 +2555,10 @@
     "description": "The current array index being considered. Only meaningful during the evaluation of values such as filtered array and sorted array.",
     "args": [],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "0000000111B5",
     "en-US": "Current Array Index",
     "es-MX": "Índice de matriz actual",
@@ -2582,17 +2630,26 @@
       {
         "name": "value",
         "description": "The left-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"],
+        "type": [
+          "float",
+          "Vector"
+        ],
         "canReplace1ByTrue": true
       },
       {
         "name": "value",
         "description": "The right-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       }
     ],
     "isConstant": true,
-    "return": ["float", "Vector"],
+    "return": [
+      "float",
+      "Vector"
+    ],
     "en-US": "Divide",
     "es-MX": "Dividir",
     "fr-FR": "Division",
@@ -2674,7 +2731,10 @@
       }
     ],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "00000000B5C2",
     "en-US": "First Of",
     "es-MX": "Primero de",
@@ -2810,18 +2870,27 @@
       {
         "name": "then",
         "description": "The result of the value when the if condition evaluates to true.",
-        "type": ["Object", "Array"],
+        "type": [
+          "Object",
+          "Array"
+        ],
         "canReplace0ByNull": true
       },
       {
         "name": "else",
         "description": "The result of the value when the if condition evaluates to false.",
-        "type": ["Object", "Array"],
+        "type": [
+          "Object",
+          "Array"
+        ],
         "canReplace0ByNull": true
       }
     ],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "000000010BC7",
     "en-US": "If-Then-Else",
     "fr-FR": "Si-Alors-Sinon",
@@ -2887,7 +2956,10 @@
     ],
     "class": "Array",
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "00000000B5C1",
     "en-US": "Last Of",
     "es-MX": "Último de",
@@ -3057,16 +3129,25 @@
       {
         "name": "value",
         "description": "The left-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       },
       {
         "name": "value",
         "description": "The right-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       }
     ],
     "isConstant": true,
-    "return": ["float", "Vector"],
+    "return": [
+      "float",
+      "Vector"
+    ],
     "en-US": "Multiply",
     "es-MX": "Multiplicar",
     "fr-FR": "Multiplication",
@@ -3403,7 +3484,10 @@
       {
         "name": "value",
         "description": "The value to remove from the array (if found). If this value is itself an array, each matching element is removed.",
-        "type": ["Object", "Array"],
+        "type": [
+          "Object",
+          "Array"
+        ],
         "canReplace0ByNull": true
       }
     ],
@@ -3687,19 +3771,28 @@
       {
         "name": "value",
         "description": "The left-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"],
+        "type": [
+          "float",
+          "Vector"
+        ],
         "canReplace0ByFalse": true,
         "canReplace1ByTrue": true
       },
       {
         "name": "value",
         "description": "The right-hand operand. May be any value that results in a number or a vector.",
-        "type": ["float", "Vector"],
+        "type": [
+          "float",
+          "Vector"
+        ],
         "canReplace1ByTrue": true
       }
     ],
     "isConstant": true,
-    "return": ["float", "Vector"],
+    "return": [
+      "float",
+      "Vector"
+    ],
     "en-US": "Subtract",
     "es-MX": "Restar",
     "fr-FR": "Soustraction",
@@ -3762,7 +3855,10 @@
       }
     ],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "00000000B52A",
     "en-US": "Value In Array",
     "es-MX": "Valor en la matriz",
@@ -4697,7 +4793,10 @@
       {
         "name": "entity",
         "description": "The player, icon entity, or effect entity whose existence to check.",
-        "type": ["Player", "EntityId"]
+        "type": [
+          "Player",
+          "EntityId"
+        ]
       }
     ],
     "return": "bool",
@@ -4724,11 +4823,17 @@
       {
         "name": "inputValue",
         "description": "The value that will be only evaluated once.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "000000012214",
     "en-US": "Evaluate Once",
     "es-MX": "Evaluar una vez",
@@ -6633,12 +6738,18 @@
       {
         "name": "startPos",
         "description": "The start position for the line-of-sight check. If a player is provided, a position 2 meters above the player's feet is used.",
-        "type": ["Position", "Player"]
+        "type": [
+          "Position",
+          "Player"
+        ]
       },
       {
         "name": "endPos",
         "description": "The end position for the line-of-sight check. If a player is provided, a position 2 meters above the player's feet is used.",
-        "type": ["Position", "Player"]
+        "type": [
+          "Position",
+          "Player"
+        ]
       },
       {
         "name": "barriers",
@@ -7131,7 +7242,10 @@
         "type": "Array"
       }
     ],
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "00000000B599",
     "en-US": "Random Value In Array",
     "es-MX": "Valor aleatorio en matriz",
@@ -7578,11 +7692,17 @@
       {
         "name": "value",
         "description": "The value that will be updated once per tick.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "isConstant": true,
-    "return": ["Object", "Array"],
+    "return": [
+      "Object",
+      "Array"
+    ],
     "guid": "00000001232B",
     "en-US": "Update Every Frame",
     "es-MX": "Actualizar todos los cuadros",

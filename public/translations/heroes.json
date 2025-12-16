@@ -3595,5 +3595,35 @@
     "tr-TR": "Hazard",
     "zh-CN": "骇灾",
     "zh-TW": "災害"
+  },
+  "wuyang": {
+    "en-US": "Wuyang",
+    "secondaryFire": {
+      "en-US": "Restorative Stream"
+    },
+    "ability1": {
+      "en-US": "Rushing Torrent"
+    },
+    "ability2": {
+      "en-US": "Guardian Wave"
+    },
+    "ultimate": {
+      "en-US": "Tidal Blast"
+    }
+  },
+  "vendetta": {
+    "en-US": "Vendetta",
+    "primaryFire": {
+      "en-US": "Projected Edge"
+    },
+    "ability1": {
+      "en-US": "Whirlwind Dash"
+    },
+    "ability2": {
+      "en-US": "Soaring Slice"
+    },
+    "ultimate": {
+      "en-US": "Sundering Blade"
+    }
   }
 }

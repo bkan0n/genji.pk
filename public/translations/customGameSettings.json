@@ -4764,7 +4764,11 @@
           "min": 0,
           "max": 500,
           "default": 100,
-          "exclude": ["brigitte", "reaper", "winston"],
+          "exclude": [
+            "brigitte",
+            "reaper",
+            "winston"
+          ],
           "guid": "0000000058A7",
           "en-US": "Projectile Speed",
           "de-DE": "Projektilgeschwindigkeit",
@@ -4836,7 +4840,6 @@
             "kiriko",
             "moira",
             "reinhardt",
-            "sojourn",
             "sigma"
           ],
           "guid": "000000005ECC",
@@ -4936,7 +4939,12 @@
           "min": 0,
           "max": 500,
           "default": 100,
-          "exclude": ["lucio", "soldier", "wreckingBall", "zenyatta"],
+          "exclude": [
+            "lucio",
+            "soldier",
+            "wreckingBall",
+            "zenyatta"
+          ],
           "en-US": "%1$s Cooldown Time",
           "de-DE": "%1$s – Abklingzeit",
           "es-ES": "Tiempo de reutilización: %1$s",
@@ -4957,7 +4965,10 @@
           "guid": "000000008669",
           "values": "__boolOnOff__",
           "default": "on",
-          "exclude": ["bastion", "venture"],
+          "exclude": [
+            "bastion",
+            "venture"
+          ],
           "en-US": "%1$s",
           "de-DE": "%1$s",
           "es-ES": "%1$s",
@@ -4980,7 +4991,11 @@
           "min": 0,
           "max": 500,
           "default": 100,
-          "exclude": ["bastion", "venture", "zenyatta"],
+          "exclude": [
+            "bastion",
+            "venture",
+            "zenyatta"
+          ],
           "en-US": "%1$s Cooldown Time",
           "de-DE": "%1$s – Abklingzeit",
           "es-ES": "Tiempo de reutilización: %1$s",
@@ -5001,7 +5016,11 @@
           "guid": "000000008669",
           "values": "__boolOnOff__",
           "default": "on",
-          "include": ["brigitte", "hanzo", "wreckingBall"],
+          "include": [
+            "brigitte",
+            "hanzo",
+            "wreckingBall"
+          ],
           "en-US": "%1$s",
           "de-DE": "%1$s",
           "es-ES": "%1$s",
@@ -5024,7 +5043,9 @@
           "min": 0,
           "max": 500,
           "default": 100,
-          "include": ["wreckingBall"],
+          "include": [
+            "wreckingBall"
+          ],
           "en-US": "%1$s Cooldown Time",
           "de-DE": "%1$s – Abklingzeit",
           "es-ES": "Tiempo de reutilización: %1$s",
@@ -5131,7 +5152,12 @@
           "guid": "000000008669",
           "values": "__boolOnOff__",
           "default": "on",
-          "include": ["mercy", "echo", "pharah", "juno"],
+          "include": [
+            "mercy",
+            "echo",
+            "pharah",
+            "juno"
+          ],
           "en-US": "%1$s",
           "de-DE": "%1$s",
           "es-ES": "%1$s",
@@ -5241,7 +5267,10 @@
           "min": 20,
           "max": 500,
           "default": 100,
-          "include": ["dva", "roadhog"],
+          "include": [
+            "dva",
+            "roadhog"
+          ],
           "guid": "000000005B45",
           "en-US": "%1$s Maximum Time",
           "de-DE": "%1$s – Maximale Dauer",
@@ -5264,7 +5293,13 @@
           "min": 0,
           "max": 500,
           "default": 100,
-          "include": ["brigitte", "dva", "roadhog", "reinhardt", "sigma"],
+          "include": [
+            "brigitte",
+            "dva",
+            "roadhog",
+            "reinhardt",
+            "sigma"
+          ],
           "guid": "000000005B3F",
           "en-US": "%1$s Recharge Rate",
           "de-DE": "%1$s – Aufladungsrate",
@@ -5322,7 +5357,11 @@
           "guid": "0000000060EB",
           "values": "__boolReverseOnOff__",
           "default": "off",
-          "include": ["ana", "ashe", "widowmaker"],
+          "include": [
+            "ana",
+            "ashe",
+            "widowmaker"
+          ],
           "en-US": "No Automatic Fire",
           "de-DE": "Kein Automatikmodus",
           "es-ES": "Sin disparo automático",
@@ -5343,7 +5382,11 @@
           "guid": "00000000A2B0",
           "values": "__boolReverseOnOff__",
           "default": "off",
-          "include": ["ana", "ashe", "widowmaker"],
+          "include": [
+            "ana",
+            "ashe",
+            "widowmaker"
+          ],
           "en-US": "No Scope",
           "de-DE": "Kein Scharfschützenmodus",
           "es-ES": "Sin mira",
@@ -5365,7 +5408,9 @@
           "min": 0,
           "max": 500,
           "default": 100,
-          "include": ["sojourn"],
+          "include": [
+            "sojourn"
+          ],
           "guid": "00000000CA6D",
           "en-US": "%1$s Energy Charge Rate",
           "de-DE": "%1$s Energieaufladungsrate",

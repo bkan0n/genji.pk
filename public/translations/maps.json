@@ -1,6 +1,9 @@
 {
   "aatlis": {
-    "gamemodes": ["skirmish", "flashpoint"],
+    "gamemodes": [
+      "skirmish",
+      "flashpoint"
+    ],
     "variants": {
       "default": "972777519512068153"
     },
@@ -8,7 +11,11 @@
   },
   "ayutthaya": {
     "guid": "00000000676E",
-    "gamemodes": ["ctf", "elimination", "freezethawElimination"],
+    "gamemodes": [
+      "ctf",
+      "elimination",
+      "freezethawElimination"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -34,7 +41,10 @@
     "tr-TR": "Ayutthaya"
   },
   "antarcticPeninsula": {
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "morning": "972777519512068154",
       "night": "972777519512068153"
@@ -57,7 +67,9 @@
     "zh-TW": "南極半島"
   },
   "arenaVictoriae": {
-    "gamemodes": ["control"],
+    "gamemodes": [
+      "control"
+    ],
     "variants": {
       "sunset": "972777519512068292",
       "night": "972777519512068153"
@@ -65,7 +77,9 @@
     "en-US": "Arena Victoriae"
   },
   "gogadoro": {
-    "gamemodes": ["control"],
+    "gamemodes": [
+      "control"
+    ],
     "variants": {
       "night": "972777519512068153",
       "morning": "972777519512068154"
@@ -73,7 +87,9 @@
     "en-US": "Gogadoro"
   },
   "redwoodDam": {
-    "gamemodes": ["push"],
+    "gamemodes": [
+      "push"
+    ],
     "variants": {
       "morning": "972777519512068154",
       "sunset": "972777519512068292"
@@ -81,7 +97,9 @@
     "en-US": "Redwood Dam"
   },
   "placeLacroix": {
-    "gamemodes": ["push"],
+    "gamemodes": [
+      "push"
+    ],
     "variants": {
       "morning": "972777519512055904",
       "sunset": "972777519512068292"
@@ -90,7 +108,13 @@
   },
   "blackForest": {
     "guid": "0000000059C3",
-    "gamemodes": ["elimination", "freezethawElimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "freezethawElimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -152,7 +176,13 @@
   },
   "blizzWorld": {
     "guid": "000000006905",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "morning": "972777519512068154",
       "overcast": "972777519512068194",
@@ -176,7 +206,13 @@
   },
   "blizzWorldWinter": {
     "guid": "00000000A933",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -198,7 +234,10 @@
   },
   "busan": {
     "guid": "000000006D90",
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "night": "972777519512068153",
       "morning": "972777519512068154",
@@ -222,7 +261,9 @@
   },
   "busanDowntownLny": {
     "guid": "00000000D2C9",
-    "gamemodes": ["ctf"],
+    "gamemodes": [
+      "ctf"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -248,7 +289,9 @@
   },
   "busanSanctuaryLny": {
     "guid": "00000000D2CA",
-    "gamemodes": ["ctf"],
+    "gamemodes": [
+      "ctf"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -274,7 +317,9 @@
   },
   "busanStadium": {
     "onlyInOw1": true,
-    "gamemodes": ["lucioball"],
+    "gamemodes": [
+      "lucioball"
+    ],
     "guid": "0000000112AA",
     "en-US": "Busan Stadium",
     "de-DE": "Stadion von Busan",
@@ -292,7 +337,9 @@
   },
   "busanStadiumClassic": {
     "onlyInOw1": true,
-    "gamemodes": ["lucioball"],
+    "gamemodes": [
+      "lucioball"
+    ],
     "guid": "000000008A19",
     "en-US": "Busan Stadium Classic",
     "de-DE": "Klassisches Stadion von Busan",
@@ -310,7 +357,13 @@
   },
   "castillo": {
     "guid": "000000005C04",
-    "gamemodes": ["elimination", "freezethawElimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "freezethawElimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -337,7 +390,11 @@
   },
   "chateauGuillard": {
     "guid": "0000000069CA",
-    "gamemodes": ["ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -359,7 +416,11 @@
   },
   "chateauGuillardHalloween": {
     "guid": "000000009FA4",
-    "gamemodes": ["ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -380,7 +441,10 @@
     "pt-BR": "Château Guillard Halloween"
   },
   "circuitRoyal": {
-    "gamemodes": ["skirmish", "escort"],
+    "gamemodes": [
+      "skirmish",
+      "escort"
+    ],
     "variants": {
       "night": "972777519512068153",
       "morning": "972777519512068154"
@@ -403,7 +467,10 @@
     "tr-TR": "<en>Circuit Royal<en>"
   },
   "colosseo": {
-    "gamemodes": ["skirmish", "push"],
+    "gamemodes": [
+      "skirmish",
+      "push"
+    ],
     "variants": {
       "evening": "972777519512068292",
       "morning": "972777519512068154"
@@ -427,7 +494,13 @@
   },
   "dorado": {
     "guid": "0000000008C1",
-    "gamemodes": ["escort", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "escort",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "night": "972777519512068153",
       "evening": "972777519512068292"
@@ -450,7 +523,13 @@
   },
   "ecopointAntarctica": {
     "guid": "0000000047D3",
-    "gamemodes": ["elimination", "freezethawElimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "freezethawElimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -512,7 +591,13 @@
   },
   "eichenwalde": {
     "guid": "0000000029AF",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "evening": "972777519512068292",
       "morning": "972777519512068154"
@@ -535,7 +620,13 @@
   },
   "eichenwaldeHalloween": {
     "guid": "000000006E6B",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -556,7 +647,10 @@
     "pt-BR": "Eichenwalde Halloween"
   },
   "esperanca": {
-    "gamemodes": ["skirmish", "push"],
+    "gamemodes": [
+      "skirmish",
+      "push"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -580,7 +674,9 @@
   "estadioDasRas": {
     "onlyInOw1": true,
     "guid": "000000004629",
-    "gamemodes": ["lucioball"],
+    "gamemodes": [
+      "lucioball"
+    ],
     "en-US": "Estádio das Rãs",
     "es-MX": "Estadio de Rãs",
     "it-IT": "Estádio de Rãs",
@@ -592,7 +688,13 @@
   },
   "hanamura": {
     "guid": "000000000138",
-    "gamemodes": ["assault", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "assault",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -614,7 +716,13 @@
   },
   "hanamuraWinter": {
     "guid": "000000005479",
-    "gamemodes": ["assault", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "assault",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -636,7 +744,10 @@
   },
   "hanaoka": {
     "guid": "00000001E681",
-    "gamemodes": ["clash", "skirmish"],
+    "gamemodes": [
+      "clash",
+      "skirmish"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -658,7 +769,13 @@
   },
   "havana": {
     "guid": "00000000B8EA",
-    "gamemodes": ["escort", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "escort",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "night": "972777519512068153",
       "morning": "972777519512068154"
@@ -681,7 +798,13 @@
   },
   "hollywood": {
     "guid": "00000000053D",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "night": "972777519512068153",
       "morning": "972777519512068154"
@@ -704,7 +827,12 @@
   },
   "hollywoodHalloween": {
     "guid": "000000004EE3",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -726,7 +854,13 @@
   },
   "horizonLunarColony": {
     "guid": "000000004EEE",
-    "gamemodes": ["assault", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "assault",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -748,7 +882,10 @@
   },
   "ilios": {
     "guid": "0000000022FA",
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "evening": "972777519512068292",
       "morning": "972777519512068154"
@@ -771,7 +908,13 @@
   },
   "iliosLighthouse": {
     "guid": "000000005847",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -798,7 +941,13 @@
   },
   "iliosRuins": {
     "guid": "000000005851",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -824,7 +973,13 @@
   },
   "iliosWell": {
     "guid": "00000000583B",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -851,7 +1006,9 @@
   },
   "junkenstein": {
     "guid": "000000004AF4",
-    "gamemodes": ["junkenstein"],
+    "gamemodes": [
+      "junkenstein"
+    ],
     "en-US": "Junkenstein's Revenge",
     "de-DE": "Junkensteins Rache",
     "es-ES": "La venganza de Junkenstein",
@@ -870,7 +1027,10 @@
   },
   "junkertown": {
     "guid": "000000005D7B",
-    "gamemodes": ["escort", "skirmish"],
+    "gamemodes": [
+      "escort",
+      "skirmish"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -891,7 +1051,11 @@
     "pt-BR": "Junkertown"
   },
   "kanezaka": {
-    "gamemodes": ["ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -914,7 +1078,13 @@
   },
   "kingsRow": {
     "guid": "000000000133",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "night": "972777519512068153",
       "evening": "972777519512068292"
@@ -937,7 +1107,13 @@
   },
   "kingsRowWinter": {
     "guid": "00000000547A",
-    "gamemodes": ["hybrid", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -959,7 +1135,13 @@
   },
   "lijiangControlCenter": {
     "guid": "000000005724",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -985,7 +1167,13 @@
   },
   "lijiangControlCenterLny": {
     "guid": "000000007EFB",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1011,7 +1199,13 @@
   },
   "lijiangGarden": {
     "guid": "000000005623",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1037,7 +1231,13 @@
   },
   "lijiangGardenLny": {
     "guid": "000000007EF9",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1063,7 +1263,13 @@
   },
   "lijiangNightMarket": {
     "guid": "000000005631",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1089,7 +1295,13 @@
   },
   "lijiangNightMarketLny": {
     "guid": "000000007EFA",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1115,7 +1327,10 @@
   },
   "lijiangTower": {
     "guid": "000000001D22",
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "night": "972777519512068153",
       "dawn": "972777519512068197"
@@ -1138,7 +1353,10 @@
   },
   "lijiangTowerLny": {
     "guid": "000000005A33",
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1159,7 +1377,11 @@
     "zh-TW": "灕江天塔（春節）"
   },
   "malevento": {
-    "gamemodes": ["ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1181,7 +1403,9 @@
     "tr-TR": "Malevento"
   },
   "midtown": {
-    "gamemodes": ["hybrid"],
+    "gamemodes": [
+      "hybrid"
+    ],
     "variants": {
       "morning": "972777519512068154",
       "night": "972777519512068153"
@@ -1205,7 +1429,13 @@
   },
   "necropolis": {
     "guid": "0000000053FB",
-    "gamemodes": ["elimination", "freezethawElimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "freezethawElimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068153"
     },
@@ -1232,7 +1462,10 @@
   },
   "nepal": {
     "guid": "00000000138A",
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "dawn": "972777519512068292",
       "morning": "972777519512068154"
@@ -1255,7 +1488,13 @@
   },
   "nepalSanctum": {
     "guid": "0000000056BA",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1282,7 +1521,13 @@
   },
   "nepalShrine": {
     "guid": "00000000582C",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1309,7 +1554,13 @@
   },
   "nepalVillage": {
     "guid": "000000005821",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1336,7 +1587,9 @@
   },
   "nepalVillageWinter": {
     "guid": "000000006E1F",
-    "gamemodes": ["yetiHunter"],
+    "gamemodes": [
+      "yetiHunter"
+    ],
     "en-US": "Nepal Village Winter",
     "de-DE": "Nepal – Dorf Winter",
     "es-ES": "Aldea de Nepal invierno",
@@ -1354,7 +1607,10 @@
     "zh-TW": "尼泊爾村落（冬境）"
   },
   "newJunkCity": {
-    "gamemodes": ["skirmish", "flashpoint"],
+    "gamemodes": [
+      "skirmish",
+      "flashpoint"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1376,7 +1632,10 @@
     "tr-TR": "New Junk City"
   },
   "newQueenStreet": {
-    "gamemodes": ["skirmish", "push"],
+    "gamemodes": [
+      "skirmish",
+      "push"
+    ],
     "variants": {
       "dawn": "972777519512068197",
       "morning": "972777519512068154"
@@ -1400,7 +1659,10 @@
   },
   "numbani": {
     "guid": "0000000002EA",
-    "gamemodes": ["hybrid", "skirmish"],
+    "gamemodes": [
+      "hybrid",
+      "skirmish"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1422,7 +1684,10 @@
   },
   "oasis": {
     "guid": "0000000046D5",
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "night": "972777519512068153",
       "evening": "972777519512068292",
@@ -1446,7 +1711,13 @@
   },
   "oasisCityCenter": {
     "guid": "000000005905",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068292"
     },
@@ -1473,7 +1744,13 @@
   },
   "oasisGardens": {
     "guid": "000000005931",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068292"
     },
@@ -1500,7 +1777,13 @@
   },
   "oasisUniversity": {
     "guid": "00000000593F",
-    "gamemodes": ["elimination", "ctf", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "elimination",
+      "ctf",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068292"
     },
@@ -1526,7 +1809,10 @@
     "zh-TW": "綠洲城大學"
   },
   "paraiso": {
-    "gamemodes": ["skirmish", "hybrid"],
+    "gamemodes": [
+      "skirmish",
+      "hybrid"
+    ],
     "variants": {
       "evening": "972777519512068292",
       "morning": "972777519512068154"
@@ -1550,7 +1836,13 @@
   },
   "paris": {
     "guid": "00000000831E",
-    "gamemodes": ["assault", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "assault",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068292"
     },
@@ -1572,7 +1864,11 @@
   },
   "petra": {
     "guid": "0000000081CB",
-    "gamemodes": ["ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1594,7 +1890,9 @@
   },
   "practiceRange": {
     "guid": "000000002BA1",
-    "gamemodes": ["practiceRange"],
+    "gamemodes": [
+      "practiceRange"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1616,7 +1914,10 @@
   },
   "rialto": {
     "guid": "000000006906",
-    "gamemodes": ["escort", "skirmish"],
+    "gamemodes": [
+      "escort",
+      "skirmish"
+    ],
     "variants": {
       "evening": "972777519512068292",
       "morning": "972777519512068154"
@@ -1639,7 +1940,12 @@
   },
   "route66": {
     "guid": "0000000011D3",
-    "gamemodes": ["escort", "skirmish", "ffa", "tdm"],
+    "gamemodes": [
+      "escort",
+      "skirmish",
+      "ffa",
+      "tdm"
+    ],
     "variants": {
       "night": "972777519512068153",
       "morning": "972777519512068154",
@@ -1662,7 +1968,10 @@
     "tr-TR": "Route 66"
   },
   "runasapi": {
-    "gamemodes": ["skirmish", "push"],
+    "gamemodes": [
+      "skirmish",
+      "push"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1684,7 +1993,10 @@
     "zh-TW": "盧納薩庇"
   },
   "samoa": {
-    "gamemodes": ["control", "skirmish"],
+    "gamemodes": [
+      "control",
+      "skirmish"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1706,7 +2018,10 @@
     "tr-TR": "Samoa"
   },
   "shambaliMonastery": {
-    "gamemodes": ["skirmish", "escort"],
+    "gamemodes": [
+      "skirmish",
+      "escort"
+    ],
     "variants": {
       "default": "972777519512068153"
     },
@@ -1728,7 +2043,10 @@
     "zh-TW": "香巴里僧院"
   },
   "suravasa": {
-    "gamemodes": ["skirmish", "flashpoint"],
+    "gamemodes": [
+      "skirmish",
+      "flashpoint"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1751,7 +2069,9 @@
   },
   "sydneyHarbourArena": {
     "onlyInOw1": true,
-    "gamemodes": ["lucioball"],
+    "gamemodes": [
+      "lucioball"
+    ],
     "guid": "0000000112A6",
     "en-US": "Sydney Harbour Arena",
     "es-MX": "Arena Sydney Harbour",
@@ -1766,7 +2086,9 @@
   },
   "sydneyHarbourArenaClassic": {
     "onlyInOw1": true,
-    "gamemodes": ["lucioball"],
+    "gamemodes": [
+      "lucioball"
+    ],
     "guid": "0000000063D5",
     "en-US": "Sydney Harbour Arena Classic",
     "de-DE": "Klassische Sydney Harbour Arena",
@@ -1784,7 +2106,13 @@
   },
   "templeOfAnubis": {
     "guid": "00000000AB25",
-    "gamemodes": ["assault", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "assault",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1806,7 +2134,10 @@
   },
   "throneOfAnubis": {
     "guid": "00000001E8E4",
-    "gamemodes": ["clash", "skirmish"],
+    "gamemodes": [
+      "clash",
+      "skirmish"
+    ],
     "variants": {
       "default": "972777519512068154"
     },
@@ -1828,7 +2159,13 @@
   },
   "volskaya": {
     "guid": "0000000002EB",
-    "gamemodes": ["assault", "skirmish", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "assault",
+      "skirmish",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512068292"
     },
@@ -1850,7 +2187,10 @@
   },
   "watchpointGibraltar": {
     "guid": "0000000002E9",
-    "gamemodes": ["escort", "skirmish"],
+    "gamemodes": [
+      "escort",
+      "skirmish"
+    ],
     "variants": {
       "evening": "972777519512068292",
       "morning": "972777519512068154"
@@ -1872,7 +2212,13 @@
     "de-DE": "Watchpoint: Gibraltar"
   },
   "workshopChamber": {
-    "gamemodes": ["skirmish", "elimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "skirmish",
+      "elimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512064577"
     },
@@ -1900,7 +2246,13 @@
     "zh-TW": "工作坊房間"
   },
   "workshopExpanse": {
-    "gamemodes": ["skirmish", "elimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "skirmish",
+      "elimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -1928,7 +2280,13 @@
     "zh-TW": "工作坊延伸區域"
   },
   "workshopExpanseNight": {
-    "gamemodes": ["skirmish", "elimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "skirmish",
+      "elimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512064577"
     },
@@ -1956,7 +2314,13 @@
     "zh-TW": "工作坊延伸區域（夜晚）"
   },
   "workshopGreenScreen": {
-    "gamemodes": ["skirmish", "elimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "skirmish",
+      "elimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512064580"
     },
@@ -1979,7 +2343,13 @@
     "zh-TW": "工作坊綠幕島"
   },
   "workshopIsland": {
-    "gamemodes": ["skirmish", "elimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "skirmish",
+      "elimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512063901"
     },
@@ -2007,7 +2377,13 @@
     "zh-TW": "工作坊島嶼"
   },
   "workshopIslandNight": {
-    "gamemodes": ["skirmish", "elimination", "ffa", "bountyHunter", "tdm"],
+    "gamemodes": [
+      "skirmish",
+      "elimination",
+      "ffa",
+      "bountyHunter",
+      "tdm"
+    ],
     "variants": {
       "default": "972777519512064579"
     },

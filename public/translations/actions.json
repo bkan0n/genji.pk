@@ -4497,7 +4497,10 @@
       {
         "name": "destination",
         "description": "The value that the global variable will eventually reach. The type of this value may be either a number or a vector, though the variable's existing value must be of the same type before the chase begins.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       },
       {
         "name": "rate",
@@ -4539,7 +4542,10 @@
       {
         "name": "destination",
         "description": "The value that the global variable will eventually reach. The type of this value may be either a number or a vector, though the variable's existing value must be of the same type before the chase begins.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       },
       {
         "name": "duration",
@@ -4591,7 +4597,10 @@
       {
         "name": "destination",
         "description": "The value that the player variable will eventually reach. The type of this value may be either a number or a vector, though the variable's existing value must be of the same type before the chase begins.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       },
       {
         "name": "rate",
@@ -4643,7 +4652,10 @@
       {
         "name": "destination",
         "description": "The value that the player variable will eventually reach. The type of this value may be either a number or a vector, though the variable's existing value must be of the same type before the chase begins.",
-        "type": ["float", "Vector"]
+        "type": [
+          "float",
+          "Vector"
+        ]
       },
       {
         "name": "duration",
@@ -5065,7 +5077,10 @@
       {
         "name": "value",
         "description": "The value used for the modification. For arithmetic operations, this is the second of the two operands, with the other being the variable's existing value. For array operations, this is the value to append or remove.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "00000000C7E1",
@@ -5102,7 +5117,10 @@
       {
         "name": "value",
         "description": "The value used for the modification. For arithmetic operations, this is the second of the two operands, with the other being the variable's existing value. For array operations, this is the value to append or remove.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "00000000786E",
@@ -5154,7 +5172,10 @@
       {
         "name": "value",
         "description": "The value used for the modification. For arithmetic operations, this is the second of the two operands, with the other being the variable's existing value. For array operations, this is the value to append or remove.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "00000000C7DF",
@@ -5201,7 +5222,10 @@
       {
         "name": "value",
         "description": "The value used for the modification. For arithmetic operations, this is the second of the two operands, with the other being the variable's existing value. For array operations, this is the value to append or remove.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "00000000786F",
@@ -5240,7 +5264,10 @@
       {
         "name": "value",
         "description": "The value that will be stored into the array.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "00000000BBAA",
@@ -5272,7 +5299,10 @@
       {
         "name": "value",
         "description": "The value that will be stored.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "0000000077DE",
@@ -5321,7 +5351,10 @@
       {
         "name": "value",
         "description": "The value that will be stored into the array.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "00000000BBA9",
@@ -5363,7 +5396,10 @@
       {
         "name": "value",
         "description": "The value that will be stored.",
-        "type": ["Object", "Array"]
+        "type": [
+          "Object",
+          "Array"
+        ]
       }
     ],
     "guid": "0000000077DF",
@@ -5859,7 +5895,10 @@
       {
         "name": "position",
         "description": "The effect's position. If this value is a player, then the effect will move along with the player. Otherwise, the value is interpreted as a position in the world.",
-        "type": ["Position", "Player"]
+        "type": [
+          "Position",
+          "Player"
+        ]
       },
       {
         "name": "radius",
@@ -5909,7 +5948,10 @@
       {
         "name": "position",
         "description": "The icon's position. If this value is a player, then the icon will appear above the player's head. Otherwise, the value is interpreted as a position in the world.",
-        "type": ["Position", "Player"]
+        "type": [
+          "Position",
+          "Player"
+        ]
       },
       {
         "name": "icon",
@@ -5976,7 +6018,10 @@
       {
         "name": "position",
         "description": "The text's position. If this value is a player, then the text will appear above the player's head. Otherwise, the value is interpreted as a position in the world.",
-        "type": ["Position", "Player"],
+        "type": [
+          "Position",
+          "Player"
+        ],
         "canReplaceNullVectorByNull": true
       },
       {
@@ -6058,7 +6103,10 @@
       {
         "name": "position",
         "description": "The text's position. If this value is a player, then the text will appear above the player's head. Otherwise, the value is interpreted as a position in the world.",
-        "type": ["Position", "Player"]
+        "type": [
+          "Position",
+          "Player"
+        ]
       },
       {
         "name": "scale",
@@ -8203,7 +8251,10 @@
       },
       {
         "name": "position",
-        "type": ["Position", "Player"],
+        "type": [
+          "Position",
+          "Player"
+        ],
         "description": "The position of the effect."
       },
       {
