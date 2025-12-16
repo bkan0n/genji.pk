@@ -111,7 +111,7 @@
         <div class="convert-controls mt-6 flex flex-wrap items-center gap-3 text-sm">
           <label for="lang" class="text-zinc-300">{{ __('convertor.pasta_language') }}:</label>
 
-          <!-- Dropdown LANG (HTML pur avec classes de drapeaux en dur) -->
+          <!-- Dropdown LANG -->
           <div class="relative" id="langDd">
             <button id="langDdBtn" type="button"
               class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 hover:bg-white/5"

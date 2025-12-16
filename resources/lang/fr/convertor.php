@@ -72,7 +72,7 @@ return [
     // FOOTER INFO
     // ──────────────────────────────────────────────────────────────────────
     'footer_made_by' => "Réalisé par FishoFire / Retouché par Arrow",
-    'footer_version' => "Version 1.10.4D",
+    'footer_version' => "Version 1.10.4E",
 
     // ──────────────────────────────────────────────────────────────────────
     // HELP STEPS
