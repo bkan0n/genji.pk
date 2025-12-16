@@ -41,7 +41,7 @@
   <body class="selection:bg-brand-500/30 bg-zinc-950 font-sans text-zinc-100 selection:text-white">
     @include('partials.navbar')
 
-    <main class="relative overflow-hidden">
+    <main class="relative overflow-hidden min-h-[100vh]">
       @yield('content')
       <div class="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
         <div id="prism" class="relative h-full w-full"></div>
