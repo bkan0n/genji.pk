@@ -3,8 +3,8 @@ export const frameworkTemplate = `settings
 {
 	main
 	{
-		Mode Name: "Genji Parkour - 源氏跑酷 - v1.10.4D"
-		Description: "\\n\\n\\n◀ The Official Genji Parkour Editor ▶\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula\\nv1.10.4D"
+		Mode Name: "Genji Parkour - 源氏跑酷 - v1.10.4E"
+		Description: "\\n\\n\\n◀ The Official Genji Parkour Editor ▶\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula\\nv1.10.4E"
 	}
 	lobby
 	{
@@ -119,7 +119,6 @@ variables {
         40: PortalNames
         41: PortalLoc
         42: PortalDest
-        43: PortalOn
         44: Difficultyhud
         45: CustomPortalStart
         46: CustomPortalEndpoint
@@ -242,11 +241,10 @@ subroutines {
     9: TimerResume
     10: EditUpdateSelectedIds
     11: AddonCustomLoadAndReset
-    12: AddonCheckMap
-    13: Addon3rdPerson
-    14: RebuildKillOrbs
-    15: RebuildPortals
-    16: RebuildBounceOrbs
+    12: Addon3rdPerson
+    13: RebuildKillOrbs
+    14: RebuildPortals
+    15: RebuildBounceOrbs
 }
 rule ("Disable inspector") {
     event {
@@ -297,7 +295,7 @@ rule ("OverPy | Player Translation Setup") {
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4D ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4E ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
@@ -318,10 +316,7 @@ rule ("Parkour | Setup & Variables") {
         Start Forcing Spawn Room(All Teams, 2);
         Wait(0.512, Ignore Condition);
         Set Global Variable(EditorOn, Workshop Setting Toggle(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Editor Mode         ◆ 作图模式      ◆ 편집 모드"), False, 0));
-        If(Workshop Setting Toggle(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Basic Map Validator       ◆ 验证地图      ◆ 맵 가능 여부 확인기"), True, 3));
-            Start Rule(AddonCheckMap, Do Nothing);
-        End;
-        Set Global Variable(PortalOn, Workshop Setting Toggle(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Portals 󠀨Control Maps󠀩    ◆ 启用传送门 󠀨占点地图󠀩 ◆ 순간이동 활성화 󠀨쟁탈 맵󠀩"), True, 4));
+        "if createWorkshopSettingBool(SettingsText.MapCategory, SettingsText.MapValidator, true, 3):\\nasync(AddonCheckMap, AsyncBehavior.NOOP)"
         Set Global Variable(CompMode, And(Not(Global.EditorOn), Workshop Setting Toggle(Custom String("Tournament Mode   ◆ 竞赛模式    ◆ 토너먼트 모드"), Custom String("Tournament Mode        ◆ 开启竞赛模式    ◆ 토너먼트 모드 활성화"), False, 100)));
         If(Global.CompMode);
             Set Global Variable(CompTime, Workshop Setting Integer(Custom String("Tournament Mode   ◆ 竞赛模式    ◆ 토너먼트 모드"), Custom String("Time Limit 󠀨Global󠀩      ◆ 时间限制      ◆ 시간 제한 󠀨전체󠀩"), 1, 240, 120, 101));
@@ -357,14 +352,13 @@ rule ("Parkour | Setup & Variables") {
         Set Global Variable(TitleData, Null);
         Set Global Variable(HintCp, Empty Array);
         Set Global Variable(HintText, Empty Array);
-        "clean out -1's after the ban has loaded"
+        "clean out -1's after the ban has loaded\\nBanTriple = [i for i in BanTriple if i + false >= 0] if len(BanTriple) else [] # legacy code, now auto sets it to null to save space"
         Set Global Variable(BanBhop, If-Then-Else(Count Of(Global.BanBhop), Filtered Array(Global.BanBhop, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
-        Set Global Variable(BanClimb, If-Then-Else(Count Of(Global.BanClimb), Filtered Array(Global.BanClimb, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
         Set Global Variable(BanEmote, If-Then-Else(Count Of(Global.BanEmote), Filtered Array(Global.BanEmote, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
+        Set Global Variable(BanClimb, If-Then-Else(Count Of(Global.BanClimb), Filtered Array(Global.BanClimb, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
         Set Global Variable(BanDead, If-Then-Else(Count Of(Global.BanDead), Filtered Array(Global.BanDead, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
         Set Global Variable(BanCreate, If-Then-Else(Count Of(Global.BanCreate), Filtered Array(Global.BanCreate, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
         Set Global Variable(BanMulti, If-Then-Else(Count Of(Global.BanMulti), Filtered Array(Global.BanMulti, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
-        "BanTriple = [i for i in BanTriple if i + false >= 0] if len(BanTriple) else [] # legacy code, now auto sets it to null to save space"
         Set Global Variable(BanStand, If-Then-Else(Count Of(Global.BanStand), Filtered Array(Global.BanStand, Compare(Add(Current Array Element, False), >=, Null)), Empty Array));
         Set Global Variable(BanSaveDouble, If-Then-Else(Count Of(Global.BanSaveDouble), Global.BanSaveDouble, Empty Array));
         Set Global Variable(BanDjump, If-Then-Else(Count Of(Global.BanDjump), Global.BanDjump, Empty Array));
@@ -741,6 +735,12 @@ rule ("Parkour | SUB Update Effect Cache") {
         Set Player Variable(Event Player, toggle_hints, False);
         Set Player Variable(Event Player, banString, Empty Array);
         Wait(False, Ignore Condition);
+        If((Event Player).cache_startUlt);
+            Small Message(Event Player, Custom String("   {0} {1}", Ability Icon String(Hero(Genji), Button(Ultimate)), Value In Array(String Split(Custom String("ＴＬＥｒｒUltimate Is ReadyUltimate Is ReadyUltimate Is Ready"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)));
+        End;
+        If((Event Player).cache_startAbility1);
+            Small Message(Event Player, Custom String("   {0} {1}", Ability Icon String(Hero(Genji), Button(Ability 1)), Value In Array(String Split(Custom String("ＴＬＥｒｒDash Is ReadyDash Is ReadyDash Is Ready"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)));
+        End;
         If((Event Player).checkpoint_notLast);
             Set Player Variable(Event Player, ban_multi, Or(Workshop Setting Toggle(Custom String("Ban (All Levels)    ◆ 封禁(应用于所有关卡)    ◆ 금지 (모든 단계에 적용)"), Custom String("Ban MultiClimb        ◆ 封禁蹭留      ◆ 벽캔 금지"), False, 1), Array Contains(Global.BanMulti, (Event Player).checkpoint_current)));
             If((Event Player).ban_multi);
@@ -878,7 +878,7 @@ rule ("Parkour | SUB Leaderboard Update") {
             "Full and time too slow"
             Abort;
         End;
-        Modify Global Variable(LeaderBoardFull, Append To Array, Array(Array(String Split(First Of(Event Player), Empty Array), (Event Player).timer_normal, Custom String("{0} sec", (Event Player).timer_normal))));
+        Modify Global Variable(LeaderBoardFull, Append To Array, Array(Array(String Split(First Of(Event Player), Empty Array), (Event Player).timer_normal, Custom String("{0} Sec", (Event Player).timer_normal))));
         "CreateLeaderboard()"
         Set Global Variable(LeaderBoardRemake, True);
     }
@@ -957,6 +957,8 @@ rule ("Parkour | SUB Start Game") {
             "FFA"
             Wait Until(Is Game In Progress, 999999999999);
             Call Subroutine(TimerResume);
+        Else;
+            Set Player Variable(Event Player, checkpoint_current, -1);
         End;
     }
 }
@@ -1202,13 +1204,11 @@ rule ("Mechanic | Genji | Dash") {
         Is Using Ability 1(Event Player) == True;
     }
     actions {
-        If(Or(Or((Event Player).toggle_invincible, And(Global.EditorOn, Compare(Event Player, ==, Host Player))), Not((Event Player).checkpoint_notLast)));
-            Set Ability 1 Enabled(Event Player, True);
-        Else;
-            Set Ability 1 Enabled(Event Player, False);
-            Wait Until(Not(Is Using Ability 1(Event Player)), True);
-            If(Compare(Distance Between(Event Player, Last Of(Value In Array(Global.A, (Event Player).checkpoint_current))), <=, 1.4));
-                Call Subroutine(ResetAbilities);
+        Abort If(Or(Or((Event Player).toggle_invincible, And(Global.EditorOn, Compare(Event Player, ==, Host Player))), Not((Event Player).checkpoint_notLast)));
+        Set Ability 1 Enabled(Event Player, False);
+        Wait Until(Not(Is Using Ability 1(Event Player)), True);
+        If(Compare(Distance Between(Event Player, Last Of(Value In Array(Global.A, (Event Player).checkpoint_current))), <=, 1.4));
+            Call Subroutine(ResetAbilities);
     }
 }
 
@@ -1328,6 +1328,7 @@ rule ("Editor | Export Map") {
         Set Global Variable(TimeRemaining, Null);
         Set Global Variable(ColorConfig, Null);
         Set Global Variable(EditorOn, Null);
+        Set Global Variable(__overpyTranslationHelper__, Null);
         Set Global Variable(K, Null);
         Set Global Variable(NANBA, Null);
         Set Global Variable(TQ2, Null);
@@ -1336,11 +1337,8 @@ rule ("Editor | Export Map") {
         Set Global Variable(SaveCp, Null);
         Set Global Variable(SaveTimer, Null);
         Set Global Variable(SaveEnt, Null);
-        "SavePauseTime = null\\nSavePauseEnabled = null"
         Set Global Variable(SaveElapsed, Null);
         Set Global Variable(CompMode, Null);
-        "LeaderBoardFull = null\\nLeaderBoardHuds = null"
-        Set Global Variable(PortalOn, Null);
         Set Global Variable(TitleData, Null);
         Set Global Variable(CpHudText, Null);
         Set Global Variable(CpHudCp, Null);
@@ -1350,7 +1348,6 @@ rule ("Editor | Export Map") {
         Set Global Variable(CpIwtCp, Null);
         Set Global Variable(CpIwtPos, Null);
         Set Global Variable(CpIwtColor, Null);
-        Set Global Variable(PortalNames, Null);
         Set Global Variable(PortalLoc, Null);
         Set Global Variable(PortalDest, Null);
         Set Global Variable(PortalEffects, Null);
@@ -1362,12 +1359,12 @@ rule ("Editor | Export Map") {
         Set Global Variable(Code, Null);
         Create HUD Text(Host Player, Custom String("­"), Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("   0. 清理无用数据:\\n (此窗口打开时将自动完成)\\n\\n   1. 复制数据:\\n Esc → 打开地图工坊查看器 → 右下角'变量目标'改为全局\\n 点击窗口下方图标 (X) 复制作图数据\\n\\n   2. 录入数据:\\n Esc → 打开地图工坊编辑器{0}", Custom String(" → 规则第(2/2)页 → 展开规则'数据录入 <---- 在这输入'\\n 点击'动作'一栏右侧橙色粘贴图标 录入数据\\n\\n   3. 地图工坊设置:\\n ESC → 显示大厅 → 设置 → 地图工坊设置→\\n 拉至底部 关闭'作图模式'\\n 选择地图难度\\n{0}", Custom String("\\n   4. 创建初始地图代码:\\n Esc → 显示大厅 → 设置 → 分享代码 →\\n 创建新的代码 → 复制并记下代码\\n\\n   5. 添加作者信息:\\n Esc → 打开地图工坊编辑器 → 规则第(2/2)页 → 展开规则'Credits Here {0}", Custom String("- 作者名字'\\n 修改自定义字符串文本框中的内容\\n\\n   6. 更新地图及作者信息:\\n Esc → 显示大厅 → 设置 → 共享代码 →\\n 上传至现有代码 → 粘贴步骤4中获得的代码")))), Custom String("   0. Clear Extra Data:\\n Already Done Upon Opening This Window\\n\\n   1. Copy Data:\\n Open Workshop Inspector → Set Variable Targ{0}", Custom String("et To Global\\n Click The [X]\\n\\n   2. Insert Data:\\n Paste The Data Into Rule Named 'Map Data <---- Insert Here'\\n\\n   3. Workshop {0}", Custom String("Settings:\\n Esc → Show Lobby → Settings → Workshop Settings →\\n Toggle 'Editor Mode' Off\\n Select Display Difficulty\\n\\n   4. Crea{0}", Custom String("te Initial Sharecode:\\n Esc → Show Lobby → Settings → Share Code →\\n Create New Code → Copy Code\\n\\n   5. Add Credits:\\n Enter You{0}", Custom String("r Name & Map Code In The 'Credits Here' Rule\\n\\n   6. Update For Credits:\\n Esc → Show Lobby → Settings → Share Code →\\n Upload T{0}", Custom String("o Existing Code → Paste The Code You Created In Step 4"))))))), Top, -185, Null, Null, Color(Lime Green), String, Default Visibility);
         Set Player Variable At Index(Host Player, editor_saveCache, 2, Last Text ID);
-        Call Subroutine(AddonCheckMap);
         Enable Inspector Recording;
         Disable Inspector Recording;
         Set Global Variable(EditorOn, True);
         Set Global Variable(TimeRemaining, First Of((Host Player).editor_saveCache));
         Set Global Variable(ColorConfig, Value In Array((Host Player).editor_saveCache, True));
+        Set Global Variable(__overpyTranslationHelper__, String Split(Custom String("0White0白色0흰색"), First Of(Null)));
         Create HUD Text(Host Player, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("    > 按互动键关闭当前窗口 <    "), Custom String("    > Press Interact To Close This Window <    ")), Null, Null, Top, -183, Color(Lime Green), Null, Null, String, Default Visibility);
         Set Player Variable At Index(Host Player, editor_saveCache, False, Last Text ID);
         Wait Until(Not(Is Button Held(Host Player, Button(Interact))), 999999999999);
@@ -1397,12 +1394,12 @@ rule ("Editor | Hud & Effects") {
             Create HUD Text(If-Then-Else(And((Host Player).toggle_guide, Not(Global.EditorMoveItem)), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Value In Array(Array(Empty Array, Custom String("{0} + {1} | 移动选中的实体", Input Binding String(Button(Ability 2)), Input Binding String(Button(Primary Fire))), Custom String("{0} + {1} | 移动选中的实体", Input Binding String(Button(Ability 2)), Input Binding String(Button(Primary Fire))), Custom String("{0} + {1} | 留小跳进点\\n{0} + {2} | 站卡", Input Binding String(Button(Ability 2)), Input Binding String(Button(Jump)), Input Binding String(Button(Crouch))), Empty Array), (Host Player).editor_modeSelect), Value In Array(Array(Empty Array, Custom String("{0} + {1} | Move", Input Binding String(Button(Ability 2)), Input Binding String(Button(Primary Fire))), Custom String("{0} + {1} | Move", Input Binding String(Button(Ability 2)), Input Binding String(Button(Primary Fire))), Custom String("{0} + {1} | Require Bhop\\n{0} + {2} | Stand Create", Input Binding String(Button(Ability 2)), Input Binding String(Button(Jump)), Input Binding String(Button(Crouch))), Empty Array), (Host Player).editor_modeSelect)), Right, -144, Null, Null, Color(Yellow), Visible To and String, Default Visibility);
             Create HUD Text(If-Then-Else((Host Player).toggle_guide, Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String(" \\n{0} + {1} | 下一关", Input Binding String(Button(Crouch)), Input Binding String(Button(Primary Fire))), Custom String(" \\n{0} + {1} | Next Checkpoint", Input Binding String(Button(Crouch)), Input Binding String(Button(Primary Fire)))), Right, -150, Null, Null, If-Then-Else((Host Player).toggle_guide, Color(Green), Color(Orange)), Visible To String and Color, Default Visibility);
             Create HUD Text(If-Then-Else((Host Player).toggle_guide, Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} | 上一关\\n{2} (长按) | 飞行\\n", Input Binding String(Button(Crouch)), Input Binding String(Button(Secondary Fire)), Input Binding String(Button(Ability 1))), Custom String("{0} + {1} | Prev Checkpoint\\n{2} (hold)| Fly\\n", Input Binding String(Button(Crouch)), Input Binding String(Button(Secondary Fire)), Input Binding String(Button(Ability 1)))), Right, -149, Null, Null, If-Then-Else((Host Player).toggle_guide, Color(Green), Color(Orange)), Visible To String and Color, Default Visibility);
-            Create HUD Text(If-Then-Else((Host Player).toggle_guide, Host Player, Null), Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("保存地图长按 {0} + {1} + {2}", Input Binding String(Button(Interact)), Input Binding String(Button(Melee)), Custom String("{0} 后按弹出窗口的提示进行操作                                                                                                ", Input Binding String(Button(Reload)))), Custom String("To Save Map, Hold {0} + {1} + {2}", Input Binding String(Button(Interact)), Input Binding String(Button(Melee)), Custom String("{0} Then Follow Instructions                                                                                                ", Input Binding String(Button(Reload))))), Null, Left, -197, Null, Color(Yellow), Null, Visible To and String, Default Visibility);
+            Create HUD Text(If-Then-Else((Host Player).toggle_guide, Host Player, Null), Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("保存地图长按 {0} + {1} + {2}", Input Binding String(Button(Interact)), Input Binding String(Button(Melee)), Custom String("{0} 后按弹出窗口的提示进行操作                                                                                                    ", Input Binding String(Button(Reload)))), Custom String("To Save Map, Hold {0} + {1} + {2}", Input Binding String(Button(Interact)), Input Binding String(Button(Melee)), Custom String("{0} Then Follow Instructions                                                                                                    ", Input Binding String(Button(Reload))))), Null, Left, -197, Null, Color(Yellow), Null, Visible To and String, Default Visibility);
             Create HUD Text(If-Then-Else((Local Player).editor_saveCache, Null, Local Player), If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), If-Then-Else(Is Button Held(Host Player, Button(Melee)), Custom String("{0} 检查点模式\\n{1} 击杀球模式\\n{2}", If-Then-Else((Host Player).editor_modeSelect, Custom String("     "), Icon String(Arrow: Right)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 1), Icon String(Arrow: Right), Custom String("     ")), Custom String("{0} 弹球模式\\n{1} 封禁(单关)\\n{2} 自定义传送门 ", If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Icon String(Arrow: Right), Custom String("     ")), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 3), Icon String(Arrow: Right), Custom String("     ")), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 4), Icon String(Arrow: Right), Custom String("     ")))), If-Then-Else(Compare(Local Player, ==, Host Player), Custom String(" {0} {1} ", Value In Array(Array(Icon String(Flag), Icon String(Skull), Icon String(Moon), Icon String(Stop), Icon String(Spiral)), (Host Player).editor_modeSelect), Value In Array(String Split(Custom String("检查点模式0击杀球模式0弹球模式0封禁(单关)0自定义传送门"), First Of(Null)), (Host Player).editor_modeSelect)), Custom String(" {0} 源氏 编辑者 {0} ", Icon String(Bolt)))), If-Then-Else(Is Button Held(Host Player, Button(Melee)), Custom String("{0} Checkpoints\\n{1} Boundary Spheres\\n{2}", If-Then-Else((Host Player).editor_modeSelect, Custom String("     "), Icon String(Arrow: Right)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 1), Icon String(Arrow: Right), Custom String("     ")), Custom String("{0} Function Orbs\\n{1} Skill Bans\\n{2} Portals", If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Icon String(Arrow: Right), Custom String("     ")), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 3), Icon String(Arrow: Right), Custom String("     ")), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 4), Icon String(Arrow: Right), Custom String("     ")))), If-Then-Else(Compare(Local Player, ==, Host Player), Custom String(" {0} {1} ", Value In Array(Array(Icon String(Flag), Icon String(Skull), Icon String(Moon), Icon String(Stop), Icon String(Spiral)), (Host Player).editor_modeSelect), Value In Array(String Split(Custom String("Checkpoints0Boundary Spheres0Function Orbs0Skill Bans0Portals"), First Of(Null)), (Host Player).editor_modeSelect)), Custom String(" {0} Genji Editor {0} ", Icon String(Bolt))))), Null, Null, Top, -174, Color(Blue), Null, Null, Visible To and String, Default Visibility);
             Create HUD Text(First Of(True), Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), If-Then-Else(Compare(Local Player, ==, Host Player), Custom String("{0} + 射击 | 切换作图模式", Input Binding String(Button(Melee))), Custom String("房主/编辑者 {0}", Host Player)), If-Then-Else(Compare(Local Player, ==, Host Player), Custom String("{0} + Shoot | Change Mode", Input Binding String(Button(Melee))), Custom String("Current Host/Editor: {0}", Host Player))), Null, Top, -175, Null, If-Then-Else((Local Player).editor_lock, Color(Gray), Color(White)), Null, Visible To String and Color, Default Visibility);
-            Create HUD Text(If-Then-Else(And((Host Player).toggle_guide, Or(Not((Host Player).editor_modeSelect), And(Compare((Host Player).editor_modeSelect, ==, 2), Count Of((Host Player).editor_bounceIndex)))), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Primary Fire)), Custom String("{0} {1} | {2}                                                                                                ", If-Then-Else((Host Player).editor_modeSelect, Custom String("弹球给刀"), Custom String("检查点给刀")), Ability Icon String(Hero(Genji), Button(Ultimate)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ5, Global.EditSelected), Array Contains(Global.Dao, (Host Player).checkpoint_current)))), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Primary Fire)), Custom String("{0} Give Ult {1} | {2}                                                                                                ", If-Then-Else((Host Player).editor_modeSelect, Custom String("Orb"), Custom String("Level")), Ability Icon String(Hero(Genji), Button(Ultimate)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ5, Global.EditSelected), Array Contains(Global.Dao, (Host Player).checkpoint_current))))), Left, -189, Null, Null, If-Then-Else(And(Value In Array(Global.TQ5, Global.EditSelected), Compare((Host Player).editor_modeSelect, ==, 2)), Color(Green), If-Then-Else(And(Array Contains(Global.Dao, (Host Player).checkpoint_current), Not((Host Player).editor_modeSelect)), Color(Green), Color(Orange))), Visible To String and Color, Default Visibility);
-            Create HUD Text(If-Then-Else(And((Host Player).toggle_guide, Or(Not((Host Player).editor_modeSelect), And(Compare((Host Player).editor_modeSelect, ==, 2), Count Of((Host Player).editor_bounceIndex)))), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Secondary Fire)), Custom String("{0} {1} | {2}                                                                                                ", If-Then-Else((Host Player).editor_modeSelect, Custom String("弹球给Shift"), Custom String("检查点给Shift")), Ability Icon String(Hero(Genji), Button(Ability 1)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ6, Global.EditSelected), Array Contains(Global.SHIFT, (Host Player).checkpoint_current)))), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Secondary Fire)), Custom String("{0} Give Dash {1} | {2}                                                                                                ", If-Then-Else((Host Player).editor_modeSelect, Custom String("Orb"), Custom String("Level")), Ability Icon String(Hero(Genji), Button(Ability 1)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ6, Global.EditSelected), Array Contains(Global.SHIFT, (Host Player).checkpoint_current))))), Left, -188, Null, Null, If-Then-Else(And(Value In Array(Global.TQ6, Global.EditSelected), Compare((Host Player).editor_modeSelect, ==, 2)), Color(Green), If-Then-Else(And(Array Contains(Global.SHIFT, (Host Player).checkpoint_current), Not((Host Player).editor_modeSelect)), Color(Green), Color(Orange))), Visible To String and Color, Default Visibility);
-            Create HUD Text(If-Then-Else(And(And(Compare((Host Player).editor_modeSelect, ==, 2), (Host Player).toggle_guide), Count Of((Host Player).editor_bounceIndex)), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} |  收集球(进点前必须集齐) {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Ability 2)), Custom String("{0} | {1}\\n                                                                                                ", Icon String(Asterisk), Value In Array(Global.BounceToggleLock, Global.EditSelected))), Custom String("{0} + {1} | Unlocks Checkpoint {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Ability 2)), Custom String("{0} | {1}\\n                                                                                                ", Icon String(Asterisk), Value In Array(Global.BounceToggleLock, Global.EditSelected)))), Left, -187, Null, Null, If-Then-Else(Value In Array(Global.BounceToggleLock, Global.EditSelected), Color(Green), Color(Orange)), Visible To String and Color, Default Visibility);
+            Create HUD Text(If-Then-Else(And((Host Player).toggle_guide, Or(Not((Host Player).editor_modeSelect), And(Compare((Host Player).editor_modeSelect, ==, 2), Count Of((Host Player).editor_bounceIndex)))), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Primary Fire)), Custom String("{0} {1} | {2}                                                                                                    ", If-Then-Else((Host Player).editor_modeSelect, Custom String("弹球给刀"), Custom String("检查点给刀")), Ability Icon String(Hero(Genji), Button(Ultimate)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ5, Global.EditSelected), Array Contains(Global.Dao, (Host Player).checkpoint_current)))), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Primary Fire)), Custom String("{0} Give Ult {1} | {2}                                                                                                    ", If-Then-Else((Host Player).editor_modeSelect, Custom String("Orb"), Custom String("Level")), Ability Icon String(Hero(Genji), Button(Ultimate)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ5, Global.EditSelected), Array Contains(Global.Dao, (Host Player).checkpoint_current))))), Left, -189, Null, Null, If-Then-Else(And(Value In Array(Global.TQ5, Global.EditSelected), Compare((Host Player).editor_modeSelect, ==, 2)), Color(Green), If-Then-Else(And(Array Contains(Global.Dao, (Host Player).checkpoint_current), Not((Host Player).editor_modeSelect)), Color(Green), Color(Orange))), Visible To String and Color, Default Visibility);
+            Create HUD Text(If-Then-Else(And((Host Player).toggle_guide, Or(Not((Host Player).editor_modeSelect), And(Compare((Host Player).editor_modeSelect, ==, 2), Count Of((Host Player).editor_bounceIndex)))), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Secondary Fire)), Custom String("{0} {1} | {2}                                                                                                    ", If-Then-Else((Host Player).editor_modeSelect, Custom String("弹球给Shift"), Custom String("检查点给Shift")), Ability Icon String(Hero(Genji), Button(Ability 1)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ6, Global.EditSelected), Array Contains(Global.SHIFT, (Host Player).checkpoint_current)))), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Secondary Fire)), Custom String("{0} Give Dash {1} | {2}                                                                                                    ", If-Then-Else((Host Player).editor_modeSelect, Custom String("Orb"), Custom String("Level")), Ability Icon String(Hero(Genji), Button(Ability 1)), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 2), Value In Array(Global.TQ6, Global.EditSelected), Array Contains(Global.SHIFT, (Host Player).checkpoint_current))))), Left, -188, Null, Null, If-Then-Else(And(Value In Array(Global.TQ6, Global.EditSelected), Compare((Host Player).editor_modeSelect, ==, 2)), Color(Green), If-Then-Else(And(Array Contains(Global.SHIFT, (Host Player).checkpoint_current), Not((Host Player).editor_modeSelect)), Color(Green), Color(Orange))), Visible To String and Color, Default Visibility);
+            Create HUD Text(If-Then-Else(And(And(Compare((Host Player).editor_modeSelect, ==, 2), (Host Player).toggle_guide), Count Of((Host Player).editor_bounceIndex)), Host Player, Null), Null, Null, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("{0} + {1} |  收集球(进点前必须集齐) {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Ability 2)), Custom String("{0} | {1}\\n                                                                                                    ", Icon String(Asterisk), Value In Array(Global.BounceToggleLock, Global.EditSelected))), Custom String("{0} + {1} | Unlocks Checkpoint {2}", Input Binding String(Button(Ultimate)), Input Binding String(Button(Ability 2)), Custom String("{0} | {1}\\n                                                                                                    ", Icon String(Asterisk), Value In Array(Global.BounceToggleLock, Global.EditSelected)))), Left, -187, Null, Null, If-Then-Else(Value In Array(Global.BounceToggleLock, Global.EditSelected), Color(Green), Color(Orange)), Visible To String and Color, Default Visibility);
             Create HUD Text(If-Then-Else((Host Player).toggle_guide, Host Player, Null), If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("球体/传送门上限: {0}/193 ", Add(Add(Count Of(Global.TQ), Count Of(Global.H)), Count Of(Global.CustomPortalStart))), Custom String("Orb/Portal Limit: {0}/193 ", Add(Add(Count Of(Global.TQ), Count Of(Global.H)), Count Of(Global.CustomPortalStart)))), Null, Custom String("                                                                                                                                "), Left, -191, Color(Blue), Null, Null, Visible To and String, Default Visibility);
             "display selected cc/orb info"
             Create HUD Text(If-Then-Else((Host Player).toggle_guide, Host Player, Null), If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), If-Then-Else(And(Not((Host Player).editor_modeSelect), Count Of(Global.A)), Custom String("\\n 选中的检查点 \\n 矢量: {0}{1} \\n", Value In Array(Global.A, (Host Player).checkpoint_current), If-Then-Else(Compare(Count Of(Value In Array(Global.A, (Host Player).checkpoint_current)), <, 2), Empty Array, Custom String("\\n 传送点: {0}", Value In Array(Value In Array(Global.A, (Host Player).checkpoint_current), True)))), If-Then-Else(And(Compare((Host Player).editor_modeSelect, ==, 1), Count Of((Host Player).editor_killIndex)), Custom String("\\n 选中的击杀球\\n 矢量: {0}\\n 半径: {1}\\n  + 進不去\\n  - 出不來\\n", Value In Array(Global.H, Global.EditSelected), Value In Array(Global.I, Global.EditSelected)), If-Then-Else(And(Compare((Host Player).editor_modeSelect, ==, 2), Count Of((Host Player).editor_bounceIndex)), Custom String("\\n 选中的弹球\\n 矢量: {0}\\n 弹力: {1}\\n 序号: {2}\\n", Value In Array(Global.TQ, Global.EditSelected), Value In Array(Global.EditMode, Global.EditSelected), Global.EditSelected), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 3), Custom String("\\n 封禁(单关)\\n――――――――――――\\n {0} 蹭留 ∞\\n {1} 卡小 ♂\\n {2}", If-Then-Else(Array Contains(Global.BanMulti, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanCreate, (Host Player).checkpoint_current), Custom String("√"), Empty Array), Custom String("{0} 站卡 ♠\\n {1} 爬墙 ↑\\n {2}", If-Then-Else(Array Contains(Global.BanStand, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanClimb, (Host Player).checkpoint_current), Custom String("√"), Empty Array), Custom String("{0} 死小 X\\n {1} 表情留小 ♥\\n {2}", If-Then-Else(Array Contains(Global.BanDead, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanEmote, (Host Player).checkpoint_current), Custom String("√"), Empty Array), Custom String("{0} 延二段跳 △\\n――――――――――――\\n {1} 留小跳进点 ≥\\n", If-Then-Else(Array Contains(Global.BanSaveDouble, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanBhop, (Host Player).checkpoint_current), Custom String("√"), Empty Array))))), If-Then-Else(And(And(Compare((Host Player).editor_modeSelect, ==, 4), Array Contains(Array((Host Player).checkpoint_current, -1), Value In Array(Global.CustomPortalCP, Global.EditSelected))), Count Of(Global.CustomPortalCP)), Custom String("\\n 入口矢量: {0}\\n 出口矢量: {1}\\n 应用关卡: {2}\\n", Value In Array(Global.CustomPortalStart, Global.EditSelected), Value In Array(Global.CustomPortalEndpoint, Global.EditSelected), If-Then-Else(Compare(Value In Array(Global.CustomPortalCP, Global.EditSelected), <, Null), Custom String("所有"), (Host Player).checkpoint_current)), Custom String("\\n   当前无数据选中   \\n")))))), If-Then-Else(And(Not((Host Player).editor_modeSelect), Count Of(Global.A)), Custom String("\\n Selected Checkpoint\\n Vector: {0}{1} \\n", Value In Array(Global.A, (Host Player).checkpoint_current), If-Then-Else(Compare(Count Of(Value In Array(Global.A, (Host Player).checkpoint_current)), <, 2), Empty Array, Custom String("\\n Teleport: {0}", Value In Array(Value In Array(Global.A, (Host Player).checkpoint_current), True)))), If-Then-Else(And(Compare((Host Player).editor_modeSelect, ==, 1), Count Of((Host Player).editor_killIndex)), Custom String("\\n Selected Boundary Sphere\\n Vector: {0}\\n Radius: {1}\\n  + Keep Out\\n  - Stay In\\n", Value In Array(Global.H, Global.EditSelected), Value In Array(Global.I, Global.EditSelected)), If-Then-Else(And(Compare((Host Player).editor_modeSelect, ==, 2), Count Of((Host Player).editor_bounceIndex)), Custom String("\\n Selected Bounce Orb\\n Vector: {0}\\n Strength: {1} \\n ID: {2}\\n", Value In Array(Global.TQ, Global.EditSelected), Value In Array(Global.EditMode, Global.EditSelected), Global.EditSelected), If-Then-Else(Compare((Host Player).editor_modeSelect, ==, 3), Custom String("\\n Skill Bans\\n――――――――――――\\n {0} Multi-Climb ∞\\n {1} Create ♂\\n {2}", If-Then-Else(Array Contains(Global.BanMulti, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanCreate, (Host Player).checkpoint_current), Custom String("√"), Empty Array), Custom String("{0} Stand ♠\\n {1} Climb ↑\\n {2}", If-Then-Else(Array Contains(Global.BanStand, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanClimb, (Host Player).checkpoint_current), Custom String("√"), Empty Array), Custom String("{0} Dead X\\n {1} Emote ♥\\n {2}", If-Then-Else(Array Contains(Global.BanDead, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanEmote, (Host Player).checkpoint_current), Custom String("√"), Empty Array), Custom String("{0} Save Double △\\n――――――――――――\\n {1} Require Bhop ≥\\n", If-Then-Else(Array Contains(Global.BanSaveDouble, (Host Player).checkpoint_current), Custom String("√"), Empty Array), If-Then-Else(Array Contains(Global.BanBhop, (Host Player).checkpoint_current), Custom String("√"), Empty Array))))), If-Then-Else(And(And(Compare((Host Player).editor_modeSelect, ==, 4), Array Contains(Array((Host Player).checkpoint_current, -1), Value In Array(Global.CustomPortalCP, Global.EditSelected))), Count Of(Global.CustomPortalCP)), Custom String("\\n Start: {0} \\n End: {1} \\n CP: {2} \\n", Value In Array(Global.CustomPortalStart, Global.EditSelected), Value In Array(Global.CustomPortalEndpoint, Global.EditSelected), If-Then-Else(Compare(Value In Array(Global.CustomPortalCP, Global.EditSelected), <, Null), Custom String("All"), (Host Player).checkpoint_current)), Custom String("\\n   No Data Selected   \\n"))))))), Null, Custom String("                                                                                                                                "), Left, -190, Color(White), Null, Color(Orange), Visible To and String, Default Visibility);
@@ -1529,31 +1526,27 @@ rule ("Editor | Create Cp/Orb") {
             If(And(Count Of(Global.A), Compare(Distance Between(Host Player, Value In Array(Global.A, (Host Player).checkpoint_current)), <=, 1.4)));
                 Small Message(Host Player, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("   放置的检查点距离太近"), Custom String("   Cannot Place Checkpoint Too Close.")));
             Else;
-                "$$"
-                If(Compare((Host Player).checkpoint_current, >=, Subtract(Count Of(Global.A), True)));
-                    Set Player Variable(Host Player, checkpoint_current, Subtract(Count Of(Global.A), True));
-                End;
-                If(Compare((Host Player).checkpoint_current, ==, Subtract(Count Of(Global.A), True)));
+                Modify Player Variable(Host Player, checkpoint_current, Add, True);
+                If(Compare((Host Player).checkpoint_current, ==, Count Of(Global.A)));
                     Modify Global Variable(A, Append To Array, Position Of(Host Player));
-                    Modify Player Variable(Host Player, checkpoint_current, Add, True);
                 Else;
-                    Modify Global Variable(A, Append To Array, Position Of(Host Player));
-                    Set Global Variable(A, Mapped Array(Global.A, If-Then-Else(Compare(Current Array Index, <, Add((Host Player).checkpoint_current, True)), Current Array Element, If-Then-Else(Compare(Current Array Index, ==, Add((Host Player).checkpoint_current, True)), Last Of(Global.A), Value In Array(Global.A, Subtract(Current Array Index, True))))));
-                    Modify Player Variable(Host Player, checkpoint_current, Add, True);
-                    Set Global Variable(killballnumber, Mapped Array(Global.killballnumber, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(pinballnumber, Mapped Array(Global.pinballnumber, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(CustomPortalCP, Mapped Array(Global.CustomPortalCP, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(Dao, Mapped Array(Global.Dao, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(SHIFT, Mapped Array(Global.SHIFT, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanMulti, Mapped Array(Global.BanMulti, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanCreate, Mapped Array(Global.BanCreate, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanStand, Mapped Array(Global.BanStand, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanDead, Mapped Array(Global.BanDead, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanEmote, Mapped Array(Global.BanEmote, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanClimb, Mapped Array(Global.BanClimb, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanSaveDouble, Mapped Array(Global.BanSaveDouble, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanBhop, Mapped Array(Global.BanBhop, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
-                    Set Global Variable(BanDjump, Mapped Array(Global.BanDjump, Add(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+                    Modify Global Variable(A, Append To Array, Null);
+                    Set Global Variable(A, Mapped Array(Global.A, If-Then-Else(Compare(Current Array Index, <=, (Host Player).checkpoint_current), Current Array Element, Value In Array(Global.A, Subtract(Current Array Index, True)))));
+                    Set Global Variable At Index(A, (Host Player).checkpoint_current, Position Of(Host Player));
+                    Set Global Variable(killballnumber, Mapped Array(Global.killballnumber, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(pinballnumber, Mapped Array(Global.pinballnumber, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(CustomPortalCP, Mapped Array(Global.CustomPortalCP, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(Dao, Mapped Array(Global.Dao, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(SHIFT, Mapped Array(Global.SHIFT, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanMulti, Mapped Array(Global.BanMulti, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanCreate, Mapped Array(Global.BanCreate, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanStand, Mapped Array(Global.BanStand, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanDead, Mapped Array(Global.BanDead, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanEmote, Mapped Array(Global.BanEmote, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanClimb, Mapped Array(Global.BanClimb, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanSaveDouble, Mapped Array(Global.BanSaveDouble, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanBhop, Mapped Array(Global.BanBhop, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
+                    Set Global Variable(BanDjump, Mapped Array(Global.BanDjump, Add(Current Array Element, Compare(Current Array Element, >=, (Host Player).checkpoint_current))));
                 End;
                 Call Subroutine(UpdateCache);
                 Call Subroutine(CheckpointFailReset);
@@ -1684,29 +1677,29 @@ rule ("Editor | Delete Cp/Orb/Portal") {
             Set Global Variable(CustomPortalEndpoint, Filtered Array(Global.CustomPortalEndpoint, Not(Array Contains((Host Player).editor_temp, Current Array Index))));
             Set Player Variable(Host Player, editor_temp, Null);
             Modify Global Variable(Dao, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(Dao, Mapped Array(Global.Dao, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(Dao, Mapped Array(Global.Dao, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(SHIFT, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(SHIFT, Mapped Array(Global.SHIFT, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(SHIFT, Mapped Array(Global.SHIFT, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanMulti, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanMulti, Mapped Array(Global.BanMulti, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanMulti, Mapped Array(Global.BanMulti, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanCreate, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanCreate, Mapped Array(Global.BanCreate, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanCreate, Mapped Array(Global.BanCreate, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanStand, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanStand, Mapped Array(Global.BanStand, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanStand, Mapped Array(Global.BanStand, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanDead, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanDead, Mapped Array(Global.BanDead, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanDead, Mapped Array(Global.BanDead, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanEmote, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanEmote, Mapped Array(Global.BanEmote, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanEmote, Mapped Array(Global.BanEmote, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanClimb, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanClimb, Mapped Array(Global.BanClimb, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanClimb, Mapped Array(Global.BanClimb, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanSaveDouble, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanSaveDouble, Mapped Array(Global.BanSaveDouble, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanSaveDouble, Mapped Array(Global.BanSaveDouble, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanBhop, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanBhop, Mapped Array(Global.BanBhop, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanBhop, Mapped Array(Global.BanBhop, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(BanDjump, Remove From Array By Value, (Host Player).checkpoint_current);
-            Set Global Variable(BanDjump, Mapped Array(Global.BanDjump, Subtract(Current Array Element, If-Then-Else(Compare(Current Array Element, >=, (Host Player).checkpoint_current), 1, Null))));
+            Set Global Variable(BanDjump, Mapped Array(Global.BanDjump, Subtract(Current Array Element, Compare(Current Array Element, >, (Host Player).checkpoint_current))));
             Modify Global Variable(A, Remove From Array By Index, (Host Player).checkpoint_current);
-            Set Player Variable(Host Player, checkpoint_current, Max(Subtract((Host Player).checkpoint_current, True), False));
+            Set Player Variable(Host Player, checkpoint_current, Max(Subtract((Host Player).checkpoint_current, True), Subtract(False, Not(Count Of(Global.A)))));
             Call Subroutine(RebuildKillOrbs);
             Call Subroutine(RebuildBounceOrbs);
             Call Subroutine(RebuildPortals);
@@ -1864,7 +1857,7 @@ rule ("Editor | Cp Add/Remove Teleport") {
         Global.EditorOn != False;
         (Host Player).editor_modeSelect == Null;
         (Host Player).editor_lock == False;
-        Count Of(Global.A) > True;
+        Count Of(Global.A) != False;
         Is Button Held(Host Player, Button(Interact)) == True;
         Is Button Held(Host Player, Button(Reload)) == True;
         Is Button Held(Host Player, Button(Melee)) == False;
@@ -1876,16 +1869,12 @@ rule ("Editor | Cp Add/Remove Teleport") {
         Set Player Variable(Host Player, editor_lock, True);
         If(Not((Host Player).checkpoint_current));
             Small Message(Host Player, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("   不能在第一个检查点设置传送门"), Custom String("   Cannot Place A Teleport On First Checkpoint")));
-            Set Player Variable(Host Player, editor_lock, False);
-            Abort;
-        End;
-        "remove"
-        If(Compare(Count Of(Value In Array(Global.A, (Host Player).checkpoint_current)), >, 1));
+        Else If(Compare(Count Of(Value In Array(Global.A, (Host Player).checkpoint_current)), >=, 2));
             Set Global Variable At Index(A, (Host Player).checkpoint_current, First Of(Value In Array(Global.A, (Host Player).checkpoint_current)));
             Small Message(Host Player, If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("   关卡{0}的传送点已移除", (Host Player).checkpoint_current), Custom String("   Teleport For Level {0} Has Been Removed", (Host Player).checkpoint_current)));
         "add"
         Else;
-            Set Global Variable At Index(A, (Host Player).checkpoint_current, Array(If-Then-Else(Count Of(Value In Array(Global.A, (Host Player).checkpoint_current)), First Of(Value In Array(Global.A, (Host Player).checkpoint_current)), Value In Array(Global.A, (Host Player).checkpoint_current)), Position Of(Host Player)));
+            Set Global Variable At Index(A, (Host Player).checkpoint_current, Array(Value In Array(Global.A, (Host Player).checkpoint_current), Position Of(Host Player)));
             Small Message(Host Player, Custom String("{0} {1}", If-Then-Else(Compare(String("Oof"), ==, Custom String("噢")), Custom String("   传送点已添加到当前关卡"), Custom String("   Teleport Has Been Added For Level")), (Host Player).checkpoint_current));
         End;
         Set Player Variable(Host Player, editor_lock, False);
@@ -2099,14 +2088,14 @@ rule ("Editor | Move Object") {
             Set Player Variable(Host Player, editor_undo, Value In Array(Global.H, Global.EditSelected));
             Start Camera(Host Player, Add(Value In Array(Global.H, Global.EditSelected), Multiply(Facing Direction Of(Host Player), Multiply(Absolute Value(Value In Array(Global.I, Global.EditSelected)), -1.5))), Value In Array(Global.H, Global.EditSelected), 30);
             While(Not(Or(Is Button Held(Host Player, Button(Primary Fire)), Is Button Held(Host Player, Button(Secondary Fire)))));
-                Modify Global Variable At Index(H, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Event Player, Button(Jump)))), Multiply(0.048, Is Button Held(Event Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Event Player), Z Component Of(Throttle Of(Event Player))), Vector(True, Not(Is Button Held(Event Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Event Player), Left), Event Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Event Player, Button(Ability 2)), Is Button Held(Event Player, Button(Ultimate)))))));
+                Modify Global Variable At Index(H, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Host Player, Button(Jump)))), Multiply(0.048, Is Button Held(Host Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Host Player), Z Component Of(Throttle Of(Host Player))), Vector(True, Not(Is Button Held(Host Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Host Player), Left), Host Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Host Player, Button(Ability 2)), Is Button Held(Host Player, Button(Ultimate)))))));
                 Wait(False, Ignore Condition);
             End;
         Else If(Compare((Host Player).editor_modeSelect, ==, 2));
             Set Player Variable(Host Player, editor_undo, Value In Array(Global.TQ, Global.EditSelected));
             Start Camera(Host Player, Add(Value In Array(Global.TQ, Global.EditSelected), Multiply(Facing Direction Of(Host Player), -4)), Value In Array(Global.TQ, Global.EditSelected), 30);
             While(Not(Or(Is Button Held(Host Player, Button(Primary Fire)), Is Button Held(Host Player, Button(Secondary Fire)))));
-                Modify Global Variable At Index(TQ, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Event Player, Button(Jump)))), Multiply(0.048, Is Button Held(Event Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Event Player), Z Component Of(Throttle Of(Event Player))), Vector(True, Not(Is Button Held(Event Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Event Player), Left), Event Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Event Player, Button(Ability 2)), Is Button Held(Event Player, Button(Ultimate)))))));
+                Modify Global Variable At Index(TQ, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Host Player, Button(Jump)))), Multiply(0.048, Is Button Held(Host Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Host Player), Z Component Of(Throttle Of(Host Player))), Vector(True, Not(Is Button Held(Host Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Host Player), Left), Host Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Host Player, Button(Ability 2)), Is Button Held(Host Player, Button(Ultimate)))))));
                 Wait(False, Ignore Condition);
             End;
         Else If(Compare((Host Player).editor_modeSelect, ==, 4));
@@ -2114,14 +2103,14 @@ rule ("Editor | Move Object") {
             "move start position"
             Start Camera(Host Player, Add(Value In Array(Global.CustomPortalStart, Global.EditSelected), Multiply(Facing Direction Of(Host Player), -4)), Value In Array(Global.CustomPortalStart, Global.EditSelected), 30);
             While(Not(Or(Is Button Held(Host Player, Button(Primary Fire)), Is Button Held(Host Player, Button(Secondary Fire)))));
-                Modify Global Variable At Index(CustomPortalStart, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Event Player, Button(Jump)))), Multiply(0.048, Is Button Held(Event Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Event Player), Z Component Of(Throttle Of(Event Player))), Vector(True, Not(Is Button Held(Event Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Event Player), Left), Event Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Event Player, Button(Ability 2)), Is Button Held(Event Player, Button(Ultimate)))))));
+                Modify Global Variable At Index(CustomPortalStart, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Host Player, Button(Jump)))), Multiply(0.048, Is Button Held(Host Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Host Player), Z Component Of(Throttle Of(Host Player))), Vector(True, Not(Is Button Held(Host Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Host Player), Left), Host Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Host Player, Button(Ability 2)), Is Button Held(Host Player, Button(Ultimate)))))));
                 Wait(False, Ignore Condition);
             End;
             "move destination"
             Start Camera(Host Player, Add(Value In Array(Global.CustomPortalEndpoint, Global.EditSelected), Multiply(Facing Direction Of(Host Player), -4)), Value In Array(Global.CustomPortalEndpoint, Global.EditSelected), 30);
             Wait Until(Or(Not(Is Button Held(Host Player, Button(Primary Fire))), Is Button Held(Host Player, Button(Secondary Fire))), True);
             While(Not(Or(Is Button Held(Host Player, Button(Primary Fire)), Is Button Held(Host Player, Button(Secondary Fire)))));
-                Modify Global Variable At Index(CustomPortalEndpoint, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Event Player, Button(Jump)))), Multiply(0.048, Is Button Held(Event Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Event Player), Z Component Of(Throttle Of(Event Player))), Vector(True, Not(Is Button Held(Event Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Event Player), Left), Event Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Event Player, Button(Ability 2)), Is Button Held(Event Player, Button(Ultimate)))))));
+                Modify Global Variable At Index(CustomPortalEndpoint, Global.EditSelected, Add, Multiply(Subtract(Add(0.096, Multiply(0.192, Is Button Held(Host Player, Button(Jump)))), Multiply(0.048, Is Button Held(Host Player, Button(Crouch)))), Add(Add(Multiply(Multiply(Facing Direction Of(Host Player), Z Component Of(Throttle Of(Host Player))), Vector(True, Not(Is Button Held(Host Player, Button(Ability 1))), True)), World Vector Of(Multiply(Throttle Of(Host Player), Left), Host Player, Rotation)), Multiply(Up, Subtract(Is Button Held(Host Player, Button(Ability 2)), Is Button Held(Host Player, Button(Ultimate)))))));
                 Wait(False, Ignore Condition);
             End;
         End;
@@ -2507,9 +2496,9 @@ rule ("Command | Skip (Crouch + Primary-Next | Secondary-Previous)") {
         All;
     }
     conditions {
-        Count Of(Global.A) > True;
+        Count Of(Global.A) != False;
         Global.EditorMoveItem == False;
-        And((Event Player).editor_lock, Compare(Event Player, ==, Host Player)) == False;
+        (Event Player).editor_lock == False;
         Or(Global.EditorOn, (Event Player).toggle_practice) == True;
         (Event Player).lockState == (Event Player).checkpoint_skip;
         Is Button Held(Event Player, Button(Crouch)) == True;
@@ -2658,24 +2647,24 @@ rule ("Huds | Global Localplayer") {
         End;
         Set Global Variable(Cachedcredits, Null);
         If(Not(Global.EditorOn));
-            Create HUD Text(First Of(True), Null, If-Then-Else((Local Player).toggle_guide, Custom String("Discord: dsc.gg/genjiparkour"), Empty Array), Custom String("{0}: {1}                                                                                                ", Value In Array(String Split(Custom String("ＴＬＥｒｒMade ByMade ByMade By"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.Name), Left, -200, Null, Value In Array(Global.ColorConfig, 18), First Of(Global.ColorConfig), Visible To and String, Default Visibility);
-            Create HUD Text(First Of(True), Null, Null, Custom String("{0}: {1}                                                                                                ", Value In Array(String Split(Custom String("ＴＬＥｒｒMap CodeMap CodeMap Code"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.Code), Left, -199, Null, Null, Value In Array(Global.ColorConfig, True), Visible To and String, Default Visibility);
+            Create HUD Text(First Of(True), Null, If-Then-Else((Local Player).toggle_guide, Custom String("Discord: dsc.gg/genjiparkour"), Empty Array), Custom String("{0}: {1}                                                                                                    ", Value In Array(String Split(Custom String("ＴＬＥｒｒMade ByMade ByMade By"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.Name), Left, -200, Null, Value In Array(Global.ColorConfig, 18), First Of(Global.ColorConfig), Visible To and String, Default Visibility);
+            Create HUD Text(First Of(True), Null, Null, Custom String("{0}: {1}                                                                                                    ", Value In Array(String Split(Custom String("ＴＬＥｒｒMap CodeMap CodeMap Code"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.Code), Left, -199, Null, Null, Value In Array(Global.ColorConfig, True), Visible To and String, Default Visibility);
             Create HUD Text((Local Player).toggle_guide, Null, Null, Custom String("{0} {1} + {2}", Value In Array(String Split(Custom String("ＴＬＥｒｒHoldHoldHold"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Input Binding String(Button(Primary Fire)), Custom String("{0} | {1}", Input Binding String(Button(Secondary Fire)), Value In Array(String Split(Custom String("ＴＬＥｒｒPreview CPPreview CPPreview CP"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__))), Right, -160, Null, Null, If-Then-Else((Local Player).preview_array1, Evaluate Once(Value In Array(Global.ColorConfig, 6)), Evaluate Once(Value In Array(Global.ColorConfig, 5))), Visible To String and Color, Default Visibility);
             Create HUD Text(First Of(And((Local Player).preview_array1, (Local Player).toggle_guide)), Null, Value In Array(String Split(Custom String("ＴＬＥｒｒWalk ◀ ▶ | Preview Others\\nWalk ▲ ▼ | Modify Zoom\\nAim | Change Preview AngleWalk ◀ ▶ | Preview Others\\nWalk ▲ ▼ | Modify{0}", Custom String(" Zoom\\nAim | Change Preview AngleWalk ◀ ▶ | Preview Others\\nWalk ▲ ▼ | Modify Zoom\\nAim | Change Preview Angle")), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Null, Top, -171, Null, Value In Array(Global.ColorConfig, 6), Null, Visible To and String, Visible Never);
-            Create HUD Text(Local Player, Null, Null, If-Then-Else(Or(Compare((Local Player).timer_splitDisplay, <=, -999999999999), (Local Player).toggle_spectate), Empty Array, Custom String("{0}{1}                                                                                                ", Value In Array(String Split(Custom String("ＴＬＥｒｒSplit: Split: Split: "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), (Local Player).timer_splitDisplay)), Left, -195, Null, Null, Value In Array(Global.ColorConfig, 3), Visible To and String, Default Visibility);
+            Create HUD Text(Local Player, Null, Null, If-Then-Else(Or(Compare((Local Player).timer_splitDisplay, <=, -999999999999), (Local Player).toggle_spectate), Empty Array, Custom String("{0}{1}                                                                                                    ", Value In Array(String Split(Custom String("ＴＬＥｒｒSplit: Split: Split: "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), (Local Player).timer_splitDisplay)), Left, -195, Null, Null, Value In Array(Global.ColorConfig, 3), Visible To and String, Default Visibility);
             "Remove no hints - visual and element bloat"
             If(Count Of(Global.HintText));
                 Create HUD Text(First Of(And((Local Player).toggle_guide, Array Contains(Global.HintCp, (Local Player).checkpoint_current))), Null, Custom String("{0}{1}", If-Then-Else((Local Player).toggle_hints, Value In Array(String Split(Custom String("ＴＬＥｒｒ― ― ― ― ― Hint ― ― ― ― ―\\n― ― ― ― ― Hint ― ― ― ― ―\\n― ― ― ― ― Hint ― ― ― ― ―\\n"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Value In Array(String Split(Custom String("ＴＬＥｒｒ― ― ― Hint Available ― ― ―― ― ― Hint Available ― ― ―― ― ― Hint Available ― ― ―"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)), If-Then-Else((Local Player).toggle_hints, Value In Array(Global.HintText, Index Of Array Value(Global.HintCp, (Local Player).checkpoint_current)), Empty Array)), Custom String("{0} + {1} | {2}", Input Binding String(Button(Ability 2)), Input Binding String(Button(Melee)), If-Then-Else((Local Player).toggle_hints, Value In Array(String Split(Custom String("ＴＬＥｒｒHide HintHide HintHide Hint"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Value In Array(String Split(Custom String("ＴＬＥｒｒShow HintShow HintShow Hint"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__))), Right, -151, Null, If-Then-Else((Local Player).toggle_hints, Color(Green), Color(Orange)), If-Then-Else(Array Contains(Global.HintCp, (Local Player).checkpoint_current), Evaluate Once(Value In Array(Global.ColorConfig, 5)), Color(Gray)), Visible To String and Color, Default Visibility);
             End;
             Create HUD Text((Local Player).toggle_guide, Null, Null, Custom String("{0} + {1} + {2}", Input Binding String(Button(Crouch)), Input Binding String(Button(Ability 2)), Custom String("{0} | {1}\\n{2}", Input Binding String(Button(Interact)), Value In Array(String Split(Custom String("ＴＬＥｒｒRestartRestartRestart"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Custom String("{0} {1} | {2}", Value In Array(String Split(Custom String("ＴＬＥｒｒHoldHoldHold"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Input Binding String(Button(Melee)), Value In Array(String Split(Custom String("ＴＬＥｒｒLeaderboardLeaderboardLeaderboard"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)))), Right, -156, Null, Null, Value In Array(Global.ColorConfig, 5), Visible To and String, Default Visibility);
-            Set Global Variable(Difficultyhud, Array(Workshop Setting Combo(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Difficulty 󠀨Display Hud󠀩     ◆ 难度 󠀨顶部hud󠀩   ◆ 난이도 󠀨HUD 디스플레이󠀩"), 0, Array(Custom String("<fg27AAFFFF>Playtest ◆ 游戏测试 ◆ 플레이테스트"), Custom String("<fgA0E81BFF>Easy-"), Custom String("<fgA0E81BFF>Easy"), Custom String("<fgA0E81BFF>Easy+"), Custom String("<fgE0E000FF>Medium-"), Custom String("<fgE0E000FF>Medium"), Custom String("<fgE0E000FF>Medium+"), Custom String("<fgEC9900FF>Hard-"), Custom String("<fgEC9900FF>Hard"), Custom String("<fgEC9900FF>Hard+"), Custom String("<fgFF4500FF>Very Hard-"), Custom String("<fgFF4500FF>Very Hard"), Custom String("<fgFF4500FF>Very Hard+"), Custom String("<fgC80013FF>Extreme-"), Custom String("<fgC80013FF>Extreme"), Custom String("<fgC80013FF>Extreme+"), Custom String("<fg960000FF>Hell"), Custom String("Do Not Display ◆ 不显示 ◆ 난이도 표시 X")), 1), Workshop Setting Toggle(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Playtest Display        ◆ 游戏测试      ◆ 플레이테스트 디스플레이"), False, 2)));
+            Set Global Variable(Difficultyhud, Array(Workshop Setting Combo(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Difficulty 󠀨Display Hud󠀩     ◆ 难度 󠀨顶部hud󠀩   ◆ 난이도 󠀨HUD 디스플레이󠀩"), 0, Array(Custom String("<fg27AAFFFF>Playtest ◆ 游戏测试 ◆ 플레이테스트"), Custom String("<fgA0E81BFF>Easy-"), Custom String("<fgA0E81BFF>Easy"), Custom String("<fgA0E81BFF>Easy+"), Custom String("<fgE0E000FF>Medium-"), Custom String("<fgE0E000FF>Medium"), Custom String("<fgE0E000FF>Medium+"), Custom String("<fgEC9900FF>Hard-"), Custom String("<fgEC9900FF>Hard"), Custom String("<fgEC9900FF>Hard+"), Custom String("<fgFF4500FF>Very Hard-"), Custom String("<fgFF4500FF>Very Hard"), Custom String("<fgFF4500FF>Very Hard+"), Custom String("<fgC80013FF>Extreme-"), Custom String("<fgC80013FF>Extreme"), Custom String("<fgC80013FF>Extreme+"), Custom String("<fg960000FF>Hell"), Custom String("No Display ◆ 不显示 ◆ 난이도 표시 X")), 1), Workshop Setting Toggle(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Playtest Display        ◆ 游戏测试      ◆ 플레이테스트 디스플레이"), False, 2)));
             "display\\n17th entry is 'dont display'"
             If(Compare(First Of(Global.Difficultyhud), !=, 17));
                 Create HUD Text(First Of(And((Local Player).toggle_guide, Not((Local Player).toggle_leaderboard))), If-Then-Else(Last Of(Global.Difficultyhud), Value In Array(String Split(Custom String("ＴＬＥｒｒPlaytestPlaytestPlaytest"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Empty Array), Value In Array(Array(Custom String("Playtest"), Custom String("Easy -"), Custom String("Easy"), Custom String("Easy +"), Custom String("Medium -"), Custom String("Medium"), Custom String("Medium +"), Custom String("Hard -"), Custom String("Hard"), Custom String("Hard +"), Custom String("Very Hard -"), Custom String("Very Hard"), Custom String("Very Hard +"), Custom String("Extreme -"), Custom String("Extreme"), Custom String("Extreme +"), Custom String("Hell"), Null), First Of(Global.Difficultyhud)), Null, Top, -173, Color(Blue), Value In Array(Array(Color(Blue), Color(Lime Green), Color(Lime Green), Color(Lime Green), Color(Yellow), Color(Yellow), Color(Yellow), Color(Orange), Color(Orange), Color(Orange), Custom Color(255, 69, 0, 255), Custom Color(255, 69, 0, 255), Custom Color(255, 69, 0, 255), Color(Red), Color(Red), Color(Red), Custom Color(150, 0, 0, 255), Null), First Of(Global.Difficultyhud)), Null, Visible To and String, Default Visibility);
             End;
         End;
         "global huds"
-        Create HUD Text(First Of(True), Null, Custom String("{0}{1}{2}", Value In Array(String Split(Custom String("ＴＬＥｒｒServer Restart In Server Restart In Server Restart In "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.TimeRemaining, Custom String("{0}{1}1.10.4D{2}", Value In Array(String Split(Custom String("ＴＬＥｒｒ Min -  Min -  Min - "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.G, If-Then-Else(Compare(Text Count, >=, 128), Value In Array(String Split(Custom String("ＴＬＥｒｒ\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Empty Array))), Null, Right, -162, Null, Value In Array(Global.ColorConfig, 2), Null, Visible To and String, Visible Always);
+        Create HUD Text(First Of(True), Null, Custom String("{0}{1}{2}", Value In Array(String Split(Custom String("ＴＬＥｒｒServer Restart In Server Restart In Server Restart In "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.TimeRemaining, Custom String("{0}{1}1.10.4E{2}", Value In Array(String Split(Custom String("ＴＬＥｒｒ Min -  Min -  Min - "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Global.G, If-Then-Else(Compare(Text Count, >=, 128), Value In Array(String Split(Custom String("ＴＬＥｒｒ\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Empty Array))), Null, Right, -162, Null, Value In Array(Global.ColorConfig, 2), Null, Visible To and String, Visible Always);
         "padding for custom hud display"
         Create HUD Text(First Of(True), Null, Null, Custom String("­\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n"), Top, -164, Null, Null, Color(Orange), Visible To, Default Visibility);
         Create HUD Text((Local Player).toggle_guide, Null, Null, If-Then-Else((Local Player).toggle_quickRestart, Custom String("{0} | {1}", Input Binding String(Button(Reload)), Value In Array(String Split(Custom String("ＴＬＥｒｒQuick ResetQuick ResetQuick Reset"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)), Custom String("{0} {1} | {2}", Value In Array(String Split(Custom String("ＴＬＥｒｒHoldHoldHold"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Input Binding String(Button(Reload)), Value In Array(String Split(Custom String("ＴＬＥｒｒEnable Quick ResetEnable Quick ResetEnable Quick Reset"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__))), Right, -157, Null, Null, Value In Array(Global.ColorConfig, 5), Visible To and String, Default Visibility);
@@ -2774,9 +2763,9 @@ rule ("Huds | Each Player") {
     }
     actions {
         Wait(0.896, Ignore Condition);
-        Create HUD Text(Event Player, Null, If-Then-Else((Event Player).toggle_practice, Custom String("{0} {1} sec", Value In Array(String Split(Custom String("ＴＬＥｒｒPractice Time:Practice Time:Practice Time:"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), (Event Player).timer_practice), Empty Array), Custom String("{0} {1} sec                                                                                                ", Value In Array(String Split(Custom String("ＴＬＥｒｒTime:Time:Time:"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), (Event Player).timer_normal), Left, -196, Null, Color(Gray), Value In Array(Global.ColorConfig, 3), String, Default Visibility);
+        Create HUD Text(Event Player, Null, If-Then-Else((Event Player).toggle_practice, Custom String("{0} {1} Sec", Value In Array(String Split(Custom String("ＴＬＥｒｒPractice Time:Practice Time:Practice Time:"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), (Event Player).timer_practice), Empty Array), Custom String("{0} {1} Sec                                                                                                    ", Value In Array(String Split(Custom String("ＴＬＥｒｒTime:Time:Time:"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), (Event Player).timer_normal), Left, -196, Null, Color(Gray), Value In Array(Global.ColorConfig, 3), String, Default Visibility);
         Create HUD Text(If-Then-Else((Event Player).toggle_leaderboard, Null, Event Player), If-Then-Else((Event Player).preview_array1, Custom String(" {0} ({1}/{2}", If-Then-Else((Event Player).preview_i, If-Then-Else(Compare((Event Player).preview_i, <=, Count Of((Event Player).cache_bouncePosition)), Value In Array(String Split(Custom String("ＴＬＥｒｒOrbOrbOrb"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Value In Array(String Split(Custom String("ＴＬＥｒｒPortalPortalPortal"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)), Value In Array(String Split(Custom String("ＴＬＥｒｒCheckpointCheckpointCheckpoint"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)), Add((Event Player).preview_i, True), Custom String("{0})\\n―――――――――――\\n {1}\\n", Count Of((Event Player).preview_array1), If-Then-Else(And(Compare((Event Player).preview_i, <=, Count Of((Event Player).cache_bouncePosition)), (Event Player).preview_i), Custom String("{0} {1} {2}", If-Then-Else(Value In Array(Global.TQ5, Value In Array((Event Player).preview_array2, (Event Player).preview_i)), Ability Icon String(Hero(Genji), Button(Ultimate)), Empty Array), If-Then-Else(Value In Array(Global.TQ6, Value In Array((Event Player).preview_array2, (Event Player).preview_i)), Ability Icon String(Hero(Genji), Button(Ability 1)), Empty Array), Custom String("{0} {1}", If-Then-Else(Value In Array(Global.BounceToggleLock, Value In Array((Event Player).preview_array2, (Event Player).preview_i)), Icon String(Warning), Empty Array), If-Then-Else(Compare(Value In Array(Global.EditMode, Value In Array((Event Player).preview_array2, (Event Player).preview_i)), >, Null), Icon String(Arrow: Up), If-Then-Else(Compare(Value In Array(Global.EditMode, Value In Array((Event Player).preview_array2, (Event Player).preview_i)), <, Null), Icon String(Arrow: Down), Empty Array)))), If-Then-Else((Event Player).preview_i, If-Then-Else(Last Of(Value In Array((Event Player).preview_array2, (Event Player).preview_i)), Custom String("{0} {1}", Value In Array(String Split(Custom String("ＴＬＥｒｒPortal ExitPortal ExitPortal Exit"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Value In Array((Event Player).preview_array2, (Event Player).preview_i)), Custom String("{0} {1}", Value In Array(String Split(Custom String("ＴＬＥｒｒPortal StartPortal StartPortal Start"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Value In Array((Event Player).preview_array2, (Event Player).preview_i))), (Event Player).banString)))), Empty Array), If-Then-Else((Event Player).preview_array1, Empty Array, Custom String("{0}{1} {2}", If-Then-Else(And((Event Player).toggle_guide, (Event Player).banString), Custom String("{0}\\n", (Event Player).banString), Empty Array), Value In Array(String Split(Custom String("ＴＬＥｒｒLevelLevelLevel"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Custom String("{0} / {1}", (Event Player).checkpoint_current, Subtract(Count Of(Global.A), True)))), If-Then-Else(And((Event Player).cache_bounceMaxLocks, Not((Event Player).preview_array1)), Custom String("{0} {1} / {2}", Value In Array(String Split(Custom String("ＴＬＥｒｒ{0} Orbs{0} Orbs{0} Orbs", Value In Array(Global.ColorConfig, 16)), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Count Of((Event Player).cache_collectedLocks), (Event Player).cache_bounceMaxLocks), Empty Array), Top, -172, Value In Array(Global.ColorConfig, 4), Value In Array(Global.ColorConfig, 4), Value In Array(Global.ColorConfig, 16), Visible To and String, Default Visibility);
-        Create HUD Text(Event Player, Null, Null, Custom String("{0}{1}{2}", If-Then-Else(X Component Of((Event Player).cache_inputs), Custom String("■"), Custom String("□")), If-Then-Else(Compare(Z Component Of(Throttle Of(Event Player)), >, Null), Custom String("▲"), Custom String("△")), Custom String("{0}\\n{1}{2}", If-Then-Else(Y Component Of((Event Player).cache_inputs), Custom String("●"), Custom String("○")), If-Then-Else(Compare(X Component Of(Throttle Of(Event Player)), >, Null), Custom String("◀"), Custom String("◁")), Custom String("{0}{1}                                                                                                ", If-Then-Else(Compare(Z Component Of(Throttle Of(Event Player)), <, Null), Custom String("▼"), Custom String("∇")), If-Then-Else(Compare(X Component Of(Throttle Of(Event Player)), <, Null), Custom String("▶"), Custom String("▷"))))), Left, -192, Null, Null, Evaluate Once(Value In Array(Global.ColorConfig, 3)), String, Default Visibility);
+        Create HUD Text(Event Player, Null, Null, Custom String("{0}{1}{2}", If-Then-Else(X Component Of((Event Player).cache_inputs), Custom String("■"), Custom String("□")), If-Then-Else(Compare(Z Component Of(Throttle Of(Event Player)), >, Null), Custom String("▲"), Custom String("△")), Custom String("{0}\\n{1}{2}", If-Then-Else(Y Component Of((Event Player).cache_inputs), Custom String("●"), Custom String("○")), If-Then-Else(Compare(X Component Of(Throttle Of(Event Player)), >, Null), Custom String("◀"), Custom String("◁")), Custom String("{0}{1}                                                                                                    ", If-Then-Else(Compare(Z Component Of(Throttle Of(Event Player)), <, Null), Custom String("▼"), Custom String("∇")), If-Then-Else(Compare(X Component Of(Throttle Of(Event Player)), <, Null), Custom String("▶"), Custom String("▷"))))), Left, -192, Null, Null, Evaluate Once(Value In Array(Global.ColorConfig, 3)), String, Default Visibility);
         "climb/bhop indicators"
         Create HUD Text(Event Player, Custom String("{0}{1}", Value In Array(String Split(Custom String("ＴＬＥｒｒClimbClimbClimb"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), If-Then-Else((Event Player).skill_countMulti, Custom String(" ({0})", (Event Player).skill_countMulti), Empty Array)), Null, Custom String("                                                                                                                                "), Left, -193, If-Then-Else((Event Player).skill_usedClimb, Evaluate Once(Value In Array(Global.ColorConfig, 8)), Evaluate Once(Value In Array(Global.ColorConfig, 7))), Null, Null, String and Color, Default Visibility);
         Create HUD Text(Event Player, Custom String("{0}{1}", Value In Array(String Split(Custom String("ＴＬＥｒｒBhopBhopBhop"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), If-Then-Else((Event Player).skill_countCreates, Custom String(" ({0})", (Event Player).skill_countCreates), Empty Array)), Null, Custom String("                                                                                                                                "), Left, -194, If-Then-Else((Event Player).skill_usedBhop, Evaluate Once(Value In Array(Global.ColorConfig, 8)), Evaluate Once(Value In Array(Global.ColorConfig, 7))), Null, Null, String and Color, Default Visibility);
@@ -2826,14 +2815,15 @@ rule ("Effects | Setup Effects") {
     }
     actions {
         "add back to below wait if removed"
-        Wait(2.048, Ignore Condition);
+        Wait(4.096, Ignore Condition);
         "pre set control map portals. not in portal rule because shared I variable"
-        If(Count Of(Global.PortalDest));
+        If(Count Of(Global.PortalLoc));
             For Global Variable(NANBA, 0, Count Of(Global.PortalLoc), True);
                 Create Effect(Filtered Array(All Players(All Teams), Or((Current Array Element).toggle_invincible, Not((Current Array Element).checkpoint_notLast))), Bad Aura, If-Then-Else(Modulo(Global.NANBA, 2), Color(Aqua), Color(Orange)), Value In Array(Global.PortalLoc, Global.NANBA), 0.6, Visible To);
                 Create In-World Text(Filtered Array(All Players(All Teams), Or((Current Array Element).toggle_invincible, Not((Current Array Element).checkpoint_notLast))), Value In Array(Global.PortalNames, Global.NANBA), Add(Value In Array(Global.PortalLoc, Global.NANBA), Up), True, Clip Against Surfaces, Visible To, Color(White), Default Visibility);
             End;
             Wait(False, Ignore Condition);
+            Set Global Variable(PortalNames, Null);
         End;
         If(Global.EditorOn);
             Call Subroutine(RebuildKillOrbs);
@@ -2967,8 +2957,7 @@ rule ("Addon | Pre-set control Map Portal - Toggle Via Workshop Settings") {
         All;
     }
     conditions {
-        Global.PortalOn != False;
-        Count Of(Global.PortalLoc) != Null;
+        Global.PortalLoc != Null;
         Or((Event Player).toggle_invincible, Not((Event Player).checkpoint_notLast)) == True;
         Is True For Any(Global.PortalLoc, Compare(Distance Between(Current Array Element, Add(Position Of(Event Player), Multiply(0.2, Up))), <, 1.3)) == True;
     }
@@ -2998,7 +2987,7 @@ rule ("Addon | Preset Control Map Portal - Toggle Via Workshop Settings") {
         Ongoing - Global;
     }
     conditions {
-        Global.PortalOn != False;
+        Workshop Setting Toggle(Custom String("Map Settings      ◆ 地图设置   ◆ 맵 설정"), Custom String("Portals 󠀨Control Maps󠀩    ◆ 启用传送门 󠀨占点地图󠀩 ◆ 순간이동 활성화 󠀨쟁탈 맵󠀩"), True, 4) == True;
     }
     actions {
         "wait(LoadOrder.portal) # overwrite pasta"
@@ -3027,10 +3016,6 @@ rule ("Addon | Preset Control Map Portal - Toggle Via Workshop Settings") {
             Set Global Variable(PortalNames, String Split(Custom String("Gardens0City Center0University0City Center0Gardens0University"), First Of(Null)));
             Set Global Variable(PortalLoc, Array(Vector(-211.137, 20, -5.084), Vector(-211.346, 20, 5.029), Vector(143.061, 8.377, -245.04), Vector(139.333, 8.377, -249.964), Vector(157.297, 12.522, 255.759), Vector(151.452, 12.522, 261.099)));
             Set Global Variable(PortalDest, Array(Vector(134.366, 7.829, -240.53), Vector(158.27, 11.814, 262.272), Vector(-206.269, 19.292, 0.103), Vector(158.283, 11.814, 262.283), Vector(134.318, 7.829, -240.667), Vector(-206.269, 19.292, 0.103)));
-        Else If(Compare(Current Map, ==, Map(Antarctic Peninsula)));
-            Set Global Variable(PortalNames, String Split(Custom String("Labs0Icebreaker0Sublevel0Icebreaker0Labs0Sublevel"), First Of(Null)));
-            Set Global Variable(PortalLoc, Array(Vector(280.66, -12.15, -223.65), Vector(273.27, 42.74, 198.15), Vector(266.58, 42.74, 198.17), Vector(-58.29, -154, 63.03), Vector(-58.36, -154, 56.47), Vector(287.08, -12.15, -223.59)));
-            Set Global Variable(PortalDest, Array(Vector(270, 42.7, 190.44), Vector(284.07, -12.75, -216.15), Vector(-53.51, -154.5, 60.08), Vector(284.07, -12.75, -216.15), Vector(270, 42.7, 190.44), Vector(-53.51, -154.5, 60.08)));
         Else If(Compare(Current Map, ==, Map(Samoa)));
             Set Global Variable(PortalNames, String Split(Custom String("Beach0Volcano0Downtown0Volcano0Beach0Downtown"), First Of(Null)));
             Set Global Variable(PortalLoc, Array(Vector(231.98, 7.23, -262.84), Vector(236.78, 7.23, -262.75), Vector(-327.59, 3.6, -108.69), Vector(-332.71, 3.6, -108.59), Vector(25.4, 341, 354.38), Vector(30, 341, 354.34)));
@@ -3087,53 +3072,6 @@ rule ("Addon | Caching Jump & Crouch Inputs For Spectators") {
     }
 }
 
-rule ("Addon | SUB Basic Map Validator") {
-    event {
-        Subroutine;
-        AddonCheckMap;
-    }
-    actions {
-        Abort If(Compare(Count Of(Global.A), <=, 1));
-        Create Dummy Bot(Hero(Ana), If-Then-Else(Compare(Number Of Slots(Team 1), <, Number Of Slots(Team 2)), Team 1, Team 2), -1, First Of(Global.A), Null);
-        Set Global Variable(MsDestructo, Last Created Entity);
-        Disable Movement Collision With Environment(Global.MsDestructo, False);
-        Set Status(Global.MsDestructo, Null, Phased Out, 999999999999);
-        Set Invisible(Global.MsDestructo, All);
-        Start Scaling Player(Global.MsDestructo, 3.111111111111110, False);
-        Set Gravity(Global.MsDestructo, 999999999999);
-        "Not infinity incase dummy does not spawn"
-        Wait Until(Has Spawned(Global.MsDestructo), 16);
-        For Player Variable(Global.MsDestructo, checkpoint_current, 1, Count Of(Global.A), True);
-            If(And(First Of(Nearest Walkable Position(Value In Array(Global.A, (Global.MsDestructo).checkpoint_current))), Compare(Distance Between(Value In Array(Global.A, (Global.MsDestructo).checkpoint_current), Nearest Walkable Position(Value In Array(Global.A, (Global.MsDestructo).checkpoint_current))), >, 1.4)));
-                Start Forcing Player Position(Global.MsDestructo, Ray Cast Hit Position(Add(Value In Array(Global.A, (Global.MsDestructo).checkpoint_current), Multiply(1.4, Up)), Add(Value In Array(Global.A, (Global.MsDestructo).checkpoint_current), Multiply(-1.4, Up)), Empty Array, Empty Array, False), True);
-                Wait(0.112, Ignore Condition);
-                Stop Forcing Player Position(Global.MsDestructo);
-                Wait Until(Is On Ground(Global.MsDestructo), True);
-                Skip If(And(Is On Ground(Global.MsDestructo), Compare(Distance Between(Global.MsDestructo, Value In Array(Global.A, (Global.MsDestructo).checkpoint_current)), <=, 1.4)), 11);
-                For Player Variable(Global.MsDestructo, checkpoint_practice, 1.4, 1.2, -0.2);
-                    Start Forcing Player Position(Global.MsDestructo, Add(Value In Array(Global.A, (Global.MsDestructo).checkpoint_current), Multiply(Up, (Global.MsDestructo).checkpoint_practice)), True);
-                    Wait(0.112, Ignore Condition);
-                    Stop Forcing Player Position(Global.MsDestructo);
-                    Wait Until(Is On Ground(Global.MsDestructo), True);
-                    Skip If(And(Is On Ground(Global.MsDestructo), Compare(Distance Between(Global.MsDestructo, Value In Array(Global.A, (Global.MsDestructo).checkpoint_current)), <=, 1.4)), 5);
-                End;
-                Enable Inspector Recording;
-                Log To Inspector(Custom String("Fail {0}", (Global.MsDestructo).checkpoint_current));
-                Disable Inspector Recording;
-            End;
-            //lbl_MapChecker_nextCp:
-        End;
-        Set Player Variable(Global.MsDestructo, editor_saveCache, Global.EditorOn);
-        Set Global Variable(EditorOn, Null);
-        Enable Inspector Recording;
-        Log To Inspector(Custom String("◆ Map Check Complete ◆"));
-        Disable Inspector Recording;
-        Set Global Variable(EditorOn, (Global.MsDestructo).editor_saveCache);
-        Destroy Dummy Bot(Team Of(Global.MsDestructo), Slot Of(Global.MsDestructo));
-        Set Global Variable(MsDestructo, Null);
-    }
-}
-
 rule ("Addon | SUB 3rd Person Camera") {
     event {
         Subroutine;
@@ -3145,6 +3083,12 @@ rule ("Addon | SUB 3rd Person Camera") {
         Else;
             Stop Camera(Event Player);
         End;
+    }
+}
+
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+    event {
+        Ongoing - Global;
     }
 }
 
@@ -3295,11 +3239,12 @@ rule ("Addon | Comp Mode Instruction Message - 竞赛模式指引消息 <---- IN
         Ongoing - Global;
     }
     actions {
-        Wait(0.4, Ignore Condition);
         "Instructions that show when you start comp mode.\\nDue to the hud text limit, you there is 4 huds available.\\nIf you dont need a field just empty the textfield."
-        Abort;
+        Wait(0.4, Ignore Condition);
+        //Optimize for size disabled
         "竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
-        Set Global Variable(instructiontext, String Split(Custom String("Change Comp Mode Instruction Message Hud 10Change Comp Mode Instruction Message Hud 20Change Comp Mode Instruction Message Hu{0}", Custom String("d 30Change Comp Mode Instruction Message Hud 4")), First Of(Null)));
+        Set Global Variable(instructiontext, Array(Custom String("Change Comp Mode Instruction Message Hud 1"), Custom String("Change Comp Mode Instruction Message Hud 2"), Custom String("Change Comp Mode Instruction Message Hud 3"), Custom String("Change Comp Mode Instruction Message Hud 4")));
+        //Optimizations enabled
     }
 }
 
@@ -3324,8 +3269,10 @@ disabled rule ("Addon | Title Data - 标题数据 <---- EDIT ME / 在此处编�
         Wait(0.64, Ignore Condition);
         "checkpoint number\\n每关数量"
         Set Global Variable At Index(TitleData, False, Array(Null, 10, 20, 30, 40, 50));
+        //Optimize for size disabled
         "title\\n标题文本"
-        Set Global Variable At Index(TitleData, True, String Split(Custom String("Bunny0Jumper0Ninja0Pro0Expert0Master"), First Of(Null)));
+        Set Global Variable At Index(TitleData, 1, Array(Custom String("Bunny"), Custom String("Jumper"), Custom String("Ninja"), Custom String("Pro"), Custom String("Expert"), Custom String("Master")));
+        //Optimizations enabled
         "color\\n颜色"
         Set Global Variable At Index(TitleData, 2, Array(Color(Lime Green), Color(White), Color(Yellow), Color(Orange), Color(Purple), Color(Red)));
     }
@@ -3371,8 +3318,10 @@ disabled rule ("Addon | HUD Text For Certain Checkpoints - 特定关卡显示的
     actions {
         "the example fill shows a text for cp 1 and cp 3\\n示例已填写 关卡1和3 的hud文本"
         Wait(0.64, Ignore Condition);
+        //Optimize for size disabled
         "in CpHudText fill in text\\n修改字符串 “CpHudText” 为顶部显示 的hud文本"
-        Set Global Variable(CpHudText, String Split(Custom String("Text CP 10Text CP 3"), First Of(Null)));
+        Set Global Variable(CpHudText, Array(Custom String("Text CP 1"), Custom String("Text CP 3")));
+        //Optimizations enabled
         "in CpHudCp fill in the at wich to display\\n修改数组 “CpHudCp” 为hud文本 显示的关卡"
         Set Global Variable(CpHudCp, Array(1, 3));
     }
@@ -3385,12 +3334,14 @@ disabled rule ("Addon | In-World Text For Certain Checkpoints - 特定关卡显�
     actions {
         "the example fill shows a text for cp 1 and cp 3\\n示例已填写 关卡1和3 的地图文本"
         Wait(0.64, Ignore Condition);
+        //Optimize for size disabled
         "in CpIwtText fill in text\\n修改字符串 “CpIwtText” 为关卡显示 的地图文本"
-        Set Global Variable(CpIwtText, String Split(Custom String("Text CP 10Text CP 3"), First Of(Null)));
+        Set Global Variable(CpIwtText, Array(Custom String("Text CP 1"), Custom String("Text CP 3")));
+        //Optimizations enabled
         "in CpIwtCp fill in cp at wich to display\\n修改数组 “CpIwtCp” 为显示地图 文本的关卡"
         Set Global Variable(CpIwtCp, Array(1, 3));
         "in CpIwtPos fill in the vector\\n修改数组 “CpIwtPos” 为地图文本 的矢量位置"
-        Set Global Variable(CpIwtPos, Array(Vector(True, True, True), Vector(True, True, True)));
+        Set Global Variable(CpIwtPos, Array(Vector(1, 1, 1), Vector(1, 1, 1)));
         "color applies to all\\n选择应用到 所有地图文 本的颜色"
         Set Global Variable(CpIwtColor, Color(Lime Green));
     }
@@ -3403,8 +3354,10 @@ disabled rule ("Addon | Hint Text For Certain Checkpoints - 特定关卡的提�
     actions {
         "the example fill shows a text for cp 1 and cp 3\\n示例已填写 关卡1和3 的提示文本"
         Wait(0.64, Ignore Condition);
+        //Optimize for size disabled
         "in HintText fill in text\\n修改字符串 “HintText” 为关卡显示 的提示文本"
-        Set Global Variable(HintText, String Split(Custom String("text cp 10text cp 3"), First Of(Null)));
+        Set Global Variable(HintText, Array(Custom String("Text CP 1"), Custom String("Text CP 3")));
+        //Optimizations enabled
         "in HintCp fill in the at wich to display\\n修改数组 “HintCp” 为提示文本 显示的关卡"
         Set Global Variable(HintCp, Array(1, 3));
     }
