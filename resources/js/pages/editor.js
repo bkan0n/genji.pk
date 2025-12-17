@@ -57,6 +57,7 @@ const dockControls = document.getElementById('dockControls');
 const dockData = document.getElementById('dockData');
 const dockMode = document.getElementById('dockMode');
 const dockShortcuts = document.getElementById('dockShortcuts');
+const dockQuickbar = document.getElementById('dockQuickbar');
 const dockPerf = document.getElementById('dockPerf');
 const dockMove = document.getElementById('dockMove');
 const dockMoveLabel = document.getElementById('dockMoveLabel');
@@ -1087,6 +1088,7 @@ function syncDockUi() {
   dockControls?.classList.toggle(onCls, !!HUD_STATE.right);
   dockData?.classList.toggle(onCls, !!HUD_STATE.left);
   dockMode?.classList.toggle(onCls, !!HUD_STATE.top);
+  dockQuickbar?.classList.toggle(onCls, !!HUD_STATE.quickbar);
   dockShortcuts?.classList.toggle(onCls, !!HUD_STATE.hotkeys);
   dockPerf?.classList.toggle(onCls, !!PERF_VISIBLE);
 }
@@ -1124,6 +1126,7 @@ function toggleQuickbar(force) {
   HUD_STATE.quickbar = (typeof force === 'boolean') ? force : !HUD_STATE.quickbar;
   syncQuickbarVisibility();
   saveHudState();
+  syncDockUi();
 }
 
 loadHudState();
@@ -1157,8 +1160,10 @@ function syncFullscreenUi() {
 
 btnFullscreen?.addEventListener('click', () => toggleFullscreen());
 document.addEventListener('fullscreenchange', () => {
+  if (isFullscreen()) {
+    toggleQuickbar(true);
+  }
   syncFullscreenUi();
-  // force a resize so Three updates correctly
   setTimeout(() => resize(), 0);
 });
 
@@ -1251,6 +1256,7 @@ dockMode?.addEventListener('click', () => toggleHudBlock(hudTopPanel, 'top'));
 dockMove?.addEventListener('click', () => toggleMoveMode());
 dockShortcuts?.addEventListener('click', () => toggleHudBlock(hudHotkeys, 'hotkeys'));
 dockPerf?.addEventListener('click', () => { setPerfVisible(!PERF_VISIBLE); HUD_STATE.perf = !!PERF_VISIBLE; saveHudState(); syncDockUi(); });
+dockQuickbar?.addEventListener('click', () => toggleQuickbar());
 
 // Quickbar (shown in fullscreen)
 hudQAdd?.addEventListener('click', () => toggleAddMode());
@@ -2673,7 +2679,7 @@ function consumeKey(e) {
     'Digit1', 'Digit2', 'Digit3', 'Digit4',
     'Digit5', 'Digit6', 'Digit7', 'Digit8',
     'F6', 'F7', 'F8', 'F9',
-    'F1','F2','F3','F4',
+    'F1','F2','F3','F4', 'F5',
     'KeyH','KeyG','KeyQ',
     'ArrowLeft', 'ArrowRight',
   ]);
@@ -2893,7 +2899,7 @@ window.addEventListener('keyup', (e) => {
 
   if (e.code === 'F1') { toggleHudBlock(hudRightPanel, 'right'); return; }
   if (e.code === 'F2') { toggleHudBlock(hudLeftPanel, 'left'); return; }
-  if (e.code === 'F7') { toggleQuickbar(); return; }
+  if (e.code === 'F5') { toggleQuickbar(); return; }
   if (e.code === 'F4') { toggleHudBlock(hudTopPanel, 'top'); return; }
   if (e.code === 'KeyH') { toggleHudBlock(hudHotkeys, 'hotkeys'); return; }
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {

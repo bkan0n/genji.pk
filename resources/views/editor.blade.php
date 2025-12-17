@@ -305,6 +305,10 @@
           <button id="dockMode" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Mode HUD (F4)">
             MODE <span class="text-white/40 font-semibold">(F4)</span>
           </button>
+          <button id="dockQuickbar" type="button"
+            class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Quickbar (F5)">
+            QBAR <span class="text-white/40 font-semibold">(F5)</span>
+          </button>
           <button id="dockShortcuts" type="button" class="rounded-xl border border-white/10 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10" title="Toggle Shortcuts (H)">
             KEYS <span class="text-white/40 font-semibold">(H)</span>
           </button>
