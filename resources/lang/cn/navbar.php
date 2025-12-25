@@ -24,7 +24,7 @@ return [
     'statistics' => '社区状态',
     'submit' => '提交',
     'submit_record' => '上传通关记录',
-    'submit_playtest' => '上传地图测试',
+    'submit_playtest' => '进行测试地图投票',
     'submit_map' => '上传地图',
     'infos' => '更多信息',
 
