@@ -70,6 +70,7 @@ return [
                 'https://mdbootstrap.com',
                 'https://bkan0n.com',
                 'https://cdn.bkan0n.com',
+                'https://cdn.genji.pk'
             ],
         ],
 
