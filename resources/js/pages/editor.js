@@ -12,6 +12,7 @@ const ORB_RADIUS = 0.5;
 const EXPOSURE_NO_GLB_LIGHTS = 0.2;
 const EXPOSURE_GLB_LIGHTS    = 0.2;
 const DBG_LOAD_TRAVERSE = false;
+let PORTAL_PARTICLE_COUNT = 120;
 
 /* ============================================================================
   DOM
@@ -62,26 +63,31 @@ const dockPerf = document.getElementById('dockPerf');
 const dockMove = document.getElementById('dockMove');
 const dockMoveLabel = document.getElementById('dockMoveLabel');
 
+const hudModeTabs = document.getElementById('hudModeTabs');
 const hudQuickbar = document.getElementById('hudQuickbar');
-const hudQAdd = document.getElementById('hudQAdd');
+
+const hudQAdd = document.getElementById('hudQAdd') || document.getElementById('qAdd');
 const hudQSnap = document.getElementById('hudQSnap');
+
 const hudQViewAll = document.getElementById('hudQViewAll');
 const hudQViewOnly = document.getElementById('hudQViewOnly');
+const hudQView = document.getElementById('hudQView') || document.getElementById('qView');
+
 const hudQCpPrev = document.getElementById('hudQCpPrev');
 const hudQCheckpointSelect = document.getElementById('hudQCheckpointSelect');
 const hudQCpNext = document.getElementById('hudQCpNext');
 const hudQHide = document.getElementById('hudQHide');
 
-// Secondary camera move mode (default: current plane movement)
-let hudQMove = null;
+const btnGo = document.getElementById('btnGo');
+const perfPreset = document.getElementById('perfPreset');
+const bootOverlay = document.getElementById('bootOverlay');
+
+let hudQMove = document.getElementById('hudQMove') || null;
 
 function getMoveModeLabel(mode) {
   return mode === 'look' ? 'LOOK' : 'PLANE';
 }
 
-// Movement mode:
-// - 'plane' (default): forward/strafe on XZ plane + Space/Ctrl for vertical
-// - 'look' : forward/back follows camera look direction (includes pitch)
 const MOVE_MODE_KEY = 'gp_editor_move_mode_v1';
 let MOVE_MODE = 'look';
 
@@ -102,7 +108,6 @@ function syncMoveModeUi() {
     dockMove.classList.toggle('bg-white/10', MOVE_MODE === 'look');
   }
   if (hudQMove) hudQMove.textContent = `MOVE: ${getMoveModeLabel(MOVE_MODE)}`;
-  // Hotkeys panel includes the move mode label, so refresh it as well
   try { updateHudHelp(); } catch (_) {}
 }
 
@@ -115,23 +120,28 @@ function toggleMoveMode() {
 loadMoveMode();
 
 function ensureQuickbarMoveBtn() {
-  if (!hudQuickbar || hudQMove) return;
+  if (!hudQuickbar) return;
 
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.id = 'hudQMove';
-  btn.className = 'px-3 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white/90 text-xs tracking-wide';
-  btn.title = 'Toggle camera move mode (F3)';
+  if (!hudQMove) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'hudQMove';
+    btn.className = 'rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-extrabold text-white/85 hover:bg-white/10';
+    btn.title = 'Toggle camera move mode (F3)';
 
-  // insert before the hide button if possible
-  if (hudQHide?.parentElement === hudQuickbar) {
-    hudQuickbar.insertBefore(btn, hudQHide);
-  } else {
-    hudQuickbar.appendChild(btn);
+    if (hudQHide?.parentElement === hudQuickbar) {
+      hudQuickbar.insertBefore(btn, hudQHide);
+    } else {
+      hudQuickbar.appendChild(btn);
+    }
+
+    hudQMove = btn;
   }
 
-  btn.addEventListener('click', () => toggleMoveMode());
-  hudQMove = btn;
+  if (!hudQMove.dataset._bound) {
+    hudQMove.addEventListener('click', () => toggleMoveMode());
+    hudQMove.dataset._bound = '1';
+  }
 
   syncMoveModeUi();
 }
@@ -191,17 +201,6 @@ function findMap(cfg, id) {
   return (cfg.maps || []).find(m => m.id === id) || null;
 }
 
-function populateMapSelect(cfg) {
-  if (!mapSelect) return;
-  mapSelect.innerHTML = cfg.maps
-    .map(m => `<option value="${m.id}">${m.label || m.id}</option>`)
-    .join('');
-}
-
-function clearGroup(group) {
-  while (group.children.length) group.remove(group.children[0]);
-}
-
 // (optional) avoid GPU leaks when removing objects
 function disposeObject3D(root) {
   root?.traverse?.((o) => {
@@ -213,6 +212,285 @@ function disposeObject3D(root) {
     tex?.dispose?.();
   });
 }
+
+/* ============================================================================
+  Dropdowns
+============================================================================ */
+const DROPDOWNS = new Set();
+
+function registerDropdown(getState) {
+  if (typeof getState === 'function') DROPDOWNS.add(getState);
+}
+
+function closeAllDropdownsExcept(exceptMenu) {
+  DROPDOWNS.forEach(getState => {
+    const st = getState();
+    if (!st?.menu || st.menu === exceptMenu) return;
+    if (st.isOpen?.()) st.close?.();
+  });
+}
+
+function rebuildMenuFromSelect(selectEl, menuEl) {
+  if (!selectEl || !menuEl) return;
+
+  menuEl.innerHTML = Array.from(selectEl.options).map(o => {
+    const val = o.value ?? '';
+    const label = (o.textContent || '').trim();
+    return `
+      <li>
+        <button type="button"
+          class="dd-opt flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/10"
+          data-value="${String(val).replaceAll('"','&quot;')}"
+        >${label}</button>
+      </li>
+    `;
+  }).join('');
+}
+
+function populateMapSelect(cfg) {
+  if (!mapSelect) return;
+
+  mapSelect.innerHTML = (cfg.maps || [])
+    .map(m => `<option value="${m.id}">${m.label || m.id}</option>`)
+    .join('');
+
+  const mapDdMenu  = document.getElementById('mapDdMenu');
+  const mapDdLabel = document.getElementById('mapDdLabel');
+
+  if (mapDdMenu) rebuildMenuFromSelect(mapSelect, document.getElementById('mapDdMenu'));
+  if (mapDdLabel) {
+    const cur = mapSelect.options[mapSelect.selectedIndex];
+    mapDdLabel.textContent = (cur?.textContent || 'Select a map').trim();
+  }
+}
+
+function portalMenuToBody(menuEl) {
+  if (!menuEl) return;
+  if (menuEl.dataset._portaled === '1') return;
+  menuEl.dataset._portaled = '1';
+  document.body.appendChild(menuEl);
+}
+
+function initLangLikeDropdown(ddBtn, ddMenu, { onPick } = {}) {
+  if (!ddBtn || !ddMenu) return;
+
+  if (ddBtn.dataset._ddInit === '1') return;
+  ddBtn.dataset._ddInit = '1';
+
+  const OPEN_CLASSES_REMOVE = ['invisible','opacity-0','translate-y-1','pointer-events-none'];
+  const OPEN_CLASSES_ADD    = ['opacity-100','translate-y-0','pointer-events-auto'];
+
+  function isOpen() {
+    return !ddMenu.classList.contains('invisible');
+  }
+
+  function placeMenu() {
+    portalMenuToBody(ddMenu);
+
+    const r = ddBtn.getBoundingClientRect();
+    const menuW = ddMenu.offsetWidth || 192;
+    const menuH = ddMenu.offsetHeight || 200;
+
+    let left = r.right - menuW;
+    left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
+
+    let top = r.bottom + 8;
+    if (top + menuH > window.innerHeight - 8) top = r.top - menuH - 8;
+
+    ddMenu.style.left = `${left}px`;
+    ddMenu.style.top  = `${top}px`;
+  }
+
+  function openMenu() {
+    closeAllDropdownsExcept(ddMenu);
+    placeMenu();
+    OPEN_CLASSES_REMOVE.forEach(c => ddMenu.classList.remove(c));
+    OPEN_CLASSES_ADD.forEach(c => ddMenu.classList.add(c));
+    ddBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    OPEN_CLASSES_ADD.forEach(c => ddMenu.classList.remove(c));
+    OPEN_CLASSES_REMOVE.forEach(c => ddMenu.classList.add(c));
+    ddBtn.setAttribute('aria-expanded', 'false');
+  }
+  registerDropdown(() => ({ btn: ddBtn, menu: ddMenu, close: closeMenu, isOpen }));
+
+  ddBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isOpen()) closeMenu();
+    else openMenu();
+  });
+
+  ddMenu.addEventListener('click', (e) => {
+    const opt = e.target.closest('.dd-opt');
+    if (!opt) return;
+    e.preventDefault();
+    onPick?.(opt);
+    closeMenu();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!isOpen()) return;
+    if (ddMenu.contains(e.target) || ddBtn.contains(e.target)) return;
+    closeMenu();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) closeMenu();
+  });
+
+  window.addEventListener('resize', () => {
+    if (isOpen()) placeMenu();
+  }, { passive: true });
+
+  window.addEventListener('scroll', () => {
+    if (isOpen()) closeMenu();
+  }, { passive: true });
+}
+
+function initLangLikeSelectDropdown({ btn, menu, label, select }) {
+  if (!btn || !menu || !label || !select) return;
+
+  const syncLabel = () => {
+    const cur = select.options[select.selectedIndex];
+    if (cur) label.textContent = (cur.textContent || '').trim();
+  };
+  syncLabel();
+
+  initLangLikeDropdown(btn, menu, {
+    onPick: (opt) => {
+      const v = opt.dataset.value;
+      if (v == null) return;
+
+      select.value = v;
+      label.textContent = opt.textContent.trim();
+
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    },
+  });
+
+  select.addEventListener('change', syncLabel);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ─────────────────────────────────────────────────────────────
+  // LANG
+  // ─────────────────────────────────────────────────────────────
+  {
+    const ddBtn  = document.getElementById('langDdBtn');
+    const ddMenu = document.getElementById('langDdMenu');
+
+    if (ddBtn && ddMenu) {
+
+      const OPEN_CLASSES_REMOVE = ['invisible','opacity-0','translate-y-1','pointer-events-none'];
+      const OPEN_CLASSES_ADD    = ['opacity-100','translate-y-0','pointer-events-auto'];
+
+      const isOpen = () => !ddMenu.classList.contains('invisible');
+
+      const placeMenu = () => {
+        const r = ddBtn.getBoundingClientRect();
+        const menuW = ddMenu.offsetWidth || 192;
+        const menuH = ddMenu.offsetHeight || 200;
+
+        let left = r.right - menuW;
+        left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
+
+        let top = r.bottom + 8;
+        if (top + menuH > window.innerHeight - 8) top = r.top - menuH - 8;
+
+        ddMenu.style.left = `${left}px`;
+        ddMenu.style.top  = `${top}px`;
+      };
+
+      const openMenu = () => {
+        placeMenu();
+        OPEN_CLASSES_REMOVE.forEach(c => ddMenu.classList.remove(c));
+        OPEN_CLASSES_ADD.forEach(c => ddMenu.classList.add(c));
+        ddBtn.setAttribute('aria-expanded', 'true');
+      };
+
+      const closeMenu = () => {
+        OPEN_CLASSES_ADD.forEach(c => ddMenu.classList.remove(c));
+        OPEN_CLASSES_REMOVE.forEach(c => ddMenu.classList.add(c));
+        ddBtn.setAttribute('aria-expanded', 'false');
+      };
+
+      ddBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen()) closeMenu();
+        else openMenu();
+      });
+
+      ddMenu.querySelectorAll('.dd-opt').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.preventDefault();
+          const flag  = opt.dataset.flag;
+          const label = opt.querySelector('span')?.textContent?.trim() || 'English';
+
+          ddBtn.querySelector('i').className = `flag ${flag}`;
+          ddBtn.querySelector('[data-label]').textContent = label;
+
+          const code = opt.dataset.code || 'en-US';
+          localStorage.setItem('editorFrameworkLang', code);
+          document.documentElement.lang = code;
+
+          closeMenu();
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!isOpen()) return;
+        if (ddMenu.contains(e.target) || ddBtn.contains(e.target)) return;
+        closeMenu();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen()) closeMenu();
+      });
+
+      window.addEventListener('resize', () => {
+        if (isOpen()) placeMenu();
+      }, { passive: true });
+
+      window.addEventListener('scroll', () => {
+        if (isOpen()) closeMenu();
+      }, { passive: true });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // MAP + PERF
+  // ─────────────────────────────────────────────────────────────
+  {
+    const mapDdBtn   = document.getElementById('mapDdBtn');
+    const mapDdMenu  = document.getElementById('mapDdMenu');
+    const mapDdLabel = document.getElementById('mapDdLabel');
+    const mapSelectEl = document.getElementById('mapSelect');
+
+    const perfDdBtn   = document.getElementById('perfDdBtn');
+    const perfDdMenu  = document.getElementById('perfDdMenu');
+    const perfDdLabel = document.getElementById('perfDdLabel');
+    const perfPresetEl = document.getElementById('perfPreset');
+
+    initLangLikeSelectDropdown({
+      btn: mapDdBtn,
+      menu: mapDdMenu,
+      label: mapDdLabel,
+      select: mapSelectEl,
+    });
+
+    initLangLikeSelectDropdown({
+      btn: perfDdBtn,
+      menu: perfDdMenu,
+      label: perfDdLabel,
+      select: perfPresetEl,
+    });
+  }
+});
 
 /* ============================================================================
   Maps.json (map name + variant id) for export
@@ -520,7 +798,6 @@ if ('toneMapping' in renderer) {
 
 renderer.domElement.style.touchAction = 'none';
 renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
-renderer.domElement.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
 
 if ('physicallyCorrectLights' in renderer) renderer.physicallyCorrectLights = true;
 if ('useLegacyLights' in renderer) renderer.useLegacyLights = false;
@@ -540,6 +817,36 @@ scene.environment = DEFAULT_ENV;
 // Camera
 const camera = new THREE.PerspectiveCamera(55, 2, 0.1, 500000);
 camera.position.set(0, 220, 420);
+
+/* ============================================================================
+  Boot
+============================================================================ */
+const PERF_PRESET_KEY = 'gp_editor_perf_preset_v1';
+let PERF_PRESET = 'balanced'; // 'performance' | 'balanced' | 'quality'
+
+function loadPerfPreset() {
+  const v = (localStorage.getItem(PERF_PRESET_KEY) || '').toLowerCase();
+  if (v === 'performance' || v === 'balanced' || v === 'quality') PERF_PRESET = v;
+}
+function savePerfPreset(v) {
+  PERF_PRESET = v;
+  localStorage.setItem(PERF_PRESET_KEY, v);
+}
+function applyPerformancePreset(v = PERF_PRESET) {
+  PERF_PRESET = v;
+
+  // FX density for portal end particles
+  PORTAL_PARTICLE_COUNT = (v === 'performance') ? 70 : (v === 'quality') ? 160 : 120;
+
+  // Resolution scaling
+  const dpr = window.devicePixelRatio || 1;
+  const cap = (v === 'performance') ? 0.75 : (v === 'quality') ? 1.5 : 1.0;
+  renderer.setPixelRatio(Math.min(dpr, cap));
+
+  resize();
+}
+
+loadPerfPreset();
 
 /* ============================================================================
   Loading Overlay
@@ -707,6 +1014,45 @@ function hideLoadOverlay(token) {
   ui.wrap.style.display = 'none';
 }
 
+function syncModeTabsUi() {
+  if (!hudModeTabs) return;
+  const cur = getMode().id;
+
+  hudModeTabs.querySelectorAll('[data-mode]').forEach((btn) => {
+    const on = btn.dataset.mode === cur;
+    btn.classList.toggle('bg-white/10', on);
+    btn.classList.toggle('text-white', on);
+    btn.classList.toggle('text-white/70', !on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+function setupModeTabsUi() {
+  if (!hudModeTabs) return;
+
+  hudModeTabs.querySelectorAll('[data-mode]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.mode;
+      const idx = MODES.findIndex((m) => m.id === id);
+      if (idx >= 0) setMode(idx);
+    });
+  });
+
+  syncModeTabsUi();
+}
+
+function setupPanelChevrons() {
+  document.querySelectorAll('[data-hud-toggle]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = btn.dataset.hudToggle;
+      const key = btn.dataset.hudKey || null;
+      const el = document.getElementById(targetId);
+      toggleHudBlock(el, key);
+    });
+  });
+}
+
 // ============================================================================
 // Workshop <-> Editor (GLB) coordinate mapping
 // ============================================================================
@@ -723,11 +1069,14 @@ function editorToWs(vEd) {
 // This returns the "true" base position (Editor space) used for Workshop conversion.
 function getMarkerBaseEditorPos(marker, ent) {
   const p = marker.position.clone();
-
-  if (ent?.type === 'checkpoints' && marker?.userData?._isCheckpointMarker) {
+  if (
+    ent?.type === 'checkpoints' &&
+    (marker?.userData?._isCheckpointMarker || marker?.userData?._isTeleportMarker)
+  ) {
     const liftY = marker.userData?._liftY;
     if (Number.isFinite(liftY)) p.y -= liftY;
   }
+
   return p;
 }
 /* ============================================================================
@@ -986,7 +1335,7 @@ function setMode(idx) {
 
   if (hudModeTitle) hudModeTitle.textContent = mode.label;
 
-  if (hudModeList) {
+  if (hudModeList && !hudModeTabs) {
     hudModeList.classList.remove('hidden');
     hudModeList.innerHTML = MODES.map((m, i) => {
       const active = i === modeIndex;
@@ -1000,7 +1349,11 @@ function setMode(idx) {
 
     clearTimeout(modeMenuTimer);
     modeMenuTimer = setTimeout(() => hudModeList.classList.add('hidden'), 1400);
+  } else if (hudModeList) {
+    hudModeList.classList.add('hidden');
   }
+
+  syncModeTabsUi();
 
   // clear selection if it's from another mode
   if (selected?.userData?.entity?.type && selected.userData.entity.type !== mode.id) {
@@ -1012,41 +1365,63 @@ function setMode(idx) {
 
 function updateHudHelp() {
   if (!hudHelpBody) return;
+
   const mode = getMode();
 
-  const base = [
-    `V · Speed`,
-    `Del · Delete Selected`,
-    `[ / ] · Selected item`,
-  ];
+  const section = (title) => `
+    <div class="mt-3 mb-1 text-[11px] uppercase tracking-[0.22em] text-white/35">${title}</div>
+  `;
+  const row = (k, v) => `
+    <div class="flex items-baseline justify-between gap-4 py-0.5">
+      <div class="min-w-[150px] text-white/85 font-semibold">${k}</div>
+      <div class="text-white/60 text-sm text-right">${v}</div>
+    </div>
+  `;
 
-  const extra = [];
+  const rows = [];
+  rows.push(section('Common'));
+  rows.push(row('F', 'Fullscreen'));
+  rows.push(row('V', 'Camera speed'));
+  rows.push(row('Del', 'Delete selected'));
+  rows.push(row('RMB (hold)', 'Mouse look'));
+  rows.push(row('F3', 'Movement mode'));
+
+  rows.push(section('Navigation'));
+  rows.push(row('Tab / Shift+Tab', 'Prev / next checkpoint'));
+  rows.push(row('PageUp / PageDown', 'Link CP (or change active CP)'));
+
   if (mode.id === 'checkpoints') {
-    extra.push(`LMB · Select a checkpoint`);
-    extra.push(`Add ON + LMB on map · Place checkpoint`);
-    extra.push(`G · Snap selected checkpoint to ground`);
-    extra.push(`T · Set teleport destination (click)`);
-    extra.push(`Shift+T · Clear teleport destination`);
+    rows.push(section('Checkpoints'));
+    rows.push(row(`Place ON + LMB`, 'Place'));
+    rows.push(row('LMB', 'Select'));
+    rows.push(row('G', 'Snap to ground'));
+    rows.push(row('T', 'Set teleport destination (click)'));
+    rows.push(row('Shift+T', 'Clear teleport'));
   } else if (mode.id === 'boundarySpheres') {
-    extra.push(`C / Shift+C · Radius +/-`);
-    extra.push(`Selection + [ / ] · Link to CP`);
+    rows.push(section('Boundary spheres'));
+    rows.push(row(`Place ON + LMB`, 'Place'));
+    rows.push(row('C / Shift+C', 'Radius ±0.1'));
+    rows.push(row('1', 'Toggle keep-out / stay-in'));
   } else if (mode.id === 'functionOrbs') {
-    extra.push(`C / Shift+C · Strength +/-`);
-    extra.push(`1 · Toggle Give Ult`);
-    extra.push(`2 · Toggle Give Dash`);
-    extra.push(`3 · Toggle Unlock Checkpoint`);
-    extra.push(`Selection + [ / ] · Link to CP`);
+    rows.push(section('Function orbs'));
+    rows.push(row(`Place ON + LMB`, 'Place'));
+    rows.push(row('C / Shift+C', 'Strength ±0.1'));
+    rows.push(row('1 / 2 / 3', 'Ult / Dash / Unlock-CP'));
   } else if (mode.id === 'portals') {
-    extra.push(`Add ON + LMB · Place start, then end`);
-    extra.push(`Selection + [ / ] · Link to CP`);
+    rows.push(section('Portals'));
+    rows.push(row(`Place ON + LMB`, 'Place start, then end'));
+    rows.push(row('J', 'Focus start/end'));
   } else if (mode.id === 'skillBans') {
-    extra.push(`1..8 · Toggle bans for active CP`);
+    rows.push(section('Skill bans'));
+    rows.push(row('0…7', 'Toggle ban (active CP)'));
   }
 
-  hudHelpBody.innerHTML = [...extra, '', ...base]
-    .filter(Boolean)
-    .map(line => `<div>${line.replace('·', '<span class="text-white/40">·</span>')}</div>`)
-    .join('');
+  rows.push(section('Movement'));
+  rows.push(row('W / A / S / D', 'Move'));
+  rows.push(row('Space / X', 'Up / Down'));
+  rows.push(row('Shift', 'Boost'));
+
+  hudHelpBody.innerHTML = rows.join('');
 }
 
 const HUD_STATE_KEY = 'gp_editor_hud_state_v2';
@@ -1218,6 +1593,42 @@ const SKILL_BANS = [
 let skillBansByCp = new Map();
 
 let collider = null;
+const _wheelRay = new THREE.Raycaster();
+const _wheelNdc = new THREE.Vector2(0, 0);
+const _wheelTmpA = new THREE.Vector3();
+const _wheelTmpB = new THREE.Vector3();
+
+function wheelZoomTowardLook(e) {
+  if (isTypingTarget(e.target)) return;
+  e.preventDefault();
+
+  // scroll up (deltaY < 0) -> zoom in
+  const dir = (e.deltaY < 0) ? 1 : -1;
+  const step = dir * 18 * speedMults[speedIdx];
+
+  if (collider) {
+    _wheelRay.setFromCamera(_wheelNdc, camera);
+    const hits = _wheelRay.intersectObject(collider, true);
+    if (hits.length) {
+      _wheelTmpA.copy(camera.position);
+      _wheelTmpB.copy(hits[0].point);
+      const v = _wheelTmpB.sub(_wheelTmpA);
+      const dist = v.length();
+      if (dist > 1e-3) {
+        v.multiplyScalar(1 / dist);
+        const maxStep = Math.max(0, dist - 2.0);
+        camera.position.addScaledVector(v, Math.sign(step) * Math.min(Math.abs(step), maxStep));
+        return;
+      }
+    }
+  }
+
+  camera.getWorldDirection(_wheelTmpB);
+  camera.position.addScaledVector(_wheelTmpB, step);
+}
+
+renderer.domElement.addEventListener('wheel', wheelZoomTowardLook, { passive: false });
+
 let addMode = false;
 
 const ADD_TOGGLE_CODE = 'KeyQ';
@@ -1259,6 +1670,7 @@ dockPerf?.addEventListener('click', () => { setPerfVisible(!PERF_VISIBLE); HUD_S
 dockQuickbar?.addEventListener('click', () => toggleQuickbar());
 
 // Quickbar (shown in fullscreen)
+hudQView?.addEventListener('click', () => setViewType(viewType === 'all' ? 'only' : 'all'));
 hudQAdd?.addEventListener('click', () => toggleAddMode());
 hudQSnap?.addEventListener('click', () => snapSelectedCheckpoint());
 hudQViewAll?.addEventListener('click', () => setViewType('all'));
@@ -1273,21 +1685,16 @@ hudQHide?.addEventListener('click', () => toggleQuickbar(false));
 
 function syncAddUi() {
   if (btnAdd) {
-    btnAdd.textContent = addMode ? `Add: ON (${ADD_KEY_LABEL})` : `Add: OFF (${ADD_KEY_LABEL})`;
-    btnAdd.classList.toggle('bg-emerald-500/20', addMode);
-    btnAdd.classList.toggle('border-emerald-400/30', addMode);
+    btnAdd.textContent = addMode ? `Place: ON (${ADD_KEY_LABEL})` : `Place: OFF (${ADD_KEY_LABEL})`;
+    btnAdd.classList.toggle('bg-white/10', addMode);
   }
   if (hudAddBadge) {
-    hudAddBadge.innerHTML = addMode
-      ? `ADD · ON <span class="text-white/45 font-semibold">(${ADD_KEY_LABEL})</span>`
-      : `ADD · OFF <span class="text-white/45 font-semibold">(${ADD_KEY_LABEL})</span>`;
-    hudAddBadge.classList.toggle('bg-emerald-500/20', addMode);
-    hudAddBadge.classList.toggle('border-emerald-400/30', addMode);
+    hudAddBadge.textContent = addMode ? 'PLACE ON' : 'PLACE OFF';
+    hudAddBadge.classList.toggle('bg-white/10', addMode);
   }
   if (hudQAdd) {
-    hudQAdd.textContent = addMode ? `ADD: ON (${ADD_KEY_LABEL})` : `ADD: OFF (${ADD_KEY_LABEL})`;
-    hudQAdd.classList.toggle('bg-emerald-500/20', addMode);
-    hudQAdd.classList.toggle('border-emerald-400/30', addMode);
+    hudQAdd.textContent = addMode ? 'PLACE: ON' : 'PLACE: OFF';
+    hudQAdd.classList.toggle('bg-white/10', addMode);
   }
 }
 
@@ -1371,7 +1778,10 @@ function updateHudCounters() {
 
   if (hudModeLevel) hudModeLevel.textContent = `LEVEL ${level} / ${maxIndex}`;
 
-  const used = countByType('functionOrbs') + countByType('portals');
+  const used =
+    countByType('functionOrbs') +
+    countByType('portals') +
+    countByType('boundarySpheres');
   if (hudOrbPortalLimit) hudOrbPortalLimit.textContent = `ORB/PORTAL LIMIT: ${used}/${ORB_PORTAL_MAX}`;
 }
 
@@ -1382,95 +1792,101 @@ function setBadge(text) {
 
 function updateHudData() {
   const mode = getMode();
-
   if (!hudDataTitle || !hudDataBody) return;
 
-  hudDataTitle.textContent = mode.id === 'checkpoints'
-    ? 'CHECKPOINT DATA'
-    : `${mode.label} DATA`;
+  hudDataTitle.textContent = (mode.id === 'checkpoints') ? 'CHECKPOINT DATA' : `${mode.label} DATA`;
+
+  const fmt = (n) => (Math.round(n * 100) / 100).toFixed(2);
+  const fmtWsVec = (arr) => `[${fmt(arr[0])}, ${fmt(arr[1])}, ${fmt(arr[2])}]`;
 
   if (!selected || !selectedData || selectedData.type !== mode.id) {
-    setBadge('NO DATA');
-    hudDataBody.innerHTML = `
-      <div class="text-white/90 font-semibold">NO DATA SELECTED</div>
-      <div class="mt-2 text-white/70 text-sm">
-        Mode: <b class="text-white/90">${mode.label}</b><br/>
-        Add: <b class="text-white/90">${addMode ? 'ON' : 'OFF'}</b><br/>
-        Tip: press <b class="text-white/90">E</b> to change mode.
-      </div>
-    `;
+    setBadge(mode.id === 'skillBans' ? 'SKILL BANS' : 'NO DATA');
 
     if (mode.id === 'skillBans') {
-      setBadge('SKILL BANS');
       const arr = ensureSkillBans(activeCheckpoint);
 
       hudDataBody.innerHTML = `
         <div class="text-white/90 font-semibold">ACTIVE CHECKPOINT</div>
         <div class="mt-1 text-white/75 text-sm">
-          CP: <b class="text-white/90">${activeCheckpoint}</b> &nbsp; <span class="text-white/50">(use [ / ])</span>
+          CP: <b class="text-white/90">${activeCheckpoint}</b>
+          &nbsp; <span class="text-white/45">(Tab / Shift+Tab)</span>
         </div>
 
         <div class="mt-3 space-y-1 text-sm">
           ${SKILL_BANS.map((s, i) => {
             const on = !!arr[i];
+            const key = i;
             return `
               <div class="flex items-center justify-between gap-3">
-                <span class="text-white/75"><b class="text-white/90">${i + 1}</b> · ${s.label}</span>
+                <span class="text-white/75"><b class="text-white/90">${key}</b> <span class="text-white/35">—</span> ${s.label}</span>
                 <span class="${on ? 'text-emerald-200' : 'text-orange-200'}">${on ? 'TRUE' : 'FALSE'}</span>
               </div>
-              <div class="text-[11px] text-white/40 -mt-1">${s.bind}</div>
             `;
           }).join('')}
         </div>
       `;
       return;
     }
+
+    hudDataBody.innerHTML = `
+      <div class="text-white/90 font-semibold">NO DATA SELECTED</div>
+      <div class="mt-2 text-white/70 text-sm">
+        Mode: <b class="text-white/90">${mode.label}</b><br/>
+        Place: <b class="text-white/90">${addMode ? 'ON' : 'OFF'}</b><br/>
+        Tip: press <b class="text-white/90">E</b> to change mode.
+      </div>
+    `;
     return;
   }
 
-  const fmt = (n) => (Math.round(n * 100) / 100).toFixed(2);
-  const fmtWsVec = (arr) => `[${fmt(arr[0])}, ${fmt(arr[1])}, ${fmt(arr[2])}]`;
-
+  // Selected in this mode
   if (mode.id === 'checkpoints') {
     setBadge('SELECTED CHECKPOINT');
-      const ws = selectedData.pos;
-      const tp = selectedData.tp;
+    const ws = selectedData.pos;
+    const tp = selectedData.tp;
 
-      hudDataBody.innerHTML = `
-        <div class="text-white/90 font-semibold">SELECTED CHECKPOINT</div>
-        <div class="mt-2 text-white/75 text-sm">
-          INDEX: <b class="text-white/90">${selectedData.index}</b><br/>
-          CP: <b class="text-white/90">${fmtWsVec(ws)}</b><br/>
-          TP: <b class="text-white/90">${tp ? fmtWsVec(tp) : 'None'}</b>
+    hudDataBody.innerHTML = `
+      <div class="text-white/90 font-semibold">CHECKPOINT</div>
+      <div class="mt-2 text-white/75 text-sm">
+        INDEX: <b class="text-white/90">${selectedData.index}</b><br/>
+        POS: <b class="text-white/90">${fmtWsVec(ws)}</b><br/>
+        TELEPORT: <b class="text-white/90">${tp ? fmtWsVec(tp) : 'None'}</b><br/>
+        <div class="mt-2 text-white/60">
+          Tab / Shift+Tab · prev/next &nbsp; | &nbsp; T · set TP &nbsp; | &nbsp; Shift+T · clear
         </div>
-      `;
+      </div>
+    `;
     return;
   }
 
   if (mode.id === 'boundarySpheres') {
-    setBadge('SELECTED BOUNDARY SPHERE');
+    setBadge('SELECTED BOUNDARY');
     const ws = selectedData.pos;
     const rSigned = Number(selectedData.radius ?? 5);
     const modeLabel = (rSigned < 0) ? 'STAY IN' : 'KEEP OUT';
     const rAbs = Math.abs(rSigned);
+
     hudDataBody.innerHTML = `
-      <div class="text-white/90 font-semibold">SELECTED BOUNDARY SPHERE</div>
+      <div class="text-white/90 font-semibold">BOUNDARY SPHERE</div>
       <div class="mt-2 text-white/75 text-sm">
         VECTOR: <b class="text-white/90">${fmtWsVec(ws)}</b><br/>
         RADIUS: <b class="text-white/90">${fmt(rAbs)}</b> <span class="text-white/60">(${modeLabel})</span><br/>
-        <span class="text-white/60">C / Shift+C · resize · (step 0.1)</span><br/>
-        <span class="text-white/60">1 · toggle KEEP OUT / STAY IN</span>
+        CP: <b class="text-white/90">${Number.isFinite(selectedData.cp) ? selectedData.cp : 0}</b><br/>
+        <div class="mt-2 text-white/60">
+          C / Shift+C · radius (±0.1) &nbsp; | &nbsp; 1 · toggle &nbsp; | &nbsp; PageUp/PageDown · link CP
+        </div>
       </div>
     `;
     return;
   }
 
   if (mode.id === 'functionOrbs') {
-    setBadge('SELECTED BOUNCE ORB');
+    setBadge('SELECTED ORB');
     const ws = selectedData.pos;
     const strength = selectedData.lock ? 0 : (selectedData.strength ?? 10);
+
     hudDataBody.innerHTML = `
-      <div class="text-white/90 font-semibold">SELECTED BOUNCE ORB</div>
+      <div class="text-white/90 font-semibold">FUNCTION ORB</div>
       <div class="mt-2 text-white/75 text-sm">
         VECTOR: <b class="text-white/90">${fmtWsVec(ws)}</b><br/>
         STRENGTH: <b class="text-white/90">${fmt(strength)}</b><br/>
@@ -1479,7 +1895,7 @@ function updateHudData() {
         GIVE DASH: <b class="text-white/90">${selectedData.dash ? 'TRUE' : 'FALSE'}</b> <span class="text-white/50">(2)</span><br/>
         UNLOCK CP: <b class="text-white/90">${selectedData.lock ? 'TRUE' : 'FALSE'}</b> <span class="text-white/50">(3)</span><br/>
         <div class="mt-2 text-white/60">
-          C / Shift+C · strength &nbsp; | &nbsp; [ / ] · link CP
+          C / Shift+C · strength (±0.1) &nbsp; | &nbsp; PageUp/PageDown · link CP
         </div>
       </div>
     `;
@@ -1488,16 +1904,21 @@ function updateHudData() {
 
   if (mode.id === 'portals') {
     setBadge('SELECTED PORTAL');
-    const s = selectedData.start; // Workshop coords
-    const e = selectedData.end;   // Workshop coords
+    const s = selectedData.start;
+    const e = selectedData.end;
+
     hudDataBody.innerHTML = `
       <div class="text-white/90 font-semibold">PORTAL</div>
       <div class="mt-2 text-white/75 text-sm">
         START: <b class="text-white/90">${fmtWsVec(s)}</b><br/>
         END: <b class="text-white/90">${fmtWsVec(e)}</b><br/>
-        CP: <b class="text-white/90">${selectedData.cp ?? 0}</b>
+        CP: <b class="text-white/90">${selectedData.cp ?? 0}</b><br/>
+        <div class="mt-2 text-white/60">
+          J · focus start/end
+        </div>
       </div>
     `;
+    return;
   }
 }
 
@@ -1535,6 +1956,10 @@ function updateViewButtons() {
   if (viewOnlyBtn) viewOnlyBtn.classList.toggle('bg-white/10', viewType === 'only');
   if (hudQViewAll) hudQViewAll.classList.toggle('bg-white/10', viewType === 'all');
   if (hudQViewOnly) hudQViewOnly.classList.toggle('bg-white/10', viewType === 'only');
+  if (hudQView) { 
+    hudQView.textContent = (viewType === 'all') ? 'VIEW: ALL' : 'VIEW: ONLY';
+    hudQView.classList.toggle('bg-white/10', viewType === 'only');
+  }
 }
 
 function updateCheckpointSelectUI() {
@@ -1569,28 +1994,41 @@ function updateCheckpointSelectUI() {
 }
 
 function applyViewVisibility() {
+  const selCp = (() => {
+    if (selectedData?.type === 'checkpoints') return selectedData.index | 0;
+    if (Number.isFinite(selectedData?.cp)) return selectedData.cp | 0;
+    return null;
+  })();
+
   for (const ent of entities) {
-    if (!ent?.marker) continue;
+    if (!ent.marker) continue;
 
-    let visible = true;
-    if (viewType === 'only' && ent.type !== 'checkpoints') {
-      visible = getEntCp(ent) === activeCheckpoint;
+    if (viewType === 'all') {
+      ent.marker.visible = true;
+      if (ent.type === 'checkpoints') {
+        if (ent.tpMarker) ent.tpMarker.visible = true;
+        if (ent.tpLine) ent.tpLine.visible = true;
+      }
+      continue;
     }
 
-    ent.marker.visible = visible;
-
-    if (ent.type === 'checkpoints' && ent.tpMarker) {
-      ent.tpMarker.visible = visible;
+    // viewType === 'only'
+    if (ent.type === 'checkpoints') {
+      const showCp = (ent.index === (activeCheckpoint | 0)) || (selCp !== null && ent.index === selCp);
+      ent.marker.visible = showCp;
+      if (ent.tpMarker) ent.tpMarker.visible = showCp;
+      if (ent.tpLine) ent.tpLine.visible = showCp;
+      continue;
     }
+
+    ent.marker.visible = (getEntCp(ent) === (activeCheckpoint | 0));
   }
 
-  // If current selection became hidden => deselect
-  if (selected && selected.userData?.entity) {
-    const ent = selected.userData.entity;
-    if (viewType === 'only' && ent.type !== 'checkpoints') {
-      if (getEntCp(ent) !== activeCheckpoint) setSelected(null, null);
-    }
+  if (selected && !selected.visible) {
+    setSelected(null, null);
   }
+
+  syncLinkVisibility();
 }
 
 function setViewType(t) {
@@ -1640,7 +2078,10 @@ function cycleSelectionByType(type, dir, portalPart = null) {
   if (selectedData?.type === type && Number.isFinite(selectedData.index)) {
     cur = list.findIndex(e => e.index === selectedData.index);
   }
-  if (cur < 0) cur = 0;
+  if (cur < 0) {
+    cur = (type === 'checkpoints') ? list.findIndex((e) => e.index === activeCheckpoint) : 0;
+    if (cur < 0) cur = 0;
+  }
 
   const next = list[(cur + dir + list.length) % list.length];
   if (!next?.marker) return;
@@ -2580,7 +3021,8 @@ const speedMults = [0.05, 0.1, 0.5, 1];
 let speedIdx = 1;
 
 function updateHudSpeed() {
-  if (hudSpeed) hudSpeed.textContent = `Speed: x${speedMults[speedIdx]}`;
+  if (!hudSpeed) return;
+  hudSpeed.textContent = `Camera speed: ${speedMults[speedIdx]}x`;
 }
 updateHudSpeed();
 
@@ -2669,21 +3111,25 @@ window.addEventListener('blur', () => {
 });
 
 function consumeKey(e) {
-  const codes = new Set([
-    'Space',
-    'ControlLeft', 'ControlRight',
-    'ShiftLeft', 'ShiftRight',
-    'KeyW', 'KeyA', 'KeyS', 'KeyD',
-    'KeyE', 'KeyV',
-    'KeyC', 'BracketLeft', 'BracketRight',
-    'Digit1', 'Digit2', 'Digit3', 'Digit4',
-    'Digit5', 'Digit6', 'Digit7', 'Digit8',
-    'F6', 'F7', 'F8', 'F9',
-    'F1','F2','F3','F4', 'F5',
-    'KeyH','KeyG','KeyQ',
+  if (isTypingTarget(e.target)) return false;
+
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyW') {
+    e.preventDefault();
+    e.stopPropagation();
+    return true;
+  }
+
+  const consumed = [
+    'KeyF', 'KeyV', 'Delete', 'Backspace',
+    'KeyE', 'KeyQ', 'KeyG', 'KeyT', 'KeyJ',
+    'Tab', 'PageUp', 'PageDown',
     'ArrowLeft', 'ArrowRight',
-  ]);
-  if (codes.has(e.code)) {
+    'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyX',
+    'KeyC',
+    'Digit0','Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7',
+  ];
+
+  if (consumed.includes(e.code)) {
     e.preventDefault();
     e.stopPropagation();
     return true;
@@ -2696,25 +3142,50 @@ window.addEventListener('keydown', (e) => {
   consumeKey(e);
 
   if (e.code === 'KeyE') { setMode(modeIndex + 1); return; }
-  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
-    const dir = (e.code === 'ArrowRight') ? +1 : -1;
-    const mid = getMode().id;
+  if (e.code === 'Tab' && !e.repeat) {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
 
-    // Checkpoints
-    if (mid === 'checkpoints') {
-      setActiveCheckpoint(activeCheckpoint + dir, { selectMarker: true });
+    const dir = e.shiftKey ? -1 : +1;
+    setActiveCheckpoint(activeCheckpoint + dir, { selectMarker: getMode().id === 'checkpoints' });
+    return;
+  }
+
+  if (e.code === 'F1' || e.code === 'F2' || e.code === 'F3' || e.code === 'F4' || e.code === 'F5' || e.code === 'F6' || e.code === 'F7' || e.code === 'F8') {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    return;
+  }
+
+  if ((e.code === 'PageUp' || e.code === 'PageDown') && !e.repeat) {
+    const dir = (e.code === 'PageDown') ? +1 : -1;
+
+    if (selectedData && selectedData.type !== 'checkpoints' && Number.isFinite(selectedData.cp)) {
+      selectedData.cp = clampCpIndex((selectedData.cp | 0) + dir);
+      applyViewVisibility();
+      updateHudAll();
       return;
     }
 
-    // NEW: cycle items for these modes too
-    if (mid === 'boundarySpheres' || mid === 'functionOrbs' || mid === 'portals') {
+    setActiveCheckpoint(activeCheckpoint + dir, { selectMarker: getMode().id === 'checkpoints' });
+    return;
+  }
+  if ((e.code === 'ArrowLeft' || e.code === 'ArrowRight') && !e.repeat) {
+    const dir = (e.code === 'ArrowRight') ? 1 : -1;
+    const mid = getMode().id;
+
+    if (mid === 'skillBans') {
+      setActiveCheckpoint(activeCheckpoint + dir);
+      return;
+    }
+
+    if (mid === 'checkpoints' || mid === 'boundarySpheres' || mid === 'functionOrbs' || mid === 'portals') {
       const portalPart = (mid === 'portals') ? getPortalCycleAttachPart() : null;
       cycleSelectionByType(mid, dir, portalPart);
       return;
     }
 
-    // fallback: keep old behavior
-    setActiveCheckpoint(activeCheckpoint + dir, { selectMarker: false });
+    setActiveCheckpoint(activeCheckpoint + dir);
     return;
   }
   if (e.code === 'KeyV') { speedIdx = (speedIdx + 1) % speedMults.length; updateHudSpeed(); return; }
@@ -2745,6 +3216,11 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
+  if (getMode().id === 'portals' && selectedData?.type === 'portals' && e.code === 'KeyJ' && !e.repeat) {
+    togglePortalEndpointFocus();
+    return;
+  }
+
   if (getMode().id === 'functionOrbs' && selectedData?.type === 'functionOrbs') {
     if (e.code === 'Digit1') { selectedData.ult = !selectedData.ult; updateHudAll(); return; }
     if (e.code === 'Digit2') { selectedData.dash = !selectedData.dash; updateHudAll(); return; }
@@ -2762,9 +3238,9 @@ window.addEventListener('keydown', (e) => {
   // Skill bans toggles for ACTIVE checkpoint
   if (getMode().id === 'skillBans') {
     const n = parseInt((e.code || '').replace('Digit', ''), 10);
-    if (Number.isFinite(n) && n >= 1 && n <= 8) {
+    if (Number.isFinite(n) && n >= 0 && n <= 7) {
       const arr = ensureSkillBans(activeCheckpoint);
-      arr[n - 1] = !arr[n - 1];
+      arr[n] = !arr[n];
       updateHudAll();
       return;
     }
@@ -2830,8 +3306,7 @@ window.addEventListener('keydown', (e) => {
     case 'KeyA': keys.left = true; break;
     case 'KeyD': keys.right = true; break;
     case 'Space': keys.up = true; break;
-    case 'ControlLeft':
-    case 'ControlRight': keys.down = true; break;
+    case 'KeyX': keys.down = true; break;
     default: break;
   }
 
@@ -2913,8 +3388,7 @@ window.addEventListener('keyup', (e) => {
     case 'KeyA': keys.left = false; break;
     case 'KeyD': keys.right = false; break;
     case 'Space': keys.up = false; break;
-    case 'ControlLeft':
-    case 'ControlRight': keys.down = false; break;
+    case 'KeyX': keys.down = false; break;
     default: break;
   }
 });
@@ -3138,8 +3612,10 @@ function setCheckpointTeleport(ent, editorPoint) {
   }
 
   setSelected(ent.tpMarker, ent);
-
+  
   updateHudAll();
+  ensureTeleportDecor(ent);
+  syncLinkVisibility();
   return true;
 }
 
@@ -3153,6 +3629,13 @@ function clearCheckpointTeleport(ent) {
     markersGroup.remove(ent.tpMarker);
     ent.tpMarker = null;
   }
+
+  if (ent.tpLine) {
+    markersGroup.remove(ent.tpLine);
+    ent.tpLine.geometry?.dispose?.();
+    ent.tpLine = null;
+  }
+  syncLinkVisibility();
 
   updateHudAll();
   return true;
@@ -3250,6 +3733,8 @@ function makeCheckpointMarker(index, hitPoint, isTeleport = false) {
   // tiny lift to avoid z-fighting
   const liftY = Math.max(0.01, cpOuterRadius * 0.015);
   group.userData._liftY = liftY;
+  group.userData._isCheckpointMarker = true;
+  if (isTeleport) group.userData._isTeleportMarker = true;
 
   group.position.copy(hitPoint).add(new THREE.Vector3(0, liftY, 0));
 
@@ -3398,7 +3883,7 @@ function makePortalStartMarker(surfaceNormal) {
 function makePortalEndParticles() {
   const group = new THREE.Group();
 
-  const count = 120;
+  const count = PORTAL_PARTICLE_COUNT;
   const positions = new Float32Array(count * 3);
   const speeds = new Float32Array(count);
   const base = [];
@@ -3471,6 +3956,140 @@ function removeAnimatedPortalsInside(root) {
   const toRemove = [];
   root.traverse((o) => { if (o.userData?._portalEnd) toRemove.push(o); });
   for (const g of toRemove) animatedPortals.delete(g);
+}
+
+// ---------------------------
+// Links (portal / teleport)
+// ---------------------------
+const LINK_LINE_MAT = new THREE.LineBasicMaterial({
+  color: 0xffffff,
+  transparent: true,
+  opacity: 0.18,
+  depthWrite: false,
+});
+LINK_LINE_MAT.blending = THREE.AdditiveBlending;
+
+function makeLinkLine() {
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+  const line = new THREE.Line(geom, LINK_LINE_MAT);
+  line.frustumCulled = false;
+  line.renderOrder = 10;
+  return line;
+}
+
+const _lnA = new THREE.Vector3();
+const _lnB = new THREE.Vector3();
+const _lnAL = new THREE.Vector3();
+const _lnBL = new THREE.Vector3();
+
+function setLineLocal(line, parent, aWorld, bWorld, lift = 0.12) {
+  _lnAL.copy(aWorld);
+  _lnBL.copy(bWorld);
+  parent.worldToLocal(_lnAL);
+  parent.worldToLocal(_lnBL);
+  _lnAL.y += lift;
+  _lnBL.y += lift;
+  const pos = line.geometry.attributes.position;
+  pos.setXYZ(0, _lnAL.x, _lnAL.y, _lnAL.z);
+  pos.setXYZ(1, _lnBL.x, _lnBL.y, _lnBL.z);
+  pos.needsUpdate = true;
+  line.geometry.computeBoundingSphere();
+}
+
+function setLineWorld(line, a, b, lift = 0.12) {
+  const pos = line.geometry.attributes.position;
+  pos.setXYZ(0, a.x, a.y + lift, a.z);
+  pos.setXYZ(1, b.x, b.y + lift, b.z);
+  pos.needsUpdate = true;
+  line.geometry.computeBoundingSphere();
+}
+
+function ensurePortalDecor(portalGroup, ent) {
+  if (!portalGroup?.userData?._portal) return;
+  const st = portalGroup.userData._portal;
+  const idx = ent?.index ?? 0;
+
+  const LABEL_SCALE = 0.05;
+
+  if (st.startMarker && !st.startMarker.userData._tagSprite) {
+    const tag = makeLabelSprite(`IN ${idx}`);
+    tag.scale.multiplyScalar(LABEL_SCALE);
+    tag.position.set(0, 2.1, 0);
+    st.startMarker.add(tag);
+    st.startMarker.userData._tagSprite = tag;
+  }
+
+  if (st.endFx && !st.endFx.userData._tagSprite) {
+    const tag = makeLabelSprite(`OUT ${idx}`);
+    tag.scale.multiplyScalar(LABEL_SCALE);
+    tag.position.set(0, 2.1, 0);
+    st.endFx.add(tag);
+    st.endFx.userData._tagSprite = tag;
+  }
+
+  if (!st.linkLine) {
+    st.linkLine = makeLinkLine();
+    st.linkLine.visible = false;
+    portalGroup.add(st.linkLine);
+  }
+}
+
+function ensureTeleportDecor(cpEnt) {
+  if (cpEnt?.type !== 'checkpoints') return;
+  if (!cpEnt.tp || !cpEnt.tpMarker) return;
+  if (cpEnt.tpLine) return;
+
+  cpEnt.tpLine = makeLinkLine();
+  cpEnt.tpLine.visible = false;
+  markersGroup.add(cpEnt.tpLine);
+}
+
+function syncLinkVisibility() {
+  for (const ent of entities) {
+    if (ent.type === 'portals') {
+      const st = ent.marker?.userData?._portal;
+      if (st?.linkLine) st.linkLine.visible = (selectedData === ent) && !!st.endFx && !!ent.marker?.visible;
+    }
+
+    if (ent.type === 'checkpoints') {
+      if (!ent.tpLine) continue;
+      const isSelCp = (selectedData === ent);
+      const isSelTp = !!(selected?.userData?._isTeleportMarker) && (selected?.userData?.entity === ent);
+      ent.tpLine.visible = (isSelCp || isSelTp) && !!ent.marker?.visible;
+    }
+  }
+}
+
+function updateLinkLines() {
+  for (const ent of entities) {
+    if (ent.type === 'portals') {
+      const pg = ent.marker;
+      const st = pg?.userData?._portal;
+      if (!pg || !st?.linkLine || !st.startMarker || !st.endFx) continue;
+
+      st.startMarker.getWorldPosition(_lnA);
+      st.endFx.getWorldPosition(_lnB);
+      setLineLocal(st.linkLine, pg, _lnA, _lnB, 0.12);
+    }
+
+    if (ent.type === 'checkpoints') {
+      if (!ent.tpLine || !ent.tpMarker) continue;
+      const a = getMarkerBaseEditorPos(ent.marker, ent);
+      const b = getMarkerBaseEditorPos(ent.tpMarker, ent);
+      setLineWorld(ent.tpLine, a, b, 0.12);
+    }
+  }
+}
+
+function togglePortalEndpointFocus() {
+  if (!selected || selectedData?.type !== 'portals') return;
+  const st = selected.userData?._portal;
+  if (!st) return;
+
+  const cur = gizmo?.object;
+  const next = (cur === st.startMarker) ? (st.endFx || st.startMarker) : st.startMarker;
+  if (next) setSelected(selected, selectedData, next);
 }
 
 /* ============================================================================
@@ -3573,11 +4192,6 @@ renderer.domElement.addEventListener('pointerdown', (ev) => {
 
   // 2) Place
   if (!addMode || !collider) return;
-
-  if (mode.id === 'skillBans') {
-    flashHud('SKILL BANS', 'HUD-only for now.');
-    return;
-  }
 
   const hits = raycaster.intersectObject(collider, true);
   const h = hits?.[0];
@@ -3707,6 +4321,7 @@ renderer.domElement.addEventListener('pointerdown', (ev) => {
         _draft: true,
       };
       portalGroup.userData.entity = entDraft;
+      ensurePortalDecor(portalGroup, entDraft);
 
       setSelected(portalGroup, entDraft, startMarker);
       updateHudAll();
@@ -3735,6 +4350,8 @@ renderer.domElement.addEventListener('pointerdown', (ev) => {
     
     portalGroup.userData.entity = ent;
     entities.push(ent);
+    ensurePortalDecor(portalGroup, ent);
+    syncLinkVisibility();
 
     portalDraft = null;
 
@@ -3781,15 +4398,22 @@ gizmo.addEventListener('objectChange', () => {
   }
 
   // Non-portals
-  const baseEd = getMarkerBaseEditorPos(selected, ent);
+  const tgt = selectedGizmoTarget || selected;
+  const baseEd = getMarkerBaseEditorPos(tgt, ent);
   const ws = editorToWs(baseEd);
 
-  if (ent.type === 'checkpoints' && selected?.userData?._isTeleportMarker) {
-    ent.tp = [ws.x, ws.y, ws.z];
-  } else {
+  if (ent.type === 'checkpoints') {
+    if (tgt?.userData?._isTeleportMarker) {
+      ent.tp = [ws.x, ws.y, ws.z];
+      ensureTeleportDecor(ent);
+    } else {
+      ent.pos = [ws.x, ws.y, ws.z];
+    }
+  } else if (Array.isArray(ent.pos)) {
     ent.pos = [ws.x, ws.y, ws.z];
   }
 
+  syncLinkVisibility();
   updateHudAll();
 });
 
@@ -4194,6 +4818,7 @@ function importWorkshopData(text) {
       markersGroup.add(tpMarker);
     }
     entities.push(ent);
+    ensureTeleportDecor(ent);
   }
 
   // Boundary spheres (killballs): H positions + I radii (SIGNED) + killballnumber -> cp link
@@ -4304,6 +4929,7 @@ function importWorkshopData(text) {
       cp: clampCpIndex(Number.isFinite(pc[i]) ? pc[i] : 0),
       marker: portalGroup,
     };
+    ensurePortalDecor(portalGroup, ent);
 
     portalGroup.userData.entity = ent;
     markersGroup.add(portalGroup);
@@ -4593,27 +5219,60 @@ async function initEditor() {
   try {
     MAPS_CFG = await loadMapsConfig();
     populateMapSelect(MAPS_CFG);
+    setupModeTabsUi();
+    setupPanelChevrons();
 
-    if (mapSelect) {
-      mapSelect.addEventListener('change', (e) => {
-        const id = e.target?.value;
-        if (id) loadMapById(id).catch(console.error);
+    // restore perf preset in UI
+    if (perfPreset) {
+      perfPreset.value = PERF_PRESET;
+      perfPreset.addEventListener('change', (e) => {
+        savePerfPreset(String(e.target.value || 'balanced'));
       });
     }
 
-    const initial = getMapIdFromUrl() || MAPS_CFG.default || MAPS_CFG.maps[0]?.id;
-    await loadMapById(initial);
+    // pick initial map (URL > default)
+    const urlId = getMapIdFromUrl();
+    const fallbackId = MAPS_CFG.default || MAPS_CFG.maps?.[0]?.id;
+    const initialId = urlId || fallbackId;
+
+    if (mapSelect && initialId) mapSelect.value = initialId;
+
+    // If GO exists: do NOT autoload
+    if (btnGo) {
+      // optional overlay
+      if (bootOverlay) bootOverlay.classList.remove('hidden');
+
+      btnGo.addEventListener('click', async () => {
+        const id = mapSelect?.value || initialId;
+        if (!id) return;
+
+        if (bootOverlay) bootOverlay.classList.add('hidden');
+
+        applyPerformancePreset(PERF_PRESET);
+        await loadMapById(id);
+      });
+
+      // allow changing URL without loading
+      mapSelect?.addEventListener('change', () => {
+        const id = mapSelect.value;
+        if (id) setMapIdInUrl(id);
+      });
+
+      return;
+    }
+
+    // No GO button found -> keep legacy behavior
+    flashHud('READY', 'Select a map + preset, then click GO.', 1500);
+    if (bootOverlay) bootOverlay.classList.remove('hidden');
+    return;
+
   } catch (err) {
     console.error(err);
-    if (mapSelect) {
-      mapSelect.innerHTML = `<option value="">Failed to load maps</option>`;
-    }
+    flashHud('ERROR', 'Failed to init editor', 1200);
   }
-
-  syncFullscreenUi();
 }
 
-initEditor();
+window.addEventListener('DOMContentLoaded', initEditor);
 /* ============================================================================
   Resize
 ============================================================================ */
@@ -4628,27 +5287,31 @@ function resize() {
 new ResizeObserver(resize).observe(editorStage || renderer.domElement);
 resize();
 
+let _hudTopStackBottom = 24;
+let _hudPanelsTop = 0;
+
 function layoutHud() {
-  if (!editorStage) return;
-  const stageRect = editorStage.getBoundingClientRect();
+  const topbarH = hudToolbar ? hudToolbar.offsetHeight : 0;
+  const hotkeysH = (hudHotkeys && !hudHotkeys.classList.contains('hidden')) ? hudHotkeys.offsetHeight : 0;
 
-  const bottomInStage = (el) => {
-    if (!el || el.classList.contains('hidden')) return 0;
-    const r = el.getBoundingClientRect();
-    return Math.max(0, r.bottom - stageRect.top);
-  };
+  const targetTop = Math.max(24, topbarH + hotkeysH + 12);
 
-  const topStackBottom = Math.max(bottomInStage(hudTopPanel), bottomInStage(hudHotkeys), 24);
-  if (hudToolbar) {
-    hudToolbar.style.top = `${topStackBottom + 10}px`;
-  }
+  if (targetTop > _hudTopStackBottom) _hudTopStackBottom = targetTop;
+  else _hudTopStackBottom = Math.max(targetTop, _hudTopStackBottom - 12);
 
-  const toolbarBottom = Math.max(bottomInStage(hudToolbar), topStackBottom);
-  const panelsTop = toolbarBottom + 14;
+  const targetPanelsTop = _hudTopStackBottom + 12;
+  if (targetPanelsTop > _hudPanelsTop) _hudPanelsTop = targetPanelsTop;
+  else _hudPanelsTop = Math.max(targetPanelsTop, _hudPanelsTop - 12);
 
-  if (hudLeftPanel)  hudLeftPanel.style.top  = `${panelsTop}px`;
-  if (hudRightPanel) hudRightPanel.style.top = `${panelsTop}px`;
+  if (hudLeftPanel)  hudLeftPanel.style.top  = `${_hudPanelsTop}px`;
 }
+
+// reset smoothing on fullscreen toggles
+document.addEventListener('fullscreenchange', () => {
+  _hudTopStackBottom = 24;
+  _hudPanelsTop = 0;
+  setTimeout(layoutHud, 0);
+});
 
 const hudLayoutRO = new ResizeObserver(() => layoutHud());
 if (editorStage) hudLayoutRO.observe(editorStage);
@@ -4672,6 +5335,7 @@ function animate() {
   applyMouseLookFrame();
   updateFlyMovement(dt);
   updatePortalParticles(dt);
+  updateLinkLines();
 
   renderer.render(scene, camera);
 

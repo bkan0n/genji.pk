@@ -11,6 +11,17 @@
         "pos": [40, 35, 70],
         "lookAt": [0, 10, 0]
       }
+    },
+    {
+      "id": "numbani",
+      "label": "Numbani",
+      "model_url": "https://cdn.genji.pk/web-editor/numbani.glb",
+      "ws_offset": [-200.0, 0.08, -84.51],
+      "camera": {
+        "mode": "fixed",
+        "pos": [40, 35, 70],
+        "lookAt": [0, 10, 0]
+      }
     }
   ]
 }
