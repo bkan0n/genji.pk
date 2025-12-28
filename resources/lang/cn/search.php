@@ -138,12 +138,15 @@ return [
         'vertical_multi_climb' => '垂直蹭',
         'create_bhop' => '卡小',
         'standing_create_bhop' => '站卡',
+        'save_double' => '留二段',
+        'double_jump' => '二段跳',
     ],
 
     // ───────────────────────────────────────────────────────────────────────
     // RESTRICTIONS
     // ───────────────────────────────────────────────────────────────────────
     'restrictions' => [
+        'bhop' => '小跳',
         'dash_start' => '卡S',
         'triple_jump' => '三段跳',
         'emote_save_bhop' => '表情留小',
@@ -152,6 +155,8 @@ return [
         'standing_create_bhop' => '站卡',
         'create_bhop' => '卡小',
         'wall_climb' => '爬墙',
+        'save_double' => '留二段',
+        'double_jump' => '二段跳',
     ],
 
     // ───────────────────────────────────────────────────────────────────────

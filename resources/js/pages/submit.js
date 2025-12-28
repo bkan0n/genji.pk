@@ -2870,7 +2870,7 @@ function editInline(field) {
 
   const saveBtn = document.createElement('button');
   saveBtn.type = 'button';
-  saveBtn.textContent = 'Save';
+  saveBtn.textContent = (t('map.meta.save') || 'Save');
   saveBtn.className = [
     'inline-flex items-center gap-1',
     'rounded-lg border border-emerald-400/30',
@@ -2883,7 +2883,7 @@ function editInline(field) {
 
   const cancelBtn = document.createElement('button');
   cancelBtn.type = 'button';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = (t('map.meta.cancel') || 'Cancel');
   cancelBtn.className = [
     'inline-flex items-center gap-1',
     'rounded-lg border border-white/10',

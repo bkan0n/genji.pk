@@ -84,6 +84,8 @@ return [
             'name'              => 'Nom de la carte',
             'checkpoints'       => 'Checkpoints',
             'edit'              => 'Modifier',
+            'save'              => 'Enregistrer',
+            'cancel'            => 'Annuler',
             'add_creator'       => 'Ajouter un créateur',
             'search_creator'    => 'Rechercher un créateur…',
             'search_map_name'   => 'Rechercher un map name…',

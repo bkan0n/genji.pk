@@ -84,6 +84,8 @@ return [
             'name'              => 'Map name',
             'checkpoints'       => 'Checkpoints',
             'edit'              => 'Edit',
+            'save'              => 'Save',
+            'cancel'            => 'Cancel',
             'add_creator'       => 'Add creator',
             'search_creator'    => 'Search a creator…',
             'search_map_name'   => 'Search a map name…',
