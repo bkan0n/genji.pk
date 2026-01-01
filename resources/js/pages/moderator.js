@@ -820,6 +820,10 @@ $$('form[data-action]').forEach((form) => {
           return handleViewAllRewards(form);
         case 'set-active-key-type':
           return handleSetActiveKeyType(form);
+        case 'get-xp-multiplier':
+          return handleGetXpMultiplier(form);
+        case 'set-xp-multiplier':
+          return handleSetXpMultiplier(form);
 
         // GUIDES (API_MODS)
         case 'create-guide':
@@ -1198,6 +1202,46 @@ async function handleSetActiveKeyType(form) {
 
   logActivity({ title: 'Set active key type', method: 'PATCH', url, ok, status, data });
   toast(ok ? 'Active key type updated' : 'Failed', ok ? 'ok' : 'err');
+}
+
+async function handleGetXpMultiplier(form) {
+  const { ok, status, url, data } = await http('GET', `/api/lootbox/xp/multiplier`);
+
+  let value = null;
+  if (data && typeof data === 'object' && 'value' in data) value = data.value;
+  else if (typeof data === 'string' && data.trim() !== '' && !Number.isNaN(+data)) value = +data;
+
+  logActivity({ title: 'Get XP multiplier', method: 'GET', url, ok, status, data });
+
+  if (!ok) {
+    toast('Failed', 'err');
+    return;
+  }
+
+  toast(value != null ? `XP multiplier: ${value}` : 'XP multiplier fetched', 'ok');
+}
+
+async function handleSetXpMultiplier(form) {
+  const raw = form.value.value;
+  const value = raw === '' ? NaN : +raw;
+
+  if (!Number.isFinite(value) || value < 1 || value > 10) {
+    toast('Value must be between 1 and 10', 'warn');
+    return;
+  }
+
+  const { ok, status, url, data } = await http('POST', `/api/lootbox/xp/multiplier`, {
+    body: { value },
+  });
+
+  logActivity({ title: 'Set XP multiplier', method: 'POST', url, ok, status, data });
+
+  if (!ok && status === 422) {
+    toast('Validation failed (1 → 10)', 'err');
+    return;
+  }
+
+  toast(ok ? 'XP multiplier updated' : 'Failed', ok ? 'ok' : 'err');
 }
 
 // GUIDES

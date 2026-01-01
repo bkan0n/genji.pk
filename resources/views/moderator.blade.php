@@ -598,6 +598,18 @@
                 >
                   Set active key type
                 </button>
+                <button
+                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  data-subtab="lootbox-get-xp-multiplier"
+                >
+                  Get XP Multiplier
+                </button>
+                <button
+                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  data-subtab="lootbox-set-xp-multiplier"
+                >
+                  Set XP Multiplier
+                </button>
               </div>
               <div
                 class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
@@ -1353,6 +1365,69 @@
                   </form>
                 </article>
               </div>
+              
+              <!-- Get XP Multiplier -->
+              <div data-subpanel="lootbox-get-xp-multiplier" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <div class="mb-4 flex items-center justify-between">
+                    <h3 class="font-semibold">Get XP Multiplier</h3>
+                    <span class="text-xs text-zinc-400">GET /api/lootbox/xp/multiplier</span>
+                  </div>
+
+                  <form data-action="get-xp-multiplier" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <div class="sm:col-span-2 text-sm text-zinc-300">
+                      Returns the current XP multiplier (e.g., <span class="text-zinc-100 font-semibold">1</span>,
+                      <span class="text-zinc-100 font-semibold">2</span> for double XP).
+                    </div>
+
+                    <div class="sm:col-span-2">
+                      <button
+                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      >
+                        Fetch XP Multiplier
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+
+              <!-- Set XP Multiplier -->
+              <div data-subpanel="lootbox-set-xp-multiplier" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <div class="mb-4 flex items-center justify-between">
+                    <h3 class="font-semibold">Set XP Multiplier</h3>
+                    <span class="text-xs text-zinc-400">POST /api/lootbox/xp/multiplier</span>
+                  </div>
+
+                  <form data-action="set-xp-multiplier" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="sm:col-span-1">
+                      Value (1 → 10)
+                      <input
+                        name="value"
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="1"
+                        placeholder="1"
+                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                      />
+                    </label>
+
+                    <div class="sm:col-span-2">
+                      <button
+                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      >
+                        Set XP Multiplier
+                      </button>
+                    </div>
+
+                    <div class="sm:col-span-2 text-xs text-zinc-400">
+                      Tip: set <span class="text-zinc-200 font-semibold">1</span> to disable bonus XP.
+                    </div>
+                  </form>
+                </article>
+              </div>
+
             </div>
 
             {{-- ============ GUIDES ============ --}}
