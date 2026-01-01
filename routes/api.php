@@ -32,6 +32,9 @@ use App\Http\Controllers\Mods\Guides\EditGuideController;
 use App\Http\Controllers\Mods\Lootbox\DebugGrantRewardWithoutKeyController;
 use App\Http\Controllers\Mods\Lootbox\GrantKeyToUserController;
 use App\Http\Controllers\Mods\Lootbox\GrantXpToUserController;
+use App\Http\Controllers\Mods\Lootbox\SetActiveKeyTypeController;
+use App\Http\Controllers\Mods\Lootbox\XP\GetXpMultiplierController;
+use App\Http\Controllers\Mods\Lootbox\XP\ChangeXpMultiplierController;
 use App\Http\Controllers\Mods\Maps\ArchiveMapsController;
 use App\Http\Controllers\Mods\Maps\ConvertToLegacyController;
 use App\Http\Controllers\Mods\Maps\UpdateMapController;
@@ -204,25 +207,21 @@ Route::prefix('users')->group(function () {
 Route::prefix('lootbox')->group(function () {
     Route::get('keys', [KeysController::class, 'index']);
     Route::get('users/{user}/keys', [KeysController::class, 'userKeys'])->whereNumber('user');
-    Route::get('users/{user}/keys/{keyType}', [KeysController::class, 'drawForUser'])->whereNumber(
-        'user',
-    );
+    Route::get('users/{user}/keys/{keyType}', [KeysController::class, 'drawForUser'])->whereNumber('user');
     Route::get('rewards', [RewardsController::class, 'index']);
-    Route::get('users/{user}/rewards', [RewardsController::class, 'userRewards'])->whereNumber(
-        'user',
-    );
+    Route::get('users/{user}/rewards', [RewardsController::class, 'userRewards'])->whereNumber('user');
 
     Route::middleware('web')->group(function () {
-        Route::patch('keys/{keyType}', [KeysController::class, 'setActive'])->where(
-            'keyType',
-            'Classic|Winter',
-        );
+        Route::patch('keys/{keyType}', SetActiveKeyTypeController::class)
+            ->where('keyType', 'Classic|Winter');
+
+        Route::get('xp/multiplier', GetXpMultiplierController::class);
+        Route::post('xp/multiplier', ChangeXpMultiplierController::class);
+
         Route::post('users/{user}/keys', [KeysController::class, 'grantToUser'])->whereNumber('user');
         Route::post('users/{user}/coins', [CoinsController::class, 'balance'])->whereNumber('user');
-        Route::post('users/{user}/{keyType}/{rewardType}/{rewardName}', [
-            RewardsController::class,
-            'grantToUser',
-        ])->whereNumber('user');
+        Route::post('users/{user}/{keyType}/{rewardType}/{rewardName}', [RewardsController::class, 'grantToUser'])
+            ->whereNumber('user');
     });
 });
 
