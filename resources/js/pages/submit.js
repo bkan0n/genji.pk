@@ -2347,7 +2347,7 @@ function showBusy(el) {
   if (!el) return () => {};
   const o = document.createElement('div');
   o.className = 'absolute inset-0 grid place-items-center bg-black/40 backdrop-blur-sm';
-  o.innerHTML = `<div class="rounded-md border border-white/10 bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100">Uploading…</div>`;
+  o.innerHTML = `<div class="rounded-md bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100 ring-1 ring-emerald-500/60">${t('record.uploading_screenshot') || 'Uploading…'}</div>`;
   el.appendChild(o);
   return () => o.remove();
 }
@@ -3831,25 +3831,54 @@ function dragAndDrop() {
       r.readAsDataURL(file);
     });
 
+  let ocrSeq = 0;
+
+  function showOcrStatus(text) {
+    const badge = dz.querySelector('#ocrStatus');
+    const label = dz.querySelector('#ocrStatusText');
+    if (!badge) return;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+    if (label && text) label.textContent = text;
+  }
+
+  function hideOcrStatus() {
+    const badge = dz.querySelector('#ocrStatus');
+    if (!badge) return;
+    badge.classList.add('hidden');
+    badge.classList.remove('flex');
+  }
+
   //OCR
-  async function runOcrFromFile(file) {
+  async function runOcrFromFile(file, jobId) {
     try {
       let imageUrl = window.screenshotUrl;
 
       if (!imageUrl) {
+        showOcrStatus(t('record.uploading_screenshot') || 'Uploading screenshot…');
+
         if (typeof uploadScreenshot === 'function') {
           imageUrl = await uploadScreenshot(file);
+
+          if (jobId !== ocrSeq) return;
+
           window.screenshotUrl = imageUrl;
         } else {
           console.warn('OCR: uploadScreenshot is not available and no screenshotUrl is set');
+          hideOcrStatus();
           return;
         }
       }
 
+      if (jobId !== ocrSeq) return;
+
       if (!imageUrl) {
         console.warn('OCR: missing image URL');
+        hideOcrStatus();
         return;
       }
+
+      showOcrStatus(t('record.ocr_processing') || 'OCR processing…');
 
       const resp = await fetch(OCR_ENDPOINT, {
         method: 'POST',
@@ -3861,16 +3890,19 @@ function dragAndDrop() {
         body: JSON.stringify({ image_url: imageUrl }),
       });
 
+      if (jobId !== ocrSeq) return;
+
       if (!resp.ok) {
         let errJson = null;
         try { errJson = await resp.json(); } catch {}
         console.warn('OCR HTTP error', resp.status, errJson);
+        hideOcrStatus();
         return;
       }
 
       const json = await resp.json().catch(() => null);
       const extracted = json?.extracted || {};
-      if (!extracted) return;
+      if (!extracted) { hideOcrStatus(); return; }
 
       const { time, code } = extracted;
 
@@ -3898,8 +3930,11 @@ function dragAndDrop() {
         inputTime.dispatchEvent(new Event('input', { bubbles: true }));
         inputTime.dispatchEvent(new Event('change', { bubbles: true }));
       }
+
+      hideOcrStatus();
     } catch (err) {
       console.error('OCR failed', err);
+      hideOcrStatus();
     }
   }
   // ---------------------------------------------------------------------------
@@ -3919,6 +3954,14 @@ function dragAndDrop() {
   async function setPreview(file) {
     dz.innerHTML = `
       <div class="absolute inset-0"></div>
+
+      <!-- OCR loading badge -->
+      <div id="ocrStatus"
+          class="absolute left-2 top-2 hidden items-center gap-2 rounded-xl bg-zinc-900/70 px-2 py-1 text-[11px] font-semibold text-white/90 backdrop-blur ring-1 ring-emerald-500/60">
+        <span class="h-3.5 w-3.5 rounded-full border border-white/30 border-t-white/80 animate-spin"></span>
+        <span id="ocrStatusText">${t('record.ocr_processing') || 'OCR processing…'}</span>
+      </div>
+
       <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
         <span class="text-xs text-white/90 truncate px-1">${file.name}</span>
         <button type="button" id="screenshotRemoveBtn"
@@ -3955,16 +3998,22 @@ function dragAndDrop() {
     dz.querySelector('#screenshotRemoveBtn')?.addEventListener('click', resetScreenshotDropzone);
   }
 
-  function acceptFile(file) {
+  async function acceptFile(file) {
     if (!file) return;
     if (!file.type || !file.type.startsWith('image/')) {
       showErrorMessage(t('errors.image_type'));
       return;
     }
+
+    const jobId = ++ocrSeq;
+
     window.screenshotFile = file;
-    setPreview(file);
+
+    await setPreview(file);
+
     try { autoUploadScreenshot(file); } catch {}
-    try { runOcrFromFile(file); } catch {}
+
+    try { runOcrFromFile(file, jobId); } catch {}
   }
 
   dz.addEventListener('click', (e) => {

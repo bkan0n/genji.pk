@@ -46,13 +46,15 @@ return [
     // RECORD (Submit Record tab)
     // ──────────────────────────────────────────────────────────────────────
     'record' => [
-        'select_quality'    => 'Sélectionnez une qualité (1–6)',
-        'optional'          => 'Optionnel',
-        'video'             => 'Vidéo (URL)',
-        'screenshot'        => 'Capture d’écran',
-        'drag_and_drop'     => 'Glissez-déposez une image ici ou cliquez pour importer',
-        'cancel'            => 'Annuler',
-        'submit_label'      => 'Soumettre le record',
+        'select_quality'       => 'Sélectionnez une qualité (1–6)',
+        'optional'             => 'Optionnel',
+        'video'                => 'Vidéo (URL)',
+        'screenshot'           => 'Capture d’écran',
+        'drag_and_drop'        => 'Glissez-déposez une image ici ou cliquez pour importer',
+        'cancel'               => 'Annuler',
+        'submit_label'         => 'Soumettre le record',
+        'uploading_screenshot' => 'Importation de la capture d’écran…',
+        'ocr_processing'       => 'Traitement OCR…',
 
         'code_invalid'        => 'Veuillez entrer un code de map valide.',
         'time_label'          => 'Temps du record',

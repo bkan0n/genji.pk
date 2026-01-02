@@ -46,13 +46,15 @@ return [
     // RECORD (Submit Record tab)
     // ──────────────────────────────────────────────────────────────────────
     'record' => [
-        'select_quality'    => '选择评分 (1–6)',
-        'optional'          => '可选',
-        'video'             => '视频 (URL)',
-        'screenshot'        => '截图',
-        'drag_and_drop'     => '拖放图片至此, 或点击上传',
-        'cancel'            => '取消',
-        'submit_label'      => '提交记录',
+        'select_quality'       => '选择评分 (1–6)',
+        'optional'             => '可选',
+        'video'                => '视频 (URL)',
+        'screenshot'           => '截图',
+        'drag_and_drop'        => '拖放图片至此, 或点击上传',
+        'cancel'               => '取消',
+        'submit_label'         => '提交记录',
+        'uploading_screenshot' => '正在上传截图…',
+        'ocr_processing'       => '正在进行 OCR 识别…',
 
         'code_invalid'        => '请输入有效的地图代码。',
         'time_label'          => '完成时间',
