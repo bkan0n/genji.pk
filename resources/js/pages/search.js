@@ -3519,7 +3519,19 @@ async function displayPersonalRecordsResultsCards(rowsInput) {
     const avatarFB = defaultAvatarFromId(uid || '0');
 
     const isCompletion = r.completion === true;
-    const timeDisplay = isCompletion ? (t('completion') || 'Completion') : (r.time != null ? String(r.time) : 'N/A');
+    const timeVal = r.time;
+
+    const CUTOFF = 15900;
+
+    const timeNum = Number(timeVal);
+    const hasNumericTime = timeVal != null && timeVal !== '' && Number.isFinite(timeNum);
+
+    const timeDisplay =
+      (hasNumericTime && timeNum <= CUTOFF)
+        ? timeNum.toFixed(2)
+        : (hasNumericTime && timeNum > CUTOFF)
+          ? (t('completion') || 'Completion')
+          : (isCompletion ? (t('completion') || 'Completion') : 'N/A');
     const medal = r.medal || '—';
     const diff  = r.difficulty || 'N/A';
     const rank  = r.rank != null ? String(r.rank) : null;
@@ -3702,8 +3714,19 @@ async function displayPersonalRecordsResults(results) {
     const diffColor = difficultyColors[normalizeDifficulty(diff)] || '#fff';
 
     const isCompletion = r.completion === true;
-    const timeDisplay = isCompletion ? t('completion') || 'Completion'
-                                     : r.time != null ? String(r.time) : 'N/A';
+    const timeVal = r.time;
+
+    const CUTOFF = 15900;
+
+    const timeNum = Number(timeVal);
+    const hasNumericTime = timeVal != null && timeVal !== '' && Number.isFinite(timeNum);
+
+    const timeDisplay =
+      (hasNumericTime && timeNum <= CUTOFF)
+        ? timeNum.toFixed(2)
+        : (hasNumericTime && timeNum > CUTOFF)
+          ? (t('completion') || 'Completion')
+          : (isCompletion ? (t('completion') || 'Completion') : 'N/A');
 
     const uid = r.user_id ? String(r.user_id) : null;
     const fallback = currentUid ? defaultAvatarFromId(currentUid) : defaultAvatarFromId(uid || '0');
