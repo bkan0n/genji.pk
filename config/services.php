@@ -43,6 +43,20 @@ return [
         'avatar_default_extension' => env('DISCORD_EXTENSION_DEFAULT', 'png'),
     ],
 
+    'battlenet' => [
+        'region' => env('BATTLENET_REGION', 'eu'),
+        'client_id' => env('BATTLENET_CLIENT_ID'),
+        'client_secret' => env('BATTLENET_CLIENT_SECRET'),
+        'redirect' => env('BATTLENET_REDIRECT_URI', env('APP_URL') . '/auth/battlenet/callback'),
+        'scope' => env('BATTLENET_SCOPE', 'openid'),
+        'verify' => env('BATTLENET_VERIFY', true),
+        'cn_mode' => env('BATTLENET_CN_MODE', 'global'),
+
+        // Optional
+        'cn_client_id' => env('BATTLENET_CN_CLIENT_ID'),
+        'cn_client_secret' => env('BATTLENET_CN_CLIENT_SECRET'),
+    ],
+
     'ocr' => [
         'base_url' => (function () {
             $env = config('app.env');
