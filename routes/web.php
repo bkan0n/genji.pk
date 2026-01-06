@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\DiscordAuthController;
+use App\Http\Controllers\Auth\BattleNetAuthController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LanguageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,10 +35,20 @@ Route::view('/ip', 'ip-temp');
 // Langues
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
 
-// Discord OAuth
-Route::get('/login',    [DiscordAuthController::class, 'redirect'])->name('login');
+// Page login
+Route::get('/login', [LoginController::class, 'show'])->name('login');
+
+// Discord OAuth 
+Route::get('/auth/discord/redirect', [DiscordAuthController::class, 'redirect'])->name('auth.discord.redirect');
 Route::get('/callback', [DiscordAuthController::class, 'callback'])->name('callback');
-Route::post('/logout',  [DiscordAuthController::class, 'logout'])->name('logout');
+Route::get('/auth/discord/callback', [DiscordAuthController::class, 'callback'])->name('auth.discord.callback');
+
+// Battle.net OAuth
+Route::get('/auth/battlenet/redirect', [BattleNetAuthController::class, 'redirect'])->name('auth.battlenet.redirect');
+Route::get('/auth/battlenet/callback', [BattleNetAuthController::class, 'callback'])->name('auth.battlenet.callback');
+
+// Logout
+Route::post('/logout', [DiscordAuthController::class, 'logout'])->name('logout');
 
 //IP 
 Route::get('/api/my-ip', function (Request $request) {

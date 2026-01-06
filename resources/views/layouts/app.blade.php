@@ -62,6 +62,7 @@
     @include('modal.profile')
     @include('modal.notifications')
     @include('modal.credits')
+    @include('auth.login')
 
     @php($lang = $selectedLang ?? (app()->getLocale() ?? 'en'))
     <script nonce="{{ $nonce }}">

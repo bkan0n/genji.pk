@@ -1,4 +1,4 @@
-{{-- Profile Modal (overlay + carte) --}}
+{{-- Profile Modal (overlay + card) --}}
 <div id="profileModal" class="fixed inset-0 z-[120] hidden">
   <button
     id="profileBackdrop"
@@ -12,33 +12,59 @@
       class="pointer-events-auto mx-auto w-full max-w-6xl min-w-0 flex-1 basis-full px-0 pt-24 lg:max-w-7xl 2xl:max-w-[90rem]"
       data-modal-box
     >
-      {{-- ====== Carte Profil ====== --}}
+      {{-- ====== Profile card ====== --}}
       @php
         use Illuminate\Support\Str;
 
+        // Provider
+        $provider = session('user_provider') ?: (session('user_avatar') ? 'discord' : null);
+        $providerLabel = $provider === 'battlenet' ? 'Battle.net' : ($provider === 'discord' ? 'Discord' : 'Account');
+        $providerMark  = $provider === 'battlenet' ? 'BN' : ($provider === 'discord' ? 'D' : '?');
+
+        // Id + username
         $userId = session('user_id');
-        $username = session('discord_username') ?? (session('username') ?? 'Guest');
+        $username =
+          session('user_name')
+          ?? session('discord_username')
+          ?? session('username')
+          ?? 'Guest';
 
-        $avatarHash = session('user_avatar');
-        $avatarUrl = session('discord_avatar_url') ?: ($userId && $avatarHash ? "https://cdn.discordapp.com/avatars/{$userId}/{$avatarHash}." . (Str::startsWith($avatarHash, 'a_') ? 'gif' : 'png') : asset('assets/img/default-avatar.jpg'));
+        // Avatar URL (Battle.net -> user_avatar_url, Discord -> CDN)
+        $avatarUrl = session('user_avatar_url');
 
-        $bannerHash = session('user_banner') ?? session('discord_banner');
-        $bannerUrl = $userId && $bannerHash ? "https://cdn.discordapp.com/banners/{$userId}/{$bannerHash}." . (Str::startsWith($bannerHash, 'a_') ? 'gif' : 'png') : null;
+        if (!$avatarUrl && $userId && session('user_avatar')) {
+          $avatarHash = session('user_avatar');
+          $ext = Str::startsWith($avatarHash, 'a_') ? 'gif' : 'png';
+          $avatarUrl = "https://cdn.discordapp.com/avatars/{$userId}/{$avatarHash}.{$ext}";
+        }
 
-        $userFlags = (int) (session('user_flags') ?? (session('discord_public_flags') ?? 0));
-        $userPremium = (int) (session('user_premium') ?? (session('discord_premium_type') ?? 0));
+        if (!$avatarUrl) {
+          $avatarUrl = asset('assets/img/default-avatar.jpg');
+        }
 
-        $badgeSrc = [];
-        for ($i = 0; $i < 20; $i++) {
-          if ($userFlags & (1 << $i)) {
-            $badgeSrc[] = asset("assets/discord/badges/{$i}.svg");
+        // Banner (Discord only)
+        $bannerUrl = null;
+        if ($provider === 'discord') {
+          $bannerHash = session('user_banner') ?? session('discord_banner');
+          if ($userId && $bannerHash) {
+            $ext = Str::startsWith($bannerHash, 'a_') ? 'gif' : 'png';
+            $bannerUrl = "https://cdn.discordapp.com/banners/{$userId}/{$bannerHash}.{$ext}";
           }
         }
-        if ($userPremium > 0) {
-          $badgeSrc[] = asset('assets/discord/badges/nitro.svg');
-        }
-        if ($userPremium > 1) {
-          $badgeSrc[] = asset('assets/discord/badges/boost.svg');
+
+        // Badges (Discord only)
+        $badgeSrc = [];
+        if ($provider === 'discord') {
+          $userFlags = (int) (session('user_flags') ?? (session('discord_public_flags') ?? 0));
+          $userPremium = (int) (session('user_premium') ?? (session('discord_premium_type') ?? 0));
+
+          for ($i = 0; $i < 20; $i++) {
+            if ($userFlags & (1 << $i)) {
+              $badgeSrc[] = asset("assets/discord/badges/{$i}.svg");
+            }
+          }
+          if ($userPremium > 0) $badgeSrc[] = asset('assets/discord/badges/nitro.svg');
+          if ($userPremium > 1) $badgeSrc[] = asset('assets/discord/badges/boost.svg');
         }
       @endphp
 
@@ -46,16 +72,6 @@
         id="profileCard"
         class="pointer-events-auto relative mx-auto w-full max-w-none overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 shadow-2xl backdrop-blur"
       >
-        <button
-          type="button"
-          id="profileClose"
-          class="absolute top-3 right-3 rounded-md bg-black/30 p-2 ring-1 ring-white/10 hover:bg-black/40"
-          aria-label="{{ __('modals.profile.close') }}"
-        >
-          <svg class="h-4 w-4 text-zinc-300" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
 
         <div class="relative h-28 sm:h-32">
           @if ($bannerUrl)
@@ -77,9 +93,13 @@
                 alt="User avatar"
                 class="h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24"
               />
-              <span
-                class="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-emerald-400/70"
-              ></span>
+
+              <span class="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-emerald-400/70"></span>
+
+              {{-- Provider chip (BN / D) --}}
+              <span class="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-zinc-950/80 text-[11px] font-extrabold text-white/85 backdrop-blur">
+                {{ $providerMark }}
+              </span>
             </div>
           </div>
         </div>
@@ -89,7 +109,13 @@
             {{ $username }}
           </h2>
 
-          <p class="mt-1 flex items-center justify-center gap-2 text-xs text-zinc-400">
+          <div class="mt-2 flex items-center justify-center">
+            <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 text-[11px] font-semibold text-white/80">
+              Connected via {{ $providerLabel }}
+            </span>
+          </div>
+
+          <p class="mt-2 flex items-center justify-center gap-2 text-xs text-zinc-400">
             <span id="uid">{{ $userId ?? 'Unknown' }}</span>
             <button
               type="button"
@@ -106,12 +132,11 @@
             </button>
           </p>
 
+          {{-- Discord badges only --}}
           @if (! empty($badgeSrc))
             <ul class="mt-3 flex flex-wrap items-center justify-center gap-2">
               @foreach ($badgeSrc as $src)
-                <li
-                  class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-white/10"
-                >
+                <li class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-white/10">
                   <img src="{{ $src }}" alt="Badge" class="h-4 w-4" loading="lazy" />
                 </li>
               @endforeach
