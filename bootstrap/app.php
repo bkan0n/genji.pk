@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Middleware\RequireDiscordModerator;
+use App\Http\Middleware\RequireAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Spatie\Csp\AddCspHeaders;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withProviders(require __DIR__ . '/providers.php')
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         api: __DIR__ . '/../routes/api.php',
@@ -14,12 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Cloudflare
         $middleware->replace(
             \Illuminate\Http\Middleware\TrustProxies::class,
             \Monicahq\Cloudflare\Http\Middleware\TrustProxies::class
         );
-        $middleware->appendToGroup('web', AddCspHeaders::class);
 
+        // CSP
         $middleware->web(
             append: [
                 \Illuminate\Cookie\Middleware\EncryptCookies::class,
@@ -32,7 +35,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ],
         );
 
+        // Aliases
         $middleware->alias([
+            'auth.user' => \App\Http\Middleware\AuthenticatedUser::class,
+            'auth.verified' => RequireAuthenticated::class,
+            'email.verified' => \App\Http\Middleware\EmailVerified::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'discord.moderator' => RequireDiscordModerator::class,
         ]);
     })

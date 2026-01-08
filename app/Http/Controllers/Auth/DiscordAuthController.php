@@ -179,6 +179,8 @@ class DiscordAuthController extends Controller
             'discord_refresh_token',
             'discord_token_expires',
             'can_moderate',
+            'user',
+            'user_provider',
         ]);
 
         $request->session()->invalidate();
