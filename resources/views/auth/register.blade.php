@@ -7,7 +7,7 @@
   <button
     id="registerBackdrop"
     type="button"
-    class="absolute inset-0 bg-black/70 opacity-0 transition-opacity duration-200 ease-out"
+    class="absolute cursor-pointer inset-0 bg-black/70 opacity-0 transition-opacity duration-200 ease-out"
     aria-label="Close"
   ></button>
 
@@ -26,7 +26,7 @@
     <button
       id="registerClose"
       type="button"
-      class="absolute right-4 top-4 z-10 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
+      class="absolute cursor-pointer right-4 top-4 z-10 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
       aria-label="Close"
     >
       ✕
@@ -143,14 +143,14 @@
 
             <button
               type="submit"
-              class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-extrabold text-black transition hover:bg-emerald-400"
+              class="inline-flex cursor-pointer w-full items-center justify-center rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-extrabold text-black transition hover:bg-emerald-400"
             >
               {{ __('auth.register.submit_button') }}
             </button>
 
             <div class="text-center text-xs text-zinc-400">
               {{ __('auth.register.already_have_account') }}
-              <button type="button" data-open-login class="text-zinc-200 hover:text-white">{{ __('auth.register.sign_in') }}</button>
+              <button type="button" data-open-login class="text-zinc-200 cursor-pointer hover:text-white">{{ __('auth.register.sign_in') }}</button>
             </div>
           </form>
         </div>

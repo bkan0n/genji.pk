@@ -52,7 +52,7 @@ return [
         'sign_up_title' => "S'inscrire",
         'sign_up_desc' => 'Crée ton compte email en quelques secondes.',
         'please_fix' => 'Veuillez corriger :',
-        'username_label' => "Nom d'utilisateur (optionnel)",
+        'username_label' => "Nom d'utilisateur",
         'email_label' => 'Email',
         'password_label' => 'Mot de passe',
         'password_confirm_label' => 'Confirmer le mot de passe',

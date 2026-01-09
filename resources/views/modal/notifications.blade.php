@@ -1,4 +1,9 @@
 {{-- Settings Modal (overlay + carte) --}}
+@php
+  $isEmailAuth =
+    data_get(session('user'), 'auth_type') === 'email'
+    || session('user_provider') === 'email';
+@endphp
 <div id="gp-settings-modal" class="fixed inset-0 z-[130] hidden">
   <button
     id="gp-settings-backdrop"
@@ -31,7 +36,7 @@
             >
               <button
                 type="button"
-                class="settings-tab inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-sm font-medium text-zinc-100 ring-0 hover:bg-white/5 data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:hover:bg-white data-[active=true]:hover:text-zinc-900"
+                class="settings-tab inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:hover:bg-white data-[active=true]:hover:text-zinc-900"
                 data-target="overwatch-section"
                 data-active="true"
                 aria-selected="true"
@@ -41,9 +46,10 @@
                 {{ __('modals.settings.tabs.overwatch') }}
               </button>
 
+            @unless($isEmailAuth)
               <button
                 type="button"
-                class="settings-tab inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-sm font-medium text-zinc-100 ring-0 hover:bg-white/5 data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:hover:bg-white data-[active=true]:hover:text-zinc-900"
+                class="settings-tab inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:hover:bg-white data-[active=true]:hover:text-zinc-900"
                 data-target="notifications-section"
                 data-active="false"
                 aria-selected="false"
@@ -52,6 +58,7 @@
               >
                 {{ __('modals.settings.tabs.notifications') }}
               </button>
+            @endunless
             </div>
 
             {{-- Overwatch --}}
@@ -84,6 +91,7 @@
             </section>
 
             {{-- Notifications --}}
+            @unless($isEmailAuth)
             <section
               id="notifications-section"
               class="settings-section hidden"
@@ -198,6 +206,7 @@
                 </div>
               </div>
             </section>
+            @endunless
           </div>
         </article>
       </div>

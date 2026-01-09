@@ -52,7 +52,7 @@ return [
         'sign_up_title' => 'Sign up',
         'sign_up_desc' => 'Create your email account in seconds.',
         'please_fix' => 'Please fix:',
-        'username_label' => 'Username (optional)',
+        'username_label' => 'Username',
         'email_label' => 'Email',
         'password_label' => 'Password',
         'password_confirm_label' => 'Confirm password',
