@@ -421,6 +421,7 @@
   <script nonce="{{ $nonce }}">
     document.documentElement.lang = @json(app()->getLocale());
     window.INDEX_I18N = @json(\Illuminate\Support\Facades\Lang::get('index'));
+    window.MAPS_DATA = @json(json_decode(file_get_contents(public_path('translations/maps.json')), true));
   </script>
   @vite('resources/js/pages/index.js')
 @endpush
