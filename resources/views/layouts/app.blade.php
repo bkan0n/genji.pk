@@ -62,6 +62,7 @@
     @include('modal.profile')
     @include('modal.notifications')
     @include('modal.credits')
+    @include('modal.rules')
     @include('auth.login')
     @include('auth.register')
     @include('auth.forgot-password')

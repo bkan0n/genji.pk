@@ -1,5 +1,5 @@
 // ———————————————————————————————————————————————————————————————
-// Helpers modaux (Tailwind)
+// Helpers modaux
 function gpGetModalBox(overlay) {
   return (
     overlay?.querySelector?.(

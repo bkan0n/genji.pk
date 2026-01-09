@@ -5,6 +5,7 @@ import './modals/layout';
 import './modals/notifications';
 import './modals/profile';
 import './modals/credits';
+import './modals/rules';
 
 import * as Sentry from '@sentry/browser';
 
