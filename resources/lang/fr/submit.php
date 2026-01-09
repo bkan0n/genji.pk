@@ -204,15 +204,16 @@ return [
     // PLAYTEST (shared modal/labels)
     // ──────────────────────────────────────────────────────────────────────
     'playtest' => [
-        'title_suffix'        => 'demande un retour de playtest',
-        'votes'               => 'Votes',
-        'difficulty_rating'   => 'Note de difficulté',
-        'rating_sub'          => 'Basé sur les votes de la communauté',
-        'question_difficulty' => 'Voter la difficulté de la map',
-        'complete_to_vote'    => 'Soumettez une completion pour pouvoir voter',
-        'vote_recorded'       => 'Votre vote a été enregistré',
-        'vote_updated'        => 'Votre vote a été mis à jour',
-        'no_votes'            => 'Aucun vote pour le moment',
+        'title_suffix'             => 'demande un retour de playtest',
+        'votes'                    => 'Votes',
+        'difficulty_rating'        => 'Note de difficulté',
+        'rating_sub'               => 'Basé sur les votes de la communauté',
+        'question_difficulty'      => 'Voter la difficulté de la map',
+        'complete_to_vote'         => 'Soumettez une completion pour pouvoir voter',
+        'vote_recorded'            => 'Votre vote a été enregistré',
+        'vote_updated'             => 'Votre vote a été mis à jour',
+        'no_votes'                 => 'Aucun vote pour le moment',
+        'cannot_vote_own_map'      => 'Vous ne pouvez pas voter pour votre propre carte',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
