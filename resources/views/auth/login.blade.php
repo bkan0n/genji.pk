@@ -5,7 +5,7 @@
 
 <div
   id="loginModal"
-  class="fixed inset-0 z-[120] hidden flex items-center justify-center p-4 sm:p-6"
+  class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 sm:p-6"
   role="dialog"
   aria-modal="true"
   aria-hidden="true"
