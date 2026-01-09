@@ -374,3 +374,11 @@ document.addEventListener('click', (e) => {
   setTimeout(() => window.openEmailModal?.(mode), 50);
 });
 </script>
+
+<script>
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  });
+</script>
