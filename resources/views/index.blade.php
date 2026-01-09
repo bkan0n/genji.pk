@@ -9,6 +9,37 @@
 @endpush
 
 @section('content')
+  @if (app()->getLocale() === 'cn')
+    <!-- Announcement Banner -->
+    <section class="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-emerald-500/10">
+      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 flex-1">
+            <span class="flex-shrink-0">
+              <svg class="h-5 w-5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-white">{{ __('index.announcement.title') }}</p>
+              <p class="text-sm text-zinc-300">{{ __('index.announcement.text') }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="flex-shrink-0 inline-flex rounded-lg bg-white/10 p-1.5 text-zinc-400 hover:bg-white/20 hover:text-white transition-colors"
+            onclick="this.closest('section').remove()"
+            aria-label="Close announcement"
+          >
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  @endif
+
   <!-- Hero -->
   <section class="relative overflow-visible">
     <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
