@@ -1031,6 +1031,24 @@ function setupAutocompleteInline(inputEl, dropdownEl, config = { type: 'creator'
   function fetchAndRender(q) {
     const kind = typeToKind(config.type);
     if (!kind) return hide();
+
+    // Special handling for Chinese map names
+    if (CURRENT_LANG === 'cn' && kind === 'map-names') {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const filtered = Object.entries(mapNameData)
+        .filter(([key, value]) => 
+          value.toLowerCase().includes(q.toLowerCase()) || 
+          key.toLowerCase().includes(q.toLowerCase())
+        )
+        .slice(0, 10)
+        .map(([key, value]) => ({
+          label: value,
+          raw: key,
+        }));
+      render(filtered);
+      return;
+    }
+
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
     const url = _buildAutoUrl(kind, { value: q, locale, pageSize: 10 });
 
@@ -1216,6 +1234,23 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   }
 
   function fetchAndRender(q) {
+    // Special handling for Chinese map names
+    if (CURRENT_LANG === 'cn' && kind === 'map-names') {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const filtered = Object.entries(mapNameData)
+        .filter(([key, value]) => 
+          value.toLowerCase().includes(q.toLowerCase()) || 
+          key.toLowerCase().includes(q.toLowerCase())
+        )
+        .slice(0, pageSize)
+        .map(([key, value]) => ({
+          label: value,
+          raw: key,
+        }));
+      render(filtered);
+      return;
+    }
+
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
     const url = _buildAutoUrl(kind, { value: q, locale, pageSize });
     if (!url) return hide();
@@ -7535,6 +7570,83 @@ function showSuggestions(event, _unused, containerId, propertyName) {
   toolbarDebounce = setTimeout(() => {
     const kind = propToKind(propertyName);
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
+
+    // Special handling for Chinese map names in playtest toolbar
+    if (CURRENT_LANG === 'cn' && kind === 'map-names') {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const filtered = Object.entries(mapNameData)
+        .filter(([key, value]) => 
+          value.toLowerCase().includes(q.toLowerCase()) || 
+          key.toLowerCase().includes(q.toLowerCase())
+        )
+        .slice(0, 10)
+        .map(([key, value]) => ({
+          label: value,
+          raw: key,
+        }));
+
+      suggestionsContainer.innerHTML = '';
+
+      filtered.forEach((s) => {
+        const div = document.createElement('div');
+        div.textContent = s.label;
+        div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        div.setAttribute('data-raw-value', s.raw);
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+
+          if (isSubmitRecordMapCode) {
+            input.value = s.label;
+            input.setAttribute('data-raw-value', String(s.raw));
+            hideSuggestions();
+            input.blur();
+            return;
+          }
+
+          const key = mapFilterKey(propertyName);
+          activeFilters[key] = s.raw;
+
+          showConfirmationMessage(
+            t('popup.filter_applied', { filterId: propertyName, value: s.label })
+          );
+
+          updateActiveFilters();
+          updateToolbarButtonStates();
+
+          hideSuggestions();
+          input.__cleanup?.();
+          input.remove();
+          currentInput = null;
+        });
+
+        suggestionsContainer.appendChild(div);
+      });
+
+      if (filtered.length) {
+        suggestionsContainer.style.display = 'block';
+        if (typeof _ensureFloating === 'function') {
+          _ensureFloating(suggestionsContainer, input, {
+            matchAnchorWidth: true,
+            place: { offset: 4, pad: 8, align: 'left' },
+          });
+        } else {
+          const rect = input.getBoundingClientRect();
+          suggestionsContainer.style.position = 'absolute';
+          suggestionsContainer.style.top  = `${rect.bottom + window.scrollY + 4}px`;
+          suggestionsContainer.style.left = `${rect.left + window.scrollX}px`;
+          suggestionsContainer.style.width= `${input.offsetWidth}px`;
+        }
+
+        suggestionsContainer.classList.add('transform', 'opacity-0', 'translate-y-2', 'scale-95');
+        __animateIn(suggestionsContainer);
+        document.addEventListener('mousedown', outsideClickHandler);
+      } else {
+        hideSuggestions();
+      }
+      return;
+    }
+
     const url = _buildAutoUrl(kind, { value: q, locale, pageSize: 10 });
 
     if (!url) {
