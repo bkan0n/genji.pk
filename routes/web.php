@@ -17,13 +17,10 @@ use Illuminate\Support\Facades\Route;
 // Pages
 // =============================================================================
 Route::view('/', 'index')->name('home');
-Route::middleware('auth.verified')->group(function () {
-    Route::get('rank_card', [DiscordAuthController::class, 'rankCardPage'])->name('rankcard.dashboard');
-    Route::view('lootbox', 'lootbox')->name('lootbox');
-    Route::view('submit', 'submit')->name('submit');
-    Route::view('dashboard', 'dashboard')->name('dashboard');
-});
-
+Route::get('rank_card', [DiscordAuthController::class, 'rankCardPage'])->name('rankcard.dashboard');
+Route::view('lootbox', 'lootbox')->name('lootbox');
+Route::view('submit', 'submit')->name('submit');
+Route::view('dashboard', 'dashboard')->name('dashboard');
 Route::view('newsfeed', 'newsfeed')->name('newsfeed');
 Route::view('leaderboard', 'leaderboard')->name('leaderboard');
 Route::view('statistics', 'statistics')->name('statistics');
