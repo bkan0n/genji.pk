@@ -121,6 +121,8 @@ return [
         'not_completed' => 'Non complétée',
         'mapped_by'     => 'Créateur(s)',
         'like'          => 'Like',
+        'official'      => 'Officiel',
+        'unofficial'    => 'Non-officiel',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -352,5 +354,6 @@ return [
         'mapDescription'       => 'Description',
         'mapUpvotes'           => 'Upvotes',
         'mapVerified'          => 'Vérifié',
+        'mapStatus'            => 'Statut',
     ],
 ];

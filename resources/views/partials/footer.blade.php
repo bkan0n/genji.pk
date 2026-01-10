@@ -26,6 +26,7 @@
           <li><a class="text-zinc-300 hover:text-white" href="{{ url('/submit') }}">{{ __('footer.contribute.submit') }}</a></li>
           <li><a class="text-zinc-300 hover:text-white" href="{{ url('/convertor') }}">{{ __('footer.contribute.convertor') }}</a></li>
           <li><a href="#" data-open="credits" class="text-zinc-300 hover:text-white">{{ __('footer.contribute.credits') }}</a></li>
+          <li><a href="#" data-open="rules" class="text-zinc-300 hover:text-white">{{ __('footer.community.rules') }}</a></li>
         </ul>
       </nav>
 

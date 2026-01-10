@@ -3144,6 +3144,8 @@ function ensureSearchDetailsModal() {
                   <dt class="text-xs text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-white/90">—</dd>
                   <dt class="text-xs text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-white/90">—</dd>
                   <dt class="text-xs text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapStatus', 'Status')}</dt>
+                  <dd id="mapStatus" class="text-sm font-medium text-white/90">—</dd>
                   <dt class="text-xs text-white/60">${t('thead.mapQuality')}</dt><dd id="mapQualityDetail" class="text-sm font-medium text-white/90">—</dd>
                 </dl>
               </div>
@@ -3389,6 +3391,12 @@ async function openSearchDetailsModal(r) {
   g('mapTypeDetail', typeText || '—');
   g('mapDiffDetail', difficulty || '—');
   g('mapQualityDetail', qualityStars);
+    const statusText =
+    isOfficial === null
+      ? '—'
+      : (isOfficial ? t('card.official', 'Official') : t('card.unofficial', 'Unofficial'));
+
+  g('mapStatus', statusText);
 
   const guideBtn = document.getElementById('btnGuide');
   if (guideBtn) {

@@ -62,6 +62,12 @@
     @include('modal.profile')
     @include('modal.notifications')
     @include('modal.credits')
+    @include('modal.rules')
+    @include('auth.login')
+    @include('auth.register')
+    @include('auth.forgot-password')
+    @include('auth.reset-password')
+    @include('auth.verify-email')
 
     @php($lang = $selectedLang ?? (app()->getLocale() ?? 'en'))
     <script nonce="{{ $nonce }}">
@@ -70,5 +76,13 @@
       window.user_id = @json(session('user_id'));
       window.currentLang = @json($lang);
       const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      
+      // Auto-open reset password modal if reset_token is in session
+      const hasResetToken = @json(session()->has('reset_token'));
+      const openResetParam = new URLSearchParams(window.location.search).get('openResetPassword');
+      if (hasResetToken && openResetParam === '1') {
+        setTimeout(() => window.openResetPasswordModal?.(), 100);
+      }
     </script>
+    </body>
 </html>

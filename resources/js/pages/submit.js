@@ -1031,6 +1031,24 @@ function setupAutocompleteInline(inputEl, dropdownEl, config = { type: 'creator'
   function fetchAndRender(q) {
     const kind = typeToKind(config.type);
     if (!kind) return hide();
+
+    // Special handling for Chinese map names
+    if (CURRENT_LANG === 'cn' && kind === 'map-names') {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const filtered = Object.entries(mapNameData)
+        .filter(([key, value]) => 
+          value.toLowerCase().includes(q.toLowerCase()) || 
+          key.toLowerCase().includes(q.toLowerCase())
+        )
+        .slice(0, 10)
+        .map(([key, value]) => ({
+          label: value,
+          raw: key,
+        }));
+      render(filtered);
+      return;
+    }
+
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
     const url = _buildAutoUrl(kind, { value: q, locale, pageSize: 10 });
 
@@ -1216,6 +1234,23 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   }
 
   function fetchAndRender(q) {
+    // Special handling for Chinese map names
+    if (CURRENT_LANG === 'cn' && kind === 'map-names') {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const filtered = Object.entries(mapNameData)
+        .filter(([key, value]) => 
+          value.toLowerCase().includes(q.toLowerCase()) || 
+          key.toLowerCase().includes(q.toLowerCase())
+        )
+        .slice(0, pageSize)
+        .map(([key, value]) => ({
+          label: value,
+          raw: key,
+        }));
+      render(filtered);
+      return;
+    }
+
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
     const url = _buildAutoUrl(kind, { value: q, locale, pageSize });
     if (!url) return hide();
@@ -4286,6 +4321,9 @@ function validateSubmitRecordForm(event) {
 function normalizePlaytest(item) {
   const creators = Array.isArray(item?.creators) ? item.creators : [];
   const primary = creators.find((c) => c.is_primary) || creators[0] || {};
+  const creator_ids = creators
+  .map((c) => String(c?.id ?? c?.user_id ?? ''))
+  .filter(Boolean);
 
   const code = item.code || item.map_code || item.id || '';
   const mapName = item.translated_map_name || item.map_name || item.name || '';
@@ -4372,6 +4410,7 @@ function normalizePlaytest(item) {
     map_banner_url: banner,
 
     creator_names,
+    creator_ids,
     primary_creator_id: String(primary.id ?? primary.user_id ?? item.creator_id ?? ''),
     total_results,
 
@@ -4878,13 +4917,24 @@ function setupRatingDropdown() {
   const dropdown = document.querySelector('.ptmodal-ratedropdown');
   if (!rateQuestion || !dropdown) return;
 
-  const canVote = rateQuestion.dataset.canVote === '1';
   const threadId = (rateQuestion.dataset.threadId || '').trim();
   const code = (rateQuestion.dataset.code || '').trim();
   const userId = (
     rateQuestion.dataset.userId ||
     (typeof window !== 'undefined' ? String(window.user_id || '') : '')
   ).trim();
+  let canVote = rateQuestion.dataset.canVote === '1';
+
+  const creatorIdsCsv = (rateQuestion.dataset.creatorIds || '').trim();
+  const creatorIds = creatorIdsCsv
+    ? creatorIdsCsv.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const ownVoteMsg =
+    (typeof t === 'function' && t('playtest.cannot_vote_own_map')) || 'You cannot vote for your own map';
+
+  const isOwner = !!(userId && creatorIds.includes(userId));
+  if (isOwner) canVote = false;
   const votersCsv = rateQuestion.dataset.voters || '';
   let initialVoters = votersCsv
     ? votersCsv
@@ -4990,12 +5040,22 @@ function setupRatingDropdown() {
   };
 
   rateQuestion.addEventListener('click', (e) => {
-    if (!canVote) return;
+    if (!canVote) {
+      if (isOwner) showWarningMessage(ownVoteMsg);
+      return;
+    }
     if (e.target.closest('.ptmodal-ratedropdown')) return;
     toggle();
   });
   rateQuestion.addEventListener('keydown', (e) => {
-    if (!canVote) return;
+    if (!canVote) {
+      if (isOwner && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        showWarningMessage(ownVoteMsg);
+      }
+      return;
+    }
+    
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       toggle();
@@ -5007,6 +5067,10 @@ function setupRatingDropdown() {
   });
 
   async function sendVote(selectedLabel) {
+    if (isOwner) {
+      showWarningMessage(ownVoteMsg);
+      return;
+    }
     if (!threadId || !userId) {
       showErrorMessage(t('errors.server_unreachable'));
       return;
@@ -6239,6 +6303,14 @@ function renderPlaytestModal(data) {
   const time = data.time;
   const canVote = time != null;
   const uid = typeof window !== 'undefined' && window.user_id != null ? String(window.user_id) : '';
+  const creatorIds = Array.isArray(data.creator_ids) ? data.creator_ids.map(String) : [];
+  const isOwner = !!(uid && creatorIds.includes(uid));
+
+  const canRateDifficulty = canVote && !isOwner;
+
+  const rateLabel = isOwner
+    ? ((typeof t === 'function' && t('playtest.cannot_vote_own_map')) || 'You cannot vote for your own map')
+    : (canVote ? t('playtest.question_difficulty') : t('playtest.complete_to_vote'));
 
   const diffCls = difficultyClasses(data.difficulty, data.difficulty_value);
 
@@ -6497,16 +6569,19 @@ function renderPlaytestModal(data) {
       <!-- Rate difficulty -->
       <div class="relative border-t border-white/10 px-3 py-2">
         <div
-          class="ptmodal-ratequestion group flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 ${canVote ? 'bg-white/5 cursor-pointer hover:bg-white/10 focus:ring-white/20' : 'bg-white/5 cursor-not-allowed opacity-60'} px-3 py-2 select-none focus:outline-none"
+          class="ptmodal-ratequestion group flex w-full items-center justify-between gap-3 rounded-lg border border-white/10
+            ${canRateDifficulty ? 'bg-white/5 cursor-pointer hover:bg-white/10 focus:ring-white/20' : 'bg-white/5 cursor-not-allowed opacity-60'}
+            px-3 py-2 select-none focus:outline-none"
           role="button"
           tabindex="0"
           aria-haspopup="menu"
           aria-expanded="false"
-          ${canVote ? '' : 'aria-disabled="true"'}
-          data-can-vote="${canVote ? '1' : '0'}"
+          ${canRateDifficulty ? '' : 'aria-disabled="true"'}
+          data-can-vote="${canRateDifficulty ? '1' : '0'}"
           data-thread-id="${esc(data.playtest_thread_id || '')}"
           data-code="${esc(data.code || '')}"
           data-user-id="${esc(uid)}"
+          data-creator-ids="${esc(Array.isArray(creatorIds) ? creatorIds.join(',') : '')}"
           data-voters="${esc(Array.isArray(data.playtest_voters) ? data.playtest_voters.map((v) => String(v)).join(',') : '')}"
         >
           <div class="flex items-center gap-2">
@@ -6516,11 +6591,13 @@ function renderPlaytestModal(data) {
                 <path fill="#cbd5e1" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/>
               </svg>
             </span>
+
             <span class="text-sm font-medium text-zinc-100">
-              ${canVote ? t('playtest.question_difficulty') : t('playtest.complete_to_vote')}
+              ${rateLabel}
             </span>
           </div>
-          <span class="chevron inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-inset ring-white/10 transition-transform duration-200 ${canVote ? '' : 'opacity-0'}">
+
+          <span class="chevron inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-inset ring-white/10 transition-transform duration-200 ${canRateDifficulty ? '' : 'opacity-0'}">
             <svg class="chevron-svg transition-transform duration-200" width="18" height="18" viewBox="0 0 22 22" aria-hidden="true">
               <path fill="#bbb" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
             </svg>
@@ -7493,6 +7570,83 @@ function showSuggestions(event, _unused, containerId, propertyName) {
   toolbarDebounce = setTimeout(() => {
     const kind = propToKind(propertyName);
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
+
+    // Special handling for Chinese map names in playtest toolbar
+    if (CURRENT_LANG === 'cn' && kind === 'map-names') {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const filtered = Object.entries(mapNameData)
+        .filter(([key, value]) => 
+          value.toLowerCase().includes(q.toLowerCase()) || 
+          key.toLowerCase().includes(q.toLowerCase())
+        )
+        .slice(0, 10)
+        .map(([key, value]) => ({
+          label: value,
+          raw: key,
+        }));
+
+      suggestionsContainer.innerHTML = '';
+
+      filtered.forEach((s) => {
+        const div = document.createElement('div');
+        div.textContent = s.label;
+        div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        div.setAttribute('data-raw-value', s.raw);
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+
+          if (isSubmitRecordMapCode) {
+            input.value = s.label;
+            input.setAttribute('data-raw-value', String(s.raw));
+            hideSuggestions();
+            input.blur();
+            return;
+          }
+
+          const key = mapFilterKey(propertyName);
+          activeFilters[key] = s.raw;
+
+          showConfirmationMessage(
+            t('popup.filter_applied', { filterId: propertyName, value: s.label })
+          );
+
+          updateActiveFilters();
+          updateToolbarButtonStates();
+
+          hideSuggestions();
+          input.__cleanup?.();
+          input.remove();
+          currentInput = null;
+        });
+
+        suggestionsContainer.appendChild(div);
+      });
+
+      if (filtered.length) {
+        suggestionsContainer.style.display = 'block';
+        if (typeof _ensureFloating === 'function') {
+          _ensureFloating(suggestionsContainer, input, {
+            matchAnchorWidth: true,
+            place: { offset: 4, pad: 8, align: 'left' },
+          });
+        } else {
+          const rect = input.getBoundingClientRect();
+          suggestionsContainer.style.position = 'absolute';
+          suggestionsContainer.style.top  = `${rect.bottom + window.scrollY + 4}px`;
+          suggestionsContainer.style.left = `${rect.left + window.scrollX}px`;
+          suggestionsContainer.style.width= `${input.offsetWidth}px`;
+        }
+
+        suggestionsContainer.classList.add('transform', 'opacity-0', 'translate-y-2', 'scale-95');
+        __animateIn(suggestionsContainer);
+        document.addEventListener('mousedown', outsideClickHandler);
+      } else {
+        hideSuggestions();
+      }
+      return;
+    }
+
     const url = _buildAutoUrl(kind, { value: q, locale, pageSize: 10 });
 
     if (!url) {

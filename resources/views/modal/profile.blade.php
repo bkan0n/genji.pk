@@ -17,10 +17,34 @@
         use Illuminate\Support\Str;
 
         $userId = session('user_id');
-        $username = session('discord_username') ?? (session('username') ?? 'Guest');
+        $provider = session('user_provider') ?: (session('user_avatar') ? 'discord' : null);
 
-        $avatarHash = session('user_avatar');
-        $avatarUrl = session('discord_avatar_url') ?: ($userId && $avatarHash ? "https://cdn.discordapp.com/avatars/{$userId}/{$avatarHash}." . (Str::startsWith($avatarHash, 'a_') ? 'gif' : 'png') : asset('assets/img/default-avatar.jpg'));
+        $username =
+        session('user_name')
+        ?? session('user')['username']
+        ?? session('discord_username')
+        ?? session('username')
+        ?? 'Guest';
+
+        // Avatar handling - prefer unified key `user_avatar_url`, fallback to constructed discord URL
+        $avatarUrl = session('user_avatar_url');
+        if (!$avatarUrl) {
+          $avatarHash = session('user_avatar');
+          if ($userId && $avatarHash) {
+            $avatarUrl = "https://cdn.discordapp.com/avatars/{$userId}/{$avatarHash}." . (Str::startsWith($avatarHash, 'a_') ? 'gif' : 'png');
+          }
+        }
+
+        // Pour les utilisateurs email, générer un avatar avec initiales
+        $initials = strtoupper(substr($username, 0, 2));
+        $avatarBgColor = 'bg-emerald-500';
+        if ($provider === 'email') {
+          $hash = crc32($username);
+          $colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-red-500', 'bg-orange-500', 'bg-cyan-500', 'bg-violet-500'];
+          $avatarBgColor = $colors[$hash % count($colors)];
+        }
+
+        $avatarUrl = $avatarUrl ?? asset('assets/img/default-avatar.jpg');
 
         $bannerHash = session('user_banner') ?? session('discord_banner');
         $bannerUrl = $userId && $bannerHash ? "https://cdn.discordapp.com/banners/{$userId}/{$bannerHash}." . (Str::startsWith($bannerHash, 'a_') ? 'gif' : 'png') : null;
@@ -72,11 +96,17 @@
 
           <div class="absolute -bottom-10 left-1/2 -translate-x-1/2">
             <div class="relative">
-              <img
-                src="{{ $avatarUrl }}"
-                alt="User avatar"
-                class="h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24"
-              />
+              @if ($provider === 'discord' && $avatarUrl)
+                <img
+                  src="{{ $avatarUrl }}"
+                  alt="User avatar"
+                  class="h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24"
+                />
+              @else
+                <div class="flex h-20 w-20 items-center justify-center rounded-full {{ $avatarBgColor }} shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24">
+                  <span class="text-2xl font-bold text-white sm:text-3xl">{{ $initials }}</span>
+                </div>
+              @endif
               <span
                 class="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-emerald-400/70"
               ></span>

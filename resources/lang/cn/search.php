@@ -109,10 +109,12 @@ return [
     ],
 
     'card' => [
-      'completed'     => '已完成',
-      'not_completed' => '未完成',
-      'mapped_by'     => '作者',
-      'like'          => '点赞',
+        'completed'     => '已完成',
+        'not_completed' => '未完成',
+        'mapped_by'     => '作者',
+        'like'          => '点赞',
+        'official'      => '国际服',
+        'unofficial'    => '国服',
     ],
 
     // ───────────────────────────────────────────────────────────────────────
@@ -347,5 +349,6 @@ return [
         'mapDescription' => '描述',
         'mapUpvotes' => '点赞数',
         'mapVerified' => '已验证',
+        'mapStatus' => '状态',
     ],
 ];

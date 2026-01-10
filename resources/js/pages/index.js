@@ -165,6 +165,20 @@
   attachOutsideClose(trendingModal);
   attachOutsideClose(mapModal);
 
+  /* Helper translate map name */
+  function getMapName(m) {
+    if (window.currentLang === 'cn' && window.MAPS_DATA) {
+      const mapName = m.map_name;
+
+      for (const [key, mapData] of Object.entries(window.MAPS_DATA)) {
+        if (mapData && mapData['en-US'] === mapName && mapData['zh-CN']) {
+          return mapData['zh-CN'];
+        }
+      }
+    }
+    return m.map_name;
+  }
+
   /* ---------------- Renderers ---------------- */
   function renderInto(ul, items) {
     ul.innerHTML = '';
@@ -176,7 +190,7 @@
       li.innerHTML = `
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <div class="truncate font-semibold">${esc(m.map_name)}</div>
+            <div class="truncate font-semibold">${esc(getMapName(m))}</div>
 
             <!-- Code pill cliquable pour copier -->
             <span
@@ -239,7 +253,7 @@
         <div class="relative w-full h-40 sm:h-48 md:h-56 rounded-2xl overflow-hidden">
           <img
             src="${esc(map.map_banner)}"
-            alt="${esc(map.map_name)}"
+            alt="${esc(getMapName(map))}"
             class="absolute inset-0 h-full w-full object-cover rounded-[inherit] [clip-path:inset(0_round_1rem)]"
             loading="lazy"
             decoding="async"
@@ -290,6 +304,9 @@
       </aside>`;
 
     mapContentEl.innerHTML = `
+      <div class="mb-4">
+        <h2 class="text-2xl font-bold text-white">${esc(getMapName(map))}</h2>
+      </div>
       <div class="space-y-6">
         ${banner}
         <div class="grid gap-6 lg:grid-cols-3">

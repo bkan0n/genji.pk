@@ -1,4 +1,51 @@
-@php($canModerate = session('can_moderate') === true)
+@php
+  use Illuminate\Support\Str;
+
+  $canModerate = session('can_moderate') === true;
+
+  // Determine provider: prefer stored auth_type, then user_provider, then infer from avatar presence
+  $provider = session('user')['auth_type'] ?? session('user_provider') ?? (session('user_avatar') ? 'discord' : null);
+
+  // If user is logged in but provider not set, default to 'email'
+  if (session('user_id') && ! $provider) {
+    $provider = 'email';
+  }
+
+  $avatarUrl = session('user_avatar_url');
+  if (! $avatarUrl) {
+    $avatarHash = session('user_avatar');
+    if (session('user_id') && $avatarHash) {
+      $avatarUrl = "https://cdn.discordapp.com/avatars/" . session('user_id') . "/" . $avatarHash . "." . (Str::startsWith($avatarHash, 'a_') ? 'gif' : 'png');
+    }
+  }
+
+  $username =
+    session('user')['username']
+    ?? session('user_name')
+    ?? session('discord_username')
+    ?? session('username')
+    ?? 'Guest';
+
+  $providerLabel = $provider === 'discord' ? 'Discord' : 'Email';
+
+  $initials = strtoupper(substr($username, 0, 2));
+  // Badge mark: 'D' for Discord, 'E' for Email, fallback to initials
+  if ($provider === 'discord') {
+    $providerMark = 'D';
+  } elseif ($provider === 'email') {
+    $providerMark = 'E';
+  } else {
+    $providerMark = $initials;
+  }
+
+  $avatarBgColor = 'bg-emerald-500';
+  if ($provider === 'email') {
+    $hash = crc32($username);
+    $colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-red-500', 'bg-orange-500', 'bg-cyan-500', 'bg-violet-500'];
+    $avatarBgColor = $colors[$hash % count($colors)];
+  }
+@endphp
+
 <header
   class="sticky top-0 z-50 border-b border-white/10 bg-zinc-900/90 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/70"
 >
@@ -249,7 +296,7 @@
 
         <!-- Auth -->
 
-        @if (session('user_id') && session('user_avatar'))
+        @if (session('user_id'))
           <div class="relative">
             <button
               id="avatarBtn"
@@ -257,64 +304,77 @@
               aria-expanded="false"
               aria-controls="avatarMenu"
             >
-              <img
-                src="https://cdn.discordapp.com/avatars/{{ session('user_id') }}/{{ session('user_avatar') }}.png"
-                alt="User Avatar"
-                class="h-8 w-8 rounded-full object-cover"
-              />
+              <div class="relative">
+                @if ($avatarUrl && $provider === 'discord')
+                  <img
+                    src="{{ $avatarUrl }}"
+                    alt="User Avatar"
+                    class="h-8 w-8 rounded-full object-cover"
+                  />
+                @else
+                  <div class="flex h-8 w-8 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-white">
+                      {{ $initials }}
+                  </div>
+                @endif
+                <span class="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-zinc-950/80 text-[10px] font-extrabold text-white/85 backdrop-blur">
+                  {{ $providerMark }}
+                </span>
+              </div>
               <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
                 <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
               </svg>
             </button>
+
             <ul
               id="avatarMenu"
               class="invisible absolute right-0 z-50 mt-2 w-48 translate-y-1 rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
             >
+              <li class="px-4 pb-2">
+                <div class="text-xs font-extrabold text-white/90">
+                  {{ $username }}
+                </div>
+                <div class="mt-1 inline-flex items-center rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-[11px] font-semibold text-white/80">
+                  Connected via {{ $providerLabel }}
+                </div>
+              </li>
+
+              <li><div class="my-2 h-px bg-white/10"></div></li>
               <li>
-                <a
-                  class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
-                  href="{{ url('/lootbox') }}"
-                >
+                <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" href="{{ url('/lootbox') }}">
                   {{ __('navbar.lootbox') }}
                 </a>
               </li>
               <li>
-                <a
-                  class="block cursor-pointer px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
-                  id="user-profile"
-                >
+                <a class="block cursor-pointer px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" id="user-profile">
                   {{ __('navbar.profile') }}
                 </a>
               </li>
               <li>
-                <a
-                  class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
-                  href="{{ url('/rank_card') }}"
-                >
+                <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" href="{{ url('/rank_card') }}">
                   {{ __('navbar.rank_card') }}
                 </a>
               </li>
               <li>
-                <a
-                  class="block cursor-pointer px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
-                  id="user-settings"
-                >
+                <a class="block cursor-pointer px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" id="user-settings">
                   {{ __('navbar.settings') }}
                 </a>
               </li>
             </ul>
           </div>
         @else
-          <a
-            href="{{ route('login') }}"
-            class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+          <button
+            type="button"
+            data-open-login
+            class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+            aria-haspopup="dialog"
+            aria-controls="loginModal"
           >
             {{ __('navbar.login') }}
             <svg class="h-4 w-4 shrink-0" viewBox="0 0 256 199" aria-hidden="true">
               <path fill="currentColor" fill-rule="nonzero"
                 d="M216.856339,16.5966031 C200.285002,8.84328665 182.566144,3.2084988 164.041564,0 C161.766523,4.11318106 159.108624,9.64549908 157.276099,14.0464379 C137.583995,11.0849896 118.072967,11.0849896 98.7430163,14.0464379 C96.9108417,9.64549908 94.1925838,4.11318106 91.8971895,0 C73.3526068,3.2084988 55.6133949,8.86399117 39.0420583,16.6376612 C5.61752293,67.146514 -3.4433191,116.400813 1.08711069,164.955721 C23.2560196,181.510915 44.7403634,191.567697 65.8621325,198.148576 C71.0772151,190.971126 75.7283628,183.341335 79.7352139,175.300261 C72.104019,172.400575 64.7949724,168.822202 57.8887866,164.667963 C59.7209612,163.310589 61.5131304,161.891452 63.2445898,160.431257 C105.36741,180.133187 151.134928,180.133187 192.754523,160.431257 C194.506336,161.891452 196.298154,163.310589 198.110326,164.667963 C191.183787,168.842556 183.854737,172.420929 176.223542,175.320965 C180.230393,183.341335 184.861538,190.991831 190.096624,198.16893 C211.238746,191.588051 232.743023,181.531619 254.911949,164.955721 C260.227747,108.668201 245.831087,59.8662432 216.856339,16.5966031 Z M85.4738752,135.09489 C72.8290281,135.09489 62.4592217,123.290155 62.4592217,108.914901 C62.4592217,94.5396472 72.607595,82.7145587 85.4738752,82.7145587 C98.3405064,82.7145587 108.709962,94.5189427 108.488529,108.914901 C108.508531,123.290155 98.3405064,135.09489 85.4738752,135.09489 Z M170.525237,135.09489 C157.88039,135.09489 147.510584,123.290155 147.510584,108.914901 C147.510584,94.5396472 157.658606,82.7145587 170.525237,82.7145587 C183.391518,82.7145587 193.761324,94.5189427 193.539891,108.914901 C193.539891,123.290155 183.391518,135.09489 170.525237,135.09489 Z" />
             </svg>
-          </a>
+          </button>
         @endif
 
         <!-- Mobile menu -->

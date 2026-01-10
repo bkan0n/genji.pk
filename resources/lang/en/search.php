@@ -117,10 +117,12 @@ return [
     ],
 
     'card' => [
-      'completed'     => 'Completed',
-      'not_completed' => 'Not completed',
-      'mapped_by'     => 'Creator(s)',
-      'like'          => 'Like',
+        'completed'     => 'Completed',
+        'not_completed' => 'Not completed',
+        'mapped_by'     => 'Creator(s)',
+        'like'          => 'Like',
+        'official'      => 'Official',
+        'unofficial'    => 'Unofficial',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -352,5 +354,6 @@ return [
         'mapDescription' => 'Description',
         'mapUpvotes' => 'Upvotes',
         'mapVerified' => 'Verified',
+        'mapStatus' => 'Status',
     ],
 ];

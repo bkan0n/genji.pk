@@ -204,15 +204,16 @@ return [
     // PLAYTEST (shared modal/labels)
     // ──────────────────────────────────────────────────────────────────────
     'playtest' => [
-        'title_suffix'         => 'is requesting playtest feedback',
-        'votes'                => 'Votes',
-        'difficulty_rating'    => 'Difficulty rating',
-        'rating_sub'           => 'Based on community votes',
-        'question_difficulty'  => 'Vote map difficulty',
-        'complete_to_vote'     => 'Submit a completion to be able to vote',
-        'vote_recorded'        => 'Your vote has been submitted',
-        'vote_updated'         => 'Your vote has been updated',
-        'no_votes'             => 'No votes yet',
+        'title_suffix'             => 'is requesting playtest feedback',
+        'votes'                    => 'Votes',
+        'difficulty_rating'        => 'Difficulty rating',
+        'rating_sub'               => 'Based on community votes',
+        'question_difficulty'      => 'Vote map difficulty',
+        'complete_to_vote'         => 'Submit a completion to be able to vote',
+        'vote_recorded'            => 'Your vote has been submitted',
+        'vote_updated'             => 'Your vote has been updated',
+        'no_votes'                 => 'No votes yet',
+        'cannot_vote_own_map'      => 'You cannot vote for your own map',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

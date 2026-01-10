@@ -93,4 +93,33 @@ return [
         'no_username_set'           => 'Aucun pseudo défini',
         'confirm_button'            => 'Confirmer',
     ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // RULES MODAL
+    // ──────────────────────────────────────────────────────────────────────
+    'rules' => [
+        'title' => 'Règles de la communauté',
+        'close' => 'Fermer les règles',
+
+        'rule_1_title' => '1. Soyez respectueux',
+        'rule_1_text' => 'Cela signifie pas de commentaires méchants, impolis ou harcelants. Traitez les autres comme vous aimeriez être traité.',
+
+        'rule_2_title' => '2. N\'utilisez pas Discord pour spammer, manipuler l\'engagement ou perturber l\'expérience d\'autres personnes',
+        'rule_2_text' => 'Y compris essayer d\'influencer ou de perturber les conversations en utilisant des bots, des comptes faux, plusieurs comptes ou d\'autres automatisations.',
+
+        'rule_3_title' => '3. Pas de langage inapproprié',
+        'rule_3_text' => 'L\'utilisation de jurons doit être maintenue à un minimum raisonnable. Tout langage dérogatoire envers un utilisateur est interdit.',
+
+        'rule_4_title' => '4. Pas de matériel pornographique/adulte/autre NSFW',
+        'rule_4_text' => 'C\'est un serveur communautaire et non destiné à partager ce type de matériel.',
+
+        'rule_5_title' => '5. Ne partagez pas vos informations personnelles',
+        'rule_5_text' => 'Ne partagez pas vos informations personnelles ou celles d\'autres utilisateurs sans leur consentement. Cela inclut les numéros de téléphone, les adresses et autres informations sensibles.',
+
+        'rule_6_title' => '6. Respectez les directives spécifiques à chaque canal',
+        'rule_6_text' => 'Chaque canal de votre serveur doit avoir des directives spécifiques pour le type de contenu autorisé. Assurez-vous de respecter ces directives et le but de chaque canal.',
+
+        'rule_7_title' => '7. Pas de partage ou de distribution de hacks, triche ou autres outils/services non autorisés',
+        'rule_7_text' => 'Le partage ou la distribution de hacks, de triche ou d\'autres outils/services non autorisés est strictement interdit sur le serveur.',
+    ],
 ];
