@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-  @if (app()->getLocale() === 'cn')
+  @if (app()->getLocale() === 'cn' && !session()->has('user_id'))
     <!-- Announcement Banner -->
     <section class="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-emerald-500/10">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
