@@ -16,7 +16,7 @@ RUN composer install --no-dev --no-ansi --no-interaction --no-progress \
     --prefer-dist --optimize-autoloader --no-scripts
 
 # 3) Runtime
-FROM serversideup/php:8.4-unit AS runtime
+FROM serversideup/php:8.3-unit AS runtime
 WORKDIR /var/www/html
 USER root
 
