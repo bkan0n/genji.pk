@@ -330,10 +330,13 @@ class GenjiApiService
     /**
      * Garbage collect expired sessions.
      */
-    public function sessionGc(): int
+    public function sessionGc(int $maxLifetime): int
     {
         try {
-            $response = $this->request()->post("{$this->apiRoot}/api/v3/auth/sessions/gc");
+            $response = $this->request()->post(
+                "{$this->apiRoot}/api/v3/auth/sessions/gc",
+                ['max_lifetime' => $maxLifetime]
+            );
 
             if ($response->successful()) {
                 return $response->json()['deleted_count'] ?? 0;

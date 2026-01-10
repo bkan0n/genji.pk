@@ -52,6 +52,6 @@ class ApiSessionHandler implements SessionHandlerInterface
 
     public function gc(int $max_lifetime): int|false
     {
-        return $this->api->sessionGc();
+        return $this->api->sessionGc($max_lifetime);
     }
 }
