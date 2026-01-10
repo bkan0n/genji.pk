@@ -81,13 +81,13 @@
 
           <button
             type="submit"
-            class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-extrabold text-black transition hover:bg-emerald-400"
+            class="inline-flex cursor-pointer w-full items-center justify-center rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-extrabold text-black transition hover:bg-emerald-400"
           >
             {{ __('auth.forgot_password.submit_button') }}
           </button>
 
           <div class="text-center text-xs text-zinc-400">
-            <button type="button" data-open-login class="text-zinc-300 hover:text-white">{{ __('auth.forgot_password.back_to_login') }}</button>
+            <button type="button" data-open-login class="text-zinc-300 cursor-pointer hover:text-white">{{ __('auth.forgot_password.back_to_login') }}</button>
           </div>
         </form>
       </div>
