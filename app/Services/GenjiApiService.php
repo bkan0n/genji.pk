@@ -273,6 +273,48 @@ class GenjiApiService
     }
 
     // =========================================================================
+    // Remember Token Endpoints (persistent login)
+    // =========================================================================
+
+    public function createRememberToken(int $userId): ?string
+    {
+        try {
+            $response = $this->request()->post("{$this->apiRoot}/api/v3/auth/remember-token", [
+                'user_id' => $userId,
+            ]);
+
+            if ($response->successful()) {
+                return $response->json()['token'] ?? null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Create remember token API exception', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    public function validateRememberToken(string $token): ?int
+    {
+        try {
+            $response = $this->request()->post("{$this->apiRoot}/api/v3/auth/remember-token/validate", [
+                'token' => $token,
+            ]);
+
+            if ($response->successful() && ($response->json()['valid'] ?? false)) {
+                return isset($response->json()['user_id'])
+                    ? (int) $response->json()['user_id']
+                    : null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Validate remember token API exception', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    // =========================================================================
     // Session Endpoints (for custom session driver)
     // =========================================================================
 

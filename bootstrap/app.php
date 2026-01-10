@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Illuminate\Routing\Middleware\SubstituteBindings::class,
                 \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
                 \App\Http\Middleware\DetectLanguage::class,
+                \App\Http\Middleware\RememberTokenAuth::class,
             ],
         );
 

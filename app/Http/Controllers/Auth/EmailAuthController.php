@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\GenjiApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 
 class EmailAuthController extends Controller
@@ -98,12 +99,39 @@ class EmailAuthController extends Controller
 
         $request->session()->regenerate();
 
+        if ($request->boolean('remember')) {
+            $rememberToken = $this->api->createRememberToken($result['user']['id']);
+            if ($rememberToken) {
+                $this->queueRememberCookie($request, $rememberToken);
+            }
+        }
+
         if (!(bool) ($user['email_verified'] ?? false)) {
             return redirect('/?openVerifyEmail=1')
                 ->with('warning', __('auth.messages.email_not_verified'));
         }
 
         return redirect()->intended('/');
+    }
+
+    private function queueRememberCookie(Request $request, string $token): void
+    {
+        $minutes = 60 * 24 * 30;
+        $domain = config('session.domain');
+        $secureCfg = config('session.secure');
+        $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
+
+        cookie()->queue(cookie(
+            'remember_token',
+            $token,
+            $minutes,
+            '/',
+            $domain,
+            $secure,
+            true,
+            false,
+            'Lax'
+        ));
     }
 
     public function verifyEmail(Request $request)
@@ -213,6 +241,7 @@ class EmailAuthController extends Controller
     public function logout(Request $request)
     {
         $request->session()->invalidate();
+        cookie()->queue(cookie()->forget('remember_token'));
         $request->session()->regenerateToken();
 
         return redirect('/');

@@ -149,6 +149,8 @@
           <div class="mt-6 space-y-3">
             {{-- Discord --}}
             <a
+              id="discordLoginLink"
+              data-base-href="{{ route('auth.discord.redirect') }}"
               href="{{ route('auth.discord.redirect') }}"
               class="group inline-flex w-full items-center justify-between rounded-xl border border-white/10 bg-[#5865F2]/90 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5865F2]"
             >
@@ -162,6 +164,14 @@
                 {{ __('auth.login.recommended') }}
               </span>
             </a>
+            <label class="mt-2 inline-flex items-center gap-2 text-xs text-zinc-300 select-none">
+              <input
+                id="rememberDiscord"
+                type="checkbox"
+                class="h-4 w-4 rounded border-white/20 bg-black/30 text-emerald-400 focus:ring-emerald-500/20"
+              />
+              Remember me
+            </label>
 
             {{-- EMAIL --}}
             <button
@@ -185,7 +195,7 @@
             <div id="emailFormWrap" class="hidden rounded-2xl border border-white/10 bg-black/20 p-4">
               <form method="POST" action="{{ url('/login') }}" class="space-y-3">
                 @csrf
-
+                <input type="hidden" name="remember" id="rememberEmail" value="0">
                 <div>
                   <label class="block text-xs font-extrabold text-zinc-200">{{ __('auth.login.email_label') }}</label>
                   <input
@@ -210,6 +220,17 @@
                     placeholder="••••••••"
                   />
                 </div>
+
+                <label class="mt-4 flex items-center gap-2 text-xs text-zinc-300">
+                  <input
+                    type="checkbox"
+                    name="remember"
+                    value="1"
+                    class="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400 focus:ring-emerald-400/30"
+                    id="rememberMe"
+                  />
+                  Remember me
+                </label>
 
                 <button
                   type="submit"
@@ -373,12 +394,48 @@ document.addEventListener('click', (e) => {
   const mode = btn.getAttribute('data-open-email') || 'login';
   setTimeout(() => window.openEmailModal?.(mode), 50);
 });
+(() => {
+  const rememberDiscord = document.getElementById('rememberDiscord');
+  const rememberEmail = document.getElementById('rememberMe');
+  const discordLink = document.getElementById('discordLoginLink');
+
+  function isRememberChecked() {
+    return (!!rememberDiscord && rememberDiscord.checked) || (!!rememberEmail && rememberEmail.checked);
+  }
+
+  function sync(from, to) {
+    if (from && to) to.checked = from.checked;
+  }
+
+  function updateDiscordHref() {
+    if (!discordLink) return;
+    const base = discordLink.getAttribute('data-base-href') || discordLink.getAttribute('href') || '';
+    if (!base) return;
+
+    const url = new URL(base, window.location.origin);
+    if (isRememberChecked()) url.searchParams.set('remember', '1');
+    else url.searchParams.delete('remember');
+
+    discordLink.setAttribute('href', url.pathname + url.search);
+  }
+
+  rememberDiscord?.addEventListener('change', () => {
+    sync(rememberDiscord, rememberEmail);
+    updateDiscordHref();
+  });
+
+  rememberEmail?.addEventListener('change', () => {
+    sync(rememberEmail, rememberDiscord);
+    updateDiscordHref();
+  });
+
+  updateDiscordHref();
+})();
+
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
 </script>
 
-<script>
-  window.addEventListener('pageshow', function (event) {
-    if (event.persisted) {
-      window.location.reload();
-    }
-  });
-</script>

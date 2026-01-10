@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use GuzzleHttp\Client;
+use App\Services\GenjiApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -15,6 +16,7 @@ use Throwable;
 
 class DiscordAuthController extends Controller
 {
+    public function __construct(private GenjiApiService $api) {}
     
     private function discordRedirectUri(): string
     {
@@ -33,6 +35,7 @@ class DiscordAuthController extends Controller
             500,
             'Discord OAuth is not configured'
         );
+        $request->session()->put('auth_remember', $request->boolean('remember'));
 
         return $this->makeDiscordProvider($scopes, $redirectUri)->redirect();
     }
@@ -88,7 +91,45 @@ class DiscordAuthController extends Controller
 
         $tag = $discriminator !== '0' ? "{$username}#{$discriminator}" : $username;
 
+        // Check if user exists
+        $exists = $this->api->userExists($id);
+
+        if ($exists) {
+            $this->api->updateUser($id, $globalName !== '' ? $globalName : $username, $username);
+            $userData = $this->api->getUser($id);
+            if (!$userData) {
+                return redirect('/')->with('error', 'Failed to authenticate. Please try again.');
+            }
+        } else {
+            $userData = $this->api->createUser($id, $globalName !== '' ? $globalName : $username, $username);
+            if (!$userData) {
+                return redirect('/')->with('error', 'Failed to create account. Please try again.');
+            }
+        }
+
+        // Store in session
+        $request->session()->put('user_id', $id);
+        $request->session()->put('user', [
+            'id' => $id,
+            'nickname' => $userData['nickname'] ?? $username,
+            'global_name' => $userData['global_name'] ?? $globalName,
+            'coins' => $userData['coins'] ?? 0,
+            'auth_type' => 'discord',
+        ]);
+        $request->session()->put('user_provider', 'discord');
+        $request->session()->put('user_name', $userData['nickname'] ?? $username);
+
         $request->session()->regenerate();
+
+        // Remember me
+        $remember = (bool) $request->session()->pull('auth_remember', false);
+        if ($remember) {
+            $rememberToken = $this->api->createRememberToken($id);
+            if ($rememberToken) {
+                $this->queueRememberCookie($request, $rememberToken);
+            }
+        }
+
         $request->session()->put([
             'user_id' => $id,
             'username' => $username,
@@ -142,6 +183,26 @@ class DiscordAuthController extends Controller
         return redirect()->intended('/');
     }
 
+    private function queueRememberCookie(Request $request, string $token): void
+    {
+        $minutes = 60 * 24 * 30;
+        $domain = config('session.domain');
+        $secureCfg = config('session.secure');
+        $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
+
+        cookie()->queue(cookie(
+            'remember_token',
+            $token,
+            $minutes,
+            '/',
+            $domain,
+            $secure,
+            true,
+            false,
+            'Lax'
+        ));
+    }
+
     public function logout(Request $request)
     {
         try {
@@ -182,7 +243,7 @@ class DiscordAuthController extends Controller
             'user',
             'user_provider',
         ]);
-
+        cookie()->queue(cookie()->forget('remember_token'));
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
