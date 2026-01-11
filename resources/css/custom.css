@@ -839,14 +839,27 @@ img.avatar-loaded{animation:none!important;background:none!important}
   .is-skeleton [data-skel="img"]{animation:none}
 }
 
-/* Map search table clip fix */
+/* Map search table */
 .gp-wrap{ overflow:visible; }
 .results-xscroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable both-edges;
   touch-action:pan-x;overscroll-behavior-x:contain;padding-bottom:2px;}
-.minw-map_search{display:inline-block;min-width:1024px;width:max-content;max-width:none;}
+
+.minw-map_search{display:block;min-width:1024px;width:100%;max-width:none;}
 .minw-map_search > .grid-map_search,
-.minw-map_search .row-gap-y > .grid-map_search{width:max-content;}
-.grid-map_search{grid-template-columns: 110px minmax(200px, max-content) minmax(180px, max-content) minmax(220px, max-content) 120px 140px max-content;}
+.minw-map_search .row-gap-y > .grid-map_search{width:100%;}
+
+/* Name/Type/Creator*/
+.grid-map_search{grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;}
+.grid-map_search > *{min-width:0;}
+
+.grid-map_search .qmb{min-width:0;max-width:100%;overflow:hidden;}
+.grid-map_search .qmb .qmb-track{
+  width:clamp(72px,7vw,96px);
+  min-width:64px;
+  max-width:96px;
+  flex:0 0 auto;
+}
+.grid-map_search .qmb .qmb-text{flex:0 0 auto;font-size:.75rem;}
 
 /* ================= SUBMIT ================= */
 .scrollbar-stable { scrollbar-gutter: stable; }
