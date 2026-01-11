@@ -1176,6 +1176,55 @@ function normalizeSuggestionItem(item, kind) {
   return null;
 }
 
+/* =========================
+   MAP NAME (EN)
+   ========================= */
+const _enMapNameCache = new Map();
+
+async function resolveEnglishMapNameExact(rawCandidate) {
+  const cand = String(rawCandidate || '').trim();
+  if (!cand) return null;
+
+  const key = cand.toLowerCase();
+  if (_enMapNameCache.has(key)) return _enMapNameCache.get(key);
+
+  try {
+    const url = _buildAutoUrl('map-names', { value: cand, locale: 'en', pageSize: 25 });
+    const r = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!r.ok) {
+      _enMapNameCache.set(key, null);
+      return null;
+    }
+
+    const arr = await r.json();
+    const list = (Array.isArray(arr) ? arr : [])
+      .map((it) => normalizeSuggestionItem(it, 'map-names'))
+      .filter(Boolean);
+
+    const needle = key;
+
+    const norm = (s) => String(s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '');
+
+    const needleNorm = norm(cand);
+
+    let hit = list.find((x) => String(x.raw || '').trim().toLowerCase() === needle);
+
+    if (!hit) hit = list.find((x) => String(x.label || '').trim().toLowerCase() === needle);
+
+    if (!hit && needleNorm) hit = list.find((x) => norm(x.raw) === needleNorm);
+    if (!hit && needleNorm) hit = list.find((x) => norm(x.label) === needleNorm);
+    const resolved = hit ? String(hit.raw || hit.label || '').trim() : null;
+
+    _enMapNameCache.set(key, resolved || null);
+    return resolved || null;
+  } catch (e) {
+    _enMapNameCache.set(key, null);
+    return null;
+  }
+}
+
 function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 10, onPick }) {
   if (!input) return;
   let debounce;
@@ -1367,10 +1416,28 @@ function attachSubmitMapAutocompletes({
     setupAutocomplete(mapNameInput, {
       kind: 'map-names',
       containerId: 'smMapNameSuggestions',
-      onPick: ({ label, raw }) => {
+      onPick: async ({ label, raw }) => {
         mapNameInput.value = label;
+
+        // Keep UI label (CN), but store the canonical EN name for POST in data-raw-value.
+        if (raw != null) mapNameInput.setAttribute('data-raw-value', String(raw));
+        else mapNameInput.removeAttribute('data-raw-value');
+
         const metaMap = document.getElementById('metaMap');
-        if (metaMap) metaMap.textContent = label || raw || 'N/A';
+        if (metaMap) {
+          metaMap.textContent = label || raw || 'N/A';
+          if (raw != null) metaMap.setAttribute('data-raw-value', String(raw));
+          else metaMap.removeAttribute('data-raw-value');
+        }
+
+        // In CN, upgrade the raw key (often lowercased) to the exact English name from EN suggestions.
+        if (CURRENT_LANG === 'cn' && raw != null) {
+          const resolved = await resolveEnglishMapNameExact(String(raw));
+          if (resolved) {
+            mapNameInput.setAttribute('data-raw-value', resolved);
+            if (metaMap) metaMap.setAttribute('data-raw-value', resolved);
+          }
+        }
 
         const box = document.getElementById('smMapNameSuggestions');
         if (box) box.style.display = 'none';
@@ -2977,6 +3044,36 @@ function editInline(field) {
         return;
       }
     }
+
+    if (field === 'metaMap') {
+      const sugg = input.__autocompleteSuggestions || [];
+      const needle = newValue.toLowerCase().trim();
+      const found = sugg.find(
+        (item) =>
+          String(item.display || '').toLowerCase().trim() === needle ||
+          String(item.raw || '').toLowerCase().trim() === needle
+      );
+
+      if (found) {
+        const display = String(found.display || newValue).trim();
+        const raw = String(found.raw || '').trim();
+
+        newValue = display;
+
+        if (raw) {
+          label.setAttribute('data-raw-value', raw);
+
+          if (CURRENT_LANG === 'cn') {
+            resolveEnglishMapNameExact(raw).then((resolved) => {
+              if (resolved) label.setAttribute('data-raw-value', resolved);
+            });
+          }
+        } else {
+          label.removeAttribute('data-raw-value');
+        }
+      }
+    }
+
     if (field === 'metaCreator' || field === 'metaCreatorMain') {
       const rawId = input.getAttribute('data-raw-value');
       if (rawId) {
@@ -3042,7 +3139,32 @@ function editInline(field) {
 async function sendMapToApi() {
   const mainCreatorId = document.getElementById('metaCreatorMain')?.getAttribute('data-raw-id');
   const code = (document.getElementById('metaCode')?.textContent || '').trim();
-  const name = (document.getElementById('metaMap')?.textContent || '').trim();
+  const metaMapEl = document.getElementById('metaMap');
+  const nameDisplay = (metaMapEl?.textContent || '').trim();
+  let nameRaw = (metaMapEl?.getAttribute('data-raw-value') || '').trim();
+  let nameForApi = nameDisplay;
+
+  if (CURRENT_LANG === 'cn') {
+    if (!nameRaw) {
+      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+      const needle = nameDisplay.toLowerCase().trim();
+      const hit = Object.entries(mapNameData).find(
+        ([k, v]) => String(v || '').toLowerCase().trim() === needle
+      );
+      if (hit?.[0]) nameRaw = String(hit[0]).trim();
+    }
+
+    const resolved = await resolveEnglishMapNameExact(nameRaw);
+    if (resolved) {
+      nameForApi = resolved;
+      if (metaMapEl) metaMapEl.setAttribute('data-raw-value', resolved);
+    } else {
+      const msg = t('popup.no_results') || 'Please pick a map name from suggestions.';
+      if (typeof showErrorMessage === 'function') showErrorMessage(msg);
+      return { error: msg };
+    }
+  }
+
   const checkpoints = Number(
     (document.getElementById('metaCheckpoints')?.textContent || '').trim()
   );
@@ -3092,7 +3214,7 @@ async function sendMapToApi() {
     code,
     creators,
     difficulty,
-    map_name: name,
+    map_name: nameForApi,
     archived: false,
     hidden: false,
     official: !!mapOfficial,
