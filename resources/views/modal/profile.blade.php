@@ -17,7 +17,7 @@
         use Illuminate\Support\Str;
 
         $userId = session('user_id');
-        $provider = session('user_provider') ?: (session('user_avatar') ? 'discord' : null);
+        $provider = session('user')['auth_type'] ?? session('user_provider') ?? (session('user_avatar') ? 'discord' : null);
 
         $username =
         session('user_name')
@@ -26,8 +26,8 @@
         ?? session('username')
         ?? 'Guest';
 
-        // Avatar handling - prefer unified key `user_avatar_url`, fallback to constructed discord URL
-        $avatarUrl = session('user_avatar_url');
+        // Avatar handling
+        $avatarUrl = session('user_avatar_url') ?? session('discord_avatar_url');
         if (!$avatarUrl) {
           $avatarHash = session('user_avatar');
           if ($userId && $avatarHash) {

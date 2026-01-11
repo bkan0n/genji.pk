@@ -127,6 +127,7 @@ class DiscordAuthController extends Controller
             $rememberToken = $this->api->createRememberToken($id);
             if ($rememberToken) {
                 $this->queueRememberCookie($request, $rememberToken);
+                $this->queueDiscordRememberCookies($request, $avatarHash, $avatarUrl, $bannerHash, $publicFlags, $premiumType);
             }
         }
 
@@ -140,6 +141,7 @@ class DiscordAuthController extends Controller
 
             'user_avatar' => $avatarHash,
             'discord_avatar_url' => $avatarUrl,
+            'user_avatar_url' => $avatarUrl,
             'user_banner' => $bannerHash,
             'discord_banner' => $bannerHash,
 
@@ -203,6 +205,48 @@ class DiscordAuthController extends Controller
         ));
     }
 
+    private function queueDiscordRememberCookies(
+        Request $request,
+        $avatarHash,
+        string $avatarUrl,
+        $bannerHash,
+        int $publicFlags,
+        int $premiumType
+    ): void {
+        $minutes = 60 * 24 * 30;
+        $domain = config('session.domain');
+        $secureCfg = config('session.secure');
+        $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
+
+        $this->queueRememberDataCookie($request, 'discord_avatar', (string) ($avatarHash ?? ''), $minutes, $domain, $secure);
+        $this->queueRememberDataCookie($request, 'discord_avatar_url', (string) $avatarUrl, $minutes, $domain, $secure);
+        $this->queueRememberDataCookie($request, 'discord_banner', (string) ($bannerHash ?? ''), $minutes, $domain, $secure);
+        $this->queueRememberDataCookie($request, 'discord_public_flags', (string) $publicFlags, $minutes, $domain, $secure);
+        $this->queueRememberDataCookie($request, 'discord_premium_type', (string) $premiumType, $minutes, $domain, $secure);
+    }
+
+    private function queueRememberDataCookie(
+        Request $request,
+        string $name,
+        string $value,
+        int $minutes,
+        $domain,
+        bool $secure
+    ): void {
+        cookie()->queue(cookie(
+            $name,
+            $value,
+            $minutes,
+            '/',
+            $domain,
+            $secure,
+            true,
+            false,
+            'Lax'
+        ));
+    }
+
+
     public function logout(Request $request)
     {
         try {
@@ -244,6 +288,11 @@ class DiscordAuthController extends Controller
             'user_provider',
         ]);
         cookie()->queue(cookie()->forget('remember_token'));
+        cookie()->queue(cookie()->forget('discord_avatar'));
+        cookie()->queue(cookie()->forget('discord_avatar_url'));
+        cookie()->queue(cookie()->forget('discord_banner'));
+        cookie()->queue(cookie()->forget('discord_public_flags'));
+        cookie()->queue(cookie()->forget('discord_premium_type'));
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
