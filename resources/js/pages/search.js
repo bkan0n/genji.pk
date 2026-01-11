@@ -2925,7 +2925,7 @@ async function displayMapSearchResultsTable(rowsInput) {
     return `
       <div class="${halo} grid grid-map_search bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
         <div class="min-w-0">${codeChip}</div>
-        <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(r.map_name || 'N/A')}"></span></div>
+        <div class="min-w-0"><span class="gp-td-mapname truncate block" data-sf="${escAttr(r.map_name || 'N/A')}"></span></div>
         <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(mapType)}"></span></div>
         <div class="min-w-0 -ml-1 flex flex-wrap items-center gap-2">${creatorsHTML || 'N/A'}</div>
         <div class="min-w-0"><span class="${__clsTextColor(diffColor)}"><span data-sf="${escAttr(r.difficulty || 'N/A')}">${esc(r.difficulty || 'N/A')}</span></span></div>

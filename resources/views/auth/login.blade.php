@@ -170,7 +170,7 @@
                 type="checkbox"
                 class="h-4 w-4 rounded cursor-pointer border-white/20 bg-black/30 text-emerald-400 focus:ring-emerald-500/20"
               />
-              Remember me
+              {{ __('auth.login.remember_me') }}
             </label>
 
             {{-- EMAIL --}}
@@ -229,7 +229,7 @@
                     class="h-4 w-4 cursor-pointer rounded border-white/20 bg-white/5 text-emerald-400 focus:ring-emerald-400/30"
                     id="rememberMe"
                   />
-                  Remember me
+                  {{ __('auth.login.remember_me') }}
                 </label>
 
                 <button

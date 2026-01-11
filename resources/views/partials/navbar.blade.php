@@ -11,7 +11,7 @@
     $provider = 'email';
   }
 
-  $avatarUrl = session('user_avatar_url');
+  $avatarUrl = session('user_avatar_url') ?? session('discord_avatar_url');
   if (! $avatarUrl) {
     $avatarHash = session('user_avatar');
     if (session('user_id') && $avatarHash) {

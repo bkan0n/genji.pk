@@ -36,6 +36,7 @@ return [
         'agreement' => 'By continuing, you agree to our community rules.',
         'recommended' => 'Recommended',
         'password_badge' => 'Password',
+        'remember_me' => 'Remember me',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
