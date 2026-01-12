@@ -4,6 +4,104 @@
 const sectionIds = ['submit_record', 'playtest', 'submit_map'];
 const IS_GUEST = typeof user_id === 'undefined' || user_id == null || String(user_id).trim() === '';
 
+/* =========================
+   MAP NAME TRANSLATIONS
+   ========================= */
+const MAPS_TRANSLATIONS_URL = '/translations/maps.json';
+
+let __mapsJsonPromise = null;
+let __mapsIndexPromise = null;
+let __mapsIndex = null;
+
+function __normalizeMapNameKey(input) {
+  const s = String(input ?? '').trim();
+  if (!s) return '';
+  // Strip accents
+  let out = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  // Replace parentheses
+  out = out.replace(/[()]/g, ' ');
+  // Remove quotes and punctuation
+  out = out.replace(/[’'"]/g, '');
+  // Collapse separators to spaces
+  out = out.replace(/[^a-zA-Z0-9\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7a3]+/g, ' ');
+  out = out.replace(/\s+/g, ' ').trim().toLowerCase();
+  return out;
+}
+
+async function __loadMapsJson() {
+  if (!__mapsJsonPromise) {
+    __mapsJsonPromise = fetch(MAPS_TRANSLATIONS_URL, { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}));
+  }
+  return __mapsJsonPromise;
+}
+
+async function ensureMapsIndex() {
+  if (__mapsIndex) return __mapsIndex;
+  if (!__mapsIndexPromise) {
+    __mapsIndexPromise = (async () => {
+      const data = await __loadMapsJson();
+      const list = [];
+      const enToZh = new Map();
+      const enNormToZh = new Map();
+      const zhToEn = new Map();
+      const zhNormToEn = new Map();
+
+      if (data && typeof data === 'object') {
+        Object.entries(data).forEach(([key, v]) => {
+          if (!v || typeof v !== 'object') return;
+          const en = String(v['en-US'] || '').trim();
+          const zh = String(v['zh-CN'] || '').trim();
+          if (!en) return;
+
+          const zhDisplay = zh || en;
+          list.push({ key, en, zh: zhDisplay });
+
+          enToZh.set(en, zhDisplay);
+          const enNorm = __normalizeMapNameKey(en);
+          if (enNorm) enNormToZh.set(enNorm, zhDisplay);
+
+          if (zh) {
+            zhToEn.set(zh, en);
+            const zhNorm = __normalizeMapNameKey(zh);
+            if (zhNorm) zhNormToEn.set(zhNorm, en);
+          }
+        });
+      }
+
+      __mapsIndex = { list, enToZh, enNormToZh, zhToEn, zhNormToEn };
+      return __mapsIndex;
+    })();
+  }
+  return __mapsIndexPromise;
+}
+
+function mapNameToCnDisplaySmart(enName) {
+  const raw = String(enName ?? '').trim();
+  if (!raw) return raw;
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'cn') return raw;
+  const idx = __mapsIndex;
+  if (!idx) return raw;
+  return idx.enToZh.get(raw) || idx.enNormToZh.get(__normalizeMapNameKey(raw)) || raw;
+}
+
+function mapNameCnToEnSmart(value) {
+  const v = String(value ?? '').trim();
+  if (!v) return v;
+  const idx = __mapsIndex;
+  if (!idx) return v;
+  return idx.zhToEn.get(v) || idx.zhNormToEn.get(__normalizeMapNameKey(v)) || v;
+}
+
+// Preload
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      ensureMapsIndex().catch(() => {});
+    }
+  });
+}
 const CATEGORY_OPTIONS = [
   { text: () => t('filters.classic'), value: 'Classic', raw: 'Classic' },
   {
@@ -159,6 +257,54 @@ function t(path, params = {}) {
     Object.prototype.hasOwnProperty.call(params, k) ? String(params[k]) : `{${k}}`
   );
 }
+
+
+/* =========================
+   ENUM TRANSLATIONS
+   ========================= */
+function __normalizeEnumKey(input) {
+  return String(input ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[()]/g, ' ')
+    .replace(/[’'"]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function __translateIfExists(prefix, raw) {
+  const r = String(raw ?? '').trim();
+  if (!r) return r;
+  const key = __normalizeEnumKey(r);
+  if (!key) return r;
+
+  const out = t(`${prefix}.${key}`);
+  // t() returns the path when missing
+  return typeof out === 'string' && out !== `${prefix}.${key}` ? out : r;
+}
+
+function translateMapTypeUi(raw) {
+  return __translateIfExists('map_type', raw);
+}
+
+function translateMechanicUi(raw) {
+  return __translateIfExists('mechanics', raw);
+}
+
+function translateRestrictionUi(raw) {
+  return __translateIfExists('restrictions', raw);
+}
+
+function __coerceTagValue(v) {
+  if (v == null) return '';
+  if (typeof v === 'string' || typeof v === 'number') return String(v);
+  if (typeof v === 'object') {
+    return String(v.key || v.id || v.name || v.value || v.label || '');
+  }
+  return String(v);
+}
+
 
 /* =========================
    TAB SYSTEM
@@ -3740,6 +3886,12 @@ async function openPlaytestModalForCode(code) {
   const data = await fetchFreshMapByCode(c);
   if (!data) { showErrorMessage(t('errors.map_not_found') || 'Map not found'); return; }
 
+
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+    try { await ensureMapsIndex(); } catch {}
+  }
+
+
   const modal = document.getElementById('playtestModal');
   const inner = document.getElementById('playtestModalInner');
   if (!modal || !inner) return;
@@ -3749,9 +3901,13 @@ async function openPlaytestModalForCode(code) {
   } else {
     inner.innerHTML = `
       <div class="p-4 space-y-2">
-        <div class="text-lg font-semibold text-zinc-100">${data.name || data.code || 'Map'}</div>
-        <div class="text-sm text-zinc-300">Code: ${data.code || '—'}</div>
-        <div class="text-sm text-zinc-400">Modal renderer missing.</div>
+        <div class="text-lg font-semibold text-zinc-100">${
+          (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
+            ? mapNameToCnDisplaySmart(data.name || data.code || 'Map')
+            : (data.name || data.code || 'Map')
+        }</div>
+        <div class="text-sm text-zinc-300">${(typeof t === 'function' ? (t('table.map_code') || t('map.meta.code')) : 'Code')}: ${data.code || '—'}</div>
+        <div class="text-sm text-zinc-400">${(typeof t === 'function' ? (t('errors.playtests_load_failed') || 'Modal renderer missing.') : 'Modal renderer missing.')}</div>
       </div>
     `;
   }
@@ -5931,12 +6087,19 @@ function renderPlaytestCard(data, index) {
     Hell: 1,
   };
 
+  const mapNameRawCard =
+    data?.map_name || data?.translated_map_name || data?.name || data?.map?.name || '—';
+  const mapNameUiCard =
+    (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
+      ? mapNameToCnDisplaySmart(mapNameRawCard)
+      : String(mapNameRawCard ?? '').trim() || '—';
+
   const safe = {
     avatar: data.avatar || DEFAULT_AVATAR,
     banner: data.map_banner_url || 'assets/img/card-banner.png',
     creators: data.creator_names || '—',
     code: data.code || '—',
-    name: data.name || '—',
+    name: mapNameUiCard,
   };
 
   const votes = getVoteCount(data);
@@ -6413,6 +6576,13 @@ function renderPlaytestModal(data) {
       (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]
     );
 
+
+const mapNameRaw = data?.map_name || data?.translated_map_name || data?.name || '—';
+const mapNameUi =
+  (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
+    ? mapNameToCnDisplaySmart(mapNameRaw)
+    : mapNameRaw;
+
   const voteCount = Number.isFinite(data.playtest_vote_count) ? data.playtest_vote_count : 0;
   const voteAvg = (() => {
     const raw = data.playtest_vote_average ?? data.playtest?.vote_average ?? data.vote_average;
@@ -6567,7 +6737,7 @@ function renderPlaytestModal(data) {
             ${codeBadge}
             ${guideBadges}
             ${data.category ? `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">
-              ${esc(data.category)}
+              ${esc(translateMapTypeUi(data.category))}
             </span>` : ''}
           </div>
         </div>
@@ -6593,7 +6763,7 @@ function renderPlaytestModal(data) {
         <div class="grid grid-cols-1 gap-2">
           <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
             <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.map_name')}</span>
-            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-100 text-right">${esc(data.name || '—')}</span>
+            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-100 text-right">${esc(mapNameUi || '—')}</span>
           </div>
           <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
             <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.checkpoints')}</span>
@@ -6609,10 +6779,10 @@ function renderPlaytestModal(data) {
                 ? data.mechanics
                     .map(
                       (m) =>
-                        `<span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">${esc(m)}</span>`
+                        `<span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">${esc(translateMechanicUi(__coerceTagValue(m)))}</span>`
                     )
                     .join('')
-                : `<i class="text-sm text-zinc-400">None</i>`
+                : `<i class="text-sm text-zinc-400">${(typeof t === "function" ? (t("common.none") || t("filters.none") || "—") : "—")}</i>`
             }
           </div>
         </div>
@@ -6625,10 +6795,10 @@ function renderPlaytestModal(data) {
                 ? data.restrictions
                     .map(
                       (r) =>
-                        `<span class="inline-flex items-center rounded-full border border-rose-400/20 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-200">${esc(r)}</span>`
+                        `<span class="inline-flex items-center rounded-full border border-rose-400/20 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-200">${esc(translateRestrictionUi(__coerceTagValue(r)))}</span>`
                     )
                     .join('')
-                : `<i class="text-sm text-zinc-400">None</i>`
+                : `<i class="text-sm text-zinc-400">${(typeof t === "function" ? (t("common.none") || t("filters.none") || "—") : "—")}</i>`
             }
           </div>
         </div>
@@ -6746,6 +6916,9 @@ async function initializePlaytestCards(userId) {
   const backdrop = modal?.querySelector('.playtest-modal-backdrop');
 
   try {
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      try { await ensureMapsIndex(); } catch {}
+    }
     await applyFiltersWithAnimation(1);
 
     const closeHandler = () => hidePlaytestModal();
@@ -6761,6 +6934,9 @@ async function initializePlaytestCards(userId) {
         const data = fresh || (fallback ? normalizePlaytest(fallback) : null);
         if (!data) return;
 
+        if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+          try { await ensureMapsIndex(); } catch {}
+        }
         modalInner.innerHTML = renderPlaytestModal(data);
         animatePtOpen({ animate: false });
         try { setupPlaytestCtaDown(); } catch {}

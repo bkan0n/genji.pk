@@ -1646,13 +1646,107 @@ function updateToolbarButtonStates() {
     creator: ['creator_ids', 'creator_names'],
   };
 
-  const booleanLikeFilters = new Set(['completion_filter', 'medal_filter']);
-  const boolLabel = {
-    With: 'True',
-    Without: 'False',
-    True: 'True',
-    False: 'False',
-  };
+  const booleanLikeFilters = new Set(['completion_filter', 'medal_filter', 'official']);
+
+  function boolBadgeLabel(v) {
+    const s = String(v || '').trim();
+    if (!s) return '✓';
+
+    // CN: render compact yes/no
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      const map = { With: '是', Without: '否', True: '是', False: '否', Yes: '是', No: '否' };
+      return map[s] || s;
+    }
+
+    // Default: keep existing behavior
+    const map = { With: 'True', Without: 'False', True: 'True', False: 'False' };
+    return map[s] || s;
+  }
+
+  function optionLabelFromWindowList(kind, rawValue) {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return raw;
+
+    const list =
+      kind === 'mechanics'
+        ? (window.mechanicsOptions || mechanicsOptions || [])
+        : (window.restrictionsOptions || restrictionsOptions || []);
+
+    const rawLower = raw.toLowerCase();
+
+    const found = (Array.isArray(list) ? list : []).find((opt) => {
+      const oRaw = String(opt?.raw ?? opt?.value ?? '').trim();
+      const oText = String(opt?.text ?? '').trim();
+      return (oRaw && oRaw.toLowerCase() === rawLower) || (oText && oText.toLowerCase() === rawLower);
+    });
+
+    return (found && (found.translated || found.text)) ? String(found.translated || found.text) : raw;
+  }
+
+  function translateBadgeValue(filterId, rawValue) {
+    const v = String(rawValue || '').trim();
+    if (!v) return v;
+
+    // Map name
+    if (filterId === 'map_name' && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      return mapNameToCnDisplay(v);
+    }
+
+    // Boolean-like
+    if (booleanLikeFilters.has(filterId)) {
+      return boolBadgeLabel(v);
+    }
+
+    // Difficulty
+    if (filterId === 'difficulty_exact') {
+      const map = {
+        'beginner': t('filters_toolbar.beginner') || 'Beginner',
+        'easy': t('filters_toolbar.easy') || 'Easy',
+        'medium': t('filters_toolbar.medium') || 'Medium',
+        'hard': t('filters_toolbar.hard') || 'Hard',
+        'very hard': t('filters_toolbar.very_hard') || 'Very Hard',
+        'extreme': t('filters_toolbar.extreme') || 'Extreme',
+        'hell': t('filters_toolbar.hell') || 'Hell',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Category
+    if (filterId === 'category') {
+      const map = {
+        'classic': t('filters_toolbar.classic') || 'Classic',
+        'increasing difficulty': t('filters_toolbar.increasing_difficulty') || 'Increasing Difficulty',
+        'tournament': t('filters_toolbar.tournament') || 'Tournament',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Playtest filter
+    if (filterId === 'playtest_filter') {
+      const map = {
+        'all': t('filters_toolbar.playtest_all') || 'All',
+        'only': t('filters_toolbar.playtest_only') || 'Only',
+        'none': t('filters_toolbar.playtest_none') || 'None',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Playtest status (persistent)
+    if (filterId === 'playtest_status') {
+      const map = {
+        'in_progress': t('filters_toolbar.in_progress') || 'In progress',
+        'approved': t('filters_toolbar.approved') || 'Approved',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Mechanics/Restrictions
+    if (filterId === 'mechanics' || filterId === 'restrictions') {
+      return optionLabelFromWindowList(filterId, v);
+    }
+
+    return v;
+  }
 
   const codeIsActive =
     !!activeFilters.code && String(activeFilters.code).trim() !== '';
@@ -1740,15 +1834,19 @@ function updateToolbarButtonStates() {
 
     let text = '✓';
 
-    if (booleanLikeFilters.has(filterId) && typeof value === 'string' && boolLabel[value]) {
-      text = boolLabel[value];
-    } else if (Array.isArray(value)) {
-      text = `${value.length}`;
+    if (Array.isArray(value)) {
+      // Mechanics/Restrictions: if only one selected, show translated label; otherwise show count
+      if ((filterId === 'mechanics' || filterId === 'restrictions') && value.length === 1) {
+        const display = translateBadgeValue(filterId, value[0]);
+        text = display.length > 6 ? display.slice(0, 6) + '…' : display;
+      } else {
+        text = `${value.length}`;
+      }
     } else if (typeof value === 'boolean') {
       text = value ? 'ON' : 'OFF';
     } else if (typeof value === 'string') {
-      const v = value;
-      text = v.length > 6 ? v.slice(0, 6) + '…' : v;
+      const display = translateBadgeValue(filterId, value);
+      text = display.length > 6 ? display.slice(0, 6) + '…' : display;
     }
 
     badge.textContent = text;
