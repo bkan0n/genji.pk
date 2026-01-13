@@ -361,6 +361,7 @@
               </li>
             </ul>
           </div>
+          @include('partials.notifications-tray')
         @else
           <button
             type="button"

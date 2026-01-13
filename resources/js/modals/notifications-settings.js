@@ -13,6 +13,10 @@ function gpGetModalBox(overlay) {
 function gpEnsureInBody(el) {
   if (el && el.parentElement !== document.body) document.body.appendChild(el);
 }
+function gpCsrfToken() {
+  const el = document.querySelector('meta[name="csrf-token"]');
+  return el?.getAttribute('content') || '';
+}
 function gpInitModal(overlayId) {
   const overlay = document.getElementById(overlayId);
   if (!overlay || overlay.dataset.gpInit === '1') return;
@@ -114,88 +118,326 @@ function notificationTypeToId(notificationType) {
 }
 
 // ============================================================================
-// API notifications  (NOUVELLES ROUTES /users/...)
+// API (Settings modal)
+// - Overwatch usernames: /api/users/{user_id}/overwatch
+// - Notification preferences: /api/notifications/preferences (session-based)
 // ============================================================================
-const OW_BASE = '/api/users';
-function loadUserNotifications() {
-  const uid = (window.user_id ?? '').toString();
-  if (!uid) {
-    console.error('Aucun user_id défini !');
-    return;
-  }
+const USERS_BASE = '/api/users';
+const NOTIF_PREFS_URL = '/api/notifications/preferences';
+const NOTIF_BULK_URL = '/api/notifications/preferences/bulk';
 
-  fetch(`${OW_BASE}/${encodeURIComponent(uid)}/notifications`, { credentials: 'same-origin' })
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
-    })
-    .then((data) => {
-      // la doc renvoie soit un tableau ["DM_ON_VERIFICATION", ...] soit un objet; on gère les deux
-      const enabledList = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.notifications)
-          ? data.notifications
-          : [];
-      const setChecked = new Set(enabledList.map(String));
-
-      const checkboxes = document.querySelectorAll(
-        '#gp-settings-modal input[type="checkbox"][id^="setting-"]'
-      );
-      checkboxes.forEach((checkbox) => {
-        const notifType = idToNotificationType(checkbox.id);
-        checkbox.checked = setChecked.has(notifType);
-      });
-    })
-    .catch((error) => {
-      console.error('Erreur loadUserNotifications :', error);
-    });
+function gpJsonHeaders(extra = {}) {
+  const csrf = gpCsrfToken();
+  return {
+    Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+    ...extra,
+  };
 }
 
-function updateUserNotification(notificationType, enabled) {
-  const uid = (window.user_id ?? '').toString();
-  if (!uid) return;
+function normalizeKey(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_');
+}
 
-  fetch(
-    `${OW_BASE}/${encodeURIComponent(uid)}/notifications/${encodeURIComponent(notificationType)}`,
-    {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': CSRF,
-      },
+// ============================================================================
+// Notification preferences UI helpers (new system: event_type + channels)
+// ============================================================================
+const NOTIF_PREF_SELECTOR =
+  '#gp-settings-modal input[type="checkbox"][data-channel][data-event-type]';
+const NOTIF_PREF_LIST_ID = 'gp-notification-preferences';
+
+function gpCssEscape(v) {
+  if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(String(v));
+  return String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+}
+
+function gpEventTypeToLabel(eventType) {
+  const s = String(eventType || '')
+    .trim()
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ');
+  const list = document.getElementById(NOTIF_PREF_LIST_ID);
+  const fallback = list?.getAttribute('data-label-event') || 'Event';
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : fallback;
+}
+
+function gpChannelLabel(channel) {
+  const list = document.getElementById(NOTIF_PREF_LIST_ID);
+  const attr = 'data-label-' + String(channel || '').replace(/_/g, '-');
+  return list?.getAttribute(attr) || channel;
+}
+
+function gpSwitchSpanClass() {
+  return (
+    "relative h-5 w-9 rounded-full bg-zinc-700 transition-colors duration-200 ease-in-out " +
+    "peer-checked:bg-emerald-500 peer-disabled:bg-zinc-800 peer-disabled:opacity-60 " +
+    "after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:translate-x-0 " +
+    "after:rounded-full after:bg-white after:transition-transform after:duration-200 after:ease-in-out " +
+    "after:content-[''] peer-checked:after:translate-x-4 active:after:scale-95 peer-disabled:after:bg-zinc-200"
+  );
+}
+
+function gpEnsurePreferenceRow(eventType) {
+  const modal = document.getElementById('gp-settings-modal');
+  const list = document.getElementById(NOTIF_PREF_LIST_ID);
+  if (!modal || !list || !eventType) return;
+
+  const escaped = gpCssEscape(eventType);
+  if (modal.querySelector(`input[data-event-type="${escaped}"]`)) return;
+
+  const isEmailAuth = modal.dataset.isEmailAuth === '1';
+
+  const row = document.createElement('div');
+  row.className =
+    'grid grid-cols-1 sm:grid-cols-4 items-start gap-4 rounded-lg border border-white/10 bg-zinc-900/50 px-3 py-2';
+  row.dataset.eventRow = eventType;
+
+  const label = document.createElement('div');
+  label.className = 'min-w-0 text-sm leading-snug text-zinc-200';
+  label.textContent = gpEventTypeToLabel(eventType);
+  row.appendChild(label);
+
+  const channels = ['web', 'discord_dm', 'discord_ping'];
+  const eventSlug = String(eventType).replace(/_/g, '-');
+
+  channels.forEach((channel) => {
+    const cell = document.createElement('div');
+    cell.className = 'flex items-center gap-2 sm:justify-center';
+
+    const mobileLabel = document.createElement('span');
+    mobileLabel.className =
+      'sm:hidden text-[11px] font-extrabold uppercase tracking-wider text-zinc-400';
+    mobileLabel.textContent = gpChannelLabel(channel);
+    cell.appendChild(mobileLabel);
+
+    const wrap = document.createElement('label');
+    const disabled = isEmailAuth && channel !== 'web';
+    wrap.className =
+      (disabled ? 'cursor-not-allowed ' : 'cursor-pointer ') +
+      'inline-flex shrink-0 items-center';
+    if (disabled) wrap.setAttribute('aria-disabled', 'true');
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'peer sr-only';
+    input.id = `setting-${channel.replace(/_/g, '-')}-${eventSlug}`;
+    input.dataset.channel = channel;
+    input.dataset.eventType = eventType;
+    input.dataset.bound = '0';
+    input.dataset.prefLoaded = '0';
+    input.dataset._origDisabled = disabled ? '1' : '0';
+    input.disabled = disabled;
+
+    const span = document.createElement('span');
+    span.className = gpSwitchSpanClass();
+
+    wrap.appendChild(input);
+    wrap.appendChild(span);
+    cell.appendChild(wrap);
+
+    row.appendChild(cell);
+  });
+
+  list.appendChild(row);
+}
+
+/**
+ * Map an input id => { eventKey, channel }
+ * UI ids:
+ *  - setting-dm-on-verification         => channel discord_dm,    eventKey verification
+ *  - setting-ping-on-xp-gain            => channel discord_ping,  eventKey xp-gain
+ */
+function settingIdToSpec(checkboxId) {
+  const id = String(checkboxId || '');
+  let channel = '';
+  let eventKey = id.replace(/^setting-/, '');
+
+  if (eventKey.startsWith('dm-on-')) {
+    channel = 'discord_dm';
+    eventKey = eventKey.replace(/^dm-on-/, '');
+  } else if (eventKey.startsWith('ping-on-')) {
+    channel = 'discord_ping';
+    eventKey = eventKey.replace(/^ping-on-/, '');
+  } else if (eventKey.startsWith('web-on-')) {
+    channel = 'web';
+    eventKey = eventKey.replace(/^web-on-/, '');
+  }
+
+  return { channel, eventKey };
+}
+
+function guessEventTypeFromKey(eventKey) {
+  // Fallback if we can't match a server-provided event_type.
+  // Keep it deterministic and readable.
+  return String(eventKey || '')
+    .trim()
+    .replace(/-/g, '_')
+    .toUpperCase();
+}
+
+function extractPreferencesPayload(data) {
+  // Accept either {preferences: [...]}, or raw [...]
+  const arr = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.preferences)
+      ? data.preferences
+      : [];
+  return arr.filter(Boolean);
+}
+
+function buildPreferenceIndex(preferences) {
+  // returns map normalized(event_type) => row
+  const idx = new Map();
+  preferences.forEach((row) => {
+    const et = row?.event_type ?? row?.eventType ?? row?.type ?? '';
+    if (!et) return;
+    idx.set(normalizeKey(et), row);
+  });
+  return idx;
+}
+
+function findPreferenceRow(prefIndex, eventKey) {
+  const nk = normalizeKey(eventKey);
+  if (prefIndex.has(nk)) return prefIndex.get(nk);
+
+  // Fallback: some APIs may prefix/suffix event_type names; try substring match
+  for (const [k, v] of prefIndex.entries()) {
+    if (k.endsWith(`_${nk}`) || k.startsWith(`${nk}_`) || k.includes(`_${nk}_`)) return v;
+  }
+  return null;
+}
+
+async function loadNotificationPreferences() {
+
+  const modal = document.getElementById('gp-settings-modal');
+  if (!modal) return;
+
+  const list = document.getElementById(NOTIF_PREF_LIST_ID);
+  // If there's no list container and no existing checkbox, nothing to sync.
+  const existing = modal.querySelectorAll(NOTIF_PREF_SELECTOR);
+  if (!existing.length && !list) return;
+
+  const lock = (cb) => {
+    if (!cb.dataset._origDisabled) cb.dataset._origDisabled = cb.disabled ? '1' : '0';
+    cb.disabled = true;
+    cb.dataset.prefLoaded = '0';
+  };
+
+  existing.forEach(lock);
+
+  try {
+    const res = await fetch(NOTIF_PREFS_URL, {
       credentials: 'same-origin',
-      body: enabled ? 'true' : 'false',
-    }
-  )
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.text();
-    })
-    .catch((error) => {
-      console.error('Erreur de requête (notifications) :', error);
-      const id = notificationTypeToId(notificationType);
-      const cb = document.getElementById(id);
-      if (cb) cb.checked = !enabled;
+      headers: gpJsonHeaders(),
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const prefs = extractPreferencesPayload(data);
+
+    // Ensure UI rows exist for every server event_type (future-proof).
+    if (list && Array.isArray(prefs)) {
+      prefs.forEach((row) => {
+        const et = row?.event_type ?? row?.eventType ?? row?.type ?? '';
+        if (!et) return;
+        gpEnsurePreferenceRow(et);
+      });
+    }
+
+    // Re-query after potential injections
+    const checkboxes = modal.querySelectorAll(NOTIF_PREF_SELECTOR);
+    checkboxes.forEach(lock);
+
+    const idx = buildPreferenceIndex(prefs);
+
+    checkboxes.forEach((cb) => {
+      const eventType = cb.dataset.eventType || '';
+      const channel = cb.dataset.channel || '';
+      if (!eventType || !channel) return;
+
+      const row = idx.get(normalizeKey(eventType)) || null;
+      const channels = row?.channels || {};
+      if (row) cb.checked = Boolean(channels?.[channel]);
+
+      cb.dataset.prefLoaded = '1';
+    });
+  } catch (e) {
+    console.error('Erreur loadNotificationPreferences :', e);
+    // Keep UI usable even if we couldn't sync.
+  } finally {
+    const checkboxes = modal.querySelectorAll(NOTIF_PREF_SELECTOR);
+    checkboxes.forEach((cb) => {
+      const origDisabled = cb.dataset._origDisabled === '1';
+      cb.disabled = origDisabled;
+    });
+  }
+}
+
+
+async function updateNotificationPreference(eventType, channel, enabled) {
+  const payload = [{ event_type: eventType, channel, enabled: Boolean(enabled) }];
+
+  const res = await fetch(NOTIF_BULK_URL, {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: gpJsonHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+
+  // Controller normalises upstream 204 => 200, but keep it safe.
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} ${text}`);
+  }
+
+  if (res.status === 204) return { ok: true };
+
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return await res.json();
+  return { ok: true };
 }
 
 // ============================================================================
 // Init & bindings (Notifications uniquement)
 // ============================================================================
 function bindNotificationEvents() {
-  document
-    .querySelectorAll('#gp-settings-modal input[type="checkbox"][id^="setting-"]')
-    .forEach((checkbox) => {
-      if (checkbox.dataset.bound === '1') return;
-      checkbox.dataset.bound = '1';
-      checkbox.addEventListener('change', (e) => {
-        const notificationType = idToNotificationType(e.target.id);
-        updateUserNotification(notificationType, e.target.checked);
-      });
+
+  const modal = document.getElementById('gp-settings-modal');
+  if (!modal) return;
+
+  modal.querySelectorAll(NOTIF_PREF_SELECTOR).forEach((checkbox) => {
+    if (checkbox.dataset.bound === '1') return;
+    checkbox.dataset.bound = '1';
+
+    checkbox.addEventListener('change', async (e) => {
+      const cb = e.target;
+      const eventType = cb.dataset.eventType || '';
+      const channel = cb.dataset.channel || '';
+      if (!eventType || !channel) return;
+
+      const desired = Boolean(cb.checked);
+
+      // Optimistic UI; revert on failure.
+      try {
+        cb.disabled = true;
+        await updateNotificationPreference(eventType, channel, desired);
+      } catch (err) {
+        console.error('Erreur de requête (notification preference) :', err);
+        cb.checked = !desired;
+      } finally {
+        const origDisabled = cb.dataset._origDisabled === '1';
+        cb.disabled = origDisabled;
+      }
     });
+  });
 }
+
 
 // ============================================================================
 // Modal Settings (ouverture / fermeture animées)
@@ -212,17 +454,22 @@ function ensureSettingsModalStructure() {
   return { modal, card, backdrop };
 }
 
-function openSettingsModal() {
+async function openSettingsModal() {
+
   ensureSettingsModalStructure();
   gpOpenModal('gp-settings-modal');
 
-  // Notifications
-  loadUserNotifications();
-  bindNotificationEvents();
+  // Notifications (ensure UI is in sync before binding)
+  try {
+    await loadNotificationPreferences();
+  } finally {
+    bindNotificationEvents();
+  }
 
   // Signale aux autres modules (profile.js) que le modal est ouvert (pour charger Overwatch)
   document.dispatchEvent(new CustomEvent('genji:settings-opened'));
 }
+
 function closeSettingsModal() {
   gpCloseModal('gp-settings-modal');
 }
@@ -374,11 +621,11 @@ function loadOverwatchUsername() {
   if (!uid) {
     console.error('Aucun user_id défini !');
     listContainer && (listContainer.innerHTML = '');
-    if (input) input.placeholder = 'No user ID';
+    if (input) input.placeholder = t('popup.no_user_id');
     return;
   }
 
-  fetch(`${OW_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
+  fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
     .then((response) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return response.json();
@@ -406,7 +653,7 @@ function loadOverwatchUsername() {
 
         const userSpan = document.createElement('span');
         userSpan.className = 'text-sm font-semibold text-zinc-100';
-        userSpan.textContent = userObj.username + (userObj.is_primary ? ' (Primary)' : '');
+        userSpan.textContent = userObj.username + (userObj.is_primary ? ` (${t('popup.primary')})` : '');
         userSpan.style.cursor = userObj.is_primary ? 'default' : 'pointer';
         userSpan.title = userObj.is_primary ? '' : t('popup.set_primary_username');
         userSpan.addEventListener('click', () => {
@@ -428,7 +675,7 @@ function loadOverwatchUsername() {
       if (confirmBtn) {
         if (usernames.length >= 3) {
           confirmBtn.disabled = true;
-          confirmBtn.title = 'Maximum 3 usernames allowed';
+          confirmBtn.title = t('popup.max_usernames_allowed');
         } else {
           confirmBtn.disabled = false;
           confirmBtn.title = '';
@@ -438,7 +685,7 @@ function loadOverwatchUsername() {
     })
     .catch((error) => {
       console.error('Error loading Overwatch usernames:', error);
-      if (input) input.placeholder = 'Error loading username';
+      if (input) input.placeholder = t('popup.error_loading_username');
     });
 }
 
@@ -446,9 +693,9 @@ function updateUsernames(usernamesArray) {
   const uid = (window.user_id ?? '').toString();
   if (!uid) return;
 
-  return fetch(`${OW_BASE}/${encodeURIComponent(uid)}/overwatch`, {
+  return fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: gpJsonHeaders({ 'Content-Type': 'application/json' }),
     credentials: 'same-origin',
     body: JSON.stringify({ usernames: usernamesArray }),
   })
@@ -468,7 +715,7 @@ function updateUsernames(usernamesArray) {
     })
     .catch((err) => {
       console.error('Erreur API update:', err);
-      showErrorMessage('Error while updating the usernames list');
+      showErrorMessage(t('popup.error_update_usernames_list'));
     });
 }
 
@@ -476,7 +723,7 @@ function deleteUsername(usernameToDelete) {
   const uid = (window.user_id ?? '').toString();
   if (!uid || !usernameToDelete) return;
 
-  fetch(`${OW_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
+  fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
     .then((resp) => resp.json())
     .then((data) => {
       let usernames = ow_extractUsernamesShape(data);
@@ -488,7 +735,7 @@ function deleteUsername(usernameToDelete) {
     })
     .catch((err) => {
       console.error('Erreur deleting the username :', err);
-      showErrorMessage('Erreur deleting the username');
+      showErrorMessage(t('popup.error_delete_username'));
     });
 }
 
@@ -496,7 +743,7 @@ function setPrimaryUsername(usernamePrimary) {
   const uid = (window.user_id ?? '').toString();
   if (!uid || !usernamePrimary) return;
 
-  fetch(`${OW_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
+  fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
     .then((resp) => resp.json())
     .then((data) => {
       const usernames = ow_extractUsernamesShape(data);
@@ -512,7 +759,7 @@ function setPrimaryUsername(usernamePrimary) {
     })
     .catch((err) => {
       console.error('Erreur maj primary username :', err);
-      showErrorMessage('Erreur maj primary username');
+      showErrorMessage(t('popup.error_set_primary_username'));
     });
 }
 
@@ -523,7 +770,7 @@ function bindOverwatchEvents() {
     confirmBtn.addEventListener('click', () => {
       const uid = (window.user_id ?? '').toString();
       if (!uid) {
-        showErrorMessage('No user ID');
+        showErrorMessage(t('popup.no_user_id'));
         return;
       }
 
@@ -534,7 +781,7 @@ function bindOverwatchEvents() {
         return;
       }
 
-      fetch(`${OW_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
+      fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, { credentials: 'same-origin' })
         .then((resp) => {
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
           return resp.json();
@@ -542,7 +789,7 @@ function bindOverwatchEvents() {
         .then((data) => {
           let usernames = ow_extractUsernamesShape(data);
           if (usernames.length >= 3) {
-            showErrorMessage('Maximum 3 usernames allowed');
+            showErrorMessage(t('popup.max_usernames_allowed'));
             return;
           }
           if (
@@ -556,7 +803,7 @@ function bindOverwatchEvents() {
         })
         .catch((err) => {
           console.error("Erreur lors de l'ajout du username:", err);
-          showErrorMessage("Erreur lors de l'ajout du nom.");
+          showErrorMessage(t('popup.error_add_username'));
         });
     });
   }

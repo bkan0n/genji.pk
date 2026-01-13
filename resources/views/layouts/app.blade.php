@@ -60,7 +60,7 @@
     @endif
 
     @include('modal.profile')
-    @include('modal.notifications')
+    @include('modal.notifications-settings')
     @include('modal.credits')
     @include('modal.rules')
     @include('auth.login')
