@@ -294,20 +294,29 @@ class GenjiApiService
         }
     }
 
-    public function validateRememberToken(string $token): ?int
+    public function validateRememberToken(string $token): ?string
     {
         try {
             $response = $this->request()->post("{$this->apiRoot}/api/v3/auth/remember-token/validate", [
                 'token' => $token,
             ]);
 
-            if ($response->successful() && ($response->json()['valid'] ?? false)) {
-                return isset($response->json()['user_id'])
-                    ? (int) $response->json()['user_id']
-                    : null;
+            if (!$response->successful()) {
+                return null;
             }
 
-            return null;
+            $payload = json_decode($response->body(), true, 512, JSON_BIGINT_AS_STRING) ?? [];
+
+            if (($payload['valid'] ?? false) !== true) {
+                return null;
+            }
+
+            $userId = $payload['user_id'] ?? null;
+            if ($userId === null || $userId === '') {
+                return null;
+            }
+
+            return (string) $userId;
         } catch (\Exception $e) {
             Log::error('Validate remember token API exception', ['error' => $e->getMessage()]);
             return null;
