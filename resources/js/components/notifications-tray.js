@@ -135,6 +135,23 @@ function isUnread(ev) {
   return !ev.read_at;
 }
 
+function setItemReadVisual(itemEl, read) {
+  if (!itemEl) return;
+
+  itemEl.classList.remove('border-emerald-500/30', 'bg-emerald-500/10');
+  itemEl.classList.remove('border-white/10', 'bg-white/5');
+  itemEl.classList.add(read ? 'border-white/10' : 'border-emerald-500/30');
+  itemEl.classList.add(read ? 'bg-white/5' : 'bg-emerald-500/10');
+
+  const title = itemEl.querySelector('[data-notif-title]');
+  if (title) {
+    title.classList.remove('font-extrabold', 'text-white/95');
+    title.classList.remove('font-bold', 'text-white/85');
+    title.classList.add(read ? 'font-bold' : 'font-extrabold');
+    title.classList.add(read ? 'text-white/85' : 'text-white/95');
+  }
+}
+
 function tt(key, fallback = '') {
   try {
     if (typeof window !== 'undefined' && typeof window.t === 'function') {
@@ -445,6 +462,8 @@ export function initNotifications() {
         ev.title || tt('modals.notifications.fallback_title', 'Notification')
       );
 
+      title.setAttribute('data-notif-title', '1');
+
       const body = el('div', 'mt-0.5 line-clamp-2 text-[12px] text-white/70', ev.body || '');
 
       const metaRow = el('div', 'mt-2 flex items-center gap-2 text-[11px] text-white/55');
@@ -534,13 +553,7 @@ export function initNotifications() {
     try {
       await httpJson(`/api/notifications/events/${eventId}/read`, { method: 'PATCH' });
 
-      itemEl.classList.remove('border-emerald-500/30', 'bg-emerald-500/10');
-      itemEl.classList.add('border-white/10', 'bg-white/5');
-      const title = itemEl.querySelector('.text-[13px]');
-      if (title) {
-        title.classList.remove('font-extrabold', 'text-white/95');
-        title.classList.add('font-bold', 'text-white/85');
-      }
+      setItemReadVisual(itemEl, true);
 
       fetchUnreadCount();
     } catch (_) {}
@@ -632,21 +645,24 @@ export function initNotifications() {
 
   markAllBtn?.addEventListener('click', async () => {
     try {
+      markAllBtn.disabled = true;
+      markAllBtn.classList.add('opacity-60', 'pointer-events-none');
+
       await httpJson('/api/notifications/read-all', { method: 'PATCH' });
 
-      list.querySelectorAll('[data-notif-item]').forEach((itemEl) => {
-        itemEl.classList.remove('border-emerald-500/30', 'bg-emerald-500/10');
-        itemEl.classList.add('border-white/10', 'bg-white/5');
-        const title = itemEl.querySelector('.text-[13px]');
-        if (title) {
-          title.classList.remove('font-extrabold', 'text-white/95');
-          title.classList.add('font-bold', 'text-white/85');
-        }
-      });
+      list.querySelectorAll('[data-notif-item]').forEach((itemEl) => setItemReadVisual(itemEl, true));
 
-      badge.classList.add('hidden');
+      applyUnreadCount(0);
       writeCachedUnreadCount(0);
+
+      fetchUnreadCount();
     } catch (_) {}
+    finally {
+      if (markAllBtn) {
+        markAllBtn.disabled = false;
+        markAllBtn.classList.remove('opacity-60', 'pointer-events-none');
+      }
+    }
   });
 
   loadMoreBtn?.addEventListener('click', async () => {
