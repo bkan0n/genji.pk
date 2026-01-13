@@ -20,6 +20,19 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // NOTIFICATIONS TRAY
+    // ──────────────────────────────────────────────────────────────────────
+    'notifications' => [
+        'title'         => 'Notifications',
+        'empty'         => 'Aucune notification',
+        'load_more'     => 'Charger plus',
+        'mark_all_read' => 'Tout marquer comme lu',
+        'dismiss'       => 'Ignorer',
+        'bell_aria'     => 'Ouvrir les notifications',
+        'fallback_title'=> 'Notification',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // CREDITS MODAL
     // ──────────────────────────────────────────────────────────────────────
     'credits' => [
@@ -56,6 +69,33 @@ return [
             'ping_on_xp_gain'               => 'Me ping lors d’un gain d’XP',
             'ping_on_mastery'               => 'Me ping lors d’un nouveau palier de maîtrise',
             'ping_on_community_rank_update' => 'Me ping lors d’un changement de rang communautaire',
+
+            'help'              => 'Choisissez les notifications que vous souhaitez recevoir pour chaque événement et canal.',
+            'footer_hint'        => 'Les nouveaux types d’événements renvoyés par l’API seront ajoutés automatiquement à l’ouverture de ce menu.',
+            'discord_unavailable'=> 'Les notifications Discord ne sont pas disponibles pour les comptes email.',
+
+            'columns' => [
+                'event' => 'Événement',
+            ],
+
+            'channels' => [
+                'web'          => 'Web',
+                'discord_dm'   => 'Discord DM',
+                'discord_ping' => 'Discord Ping',
+            ],
+
+            'events' => [
+                'verification_approved' => 'Vérification approuvée',
+                'verification_rejected' => 'Vérification refusée',
+                'record_removed'        => 'Record supprimé',
+                'skill_role_update'     => 'Mise à jour du rang de compétence',
+                'xp_gain'               => 'Gain d’XP',
+                'rank_up'               => 'Montée de rang',
+                'prestige'              => 'Prestige',
+                'mastery_earned'        => 'Maîtrise obtenue',
+                'lootbox_earned'        => 'Lootbox obtenue',
+                'playtest_update'       => 'Mise à jour de playtest',
+            ],
         ],
         'close' => 'Fermer les paramètres',
     ],
@@ -75,23 +115,31 @@ return [
     // POPUP / MISC
     // ──────────────────────────────────────────────────────────────────────
     'popup' => [
-        'login_required_btn'        => 'Connexion requise',
-        'login_required_msg'        => 'La connexion est requise sur cette page',
-        'login_required_pr'         => 'La connexion est requise pour voir les records personnels',
-        'login_required_filter'     => 'La connexion est requise pour utiliser ce filtre',
-        'login_required_progression'=> 'Veuillez vous connecter pour voir votre progression',
-        'map_code_required'         => 'Entrez un code de carte',
-        'no_results'                => 'Aucun résultat trouvé',
-        'filter_applied'            => 'Filtre appliqué pour {filterId} : {value}',
-        'filters_cleared'           => 'Tous les filtres ont été réinitialisés',
-        'enter_username'            => 'Entrez un pseudo valide',
-        'username_updated'          => 'Votre pseudo a été mis à jour',
-        'primary_username_updated'  => 'Pseudo principal mis à jour',
-        'already_exist_username'    => 'Ce pseudo existe déjà',
-        'set_primary_username'      => 'Définir comme pseudo principal',
-        'delete_username'           => 'Supprimer le pseudo',
-        'no_username_set'           => 'Aucun pseudo défini',
-        'confirm_button'            => 'Confirmer',
+        'login_required_btn'          => 'Connexion requise',
+        'login_required_msg'          => 'La connexion est requise sur cette page',
+        'login_required_pr'           => 'La connexion est requise pour voir les records personnels',
+        'login_required_filter'       => 'La connexion est requise pour utiliser ce filtre',
+        'login_required_progression'  => 'Veuillez vous connecter pour voir votre progression',
+        'map_code_required'           => 'Entrez un code de carte',
+        'no_results'                  => 'Aucun résultat trouvé',
+        'filter_applied'              => 'Filtre appliqué pour {filterId} : {value}',
+        'filters_cleared'             => 'Tous les filtres ont été réinitialisés',
+        'enter_username'              => 'Entrez un pseudo valide',
+        'username_updated'            => 'Votre pseudo a été mis à jour',
+        'primary_username_updated'    => 'Pseudo principal mis à jour',
+        'already_exist_username'      => 'Ce pseudo existe déjà',
+        'set_primary_username'        => 'Définir comme pseudo principal',
+        'delete_username'             => 'Supprimer le pseudo',
+        'no_username_set'             => 'Aucun pseudo défini',
+        'confirm_button'              => 'Confirmer',
+        'primary'                     => 'Principal',
+        'no_user_id'                  => 'No user ID',
+        'max_usernames_allowed'       => 'Maximum 3 usernames allowed',
+        'error_loading_username'      => 'Error loading username',
+        'error_update_usernames_list' => 'Error while updating the usernames list',
+        'error_delete_username'       => 'Error while deleting the username',
+        'error_set_primary_username'  => 'Error while setting primary username',
+        'error_add_username'          => 'Error while adding the username',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

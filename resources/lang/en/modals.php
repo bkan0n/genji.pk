@@ -20,6 +20,19 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // NOTIFICATIONS
+    // ──────────────────────────────────────────────────────────────────────
+    'notifications' => [
+        'title'          => 'Notifications',
+        'empty'          => 'No notifications',
+        'load_more'      => 'Load more',
+        'mark_all_read'  => 'Mark all as read',
+        'dismiss'        => 'Dismiss',
+        'bell_aria'      => 'Open notifications',
+        'fallback_title' => 'Notification',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // CREDITS MODAL
     // ──────────────────────────────────────────────────────────────────────
     'credits' => [
@@ -46,10 +59,34 @@ return [
             'overwatch' => 'Overwatch usernames',
             'notifications' => 'Notifications',
         ],
+        'tabs_aria' => 'Settings tabs',
         'overwatch' => [
             'confirm' => 'Confirm',
         ],
         'notifications' => [
+            'help' => 'Choose which notifications you want to receive for each event and channel.',
+            'discord_unavailable' => 'Discord notifications are not available for email accounts.',
+            'channels' => [
+                'web' => 'Web',
+                'discord_dm' => 'Discord DM',
+                'discord_ping' => 'Discord Ping',
+            ],
+            'columns' => [
+                'event' => 'Event',
+            ],
+            'events' => [
+                'verification_approved' => 'Verification approved',
+                'verification_rejected' => 'Verification rejected',
+                'record_removed' => 'Record removed',
+                'skill_role_update' => 'Skill role update',
+                'xp_gain' => 'XP gain',
+                'rank_up' => 'Rank up',
+                'prestige' => 'Prestige',
+                'mastery_earned' => 'Mastery earned',
+                'lootbox_earned' => 'Lootbox earned',
+                'playtest_update' => 'Playtest update',
+            ],
+
             'dm_on_verification' => 'Message me on verification',
             'dm_on_skill_role_update' => 'Message me on skill role update',
             'dm_on_lootbox_gain' => 'Message me on lootbox gain',
@@ -75,23 +112,31 @@ return [
     // POPUP / MISC
     // ──────────────────────────────────────────────────────────────────────
     'popup' => [
-        'login_required_btn' => 'Login required',
-        'login_required_msg' => 'Login is required on this page',
-        'login_required_pr' => 'Login is required to view personal records',
-        'login_required_filter' => 'Login is required to use this filter',
-        'login_required_progression' => 'Please login to see your progression',
-        'map_code_required' => 'Enter a map code',
-        'no_results' => 'No results found',
-        'filter_applied' => 'Filter applied for {filterId}: {value}',
-        'filters_cleared' => 'All filters have been cleared',
-        'enter_username' => 'Enter a valid username',
-        'username_updated' => 'Your username has been updated',
-        'primary_username_updated' => 'Primary username updated',
-        'already_exist_username' => 'Username already exist',
-        'set_primary_username' => 'Set as primary username',
-        'delete_username' => 'Delete username',
-        'no_username_set' => 'No username set',
-        'confirm_button' => 'Confirm',
+        'login_required_btn'          => 'Login required',
+        'login_required_msg'          => 'Login is required on this page',
+        'login_required_pr'           => 'Login is required to view personal records',
+        'login_required_filter'       => 'Login is required to use this filter',
+        'login_required_progression'  => 'Please login to see your progression',
+        'map_code_required'           => 'Enter a map code',
+        'no_results'                  => 'No results found',
+        'filter_applied'              => 'Filter applied for {filterId}: {value}',
+        'filters_cleared'             => 'All filters have been cleared',
+        'enter_username'              => 'Enter a valid username',
+        'username_updated'            => 'Your username has been updated',
+        'primary_username_updated'    => 'Primary username updated',
+        'already_exist_username'      => 'Username already exist',
+        'set_primary_username'        => 'Set as primary username',
+        'delete_username'             => 'Delete username',
+        'no_username_set'             => 'No username set',
+        'confirm_button'              => 'Confirm',
+        'primary'                     => 'Primary',
+        'no_user_id'                  => 'No user ID',
+        'max_usernames_allowed'       => 'Maximum 3 usernames allowed',
+        'error_loading_username'      => 'Error loading username',
+        'error_update_usernames_list' => 'Error while updating the usernames list',
+        'error_delete_username'       => 'Error while deleting the username',
+        'error_set_primary_username'  => 'Error while setting primary username',
+        'error_add_username'          => 'Error while adding the username',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

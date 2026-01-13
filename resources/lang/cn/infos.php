@@ -12,7 +12,7 @@ return [
     // META (PAGE <HEAD>)
     // ──────────────────────────────────────────────────────────────────────
     'meta' => [
-        'title' => 'Genji Parkour - Infos & Rules',
+        'title'           => 'Genji Parkour - Infos & Rules',
         'og' => [
             'title'       => 'Genji Parkour · Infos & Rules',
             'description' => 'Learn how rank promotions, medals, playtesting, map submissions, and difficulty tiers work in Genji Parkour.',
@@ -63,8 +63,8 @@ return [
             // HOW TO SUBMIT (RANK PROMOTION COMPLETION)
             // ──────────────────────────────────────────────────────────────
             'how_to_submit' => [
-                'title' => '怎么提升你的段位',
-                'intro' => '在国际服且未被下架的地图代码上提供跑图通关证明, 并且给出你对地图的评分',
+                'title'     => '怎么提升你的段位',
+                'intro'     => '在国际服且未被下架的地图代码上提供跑图通关证明, 并且给出你对地图的评分',
 
                 'requirements' => [
                     'title'         => '要求',
@@ -126,9 +126,9 @@ return [
             // ──────────────────────────────────────────────────────────────
             'rank_info_thresholds' => [
                 'info' => [
-                    'title'       => '段位详情',
-                    'subtitle'    => '对不同段位的能力要求以及如何升段',
-                    'li_no_order' => '提升段位并不需要从下往上, 没有固定顺序',
+                    'title'          => '段位详情',
+                    'subtitle'       => '对不同段位的能力要求以及如何升段',
+                    'li_no_order'    => '提升段位并不需要从下往上, 没有固定顺序',
                     'li_requirement' => '要得到段位标识, 你必须完成该段位所指定难度 指定数量的地图',
                     'li_thresholds'  => '详细见下方段位门槛图表',
                 ],
@@ -245,18 +245,18 @@ return [
                 'acceptance'  => '测试完成',
 
                 'steps' => [
-                    'map_is_made'                        => '地图完成创作',
-                    'map_submission_form'                => '填写提交表单',
-                    'creator_suggests_difficulty'        => '作者估计难度',
-                    'testers_submit_completion'          => '测试玩家提交跑图记录',
-                    'testers_vote_on_difficulty'         => '测试玩家投票表决难度',
-                    'creator_finalizes_submission'       => '作者结束投票环节',
-                    'sensei_receive_submission_notification' => '管理员收到地图上传信息',
-                    'accept'                             => '通过',
-                    'reject'                             => '打回',
-                    'map_sent_back_previous_step'        => '地图被送到上一环节*',
-                    'map_accepted'                       => '地图通过',
-                    'map_added_to_pool'                  => '添加进地图池',
+                    'map_is_made'                             => '地图完成创作',
+                    'map_submission_form'                     => '填写提交表单',
+                    'creator_suggests_difficulty'             => '作者估计难度',
+                    'testers_submit_completion'               => '测试玩家提交跑图记录',
+                    'testers_vote_on_difficulty'              => '测试玩家投票表决难度',
+                    'creator_finalizes_submission'            => '作者结束投票环节',
+                    'sensei_receive_submission_notification'  => '管理员收到地图上传信息',
+                    'accept'                                  => '通过',
+                    'reject'                                  => '打回',
+                    'map_sent_back_previous_step'             => '地图被送到上一环节*',
+                    'map_accepted'                            => '地图通过',
+                    'map_added_to_pool'                       => '添加进地图池',
                     'testers_granted_completion_without_time' => '测试玩家获得通关记录(但没有时间)',
                 ],
 
@@ -316,9 +316,9 @@ return [
             ],
 
             'tips' => [
-                'title'    => '提示',
-                'li_edit'  => '带有"编辑"按钮的字段可以快速内联更正',
-                'li_guest' => '如果未登录, 提交将被锁定, 并显示"需要登录"消息',
+                'title'      => '提示',
+                'li_edit'    => '带有"编辑"按钮的字段可以快速内联更正',
+                'li_guest'   => '如果未登录, 提交将被锁定, 并显示"需要登录"消息',
                 'li_support' => '如果横幅图片上传失败, 请重试（≤8MB）或向管理员请求支持',
             ],
         ],

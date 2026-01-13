@@ -11,9 +11,9 @@ return [
     // META
     // ──────────────────────────────────────────────────────────────────────
     'meta' => [
-        'title' => '源氏跑酷 - 排行榜',
+        'title'           => '源氏跑酷 - 排行榜',
         'og' => [
-            'title' => 'Leaderboard — Genji Parkour',
+            'title'       => 'Leaderboard — Genji Parkour',
             'description' => 'Browse rankings: XP, tiers, skill ranks, and more.',
         ],
     ],
@@ -22,35 +22,35 @@ return [
     // HEADER
     // ──────────────────────────────────────────────────────────────────────
     'header' => [
-        'title' => '排行榜',
-        'subtitle' => 'XP · 段位 · 等级',
+        'title'     => '排行榜',
+        'subtitle'  => 'XP · 段位 · 等级',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
     // FILTERS
     // ──────────────────────────────────────────────────────────────────────
     'filters' => [
-        'player_label' => '玩家',
+        'player_label'       => '玩家',
         'search_placeholder' => '搜索玩家ID…',
 
-        'sort_label' => '排序',
+        'sort_label'    => '排序',
         'sort_options' => [
-            'xp' => 'XP',
-            'wr' => '世界纪录',
-            'maps' => '作图数',
-            'votes' => '地图测试投票',
+            'xp'        => 'XP',
+            'wr'        => '世界纪录',
+            'maps'      => '作图数',
+            'votes'     => '地图测试投票',
         ],
 
-        'rank_label' => '只显示该段位',
+        'rank_label'      => '只显示该段位',
         'rank_options' => [
-            'all' => '全部段位',
-            'ninja' => 'Ninja',
-            'jumper' => 'Jumper',
-            'skilled' => 'Skilled',
-            'pro' => 'Pro',
-            'master' => 'Master',
+            'all'         => '全部段位',
+            'ninja'       => 'Ninja',
+            'jumper'      => 'Jumper',
+            'skilled'     => 'Skilled',
+            'pro'         => 'Pro',
+            'master'      => 'Master',
             'grandmaster' => 'Grandmaster',
-            'god' => 'God',
+            'god'         => 'God',
         ],
 
         'reset' => '重置筛选',
