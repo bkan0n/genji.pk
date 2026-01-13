@@ -7640,6 +7640,18 @@ async function applyFilters(page = 1) {
     }
   });
 
+  // CN
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && extraFilters.map_name) {
+    try {
+      await ensureMapsIndex();
+      const raw = String(extraFilters.map_name || '').trim();
+      const cand = /[\u4e00-\u9fff]/.test(raw) ? mapNameCnToEnSmart(raw) : raw;
+      const resolved = await resolveEnglishMapNameExact(cand);
+      extraFilters.map_name = resolved || cand;
+    } catch {}
+  }
+
+
   const hasActiveFilters = Object.keys(extraFilters).length > 0;
 
   const qs = buildPlaytestParams(extraFilters, currentPage);
@@ -7804,7 +7816,11 @@ function updateToolbarButtonStates() {
               else if (val.length > 2) text = val.slice(0, 2).join(', ') + '…';
             }
           } else if (typeof val === 'string') {
-            text = val.length > 18 ? val.slice(0, 18) + '…' : val;
+            let display = val;
+            if (key === 'map_name' && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+              display = mapNameToCnDisplaySmart(val);
+            }
+            text = display.length > 18 ? display.slice(0, 18) + '…' : display;
           }
 
           badge.textContent = text;
@@ -7865,23 +7881,50 @@ function showSuggestions(event, _unused, containerId, propertyName) {
     return '';
   };
 
-  toolbarDebounce = setTimeout(() => {
+  toolbarDebounce = setTimeout(async () => {
     const kind = propToKind(propertyName);
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
 
-    // Special handling for Chinese map names in playtest toolbar
+    // CN
     if (CURRENT_LANG === 'cn' && kind === 'map-names') {
-      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
-      const filtered = Object.entries(mapNameData)
-        .filter(([key, value]) => 
-          value.toLowerCase().includes(q.toLowerCase()) || 
-          key.toLowerCase().includes(q.toLowerCase())
-        )
-        .slice(0, 10)
-        .map(([key, value]) => ({
-          label: value,
-          raw: key,
-        }));
+      const qLower = q.toLowerCase();
+      let filtered = [];
+
+      try {
+        await ensureMapsIndex();
+        const idx = __mapsIndex;
+        const qNorm = __normalizeMapNameKey(q);
+
+        filtered = (idx?.list || [])
+          .filter(({ en, zh }) => {
+            const enStr = String(en || '');
+            const zhStr = String(zh || '');
+            if (!enStr && !zhStr) return false;
+
+            if (enStr.toLowerCase().includes(qLower) || zhStr.toLowerCase().includes(qLower)) return true;
+            if (!qNorm) return false;
+
+            const enNorm = __normalizeMapNameKey(enStr);
+            const zhNorm = __normalizeMapNameKey(zhStr);
+            return enNorm.includes(qNorm) || zhNorm.includes(qNorm);
+          })
+          .slice(0, 10)
+          .map(({ en, zh }) => ({
+            label: zh || en,
+            raw: en,
+          }));
+      } catch {
+        const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+        filtered = Object.entries(mapNameData)
+          .filter(([key, value]) =>
+            String(value).toLowerCase().includes(qLower) || String(key).toLowerCase().includes(qLower)
+          )
+          .slice(0, 10)
+          .map(([key, value]) => ({
+            label: value,
+            raw: key,
+          }));
+      }
 
       suggestionsContainer.innerHTML = '';
 

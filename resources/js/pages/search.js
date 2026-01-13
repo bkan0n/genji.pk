@@ -19,6 +19,138 @@ let hideTimeout;
 const resultsContainer = document.getElementById('resultsContainer');
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.SEARCH_I18N || {};
+
+/* =========================
+   MAP NAME TRANSLATIONS
+   ========================= */
+const MAPS_TRANSLATIONS_URL = '/translations/maps.json';
+
+let __mapsJsonPromise = null;
+let __mapsIndexPromise = null;
+let __mapsIndex = null;
+
+function __normalizeMapNameKey(input) {
+  const s = String(input ?? '').trim();
+  if (!s) return '';
+  let out = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  out = out.replace(/[()]/g, ' ');
+  out = out.replace(/[’'"]/g, '');
+  out = out.replace(/[^a-zA-Z0-9\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7a3]+/g, ' ');
+  out = out.replace(/\s+/g, ' ').trim().toLowerCase();
+  return out;
+}
+
+async function __loadMapsJson() {
+  if (!__mapsJsonPromise) {
+    __mapsJsonPromise = fetch(MAPS_TRANSLATIONS_URL, { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}));
+  }
+  return __mapsJsonPromise;
+}
+
+async function ensureMapsIndex() {
+  if (__mapsIndex) return __mapsIndex;
+  if (!__mapsIndexPromise) {
+    __mapsIndexPromise = (async () => {
+      const data = await __loadMapsJson();
+      const list = [];
+      const enToZh = new Map();
+      const enNormToZh = new Map();
+      const zhToEn = new Map();
+      const zhNormToEn = new Map();
+
+      if (data && typeof data === 'object') {
+        Object.entries(data).forEach(([key, v]) => {
+          if (!v || typeof v !== 'object') return;
+          const en = String(v['en-US'] || '').trim();
+          const zh = String(v['zh-CN'] || '').trim();
+          if (!en) return;
+
+          const zhDisplay = zh || en;
+          list.push({ key, en, zh: zhDisplay });
+
+          enToZh.set(en, zhDisplay);
+          const enNorm = __normalizeMapNameKey(en);
+          if (enNorm) enNormToZh.set(enNorm, zhDisplay);
+
+          if (zh) {
+            zhToEn.set(zh, en);
+            const zhNorm = __normalizeMapNameKey(zh);
+            if (zhNorm) zhNormToEn.set(zhNorm, en);
+          }
+        });
+      }
+
+      __mapsIndex = { list, enToZh, enNormToZh, zhToEn, zhNormToEn };
+      return __mapsIndex;
+    })();
+  }
+  return __mapsIndexPromise;
+}
+
+function mapNameToCnDisplay(enName) {
+  const raw = String(enName ?? '').trim();
+  if (!raw) return raw;
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'cn') return raw;
+  const idx = __mapsIndex;
+  if (!idx) return raw;
+  return idx.enToZh.get(raw) || idx.enNormToZh.get(__normalizeMapNameKey(raw)) || raw;
+}
+
+function mapNameCnToEnSmart(value) {
+  const v = String(value ?? '').trim();
+  if (!v) return v;
+  const idx = __mapsIndex;
+  if (!idx) return v;
+  return idx.zhToEn.get(v) || idx.zhNormToEn.get(__normalizeMapNameKey(v)) || v;
+}
+
+async function resolveEnglishMapNameExact(name) {
+  const raw = String(name ?? '').trim();
+  if (!raw) return null;
+  try {
+    const url = buildAutocompleteUrl('map-names', { value: raw, locale: 'en', pageSize: 20 });
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data)) return null;
+
+    const lower = raw.toLowerCase();
+    const exact = data.find((x) => x && x.map_name && String(x.map_name).toLowerCase() === lower);
+    if (exact && exact.map_name) return String(exact.map_name);
+
+    const first = data.find((x) => x && x.map_name);
+    return first && first.map_name ? String(first.map_name) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function canonicalizeMapNameForApi(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return raw;
+
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+    await ensureMapsIndex().catch(() => {});
+  }
+
+  const cand = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && /[\u4e00-\u9fff]/.test(raw))
+    ? mapNameCnToEnSmart(raw)
+    : raw;
+
+  const resolved = await resolveEnglishMapNameExact(cand);
+  return resolved || cand;
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      ensureMapsIndex().catch(() => {});
+    }
+  });
+}
+
 const MAP_VIEW_LS_KEY = 'map_search_view';
 let mapSearchView = (localStorage.getItem(MAP_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
 let lastMapRows = [];
@@ -1609,7 +1741,13 @@ function updateActiveFilters() {
 
   const mapNameInput = document.getElementById('mapNameInput');
   if (mapNameInput) {
-    const raw = mapNameInput.getAttribute('data-selected-raw-value') || mapNameInput.value.trim();
+    const selectedRaw = mapNameInput.getAttribute('data-selected-raw-value');
+    let raw = selectedRaw || mapNameInput.value.trim();
+
+    if (!selectedRaw && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && raw) {
+      raw = mapNameCnToEnSmart(raw);
+    }
+
     if (raw) activeFilters.map_name = raw;
     else delete activeFilters.map_name;
   }
@@ -1974,6 +2112,11 @@ async function applyFilters(filters) {
   renderSkeletonForSection(currentSection);
   showLoadingBar();
 
+  // CN
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && activeFilters.map_name) {
+    activeFilters.map_name = await canonicalizeMapNameForApi(activeFilters.map_name);
+  }
+
   try {
     const req = buildSectionRequest(currentSection, activeFilters, 1, pageSize);
 
@@ -2101,11 +2244,19 @@ function displayResults(data) {
   const post = (r) => {
     if (r.map_name) {
       r.original_map_name = r.map_name;
-      const translatedName = t(
-        `map_name.${r.map_name.toLowerCase().replace(/ /g, '_').replace(/[()']/g, '')}`
-      );
-      if (typeof translatedName === 'string' && !translatedName.includes('map_name.')) {
-        r.map_name = translatedName;
+
+      if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+        r.map_name = mapNameToCnDisplay(r.map_name);
+      } else if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'en') {
+        const translatedName = t(
+          `map_name.${r.map_name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '')}`
+        );
+        if (typeof translatedName === 'string' && !translatedName.includes('map_name.')) {
+          r.map_name = translatedName;
+        }
       }
     }
     r.category = getTypesArray(r);
@@ -2189,59 +2340,110 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
     return;
   }
 
-  debounceTimeout = setTimeout(() => {
-    const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
-    const url = buildAutocompleteUrl(apiEndpoint, { value: filterValue, locale, pageSize: 10 });
+    debounceTimeout = setTimeout(async () => {
+      const makeItem = (label, raw) => {
+        const d = document.createElement('div');
+        d.textContent = label;
+        d.className =
+          'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        d.setAttribute('data-raw-value', raw);
+        d.addEventListener('click', (e) => {
+          e.stopPropagation();
+          input.setAttribute('data-selected-raw-value', raw);
+          input.value = label;
 
-    fetch(url, { headers: { Accept: 'application/json' } })
-      .then((r) => {
+          let labelId = propertyName;
+          if (propertyName === 'code') labelId = 'code';
+          if (propertyName === 'map_name') labelId = 'map name';
+
+          const translatedMessage = t('popup.filter_applied', {
+            filterId: labelId,
+            value: label,
+          });
+          showConfirmationMessage(translatedMessage);
+
+          closeFloating(suggestionsContainer);
+          updateActiveFilters();
+
+          input.blur();
+          closeFloating(input);
+
+          const parentId = input.getAttribute('data-parent') || '';
+          const parentBtn = parentId ? document.getElementById(parentId) : null;
+          if (parentBtn) {
+            parentBtn.classList.remove('selected');
+            const circle = parentBtn.querySelector('.selection-circle');
+            if (circle) circle.classList.remove('circle-visible');
+          }
+        });
+        return d;
+      };
+
+      // CN
+      if (
+        typeof CURRENT_LANG !== 'undefined' &&
+        CURRENT_LANG === 'cn' &&
+        apiEndpoint === 'map-names' &&
+        propertyName === 'map_name'
+      ) {
+        try {
+          await ensureMapsIndex();
+        } catch (_) {}
+
+        suggestionsContainer.innerHTML = '';
+        const list = Array.isArray(__mapsIndex?.list) ? __mapsIndex.list : [];
+        const qLower = filterValue.toLowerCase();
+        const qNorm = __normalizeMapNameKey(filterValue);
+
+        const matches = list
+          .filter((it) => {
+            const zh = String(it?.zh || '');
+            const en = String(it?.en || '');
+            if (!zh && !en) return false;
+
+            if (zh.toLowerCase().includes(qLower) || en.toLowerCase().includes(qLower)) return true;
+            if (!qNorm) return false;
+
+            return (
+              __normalizeMapNameKey(zh).includes(qNorm) ||
+              __normalizeMapNameKey(en).includes(qNorm)
+            );
+          })
+          .slice(0, 10);
+
+        matches.forEach((it) => {
+          const label = String(it.zh || it.en);
+          const raw = String(it.en || '');
+          if (!raw) return;
+          suggestionsContainer.appendChild(makeItem(label, raw));
+        });
+
+        if (suggestionsContainer.children.length > 0) {
+          openFloating(suggestionsContainer, input, {
+            matchAnchorWidth: true,
+            offset: 4,
+            origin: 'top left',
+            dur: 140,
+          });
+        } else {
+          closeFloating(suggestionsContainer);
+        }
+        return;
+      }
+
+      const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
+      const url = buildAutocompleteUrl(apiEndpoint, { value: filterValue, locale, pageSize: 10 });
+
+      try {
+        const r = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!r.ok) throw new Error(`API Error: ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
+
+        const data = await r.json();
         suggestionsContainer.innerHTML = '';
         if (!Array.isArray(data) || data.length === 0) {
           closeFloating(suggestionsContainer);
           return;
         }
-
-        const makeItem = (label, raw) => {
-          const d = document.createElement('div');
-          d.textContent = label;
-          d.className =
-            'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
-          d.setAttribute('data-raw-value', raw);
-          d.addEventListener('click', (e) => {
-            e.stopPropagation();
-            input.setAttribute('data-selected-raw-value', raw);
-            input.value = label;
-
-            let labelId = propertyName;
-            if (propertyName === 'code') labelId = 'code';
-            if (propertyName === 'map_name') labelId = 'map name';
-
-            const translatedMessage = t('popup.filter_applied', {
-              filterId: labelId,
-              value: label,
-            });
-            showConfirmationMessage(translatedMessage);
-
-            closeFloating(suggestionsContainer);
-            updateActiveFilters();
-
-            input.blur();
-            closeFloating(input);
-
-            const parentId = input.getAttribute('data-parent') || '';
-            const parentBtn = parentId ? document.getElementById(parentId) : null;
-            if (parentBtn) {
-              parentBtn.classList.remove('selected');
-              const circle = parentBtn.querySelector('.selection-circle');
-              if (circle) circle.classList.remove('circle-visible');
-            }
-          });
-          return d;
-        };
 
         data.forEach((item) => {
           if (propertyName === 'code' && typeof item === 'string') {
@@ -2258,9 +2460,15 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
             if (label) suggestionsContainer.appendChild(makeItem(label, id));
             return;
           }
-          if (item[propertyName]) {
+          if (item && item[propertyName]) {
             const rawValue = item[propertyName];
-            const displayName = item.translated_map_name || rawValue;
+            const displayName =
+              item.translated_map_name ||
+              (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn'
+                ? mapNameToCnDisplay(rawValue)
+                : rawValue) ||
+              rawValue;
+
             suggestionsContainer.appendChild(makeItem(displayName, rawValue));
           }
         });
@@ -2275,12 +2483,11 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
         } else {
           closeFloating(suggestionsContainer);
         }
-      })
-      .catch((error) => {
-        console.error(`Error fetching ${apiEndpoint} suggestions:`, error);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions :', error);
         closeFloating(suggestionsContainer);
-      });
-  }, 220);
+      }
+    }, 220);
 }
 
 /* =========================
