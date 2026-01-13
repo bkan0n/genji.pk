@@ -158,7 +158,7 @@ const COMPLETIONS_VIEW_LS_KEY = 'completions_view';
 let completionsView = (localStorage.getItem(COMPLETIONS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
 let lastCompletionsRows = [];
 const PERSONAL_RECORDS_VIEW_LS_KEY = 'personal_records_view';
-let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
+let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
 let lastPersonalRows = [];
 const OFFICIAL_NOTICE_ID = 'officialCodeNotice';
 
@@ -412,7 +412,10 @@ function initializeIcons() {
     'clear_filters',
   ].map((id) => ({
     id,
-    name: t(`filters_toolbar.${id}`) || id.replace('_', ' ').toUpperCase(),
+    name:
+     (id === 'official'
+       ? t('filters_toolbar.server')
+       : t(`filters_toolbar.${id}`)) || id.replace(/_/g, ' ').toUpperCase(),
     svg: getIconSVG(id),
   }));
 }
@@ -653,6 +656,17 @@ async function selectSection(sectionId, opts = {}) {
   const tabBtn = document.getElementById(`${sectionId}Btn`);
   if (tabBtn) tabBtn.classList.add('active');
 
+  //CN
+  if (sectionId === 'map_search' && String(CURRENT_LANG).toLowerCase() === 'cn') {
+    const hasValue =
+      Object.prototype.hasOwnProperty.call(activeFilters || {}, 'official') ||
+      Object.prototype.hasOwnProperty.call(persistentFilters || {}, 'official');
+
+    if (!hasValue || persistentFilters.official == null || String(persistentFilters.official).trim() === '') {
+      persistentFilters.official = 'False';
+    }
+  }
+
   initializeToolbarButtons();
   applyFilters();
 
@@ -687,14 +701,14 @@ window.addEventListener('popstate', () => {
 async function initializeApp() {
   const fa = document.getElementById('filterActions');
   if (fa) hideEl(fa);
-  initSearchTabs();
   initializeIcons();
   await loadDynamicOptions();
-  initializeToolbarButtons();
+  initSearchTabs();
   hideOnClickOutside();
   if (fa) showFlex(fa);
 }
 document.addEventListener('DOMContentLoaded', initializeApp);
+
 
 /* =========================
    HELPERS TOOLBAR
@@ -1627,8 +1641,8 @@ function initializeToolbarButtons() {
           optionsContainer = showOptionsContainer(
             'officialOptions',
             [
-              { text: 'True',  value: 'True',  raw: 'True' },
-              { text: 'False', value: 'False', raw: 'False' },
+              { text: t('filters_toolbar.global_server'),  value: 'True',  raw: 'True' },
+              { text: t('filters_toolbar.china_server'),   value: 'False', raw: 'False' },
             ],
             button,
             false
@@ -1830,6 +1844,23 @@ function updateToolbarButtonStates() {
       return mapNameToCnDisplay(v);
     }
 
+    if (filterId === 'official') {
+      const isTrue =
+        (typeof rawValue === 'boolean')
+          ? rawValue
+          : (() => {
+              const s = String(rawValue ?? v).trim().toLowerCase();
+              if (!s) return true;
+              if (['true', 'with', 'yes', '1', 'on', 'global'].includes(s)) return true;
+              if (['false', 'without', 'no', '0', 'off', 'china', 'cn'].includes(s)) return false;
+              return true;
+            })();
+
+      return isTrue
+        ? (t('filters_toolbar.global_server') || 'Global')
+        : (t('filters_toolbar.china_server') || 'China');
+    }
+
     // Boolean-like
     if (booleanLikeFilters.has(filterId)) {
       return boolBadgeLabel(v);
@@ -1981,7 +2012,12 @@ function updateToolbarButtonStates() {
         text = `${value.length}`;
       }
     } else if (typeof value === 'boolean') {
-      text = value ? 'ON' : 'OFF';
+      if (filterId === 'official') {
+        const display = translateBadgeValue(filterId, value);
+        text = display.length > 6 ? display.slice(0, 6) + '…' : display;
+      } else {
+        text = value ? 'ON' : 'OFF';
+      }
     } else if (typeof value === 'string') {
       const display = translateBadgeValue(filterId, value);
       text = display.length > 6 ? display.slice(0, 6) + '…' : display;
@@ -2054,6 +2090,12 @@ function clearFilters(silent = false) {
   activeFilters = {};
   filters = {};
   persistentFilters = {};
+
+  //CN
+  if (String(CURRENT_LANG).toLowerCase() === 'cn' && currentSection === 'map_search') {
+    persistentFilters.official = 'False';
+  }
+  updateToolbarButtonStates();
 
   document.getElementById('filtersContainer').innerHTML = '';
 
