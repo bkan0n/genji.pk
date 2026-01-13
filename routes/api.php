@@ -86,6 +86,7 @@ use App\Http\Controllers\Utilities\Autocomplete\UsersController;
 use App\Http\Controllers\Utilities\UploadImageController;
 use App\Http\Controllers\Utilities\LogMapClickController;
 use App\Http\Controllers\Utilities\OcrController;
+use App\Http\Controllers\Notifications\WebNotificationsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -328,6 +329,40 @@ Route::prefix('mods')
             Route::delete('{thread_id}/vote/{user_id}', [DeletePlaytestVoteController::class, 'destroy'])->whereNumber('thread_id')->whereNumber('user_id')->name('mods.playtests.votes.delete_one');
         });
 });
+
+/* ================== NOTIFICATIONS ================== */
+
+Route::prefix('notifications')
+    ->middleware([
+        'web',
+        \App\Http\Middleware\RequireAuthenticated::class,
+    ])
+    ->group(function () {
+
+        // Tray
+        Route::get('/unread-count', [WebNotificationsController::class, 'unreadCount']);
+        Route::get('/events', [WebNotificationsController::class, 'events']);
+
+        Route::patch('/events/{eventId}/read', [WebNotificationsController::class, 'markRead'])
+            ->whereNumber('eventId');
+
+        Route::patch('/events/{eventId}/dismiss', [WebNotificationsController::class, 'dismiss'])
+            ->whereNumber('eventId');
+
+        Route::patch('/read-all', [WebNotificationsController::class, 'markAllRead']);
+
+        // Preferences
+        Route::get('/preferences', [WebNotificationsController::class, 'preferences']);
+
+        Route::put('/preferences/bulk', [WebNotificationsController::class, 'bulkUpdatePreferences']);
+
+        Route::put('/preferences/{eventType}/{channel}', [WebNotificationsController::class, 'updatePreference'])
+            ->where('eventType', '[a-z_]+')
+            ->where('channel', 'web|discord_dm|discord_ping');
+
+        // Should deliver
+        Route::get('/should-deliver', [WebNotificationsController::class, 'shouldDeliver']);
+    });
 
 /* ================== SENTRY ================== */
 Route::post('_/e', function (Request $request) {

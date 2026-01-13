@@ -2,10 +2,11 @@ import './bootstrap';
 import '../css/app.css';
 import '../css/custom.css';
 import './modals/layout';
-import './modals/notifications';
+import './modals/notifications-settings';
 import './modals/profile';
 import './modals/credits';
 import './modals/rules';
+import './components/notifications-tray';
 
 import * as Sentry from '@sentry/browser';
 

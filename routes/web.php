@@ -36,7 +36,7 @@ Route::view('/ip', 'ip-temp');
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
 
 // =============================================================================
-// Guest routes (not logged in)
+// Guest routes
 // =============================================================================
 
 Route::middleware('guest')->group(function () {
@@ -60,7 +60,7 @@ Route::middleware('guest')->group(function () {
 
 
 // =============================================================================
-// Email verification (can be accessed while logged in or not)
+// Email verification
 // =============================================================================
 
 Route::get('/verify-email', [EmailAuthController::class, 'verifyEmail'])->name('verification.verify');
@@ -69,7 +69,7 @@ Route::post('/email/resend', [EmailAuthController::class, 'resendVerification'])
 
 
 // =============================================================================
-// Logout (works for both auth types)
+// Logout
 // =============================================================================
 
 Route::post('/logout', [EmailAuthController::class, 'logout'])->name('logout');
