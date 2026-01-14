@@ -39,7 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Aliases
         $middleware->alias([
-            'auth.user' => \App\Http\Middleware\AuthenticatedUser::class,
+            'auth.user' => RequireAuthenticated::class,
+            'auth.any' => \App\Http\Middleware\AuthenticatedUser::class,
             'auth.verified' => RequireAuthenticated::class,
             'email.verified' => \App\Http\Middleware\EmailVerified::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,

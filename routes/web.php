@@ -17,10 +17,10 @@ use Illuminate\Support\Facades\Route;
 // Pages
 // =============================================================================
 Route::view('/', 'index')->name('home');
-Route::get('rank_card', [DiscordAuthController::class, 'rankCardPage'])->name('rankcard.dashboard');
+Route::get('rank_card', [DiscordAuthController::class, 'rankCardPage'])->middleware('auth.user')->name('rankcard.dashboard');
 Route::view('lootbox', 'lootbox')->name('lootbox');
-Route::view('submit', 'submit')->name('submit');
-Route::view('dashboard', 'dashboard')->name('dashboard');
+Route::view('submit', 'submit')->middleware('auth.user')->name('submit');
+Route::view('dashboard', 'dashboard')->middleware('auth.user')->name('dashboard');
 Route::view('newsfeed', 'newsfeed')->name('newsfeed');
 Route::view('leaderboard', 'leaderboard')->name('leaderboard');
 Route::view('statistics', 'statistics')->name('statistics');
@@ -64,15 +64,15 @@ Route::middleware('guest')->group(function () {
 // =============================================================================
 
 Route::get('/verify-email', [EmailAuthController::class, 'verifyEmail'])->name('verification.verify');
-Route::get('/email/verify', [EmailAuthController::class, 'showVerifyNotice'])->name('verification.notice');
-Route::post('/email/resend', [EmailAuthController::class, 'resendVerification'])->name('verification.resend');
+Route::get('/email/verify', [EmailAuthController::class, 'showVerifyNotice'])->middleware('auth.any')->name('verification.notice');
+Route::post('/email/resend', [EmailAuthController::class, 'resendVerification'])->middleware('auth.any')->name('verification.resend');
 
 
 // =============================================================================
 // Logout
 // =============================================================================
 
-Route::post('/logout', [EmailAuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [EmailAuthController::class, 'logout'])->middleware('auth.any')->name('logout');
 
 //IP 
 Route::get('/api/my-ip', function (Request $request) {

@@ -16,6 +16,7 @@ use Throwable;
 
 class DiscordAuthController extends Controller
 {
+    private const DEVICE_SESSION_COOKIE = 'device_session_id';
     public function __construct(private GenjiApiService $api) {}
     
     private function discordRedirectUri(): string
@@ -120,6 +121,7 @@ class DiscordAuthController extends Controller
         $request->session()->put('user_name', $userData['nickname'] ?? $username);
 
         $request->session()->regenerate();
+        $this->queueDeviceSessionCookie($request);
 
         // Remember me
         $remember = (bool) $request->session()->pull('auth_remember', false);
@@ -182,7 +184,7 @@ class DiscordAuthController extends Controller
         }
         $request->session()->put('can_moderate', $canModerate);
 
-        return redirect()->intended('/');
+        return redirect('/');
     }
 
     private function queueRememberCookie(Request $request, string $token): void
@@ -204,6 +206,42 @@ class DiscordAuthController extends Controller
             'Lax'
         ));
     }
+
+    private function queueDeviceSessionCookie(Request $request, ?string $sessionId = null): void
+    {
+        $sid = $sessionId ?? (string) $request->session()->getId();
+        if ($sid === '') {
+            return;
+        }
+
+        $days = (int) env('DEVICE_SESSION_COOKIE_DAYS', 365);
+        $minutes = max(60, $days * 24 * 60);
+
+        $domain = config('session.domain');
+        $secureCfg = config('session.secure');
+        $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
+
+        $sameSite = (string) (config('session.same_site') ?? 'lax');
+        $sameSite = ucfirst(strtolower($sameSite));
+
+        cookie()->queue(cookie(
+            self::DEVICE_SESSION_COOKIE,
+            $sid,
+            $minutes,
+            '/',
+            $domain,
+            $secure,
+            true,
+            false,
+            $sameSite
+        ));
+    }
+
+    private function forgetDeviceSessionCookie(): void
+    {
+        cookie()->queue(cookie()->forget(self::DEVICE_SESSION_COOKIE));
+    }
+
 
     private function queueDiscordRememberCookies(
         Request $request,
@@ -288,6 +326,8 @@ class DiscordAuthController extends Controller
             'user_provider',
         ]);
         cookie()->queue(cookie()->forget('remember_token'));
+        $this->forgetDeviceSessionCookie();
+        $request->session()->forget('is_mod');
         cookie()->queue(cookie()->forget('discord_avatar'));
         cookie()->queue(cookie()->forget('discord_avatar_url'));
         cookie()->queue(cookie()->forget('discord_banner'));

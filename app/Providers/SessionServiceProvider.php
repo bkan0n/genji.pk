@@ -16,7 +16,7 @@ class SessionServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Session::extend('api', function ($app) {
-            return new ApiSessionHandler();
+            return new ApiSessionHandler($app->make(\App\Services\GenjiApiService::class));
         });
     }
 }

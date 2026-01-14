@@ -1,7 +1,7 @@
 @php
   use Illuminate\Support\Str;
 
-  $canModerate = session('can_moderate') === true;
+  $isMod = (bool) session('is_mod', false);
 
   // Determine provider: prefer stored auth_type, then user_provider, then infer from avatar presence
   $provider = session('user')['auth_type'] ?? session('user_provider') ?? (session('user_avatar') ? 'discord' : null);
@@ -265,7 +265,7 @@
           </ul>
         </div>
 
-        @if ($canModerate)
+        @if ($isMod)
           <a
             href="{{ url('/moderator') }}"
             class="group inline-flex items-center justify-center rounded-xl border border-white/10 p-2 hover:border-emerald-400/30 hover:bg-emerald-500/10 focus-visible:ring-2 focus-visible:ring-emerald-400/40 focus-visible:outline-none"
