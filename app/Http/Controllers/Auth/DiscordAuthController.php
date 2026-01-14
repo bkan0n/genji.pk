@@ -122,15 +122,10 @@ class DiscordAuthController extends Controller
 
         $request->session()->regenerate();
         $this->queueDeviceSessionCookie($request);
-
-        // Remember me
         $remember = (bool) $request->session()->pull('auth_remember', false);
+        $rememberToken = null;
         if ($remember) {
             $rememberToken = $this->api->createRememberToken($id);
-            if ($rememberToken) {
-                $this->queueRememberCookie($request, $rememberToken);
-                $this->queueDiscordRememberCookies($request, $avatarHash, $avatarUrl, $bannerHash, $publicFlags, $premiumType);
-            }
         }
 
         $request->session()->put([
@@ -183,6 +178,27 @@ class DiscordAuthController extends Controller
             }
         }
         $request->session()->put('can_moderate', $canModerate);
+        $request->session()->put('is_mod', (bool) $canModerate);
+
+        $user = $request->session()->get('user');
+        if (is_array($user)) {
+            $user['is_mod'] = (bool) $canModerate;
+            $request->session()->put('user', $user);
+        }
+
+        if ($remember && $rememberToken) {
+            $this->queueRememberCookie($request, $rememberToken);
+            $this->queueDiscordRememberCookies(
+                $request,
+                $avatarHash,
+                $avatarUrl,
+                $bannerHash,
+                $publicFlags,
+                $premiumType,
+                (bool) $canModerate
+            );
+        }
+
 
         return redirect('/');
     }
@@ -249,7 +265,8 @@ class DiscordAuthController extends Controller
         string $avatarUrl,
         $bannerHash,
         int $publicFlags,
-        int $premiumType
+        int $premiumType,
+        bool $canModerate
     ): void {
         $minutes = 60 * 24 * 30;
         $domain = config('session.domain');
@@ -261,6 +278,7 @@ class DiscordAuthController extends Controller
         $this->queueRememberDataCookie($request, 'discord_banner', (string) ($bannerHash ?? ''), $minutes, $domain, $secure);
         $this->queueRememberDataCookie($request, 'discord_public_flags', (string) $publicFlags, $minutes, $domain, $secure);
         $this->queueRememberDataCookie($request, 'discord_premium_type', (string) $premiumType, $minutes, $domain, $secure);
+        $this->queueRememberDataCookie($request, 'discord_can_moderate', $canModerate ? '1' : '0', $minutes, $domain, $secure);
     }
 
     private function queueRememberDataCookie(
@@ -333,6 +351,7 @@ class DiscordAuthController extends Controller
         cookie()->queue(cookie()->forget('discord_banner'));
         cookie()->queue(cookie()->forget('discord_public_flags'));
         cookie()->queue(cookie()->forget('discord_premium_type'));
+        cookie()->queue(cookie()->forget('discord_can_moderate'));
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

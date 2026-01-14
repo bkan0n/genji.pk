@@ -21,6 +21,11 @@ class RememberTokenAuth
     {
         if ($request->session()->has('user_id')) {
             $this->syncDeviceSessionCookie($request);
+
+            if (!$request->session()->has('is_mod') && (bool) $request->session()->get('can_moderate', false) === true) {
+                $request->session()->put('is_mod', true);
+            }
+
             $this->syncModeratorFlagFromSession($request);
             return $next($request);
         }
@@ -32,6 +37,21 @@ class RememberTokenAuth
 
         $previousDeviceSessionId = (string) $request->cookie(self::DEVICE_SESSION_COOKIE, '');
         $preAuthSessionId = (string) $request->session()->getId();
+
+        $rememberedIsMod = null;
+
+        $cookieCanModerate = $request->cookie('discord_can_moderate', null);
+        if ($cookieCanModerate !== null && $cookieCanModerate !== '') {
+            $v = strtolower(trim((string) $cookieCanModerate));
+            if (in_array($v, ['1', 'true', 'yes', 'on'], true)) {
+                $rememberedIsMod = true;
+            }
+        }
+
+        if ($rememberedIsMod === null && $previousDeviceSessionId !== '') {
+            $rememberedIsMod = $this->api->sessionIsMod($previousDeviceSessionId);
+        }
+
 
         $userId = $this->api->validateRememberToken($rememberToken);
         if (!$userId) {
@@ -95,7 +115,20 @@ class RememberTokenAuth
             ]);
         }
 
-        $request->session()->put('is_mod', (bool) ($userData['is_mod'] ?? false));
+        if ($isDiscord && $rememberedIsMod === true) {
+            $request->session()->put('can_moderate', true);
+            $request->session()->put('is_mod', true);
+
+            $user = $request->session()->get('user');
+            if (is_array($user)) {
+                $user['is_mod'] = true;
+                $request->session()->put('user', $user);
+            }
+        }
+
+        if (!$isDiscord) {
+            $request->session()->put('is_mod', (bool) ($userData['is_mod'] ?? false));
+        }
 
         $request->session()->regenerate(true);
 
@@ -121,6 +154,7 @@ class RememberTokenAuth
         cookie()->queue(cookie()->forget('discord_banner'));
         cookie()->queue(cookie()->forget('discord_public_flags'));
         cookie()->queue(cookie()->forget('discord_premium_type'));
+        cookie()->queue(cookie()->forget('discord_can_moderate'));
     }
 
     private function hydrateDiscordSessionFromRememberCookies(Request $request, int $userId, array $userData): void
@@ -180,6 +214,19 @@ class RememberTokenAuth
             $request->session()->put('user_premium', $premiumInt);
             $request->session()->put('discord_premium_type', $premiumInt);
         }
+
+        $cm = $request->cookie('discord_can_moderate', null);
+        if ($cm !== null && $cm !== '') {
+            $v = strtolower(trim((string) $cm));
+            if (in_array($v, ['1', 'true', 'yes', 'on'], true)) {
+                $request->session()->put('can_moderate', true);
+                if (!$request->session()->has('is_mod')) {
+                    $request->session()->put('is_mod', true);
+                }
+            }
+        }
+
+
     }
 
     private function syncDeviceSessionCookie(Request $request): void

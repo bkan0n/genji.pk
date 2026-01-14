@@ -19,7 +19,9 @@ class RequireDiscordModerator
             return redirect('/')->with('error', 'Please login.');
         }
 
-        if ((bool) $request->session()->get('is_mod', false) === true) {
+        if ((bool) $request->session()->get('is_mod', false) === true
+            || (bool) $request->session()->get('can_moderate', false) === true) {
+            $request->session()->put('is_mod', true);
             return $next($request);
         }
 
@@ -38,25 +40,16 @@ class RequireDiscordModerator
                 abort(403, 'Moderator role required.');
             }
 
-            if (method_exists($this->api, 'sessionReadWithMeta')) {
-                $meta = $this->api->sessionReadWithMeta($sessionId);
-                if (is_array($meta)) {
-                    $isMod = (bool) ($meta['is_mod'] ?? false);
+            $isMod = $this->api->sessionIsMod($sessionId);
 
-                    $ttl = (int) (env('SESSION_IS_MOD_TTL_SECONDS', 120));
-                    if ($ttl <= 0) {
-                        $ttl = 120;
-                    }
+            if ($isMod !== null) {
+                $ttl = max(10, (int) env('SESSION_IS_MOD_TTL_SECONDS', 120));
+                Cache::put($cacheKey, (bool) $isMod, now()->addSeconds($ttl));
+                $request->session()->put('is_mod', (bool) $isMod);
 
-                    Cache::put($cacheKey, $isMod, now()->addSeconds($ttl));
-                    $request->session()->put('is_mod', $isMod);
+                if ($isMod) return $next($request);
 
-                    if ($isMod) {
-                        return $next($request);
-                    }
-
-                    abort(403, 'Moderator role required.');
-                }
+                abort(403, 'Moderator role required.');
             }
         }
 
