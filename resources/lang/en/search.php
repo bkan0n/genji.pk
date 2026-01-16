@@ -97,8 +97,8 @@ return [
         'participated_no'       => 'Not participated',
         'official'              => 'Official',
         'server'                => 'Server',
-        'global_server'         => 'Global Server',
-        'china_server'          => 'China Server',
+        'global_server'         => 'Global',
+        'china_server'          => 'China',
         'apply_filters'         => 'Apply filters',
         'clear_filters'         => 'Clear filters',
     ],
@@ -243,6 +243,71 @@ return [
         'hanaoka' => 'Hanaoka',
         'runasapi' => 'Runasapi',
         'throne_of_anubis' => 'Throne of Anubis',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP EDIT REQUEST
+    // ──────────────────────────────────────────────────────────────────────
+    'map_edit_request' => [
+        'title' => 'Map edit request',
+        'subtitle' => 'Propose changes to a map',
+
+        'code' => 'Code',
+        'created_by' => 'Created by',
+        'reason' => 'Reason',
+        'reason_placeholder' => 'Explain why you want to change this map…',
+
+        'send' => 'Send map edit request',
+        'close' => 'Close',
+
+        'proposed_changes' => 'Proposed changes',
+        'proposed_hint' => 'Only changed fields will be sent',
+
+        'official' => 'Official',
+        'unofficial' => 'Unofficial',
+        'visible' => 'Visible',
+        'hidden' => 'Hidden',
+        'active' => 'Active',
+        'archived' => 'Archived',
+
+        'new_code' => 'New code',
+        'new_code_placeholder' => 'Leave empty to keep current',
+
+        'map_name' => 'Map name',
+        'checkpoints' => 'Checkpoints',
+        'creators' => 'Creators',
+
+        'creator_search' => 'Search a user…',
+        'creator_hint' => 'Select users to add. First creator is primary.',
+
+        'select' => 'Select…',
+        'selected_count' => '{count} selected',
+
+        'category' => 'Category',
+        'difficulty' => 'Difficulty',
+        'mechanics' => 'Mechanics',
+        'restrictions' => 'Restrictions',
+
+        'optional_title' => 'Title',
+        'custom_banner' => 'Custom banner',
+        'drag_and_drop' => 'Drag & drop or click to upload',
+        'banner_hint' => 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.',
+        'remove' => 'Remove',
+
+        'optional_description' => 'Description',
+        'medal_gold' => 'Gold medal',
+        'medal_silver' => 'Silver medal',
+        'medal_bronze' => 'Bronze medal',
+
+        'uploading' => 'Uploading…',
+        'uploaded' => 'Uploaded',
+
+        'login_required' => 'You must be logged in to send a map edit request.',
+        'reason_required' => 'Please provide a reason.',
+        'sending' => 'Sending…',
+        'sent' => 'Map edit request sent ✅',
+
+        'na' => 'N/A',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

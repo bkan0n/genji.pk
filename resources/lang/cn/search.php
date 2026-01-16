@@ -96,8 +96,8 @@ return [
         'participated_no'       => '未参与',
         'official'              => '国际服',
         'server'                => '服务器',
-        'global_server'         => '国际服',
-        'china_server'          => '国服',
+        'global_server'         => '全球的',
+        'china_server'          => '中国',
         'apply_filters'         => '应用筛选',
         'clear_filters'         => '重置筛选',
     ],
@@ -247,6 +247,71 @@ return [
         'hanaoka'                         => '花冈',
         'runasapi'                        => '鲁纳塞彼',
         'throne_of_anubis'                => '阿努比斯王座'
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // 地图编辑请求
+    // ──────────────────────────────────────────────────────────────────────
+    'map_edit_request' => [
+        'title' => '地图编辑请求',
+        'subtitle' => '为地图提出修改建议',
+
+        'code' => '代码',
+        'created_by' => '创建者',
+        'reason' => '原因',
+        'reason_placeholder' => '请说明你为什么想修改这张地图…',
+
+        'send' => '发送地图编辑请求',
+        'close' => '关闭',
+
+        'proposed_changes' => '拟议修改',
+        'proposed_hint' => '仅会发送已更改的字段',
+
+        'official' => '官方',
+        'unofficial' => '非官方',
+        'visible' => '可见',
+        'hidden' => '隐藏',
+        'active' => '启用',
+        'archived' => '已归档',
+
+        'new_code' => '新代码',
+        'new_code_placeholder' => '留空以保持当前值',
+
+        'map_name' => '地图名称',
+        'checkpoints' => '检查点',
+        'creators' => '作者',
+
+        'creator_search' => '搜索用户…',
+        'creator_hint' => '选择要添加的用户。第一个作者为主作者。',
+
+        'select' => '选择…',
+        'selected_count' => '已选择 {count} 个',
+
+        'category' => '分类',
+        'difficulty' => '难度',
+        'mechanics' => '机制',
+        'restrictions' => '限制',
+
+        'optional_title' => '标题',
+        'custom_banner' => '自定义横幅',
+        'drag_and_drop' => '拖拽文件或点击上传',
+        'banner_hint' => '建议 16:9。JPG/PNG/WebP/AVIF，最大 10MB。',
+        'remove' => '移除',
+
+        'optional_description' => '描述',
+        'medal_gold' => '金牌',
+        'medal_silver' => '银牌',
+        'medal_bronze' => '铜牌',
+
+        'uploading' => '上传中…',
+        'uploaded' => '已上传',
+
+        'login_required' => '你必须登录才能发送地图编辑请求。',
+        'reason_required' => '请填写原因。',
+        'sending' => '发送中…',
+        'sent' => '地图编辑请求已发送 ✅',
+
+        'na' => '不适用',
     ],
 
     // ───────────────────────────────────────────────────────────────────────

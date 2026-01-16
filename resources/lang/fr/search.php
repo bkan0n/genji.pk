@@ -97,8 +97,8 @@ return [
         'participated_no'      => 'N’a pas participé',
         'official'             => 'Officiel',
         'server'               => 'Serveur',
-        'global_server'        => 'Serveur Global',
-        'china_server'         => 'Serveur Chinois',
+        'global_server'        => 'Global',
+        'china_server'         => 'Chine',
         'apply_filters'        => 'Appliquer les filtres',
         'clear_filters'        => 'Réinitialiser les filtres',
     ],
@@ -243,6 +243,71 @@ return [
         'hanaoka'                      => 'Hanaoka',
         'runasapi'                     => 'Runasapi',
         'throne_of_anubis'             => 'Throne of Anubis',
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // MAP EDIT REQUEST
+    // ──────────────────────────────────────────────────────────────────────
+    'map_edit_request' => [
+        'title' => 'Demande de modification de map',
+        'subtitle' => 'Proposer des modifications pour une map',
+
+        'code' => 'Code',
+        'created_by' => 'Créée par',
+        'reason' => 'Raison',
+        'reason_placeholder' => 'Expliquez pourquoi vous souhaitez modifier cette map…',
+
+        'send' => 'Envoyer la demande de modification',
+        'close' => 'Fermer',
+
+        'proposed_changes' => 'Modifications proposées',
+        'proposed_hint' => 'Seuls les champs modifiés seront envoyés',
+
+        'official' => 'Officielle',
+        'unofficial' => 'Non officielle',
+        'visible' => 'Visible',
+        'hidden' => 'Masquée',
+        'active' => 'Active',
+        'archived' => 'Archivée',
+
+        'new_code' => 'Nouveau code',
+        'new_code_placeholder' => 'Laissez vide pour conserver l’actuel',
+
+        'map_name' => 'Nom de la map',
+        'checkpoints' => 'Checkpoints',
+        'creators' => 'Créateurs',
+
+        'creator_search' => 'Rechercher un utilisateur…',
+        'creator_hint' => 'Sélectionnez des utilisateurs à ajouter. Le premier créateur est principal.',
+
+        'select' => 'Sélectionner…',
+        'selected_count' => '{count} sélectionné(s)',
+
+        'category' => 'Catégorie',
+        'difficulty' => 'Difficulté',
+        'mechanics' => 'Mécaniques',
+        'restrictions' => 'Restrictions',
+
+        'optional_title' => 'Titre',
+        'custom_banner' => 'Bannière personnalisée',
+        'drag_and_drop' => 'Glissez-déposez ou cliquez pour envoyer',
+        'banner_hint' => 'Recommandé 16:9. JPG/PNG/WebP/AVIF, max 10 Mo.',
+        'remove' => 'Retirer',
+
+        'optional_description' => 'Description',
+        'medal_gold' => 'Médaille d’or',
+        'medal_silver' => 'Médaille d’argent',
+        'medal_bronze' => 'Médaille de bronze',
+
+        'uploading' => 'Envoi en cours…',
+        'uploaded' => 'Envoyé',
+
+        'login_required' => 'Vous devez être connecté pour envoyer une demande de modification de map.',
+        'reason_required' => 'Veuillez indiquer une raison.',
+        'sending' => 'Envoi…',
+        'sent' => 'Demande de modification envoyée ✅',
+
+        'na' => 'N/A',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
