@@ -69,12 +69,12 @@ return [
         'enter_map_code'       => 'Entrez un code de map',
         'difficulty_exact'     => 'Difficulté',
         'beginner'             => 'Débutant',
-        'easy'                 => 'Facile',
-        'medium'               => 'Moyenne',
-        'hard'                 => 'Difficile',
-        'very_hard'            => 'Très difficile',
-        'extreme'              => 'Extrême',
-        'hell'                 => 'Infernal',
+        'easy'                 => 'Easy',
+        'medium'               => 'Medium',
+        'hard'                 => 'Hard',
+        'very_hard'            => 'Very Hard',
+        'extreme'              => 'Extreme',
+        'hell'                 => 'Hell',
         'category'             => 'Type de map',
         'classic'              => 'Classique',
         'increasing_difficulty'=> 'Difficulté progressive',
@@ -251,6 +251,9 @@ return [
     'map_edit_request' => [
         'title' => 'Demande de modification de map',
         'subtitle' => 'Proposer des modifications pour une map',
+
+        'map_edit_btn' => 'Créer une demande de modification de map',
+        'map_edit_btn_login' => 'Connectez-vous pour créer une demande de modification de map',
 
         'code' => 'Code',
         'created_by' => 'Créée par',

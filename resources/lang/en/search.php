@@ -252,6 +252,9 @@ return [
         'title' => 'Map edit request',
         'subtitle' => 'Propose changes to a map',
 
+        'map_edit_btn' => 'Create a map edit request',
+        'map_edit_btn_login' => 'Login to create a map edit request',
+
         'code' => 'Code',
         'created_by' => 'Created by',
         'reason' => 'Reason',

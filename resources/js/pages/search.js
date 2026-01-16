@@ -585,7 +585,7 @@ function initSearchTabs(defaultSection = 'map_search') {
 
   const setActive = (
     section,
-    { updateUrl = true, triggerLoad = true, animateHighlight = true } = {}
+    { updateUrl = true, triggerLoad = true, animateHighlight = true, userAction = false } = {}
   ) => {
     const activeBtn =
       buttons.find((b) => b.getAttribute('data-section') === section) || buttons[0];
@@ -609,6 +609,13 @@ function initSearchTabs(defaultSection = 'map_search') {
 
     if (updateUrl) {
       const url = new URL(window.location.href);
+
+      // clean URL only when switching to a different section by user action
+      const prevSection = url.searchParams.get('section') || (typeof currentSection !== 'undefined' ? currentSection : '') || defaultSection;
+      if (userAction && String(prevSection) !== String(activeSection)) {
+        __urlStripFiltersAndModals(url);
+      }
+
       url.searchParams.set('section', activeSection);
       history.replaceState(
         { section: activeSection },
@@ -618,7 +625,7 @@ function initSearchTabs(defaultSection = 'map_search') {
     }
 
     if (triggerLoad && typeof window.selectSection === 'function') {
-      window.selectSection(activeSection, { push: false, replace: true });
+      window.selectSection(activeSection, { push: false, replace: true, cleanOnChange: userAction });
     }
   };
 
@@ -640,6 +647,7 @@ function initSearchTabs(defaultSection = 'map_search') {
           updateUrl: true,
           triggerLoad: true,
           animateHighlight: true,
+          userAction: true,
         });
       }
     });
@@ -671,7 +679,7 @@ function initSearchTabs(defaultSection = 'map_search') {
 }
 
 async function selectSection(sectionId, opts = {}) {
-  const { push = true, replace = false } = opts;
+  const { push = true, replace = false, fromUrl = false, cleanOnChange = false } = opts;
 
   if (sectionId === 'personal_records' && !user_id) {
     renderMessage(t('popup.login_required_pr'));
@@ -679,16 +687,27 @@ async function selectSection(sectionId, opts = {}) {
     return;
   }
 
-  if (currentSection !== sectionId) {
+  const changing = currentSection !== sectionId;
+  const userNav = (push && !fromUrl) || !!cleanOnChange;
+
+  if (changing) {
     const rc = document.getElementById('resultsContainer');
     if (rc) rc.innerHTML = '';
     const pc = document.getElementById('paginationContainer');
     if (pc) pc.innerHTML = '';
   }
 
+  // Set section early
   currentSection = sectionId;
 
-  if (Object.keys(filters).length > 0 || selectedFilters.length > 0) clearFilters(true);
+  // clean slate
+  if (changing && userNav) {
+    clearFilters(true);
+  }
+
+  if (changing && cleanOnChange) {
+    void __syncModalsFromUrl();
+  }
   currentPage = 1;
 
   const selectedModeText = document.getElementById('selectedMode');
@@ -715,17 +734,33 @@ async function selectSection(sectionId, opts = {}) {
   }
 
   initializeToolbarButtons();
-  applyFilters();
+
+  // “Apply filters” url update
+  applyFilters(undefined, { syncUrl: false });
 
   const fa = document.getElementById('filterActions');
   if (fa) showFlex(fa);
 
   if (push) {
     const url = new URL(location.href);
+
+    // Clean URL only when switching section by user action
+    if (changing && userNav) {
+      __urlStripFiltersAndModals(url);
+    }
+
     url.searchParams.set(SECTION_URL_PARAM, sectionId);
-    const state = { section: sectionId };
+
+    const state = { ...(history.state || {}), section: sectionId };
+    if (state.__modalOpen) delete state.__modalOpen;
+
     if (replace) history.replaceState(state, '', url);
     else history.pushState(state, '', url);
+
+    // Close any open modal immediately
+    if (changing && userNav) {
+      void __syncModalsFromUrl();
+    }
   }
 }
 window.selectSection = selectSection;
@@ -734,13 +769,363 @@ window.selectSection = selectSection;
    URL
    ========================= */
 const SECTION_URL_PARAM = 'section';
-const VALID_SECTIONS = new Set(['map_search','completions','guide','personal_records']);
+const VALID_SECTIONS = new Set(['map_search', 'completions', 'guide', 'personal_records']);
 
+const URL_MODAL_PARAM = 'modal';
+const URL_MODAL_CODE_PARAM = 'modal_code';
+const URL_MODAL_USER_ID_PARAM = 'modal_user_id';
+const URL_MODAL_TIME_PARAM = 'modal_time';
+
+const URL_FILTER_KEYS = new Set([
+  'code',
+  'map_name',
+  'creator_ids',
+  'creator_names',
+  'category',
+  'difficulty_exact',
+  'mechanics',
+  'restrictions',
+  'playtest_filter',
+  'official',
+  'user_id',
+  'medal_filter',
+  'completion_filter',
+]);
+
+const URL_FILTER_ALIASES = {
+  map_code: 'code',
+  mapCode: 'code',
+  mapName: 'map_name',
+  userId: 'user_id',
+  user: 'user_id',
+  creator_id: 'creator_ids',
+  creatorIds: 'creator_ids',
+  creator_name: 'creator_names',
+  creatorNames: 'creator_names',
+  creator: 'creator_names',
+  difficulty: 'difficulty_exact',
+  difficultyExact: 'difficulty_exact',
+  playtestFilter: 'playtest_filter',
+  medalFilter: 'medal_filter',
+  completionFilter: 'completion_filter',
+};
+
+const URL_ARRAY_KEYS = new Set(['mechanics', 'restrictions', 'creator_ids', 'creator_names']);
+
+let __urlBootstrapped = false;
+
+function __urlNormalizeOfficial(v) {
+  const s = String(v ?? '').trim().toLowerCase();
+  if (!s) return '';
+  if (['true', '1', 'yes', 'on', 'with', 'global'].includes(s)) return 'True';
+  if (['false', '0', 'no', 'off', 'without', 'cn', 'china'].includes(s)) return 'False';
+  return String(v ?? '').trim();
+}
+
+function __urlReadSection() {
+  const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
+  return VALID_SECTIONS.has(s) ? s : 'map_search';
+}
+
+function __urlHasAnyFilterParams() {
+  const sp = new URL(location.href).searchParams;
+  for (const [rawKey] of sp.entries()) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (URL_FILTER_KEYS.has(key)) return true;
+  }
+  return false;
+}
+
+function __urlReadFilters() {
+  const sp = new URL(location.href).searchParams;
+
+  const tmp = {};
+
+  for (const [rawKey, rawVal] of sp.entries()) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (!URL_FILTER_KEYS.has(key)) continue;
+
+    const s0 = String(rawVal ?? '').trim();
+    if (!s0) continue;
+
+    const parts =
+      URL_ARRAY_KEYS.has(key) && s0.includes(',')
+        ? s0.split(',').map((x) => x.trim()).filter(Boolean)
+        : [s0];
+
+    if (!tmp[key]) tmp[key] = [];
+    tmp[key].push(...parts);
+  }
+
+  const out = {};
+  for (const [k, arrRaw] of Object.entries(tmp)) {
+    const arr = (arrRaw || []).map((x) => String(x).trim()).filter(Boolean);
+    if (!arr.length) continue;
+
+    if (k === 'official') {
+      const norm = __urlNormalizeOfficial(arr[0]);
+      if (norm) out.official = norm;
+      continue;
+    }
+
+    if (URL_ARRAY_KEYS.has(k)) out[k] = arr;
+    else out[k] = arr[0];
+  }
+
+  return out;
+}
+
+function __urlBootstrapPersistentFilters() {
+  if (__urlBootstrapped) return;
+
+  const urlFilters = __urlReadFilters();
+  if (urlFilters && Object.keys(urlFilters).length) {
+    persistentFilters = { ...urlFilters };
+  }
+
+  __urlBootstrapped = true;
+}
+
+
+let __urlLastModalSig = null;
+
+let __suppressUrlSync = false;
+
+function __stableFilterSignature(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  const keys = Object.keys(obj).sort();
+  const norm = {};
+  for (const k of keys) {
+    const v = obj[k];
+    if (Array.isArray(v)) norm[k] = [...v].map(String).sort();
+    else norm[k] = String(v);
+  }
+  return JSON.stringify(norm);
+}
+
+function __urlStripFiltersAndModals(url) {
+  if (!url) return;
+
+  for (const rawKey of Array.from(url.searchParams.keys())) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (URL_FILTER_KEYS.has(key)) url.searchParams.delete(rawKey);
+  }
+
+  // Modal params
+  url.searchParams.delete(URL_MODAL_PARAM);
+  url.searchParams.delete(URL_MODAL_CODE_PARAM);
+  url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
+  url.searchParams.delete(URL_MODAL_TIME_PARAM);
+
+  // Pagination leftovers
+  url.searchParams.delete('page');
+  url.searchParams.delete('page_number');
+  url.searchParams.delete('page_size');
+}
+
+function __urlSyncFiltersFromState({ push = false } = {}) {
+  if (__suppressUrlSync) return;
+
+  const url = new URL(location.href);
+  url.searchParams.set(SECTION_URL_PARAM, currentSection || 'map_search');
+
+  // reset keys
+  for (const rawKey of Array.from(url.searchParams.keys())) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (URL_FILTER_KEYS.has(key)) url.searchParams.delete(rawKey);
+  }
+
+  // write from persistentFilters
+  const src = persistentFilters || {};
+  for (const k of URL_FILTER_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(src, k)) continue;
+    const v = src[k];
+    if (v == null) continue;
+
+    if (Array.isArray(v)) {
+      const arr = v.map(String).map(s => s.trim()).filter(Boolean);
+      for (const item of arr) url.searchParams.append(k, item);
+    } else {
+      const s = String(v).trim();
+      if (s) url.searchParams.set(k, s);
+    }
+  }
+
+  const state = { ...(history.state || {}), section: currentSection || 'map_search' };
+  if (push) history.pushState(state, '', url);
+  else history.replaceState(state, '', url);
+}
+
+function __urlOpenModal(type, { code, user_id, time } = {}, { push = true, replace = false } = {}) {
+  if (__suppressUrlSync) return;
+  const url = new URL(location.href);
+
+  // clear old modal params
+  url.searchParams.delete(URL_MODAL_PARAM);
+  url.searchParams.delete(URL_MODAL_CODE_PARAM);
+  url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
+  url.searchParams.delete(URL_MODAL_TIME_PARAM);
+
+  url.searchParams.set(SECTION_URL_PARAM, currentSection || url.searchParams.get(SECTION_URL_PARAM) || 'map_search');
+
+  if (type) {
+    url.searchParams.set(URL_MODAL_PARAM, type);
+    if (code) url.searchParams.set(URL_MODAL_CODE_PARAM, String(code));
+    if (user_id) url.searchParams.set(URL_MODAL_USER_ID_PARAM, String(user_id));
+    if (time != null && String(time).trim() !== '') url.searchParams.set(URL_MODAL_TIME_PARAM, String(time));
+  }
+
+  const st = { ...(history.state || {}), __modalOpen: type || null };
+  if (replace) history.replaceState(st, '', url);
+  else if (push) history.pushState(st, '', url);
+  else history.replaceState(st, '', url);
+}
+
+function __urlHandleModalUserClose(expectedType) {
+  if (__suppressUrlSync) return;
+
+  const url = new URL(location.href);
+  const cur = url.searchParams.get(URL_MODAL_PARAM);
+  if (cur !== expectedType) return;
+
+  const st = history.state || {};
+  if (st && st.__modalOpen === expectedType) {
+    history.back();
+    return;
+  }
+
+  // remove modal params
+  url.searchParams.delete(URL_MODAL_PARAM);
+  url.searchParams.delete(URL_MODAL_CODE_PARAM);
+  url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
+  url.searchParams.delete(URL_MODAL_TIME_PARAM);
+  history.replaceState({ ...(history.state || {}) }, '', url);
+}
+
+async function __fetchCompletionRowForModal({ code, user_id, time } = {}) {
+  if (!code) return null;
+
+  try {
+    const params = new URLSearchParams({ page_size: '10', page_number: '1' });
+    if (user_id) params.set('user_id', String(user_id));
+
+    const res = await fetch(`${apiUrls.completions}/${encodeURIComponent(code)}?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const rows = normalizeToRows(data, 'completion') || [];
+    if (!rows.length) return null;
+
+    let filtered = rows;
+    if (user_id) filtered = filtered.filter(r => String(r.user_id) === String(user_id));
+
+    if (time != null && String(time).trim() !== '') {
+      const t = Number(time);
+      const tol = 0.01;
+      const found = filtered.find(r => Number(r.time) && Math.abs(Number(r.time) - t) <= tol);
+      if (found) return found;
+    }
+
+    return filtered[0] || rows[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+async function __syncModalsFromUrl() {
+  const url = new URL(location.href);
+  const modal = url.searchParams.get(URL_MODAL_PARAM);
+  const code = url.searchParams.get(URL_MODAL_CODE_PARAM) || '';
+  const user_id = url.searchParams.get(URL_MODAL_USER_ID_PARAM) || '';
+  const time = url.searchParams.get(URL_MODAL_TIME_PARAM) || '';
+
+  // close all if no modal
+  if (!modal) {
+    __urlLastModalSig = null;
+    __suppressUrlSync = true;
+    try {
+      const mapOv = document.getElementById('detailsModalOverlay');
+      if (mapOv && !mapOv.classList.contains('hidden')) mapOv.__sfClose?.();
+
+      const compOv = document.getElementById('completionModalOverlay');
+      if (compOv && !compOv.classList.contains('hidden')) compOv.__sfClose?.();
+
+      const mer = document.getElementById('mapEditRequestOverlay');
+      if (mer && !mer.classList.contains('hidden')) mer.__merClose?.();
+    } finally {
+      __suppressUrlSync = false;
+    }
+    return;
+  }
+
+  const sig = `${modal}|${code}|${user_id}|${time}`;
+  if (sig === __urlLastModalSig) return;
+  __urlLastModalSig = sig;
+
+  if (modal === 'map') {
+    if (!code) return;
+    const r = await __merFetchMapRowByCode(code);
+    if (r?.ok && r.row) openSearchDetailsModal(r.row, { fromUrl: true, syncUrl: false });
+    return;
+  }
+
+  if (modal === 'completion') {
+    if (!code) return;
+    const row = await __fetchCompletionRowForModal({ code, user_id, time });
+    if (row) openCompletionsDetailsModal(row, { fromUrl: true, syncUrl: false });
+    return;
+  }
+
+  if (modal === 'map_edit_request') {
+    if (!code) return;
+    const r = await __merFetchMapRowByCode(code);
+    if (r?.ok && r.row) openMapEditRequestModal(r.row, { fromUrl: true, syncUrl: false });
+    return;
+  }
+}
+
+// popstate
 window.addEventListener('popstate', () => {
   const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
   const section = VALID_SECTIONS.has(s) ? s : 'map_search';
-  if (section !== currentSection) selectSection(section, { push: false });
+
+  const urlFilters = __urlReadFilters();
+  const nextSig = __stableFilterSignature(urlFilters);
+  const curSig = __stableFilterSignature(persistentFilters);
+
+  if (section !== currentSection) {
+    // Restore filters first
+    __suppressUrlSync = true;
+    try {
+      selectedFilters.length = 0;
+      filters = {};
+      activeFilters = {};
+      persistentFilters = { ...urlFilters };
+    } finally {
+      __suppressUrlSync = false;
+    }
+
+    selectSection(section, { push: false, replace: true });
+    return;
+  }
+
+  if (nextSig !== curSig) {
+    __suppressUrlSync = true;
+    try {
+      persistentFilters = { ...urlFilters };
+      activeFilters = { ...urlFilters };
+      filters = { ...urlFilters };
+      applyFilters(urlFilters, { syncUrl: false });
+    } finally {
+      __suppressUrlSync = false;
+    }
+  }
+
+  void __syncModalsFromUrl();
 });
+
 
 /* =========================
    GLOBAL INITS
@@ -753,6 +1138,9 @@ async function initializeApp() {
   }
 
   initializeIcons();
+
+  __urlBootstrapPersistentFilters();
+
   void loadDynamicOptions();
   initSearchTabs();
   hideOnClickOutside();
@@ -1362,7 +1750,7 @@ function mountMapViewSwitch() {
     if (Array.isArray(lastMapRows) && lastMapRows.length) {
       renderMapSearchResultsByMode(lastMapRows);
     } else {
-      applyFilters(activeFilters);
+      applyFilters(activeFilters, { syncUrl: false });
     }
   });
 }
@@ -1421,7 +1809,7 @@ function mountCompletionsViewSwitch() {
     if (Array.isArray(lastCompletionsRows) && lastCompletionsRows.length) {
       renderCompletionsResultsByMode({ results: lastCompletionsRows });
     } else {
-      applyFilters(activeFilters);
+      applyFilters(activeFilters, { syncUrl: false });
     }
   });
 }
@@ -1481,7 +1869,7 @@ function mountPersonalRecordsViewSwitch() {
     if (Array.isArray(lastPersonalRows) && lastPersonalRows.length) {
       renderPersonalRecordsResultsByMode({ results: lastPersonalRows });
     } else {
-      applyFilters(activeFilters);
+      applyFilters(activeFilters, { syncUrl: false });
     }
   });
 }
@@ -1716,11 +2104,11 @@ function initializeToolbarButtons() {
           );
           break;
         case 'apply_filters':
-          applyFilters(activeFilters);
+          applyFilters(activeFilters, { pushUrl: true });
           break;
         case 'clear_filters':
           clearFilters();
-          applyFilters();
+          applyFilters(activeFilters, { pushUrl: true });
           break;
       }
       document.querySelectorAll('.toolbar-button').forEach((b) => {
@@ -2183,7 +2571,8 @@ function clearFilters(silent = false) {
   updateOfficialNotice();
 }
 
-async function applyFilters(filters) {
+async function applyFilters(filters, opts = {}) {
+  const { pushUrl = false, syncUrl = true } = (opts || {});
   cachedPages = {};
   currentPage = 1;
   if (filters && typeof filters === 'object') {
@@ -2227,6 +2616,7 @@ async function applyFilters(filters) {
     const data = await response.json();
 
     persistentFilters = { ...activeFilters };
+    if (syncUrl) __urlSyncFiltersFromState({ push: !!pushUrl });
     cachedPages[currentSection] = { 1: data };
     totalPages = computeTotalPagesFromData(data, pageSize);
 
@@ -2241,6 +2631,7 @@ async function applyFilters(filters) {
     console.error("Erreur lors de l'application des filtres :", error);
   } finally {
     hideLoadingBar();
+    void __syncModalsFromUrl();
   }
 }
 
@@ -3440,7 +3831,7 @@ function ensureSearchDetailsModal() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
                   </svg>
-                  <span id="btnOpenMapEditRequestText">Change requests</span>
+                  <span id="btnOpenMapEditRequestText">${t('map_edit_request.title')}</span>
                 </button>
 
                 <!-- Close -->
@@ -3797,27 +4188,6 @@ function ensureMapEditRequestModal() {
           <!-- META (submitMapForm-like) -->
           <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in">
             <div class="mb-4 flex flex-wrap items-center gap-3">
-              <div id="merOfficialSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1" data-value="0">
-                <button type="button" data-switch="official" data-value="1"
-                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white/80 hover:bg-white/10">
-                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.official') || 'Official') : 'Official')}
-                </button>
-                <button type="button" data-switch="official" data-value="0"
-                  class="mer-switch-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
-                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.unofficial') || 'Unofficial') : 'Unofficial')}
-                </button>
-              </div>
-
-              <div id="merHiddenSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1" data-value="0">
-                <button type="button" data-switch="hidden" data-value="0"
-                  class="mer-switch-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
-                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.visible') || 'Visible') : 'Visible')}
-                </button>
-                <button type="button" data-switch="hidden" data-value="1"
-                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white/80 hover:bg-white/10">
-                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.hidden') || 'Hidden') : 'Hidden')}
-                </button>
-              </div>
 
               <div id="merArchivedSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1" data-value="0">
                 <button type="button" data-switch="archived" data-value="0"
@@ -4011,6 +4381,7 @@ function ensureMapEditRequestModal() {
     overlay.classList.add('hidden');
     overlay.classList.remove('flex');
     if (statusEl) statusEl.classList.add('hidden');
+    if (!__suppressUrlSync) __urlHandleModalUserClose('map_edit_request');
   };
 
   const show = () => {
@@ -4077,10 +4448,12 @@ function __merReadNumber(v) {
 async function __merFetchMapRowByCode(code) {
   try {
     const params = new URLSearchParams({
-      page_size: '1',
+      page_size: '10',
       page_number: '1',
       code: String(code ?? '').trim(),
     });
+    const uid = (typeof window !== 'undefined' && window.user_id != null) ? String(window.user_id).trim() : '';
+    if (uid) params.set('user_id', uid);
     const resp = await fetch(`${apiUrls.mapSearch}?${params.toString()}`, {
       headers: { Accept: 'application/json' },
     });
@@ -5032,6 +5405,9 @@ function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) 
 }
 
 function openMapEditRequestModal(map, opts = {}) {
+  const { fromUrl = false, syncUrl = true } = opts || {};
+  const code = map?.code || '';
+  if (syncUrl && !fromUrl && code) __urlOpenModal('map_edit_request', { code }, { push: true });
   ensureMapEditRequestModal();
 
   const overlay = document.getElementById('mapEditRequestOverlay');
@@ -5161,7 +5537,6 @@ function openMapEditRequestModal(map, opts = {}) {
   // -------------------------
   // Resolve map fields
   // -------------------------
-  const code = toStr(get('code', 'map_code', 'mapCode', 'id'));
   const mapName = toStr(get('map_name', 'name', 'mapName', 'translated_map_name'));
   const category = toStr(get('category', 'type', 'map_type'));
   const checkpoints = get('checkpoints', 'checkpoint_count', 'cp_count');
@@ -5573,22 +5948,26 @@ function openMapEditRequestModal(map, opts = {}) {
   }, 0);
 }
 
-async function openSearchDetailsModal(r) {
+async function openSearchDetailsModal(r, opts = {}) {
   if (!r) return;
+  const { fromUrl = false, syncUrl = true } = opts || {};
   ensureSearchDetailsModal();
+
+  const mapCode = r?.code || '';
+  if (syncUrl && !fromUrl && mapCode) __urlOpenModal('map', { code: mapCode }, { push: true });
 
   const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
   // Change requests
   const __merBtn = document.getElementById('btnOpenMapEditRequest');
   const __merBtnText = document.getElementById('btnOpenMapEditRequestText');
-  if (__merBtnText) __merBtnText.textContent = 'Change requests';
+  if (__merBtnText) __merBtnText.textContent = t('map_edit_request.title');
   if (__merBtn) {
     const __logged = typeof window !== 'undefined' && window.user_id != null && String(window.user_id).trim() !== '';
     __merBtn.disabled = !__logged;
     __merBtn.classList.toggle('opacity-50', !__logged);
     __merBtn.classList.toggle('cursor-not-allowed', !__logged);
     __merBtn.classList.toggle('cursor-pointer', __logged);
-    __merBtn.title = __logged ? 'Create a map edit request' : 'Log in to create a map edit request';
+    __merBtn.title = __logged ? t('map_edit_request.map_edit_btn') : t('map_edit_request.map_edit_btn_login');
     __merBtn.onclick = (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -5769,7 +6148,9 @@ async function openSearchDetailsModal(r) {
     setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
     document.removeEventListener('keydown', onEsc);
     overlay.removeEventListener('pointerdown', onOutside, true);
+    if (!__suppressUrlSync) __urlHandleModalUserClose('map');
   };
+  overlay.__sfClose = close;
   const onEsc = (e)=> { if (e.key==='Escape') close(); };
   const onOutside = (e)=> { const box = document.getElementById('detailsModalBox'); if (!box.contains(e.target)) close(); };
 
@@ -6508,7 +6889,7 @@ function ensureCompletionsDetailsModal(){
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
                   </svg>
-                  <span id="btnOpenMapEditRequestCompletionText">Change requests</span>
+                  <span id="btnOpenMapEditRequestCompletionText">${t('map_edit_request.title')}</span>
                 </button>
 
                 <button type="button" id="completionModalCloseBtn"
@@ -6699,22 +7080,28 @@ function ensureCompletionsDetailsModal(){
   }
 }
 
-function openCompletionsDetailsModal(r){
+function openCompletionsDetailsModal(r, opts = {}){
   if (!r) return;
+  const { fromUrl = false, syncUrl = true } = opts || {};
   ensureCompletionsDetailsModal();
+
+  const code = r?.code || r?.map_code || '';
+  if (syncUrl && !fromUrl && code) {
+    __urlOpenModal('completion', { code, user_id: r.user_id, time: r.time }, { push: true });
+  }
 
   const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
   // Change requests
   const __merBtn = document.getElementById('btnOpenMapEditRequestCompletion');
   const __merBtnText = document.getElementById('btnOpenMapEditRequestCompletionText');
-  if (__merBtnText) __merBtnText.textContent = 'Change requests';
+  if (__merBtnText) __merBtnText.textContent = t('map_edit_request.title');
   if (__merBtn) {
     const __logged = typeof window !== 'undefined' && window.user_id != null && String(window.user_id).trim() !== '';
     __merBtn.disabled = !__logged;
     __merBtn.classList.toggle('opacity-50', !__logged);
     __merBtn.classList.toggle('cursor-not-allowed', !__logged);
     __merBtn.classList.toggle('cursor-pointer', __logged);
-    __merBtn.title = __logged ? 'Create a map edit request' : 'Log in to create a map edit request';
+    __merBtn.title = __logged ? t('map_edit_request.map_edit_btn') : t('map_edit_request.map_edit_btn_login');
     __merBtn.onclick = (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -6744,7 +7131,6 @@ function openCompletionsDetailsModal(r){
   el('completionStatus').innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400"></span> ${esc(tSafe('completion','Completion'))}`;
 
   const mapName = r.map_name || r.map || r.map_code || r.code || '—';
-  const code    = r.map_code || r.code || '—';
   el('completionMapName').textContent = mapName;
   el('completionCode').textContent    = code;
 
@@ -6813,7 +7199,9 @@ function openCompletionsDetailsModal(r){
     setTimeout(()=>{ modalOverlay.classList.add('hidden'); modalOverlay.classList.remove('flex'); }, 180);
     document.removeEventListener('keydown', onEsc);
     modalOverlay.removeEventListener('pointerdown', onOutside, true);
+    if (!__suppressUrlSync) __urlHandleModalUserClose('completion');
   };
+  modalOverlay.__sfClose = close;
   const onEsc = e=>{ if (e.key==='Escape') close(); };
 
   const onOutside = (e)=>{
