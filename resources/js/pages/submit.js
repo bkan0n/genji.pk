@@ -3609,21 +3609,23 @@ function renderSubmitMapSection() {
             <div class="grid gap-3 sm:grid-cols-3">
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="{{ cdn_asset('assets/medals/gold.png') }}" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="${cdnAsset('assets/medals/gold.png')}" alt="Gold" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
                   <span class="text-sm text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
                 </span>
                 <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
+
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="{{ cdn_asset('assets/medals/silver.png') }}" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="${cdnAsset('assets/medals/silver.png')}" alt="Silver" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
                   <span class="text-sm text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
                 </span>
                 <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
+
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="{{ cdn_asset('assets/medals/bronze.png') }}" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="${cdnAsset('assets/medals/bronze.png')}" alt="Bronze" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
                   <span class="text-sm text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
                 </span>
                 <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
@@ -4636,12 +4638,23 @@ function normalizePlaytest(item) {
       ? item.guide_urls
       : [];
 
-  const banner =
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const bannerSrc =
     item.map_banner ||
     item.map_banner_url ||
     item.banner_url ||
     item.thumbnail ||
     cdnAsset('assets/img/card-banner.png');
+
+  const banner = cdnImage(bannerSrc, {
+    width: 480,
+    height: 270,
+    fit: 'cover',
+    quality: 80,
+    format: 'auto',
+    dpr: Math.min(2, window.devicePixelRatio || 1),
+  });
 
   const total_results = toInt(item.total_results ?? item.total ?? item._total) ?? 0;
 
@@ -5633,7 +5646,8 @@ function buildVotersGridHTML(preloaded, voterIds) {
     return `<div class="mt-2 text-xs text-zinc-400">"${t('playtest.no_votes')}"</div>`;
   }
   return `
-    <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3">
+    <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3
+            max-h-[35vh] overflow-y-auto overflow-x-hidden pr-1 overscroll-contain">
       ${voterIds.map((id) => {
         const key = String(id);
         const avatar = preloaded[key]?.avatar || cdnAsset('assets/profile/default-avatar.png');
@@ -6096,9 +6110,23 @@ function renderPlaytestCard(data, index) {
       ? mapNameToCnDisplaySmart(mapNameRawCard)
       : String(mapNameRawCard ?? '').trim() || '—';
 
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const avatarSrc = data.avatar || DEFAULT_AVATAR;
+  const bannerSrc = data.map_banner_url || cdnAsset('assets/img/card-banner.png');
+
   const safe = {
-    avatar: data.avatar || DEFAULT_AVATAR,
-    banner: data.map_banner_url || cdnAsset('assets/img/card-banner.png'),
+    avatar: avatarSrc,
+
+    banner: cdnImage(bannerSrc, {
+      width: 480,
+      height: 270,
+      fit: 'cover',
+      quality: 80,
+      format: 'auto',
+      dpr,
+    }),
+
     creators: data.creator_names || '—',
     code: data.code || '—',
     name: mapNameUiCard,
