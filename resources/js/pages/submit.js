@@ -1,3 +1,5 @@
+import { cdnAsset, cdnImage } from "../utils/cdn";
+
 /* =========================
    CONFIG & UTILS
    ========================= */
@@ -139,7 +141,7 @@ const DIFFICULTY_FINE_OPTIONS = [
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.SUBMIT_I18N || {};
 let addingSecondaryCreator = false;
-const DEFAULT_AVATAR = 'assets/profile/genjibot.jpg';
+const DEFAULT_AVATAR = cdnAsset('assets/profile/genjibot.jpg');
 const playtestDataArray = [];
 let currentPage = 1;
 let totalPages = 1;
@@ -3607,21 +3609,21 @@ function renderSubmitMapSection() {
             <div class="grid gap-3 sm:grid-cols-3">
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="assets/medals/gold.png" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="{{ cdn_asset('assets/medals/gold.png') }}" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
                   <span class="text-sm text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
                 </span>
                 <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="assets/medals/silver.png" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="{{ cdn_asset('assets/medals/silver.png') }}" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
                   <span class="text-sm text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
                 </span>
                 <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="assets/medals/bronze.png" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="{{ cdn_asset('assets/medals/bronze.png') }}" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
                   <span class="text-sm text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
                 </span>
                 <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
@@ -4639,7 +4641,7 @@ function normalizePlaytest(item) {
     item.map_banner_url ||
     item.banner_url ||
     item.thumbnail ||
-    'assets/img/card-banner.png';
+    cdnAsset('assets/img/card-banner.png');
 
   const total_results = toInt(item.total_results ?? item.total ?? item._total) ?? 0;
 
@@ -5530,7 +5532,7 @@ async function appendVoterToModal(userId) {
   row.setAttribute('data-voter-row', '1');
   row.setAttribute('data-user-id', String(userId));
   row.innerHTML = `
-    <img src="${avatar || 'assets/profile/default-avatar.png'}" alt="${name || '—'}"
+    <img src="${avatar || cdnAsset('assets/profile/default-avatar.png')}" alt="${name || '—'}"
          class="h-12 w-12 rounded-full object-cover ring-1 ring-white/10" loading="lazy">
     <span class="mt-1 text-sm text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
     <span class="text-[11px] text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
@@ -5617,7 +5619,7 @@ async function preloadVoters(voterIds = []) {
         fetchUserPrimaryName(id),
       ]);
       out[id] = {
-        avatar: avatarUrl || 'assets/profile/default-avatar.png',
+        avatar: avatarUrl || cdnAsset('assets/profile/default-avatar.png'),
         name: displayName || '—',
       };
     })
@@ -5634,7 +5636,7 @@ function buildVotersGridHTML(preloaded, voterIds) {
     <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3">
       ${voterIds.map((id) => {
         const key = String(id);
-        const avatar = preloaded[key]?.avatar || 'assets/profile/default-avatar.png';
+        const avatar = preloaded[key]?.avatar || cdnAsset('assets/profile/default-avatar.png');
         const name = preloaded[key]?.name || '—';
         return `
           <div class="voter-card flex flex-col items-center text-center" data-voter-row data-user-id="${esc(key)}">
@@ -6096,7 +6098,7 @@ function renderPlaytestCard(data, index) {
 
   const safe = {
     avatar: data.avatar || DEFAULT_AVATAR,
-    banner: data.map_banner_url || 'assets/img/card-banner.png',
+    banner: data.map_banner_url || cdnAsset('assets/img/card-banner.png'),
     creators: data.creator_names || '—',
     code: data.code || '—',
     name: mapNameUiCard,
@@ -6707,7 +6709,7 @@ const mapNameUi =
     <!-- HERO -->
     <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
       <div class="absolute inset-0">
-        <img src="${esc(data.map_banner_url || 'assets/img/card-banner.png')}" alt=""
+        <img src="${esc(data.map_banner_url || cdnAsset('assets/img/card-banner.png'))}" alt=""
              class="h-full w-full object-cover opacity-40">
         <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent"></div>
       </div>

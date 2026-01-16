@@ -1,5 +1,7 @@
-// ============================================================================
-// Helpers credits
+// ———————————————————————————————————————————————————————————————
+
+import { cdnAsset } from "../utils/cdn";
+
 // ============================================================================
 function showCreditsModal() {
   const modal = document.getElementById('creditsModal');
@@ -119,8 +121,8 @@ function createContributorItem({ name, avatar, role, note, discord, discordLabel
 // --------------------------------------------------------------------------
 function populateCredits() {
   const translators = [
-    { name: 'CoralMage',   avatar: 'assets/profile/coralmage.webp' },
-    { name: 'Poiliu', avatar: 'assets/profile/poiliu.webp' },
+    { name: 'CoralMage',   avatar: cdnAsset('assets/profile/coralmage.webp') },
+    { name: 'Poiliu', avatar: cdnAsset('assets/profile/poiliu.webp') },
   ];
 
   const trEl = document.getElementById('creditsTranslations');
@@ -133,7 +135,7 @@ function populateCredits() {
   const websiteCreators = [
     {
       name: 'Joe',
-      avatar: 'assets/profile/joe.jpg',
+      avatar: cdnAsset('assets/profile/joe.jpg'),
       role: backendRole,
       note: backendNote,
       discord: 'youngnebula',
@@ -141,7 +143,7 @@ function populateCredits() {
     },
     {
       name: 'Arrow',
-      avatar: 'assets/profile/arrow.png',
+      avatar: cdnAsset('assets/profile/arrow.png'),
       role: frontendRole,
       note: frontendNote,
       discord: '.aiapaec',

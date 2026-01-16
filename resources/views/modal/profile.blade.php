@@ -44,7 +44,7 @@
           $avatarBgColor = $colors[$hash % count($colors)];
         }
 
-        $avatarUrl = $avatarUrl ?? asset('assets/img/default-avatar.jpg');
+        $avatarUrl = $avatarUrl ?? cdn_asset('assets/img/default-avatar.jpg');
 
         $bannerHash = session('user_banner') ?? session('discord_banner');
         $bannerUrl = $userId && $bannerHash ? "https://cdn.discordapp.com/banners/{$userId}/{$bannerHash}." . (Str::startsWith($bannerHash, 'a_') ? 'gif' : 'png') : null;
@@ -55,14 +55,14 @@
         $badgeSrc = [];
         for ($i = 0; $i < 20; $i++) {
           if ($userFlags & (1 << $i)) {
-            $badgeSrc[] = asset("assets/discord/badges/{$i}.svg");
+            $badgeSrc[] = cdn_asset("assets/discord/badges/{$i}.svg");
           }
         }
         if ($userPremium > 0) {
-          $badgeSrc[] = asset('assets/discord/badges/nitro.svg');
+          $badgeSrc[] = cdn_asset('assets/discord/badges/nitro.svg');
         }
         if ($userPremium > 1) {
-          $badgeSrc[] = asset('assets/discord/badges/boost.svg');
+          $badgeSrc[] = cdn_asset('assets/discord/badges/boost.svg');
         }
       @endphp
 

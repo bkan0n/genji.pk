@@ -20,7 +20,7 @@
               <div class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-white/10">
               <img
                 id="headerAvatar"
-                src="{{ $avatar_url ?: asset('assets/img/default-avatar.jpg') }}"
+                src="{{ $avatar_url ?: cdn_asset('assets/img/default-avatar.jpg') }}"
                 alt="{{ __('rank_card.alts.user_avatar') }}"
                 class="h-full w-full object-cover"
               />

@@ -1,3 +1,5 @@
+import { cdnAsset } from "../utils/cdn";
+
 /* =========================
    CONFIG & UTILS
    ========================= */
@@ -4341,7 +4343,7 @@ function createCheckpointCard(idx, coords, data) {
           box.className = 'pinball-icons inline-flex items-center gap-2 ml-2';
           if (pb.givesUlt5) {
             const i = document.createElement('img');
-            i.src = 'assets/abilities/ultimate.webp';
+            i.src = cdnAsset('assets/abilities/ultimate.webp');
             i.alt = 'Ultimate';
             i.title = 'Donne Ultime';
             i.className = 'pinball-icon h-5 w-5';
@@ -4349,7 +4351,7 @@ function createCheckpointCard(idx, coords, data) {
           }
           if (pb.givesUlt6) {
             const i = document.createElement('img');
-            i.src = 'assets/abilities/dash.webp';
+            i.src = cdnAsset('assets/abilities/dash.webp');
             i.alt = 'Dash';
             i.title = 'Donne Dash';
             i.className = 'pinball-icon h-5 w-5';
@@ -4408,7 +4410,7 @@ function createCheckpointCard(idx, coords, data) {
     box.className = 'ability-icons inline-flex items-center gap-2';
     if (abilities.ultimate) {
       const imgU = document.createElement('img');
-      imgU.src = 'assets/abilities/ultimate.webp';
+      imgU.src = cdnAsset('assets/abilities/ultimate.webp');
       imgU.alt = 'Ultimate';
       imgU.title = 'Ultimate available';
       imgU.className = 'ability-icon h-6 w-6';
@@ -4416,7 +4418,7 @@ function createCheckpointCard(idx, coords, data) {
     }
     if (abilities.dash) {
       const imgD = document.createElement('img');
-      imgD.src = 'assets/abilities/dash.webp';
+      imgD.src = cdnAsset('assets/abilities/dash.webp');
       imgD.alt = 'Dash';
       imgD.title = 'Dash available';
       imgD.className = 'ability-icon h-6 w-6';
@@ -5867,8 +5869,8 @@ function openEditModal(idx) {
     SaveDouble: '△',
   };
   const ABILITY_ICONS = {
-    ultimate: 'assets/abilities/ultimate.webp',
-    dash: 'assets/abilities/dash.webp',
+    ultimate: cdnAsset('assets/abilities/ultimate.webp'),
+    dash: cdnAsset('assets/abilities/dash.webp'),
   };
 
   const pill = (txt, tone='emerald') => {

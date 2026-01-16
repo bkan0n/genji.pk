@@ -117,4 +117,12 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | CDN URL
+    |--------------------------------------------------------------------------
+    */
+
+    'cdn_url' => env('CDN_URL', 'https://cdn.genji.pk'),
 ];

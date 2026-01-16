@@ -1,3 +1,5 @@
+import { cdnAsset } from "../utils/cdn";
+
 const roleClasses = {
   Ninja: 'border border-green-900/30 bg-green-900/20 text-green-300',
   Jumper: 'border border-green-400/30 bg-green-400/20 text-green-200',
@@ -816,7 +818,11 @@ function openMapDetailsModal(mapCode) {
       const banner =
         map.map_banner ||
         map.banner_url ||
-        `assets/banners/${String(map.map_name || '').toLowerCase().replace(/[^a-z0-9]/g,'')}.png`;
+        cdnAsset(
+          `assets/map_banners/${String(map.map_name || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')}.png`
+        );
       const mechanics    = Array.isArray(map.mechanics) ? map.mechanics : [];
       const restrictions = Array.isArray(map.restrictions) ? map.restrictions : [];
       const desc =
@@ -848,9 +854,9 @@ function openMapDetailsModal(mapCode) {
       const bronze = map.medals?.bronze ?? null;
 
       const medalsHtml = `
-        ${gold   != null ? medalItemSafe('Gold',   '/assets/medals/gold.png',   __mm.secondsToText(gold))   : ''}
-        ${silver != null ? medalItemSafe('Silver', '/assets/medals/silver.png', __mm.secondsToText(silver)) : ''}
-        ${bronze != null ? medalItemSafe('Bronze', '/assets/medals/bronze.png', __mm.secondsToText(bronze)) : ''}
+        ${gold   != null ? medalItemSafe('Gold',   cdnAsset('assets/medals/gold.png'),   __mm.secondsToText(gold))   : ''}
+        ${silver != null ? medalItemSafe('Silver', cdnAsset('assets/medals/silver.png'), __mm.secondsToText(silver)) : ''}
+        ${bronze != null ? medalItemSafe('Bronze', cdnAsset('assets/medals/bronze.png'), __mm.secondsToText(bronze)) : ''}
       `;
 
       const firstGuide = Array.isArray(map.guides) && map.guides.length ? String(map.guides[0]) : '';
@@ -1187,7 +1193,7 @@ async function createNewsCard(item) {
   const roleScore = (base,plus)=> Math.max(0, ROLE_ORDER.indexOf(base))*10 + plus;
   const roleImgFor = (base)=>{
     const file = String(base||'').toLowerCase();
-    return `assets/ranks/${file}.webp`;
+    return cdnAsset(`assets/ranks/${file}.webp`);
   };
   const renderRoleChip = (raw, isPrimary=false)=>{
     const {base, plus, label} = parseRole(raw);
@@ -1211,9 +1217,9 @@ async function createNewsCard(item) {
   // ====== MEDALS
   const medalImgFor = (medalRaw)=>{
     const m = String(medalRaw||'').toLowerCase();
-    if (m.includes('gold'))   return 'assets/verifications/new/verification/wr_gold.avif';
-    if (m.includes('silver')) return 'assets/verifications/new/verification/wr_silver.avif';
-    if (m.includes('bronze')) return 'assets/verifications/new/verification/wr_bronze.avif';
+    if (m.includes('gold'))   return cdnAsset('assets/verifications/new/verification/wr_gold.avif');
+    if (m.includes('silver')) return cdnAsset('assets/verifications/new/verification/wr_silver.avif');
+    if (m.includes('bronze')) return cdnAsset('assets/verifications/new/verification/wr_bronze.avif');
     return '';
   };
 
@@ -1224,9 +1230,9 @@ async function createNewsCard(item) {
 
   const userId = p?.user?.user_id ?? p?.user_id ?? null;
   let nickname = p?.user?.nickname || p?.name || 'GenjiBot';
-  let profileImg = 'assets/profile/genjibot.png';
-  if (userId === 141372217677053952) profileImg = 'assets/profile/joe.jpg';
-  else if (userId === 273775694008549376) profileImg = 'assets/profile/fishofire.jpg';
+  let profileImg = cdnAsset('assets/profile/genjibot.png');
+  if (userId === 141372217677053952) profileImg = cdnAsset('assets/profile/joe.jpg');
+  else if (userId === 273775694008549376) profileImg = cdnAsset('assets/profile/fishofire.jpg');
 
   let theme = THEME[type] || THEME.unknown;
   theme.badge = theme.badge || OFFICIAL_BADGE_CLS;
@@ -1262,7 +1268,7 @@ async function createNewsCard(item) {
     html += `
       <header class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-3">
-          <img class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10" src="assets/profile/genjibot.png" alt="GenjiBot">
+          <img class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10" src="${cdnAsset('assets/profile/genjibot.png')}" alt="GenjiBot">
           <div class="leading-tight">
             <div class="flex items-center gap-2">
               <span class="font-semibold">GenjiBot</span>
@@ -1308,7 +1314,13 @@ async function createNewsCard(item) {
     const diffRaw = p?.difficulty || '';
     const diffKey = diffKeyOf(diffRaw);
     const diffTextCls = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKey]) || 'text-zinc-200';
-    const bannerSrc = p?.banner_url || `assets/banners/${(mapName||'').toLowerCase().replace(/\s+/g,'-')}.png`;
+    const bannerSrc =
+      p?.banner_url ||
+      `${cdnAsset('assets/map_banners/')}${(mapName || '')
+        .toLowerCase()
+        .replace(/:/g, '')
+        .replace(/\s+/g, '-')
+      }.png`;
     const creators = Array.isArray(p?.creators) ? p.creators.join(', ') : (p?.creators || '');
     const isOfficial = !!p?.official;
 
@@ -1340,7 +1352,7 @@ async function createNewsCard(item) {
           <div class="absolute right-3 top-3 rounded-lg bg-zinc-900/30 p-1 ring-1 ring-white/10 backdrop-blur-sm shadow-sm">
             <img
               class="h-8 w-8 rounded-md"
-              src="assets/ranks/${escAttr(formatImageName(p?.difficulty||''))}"
+              src="${cdnAsset('assets/ranks/')}${escAttr(formatImageName(p?.difficulty||''))}"
               alt="${escAttr(diffRaw || '—')}"
               loading="lazy"
             />
@@ -1681,7 +1693,7 @@ async function createNewsCard(item) {
               <span class="text-xs text-zinc-400 mr-1">${hasFn(t)? t('newsfeed.record_label'):'Record'}:</span>
               <span class="font-mono text-base">${recordTxt}</span>
             </div>
-            <img class="inline h-5 w-5 align-[-3px]" src="assets/verifications/new/verification/wr_full.avif" alt="VRF" />
+            <img class="inline h-5 w-5 align-[-3px]" src="${cdnAsset('assets/verifications/new/verification/wr_full.avif')}" alt="VRF" />
           </div>
         </div>
 
@@ -1721,7 +1733,7 @@ async function createNewsCard(item) {
     const reason   = (p?.reason || '').trim();
 
     const diffCls  = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKeyOf(diffRaw)]) || 'text-zinc-200';
-    const rankIcon = diffRaw ? `assets/ranks/${formatImageName(diffRaw)}` : '';
+    const rankIcon = diffRaw ? `${cdnAsset('assets/ranks/')}${formatImageName(diffRaw)}` : '';
 
     html += `
       <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
@@ -1955,9 +1967,9 @@ const __MEDAL_ORDER = ['gold','silver','bronze'];
 
 function medalVerifiedImgFor(kind) {
   switch (String(kind).toLowerCase()) {
-    case 'gold':   return 'assets/verifications/new/verification/verified_gold.avif';
-    case 'silver': return 'assets/verifications/new/verification/verified_silver.avif';
-    case 'bronze': return 'assets/verifications/new/verification/verified_bronze.avif';
+    case 'gold':   return cdnAsset('assets/verifications/new/verification/verified_gold.avif');
+    case 'silver': return cdnAsset('assets/verifications/new/verification/verified_silver.avif');
+    case 'bronze': return cdnAsset('assets/verifications/new/verification/verified_bronze.avif');
     default:       return '';
   }
 }
@@ -2828,7 +2840,7 @@ function resolveStatusIcon(item) {
         ? 'bronze'
         : '';
 
-  const base = 'assets/verifications/new/verification/';
+  const base = cdnAsset('assets/verifications/new/verification/');
 
   if (Number(item?.rank) === 1) {
     if (medal) return `${base}wr_${medal}.avif`;
@@ -2857,11 +2869,11 @@ function resolveStatusText(item) {
 async function fetchDiscordAvatar(user_id) {
   try {
     const response = await fetch(`/api/settings/user-avatar?user_id=${user_id}`);
-    if (!response.ok) return 'assets/profile/default-avatar.png';
+    if (!response.ok) return cdnAsset('assets/profile/default-avatar.png');
     const json = await response.json();
-    return json.avatar_url || 'assets/profile/default-avatar.png';
+    return json.avatar_url || cdnAsset('assets/profile/default-avatar.png');
   } catch (e) {
-    return 'assets/profile/default-avatar.png';
+    return cdnAsset('assets/profile/default-avatar.png');
   }
 }
 
@@ -3493,7 +3505,7 @@ function closeChangelogsModal() {
   function renderInto(ul, items, { dense = false } = {}) {
     ul.innerHTML = '';
     for (const m of items) {
-      const banner = m.map_banner || m.banner_url || `assets/banners/${(m.map_name || '').toLowerCase().replace(/[^a-z0-9]/g,'')}.png`;
+      const banner = m.map_banner || m.banner_url || `${cdnAsset('assets/map_banners/')}${(m.map_name || '').toLowerCase().replace(/[^a-z0-9]/g,'')}.png`;
       const code   = m.code || m.map_code || '';
       const name   = m.map_name || m.name || '';
       const upv    = Number(m.upvotes ?? m.votes ?? 0) || 0;

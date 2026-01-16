@@ -1,3 +1,5 @@
+import { cdnAsset, cdnImage } from "../utils/cdn";
+
 /* =========================
    CONFIG & UTILS
    ========================= */
@@ -988,18 +990,18 @@ function __urlHandleModalUserClose(expectedType) {
   const cur = url.searchParams.get(URL_MODAL_PARAM);
   if (cur !== expectedType) return;
 
-  const st = history.state || {};
-  if (st && st.__modalOpen === expectedType) {
-    history.back();
-    return;
-  }
-
   // remove modal params
   url.searchParams.delete(URL_MODAL_PARAM);
   url.searchParams.delete(URL_MODAL_CODE_PARAM);
   url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
   url.searchParams.delete(URL_MODAL_TIME_PARAM);
-  history.replaceState({ ...(history.state || {}) }, '', url);
+
+  const st = { ...(history.state || {}) };
+  if (st.__modalOpen) delete st.__modalOpen;
+
+  history.replaceState(st, '', url.pathname + '?' + url.searchParams.toString() + url.hash);
+
+  __urlLastModalSig = null;
 }
 
 async function __fetchCompletionRowForModal({ code, user_id, time } = {}) {
@@ -3479,9 +3481,11 @@ async function displayMapSearchResultsCards(rowsInput) {
     const diffCls = `mx-d-${diffSlug(diff)}`;
 
     const mapName     = r.original_map_name || r.map_name || 'N/A';
-    const mapNameKey  = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
-    const bannerPath  = r.map_banner || `assets/banners/${mapNameKey}.png`;
-    const bannerFB    = `assets/banners/${mapNameKey}.png`;
+    const mapNameKey = (r.original_map_name || r.map_name || 'default')
+      .toLowerCase()
+      .replace(/[()\s':]/g, '');
+    const bannerPath  = cdnImage(`assets/map_banners/${mapNameKey}.png`);
+    const bannerFB    = cdnImage(`assets/map_banners/${mapNameKey}.png`);
     const checkpoints = (r.checkpoints != null && r.checkpoints !== 'N/A') ? String(r.checkpoints) : '';
 
     const medalClass =
@@ -6014,8 +6018,10 @@ async function openSearchDetailsModal(r, opts = {}) {
   };
 
   // data
-  const mapNameKey = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g,'');
-  const cover = r.map_banner || `assets/banners/${mapNameKey}.png`;
+  const mapNameKey = (r.original_map_name || r.map_name || 'default')
+    .toLowerCase()
+    .replace(/[()\s':]/g, '');
+  const cover = cdnImage(`assets/map_banners/${mapNameKey}.png`);
   const names = (typeof pickCreatorNames === 'function' ? pickCreatorNames(r) : []).filter(Boolean);
   const typeText = Array.isArray(r.category) ? r.category.join(', ') : (r.category || 'Classic');
   const difficulty = r.difficulty || 'Easy';
@@ -6054,7 +6060,7 @@ async function openSearchDetailsModal(r, opts = {}) {
   const img = document.getElementById('mapModalCover');
   if (img) {
     img.src = cover;
-    const fb = `assets/banners/${mapNameKey}.png`;
+    const fb = cdnImage(`assets/map_banners/${mapNameKey}.png`);
     img.addEventListener('error', ()=>{ if (img.src !== fb) img.src = fb; }, { once:true });
   }
 
@@ -6241,9 +6247,9 @@ async function displayPersonalRecordsResultsCards(rowsInput) {
 
     const medalKeyNorm = String(medal).trim().toLowerCase();
     const medalIcon =
-      medalKeyNorm === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKeyNorm === 'silver' ? '/assets/medals/silver.png' :
-      medalKeyNorm === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKeyNorm === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKeyNorm === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKeyNorm === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     const videoBtn = r.video
       ? `<a href="${escAttr(r.video)}" target="_blank" rel="noopener" class="pr-btn" title="${escAttr(t('watch')||'Watch')}">${iconPlay}<span>${esc(t('watch')||'Watch')}</span></a>`
@@ -6432,9 +6438,9 @@ async function displayPersonalRecordsResults(results) {
     const medalText = r.medal || 'N/A';
     const medalKey = String(medalText).trim().toLowerCase();
     const medalIcon =
-      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKey === 'silver' ? '/assets/medals/silver.png' :
-      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKey === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKey === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     const mapCodeCell = r.code
       ? `
@@ -6546,9 +6552,9 @@ async function displayCompletionsResultsCards(rowsInput){
   const cardsHTML = filtered.map((r, idx) => {
     const code = r.map_code || r.code || 'N/A';
     const name = r.map_name || code;
-    const nameKey = (r.map_name || code || 'default').toLowerCase().replace(/[()\s']/g,'');
-    const banner = r.map_banner || `assets/banners/${nameKey}.png`;
-    const fbBanner = `assets/banners/${nameKey}.png`;
+    const nameKey = (r.map_name || code || 'default').toLowerCase().replace(/[()\s':]/g, '');
+    const banner = cdnImage(`assets/map_banners/${nameKey}.png`);
+    const fbBanner = cdnImage(`assets/map_banners/${nameKey}.png`);
 
     const uid = r.user_id ? String(r.user_id) : '';
     const nickname = r.nickname || r.name || 'N/A';
@@ -6580,9 +6586,9 @@ async function displayCompletionsResultsCards(rowsInput){
       medalKey === 'silver' ? 'c-medal c-medal--silver' :
       medalKey === 'bronze' ? 'c-medal c-medal--bronze' : 'c-medal c-medal--neutral';
     const medalIcon =
-      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKey === 'silver' ? '/assets/medals/silver.png' :
-      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKey === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKey === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     const diffTxt = r.difficulty || 'N/A';
     const diffColor = difficultyColors[normalizeDifficulty(diffTxt)] || '#e5e7eb';
@@ -6787,9 +6793,9 @@ async function displayCompletionsResults(results){
 
     const medalKey = String(r.medal || '').trim().toLowerCase();
     const medalIcon =
-      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKey === 'silver' ? '/assets/medals/silver.png' :
-      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKey === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKey === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     return `
       <div class="grid grid-completions bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
@@ -7115,11 +7121,11 @@ function openCompletionsDetailsModal(r, opts = {}){
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const arrToText = (v)=> Array.isArray(v) ? v.filter(Boolean).join(', ') : (v || '—');
 
-  const nameKey = (r.map_name || r.map_code || r.code || 'default').toLowerCase().replace(/[()\s']/g,'');
-  const cover = r.map_banner || `assets/banners/${nameKey}.png`;
+  const nameKey = (r.map_name || r.map_code || r.code || 'default').toLowerCase().replace(/[()\s':]/g, '');
+  const cover = cdnImage(`assets/map_banners/${nameKey}.png`);
   const imgCover = document.getElementById('completionModalCover');
   if (imgCover){
-    const fb = `assets/banners/${nameKey}.png`;
+    const fb = cdnImage(`assets/map_banners/${nameKey}.png`);
     imgCover.src = cover;
     imgCover.addEventListener('error', ()=>{ if (imgCover.src!==fb) imgCover.src = fb; }, { once:true });
   }

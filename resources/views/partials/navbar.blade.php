@@ -60,7 +60,7 @@
       >
         <img
           id="brandLogo"
-          src="{{ asset('assets/img/favicon-high.png') }}"
+          src="{{ cdn_asset('assets/img/favicon-high.png') }}"
           alt="Genji Parkour Logo"
           class="h-9 w-9 flex-none rounded-xl object-cover transition hover:opacity-90"
         />

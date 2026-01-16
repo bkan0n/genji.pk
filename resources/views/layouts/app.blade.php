@@ -11,15 +11,16 @@
       property="og:description"
       content="@yield('og:description', 'The Official Genji Parkour Website.')"
     />
+    <meta name="cdn-url" content="{{ rtrim(config('app.cdn_url') ?: '', '/') }}">
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ config('app.url') }}" />
-    <meta property="og:image" content="{{ asset('assets/img/favicon-high.png') }}" />
+    <meta property="og:image" content="{{ cdn_asset('assets/img/favicon-high.png') }}" />
     <meta name="theme-color" content="#22c55e" />
     <meta name="redirect-url" content="{{ config('app.redirect_url') }}" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="csp-nonce" content="{{ $nonce }}" />
 
-    <link rel="icon" type="image/png" href="{{ asset('assets/img/favicon.png') }}" />
+    <link rel="icon" type="image/png" href="{{ cdn_asset('assets/img/favicon.png') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

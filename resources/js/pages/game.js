@@ -1,3 +1,5 @@
+import { cdnAsset } from "../utils/cdn";
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
@@ -48,12 +50,12 @@ function applyTranslations() {
 }
 
 const sounds = {
-  gameRunning: new Audio('assets/sounds/gameRunning.ogg'),
-  gameFreemode: new Audio('assets/sounds/gameFreemode.ogg'),
-  genjiJump: new Audio('assets/sounds/genjiJump.ogg'),
-  genjiDead: new Audio('assets/sounds/genjiDead.ogg'),
-  genjiKilled: new Audio('assets/sounds/genjiKilled.ogg'),
-  gameDial: new Audio('assets/sounds/gameDial.ogg'),
+  gameRunning: new Audio(cdnAsset('assets/sounds/gameRunning.ogg')),
+  gameFreemode: new Audio(cdnAsset('assets/sounds/gameFreemode.ogg')),
+  genjiJump: new Audio(cdnAsset('assets/sounds/genjiJump.ogg')),
+  genjiDead: new Audio(cdnAsset('assets/sounds/genjiDead.ogg')),
+  genjiKilled: new Audio(cdnAsset('assets/sounds/genjiKilled.ogg')),
+  gameDial: new Audio(cdnAsset('assets/sounds/gameDial.ogg')),
 };
 
 sounds.gameRunning.loop = true;
@@ -126,13 +128,13 @@ const genjiYOffset = -30;
 const keyPressed = {};
 
 const backgroundImage = new Image();
-backgroundImage.src = 'assets/404/background.png';
+backgroundImage.src = cdnAsset('assets/404/background.png');
 
 const obstacleGroups = {
-  group1: ['assets/404/obstacles/obstacle1.png','assets/404/obstacles/obstacle2.png','assets/404/obstacles/obstacle3.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
-  group2: ['assets/404/obstacles/obstacle4.png','assets/404/obstacles/obstacle5.png','assets/404/obstacles/obstacle6.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
-  group3: ['assets/404/obstacles/obstacle7.png','assets/404/obstacles/obstacle8.png','assets/404/obstacles/obstacle9.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
-  group4: ['assets/404/obstacles/obstacle10.png','assets/404/obstacles/obstacle11.png'].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group1: [cdnAsset('assets/404/obstacles/obstacle1.png'), cdnAsset('assets/404/obstacles/obstacle2.png'), cdnAsset('assets/404/obstacles/obstacle3.png')].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group2: [cdnAsset('assets/404/obstacles/obstacle4.png'), cdnAsset('assets/404/obstacles/obstacle5.png'), cdnAsset('assets/404/obstacles/obstacle6.png')].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group3: [cdnAsset('assets/404/obstacles/obstacle7.png'), cdnAsset('assets/404/obstacles/obstacle8.png'), cdnAsset('assets/404/obstacles/obstacle9.png')].map((src) => { const img = new Image(); img.src = src; return img; }),
+  group4: [cdnAsset('assets/404/obstacles/obstacle10.png'), cdnAsset('assets/404/obstacles/obstacle11.png')].map((src) => { const img = new Image(); img.src = src; return img; }),
 };
 
 function drawBackground() {
@@ -631,61 +633,61 @@ function loadImage(src) {
 
 async function preloadImages() {
   try {
-    genjiNeutral = await loadImage('assets/404/characters/genji/genji-neutral.png');
-    genjiDead = await loadImage('assets/404/characters/genji/genji-dead.png');
-    startScreenImage.src = 'assets/404/start-screen.png';
+    genjiNeutral = await loadImage(cdnAsset('assets/404/characters/genji/genji-neutral.png'));
+    genjiDead = await loadImage(cdnAsset('assets/404/characters/genji/genji-dead.png'));
+    startScreenImage.src = cdnAsset('assets/404/start-screen.png');
     jumpFrames = await Promise.all([
-      loadImage('assets/404/characters/genji/genji-jump1-right.png'),
-      loadImage('assets/404/characters/genji/genji-jump2-right.png'),
-      loadImage('assets/404/characters/genji/genji-jump3-right.png'),
-      loadImage('assets/404/characters/genji/genji-jump4-right.png'),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-jump1-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-jump2-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-jump3-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-jump4-right.png')),
     ]);
     sprintFrames = await Promise.all([
-      loadImage('assets/404/characters/genji/genji-sprint1-right.png'),
-      loadImage('assets/404/characters/genji/genji-sprint2-right.png'),
-      loadImage('assets/404/characters/genji/genji-sprint3-right.png'),
-      loadImage('assets/404/characters/genji/genji-sprint4-right.png'),
-      loadImage('assets/404/characters/genji/genji-sprint5-right.png'),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint1-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint2-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint3-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint4-right.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint5-right.png')),
     ]);
     sprintFramesLeft = await Promise.all([
-      loadImage('assets/404/characters/genji/genji-sprint1-left.png'),
-      loadImage('assets/404/characters/genji/genji-sprint2-left.png'),
-      loadImage('assets/404/characters/genji/genji-sprint3-left.png'),
-      loadImage('assets/404/characters/genji/genji-sprint4-left.png'),
-      loadImage('assets/404/characters/genji/genji-sprint5-left.png'),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint1-left.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint2-left.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint3-left.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint4-left.png')),
+      loadImage(cdnAsset('assets/404/characters/genji/genji-sprint5-left.png')),
     ]);
     mercyFrames = await Promise.all([
-      loadImage('assets/404/characters/mercy/mercy-fly1.png'),
-      loadImage('assets/404/characters/mercy/mercy-fly2.png'),
-      loadImage('assets/404/characters/mercy/mercy-fly3.png'),
-      loadImage('assets/404/characters/mercy/mercy-fly4.png'),
-      loadImage('assets/404/characters/mercy/mercy-fly5.png'),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-fly1.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-fly2.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-fly3.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-fly4.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-fly5.png')),
     ]);
     mercyStandFrames = await Promise.all([
-      loadImage('assets/404/characters/mercy/mercy-stand1.png'),
-      loadImage('assets/404/characters/mercy/mercy-stand2.png'),
-      loadImage('assets/404/characters/mercy/mercy-stand3.png'),
-      loadImage('assets/404/characters/mercy/mercy-stand4.png'),
-      loadImage('assets/404/characters/mercy/mercy-stand5.png'),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-stand1.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-stand2.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-stand3.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-stand4.png')),
+      loadImage(cdnAsset('assets/404/characters/mercy/mercy-stand5.png')),
     ]);
     jackNeutralFrames = await Promise.all([
-      loadImage('assets/404/characters/jack/jack-neutral1.png'),
-      loadImage('assets/404/characters/jack/jack-neutral2.png'),
-      loadImage('assets/404/characters/jack/jack-neutral3.png'),
-      loadImage('assets/404/characters/jack/jack-neutral4.png'),
-      loadImage('assets/404/characters/jack/jack-neutral5.png'),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-neutral1.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-neutral2.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-neutral3.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-neutral4.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-neutral5.png')),
     ]);
     jackGuardFrames = await Promise.all([
-      loadImage('assets/404/characters/jack/jack-guard1.png'),
-      loadImage('assets/404/characters/jack/jack-guard2.png'),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-guard1.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-guard2.png')),
     ]);
     jackAttackFrames = await Promise.all([
-      loadImage('assets/404/characters/jack/jack-attack1.png'),
-      loadImage('assets/404/characters/jack/jack-attack2.png'),
-      loadImage('assets/404/characters/jack/jack-attack3.png'),
-      loadImage('assets/404/characters/jack/jack-attack4.png'),
-      loadImage('assets/404/characters/jack/jack-attack5.png'),
-      loadImage('assets/404/characters/jack/jack-attack6.png'),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-attack1.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-attack2.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-attack3.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-attack4.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-attack5.png')),
+      loadImage(cdnAsset('assets/404/characters/jack/jack-attack6.png')),
     ]);
   } catch (error) {
     console.error(error);

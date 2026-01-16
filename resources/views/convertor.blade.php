@@ -234,12 +234,12 @@
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step1') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step1_text') }}</p>
-              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/copy-settings.webp') }}" alt="Copy settings" />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ cdn_asset('assets/abilities/copy-settings.webp') }}" alt="Copy settings" />
             </div>
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step2') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step2_text') }}</p>
-              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/text-area.webp') }}" alt="Text area" />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ cdn_asset('assets/abilities/text-area.webp') }}" alt="Text area" />
             </div>
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step3') }}</strong>
@@ -248,17 +248,17 @@
                 <code class="rounded bg-white/10 px-1.5 py-0.5">{{ __('convertor.step3_convert') }}</code>,
                 <code class="rounded bg-white/10 px-1.5 py-0.5">{{ __('convertor.step3_translate') }}</code>
               </div>
-              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/pasta-language.webp') }}" alt="Language settings" />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ cdn_asset('assets/abilities/pasta-language.webp') }}" alt="Language settings" />
             </div>
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step4') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step4_text') }}</p>
-              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/edit-map-data.webp') }}" alt="Edit map data" />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ cdn_asset('assets/abilities/edit-map-data.webp') }}" alt="Edit map data" />
             </div>
             <div class="help-step space-y-2">
               <strong class="block">{{ __('convertor.step5') }}</strong>
               <p class="text-sm text-zinc-300">{{ __('convertor.step5_text') }}</p>
-              <img class="rounded-lg ring-1 ring-white/10" src="{{ asset('assets/abilities/pasta-settings.webp') }}" alt="Paste settings" />
+              <img class="rounded-lg ring-1 ring-white/10" src="{{ cdn_asset('assets/abilities/pasta-settings.webp') }}" alt="Paste settings" />
             </div>
           </div>
         </div>

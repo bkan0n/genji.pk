@@ -980,7 +980,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 #infoModal .modal-infos{max-height:80svh;overflow-y:auto;overscroll-behavior:contain}
 @supports not (height:1svh){#infoModal .modal-infos{max-height:80vh}}
 @media (min-width:640px){#infoModal .modal-infos{max-height:70svh}@supports not (height:1svh){#infoModal .modal-infos{max-height:70vh}}}
-.lb-placeholder{background-image:url('/assets/img/favicon-high.png');background-position:center;background-repeat:no-repeat;background-size:60%}
+.lb-placeholder{background-image:url('https://cdn.genji.pk/assets/img/favicon-high.png');background-position:center;background-repeat:no-repeat;background-size:60%}
 .lb-card-transition{transition:transform .55s cubic-bezier(.22,.68,0,1),opacity .5s ease}
 .lb-card-start{opacity:0;transform:translateY(14px) scale(.98)}
 .lb-card-in{opacity:1;transform:translateY(0) scale(1)}

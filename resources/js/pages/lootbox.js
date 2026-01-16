@@ -1,6 +1,8 @@
+import { cdnAsset } from "../utils/cdn";
+
 // ====== état/appli ======
 let isRunning = false;
-const openSound = new Audio('assets/sounds/open-box.ogg');
+const openSound = new Audio(cdnAsset('assets/sounds/lootbox-open.ogg'));
 let volume = 0.25;
 
 let crate = [];
@@ -20,10 +22,10 @@ const BASE_I18N = window.LOOTBOX_I18N || {};
 let translations = { ...BASE_I18N, map_name: {} };
 
 const sounds = {
-  common: new Audio('assets/sounds/common-sound.ogg'),
-  rare: new Audio('assets/sounds/rare-sound.ogg'),
-  epic: new Audio('assets/sounds/epic-sound.ogg'),
-  legendary: new Audio('assets/sounds/legendary-sound.ogg'),
+  common: new Audio(cdnAsset('assets/sounds/common-sound.ogg')),
+  rare: new Audio(cdnAsset('assets/sounds/rare-sound.ogg')),
+  epic: new Audio(cdnAsset('assets/sounds/epic-sound.ogg')),
+  legendary: new Audio(cdnAsset('assets/sounds/legendary-sound.ogg')),
 };
 Object.values(sounds).forEach((s) => (s.preload = 'auto'));
 

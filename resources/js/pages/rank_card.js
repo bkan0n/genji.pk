@@ -1,3 +1,5 @@
+import { cdnAsset, cdnImage } from "../utils/cdn";
+
 /* =========================
    Endpoints
    ========================= */
@@ -38,10 +40,69 @@ const endpoints = {
    CONFIG & UTILS
    ========================= */
 const MEDAL_ICON = {
-  gold: 'assets/medals/gold.png',
-  silver: 'assets/medals/silver.png',
-  bronze: 'assets/medals/bronze.png',
+  gold: cdnAsset('assets/medals/gold.png'),
+  silver: cdnAsset('assets/medals/silver.png'),
+  bronze: cdnAsset('assets/medals/bronze.png'),
 };
+
+
+/* =========================
+   CDN HELPERS
+   ========================= */
+function isAbsoluteUrl(url) {
+  return (
+    typeof url === 'string' &&
+    (/^(?:https?:)?\/\//i.test(url) || /^data:/i.test(url) || /^blob:/i.test(url))
+  );
+}
+
+function normalizeRankCardAssetPath(path) {
+  if (!path || typeof path !== 'string') return path;
+
+  let p = path.split('#')[0].split('?')[0];
+  if (p.startsWith('/')) p = p.slice(1);
+
+  if (!p.startsWith('assets/rank_card/')) return p;
+
+  const mAvatar = p.match(/^assets\/rank_card\/avatar\/([^/]+)\/([^/]+)\.webp$/i);
+  if (mAvatar) {
+    const skin = decodeURIComponent(mAvatar[1])
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_');
+    const pose = decodeURIComponent(mAvatar[2])
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_');
+    return `assets/rank_card/avatar/${skin}/${pose}.webp`;
+  }
+
+  const mBg = p.match(/^assets\/rank_card\/background\/([^/]+)\.webp$/i);
+  if (mBg) {
+    const name = decodeURIComponent(mBg[1])
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_');
+    return `assets/rank_card/background/${name}.webp`;
+  }
+
+  return p.replace(/\s+/g, '_');
+}
+
+function cdnifyAssetUrl(url) {
+  if (!url) return url;
+  if (isAbsoluteUrl(url)) return url;
+
+  const raw = String(url);
+  const isAssetsPath = raw.startsWith('/assets/') || raw.startsWith('assets/');
+  if (!isAssetsPath) return url;
+
+  const normalized = normalizeRankCardAssetPath(raw);
+  return cdnImage(normalized);
+}
 
 let selectedUserId = null;
 const CURRENT_LANG = document.documentElement.lang || 'en';
@@ -243,8 +304,11 @@ async function initRankCard() {
   const me = getCurrentUserId();
   if (me) {
     preloadAllRewards();
+    preloadBackgroundsOptions();
     preloadBackgroundPreview();
+    preloadAvatarOptions();
     preloadAvatarPreviews();
+    preloadBadgesOptions();
     preloadBadgesPreview();
     fetchUserMastery(me);
   }
@@ -522,7 +586,7 @@ async function loadRankCardContent() {
       <div class="rank-card-container relative">
         <div class="relative overflow-hidden rounded-2xl ring-1 ring-white/10">
           <div class="background absolute inset-0">
-            <img src="${data.background_url || 'default-background.webp'}" alt="${t('alts.background')}" class="h-full w-full object-cover">
+            <img src="${cdnifyAssetUrl(data.background_url) || 'default-background.webp'}" alt="${t('alts.background')}" class="h-full w-full object-cover">
           </div>
 
           <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
@@ -609,7 +673,7 @@ async function loadRankCardContent() {
                           .filter((b) => !!b.url)
                           .map(
                             (b) => `
-                              <img src="${b.url}" alt="${b.name || 'Badge'}"
+                              <img src="${cdnifyAssetUrl(b.url)}" alt="${b.name || 'Badge'}"
                                     class="badge h-8 w-8 sm:h-10 sm:w-10 flex-none rounded-full ring-1 ring-white/10 object-cover">
                             `
                           )
@@ -642,10 +706,10 @@ async function loadRankCardContent() {
                   <span class="player-rank-name text-sm text-white/90 leading-none">
                     ${data.rank_name}
                   </span>
-                  <img src="${data.rank_url || 'assets/default_rank.png'}" alt="${t('alts.player_rank_badge')}" class="player-rank-badge h-5 sm:h-6 object-contain">
+                  <img src="${cdnifyAssetUrl(data.rank_url) || cdnAsset('assets/default_rank.png')}" alt="${t('alts.player_rank_badge')}" class="player-rank-badge h-5 sm:h-6 object-contain">
                 </div>
 
-                <img src="${data.avatar_url || 'assets/default_avatar.png'}" alt="${t('alts.player_avatar')}"
+                <img src="${cdnifyAssetUrl(data.avatar_url) || cdnAsset('assets/default_avatar.png')}" alt="${t('alts.player_avatar')}"
                      class="player-avatar mt-4 w-full max-w-[240px] object-contain bg-transparent">
               </div>
             </div>
@@ -738,7 +802,7 @@ async function fetchUserRankCard(userId, opts = {}) {
       <div class="rank-card-container relative">
         <div class="relative overflow-hidden rounded-2xl ring-1 ring-white/10">
           <div class="background absolute inset-0">
-            <img src="${data.background_url || 'default-background.webp'}" alt="Background" class="h-full w-full object-cover">
+            <img src="${cdnifyAssetUrl(data.background_url) || 'default-background.webp'}" alt="Background" class="h-full w-full object-cover">
           </div>
 
           <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
@@ -815,7 +879,7 @@ async function fetchUserRankCard(userId, opts = {}) {
                           .filter((b) => !!b.url)
                           .map(
                             (b) => `
-                              <img src="${b.url}" alt="${b.name || t('alts.badge')}"
+                              <img src="${cdnifyAssetUrl(b.url)}" alt="${b.name || t('alts.badge')}"
                                     class="badge h-8 w-8 sm:h-10 sm:w-10 flex-none rounded-full ring-1 ring-white/10 object-cover">
                             `
                           )
@@ -845,10 +909,10 @@ async function fetchUserRankCard(userId, opts = {}) {
               <div class="player-info md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
                 <div class="inline-flex items-center gap-2">
                   <span class="player-rank-name text-sm text-white/90 leading-none">${data.rank_name}</span>
-                  <img src="${data.rank_url || 'assets/default_rank.png'}" alt="Player Rank Badge" class="player-rank-badge h-5 sm:h-6 object-contain">
+                  <img src="${cdnifyAssetUrl(data.rank_url) || cdnAsset('assets/default_rank.png')}" alt="Player Rank Badge" class="player-rank-badge h-5 sm:h-6 object-contain">
                 </div>
 
-                <img src="${data.avatar_url || 'assets/default_avatar.png'}" alt="Player Avatar"
+                <img src="${cdnifyAssetUrl(data.avatar_url) || cdnAsset('assets/default_avatar.png')}" alt="Player Avatar"
                      class="player-avatar mt-4 w-full max-w-[240px] object-contain bg-transparent">
               </div>
             </div>
@@ -1351,7 +1415,7 @@ function initBadgesChanges() {
           if (!activeCircle) return;
           activeCircle.innerHTML = '';
           const img = document.createElement('img');
-          img.src = badge.url;
+          img.src = cdnifyAssetUrl(badge.url);
           img.alt = badge.name || '';
           img.className = 'h-full w-full rounded-full object-cover';
           activeCircle.appendChild(img);
@@ -1370,7 +1434,7 @@ function initBadgesChanges() {
         const slot = slots[idx];
         if (slot && slot.url) {
           const img = document.createElement('img');
-          img.src = slot.url;
+          img.src = cdnifyAssetUrl(slot.url);
           img.alt = slot.name || '';
           img.className = 'h-full w-full rounded-full object-cover';
           circle.appendChild(img);
@@ -1430,7 +1494,7 @@ function initBadgesChanges() {
         });
         preloadedRewards.forEach((b) => {
           const img = new Image();
-          img.src = b.url;
+          img.src = cdnifyAssetUrl(b.url);
         });
       })
       .catch((e) => console.error('Error preloading rewards:', e));
@@ -1544,7 +1608,7 @@ function updateBadgesContainer(badges) {
     .filter((b) => b && b.url)
     .map(
       (b) => `
-      <img src="${b.url}" alt="${b.name || 'Badge'}"
+      <img src="${cdnifyAssetUrl(b.url)}" alt="${b.name || 'Badge'}"
            class="badge h-8 w-8 sm:h-10 sm:w-10 flex-none rounded-full ring-1 ring-white/10 object-cover">
     `
     )
@@ -1575,7 +1639,7 @@ function preloadBadgesPreview() {
         .filter((b) => b && b.url)
         .forEach((b) => {
           const img = new Image();
-          img.src = b.url;
+          img.src = cdnifyAssetUrl(b.url);
         });
     })
     .catch((e) => {
@@ -1602,7 +1666,7 @@ function preloadBadgesOptions() {
 
       preloadedBadges.forEach((b) => {
         const img = new Image();
-        img.src = b.url;
+        img.src = cdnifyAssetUrl(b.url);
       });
 
       return preloadedBadges;
@@ -1683,8 +1747,8 @@ function initBackgroundChanges() {
       row.textContent = `${bg.name} (${bg.rarity})`;
       row.addEventListener('click', (e) => {
         e.stopPropagation();
-        selectedBackground = { name: bg.name, url: bg.url };
-        preview.style.backgroundImage = `url(${bg.url})`;
+        selectedBackground = { name: bg.name, url: cdnifyAssetUrl(bg.url) };
+        preview.style.backgroundImage = `url(${cdnifyAssetUrl(bg.url)})`;
         preview.style.backgroundSize = 'cover';
         preview.style.backgroundPosition = 'center';
         preview.textContent = '';
@@ -1724,7 +1788,7 @@ function initBackgroundChanges() {
         closeModal(overlay);
         if (data.url) {
           updateBackgroundContainer(data);
-          preview.style.backgroundImage = `url(${data.url})`;
+          preview.style.backgroundImage = `url(${cdnifyAssetUrl(data.url)})`;
           preview.textContent = '';
           currentBackground = { url: data.url, name: data.name || 'placeholder' };
           toastSuccess(t('background_saved'));
@@ -1771,7 +1835,7 @@ function updateBackgroundContainer(res) {
     return;
   }
   const img = document.createElement('img');
-  img.src = res.url;
+  img.src = cdnifyAssetUrl(res.url);
   img.alt = res.name || t('alts.background');
   img.className = 'background-image h-full w-full object-cover';
   bg.appendChild(img);
@@ -1815,7 +1879,7 @@ function preloadBackgroundsOptions() {
       preloadedBackgrounds = data.filter((r) => r.type === 'background');
       preloadedBackgrounds.forEach((bg) => {
         const img = new Image();
-        img.src = bg.url;
+        img.src = cdnifyAssetUrl(bg.url);
       });
     })
     .catch((e) => console.error('Erreur preload bg options:', e));
@@ -1933,7 +1997,7 @@ function initAvatarChanges() {
       .then(([skinData, poseData]) => {
         if (skinData.url) {
           currentSkin = skinData.skin || currentSkin;
-          skinPreview.style.backgroundImage = `url(${skinData.url})`;
+          skinPreview.style.backgroundImage = `url(${cdnifyAssetUrl(skinData.url)})`;
           skinPreview.style.backgroundSize = 'contain';
           skinPreview.style.backgroundPosition = 'center';
           skinPreview.style.backgroundRepeat = 'no-repeat';
@@ -1945,7 +2009,7 @@ function initAvatarChanges() {
 
         if (poseData.url) {
           currentPose = poseData.pose || currentPose;
-          posePreview.style.backgroundImage = `url(${poseData.url})`;
+          posePreview.style.backgroundImage = `url(${cdnifyAssetUrl(poseData.url)})`;
           posePreview.style.backgroundSize = 'contain';
           posePreview.style.backgroundPosition = 'center';
           posePreview.style.backgroundRepeat = 'no-repeat';
@@ -1978,14 +2042,14 @@ function initAvatarChanges() {
         e.stopPropagation();
         if (type === 'skin') {
           selectedSkin = item.name;
-          skinPreview.style.backgroundImage = `url(${item.url})`;
+          skinPreview.style.backgroundImage = `url(${cdnifyAssetUrl(item.url)})`;
           skinPreview.style.backgroundSize = 'contain';
           skinPreview.style.backgroundPosition = 'center';
           skinPreview.style.backgroundRepeat = 'no-repeat';
           skinPreview.textContent = '';
         } else {
           selectedPose = item.name;
-          posePreview.style.backgroundImage = `url(${item.url})`;
+          posePreview.style.backgroundImage = `url(${cdnifyAssetUrl(item.url)})`;
           posePreview.style.backgroundSize = 'contain';
           posePreview.style.backgroundPosition = 'center';
           posePreview.style.backgroundRepeat = 'no-repeat';
@@ -2011,7 +2075,7 @@ function initAvatarChanges() {
     selectedSkin = 'Overwatch 1';
     selectedPose = 'heroic';
     const formattedSkin = selectedSkin.toLowerCase().replace(/ /g, '_');
-    const url = `assets/rank_card/avatar/${formattedSkin}/${selectedPose}.webp`;
+    const url = `${cdnImage('assets/rank_card/avatar/')}${formattedSkin}/${selectedPose}.webp`;
     skinPreview.style.backgroundImage = `url(${url})`;
     skinPreview.style.backgroundSize = 'contain';
     skinPreview.style.backgroundPosition = 'center';
@@ -2060,7 +2124,7 @@ function initAvatarChanges() {
         const pose = (selectedPose || currentPose).toLowerCase().replace(/ /g, '_');
         updatePlayerAvatar({
           name: selectedSkin || currentSkin,
-          url: `assets/rank_card/avatar/${skin}/${pose}.webp`,
+          url: `${cdnImage('assets/rank_card/avatar/')}${skin}/${pose}.webp`,
         });
         toastSuccess(t('avatar_saved'));
         closeModal(overlay);
@@ -2097,7 +2161,7 @@ function updatePlayerAvatar(data) {
     console.error('Avatar data invalide:', data);
     return;
   }
-  img.src = data.url;
+  img.src = cdnifyAssetUrl(data.url);
   img.alt = data.name || t('alts.player_avatar');
 }
 
@@ -2118,7 +2182,7 @@ function preloadAvatarPreviews() {
       })
       .then((data) => {
         if (data?.url) {
-          skinPreview.style.backgroundImage = `url(${data.url})`;
+          skinPreview.style.backgroundImage = `url(${cdnifyAssetUrl(data.url)})`;
           skinPreview.style.backgroundSize = 'contain';
           skinPreview.style.backgroundPosition = 'center';
           skinPreview.style.backgroundRepeat = 'no-repeat';
@@ -2138,7 +2202,7 @@ function preloadAvatarPreviews() {
       })
       .then((data) => {
         if (data?.url) {
-          posePreview.style.backgroundImage = `url(${data.url})`;
+          posePreview.style.backgroundImage = `url(${cdnifyAssetUrl(data.url)})`;
           posePreview.style.backgroundSize = 'contain';
           posePreview.style.backgroundPosition = 'center';
           posePreview.style.backgroundRepeat = 'no-repeat';
@@ -2165,11 +2229,11 @@ function preloadAvatarOptions() {
       availableAvatars.poses = data.filter((r) => r.type === 'pose');
       availableAvatars.skins.forEach((s) => {
         const img = new Image();
-        img.src = s.url;
+        img.src = cdnifyAssetUrl(s.url);
       });
       availableAvatars.poses.forEach((p) => {
         const img = new Image();
-        img.src = p.url;
+        img.src = cdnifyAssetUrl(p.url);
       });
     })
     .catch((e) => console.error('Préload options avatar:', e));
@@ -2204,7 +2268,7 @@ function preloadAllRewards() {
       ].forEach((it) => {
         if (it?.url) {
           const img = new Image();
-          img.src = it.url;
+          img.src = cdnifyAssetUrl(it.url);
         }
       });
 
