@@ -2536,6 +2536,18 @@ function clearFilters(silent = false) {
   filters = {};
   persistentFilters = {};
 
+  // Defaults filters
+  if (currentSection === 'map_search') {
+    const lang = String(CURRENT_LANG || '').toLowerCase();
+    const defOfficial = (lang === 'cn') ? 'False' : 'True';
+
+    activeFilters.official = defOfficial;
+    persistentFilters.official = defOfficial;
+
+    activeFilters.playtest_filter = 'All';
+    persistentFilters.playtest_filter = 'All';
+  }
+
   document.getElementById('filtersContainer').innerHTML = '';
 
   const paginationContainer = document.getElementById('paginationContainer');
@@ -2601,10 +2613,6 @@ async function applyFilters(filters, opts = {}) {
     if (!hasFilters && !hasActiveMapCode) {
       activeFilters.map_code = '008EX';
     }
-  }
-
-  if (currentSection === 'map_search' && !activeFilters.playtest_filter) {
-    activeFilters.playtest_filter = 'All';
   }
 
   renderSkeletonForSection(currentSection);
