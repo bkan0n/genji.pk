@@ -2536,12 +2536,6 @@ function clearFilters(silent = false) {
   filters = {};
   persistentFilters = {};
 
-  //CN
-  if (String(CURRENT_LANG).toLowerCase() === 'cn' && currentSection === 'map_search') {
-    persistentFilters.official = 'False';
-  }
-  updateToolbarButtonStates();
-
   document.getElementById('filtersContainer').innerHTML = '';
 
   const paginationContainer = document.getElementById('paginationContainer');
@@ -2562,9 +2556,25 @@ function clearFilters(silent = false) {
   document
     .querySelectorAll('.custom-option [data-check]')
     .forEach((svg) => (svg.style.opacity = '0'));
-  document
-    .querySelectorAll('.toolbar-button')
-    .forEach((btn) => btn.classList.remove('active-filter', 'border-brand-400/40'));
+
+  document.querySelectorAll('.toolbar-button').forEach((btn) =>
+    btn.classList.remove(
+      'active-filter',
+      'border-brand-400/40',
+      'ring-1',
+      'ring-emerald-500/30'
+    )
+  );
+
+  // Server
+  if (currentSection === 'map_search') {
+    const lang = String(CURRENT_LANG || '').toLowerCase();
+    const def = (lang === 'cn') ? 'False' : 'True';
+    persistentFilters.official = def;
+    activeFilters.official = def;
+  }
+
+  updateToolbarButtonStates();
 
   if (hasActiveFilters && !silent) {
     showWarningMessage(t('popup.filters_cleared'));
