@@ -4650,7 +4650,7 @@ function normalizePlaytest(item) {
   const banner = cdnImage(bannerSrc, {
     width: 480,
     height: 270,
-    fit: 'cover',
+    fit: 'contain',
     quality: 80,
     format: 'auto',
     dpr: Math.min(2, window.devicePixelRatio || 1),
@@ -6121,7 +6121,7 @@ function renderPlaytestCard(data, index) {
     banner: cdnImage(bannerSrc, {
       width: 480,
       height: 270,
-      fit: 'cover',
+      fit: 'contain',
       quality: 80,
       format: 'auto',
       dpr,
