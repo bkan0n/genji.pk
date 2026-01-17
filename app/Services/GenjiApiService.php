@@ -19,18 +19,25 @@ class GenjiApiService
     /**
      * Make an API request with the API key header.
      */
-    protected function request()
+    protected function request(array $headers = [], array $options = [])
     {
-        $http = Http::withHeaders([
-            'X-API-KEY' => $this->apiKey,
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ])->timeout(10);
-
-        // Disable SSL verification in local environment
-        if (app()->environment('local')) {
-            $http = $http->withoutVerifying();
+        $verify = config('services.genji_api.verify', true);
+        if (is_string($verify)) {
+            $verify = filter_var($verify, FILTER_VALIDATE_BOOLEAN);
         }
+
+        $baseHeaders = [
+            'X-API-KEY' => $this->apiKey,
+            'Accept' => 'application/json',
+        ];
+
+        if (!isset($headers['Content-Type'])) {
+            $baseHeaders['Content-Type'] = 'application/json';
+        }
+
+        $http = Http::withHeaders(array_merge($baseHeaders, $headers))
+            ->withOptions(array_merge(['verify' => (bool) $verify], $options))
+            ->timeout(10);
 
         return $http;
     }
@@ -294,20 +301,29 @@ class GenjiApiService
         }
     }
 
-    public function validateRememberToken(string $token): ?int
+    public function validateRememberToken(string $token): ?string
     {
         try {
             $response = $this->request()->post("{$this->apiRoot}/api/v3/auth/remember-token/validate", [
                 'token' => $token,
             ]);
 
-            if ($response->successful() && ($response->json()['valid'] ?? false)) {
-                return isset($response->json()['user_id'])
-                    ? (int) $response->json()['user_id']
-                    : null;
+            if (!$response->successful()) {
+                return null;
             }
 
-            return null;
+            $payload = json_decode($response->body(), true, 512, JSON_BIGINT_AS_STRING) ?? [];
+
+            if (($payload['valid'] ?? false) !== true) {
+                return null;
+            }
+
+            $userId = $payload['user_id'] ?? null;
+            if ($userId === null || $userId === '') {
+                return null;
+            }
+
+            return (string) $userId;
         } catch (\Exception $e) {
             Log::error('Validate remember token API exception', ['error' => $e->getMessage()]);
             return null;
@@ -321,13 +337,14 @@ class GenjiApiService
     /**
      * Read session data.
      */
-    public function sessionRead(string $sessionId): ?string
+    public function sessionReadMeta(string $sessionId): ?array
     {
         try {
             $response = $this->request()->get("{$this->apiRoot}/api/v3/auth/sessions/{$sessionId}");
 
             if ($response->successful()) {
-                return $response->json()['payload'];
+                $json = $response->json();
+                return is_array($json) ? $json : null;
             }
 
             return null;
@@ -337,15 +354,53 @@ class GenjiApiService
         }
     }
 
+    public function sessionIsMod(string $sessionId): ?bool
+    {
+        $meta = $this->sessionReadMeta($sessionId);
+        if (!$meta || !array_key_exists('is_mod', $meta)) {
+            return null;
+        }
+        return (bool) ($meta['is_mod'] ?? false);
+    }
+
+    public function sessionRead(string $sessionId): ?string
+    {
+        $meta = $this->sessionReadMeta($sessionId);
+        if (!$meta) {
+            return null;
+        }
+        return $meta['payload'] ?? null;
+    }
+
     /**
      * Write session data.
      */
-    public function sessionWrite(string $sessionId, string $payload, ?int $userId = null): bool
+    public function sessionWrite(string $sessionId, string $payload, int|string|null $userId = null, ?string $ip = null, ?string $userAgent = null): bool
     {
         try {
-            $response = $this->request()->put("{$this->apiRoot}/api/v3/auth/sessions/{$sessionId}", [
+            $headers = [];
+            if ($ip !== null && $ip !== '') {
+                $headers['X-Forwarded-For'] = $ip;
+                $headers['X-Real-IP'] = $ip;
+            }
+            if ($userAgent !== null && $userAgent !== '') {
+                $headers['User-Agent'] = $userAgent;
+            }
+
+            $uid = null;
+            if ($userId !== null && $userId !== '') {
+                $uidStr = trim((string) $userId);
+                if ($uidStr !== '' && preg_match('/^\d+$/', $uidStr)) {
+                    if (PHP_INT_SIZE >= 8) {
+                        $uid = (strlen($uidStr) > 15) ? $uidStr : (int) $uidStr;
+                    } else {
+                        $uid = $uidStr;
+                    }
+                }
+            }
+$response = $this->request($headers)->put("{$this->apiRoot}/api/v3/auth/sessions/{$sessionId}", [
                 'payload' => $payload,
-                'user_id' => $userId,
+                'user_id' => $uid,
             ]);
 
             return $response->successful();
@@ -362,10 +417,15 @@ class GenjiApiService
     {
         try {
             $response = $this->request()->delete("{$this->apiRoot}/api/v3/auth/sessions/{$sessionId}");
+
+            if ($response->status() === 404 || $response->status() === 410) {
+                return true;
+            }
+
             return $response->successful();
         } catch (\Exception $e) {
             Log::error('Session destroy API exception', ['error' => $e->getMessage()]);
-            return false;
+            return true;
         }
     }
 
@@ -388,6 +448,51 @@ class GenjiApiService
         } catch (\Exception $e) {
             Log::error('Session GC API exception', ['error' => $e->getMessage()]);
             return 0;
+        }
+    }
+
+    public function getUserSessions(int|string $userId): ?array
+    {
+        try {
+            $uid = is_numeric($userId) ? (int) $userId : null;
+            if ($uid === null) {
+                return null;
+            }
+
+            $response = $this->request()->get("{$this->apiRoot}/api/v3/auth/sessions/user/{$uid}");
+
+            if ($response->successful()) {
+                $json = $response->json();
+                return is_array($json) ? $json : null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Get user sessions API exception', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    public function destroyAllUserSessions(int|string $userId, ?string $exceptSessionId = null): bool
+    {
+        try {
+            $uid = is_numeric($userId) ? (int) $userId : null;
+            if ($uid === null) {
+                return false;
+            }
+
+            $query = [];
+            if ($exceptSessionId !== null && $exceptSessionId !== '') {
+                $query['except_session_id'] = $exceptSessionId;
+            }
+
+            $url = "{$this->apiRoot}/api/v3/auth/sessions/user/{$uid}";
+            $response = $this->request()->delete($url, $query);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('Destroy all user sessions API exception', ['error' => $e->getMessage()]);
+            return false;
         }
     }
 }

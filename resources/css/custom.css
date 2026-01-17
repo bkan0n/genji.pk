@@ -933,7 +933,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 /* Screenshot preview */
 #screenshotDrop img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;user-select:none;pointer-events:none}
 .pt-dot{display:inline-block;width:10px;height:10px;border-radius:9999px;margin-right:8px;flex:0 0 auto}
-#playtestModalInner .voter-card .avatar-wrap{position:relative}
+#playtestModalInner .voter-card .avatar-wrap{position:relative; margin-top: 7px;}
 #playtestModalInner .voter-card .copy-id-badge{position:absolute;right:-6px;top:-6px;display:grid;place-items:center;height:20px;width:20px;border-radius:9999px;border:1px solid rgba(255,255,255,.18);background:rgba(159,161,161,.18);backdrop-filter:blur(2px);cursor:pointer;transition:transform .15s ease,background-color .15s ease}
 #playtestModalInner .voter-card .copy-id-badge:hover{transform:scale(1.05);background:rgba(91,94,93,.28)}
 #playtestModalInner .voter-card .copy-id-badge svg{opacity:.9}
@@ -980,7 +980,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 #infoModal .modal-infos{max-height:80svh;overflow-y:auto;overscroll-behavior:contain}
 @supports not (height:1svh){#infoModal .modal-infos{max-height:80vh}}
 @media (min-width:640px){#infoModal .modal-infos{max-height:70svh}@supports not (height:1svh){#infoModal .modal-infos{max-height:70vh}}}
-.lb-placeholder{background-image:url('/assets/img/favicon-high.png');background-position:center;background-repeat:no-repeat;background-size:60%}
+.lb-placeholder{background-image:url('https://cdn.genji.pk/assets/img/favicon-high.png');background-position:center;background-repeat:no-repeat;background-size:60%}
 .lb-card-transition{transition:transform .55s cubic-bezier(.22,.68,0,1),opacity .5s ease}
 .lb-card-start{opacity:0;transform:translateY(14px) scale(.98)}
 .lb-card-in{opacity:1;transform:translateY(0) scale(1)}

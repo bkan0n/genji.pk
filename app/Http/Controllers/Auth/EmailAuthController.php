@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Validator;
 
 class EmailAuthController extends Controller
 {
+    private const DEVICE_SESSION_COOKIE = 'device_session_id';
     public function __construct(protected GenjiApiService $api) {}
 
     public function showRegister(Request $request)
     {
-        // ouvre le modal sans perdre les flash messages
         $request->session()->reflash();
         return redirect('/?openRegister=1');
     }
@@ -97,7 +97,22 @@ class EmailAuthController extends Controller
             'auth_type' => 'email',
         ]);
 
-        $request->session()->regenerate();
+        $previousDeviceSessionId = (string) $request->cookie(self::DEVICE_SESSION_COOKIE, '');
+        $preAuthSessionId = (string) $request->session()->getId();
+
+        $request->session()->regenerate(true);
+
+        $newSessionId = (string) $request->session()->getId();
+
+        if ($previousDeviceSessionId !== '' && $previousDeviceSessionId !== $newSessionId) {
+            $this->api->sessionDestroy($previousDeviceSessionId);
+        }
+
+        if ($preAuthSessionId !== '' && $preAuthSessionId !== $newSessionId && $preAuthSessionId !== $previousDeviceSessionId) {
+            $this->api->sessionDestroy($preAuthSessionId);
+        }
+
+        $this->queueDeviceSessionCookie($request, $newSessionId);
 
         if ($request->boolean('remember')) {
             $rememberToken = $this->api->createRememberToken($result['user']['id']);
@@ -111,7 +126,7 @@ class EmailAuthController extends Controller
                 ->with('warning', __('auth.messages.email_not_verified'));
         }
 
-        return redirect()->intended('/');
+        return redirect('/');
     }
 
     private function queueRememberCookie(Request $request, string $token): void
@@ -133,6 +148,27 @@ class EmailAuthController extends Controller
             'Lax'
         ));
     }
+
+    private function queueDeviceSessionCookie(Request $request, string $sessionId): void
+    {
+        $minutes = 60 * 24 * 90;
+        $domain = config('session.domain');
+        $secureCfg = config('session.secure');
+        $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
+
+        cookie()->queue(cookie(
+            self::DEVICE_SESSION_COOKIE,
+            $sessionId,
+            $minutes,
+            '/',
+            $domain,
+            $secure,
+            true,
+            false,
+            'Lax'
+        ));
+    }
+
 
     public function verifyEmail(Request $request)
     {
@@ -240,8 +276,13 @@ class EmailAuthController extends Controller
 
     public function logout(Request $request)
     {
+        $this->api->sessionDestroy((string) $request->session()->getId());
+
         $request->session()->invalidate();
+
         cookie()->queue(cookie()->forget('remember_token'));
+        cookie()->queue(cookie()->forget(self::DEVICE_SESSION_COOKIE));
+
         $request->session()->regenerateToken();
 
         return redirect('/');

@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      @php($canModerate = session('can_moderate') === true)
+      @php($canModerate = session('is_mod') === true)
       @if (! $canModerate)
         <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 text-red-200">
           You do not have permission to access this page.

@@ -1,9 +1,109 @@
+import { cdnAsset, cdnImage } from "../utils/cdn";
+
 /* =========================
    CONFIG & UTILS
    ========================= */
 const sectionIds = ['submit_record', 'playtest', 'submit_map'];
 const IS_GUEST = typeof user_id === 'undefined' || user_id == null || String(user_id).trim() === '';
 
+/* =========================
+   MAP NAME TRANSLATIONS
+   ========================= */
+const MAPS_TRANSLATIONS_URL = '/translations/maps.json';
+
+let __mapsJsonPromise = null;
+let __mapsIndexPromise = null;
+let __mapsIndex = null;
+
+function __normalizeMapNameKey(input) {
+  const s = String(input ?? '').trim();
+  if (!s) return '';
+  // Strip accents
+  let out = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  // Replace parentheses
+  out = out.replace(/[()]/g, ' ');
+  // Remove quotes and punctuation
+  out = out.replace(/[’'"]/g, '');
+  // Collapse separators to spaces
+  out = out.replace(/[^a-zA-Z0-9\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7a3]+/g, ' ');
+  out = out.replace(/\s+/g, ' ').trim().toLowerCase();
+  return out;
+}
+
+async function __loadMapsJson() {
+  if (!__mapsJsonPromise) {
+    __mapsJsonPromise = fetch(MAPS_TRANSLATIONS_URL, { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}));
+  }
+  return __mapsJsonPromise;
+}
+
+async function ensureMapsIndex() {
+  if (__mapsIndex) return __mapsIndex;
+  if (!__mapsIndexPromise) {
+    __mapsIndexPromise = (async () => {
+      const data = await __loadMapsJson();
+      const list = [];
+      const enToZh = new Map();
+      const enNormToZh = new Map();
+      const zhToEn = new Map();
+      const zhNormToEn = new Map();
+
+      if (data && typeof data === 'object') {
+        Object.entries(data).forEach(([key, v]) => {
+          if (!v || typeof v !== 'object') return;
+          const en = String(v['en-US'] || '').trim();
+          const zh = String(v['zh-CN'] || '').trim();
+          if (!en) return;
+
+          const zhDisplay = zh || en;
+          list.push({ key, en, zh: zhDisplay });
+
+          enToZh.set(en, zhDisplay);
+          const enNorm = __normalizeMapNameKey(en);
+          if (enNorm) enNormToZh.set(enNorm, zhDisplay);
+
+          if (zh) {
+            zhToEn.set(zh, en);
+            const zhNorm = __normalizeMapNameKey(zh);
+            if (zhNorm) zhNormToEn.set(zhNorm, en);
+          }
+        });
+      }
+
+      __mapsIndex = { list, enToZh, enNormToZh, zhToEn, zhNormToEn };
+      return __mapsIndex;
+    })();
+  }
+  return __mapsIndexPromise;
+}
+
+function mapNameToCnDisplaySmart(enName) {
+  const raw = String(enName ?? '').trim();
+  if (!raw) return raw;
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'cn') return raw;
+  const idx = __mapsIndex;
+  if (!idx) return raw;
+  return idx.enToZh.get(raw) || idx.enNormToZh.get(__normalizeMapNameKey(raw)) || raw;
+}
+
+function mapNameCnToEnSmart(value) {
+  const v = String(value ?? '').trim();
+  if (!v) return v;
+  const idx = __mapsIndex;
+  if (!idx) return v;
+  return idx.zhToEn.get(v) || idx.zhNormToEn.get(__normalizeMapNameKey(v)) || v;
+}
+
+// Preload
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      ensureMapsIndex().catch(() => {});
+    }
+  });
+}
 const CATEGORY_OPTIONS = [
   { text: () => t('filters.classic'), value: 'Classic', raw: 'Classic' },
   {
@@ -41,7 +141,7 @@ const DIFFICULTY_FINE_OPTIONS = [
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.SUBMIT_I18N || {};
 let addingSecondaryCreator = false;
-const DEFAULT_AVATAR = 'assets/profile/genjibot.jpg';
+const DEFAULT_AVATAR = cdnAsset('assets/profile/genjibot.jpg');
 const playtestDataArray = [];
 let currentPage = 1;
 let totalPages = 1;
@@ -159,6 +259,54 @@ function t(path, params = {}) {
     Object.prototype.hasOwnProperty.call(params, k) ? String(params[k]) : `{${k}}`
   );
 }
+
+
+/* =========================
+   ENUM TRANSLATIONS
+   ========================= */
+function __normalizeEnumKey(input) {
+  return String(input ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[()]/g, ' ')
+    .replace(/[’'"]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function __translateIfExists(prefix, raw) {
+  const r = String(raw ?? '').trim();
+  if (!r) return r;
+  const key = __normalizeEnumKey(r);
+  if (!key) return r;
+
+  const out = t(`${prefix}.${key}`);
+  // t() returns the path when missing
+  return typeof out === 'string' && out !== `${prefix}.${key}` ? out : r;
+}
+
+function translateMapTypeUi(raw) {
+  return __translateIfExists('map_type', raw);
+}
+
+function translateMechanicUi(raw) {
+  return __translateIfExists('mechanics', raw);
+}
+
+function translateRestrictionUi(raw) {
+  return __translateIfExists('restrictions', raw);
+}
+
+function __coerceTagValue(v) {
+  if (v == null) return '';
+  if (typeof v === 'string' || typeof v === 'number') return String(v);
+  if (typeof v === 'object') {
+    return String(v.key || v.id || v.name || v.value || v.label || '');
+  }
+  return String(v);
+}
+
 
 /* =========================
    TAB SYSTEM
@@ -3461,21 +3609,23 @@ function renderSubmitMapSection() {
             <div class="grid gap-3 sm:grid-cols-3">
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="assets/medals/gold.png" alt="Gold" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="${cdnAsset('assets/medals/gold.png')}" alt="Gold" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
                   <span class="text-sm text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
                 </span>
                 <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
+
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="assets/medals/silver.png" alt="Silver" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="${cdnAsset('assets/medals/silver.png')}" alt="Silver" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
                   <span class="text-sm text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
                 </span>
                 <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
+
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
-                  <img src="assets/medals/bronze.png" alt="Bronze" class="h-5 w-5 select-none pointer-events-none">
+                  <img src="${cdnAsset('assets/medals/bronze.png')}" alt="Bronze" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
                   <span class="text-sm text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
                 </span>
                 <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
@@ -3740,6 +3890,12 @@ async function openPlaytestModalForCode(code) {
   const data = await fetchFreshMapByCode(c);
   if (!data) { showErrorMessage(t('errors.map_not_found') || 'Map not found'); return; }
 
+
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+    try { await ensureMapsIndex(); } catch {}
+  }
+
+
   const modal = document.getElementById('playtestModal');
   const inner = document.getElementById('playtestModalInner');
   if (!modal || !inner) return;
@@ -3749,9 +3905,13 @@ async function openPlaytestModalForCode(code) {
   } else {
     inner.innerHTML = `
       <div class="p-4 space-y-2">
-        <div class="text-lg font-semibold text-zinc-100">${data.name || data.code || 'Map'}</div>
-        <div class="text-sm text-zinc-300">Code: ${data.code || '—'}</div>
-        <div class="text-sm text-zinc-400">Modal renderer missing.</div>
+        <div class="text-lg font-semibold text-zinc-100">${
+          (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
+            ? mapNameToCnDisplaySmart(data.name || data.code || 'Map')
+            : (data.name || data.code || 'Map')
+        }</div>
+        <div class="text-sm text-zinc-300">${(typeof t === 'function' ? (t('table.map_code') || t('map.meta.code')) : 'Code')}: ${data.code || '—'}</div>
+        <div class="text-sm text-zinc-400">${(typeof t === 'function' ? (t('errors.playtests_load_failed') || 'Modal renderer missing.') : 'Modal renderer missing.')}</div>
       </div>
     `;
   }
@@ -4478,12 +4638,23 @@ function normalizePlaytest(item) {
       ? item.guide_urls
       : [];
 
-  const banner =
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const bannerSrc =
     item.map_banner ||
     item.map_banner_url ||
     item.banner_url ||
     item.thumbnail ||
-    'assets/img/card-banner.png';
+    cdnAsset('assets/img/card-banner.png');
+
+  const banner = cdnImage(bannerSrc, {
+    width: 480,
+    height: 270,
+    fit: 'contain',
+    quality: 80,
+    format: 'auto',
+    dpr: Math.min(2, window.devicePixelRatio || 1),
+  });
 
   const total_results = toInt(item.total_results ?? item.total ?? item._total) ?? 0;
 
@@ -5374,7 +5545,7 @@ async function appendVoterToModal(userId) {
   row.setAttribute('data-voter-row', '1');
   row.setAttribute('data-user-id', String(userId));
   row.innerHTML = `
-    <img src="${avatar || 'assets/profile/default-avatar.png'}" alt="${name || '—'}"
+    <img src="${avatar || cdnAsset('assets/profile/default-avatar.png')}" alt="${name || '—'}"
          class="h-12 w-12 rounded-full object-cover ring-1 ring-white/10" loading="lazy">
     <span class="mt-1 text-sm text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
     <span class="text-[11px] text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
@@ -5461,7 +5632,7 @@ async function preloadVoters(voterIds = []) {
         fetchUserPrimaryName(id),
       ]);
       out[id] = {
-        avatar: avatarUrl || 'assets/profile/default-avatar.png',
+        avatar: avatarUrl || cdnAsset('assets/profile/default-avatar.png'),
         name: displayName || '—',
       };
     })
@@ -5475,10 +5646,11 @@ function buildVotersGridHTML(preloaded, voterIds) {
     return `<div class="mt-2 text-xs text-zinc-400">"${t('playtest.no_votes')}"</div>`;
   }
   return `
-    <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3">
+    <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3
+            max-h-[35vh] overflow-y-auto overflow-x-hidden pr-1 overscroll-contain">
       ${voterIds.map((id) => {
         const key = String(id);
-        const avatar = preloaded[key]?.avatar || 'assets/profile/default-avatar.png';
+        const avatar = preloaded[key]?.avatar || cdnAsset('assets/profile/default-avatar.png');
         const name = preloaded[key]?.name || '—';
         return `
           <div class="voter-card flex flex-col items-center text-center" data-voter-row data-user-id="${esc(key)}">
@@ -5931,12 +6103,33 @@ function renderPlaytestCard(data, index) {
     Hell: 1,
   };
 
+  const mapNameRawCard =
+    data?.map_name || data?.translated_map_name || data?.name || data?.map?.name || '—';
+  const mapNameUiCard =
+    (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
+      ? mapNameToCnDisplaySmart(mapNameRawCard)
+      : String(mapNameRawCard ?? '').trim() || '—';
+
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const avatarSrc = data.avatar || DEFAULT_AVATAR;
+  const bannerSrc = data.map_banner_url || cdnAsset('assets/img/card-banner.png');
+
   const safe = {
-    avatar: data.avatar || DEFAULT_AVATAR,
-    banner: data.map_banner_url || 'assets/img/card-banner.png',
+    avatar: avatarSrc,
+
+    banner: cdnImage(bannerSrc, {
+      width: 480,
+      height: 270,
+      fit: 'contain',
+      quality: 80,
+      format: 'auto',
+      dpr,
+    }),
+
     creators: data.creator_names || '—',
     code: data.code || '—',
-    name: data.name || '—',
+    name: mapNameUiCard,
   };
 
   const votes = getVoteCount(data);
@@ -6413,6 +6606,13 @@ function renderPlaytestModal(data) {
       (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]
     );
 
+
+const mapNameRaw = data?.map_name || data?.translated_map_name || data?.name || '—';
+const mapNameUi =
+  (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
+    ? mapNameToCnDisplaySmart(mapNameRaw)
+    : mapNameRaw;
+
   const voteCount = Number.isFinite(data.playtest_vote_count) ? data.playtest_vote_count : 0;
   const voteAvg = (() => {
     const raw = data.playtest_vote_average ?? data.playtest?.vote_average ?? data.vote_average;
@@ -6537,7 +6737,7 @@ function renderPlaytestModal(data) {
     <!-- HERO -->
     <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
       <div class="absolute inset-0">
-        <img src="${esc(data.map_banner_url || 'assets/img/card-banner.png')}" alt=""
+        <img src="${esc(data.map_banner_url || cdnAsset('assets/img/card-banner.png'))}" alt=""
              class="h-full w-full object-cover opacity-40">
         <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent"></div>
       </div>
@@ -6567,7 +6767,7 @@ function renderPlaytestModal(data) {
             ${codeBadge}
             ${guideBadges}
             ${data.category ? `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">
-              ${esc(data.category)}
+              ${esc(translateMapTypeUi(data.category))}
             </span>` : ''}
           </div>
         </div>
@@ -6593,7 +6793,7 @@ function renderPlaytestModal(data) {
         <div class="grid grid-cols-1 gap-2">
           <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
             <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.map_name')}</span>
-            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-100 text-right">${esc(data.name || '—')}</span>
+            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-100 text-right">${esc(mapNameUi || '—')}</span>
           </div>
           <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
             <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.checkpoints')}</span>
@@ -6609,10 +6809,10 @@ function renderPlaytestModal(data) {
                 ? data.mechanics
                     .map(
                       (m) =>
-                        `<span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">${esc(m)}</span>`
+                        `<span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">${esc(translateMechanicUi(__coerceTagValue(m)))}</span>`
                     )
                     .join('')
-                : `<i class="text-sm text-zinc-400">None</i>`
+                : `<i class="text-sm text-zinc-400">${(typeof t === "function" ? (t("common.none") || t("filters.none") || "—") : "—")}</i>`
             }
           </div>
         </div>
@@ -6625,10 +6825,10 @@ function renderPlaytestModal(data) {
                 ? data.restrictions
                     .map(
                       (r) =>
-                        `<span class="inline-flex items-center rounded-full border border-rose-400/20 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-200">${esc(r)}</span>`
+                        `<span class="inline-flex items-center rounded-full border border-rose-400/20 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-200">${esc(translateRestrictionUi(__coerceTagValue(r)))}</span>`
                     )
                     .join('')
-                : `<i class="text-sm text-zinc-400">None</i>`
+                : `<i class="text-sm text-zinc-400">${(typeof t === "function" ? (t("common.none") || t("filters.none") || "—") : "—")}</i>`
             }
           </div>
         </div>
@@ -6746,6 +6946,9 @@ async function initializePlaytestCards(userId) {
   const backdrop = modal?.querySelector('.playtest-modal-backdrop');
 
   try {
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      try { await ensureMapsIndex(); } catch {}
+    }
     await applyFiltersWithAnimation(1);
 
     const closeHandler = () => hidePlaytestModal();
@@ -6761,6 +6964,9 @@ async function initializePlaytestCards(userId) {
         const data = fresh || (fallback ? normalizePlaytest(fallback) : null);
         if (!data) return;
 
+        if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+          try { await ensureMapsIndex(); } catch {}
+        }
         modalInner.innerHTML = renderPlaytestModal(data);
         animatePtOpen({ animate: false });
         try { setupPlaytestCtaDown(); } catch {}
@@ -7464,6 +7670,18 @@ async function applyFilters(page = 1) {
     }
   });
 
+  // CN
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && extraFilters.map_name) {
+    try {
+      await ensureMapsIndex();
+      const raw = String(extraFilters.map_name || '').trim();
+      const cand = /[\u4e00-\u9fff]/.test(raw) ? mapNameCnToEnSmart(raw) : raw;
+      const resolved = await resolveEnglishMapNameExact(cand);
+      extraFilters.map_name = resolved || cand;
+    } catch {}
+  }
+
+
   const hasActiveFilters = Object.keys(extraFilters).length > 0;
 
   const qs = buildPlaytestParams(extraFilters, currentPage);
@@ -7628,7 +7846,11 @@ function updateToolbarButtonStates() {
               else if (val.length > 2) text = val.slice(0, 2).join(', ') + '…';
             }
           } else if (typeof val === 'string') {
-            text = val.length > 18 ? val.slice(0, 18) + '…' : val;
+            let display = val;
+            if (key === 'map_name' && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+              display = mapNameToCnDisplaySmart(val);
+            }
+            text = display.length > 18 ? display.slice(0, 18) + '…' : display;
           }
 
           badge.textContent = text;
@@ -7689,23 +7911,50 @@ function showSuggestions(event, _unused, containerId, propertyName) {
     return '';
   };
 
-  toolbarDebounce = setTimeout(() => {
+  toolbarDebounce = setTimeout(async () => {
     const kind = propToKind(propertyName);
     const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
 
-    // Special handling for Chinese map names in playtest toolbar
+    // CN
     if (CURRENT_LANG === 'cn' && kind === 'map-names') {
-      const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
-      const filtered = Object.entries(mapNameData)
-        .filter(([key, value]) => 
-          value.toLowerCase().includes(q.toLowerCase()) || 
-          key.toLowerCase().includes(q.toLowerCase())
-        )
-        .slice(0, 10)
-        .map(([key, value]) => ({
-          label: value,
-          raw: key,
-        }));
+      const qLower = q.toLowerCase();
+      let filtered = [];
+
+      try {
+        await ensureMapsIndex();
+        const idx = __mapsIndex;
+        const qNorm = __normalizeMapNameKey(q);
+
+        filtered = (idx?.list || [])
+          .filter(({ en, zh }) => {
+            const enStr = String(en || '');
+            const zhStr = String(zh || '');
+            if (!enStr && !zhStr) return false;
+
+            if (enStr.toLowerCase().includes(qLower) || zhStr.toLowerCase().includes(qLower)) return true;
+            if (!qNorm) return false;
+
+            const enNorm = __normalizeMapNameKey(enStr);
+            const zhNorm = __normalizeMapNameKey(zhStr);
+            return enNorm.includes(qNorm) || zhNorm.includes(qNorm);
+          })
+          .slice(0, 10)
+          .map(({ en, zh }) => ({
+            label: zh || en,
+            raw: en,
+          }));
+      } catch {
+        const mapNameData = translations?.map_name || translations?.cn?.map_name || {};
+        filtered = Object.entries(mapNameData)
+          .filter(([key, value]) =>
+            String(value).toLowerCase().includes(qLower) || String(key).toLowerCase().includes(qLower)
+          )
+          .slice(0, 10)
+          .map(([key, value]) => ({
+            label: value,
+            raw: key,
+          }));
+      }
 
       suggestionsContainer.innerHTML = '';
 

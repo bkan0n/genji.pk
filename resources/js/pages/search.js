@@ -1,3 +1,5 @@
+import { cdnAsset, cdnImage } from "../utils/cdn";
+
 /* =========================
    CONFIG & UTILS
    ========================= */
@@ -19,6 +21,138 @@ let hideTimeout;
 const resultsContainer = document.getElementById('resultsContainer');
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.SEARCH_I18N || {};
+
+/* =========================
+   MAP NAME TRANSLATIONS
+   ========================= */
+const MAPS_TRANSLATIONS_URL = '/translations/maps.json';
+
+let __mapsJsonPromise = null;
+let __mapsIndexPromise = null;
+let __mapsIndex = null;
+
+function __normalizeMapNameKey(input) {
+  const s = String(input ?? '').trim();
+  if (!s) return '';
+  let out = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  out = out.replace(/[()]/g, ' ');
+  out = out.replace(/[’'"]/g, '');
+  out = out.replace(/[^a-zA-Z0-9\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7a3]+/g, ' ');
+  out = out.replace(/\s+/g, ' ').trim().toLowerCase();
+  return out;
+}
+
+async function __loadMapsJson() {
+  if (!__mapsJsonPromise) {
+    __mapsJsonPromise = fetch(MAPS_TRANSLATIONS_URL, { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}));
+  }
+  return __mapsJsonPromise;
+}
+
+async function ensureMapsIndex() {
+  if (__mapsIndex) return __mapsIndex;
+  if (!__mapsIndexPromise) {
+    __mapsIndexPromise = (async () => {
+      const data = await __loadMapsJson();
+      const list = [];
+      const enToZh = new Map();
+      const enNormToZh = new Map();
+      const zhToEn = new Map();
+      const zhNormToEn = new Map();
+
+      if (data && typeof data === 'object') {
+        Object.entries(data).forEach(([key, v]) => {
+          if (!v || typeof v !== 'object') return;
+          const en = String(v['en-US'] || '').trim();
+          const zh = String(v['zh-CN'] || '').trim();
+          if (!en) return;
+
+          const zhDisplay = zh || en;
+          list.push({ key, en, zh: zhDisplay });
+
+          enToZh.set(en, zhDisplay);
+          const enNorm = __normalizeMapNameKey(en);
+          if (enNorm) enNormToZh.set(enNorm, zhDisplay);
+
+          if (zh) {
+            zhToEn.set(zh, en);
+            const zhNorm = __normalizeMapNameKey(zh);
+            if (zhNorm) zhNormToEn.set(zhNorm, en);
+          }
+        });
+      }
+
+      __mapsIndex = { list, enToZh, enNormToZh, zhToEn, zhNormToEn };
+      return __mapsIndex;
+    })();
+  }
+  return __mapsIndexPromise;
+}
+
+function mapNameToCnDisplay(enName) {
+  const raw = String(enName ?? '').trim();
+  if (!raw) return raw;
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'cn') return raw;
+  const idx = __mapsIndex;
+  if (!idx) return raw;
+  return idx.enToZh.get(raw) || idx.enNormToZh.get(__normalizeMapNameKey(raw)) || raw;
+}
+
+function mapNameCnToEnSmart(value) {
+  const v = String(value ?? '').trim();
+  if (!v) return v;
+  const idx = __mapsIndex;
+  if (!idx) return v;
+  return idx.zhToEn.get(v) || idx.zhNormToEn.get(__normalizeMapNameKey(v)) || v;
+}
+
+async function resolveEnglishMapNameExact(name) {
+  const raw = String(name ?? '').trim();
+  if (!raw) return null;
+  try {
+    const url = buildAutocompleteUrl('map-names', { value: raw, locale: 'en', pageSize: 20 });
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data)) return null;
+
+    const lower = raw.toLowerCase();
+    const exact = data.find((x) => x && x.map_name && String(x.map_name).toLowerCase() === lower);
+    if (exact && exact.map_name) return String(exact.map_name);
+
+    const first = data.find((x) => x && x.map_name);
+    return first && first.map_name ? String(first.map_name) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function canonicalizeMapNameForApi(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return raw;
+
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+    await ensureMapsIndex().catch(() => {});
+  }
+
+  const cand = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && /[\u4e00-\u9fff]/.test(raw))
+    ? mapNameCnToEnSmart(raw)
+    : raw;
+
+  const resolved = await resolveEnglishMapNameExact(cand);
+  return resolved || cand;
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      ensureMapsIndex().catch(() => {});
+    }
+  });
+}
+
 const MAP_VIEW_LS_KEY = 'map_search_view';
 let mapSearchView = (localStorage.getItem(MAP_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
 let lastMapRows = [];
@@ -26,7 +160,7 @@ const COMPLETIONS_VIEW_LS_KEY = 'completions_view';
 let completionsView = (localStorage.getItem(COMPLETIONS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
 let lastCompletionsRows = [];
 const PERSONAL_RECORDS_VIEW_LS_KEY = 'personal_records_view';
-let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
+let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
 let lastPersonalRows = [];
 const OFFICIAL_NOTICE_ID = 'officialCodeNotice';
 
@@ -123,6 +257,7 @@ const sectionLoadingOperations = {
 const apiUrls = {
   mapSearch: '/api/maps',
   completions: '/api/completions',
+  mapEdits: '/api/maps/map-edits',
   guide: '/api/maps',
   personalRecords: '/api/completions',
 };
@@ -280,7 +415,10 @@ function initializeIcons() {
     'clear_filters',
   ].map((id) => ({
     id,
-    name: t(`filters_toolbar.${id}`) || id.replace('_', ' ').toUpperCase(),
+    name:
+     (id === 'official'
+       ? t('filters_toolbar.server')
+       : t(`filters_toolbar.${id}`)) || id.replace(/_/g, ' ').toUpperCase(),
     svg: getIconSVG(id),
   }));
 }
@@ -387,6 +525,9 @@ function initSearchTabs(defaultSection = 'map_search') {
     tabsContainer.style.position = 'relative';
   }
 
+  const HL_TRANSITION =
+    'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)';
+
   Object.assign(highlight.style, {
     position: 'absolute',
     top: '2px',
@@ -397,28 +538,59 @@ function initSearchTabs(defaultSection = 'map_search') {
     background: 'white',
     boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
     transform: 'translate3d(0,0,0)',
-    transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+    transition: 'none',
     willChange: 'transform,width',
     zIndex: '0'
   });
-  buttons.forEach(b => { b.style.position = 'relative'; b.style.zIndex = '1'; });
+  buttons.forEach((b) => {
+    b.style.position = 'relative';
+    b.style.zIndex = '1';
+  });
 
   const selectedModeEl = document.getElementById('selectedMode');
 
-  const moveHighlightTo = (btn) => {
+  const moveHighlightTo = (btn, { animate = true } = {}) => {
     if (!btn) return;
+
     const br = btn.getBoundingClientRect();
     const cr = tabsContainer.getBoundingClientRect();
-    const left = br.left - cr.left;
-    const width = br.width;
-    requestAnimationFrame(() => {
+    const left = Math.round(br.left - cr.left);
+    const width = Math.round(br.width);
+
+    const prevLeft = Number(highlight.dataset.hlLeft || NaN);
+    const prevWidth = Number(highlight.dataset.hlWidth || NaN);
+    if (left === prevLeft && width === prevWidth) return;
+
+    highlight.dataset.hlLeft = String(left);
+    highlight.dataset.hlWidth = String(width);
+
+    const apply = () => {
       highlight.style.width = `${Math.max(0, width)}px`;
       highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
-    });
+    };
+
+    if (!animate) {
+      const prev = highlight.style.transition;
+      highlight.style.transition = 'none';
+      apply();
+      requestAnimationFrame(() => {
+        highlight.style.transition = prev && prev !== 'none' ? prev : HL_TRANSITION;
+      });
+      return;
+    }
+
+    if (highlight.style.transition === 'none') {
+      highlight.style.transition = HL_TRANSITION;
+    }
+    requestAnimationFrame(apply);
   };
 
-  const setActive = (section, { updateUrl = true, triggerLoad = true } = {}) => {
-    let activeBtn = buttons.find(b => b.getAttribute('data-section') === section) || buttons[0];
+  const setActive = (
+    section,
+    { updateUrl = true, triggerLoad = true, animateHighlight = true, userAction = false } = {}
+  ) => {
+    const activeBtn =
+      buttons.find((b) => b.getAttribute('data-section') === section) || buttons[0];
     const activeSection = activeBtn?.getAttribute('data-section') || section;
 
     buttons.forEach((btn) => {
@@ -429,15 +601,23 @@ function initSearchTabs(defaultSection = 'map_search') {
       btn.classList.toggle('hover:bg-white/10', !isActive);
     });
 
-    moveHighlightTo(activeBtn);
+    moveHighlightTo(activeBtn, { animate: animateHighlight });
 
     if (selectedModeEl) {
       const label = activeBtn?.textContent?.trim() || '';
-      selectedModeEl.textContent = label || (window.SEARCH_I18N?.select_mode ?? 'Select a mode');
+      selectedModeEl.textContent =
+        label || (window.SEARCH_I18N?.select_mode ?? 'Select a mode');
     }
 
     if (updateUrl) {
       const url = new URL(window.location.href);
+
+      // clean URL only when switching to a different section by user action
+      const prevSection = url.searchParams.get('section') || (typeof currentSection !== 'undefined' ? currentSection : '') || defaultSection;
+      if (userAction && String(prevSection) !== String(activeSection)) {
+        __urlStripFiltersAndModals(url);
+      }
+
       url.searchParams.set('section', activeSection);
       history.replaceState(
         { section: activeSection },
@@ -447,7 +627,7 @@ function initSearchTabs(defaultSection = 'map_search') {
     }
 
     if (triggerLoad && typeof window.selectSection === 'function') {
-      window.selectSection(activeSection, { push: false, replace: true });
+      window.selectSection(activeSection, { push: false, replace: true, cleanOnChange: userAction });
     }
   };
 
@@ -464,24 +644,33 @@ function initSearchTabs(defaultSection = 'map_search') {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const section = btn.getAttribute('data-section');
-      if (section) setActive(section, { updateUrl: true, triggerLoad: true });
+      if (section) {
+        setActive(section, {
+          updateUrl: true,
+          triggerLoad: true,
+          animateHighlight: true,
+          userAction: true,
+        });
+      }
     });
   });
 
   const desired = getDesired();
-  const initialBtn = buttons.find(b => b.getAttribute('data-section') === desired) || buttons[0];
+  const initialBtn =
+    buttons.find((b) => b.getAttribute('data-section') === desired) || buttons[0];
 
   requestAnimationFrame(() => {
-    moveHighlightTo(initialBtn);
     setActive(initialBtn.getAttribute('data-section'), {
       updateUrl: !new URLSearchParams(window.location.search).get('section'),
-      triggerLoad: true
+      triggerLoad: true,
+      animateHighlight: false,
     });
 
     const recalc = () => {
-      const active = buttons.find(b => b.classList.contains('bg-white')) || initialBtn;
-      moveHighlightTo(active);
+      const active = buttons.find((b) => b.classList.contains('bg-white')) || initialBtn;
+      moveHighlightTo(active, { animate: false });
     };
+
     window.addEventListener('resize', recalc);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(recalc);
@@ -492,7 +681,7 @@ function initSearchTabs(defaultSection = 'map_search') {
 }
 
 async function selectSection(sectionId, opts = {}) {
-  const { push = true, replace = false } = opts;
+  const { push = true, replace = false, fromUrl = false, cleanOnChange = false } = opts;
 
   if (sectionId === 'personal_records' && !user_id) {
     renderMessage(t('popup.login_required_pr'));
@@ -500,16 +689,27 @@ async function selectSection(sectionId, opts = {}) {
     return;
   }
 
-  if (currentSection !== sectionId) {
+  const changing = currentSection !== sectionId;
+  const userNav = (push && !fromUrl) || !!cleanOnChange;
+
+  if (changing) {
     const rc = document.getElementById('resultsContainer');
     if (rc) rc.innerHTML = '';
     const pc = document.getElementById('paginationContainer');
     if (pc) pc.innerHTML = '';
   }
 
+  // Set section early
   currentSection = sectionId;
 
-  if (Object.keys(filters).length > 0 || selectedFilters.length > 0) clearFilters(true);
+  // clean slate
+  if (changing && userNav) {
+    clearFilters(true);
+  }
+
+  if (changing && cleanOnChange) {
+    void __syncModalsFromUrl();
+  }
   currentPage = 1;
 
   const selectedModeText = document.getElementById('selectedMode');
@@ -521,18 +721,48 @@ async function selectSection(sectionId, opts = {}) {
   const tabBtn = document.getElementById(`${sectionId}Btn`);
   if (tabBtn) tabBtn.classList.add('active');
 
+  //Server
+  if (sectionId === 'map_search') {
+    const lang = String(CURRENT_LANG || 'en').toLowerCase();
+    const defaultOfficial = lang === 'cn' ? 'False' : 'True';
+
+    const hasValue =
+      Object.prototype.hasOwnProperty.call(activeFilters || {}, 'official') ||
+      Object.prototype.hasOwnProperty.call(persistentFilters || {}, 'official');
+
+    if (!hasValue || persistentFilters.official == null || String(persistentFilters.official).trim() === '') {
+      persistentFilters.official = defaultOfficial;
+    }
+  }
+
   initializeToolbarButtons();
-  applyFilters();
+
+  // “Apply filters” url update
+  applyFilters(undefined, { syncUrl: false });
 
   const fa = document.getElementById('filterActions');
   if (fa) showFlex(fa);
 
   if (push) {
     const url = new URL(location.href);
+
+    // Clean URL only when switching section by user action
+    if (changing && userNav) {
+      __urlStripFiltersAndModals(url);
+    }
+
     url.searchParams.set(SECTION_URL_PARAM, sectionId);
-    const state = { section: sectionId };
+
+    const state = { ...(history.state || {}), section: sectionId };
+    if (state.__modalOpen) delete state.__modalOpen;
+
     if (replace) history.replaceState(state, '', url);
     else history.pushState(state, '', url);
+
+    // Close any open modal immediately
+    if (changing && userNav) {
+      void __syncModalsFromUrl();
+    }
   }
 }
 window.selectSection = selectSection;
@@ -541,28 +771,389 @@ window.selectSection = selectSection;
    URL
    ========================= */
 const SECTION_URL_PARAM = 'section';
-const VALID_SECTIONS = new Set(['map_search','completions','guide','personal_records']);
+const VALID_SECTIONS = new Set(['map_search', 'completions', 'guide', 'personal_records']);
 
+const URL_MODAL_PARAM = 'modal';
+const URL_MODAL_CODE_PARAM = 'modal_code';
+const URL_MODAL_USER_ID_PARAM = 'modal_user_id';
+const URL_MODAL_TIME_PARAM = 'modal_time';
+
+const URL_FILTER_KEYS = new Set([
+  'code',
+  'map_name',
+  'creator_ids',
+  'creator_names',
+  'category',
+  'difficulty_exact',
+  'mechanics',
+  'restrictions',
+  'playtest_filter',
+  'official',
+  'user_id',
+  'medal_filter',
+  'completion_filter',
+]);
+
+const URL_FILTER_ALIASES = {
+  map_code: 'code',
+  mapCode: 'code',
+  mapName: 'map_name',
+  userId: 'user_id',
+  user: 'user_id',
+  creator_id: 'creator_ids',
+  creatorIds: 'creator_ids',
+  creator_name: 'creator_names',
+  creatorNames: 'creator_names',
+  creator: 'creator_names',
+  difficulty: 'difficulty_exact',
+  difficultyExact: 'difficulty_exact',
+  playtestFilter: 'playtest_filter',
+  medalFilter: 'medal_filter',
+  completionFilter: 'completion_filter',
+};
+
+const URL_ARRAY_KEYS = new Set(['mechanics', 'restrictions', 'creator_ids', 'creator_names']);
+
+let __urlBootstrapped = false;
+
+function __urlNormalizeOfficial(v) {
+  const s = String(v ?? '').trim().toLowerCase();
+  if (!s) return '';
+  if (['true', '1', 'yes', 'on', 'with', 'global'].includes(s)) return 'True';
+  if (['false', '0', 'no', 'off', 'without', 'cn', 'china'].includes(s)) return 'False';
+  return String(v ?? '').trim();
+}
+
+function __urlReadSection() {
+  const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
+  return VALID_SECTIONS.has(s) ? s : 'map_search';
+}
+
+function __urlHasAnyFilterParams() {
+  const sp = new URL(location.href).searchParams;
+  for (const [rawKey] of sp.entries()) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (URL_FILTER_KEYS.has(key)) return true;
+  }
+  return false;
+}
+
+function __urlReadFilters() {
+  const sp = new URL(location.href).searchParams;
+
+  const tmp = {};
+
+  for (const [rawKey, rawVal] of sp.entries()) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (!URL_FILTER_KEYS.has(key)) continue;
+
+    const s0 = String(rawVal ?? '').trim();
+    if (!s0) continue;
+
+    const parts =
+      URL_ARRAY_KEYS.has(key) && s0.includes(',')
+        ? s0.split(',').map((x) => x.trim()).filter(Boolean)
+        : [s0];
+
+    if (!tmp[key]) tmp[key] = [];
+    tmp[key].push(...parts);
+  }
+
+  const out = {};
+  for (const [k, arrRaw] of Object.entries(tmp)) {
+    const arr = (arrRaw || []).map((x) => String(x).trim()).filter(Boolean);
+    if (!arr.length) continue;
+
+    if (k === 'official') {
+      const norm = __urlNormalizeOfficial(arr[0]);
+      if (norm) out.official = norm;
+      continue;
+    }
+
+    if (URL_ARRAY_KEYS.has(k)) out[k] = arr;
+    else out[k] = arr[0];
+  }
+
+  return out;
+}
+
+function __urlBootstrapPersistentFilters() {
+  if (__urlBootstrapped) return;
+
+  const urlFilters = __urlReadFilters();
+  if (urlFilters && Object.keys(urlFilters).length) {
+    persistentFilters = { ...urlFilters };
+  }
+
+  __urlBootstrapped = true;
+}
+
+
+let __urlLastModalSig = null;
+
+let __suppressUrlSync = false;
+
+function __stableFilterSignature(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  const keys = Object.keys(obj).sort();
+  const norm = {};
+  for (const k of keys) {
+    const v = obj[k];
+    if (Array.isArray(v)) norm[k] = [...v].map(String).sort();
+    else norm[k] = String(v);
+  }
+  return JSON.stringify(norm);
+}
+
+function __urlStripFiltersAndModals(url) {
+  if (!url) return;
+
+  for (const rawKey of Array.from(url.searchParams.keys())) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (URL_FILTER_KEYS.has(key)) url.searchParams.delete(rawKey);
+  }
+
+  // Modal params
+  url.searchParams.delete(URL_MODAL_PARAM);
+  url.searchParams.delete(URL_MODAL_CODE_PARAM);
+  url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
+  url.searchParams.delete(URL_MODAL_TIME_PARAM);
+
+  // Pagination leftovers
+  url.searchParams.delete('page');
+  url.searchParams.delete('page_number');
+  url.searchParams.delete('page_size');
+}
+
+function __urlSyncFiltersFromState({ push = false } = {}) {
+  if (__suppressUrlSync) return;
+
+  const url = new URL(location.href);
+  url.searchParams.set(SECTION_URL_PARAM, currentSection || 'map_search');
+
+  // reset keys
+  for (const rawKey of Array.from(url.searchParams.keys())) {
+    const key = URL_FILTER_ALIASES[rawKey] || rawKey;
+    if (URL_FILTER_KEYS.has(key)) url.searchParams.delete(rawKey);
+  }
+
+  // write from persistentFilters
+  const src = persistentFilters || {};
+  for (const k of URL_FILTER_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(src, k)) continue;
+    const v = src[k];
+    if (v == null) continue;
+
+    if (Array.isArray(v)) {
+      const arr = v.map(String).map(s => s.trim()).filter(Boolean);
+      for (const item of arr) url.searchParams.append(k, item);
+    } else {
+      const s = String(v).trim();
+      if (s) url.searchParams.set(k, s);
+    }
+  }
+
+  const state = { ...(history.state || {}), section: currentSection || 'map_search' };
+  if (push) history.pushState(state, '', url);
+  else history.replaceState(state, '', url);
+}
+
+function __urlOpenModal(type, { code, user_id, time } = {}, { push = true, replace = false } = {}) {
+  if (__suppressUrlSync) return;
+  const url = new URL(location.href);
+
+  // clear old modal params
+  url.searchParams.delete(URL_MODAL_PARAM);
+  url.searchParams.delete(URL_MODAL_CODE_PARAM);
+  url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
+  url.searchParams.delete(URL_MODAL_TIME_PARAM);
+
+  url.searchParams.set(SECTION_URL_PARAM, currentSection || url.searchParams.get(SECTION_URL_PARAM) || 'map_search');
+
+  if (type) {
+    url.searchParams.set(URL_MODAL_PARAM, type);
+    if (code) url.searchParams.set(URL_MODAL_CODE_PARAM, String(code));
+    if (user_id) url.searchParams.set(URL_MODAL_USER_ID_PARAM, String(user_id));
+    if (time != null && String(time).trim() !== '') url.searchParams.set(URL_MODAL_TIME_PARAM, String(time));
+  }
+
+  const st = { ...(history.state || {}), __modalOpen: type || null };
+  if (replace) history.replaceState(st, '', url);
+  else if (push) history.pushState(st, '', url);
+  else history.replaceState(st, '', url);
+}
+
+function __urlHandleModalUserClose(expectedType) {
+  if (__suppressUrlSync) return;
+
+  const url = new URL(location.href);
+  const cur = url.searchParams.get(URL_MODAL_PARAM);
+  if (cur !== expectedType) return;
+
+  // remove modal params
+  url.searchParams.delete(URL_MODAL_PARAM);
+  url.searchParams.delete(URL_MODAL_CODE_PARAM);
+  url.searchParams.delete(URL_MODAL_USER_ID_PARAM);
+  url.searchParams.delete(URL_MODAL_TIME_PARAM);
+
+  const st = { ...(history.state || {}) };
+  if (st.__modalOpen) delete st.__modalOpen;
+
+  history.replaceState(st, '', url.pathname + '?' + url.searchParams.toString() + url.hash);
+
+  __urlLastModalSig = null;
+}
+
+async function __fetchCompletionRowForModal({ code, user_id, time } = {}) {
+  if (!code) return null;
+
+  try {
+    const params = new URLSearchParams({ page_size: '10', page_number: '1' });
+    if (user_id) params.set('user_id', String(user_id));
+
+    const res = await fetch(`${apiUrls.completions}/${encodeURIComponent(code)}?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const rows = normalizeToRows(data, 'completion') || [];
+    if (!rows.length) return null;
+
+    let filtered = rows;
+    if (user_id) filtered = filtered.filter(r => String(r.user_id) === String(user_id));
+
+    if (time != null && String(time).trim() !== '') {
+      const t = Number(time);
+      const tol = 0.01;
+      const found = filtered.find(r => Number(r.time) && Math.abs(Number(r.time) - t) <= tol);
+      if (found) return found;
+    }
+
+    return filtered[0] || rows[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+async function __syncModalsFromUrl() {
+  const url = new URL(location.href);
+  const modal = url.searchParams.get(URL_MODAL_PARAM);
+  const code = url.searchParams.get(URL_MODAL_CODE_PARAM) || '';
+  const user_id = url.searchParams.get(URL_MODAL_USER_ID_PARAM) || '';
+  const time = url.searchParams.get(URL_MODAL_TIME_PARAM) || '';
+
+  // close all if no modal
+  if (!modal) {
+    __urlLastModalSig = null;
+    __suppressUrlSync = true;
+    try {
+      const mapOv = document.getElementById('detailsModalOverlay');
+      if (mapOv && !mapOv.classList.contains('hidden')) mapOv.__sfClose?.();
+
+      const compOv = document.getElementById('completionModalOverlay');
+      if (compOv && !compOv.classList.contains('hidden')) compOv.__sfClose?.();
+
+      const mer = document.getElementById('mapEditRequestOverlay');
+      if (mer && !mer.classList.contains('hidden')) mer.__merClose?.();
+    } finally {
+      __suppressUrlSync = false;
+    }
+    return;
+  }
+
+  const sig = `${modal}|${code}|${user_id}|${time}`;
+  if (sig === __urlLastModalSig) return;
+  __urlLastModalSig = sig;
+
+  if (modal === 'map') {
+    if (!code) return;
+    const r = await __merFetchMapRowByCode(code);
+    if (r?.ok && r.row) openSearchDetailsModal(r.row, { fromUrl: true, syncUrl: false });
+    return;
+  }
+
+  if (modal === 'completion') {
+    if (!code) return;
+    const row = await __fetchCompletionRowForModal({ code, user_id, time });
+    if (row) openCompletionsDetailsModal(row, { fromUrl: true, syncUrl: false });
+    return;
+  }
+
+  if (modal === 'map_edit_request') {
+    if (!code) return;
+    const r = await __merFetchMapRowByCode(code);
+    if (r?.ok && r.row) openMapEditRequestModal(r.row, { fromUrl: true, syncUrl: false });
+    return;
+  }
+}
+
+// popstate
 window.addEventListener('popstate', () => {
   const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
   const section = VALID_SECTIONS.has(s) ? s : 'map_search';
-  if (section !== currentSection) selectSection(section, { push: false });
+
+  const urlFilters = __urlReadFilters();
+  const nextSig = __stableFilterSignature(urlFilters);
+  const curSig = __stableFilterSignature(persistentFilters);
+
+  if (section !== currentSection) {
+    // Restore filters first
+    __suppressUrlSync = true;
+    try {
+      selectedFilters.length = 0;
+      filters = {};
+      activeFilters = {};
+      persistentFilters = { ...urlFilters };
+    } finally {
+      __suppressUrlSync = false;
+    }
+
+    selectSection(section, { push: false, replace: true });
+    return;
+  }
+
+  if (nextSig !== curSig) {
+    __suppressUrlSync = true;
+    try {
+      persistentFilters = { ...urlFilters };
+      activeFilters = { ...urlFilters };
+      filters = { ...urlFilters };
+      applyFilters(urlFilters, { syncUrl: false });
+    } finally {
+      __suppressUrlSync = false;
+    }
+  }
+
+  void __syncModalsFromUrl();
 });
+
 
 /* =========================
    GLOBAL INITS
    ========================= */
 async function initializeApp() {
   const fa = document.getElementById('filterActions');
-  if (fa) hideEl(fa);
-  initSearchTabs();
+  if (fa) {
+    fa.style.visibility = 'hidden';
+    fa.style.pointerEvents = 'none';
+  }
+
   initializeIcons();
-  await loadDynamicOptions();
-  initializeToolbarButtons();
+
+  __urlBootstrapPersistentFilters();
+
+  void loadDynamicOptions();
+  initSearchTabs();
   hideOnClickOutside();
-  if (fa) showFlex(fa);
+
+  if (fa) {
+    fa.style.visibility = '';
+    fa.style.pointerEvents = '';
+  }
 }
 document.addEventListener('DOMContentLoaded', initializeApp);
+
 
 /* =========================
    HELPERS TOOLBAR
@@ -1161,7 +1752,7 @@ function mountMapViewSwitch() {
     if (Array.isArray(lastMapRows) && lastMapRows.length) {
       renderMapSearchResultsByMode(lastMapRows);
     } else {
-      applyFilters(activeFilters);
+      applyFilters(activeFilters, { syncUrl: false });
     }
   });
 }
@@ -1220,7 +1811,7 @@ function mountCompletionsViewSwitch() {
     if (Array.isArray(lastCompletionsRows) && lastCompletionsRows.length) {
       renderCompletionsResultsByMode({ results: lastCompletionsRows });
     } else {
-      applyFilters(activeFilters);
+      applyFilters(activeFilters, { syncUrl: false });
     }
   });
 }
@@ -1280,7 +1871,7 @@ function mountPersonalRecordsViewSwitch() {
     if (Array.isArray(lastPersonalRows) && lastPersonalRows.length) {
       renderPersonalRecordsResultsByMode({ results: lastPersonalRows });
     } else {
-      applyFilters(activeFilters);
+      applyFilters(activeFilters, { syncUrl: false });
     }
   });
 }
@@ -1495,8 +2086,8 @@ function initializeToolbarButtons() {
           optionsContainer = showOptionsContainer(
             'officialOptions',
             [
-              { text: 'True',  value: 'True',  raw: 'True' },
-              { text: 'False', value: 'False', raw: 'False' },
+              { text: t('filters_toolbar.global_server'),  value: 'True',  raw: 'True' },
+              { text: t('filters_toolbar.china_server'),   value: 'False', raw: 'False' },
             ],
             button,
             false
@@ -1515,11 +2106,11 @@ function initializeToolbarButtons() {
           );
           break;
         case 'apply_filters':
-          applyFilters(activeFilters);
+          applyFilters(activeFilters, { pushUrl: true });
           break;
         case 'clear_filters':
           clearFilters();
-          applyFilters();
+          applyFilters(activeFilters, { pushUrl: true });
           break;
       }
       document.querySelectorAll('.toolbar-button').forEach((b) => {
@@ -1609,7 +2200,13 @@ function updateActiveFilters() {
 
   const mapNameInput = document.getElementById('mapNameInput');
   if (mapNameInput) {
-    const raw = mapNameInput.getAttribute('data-selected-raw-value') || mapNameInput.value.trim();
+    const selectedRaw = mapNameInput.getAttribute('data-selected-raw-value');
+    let raw = selectedRaw || mapNameInput.value.trim();
+
+    if (!selectedRaw && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && raw) {
+      raw = mapNameCnToEnSmart(raw);
+    }
+
     if (raw) activeFilters.map_name = raw;
     else delete activeFilters.map_name;
   }
@@ -1646,13 +2243,124 @@ function updateToolbarButtonStates() {
     creator: ['creator_ids', 'creator_names'],
   };
 
-  const booleanLikeFilters = new Set(['completion_filter', 'medal_filter']);
-  const boolLabel = {
-    With: 'True',
-    Without: 'False',
-    True: 'True',
-    False: 'False',
-  };
+  const booleanLikeFilters = new Set(['completion_filter', 'medal_filter', 'official']);
+
+  function boolBadgeLabel(v) {
+    const s = String(v || '').trim();
+    if (!s) return '✓';
+
+    // CN: render compact yes/no
+    if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      const map = { With: '是', Without: '否', True: '是', False: '否', Yes: '是', No: '否' };
+      return map[s] || s;
+    }
+
+    // Default: keep existing behavior
+    const map = { With: 'True', Without: 'False', True: 'True', False: 'False' };
+    return map[s] || s;
+  }
+
+  function optionLabelFromWindowList(kind, rawValue) {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return raw;
+
+    const list =
+      kind === 'mechanics'
+        ? (window.mechanicsOptions || mechanicsOptions || [])
+        : (window.restrictionsOptions || restrictionsOptions || []);
+
+    const rawLower = raw.toLowerCase();
+
+    const found = (Array.isArray(list) ? list : []).find((opt) => {
+      const oRaw = String(opt?.raw ?? opt?.value ?? '').trim();
+      const oText = String(opt?.text ?? '').trim();
+      return (oRaw && oRaw.toLowerCase() === rawLower) || (oText && oText.toLowerCase() === rawLower);
+    });
+
+    return (found && (found.translated || found.text)) ? String(found.translated || found.text) : raw;
+  }
+
+  function translateBadgeValue(filterId, rawValue) {
+    const v = String(rawValue || '').trim();
+    if (!v) return v;
+
+    // Map name
+    if (filterId === 'map_name' && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+      return mapNameToCnDisplay(v);
+    }
+
+    if (filterId === 'official') {
+      const isTrue =
+        (typeof rawValue === 'boolean')
+          ? rawValue
+          : (() => {
+              const s = String(rawValue ?? v).trim().toLowerCase();
+              if (!s) return true;
+              if (['true', 'with', 'yes', '1', 'on', 'global'].includes(s)) return true;
+              if (['false', 'without', 'no', '0', 'off', 'china', 'cn'].includes(s)) return false;
+              return true;
+            })();
+
+      return isTrue
+        ? (t('filters_toolbar.global_server') || 'Global')
+        : (t('filters_toolbar.china_server') || 'China');
+    }
+
+    // Boolean-like
+    if (booleanLikeFilters.has(filterId)) {
+      return boolBadgeLabel(v);
+    }
+
+    // Difficulty
+    if (filterId === 'difficulty_exact') {
+      const map = {
+        'beginner': t('filters_toolbar.beginner') || 'Beginner',
+        'easy': t('filters_toolbar.easy') || 'Easy',
+        'medium': t('filters_toolbar.medium') || 'Medium',
+        'hard': t('filters_toolbar.hard') || 'Hard',
+        'very hard': t('filters_toolbar.very_hard') || 'Very Hard',
+        'extreme': t('filters_toolbar.extreme') || 'Extreme',
+        'hell': t('filters_toolbar.hell') || 'Hell',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Category
+    if (filterId === 'category') {
+      const map = {
+        'classic': t('filters_toolbar.classic') || 'Classic',
+        'increasing difficulty': t('filters_toolbar.increasing_difficulty') || 'Increasing Difficulty',
+        'tournament': t('filters_toolbar.tournament') || 'Tournament',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Playtest filter
+    if (filterId === 'playtest_filter') {
+      const map = {
+        'all': t('filters_toolbar.playtest_all') || 'All',
+        'only': t('filters_toolbar.playtest_only') || 'Only',
+        'none': t('filters_toolbar.playtest_none') || 'None',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Playtest status (persistent)
+    if (filterId === 'playtest_status') {
+      const map = {
+        'in_progress': t('filters_toolbar.in_progress') || 'In progress',
+        'approved': t('filters_toolbar.approved') || 'Approved',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
+    // Mechanics/Restrictions
+    if (filterId === 'mechanics' || filterId === 'restrictions') {
+      return optionLabelFromWindowList(filterId, v);
+    }
+
+    return v;
+  }
 
   const codeIsActive =
     !!activeFilters.code && String(activeFilters.code).trim() !== '';
@@ -1740,15 +2448,24 @@ function updateToolbarButtonStates() {
 
     let text = '✓';
 
-    if (booleanLikeFilters.has(filterId) && typeof value === 'string' && boolLabel[value]) {
-      text = boolLabel[value];
-    } else if (Array.isArray(value)) {
-      text = `${value.length}`;
+    if (Array.isArray(value)) {
+      // Mechanics/Restrictions: if only one selected, show translated label; otherwise show count
+      if ((filterId === 'mechanics' || filterId === 'restrictions') && value.length === 1) {
+        const display = translateBadgeValue(filterId, value[0]);
+        text = display.length > 6 ? display.slice(0, 6) + '…' : display;
+      } else {
+        text = `${value.length}`;
+      }
     } else if (typeof value === 'boolean') {
-      text = value ? 'ON' : 'OFF';
+      if (filterId === 'official') {
+        const display = translateBadgeValue(filterId, value);
+        text = display.length > 6 ? display.slice(0, 6) + '…' : display;
+      } else {
+        text = value ? 'ON' : 'OFF';
+      }
     } else if (typeof value === 'string') {
-      const v = value;
-      text = v.length > 6 ? v.slice(0, 6) + '…' : v;
+      const display = translateBadgeValue(filterId, value);
+      text = display.length > 6 ? display.slice(0, 6) + '…' : display;
     }
 
     badge.textContent = text;
@@ -1819,6 +2536,18 @@ function clearFilters(silent = false) {
   filters = {};
   persistentFilters = {};
 
+  // Defaults filters
+  if (currentSection === 'map_search') {
+    const lang = String(CURRENT_LANG || '').toLowerCase();
+    const defOfficial = (lang === 'cn') ? 'False' : 'True';
+
+    activeFilters.official = defOfficial;
+    persistentFilters.official = defOfficial;
+
+    activeFilters.playtest_filter = 'All';
+    persistentFilters.playtest_filter = 'All';
+  }
+
   document.getElementById('filtersContainer').innerHTML = '';
 
   const paginationContainer = document.getElementById('paginationContainer');
@@ -1839,9 +2568,25 @@ function clearFilters(silent = false) {
   document
     .querySelectorAll('.custom-option [data-check]')
     .forEach((svg) => (svg.style.opacity = '0'));
-  document
-    .querySelectorAll('.toolbar-button')
-    .forEach((btn) => btn.classList.remove('active-filter', 'border-brand-400/40'));
+
+  document.querySelectorAll('.toolbar-button').forEach((btn) =>
+    btn.classList.remove(
+      'active-filter',
+      'border-brand-400/40',
+      'ring-1',
+      'ring-emerald-500/30'
+    )
+  );
+
+  // Server
+  if (currentSection === 'map_search') {
+    const lang = String(CURRENT_LANG || '').toLowerCase();
+    const def = (lang === 'cn') ? 'False' : 'True';
+    persistentFilters.official = def;
+    activeFilters.official = def;
+  }
+
+  updateToolbarButtonStates();
 
   if (hasActiveFilters && !silent) {
     showWarningMessage(t('popup.filters_cleared'));
@@ -1850,7 +2595,8 @@ function clearFilters(silent = false) {
   updateOfficialNotice();
 }
 
-async function applyFilters(filters) {
+async function applyFilters(filters, opts = {}) {
+  const { pushUrl = false, syncUrl = true } = (opts || {});
   cachedPages = {};
   currentPage = 1;
   if (filters && typeof filters === 'object') {
@@ -1869,12 +2615,13 @@ async function applyFilters(filters) {
     }
   }
 
-  if (currentSection === 'map_search' && !activeFilters.playtest_filter) {
-    activeFilters.playtest_filter = 'All';
-  }
-
   renderSkeletonForSection(currentSection);
   showLoadingBar();
+
+  // CN
+  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && activeFilters.map_name) {
+    activeFilters.map_name = await canonicalizeMapNameForApi(activeFilters.map_name);
+  }
 
   try {
     const req = buildSectionRequest(currentSection, activeFilters, 1, pageSize);
@@ -1889,6 +2636,7 @@ async function applyFilters(filters) {
     const data = await response.json();
 
     persistentFilters = { ...activeFilters };
+    if (syncUrl) __urlSyncFiltersFromState({ push: !!pushUrl });
     cachedPages[currentSection] = { 1: data };
     totalPages = computeTotalPagesFromData(data, pageSize);
 
@@ -1903,6 +2651,7 @@ async function applyFilters(filters) {
     console.error("Erreur lors de l'application des filtres :", error);
   } finally {
     hideLoadingBar();
+    void __syncModalsFromUrl();
   }
 }
 
@@ -2003,11 +2752,19 @@ function displayResults(data) {
   const post = (r) => {
     if (r.map_name) {
       r.original_map_name = r.map_name;
-      const translatedName = t(
-        `map_name.${r.map_name.toLowerCase().replace(/ /g, '_').replace(/[()']/g, '')}`
-      );
-      if (typeof translatedName === 'string' && !translatedName.includes('map_name.')) {
-        r.map_name = translatedName;
+
+      if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
+        r.map_name = mapNameToCnDisplay(r.map_name);
+      } else if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'en') {
+        const translatedName = t(
+          `map_name.${r.map_name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '')}`
+        );
+        if (typeof translatedName === 'string' && !translatedName.includes('map_name.')) {
+          r.map_name = translatedName;
+        }
       }
     }
     r.category = getTypesArray(r);
@@ -2091,59 +2848,110 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
     return;
   }
 
-  debounceTimeout = setTimeout(() => {
-    const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
-    const url = buildAutocompleteUrl(apiEndpoint, { value: filterValue, locale, pageSize: 10 });
+    debounceTimeout = setTimeout(async () => {
+      const makeItem = (label, raw) => {
+        const d = document.createElement('div');
+        d.textContent = label;
+        d.className =
+          'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        d.setAttribute('data-raw-value', raw);
+        d.addEventListener('click', (e) => {
+          e.stopPropagation();
+          input.setAttribute('data-selected-raw-value', raw);
+          input.value = label;
 
-    fetch(url, { headers: { Accept: 'application/json' } })
-      .then((r) => {
+          let labelId = propertyName;
+          if (propertyName === 'code') labelId = 'code';
+          if (propertyName === 'map_name') labelId = 'map name';
+
+          const translatedMessage = t('popup.filter_applied', {
+            filterId: labelId,
+            value: label,
+          });
+          showConfirmationMessage(translatedMessage);
+
+          closeFloating(suggestionsContainer);
+          updateActiveFilters();
+
+          input.blur();
+          closeFloating(input);
+
+          const parentId = input.getAttribute('data-parent') || '';
+          const parentBtn = parentId ? document.getElementById(parentId) : null;
+          if (parentBtn) {
+            parentBtn.classList.remove('selected');
+            const circle = parentBtn.querySelector('.selection-circle');
+            if (circle) circle.classList.remove('circle-visible');
+          }
+        });
+        return d;
+      };
+
+      // CN
+      if (
+        typeof CURRENT_LANG !== 'undefined' &&
+        CURRENT_LANG === 'cn' &&
+        apiEndpoint === 'map-names' &&
+        propertyName === 'map_name'
+      ) {
+        try {
+          await ensureMapsIndex();
+        } catch (_) {}
+
+        suggestionsContainer.innerHTML = '';
+        const list = Array.isArray(__mapsIndex?.list) ? __mapsIndex.list : [];
+        const qLower = filterValue.toLowerCase();
+        const qNorm = __normalizeMapNameKey(filterValue);
+
+        const matches = list
+          .filter((it) => {
+            const zh = String(it?.zh || '');
+            const en = String(it?.en || '');
+            if (!zh && !en) return false;
+
+            if (zh.toLowerCase().includes(qLower) || en.toLowerCase().includes(qLower)) return true;
+            if (!qNorm) return false;
+
+            return (
+              __normalizeMapNameKey(zh).includes(qNorm) ||
+              __normalizeMapNameKey(en).includes(qNorm)
+            );
+          })
+          .slice(0, 10);
+
+        matches.forEach((it) => {
+          const label = String(it.zh || it.en);
+          const raw = String(it.en || '');
+          if (!raw) return;
+          suggestionsContainer.appendChild(makeItem(label, raw));
+        });
+
+        if (suggestionsContainer.children.length > 0) {
+          openFloating(suggestionsContainer, input, {
+            matchAnchorWidth: true,
+            offset: 4,
+            origin: 'top left',
+            dur: 140,
+          });
+        } else {
+          closeFloating(suggestionsContainer);
+        }
+        return;
+      }
+
+      const locale = CURRENT_LANG === 'cn' ? 'cn' : CURRENT_LANG === 'jp' ? 'en' : 'en';
+      const url = buildAutocompleteUrl(apiEndpoint, { value: filterValue, locale, pageSize: 10 });
+
+      try {
+        const r = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!r.ok) throw new Error(`API Error: ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
+
+        const data = await r.json();
         suggestionsContainer.innerHTML = '';
         if (!Array.isArray(data) || data.length === 0) {
           closeFloating(suggestionsContainer);
           return;
         }
-
-        const makeItem = (label, raw) => {
-          const d = document.createElement('div');
-          d.textContent = label;
-          d.className =
-            'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
-          d.setAttribute('data-raw-value', raw);
-          d.addEventListener('click', (e) => {
-            e.stopPropagation();
-            input.setAttribute('data-selected-raw-value', raw);
-            input.value = label;
-
-            let labelId = propertyName;
-            if (propertyName === 'code') labelId = 'code';
-            if (propertyName === 'map_name') labelId = 'map name';
-
-            const translatedMessage = t('popup.filter_applied', {
-              filterId: labelId,
-              value: label,
-            });
-            showConfirmationMessage(translatedMessage);
-
-            closeFloating(suggestionsContainer);
-            updateActiveFilters();
-
-            input.blur();
-            closeFloating(input);
-
-            const parentId = input.getAttribute('data-parent') || '';
-            const parentBtn = parentId ? document.getElementById(parentId) : null;
-            if (parentBtn) {
-              parentBtn.classList.remove('selected');
-              const circle = parentBtn.querySelector('.selection-circle');
-              if (circle) circle.classList.remove('circle-visible');
-            }
-          });
-          return d;
-        };
 
         data.forEach((item) => {
           if (propertyName === 'code' && typeof item === 'string') {
@@ -2160,9 +2968,15 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
             if (label) suggestionsContainer.appendChild(makeItem(label, id));
             return;
           }
-          if (item[propertyName]) {
+          if (item && item[propertyName]) {
             const rawValue = item[propertyName];
-            const displayName = item.translated_map_name || rawValue;
+            const displayName =
+              item.translated_map_name ||
+              (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn'
+                ? mapNameToCnDisplay(rawValue)
+                : rawValue) ||
+              rawValue;
+
             suggestionsContainer.appendChild(makeItem(displayName, rawValue));
           }
         });
@@ -2177,12 +2991,11 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
         } else {
           closeFloating(suggestionsContainer);
         }
-      })
-      .catch((error) => {
-        console.error(`Error fetching ${apiEndpoint} suggestions:`, error);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions :', error);
         closeFloating(suggestionsContainer);
-      });
-  }, 220);
+      }
+    }, 220);
 }
 
 /* =========================
@@ -2686,9 +3499,11 @@ async function displayMapSearchResultsCards(rowsInput) {
     const diffCls = `mx-d-${diffSlug(diff)}`;
 
     const mapName     = r.original_map_name || r.map_name || 'N/A';
-    const mapNameKey  = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g, '');
-    const bannerPath  = r.map_banner || `assets/banners/${mapNameKey}.png`;
-    const bannerFB    = `assets/banners/${mapNameKey}.png`;
+    const mapNameKey = (r.original_map_name || r.map_name || 'default')
+      .toLowerCase()
+      .replace(/[()\s':]/g, '');
+    const bannerPath  = cdnImage(`assets/map_banners/${mapNameKey}.png`);
+    const bannerFB    = cdnImage(`assets/map_banners/${mapNameKey}.png`);
     const checkpoints = (r.checkpoints != null && r.checkpoints !== 'N/A') ? String(r.checkpoints) : '';
 
     const medalClass =
@@ -3030,14 +3845,26 @@ function ensureSearchDetailsModal() {
                 ${t('card.completed')}
               </span>
 
-              <!-- Close -->
-              <button type="button" id="modalCloseBtn"
-                class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
-                aria-label="${t('popup.close')}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
+              <div class="flex items-center gap-2">
+                <!-- Change requests -->
+                <button type="button" id="btnOpenMapEditRequest"
+                  class="group inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 ring-1 ring-white/15 hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                  </svg>
+                  <span id="btnOpenMapEditRequestText">${t('map_edit_request.title')}</span>
+                </button>
+
+                <!-- Close -->
+                <button type="button" id="modalCloseBtn"
+                  class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                  aria-label="${t('popup.close')}">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -3287,11 +4114,1890 @@ function ensureSearchDetailsModal() {
   }
 }
 
-async function openSearchDetailsModal(r) {
+/* =========================
+   MAP EDIT REQUEST MODAL
+   ========================= */
+function ensureMapEditRequestModal() {
+  if (document.getElementById('mapEditRequestOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'mapEditRequestOverlay';
+  overlay.className =
+  'fixed inset-0 z-[110] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-6 sm:p-8';
+
+  const title =
+    (typeof t === 'function' && t('map_edit_request.title') && t('map_edit_request.title') !== 'map_edit_request.title')
+      ? t('map_edit_request.title')
+      : 'Map edit request';
+
+  const subtitle =
+    (typeof t === 'function' && t('map_edit_request.subtitle') && t('map_edit_request.subtitle') !== 'map_edit_request.subtitle')
+      ? t('map_edit_request.subtitle')
+      : 'Propose changes to a map';
+
+  const reasonLabel =
+    (typeof t === 'function' && t('map_edit_request.reason') && t('map_edit_request.reason') !== 'map_edit_request.reason')
+      ? t('map_edit_request.reason')
+      : 'Reason';
+
+  const sendLabel =
+    (typeof t === 'function' && t('map_edit_request.send') && t('map_edit_request.send') !== 'map_edit_request.send')
+      ? t('map_edit_request.send')
+      : 'Send map edit request';
+
+  const closeLabel =
+    (typeof t === 'function' && t('common.close') && t('common.close') !== 'common.close')
+      ? t('common.close')
+      : 'Close';
+
+  overlay.innerHTML = `
+    <div data-mer-box class="mx-4 flex w-[min(96vw,1100px)] max-h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl ring-1 ring-white/10">
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-4 border-b border-white/10 bg-zinc-900/40 px-5 py-4">
+        <div class="min-w-0">
+          <div class="text-lg font-semibold text-white">${__merEsc(title)}</div>
+          <div class="mt-0.5 text-sm text-zinc-300">${__merEsc(subtitle)}</div>
+        </div>
+
+        <button type="button" data-mer-close
+          class="inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-white/80 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <div id="merLoginNotice" class="hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"></div>
+
+        <!-- Request -->
+        <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.code') || 'Code') : 'Code')}</div>
+              <div id="merCode"
+                class="mt-1 w-full select-none pointer-events-none cursor-default rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100">N/A</div>
+            </div>
+
+            <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.created_by') || 'Created by') : 'Created by')}</div>
+              <div id="merCreatedBy"
+                class="mt-1 w-full select-none pointer-events-none cursor-default rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100">N/A</div>
+            </div>
+
+            <div class="sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <div class="text-[11px] text-zinc-400">${__merEsc(reasonLabel)}</div>
+              <textarea id="merReason" rows="3"
+                class="mt-1 w-full resize-y rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.reason_placeholder') || 'Explain why you want to change this map…') : 'Explain why you want to change this map…')}"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proposed changes -->
+        <div class="space-y-6">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-semibold text-white/90">
+              ${__merEsc(typeof t === 'function' ? (t('map_edit_request.proposed_changes') || 'Proposed changes') : 'Proposed changes')}
+            </div>
+            <div class="text-xs text-zinc-400">
+              ${__merEsc(typeof t === 'function' ? (t('map_edit_request.proposed_hint') || 'Only changed fields will be sent') : 'Only changed fields will be sent')}
+            </div>
+          </div>
+
+          <!-- META (submitMapForm-like) -->
+          <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in">
+            <div class="mb-4 flex flex-wrap items-center gap-3">
+
+              <div id="merArchivedSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1" data-value="0">
+                <button type="button" data-switch="archived" data-value="0"
+                  class="mer-switch-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
+                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.active') || 'Active') : 'Active')}
+                </button>
+                <button type="button" data-switch="archived" data-value="1"
+                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white/80 hover:bg-white/10">
+                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.archived') || 'Archived') : 'Archived')}
+                </button>
+              </div>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.new_code') || 'New code') : 'New code')}</div>
+                <input id="merNewCode" type="text" inputmode="text" autocomplete="off"
+                  class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.new_code_placeholder') || 'Leave empty to keep current') : 'Leave empty to keep current')}" />
+              </div>
+
+              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.map_name') || 'Map name') : 'Map name')}</div>
+                <div class="relative mt-1">
+                  <input id="merMapName" type="text" autocomplete="off"
+                    class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                  <div id="merMapNameSuggestions"
+                    class="absolute left-0 right-0 z-[120] mt-1 hidden rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+                </div>
+              </div>
+
+              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.checkpoints') || 'Checkpoints') : 'Checkpoints')}</div>
+                <input id="merCheckpoints" type="number" inputmode="numeric" min="0" step="1"
+                  class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+              </div>
+
+              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.creators') || 'Creators') : 'Creators')}</div>
+                <input id="merCreators" type="hidden" />
+
+                <div id="merCreatorsChips" class="mt-2 flex flex-wrap gap-2"></div>
+
+                <div class="relative mt-2">
+                  <input id="merCreatorsSearch" type="text" autocomplete="off"
+                    class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.creator_search') || 'Search a user…') : 'Search a user…')}" />
+                  <div id="merCreatorSuggestions"
+                    class="absolute left-0 right-0 z-[120] mt-1 hidden rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                </div>
+
+                <div class="mt-2 text-[11px] text-zinc-400">
+                  ${__merEsc(typeof t === 'function' ? (t('map_edit_request.creator_hint') || 'Select users to add. First creator is primary.') : 'Select users to add. First creator is primary.')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- REQUIRED (submitMapForm-like) -->
+          <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in">
+            <div class="grid gap-4 md:grid-cols-2">
+              <div>
+                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.category') || 'Category') : 'Category')}</div>
+                <div id="merCategoryDropdown" class="custom-multiselect relative">
+                  <button type="button" id="merCategoryDropdownBtn"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.category') || 'Category') : 'Category')}">
+                    <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.difficulty') || 'Difficulty') : 'Difficulty')}</div>
+                <div id="merDifficultyDropdown" class="custom-multiselect relative">
+                  <button type="button" id="merDifficultyDropdownBtn"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.difficulty') || 'Difficulty') : 'Difficulty')}">
+                    <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.mechanics') || 'Mechanics') : 'Mechanics')}</div>
+                <div id="merMechanicsDropdown" class="custom-multiselect relative">
+                  <button type="button" id="merMechanicsDropdownBtn"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.mechanics') || 'Mechanics') : 'Mechanics')}">
+                    <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.restrictions') || 'Restrictions') : 'Restrictions')}</div>
+                <div id="merRestrictionsDropdown" class="custom-multiselect relative">
+                  <button type="button" id="merRestrictionsDropdownBtn"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.restrictions') || 'Restrictions') : 'Restrictions')}">
+                    <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OPTIONAL -->
+          <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in">
+            <div class="grid gap-4 md:grid-cols-2">
+              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.optional_title') || 'Title') : 'Title')}</div>
+                <input id="merTitle" type="text" autocomplete="off"
+                  class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+              </div>
+
+              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400 mb-1">${__merEsc(typeof t === 'function' ? (t('map_edit_request.custom_banner') || t('map.optional.custom_banner') || 'Custom banner') : 'Custom banner')}</div>
+                <input id="merCustomBanner" type="hidden" autocomplete="off" />
+                <div id="merBannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
+                  <input id="merBannerInput" type="file" accept="image/*" class="hidden">
+                  <div id="merBannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+                    ${__merEsc(typeof t === 'function' ? (t('map_edit_request.drag_and_drop') || 'Drag & drop or click to upload') : 'Drag & drop or click to upload')}
+                    <div class="text-[11px] text-zinc-400 mt-1">${__merEsc(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="md:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.optional_description') || 'Description') : 'Description')}</div>
+                <textarea id="merDescription" rows="4"
+                  class="mt-1 w-full resize-y rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"></textarea>
+              </div>
+
+              <div class="md:col-span-2 grid gap-3 sm:grid-cols-3">
+                <div class="relative rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_gold') || 'Gold medal') : 'Gold medal')}</div>
+                  <input id="merMedalGold" type="text" autocomplete="off"
+                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                </div>
+                <div class="relative rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_silver') || 'Silver medal') : 'Silver medal')}</div>
+                  <input id="merMedalSilver" type="text" autocomplete="off"
+                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                </div>
+                <div class="relative rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_bronze') || 'Bronze medal') : 'Bronze medal')}</div>
+                  <input id="merMedalBronze" type="text" autocomplete="off"
+                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="merStatus" class="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-200"></div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center gap-3 border-t border-white/10 bg-zinc-900/30 px-5 py-4">
+        <button type="button" id="merSendBtn"
+          class="ml-auto inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
+          ${__merEsc(sendLabel)}
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const box = overlay.querySelector('[data-mer-box]');
+  const statusEl = overlay.querySelector('#merStatus');
+
+  const close = () => {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+    if (statusEl) statusEl.classList.add('hidden');
+    if (!__suppressUrlSync) __urlHandleModalUserClose('map_edit_request');
+  };
+
+  const show = () => {
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    if (statusEl) statusEl.classList.add('hidden');
+  };
+
+  overlay.querySelectorAll('[data-mer-close]').forEach((btn) => btn.addEventListener('click', close));
+  overlay.addEventListener('pointerdown', (e) => {
+    if (!box.contains(e.target)) close();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-switch]');
+    if (!btn) return;
+    const group = btn.getAttribute('data-switch');
+    const val = btn.getAttribute('data-value') || '0';
+    const groupEl = overlay.querySelector(`#mer${group.charAt(0).toUpperCase()}${group.slice(1)}Switch`);
+    if (!groupEl) return;
+    groupEl.setAttribute('data-value', val);
+
+    groupEl.querySelectorAll('button[data-switch]').forEach((b) => {
+      const isActive = (b.getAttribute('data-value') || '0') === val;
+      b.classList.toggle('bg-white', isActive);
+      b.classList.toggle('text-zinc-900', isActive);
+      b.classList.toggle('text-white/80', !isActive);
+      b.classList.toggle('hover:bg-white/10', !isActive);
+    });
+  });
+
+  overlay.__merMounted = overlay.__merMounted || {};
+  overlay.__merMounted.dropdown = false;
+  overlay.__merMounted.auto = false;
+  overlay.__merMounted.send = false;
+
+  overlay.__merShow = show;
+  overlay.__merClose = close;
+}
+
+function __merEsc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function __merSameArray(a, b) {
+  const aa = Array.isArray(a) ? a.filter(Boolean).map(String) : [];
+  const bb = Array.isArray(b) ? b.filter(Boolean).map(String) : [];
+  if (aa.length !== bb.length) return false;
+  aa.sort(); bb.sort();
+  for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+  return true;
+}
+
+function __merReadNumber(v) {
+  const n = Number(String(v ?? '').trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+async function __merFetchMapRowByCode(code) {
+  try {
+    const params = new URLSearchParams({
+      page_size: '10',
+      page_number: '1',
+      code: String(code ?? '').trim(),
+    });
+    const uid = (typeof window !== 'undefined' && window.user_id != null) ? String(window.user_id).trim() : '';
+    if (uid) params.set('user_id', uid);
+    const resp = await fetch(`${apiUrls.mapSearch}?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const status = resp.status;
+    if (!resp.ok) {
+      let txt = '';
+      try { txt = await resp.text(); } catch {}
+      return { ok: false, status, error: txt || 'Upstream error' };
+    }
+    const data = await resp.json();
+    const rows = normalizeToRows(data, 'map');
+    const row = rows && rows[0] ? rows[0] : null;
+    return { ok: true, status, row };
+  } catch (e) {
+    return { ok: false, status: 0, error: e?.message || String(e) };
+  }
+}
+
+function __merFillSelect(el, options, selectedRaw) {
+  if (!el) return;
+  const current = (selectedRaw ?? '').toString();
+  el.innerHTML = options
+    .map((o) => {
+      const raw = o.raw ?? o.value ?? '';
+      const label = o.label ?? o.text ?? raw;
+      const sel = String(raw) === current ? ' selected' : '';
+      return `<option value="${__merEsc(raw)}"${sel}>${__merEsc(label)}</option>`;
+    })
+    .join('');
+}
+
+function __merRenderChecklist(menuEl, options, selectedSet, onChange) {
+  if (!menuEl) return;
+  menuEl.innerHTML = options
+    .map((opt) => {
+      const raw = opt.raw ?? opt.value ?? '';
+      const label = opt.translated ?? opt.label ?? opt.text ?? raw;
+      const checked = selectedSet.has(String(raw)) ? 'checked' : '';
+      return `
+        <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-white/5">
+          <input type="checkbox" class="h-4 w-4 rounded border-white/20 bg-black/30 text-emerald-400 focus:ring-emerald-400/30"
+                 value="${__merEsc(raw)}" ${checked}>
+          <span class="text-sm text-zinc-200">${__merEsc(label)}</span>
+        </label>
+      `;
+    })
+    .join('');
+
+  menuEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      const v = String(cb.value);
+      if (cb.checked) selectedSet.add(v);
+      else selectedSet.delete(v);
+      onChange && onChange();
+    });
+  });
+}
+
+function __merSetMultiLabel(labelEl, selectedSet, emptyLabel) {
+  if (!labelEl) return;
+  const n = selectedSet.size;
+  if (!n) labelEl.textContent = emptyLabel;
+  else labelEl.textContent = `${n} selected`;
+}
+
+/* -------------------------------------------------------------------------
+   Map Edit Request controls
+   ------------------------------------------------------------------------- */
+
+const __MER_CATEGORY_OPTIONS = [
+  { text: () => t('filters_toolbar.classic') || 'Classic', value: 'Classic', raw: 'Classic' },
+  {
+    text: () => t('filters_toolbar.increasing_difficulty') || 'Increasing Difficulty',
+    value: 'Increasing Difficulty',
+    raw: 'Increasing Difficulty',
+  },
+  // { text: () => t('filters.tournament') || 'Tournament', value: 'Tournament', raw: 'Tournament' },
+];
+
+const __MER_DIFFICULTY_FINE_OPTIONS = [
+  { text: () => `${t('filters_toolbar.easy') || 'Easy'} -`, value: 'Easy -', raw: 'Easy -' },
+  { text: () => t('filters_toolbar.easy') || 'Easy', value: 'Easy', raw: 'Easy' },
+  { text: () => `${t('filters_toolbar.easy') || 'Easy'} +`, value: 'Easy +', raw: 'Easy +' },
+
+  { text: () => `${t('filters_toolbar.medium') || 'Medium'} -`, value: 'Medium -', raw: 'Medium -' },
+  { text: () => t('filters_toolbar.medium') || 'Medium', value: 'Medium', raw: 'Medium' },
+  { text: () => `${t('filters_toolbar.medium') || 'Medium'} +`, value: 'Medium +', raw: 'Medium +' },
+  { text: () => `${t('filters_toolbar.hard') || 'Hard'} -`, value: 'Hard -', raw: 'Hard -' },
+  { text: () => t('filters_toolbar.hard') || 'Hard', value: 'Hard', raw: 'Hard' },
+  { text: () => `${t('filters_toolbar.hard') || 'Hard'} +`, value: 'Hard +', raw: 'Hard +' },
+
+  { text: () => `${t('filters_toolbar.very_hard') || 'Very Hard'} -`, value: 'Very Hard -', raw: 'Very Hard -' },
+  { text: () => t('filters_toolbar.very_hard') || 'Very Hard', value: 'Very Hard', raw: 'Very Hard' },
+  { text: () => `${t('filters_toolbar.very_hard') || 'Very Hard'} +`, value: 'Very Hard +', raw: 'Very Hard +' },
+
+  { text: () => `${t('filters_toolbar.extreme') || 'Extreme'} -`, value: 'Extreme -', raw: 'Extreme -' },
+  { text: () => t('filters_toolbar.extreme') || 'Extreme', value: 'Extreme', raw: 'Extreme' },
+  { text: () => `${t('filters_toolbar.extreme') || 'Extreme'} +`, value: 'Extreme +', raw: 'Extreme +' },
+
+  { text: () => t('filters_toolbar.hell') || 'Hell', value: 'Hell', raw: 'Hell' },
+];
+
+
+// --- MER helpers
+function __merDifficultyDotClass(labelOrRaw) {
+  const L = String(labelOrRaw || '').toLowerCase();
+  if (L.startsWith('easy')) return 'bg-emerald-400';
+  if (L.startsWith('medium')) return 'bg-yellow-400';
+  if (L.startsWith('very hard')) return 'bg-orange-500';
+  if (L.startsWith('hard') && !L.startsWith('very')) return 'bg-orange-400';
+  if (L.startsWith('extreme')) return 'bg-red-500';
+  if (L.startsWith('hell')) return 'bg-rose-500';
+  return 'bg-zinc-400';
+}
+
+let __merMechRestrCache = null;
+let __merMechRestrInFlight = null;
+
+function __merToNameArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.items)) return data.items;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.results)) return data.results;
+  }
+  return [];
+}
+
+async function __merFillMechanicsAndRestrictions() {
+  if (__merMechRestrCache) return __merMechRestrCache;
+  if (__merMechRestrInFlight) return __merMechRestrInFlight;
+
+  const locale =
+    (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : document.documentElement.lang || 'en');
+
+  __merMechRestrInFlight = (async () => {
+    try {
+      const [mechResp, restrResp] = await Promise.all([
+        fetch('/api/autocomplete/map-mechanics', { headers: { Accept: 'application/json' } }),
+        fetch('/api/autocomplete/map-restrictions', { headers: { Accept: 'application/json' } }),
+      ]);
+
+      const mechanicsData = mechResp.ok ? await mechResp.json() : [];
+      const restrictionsData = restrResp.ok ? await restrResp.json() : [];
+
+      const toOpt = (data, keyPrefix) => {
+        const base = __merToNameArray(data)
+          .map((v) => (typeof v === 'string' ? v : v?.name ?? v?.value ?? v?.label ?? ''))
+          .map((s) => String(s || '').trim())
+          .filter(Boolean);
+
+        const seen = new Set();
+        const out = [];
+        for (const raw of base) {
+          if (seen.has(raw)) continue;
+          seen.add(raw);
+
+          let translated = raw;
+          if (typeof t === 'function' && locale === 'cn') {
+            const slug = raw.toLowerCase().replace(/\s+/g, '_');
+            const k = `${keyPrefix}.${slug}`;
+            const tr = t(k);
+            if (tr && tr !== k) translated = tr;
+          }
+
+          out.push({ translated, value: raw, raw });
+        }
+        return out;
+      };
+
+      const mechanicsOptions = toOpt(mechanicsData, 'mechanics');
+      const restrictionsOptions = toOpt(restrictionsData, 'restrictions');
+
+      __merMechRestrCache = { mechanicsOptions, restrictionsOptions };
+      return __merMechRestrCache;
+    } catch {
+      __merMechRestrCache = { mechanicsOptions: [], restrictionsOptions: [] };
+      return __merMechRestrCache;
+    } finally {
+      __merMechRestrInFlight = null;
+    }
+  })();
+
+  return __merMechRestrInFlight;
+}
+
+const __merUserCache = new Map();
+async function __merFetchUserProfile(userId) {
+  const id = String(userId || '').trim();
+  if (!/^\d+$/.test(id)) return null;
+
+  const cached = __merUserCache.get(id);
+  if (cached) return cached instanceof Promise ? await cached : cached;
+
+  const p = (async () => {
+    try {
+      const resp = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!resp.ok) return null;
+      return await resp.json();
+    } catch {
+      return null;
+    }
+  })();
+
+  __merUserCache.set(id, p);
+  const data = await p;
+  __merUserCache.set(id, data);
+  return data;
+}
+
+function __merUserDisplayName(profile) {
+  const name =
+    profile?.coalesced_name ||
+    profile?.global_name ||
+    profile?.name ||
+    profile?.nickname ||
+    profile?.username ||
+    '';
+  return String(name || '').trim();
+}
+
+async function __merSetUserDisplayInto(el, userId, fallback = '') {
+  if (!el) return;
+  const id = String(userId || '').trim();
+  if (!id) {
+    el.textContent = fallback || '—';
+    return;
+  }
+
+  el.textContent = fallback || '…';
+
+  const profile = await __merFetchUserProfile(id);
+  const name = __merUserDisplayName(profile);
+  el.textContent = name || fallback || id;
+}
+
+function __merEnsureCreatorsState(overlay, creators) {
+  if (!overlay) return;
+
+  let list = Array.isArray(creators) ? creators.slice() : [];
+
+  const seen = new Set();
+  list = list
+    .map((c) => ({
+      id: String(c?.id ?? c?.user_id ?? '').trim(),
+      name: String(c?.name ?? '').trim(),
+      is_primary: !!c?.is_primary,
+    }))
+    .filter((c) => /^\d+$/.test(c.id))
+    .filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+
+  const firstId = list[0]?.id || null;
+  const primaryId = list.find((c) => c.is_primary)?.id || firstId;
+  list.forEach((c) => (c.is_primary = c.id === primaryId));
+
+  overlay.__merCreatorsState = { list };
+}
+
+function __merSyncCreatorsHiddenInput(overlay) {
+  const hidden = document.getElementById('merCreators');
+  if (!hidden) return;
+
+  const list = Array.isArray(overlay?.__merCreatorsState?.list) ? overlay.__merCreatorsState.list : [];
+  hidden.value = list.map((c) => c.id).join(', ');
+}
+
+function __merRenderCreatorsChips(overlay) {
+  const host = document.getElementById('merCreatorsChips');
+  if (!host) return;
+
+  const creators = Array.isArray(overlay?.__merCreatorsState?.list) ? overlay.__merCreatorsState.list : [];
+  host.innerHTML = '';
+
+  if (!creators.length) {
+    const empty = document.createElement('div');
+    empty.className = 'text-sm text-zinc-400';
+    empty.textContent = 'N/A';
+    host.appendChild(empty);
+    return;
+  }
+
+  for (const c of creators) {
+    const chip = document.createElement('span');
+    chip.className =
+      'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-white/85';
+
+    const dot = document.createElement('span');
+    dot.className = 'h-2 w-2 rounded-full ' + (c.is_primary ? 'bg-emerald-400' : 'bg-white/50');
+
+    const name = document.createElement('span');
+    name.className = 'max-w-[180px] truncate';
+    name.textContent = c.name || c.id;
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className =
+      'ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/80 hover:bg-white/10 cursor-pointer';
+    remove.setAttribute('data-mer-remove-creator', c.id);
+    remove.innerHTML = '&times;';
+
+    chip.appendChild(dot);
+    chip.appendChild(name);
+    chip.appendChild(remove);
+    host.appendChild(chip);
+  }
+
+  host.querySelectorAll('button[data-mer-remove-creator]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-mer-remove-creator');
+      if (!id) return;
+      overlay.__merCreatorsState.list = creators.filter((c) => c.id !== id);
+
+      const firstId = overlay.__merCreatorsState.list[0]?.id || null;
+      const primaryId = overlay.__merCreatorsState.list.find((c) => c.is_primary)?.id || firstId;
+      overlay.__merCreatorsState.list.forEach((c) => (c.is_primary = c.id === primaryId));
+
+      __merSyncCreatorsHiddenInput(overlay);
+      __merRenderCreatorsChips(overlay);
+    });
+  });
+}
+
+function __merAddCreatorToState(overlay, { id, name }) {
+  const uid = String(id || '').trim();
+  if (!/^\d+$/.test(uid)) return;
+  const nm = String(name || '').trim();
+
+  overlay.__merCreatorsState = overlay.__merCreatorsState || { list: [] };
+  const list = Array.isArray(overlay.__merCreatorsState.list) ? overlay.__merCreatorsState.list : (overlay.__merCreatorsState.list = []);
+
+  if (list.some((c) => c.id === uid)) return;
+
+  const isPrimary = list.length === 0;
+  list.push({ id: uid, name: nm, is_primary: isPrimary });
+
+  if (isPrimary) {
+    list.forEach((c) => (c.is_primary = c.id === uid));
+  }
+
+  __merSyncCreatorsHiddenInput(overlay);
+  __merRenderCreatorsChips(overlay);
+}
+
+// --- MER banner upload / dropzone
+const __MER_BANNER_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+const __MER_BANNER_MAX_BYTES = 10 * 1024 * 1024; // 10MB
+const __MER_IMAGE_UPLOAD_ENDPOINT = '/api/utilities/image';
+
+function __merShowBusy(el) {
+  if (!el) return () => {};
+  const o = document.createElement('div');
+  o.className = 'absolute inset-0 grid place-items-center bg-black/40 backdrop-blur-sm';
+  o.innerHTML = `<div class="rounded-md bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100 ring-1 ring-emerald-500/60">${(typeof t === 'function' ? (t('record.uploading_screenshot') || 'Uploading…') : 'Uploading…')}</div>`;
+  el.appendChild(o);
+  return () => o.remove();
+}
+
+function __merFilenameWithExt(file, base = 'image') {
+  const name = String(file?.name || '').trim();
+  const ext = (name.match(/\.[a-z0-9]{2,5}$/i) || [''])[0];
+  return ext ? `${base}${ext.toLowerCase()}` : base;
+}
+
+async function __merUploadImageGeneric(file) {
+  if (!file) throw new Error('No file');
+  if (!__MER_BANNER_ALLOWED_MIME.includes(file.type)) {
+    throw new Error(typeof t === 'function' ? (t('errors.image_type') || 'Unsupported image type.') : 'Unsupported image type.');
+  }
+  if (file.size > __MER_BANNER_MAX_BYTES) {
+    throw new Error(typeof t === 'function' ? (t('errors.image_too_large') || 'Image too large.') : 'Image too large.');
+  }
+
+  const fd = new FormData();
+  fd.append('file', file, __merFilenameWithExt(file, 'banner'));
+
+  const resp = await fetch(__MER_IMAGE_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    headers: { Accept: 'text/plain' },
+    body: fd,
+    credentials: 'same-origin',
+  });
+
+  const text = await resp.text();
+  if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
+  const url = (text || '').trim();
+  if (!/^https?:\/\//i.test(url)) throw new Error('Invalid upload response.');
+  return url;
+}
+
+function __merResetBannerDropzone(overlay) {
+  const drop = document.getElementById('merBannerDrop');
+  if (!drop) return;
+
+  overlay.__merBannerFile = null;
+  overlay.__merBannerUrl = null;
+
+  const hidden = document.getElementById('merCustomBanner');
+  if (hidden) hidden.value = '';
+
+  drop.dataset.merBound = '0';
+  drop.innerHTML = `
+    <input id="merBannerInput" type="file" accept="image/*" class="hidden">
+    <div id="merBannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+      ${(typeof t === 'function' ? (t('map_edit_request.drag_and_drop') || 'Drag & drop or click to upload') : 'Drag & drop or click to upload')}
+      <div class="text-[11px] text-zinc-400 mt-1">${(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
+    </div>
+  `;
+
+  __merSetupBannerDropzone(overlay);
+}
+
+function __merSetBannerPreviewFromUrl(overlay, url) {
+  const drop = document.getElementById('merBannerDrop');
+  if (!drop) return;
+
+  overlay.__merBannerFile = null;
+  overlay.__merBannerUrl = url;
+
+  const hidden = document.getElementById('merCustomBanner');
+  if (hidden) hidden.value = url || '';
+
+  drop.dataset.merBound = '0';
+  drop.innerHTML = `
+    <div class="absolute inset-0"></div>
+    <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
+      <span class="text-xs text-white/90 truncate px-1">${__merEsc(url || '')}</span>
+      <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+        ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
+      </button>
+    </div>
+  `;
+
+  const imgHost = drop.firstElementChild;
+  const img = new Image();
+  img.alt = '';
+  img.decoding = 'async';
+  img.loading = 'eager';
+  img.draggable = false;
+  img.className = 'absolute inset-0 h-full w-full object-cover select-none pointer-events-none';
+  img.src = String(url || '');
+  imgHost.appendChild(img);
+
+  document.getElementById('merBannerRemoveBtn')?.addEventListener('click', () => __merResetBannerDropzone(overlay));
+}
+
+function __merSetupBannerDropzone(overlay) {
+  const drop = document.getElementById('merBannerDrop');
+  const input = document.getElementById('merBannerInput');
+  if (!drop || !input) return;
+
+  if (drop.dataset.merBound === '1') return;
+  drop.dataset.merBound = '1';
+
+  const pick = () => input.click();
+
+  const readAsDataURL = (file) =>
+    new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+  const setPreview = async (file) => {
+    drop.dataset.merBound = '0';
+    drop.innerHTML = `
+      <div class="absolute inset-0"></div>
+      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
+        <span class="text-xs text-white/90 truncate px-1">${__merEsc(file.name || '')}</span>
+        <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+          ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
+        </button>
+      </div>
+    `;
+
+    const imgHost = drop.firstElementChild;
+    const img = new Image();
+    img.alt = '';
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.draggable = false;
+    img.className = 'absolute inset-0 h-full w-full object-cover select-none pointer-events-none';
+
+    let blobUrl = null;
+    try {
+      blobUrl = URL.createObjectURL(file);
+      img.src = blobUrl;
+
+      img.onerror = async () => {
+        try {
+          const dataUrl = await readAsDataURL(file);
+          img.src = dataUrl;
+        } catch {
+          /* ignore */
+        } finally {
+          if (blobUrl) URL.revokeObjectURL(blobUrl);
+        }
+      };
+
+      img.onload = () => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+      };
+    } catch {
+      try {
+        const dataUrl = await readAsDataURL(file);
+        img.src = dataUrl;
+      } catch {
+        /* ignore */
+      }
+    }
+
+    imgHost.appendChild(img);
+
+    document.getElementById('merBannerRemoveBtn')?.addEventListener('click', () => __merResetBannerDropzone(overlay));
+  };
+
+  const acceptFile = async (file) => {
+    if (!file) return;
+
+    if (!__MER_BANNER_ALLOWED_MIME.includes(file.type)) {
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage(typeof t === 'function' ? (t('errors.image_type') || 'Unsupported image type.') : 'Unsupported image type.');
+      }
+      return;
+    }
+    if (file.size > __MER_BANNER_MAX_BYTES) {
+      if (typeof showWarningMessage === 'function') {
+        showWarningMessage(typeof t === 'function' ? (t('errors.image_too_large') || 'Image too large.') : 'Image too large.');
+      }
+      return;
+    }
+
+    overlay.__merBannerFile = file;
+    await setPreview(file);
+
+    const endBusy = __merShowBusy(drop);
+    try {
+      const url = await __merUploadImageGeneric(file);
+      overlay.__merBannerUrl = url;
+      const hidden = document.getElementById('merCustomBanner');
+      if (hidden) hidden.value = url || '';
+
+      const ok = document.createElement('div');
+      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-white px-2 py-0.5 shadow';
+      ok.textContent = 'Uploaded';
+      drop.appendChild(ok);
+      setTimeout(() => ok.remove(), 1500);
+    } catch (e) {
+      overlay.__merBannerUrl = null;
+      const hidden = document.getElementById('merCustomBanner');
+      if (hidden) hidden.value = '';
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage(e?.message || (typeof t === 'function' ? (t('errors.upload_failed') || 'Upload failed.') : 'Upload failed.'));
+      }
+    } finally {
+      endBusy();
+    }
+  };
+
+  input.addEventListener('change', (e) => acceptFile(e.target.files?.[0]));
+  drop.addEventListener('click', pick);
+
+  drop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add('ring-2', 'ring-emerald-500/60');
+  });
+  drop.addEventListener('dragleave', () => {
+    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+  });
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    const file = e.dataTransfer?.files?.[0];
+    acceptFile(file);
+  });
+}
+
+function __merGetSafeUserIdString() {
+  const candidates = [];
+  if (typeof window !== 'undefined') {
+    candidates.push(window.user_id, window.userId, window.USER_ID, window.__USER_ID__);
+    candidates.push(window?.user?.id, window?.user?.user_id);
+  }
+
+  try {
+    const el = document.documentElement;
+    if (el?.dataset) candidates.push(el.dataset.userId, el.dataset.user_id);
+    const m = document.querySelector('meta[name="user-id"]');
+    candidates.push(m?.content);
+  } catch {}
+
+  for (const c of candidates) {
+    if (typeof c === 'string' && /^\d{5,25}$/.test(c)) return c;
+    if (typeof c === 'number' && Number.isSafeInteger(c) && c > 0) return String(c);
+  }
+  return null;
+}
+
+function __merGetDropdownListEl(container) {
+  return (
+    container?.querySelector('.custom-multiselect-list') ||
+    container?.querySelector('.fake-select-list') ||
+    null
+  );
+}
+
+function __merGetDropdownBtnEl(container) {
+  return (
+    container?.querySelector('.fake-select-btn, .custom-multiselect-btn') ||
+    null
+  );
+}
+
+function __merEnsureBtnLabelSpan(btn) {
+  if (!btn) return null;
+  let span = btn.querySelector('.cm-label');
+  if (!span) {
+    span = document.createElement('span');
+    span.className = 'cm-label truncate';
+    btn.insertBefore(span, btn.firstChild);
+  }
+  return span;
+}
+
+function __merHideDropdownList(list) {
+  if (!list) return;
+  if (list.classList.contains('dd-anim')) {
+    list.classList.remove('dd-in');
+    list.classList.add('dd-out');
+    setTimeout(() => {
+      list.classList.add('hidden');
+      list.style.display = 'none';
+    }, 120);
+    return;
+  }
+
+  list.classList.add('hidden');
+  list.style.display = 'none';
+}
+
+function __merShowDropdownList(list) {
+  if (!list) return;
+  list.classList.remove('hidden');
+  list.style.display = 'block';
+  if (list.classList.contains('dd-anim')) {
+    requestAnimationFrame(() => {
+      list.classList.remove('dd-out');
+      list.classList.add('dd-in');
+    });
+  }
+}
+
+function __merCloseAllFakeSelects(except) {
+  document.querySelectorAll('.fake-select[data-open="1"], .custom-multiselect[data-open="1"]').forEach((el) => {
+    if (except && el === except) return;
+    const list = __merGetDropdownListEl(el);
+    if (!list) return;
+    el.setAttribute('data-open', '0');
+    __merHideDropdownList(list);
+  });
+}
+
+function __merUpdateFakeSelectLabel(container) {
+  const btn = __merGetDropdownBtnEl(container);
+  const labelEl = __merEnsureBtnLabelSpan(btn);
+  const placeholder = btn?.getAttribute('data-placeholder') ||
+    (typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…');
+  if (!btn || !labelEl) return;
+
+  const isDifficulty = container?.id === 'merDifficultyDropdown';
+  const radio = container.querySelector('input[type="radio"]:checked');
+  if (radio) {
+    const text = String(radio.getAttribute('data-label') || radio.value || '').trim();
+    if (isDifficulty) {
+      const dotCls = __merDifficultyDotClass(text);
+      labelEl.innerHTML = `<span class="mr-2 inline-block h-2 w-2 rounded-full ${dotCls}"></span>${__merEsc(text)}`;
+    } else {
+      labelEl.textContent = text || placeholder;
+    }
+    return;
+  }
+
+  const checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked'));
+  if (checked.length > 0) {
+    const texts = checked
+      .map((c) => String(c.getAttribute('data-label') || c.value || '').trim())
+      .filter(Boolean);
+
+    if (texts.length <= 2) {
+      labelEl.textContent = texts.join(', ');
+    } else {
+      labelEl.textContent = `${texts.length} selected`;
+    }
+    return;
+  }
+
+  labelEl.textContent = placeholder;
+}
+
+function __merSetupFakeSelect(container) {
+  if (!container || container.dataset.merBound === '1') return;
+  container.dataset.merBound = '1';
+
+  const btn = __merGetDropdownBtnEl(container);
+  const list = __merGetDropdownListEl(container);
+  if (!btn || !list) return;
+
+  btn.classList.add('cursor-pointer');
+
+  list.classList.add('dropdown-list', 'dd-anim');
+  list.style.display = 'none';
+
+  const close = () => {
+    container.setAttribute('data-open', '0');
+    __merHideDropdownList(list);
+  };
+
+  const open = () => {
+    __merCloseAllFakeSelects(container);
+    container.setAttribute('data-open', '1');
+    __merShowDropdownList(list);
+  };
+
+  __merUpdateFakeSelectLabel(container);
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = container.getAttribute('data-open') === '1';
+    if (isOpen) close();
+    else open();
+  });
+
+  container.addEventListener('change', (e) => {
+    __merUpdateFakeSelectLabel(container);
+
+    const isRadio = e?.target?.type === 'radio';
+    const shouldAutoClose =
+      isRadio && (container.id === 'merCategoryDropdown' || container.id === 'merDifficultyDropdown');
+
+    if (shouldAutoClose) close();
+  });
+
+  const handleOutside = (e) => {
+    if (!container.contains(e.target)) close();
+  };
+  document.addEventListener('pointerdown', handleOutside);
+
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+}
+
+function __merPopulateRadioDropdown(dropdownId, options, inputName) {
+  const container = document.getElementById(dropdownId);
+  const list = __merGetDropdownListEl(container);
+  if (!container || !list) return;
+
+  const isDifficulty = dropdownId === 'merDifficultyDropdown';
+
+  list.innerHTML = '';
+  (options || []).forEach((opt) => {
+    const value = String(opt.raw ?? opt.value ?? '');
+    const labelText = String(
+      opt.translated ?? (typeof opt.text === 'function' ? opt.text() : (opt.text ?? opt.label ?? value))
+    );
+
+    const label = document.createElement('label');
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+
+    if (isDifficulty) {
+      const dotCls = __merDifficultyDotClass(labelText);
+      label.innerHTML = `
+        <input type="radio" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="sr-only">
+        <span class="inline-block h-2 w-2 rounded-full ${dotCls}"></span>
+        <span class="min-w-0 truncate">${__merEsc(labelText)}</span>
+      `;
+    } else {
+      label.innerHTML = `
+        <input type="radio" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
+        <span class="min-w-0 truncate">${__merEsc(labelText)}</span>
+      `;
+    }
+    list.appendChild(label);
+  });
+
+  __merSetupFakeSelect(container);
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merPopulateCheckboxDropdown(dropdownId, options, inputName) {
+  const container = document.getElementById(dropdownId);
+  const list = __merGetDropdownListEl(container);
+  if (!container || !list) return;
+
+  list.innerHTML = '';
+  (options || []).forEach((opt) => {
+    const value = String(opt.raw ?? opt.value ?? '');
+    const labelText = String(
+      opt.translated ?? (typeof opt.text === 'function' ? opt.text() : (opt.text ?? opt.label ?? value))
+    );
+
+    const label = document.createElement('label');
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+
+    label.innerHTML = `
+      <input type="checkbox" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
+      <span class="min-w-0 truncate">${__merEsc(labelText)}</span>
+    `;
+    list.appendChild(label);
+  });
+
+  __merSetupFakeSelect(container);
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merSetRadioValue(dropdownId, rawValue) {
+  const container = document.getElementById(dropdownId);
+  if (!container) return;
+  container.querySelectorAll('input[type="radio"]').forEach((r) => {
+    r.checked = String(r.value) === String(rawValue ?? '');
+  });
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merGetRadioValue(dropdownId) {
+  const container = document.getElementById(dropdownId);
+  const r = container?.querySelector('input[type="radio"]:checked');
+  return r ? String(r.value) : '';
+}
+
+function __merSetCheckboxValues(dropdownId, values) {
+  const want = new Set((Array.isArray(values) ? values : []).map(String));
+  const container = document.getElementById(dropdownId);
+  if (!container) return;
+  container.querySelectorAll('input[type="checkbox"]').forEach((c) => {
+    c.checked = want.has(String(c.value));
+  });
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merGetCheckboxValues(dropdownId) {
+  const container = document.getElementById(dropdownId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map((c) => String(c.value));
+}
+
+function __merHideSuggestionBox(box) {
+  if (!box) return;
+  box.classList.add('hidden');
+  box.innerHTML = '';
+}
+
+function __merRenderSuggestionBox(box, items, onPick) {
+  if (!box) return;
+  box.innerHTML = '';
+  const max = Math.min(items.length, 12);
+
+  for (let i = 0; i < max; i++) {
+    const it = items[i];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm text-zinc-200 hover:bg-white/10';
+    btn.textContent = it.label;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      onPick(it);
+      __merHideSuggestionBox(box);
+    });
+    box.appendChild(btn);
+  }
+
+  if (max === 0) __merHideSuggestionBox(box);
+  else box.classList.remove('hidden');
+}
+
+function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) {
+  if (!inputEl || !boxEl) return;
+  let timer = null;
+
+  document.addEventListener('pointerdown', (e) => {
+    if (inputEl.contains(e.target) || boxEl.contains(e.target)) return;
+    __merHideSuggestionBox(boxEl);
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') __merHideSuggestionBox(boxEl);
+  });
+
+  inputEl.addEventListener('input', () => {
+    const q = String(inputEl.value || '').trim();
+    if (q.length < minChars) return __merHideSuggestionBox(boxEl);
+
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(async () => {
+      try {
+        const url = buildAutocompleteUrl(kind, { value: q, locale: (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'en'), pageSize: 12 });
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) return __merHideSuggestionBox(boxEl);
+
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.items || data.data || []);
+        const isUsers = kind === 'users';
+        const items = (list || [])
+          .map((x) => {
+            if (Array.isArray(x)) {
+              const id = String(x[0] ?? '').trim();
+              const label = String(x[1] ?? id).trim();
+              return { label, raw: id, data: x };
+            }
+
+            if (typeof x === 'string') return { label: x, raw: x, data: x };
+
+            const label =
+              x.translated_map_name ||
+              x.translated ||
+              x.coalesced_name ||
+              x.global_name ||
+              x.name ||
+              x.nickname ||
+              x.username ||
+              x.map_name ||
+              x.value ||
+              '';
+
+            const isUsers = kind === 'users';
+            const raw = isUsers
+              ? (x.user_id ?? x.id ?? x.value ?? x.raw ?? label)
+              : (x.map_name ?? x.raw ?? x.value ?? x.id ?? x.user_id ?? label);
+
+            return { label: String(label), raw, data: x };
+          })
+          .filter((x) => x.label);
+
+        __merRenderSuggestionBox(boxEl, items, onPick);
+      } catch {
+        __merHideSuggestionBox(boxEl);
+      }
+    }, 220);
+  });
+}
+
+function openMapEditRequestModal(map, opts = {}) {
+  const { fromUrl = false, syncUrl = true } = opts || {};
+  const code = map?.code || '';
+  if (syncUrl && !fromUrl && code) __urlOpenModal('map_edit_request', { code }, { push: true });
+  ensureMapEditRequestModal();
+
+  const overlay = document.getElementById('mapEditRequestOverlay');
+  if (!overlay) return;
+
+  // -------------------------
+  // Helpers
+  // -------------------------
+  const get = (...keys) => {
+    for (const k of keys) {
+      if (k == null) continue;
+      const v = map?.[k];
+      if (v !== undefined && v !== null) return v;
+    }
+    return undefined;
+  };
+
+  const toStr = (v) => (v === undefined || v === null ? '' : String(v));
+  const toBool = (v) => {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v !== 0;
+    if (typeof v === 'string') {
+      const s = v.trim().toLowerCase();
+      if (s === 'true' || s === '1' || s === 'yes' || s === 'y') return true;
+      if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === '') return false;
+    }
+    return false;
+  };
+
+  const normalizeStringList = (arr) =>
+    (Array.isArray(arr) ? arr : [])
+      .map((x) => (x == null ? '' : String(x)).trim())
+      .filter(Boolean);
+
+  const normalizeCreators = (v) => {
+    if (Array.isArray(v)) {
+      if (v.length === 0) return [];
+      if (typeof v[0] === 'object' && v[0]) {
+        return v
+          .map((c) => ({
+            id: String(c.id ?? c.user_id ?? '').trim(),
+            is_primary: !!c.is_primary,
+            name: String(c.name ?? c.coalesced_name ?? c.global_name ?? c.nickname ?? c.username ?? '').trim(),
+          }))
+          .filter((c) => /^\d+$/.test(c.id));
+      }
+      return v
+        .map((x) => ({ id: String(x).trim(), is_primary: false, name: '' }))
+        .filter((c) => /^\d+$/.test(c.id));
+    }
+
+    if (typeof v === 'string') {
+      const ids = v
+        .split(',')
+        .map((x) => x.trim())
+        .filter((x) => /^\d+$/.test(x));
+      return ids.map((id) => ({ id, is_primary: false, name: '' }));
+    }
+
+    if (v && typeof v === 'object') {
+      const primary = v.primary ?? v.primary_id ?? v.primary_user_id;
+      const others = v.others ?? v.secondary ?? [];
+      const out = [];
+      if (primary && /^\d+$/.test(String(primary))) out.push({ id: String(primary), is_primary: true, name: '' });
+      for (const x of (Array.isArray(others) ? others : [])) {
+        if (/^\d+$/.test(String(x))) out.push({ id: String(x), is_primary: false, name: '' });
+      }
+      return out;
+    }
+
+    return [];
+  };
+
+  const equalScalar = (a, b) => {
+    const na = (a === undefined || a === null) ? '' : String(a);
+    const nb = (b === undefined || b === null) ? '' : String(b);
+    return na === nb;
+  };
+
+  const equalArray = (a, b) => {
+    const aa = normalizeStringList(a);
+    const bb = normalizeStringList(b);
+    if (aa.length !== bb.length) return false;
+    for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+    return true;
+  };
+
+  const toSafeId = (s) => {
+    const str = String(s ?? '').trim();
+    const n = Number(str);
+    if (Number.isSafeInteger(n) && String(n) === str) return n;
+    return str;
+  };
+
+  function __merWarn(msg) {
+    const m = String(msg || '').trim();
+    if (!m) return;
+    if (typeof showWarningMessage === 'function') return showWarningMessage(m);
+    try { console.warn(m); } catch {}
+  }
+
+  function __merErr(msg) {
+    const m = String(msg || '').trim();
+    if (!m) return;
+    if (typeof showErrorMessage === 'function') return showErrorMessage(m);
+    try { console.error(m); } catch {}
+  }
+
+  function __merFormatApiError(data, status) {
+    if (typeof data === 'string') return data || `HTTP ${status}`;
+
+    const message = String(data?.message || data?.error || `HTTP ${status}`).trim();
+    const errors = data?.errors;
+    if (!errors || typeof errors !== 'object') return message;
+
+    const lines = [];
+    for (const [field, arr] of Object.entries(errors)) {
+      if (Array.isArray(arr) && arr.length) {
+        for (const one of arr) lines.push(`${field}: ${one}`);
+      } else if (typeof arr === 'string') {
+        lines.push(`${field}: ${arr}`);
+      }
+    }
+    return lines.length ? `${message}\n${lines.join('\n')}` : message;
+  }
+
+  // -------------------------
+  // Resolve map fields
+  // -------------------------
+  const mapName = toStr(get('map_name', 'name', 'mapName', 'translated_map_name'));
+  const category = toStr(get('category', 'type', 'map_type'));
+  const checkpoints = get('checkpoints', 'checkpoint_count', 'cp_count');
+  const difficulty = toStr(get('difficulty', 'diff', 'difficulty_name'));
+  const mechanics = normalizeStringList(get('mechanics', 'map_mechanics'));
+  const restrictions = normalizeStringList(get('restrictions', 'map_restrictions'));
+  const title = toStr(get('title'));
+  const description = toStr(get('description', 'desc'));
+  const customBanner = toStr(get('custom_banner', 'banner', 'banner_url'));
+
+  const official = toBool(get('official', 'is_official'));
+  const hidden = toBool(get('hidden', 'is_hidden'));
+  const archived = toBool(get('archived', 'is_archived'));
+
+  const medalsRaw = get('medals', 'medal_times', 'medals_times') || {};
+  const medalGold = toStr(medalsRaw.gold ?? medalsRaw.Gold ?? medalsRaw.gold_time ?? '');
+  const medalSilver = toStr(medalsRaw.silver ?? medalsRaw.Silver ?? medalsRaw.silver_time ?? '');
+  const medalBronze = toStr(medalsRaw.bronze ?? medalsRaw.Bronze ?? medalsRaw.bronze_time ?? '');
+
+  const creatorsRaw = get('creators', 'creator_ids', 'creator', 'authors');
+  const creators = normalizeCreators(creatorsRaw);
+
+  // -------------------------
+  // Fill UI
+  // -------------------------
+  overlay.__merShow?.();
+
+  const elCode = document.getElementById('merCode');
+  const elCreatedBy = document.getElementById('merCreatedBy');
+
+  // Grey
+  if (elCode) {
+    elCode.textContent = code || 'N/A';
+    elCode.classList.add('opacity-80', 'text-zinc-300/80');
+    elCode.classList.add('pointer-events-none', 'cursor-default');
+  }
+
+  const createdByStr = __merGetSafeUserIdString?.() || null;
+  if (elCreatedBy) {
+    elCreatedBy.textContent = createdByStr || 'N/A';
+    elCreatedBy.classList.add('opacity-80', 'text-zinc-300/80');
+    elCreatedBy.classList.add('pointer-events-none', 'cursor-default');
+    // display coalesced_name
+    if (createdByStr) __merSetUserDisplayInto(elCreatedBy, createdByStr);
+  }
+
+  const elReason = document.getElementById('merReason');
+  if (elReason) elReason.value = '';
+
+  const elNewCode = document.getElementById('merNewCode');
+  const elMapName = document.getElementById('merMapName');
+  const elCheckpoints = document.getElementById('merCheckpoints');
+  const elTitle = document.getElementById('merTitle');
+  const elDesc = document.getElementById('merDescription');
+
+  if (elNewCode) elNewCode.value = '';
+  if (elMapName) {
+    elMapName.value = mapName;
+    elMapName.setAttribute('data-raw-value', mapName || '');
+  }
+  if (elCheckpoints) elCheckpoints.value = checkpoints == null ? '' : String(checkpoints);
+  if (elTitle) elTitle.value = title;
+  if (elDesc) elDesc.value = description;
+
+  // medals
+  const elGold = document.getElementById('merMedalGold');
+  const elSilver = document.getElementById('merMedalSilver');
+  const elBronze = document.getElementById('merMedalBronze');
+  if (elGold) elGold.value = medalGold;
+  if (elSilver) elSilver.value = medalSilver;
+  if (elBronze) elBronze.value = medalBronze;
+
+  // banner
+  const elBannerHidden = document.getElementById('merCustomBanner');
+  if (elBannerHidden) elBannerHidden.value = customBanner || '';
+  if (customBanner) __merSetBannerPreviewFromUrl(overlay, customBanner);
+  else __merResetBannerDropzone(overlay);
+
+  // switches
+  const setSwitch = (switchId, boolVal) => {
+    const el = document.getElementById(switchId);
+    if (!el) return;
+    const value = boolVal ? '1' : '0';
+    el.setAttribute('data-value', value);
+    el.querySelectorAll('button[data-switch]').forEach((b) => {
+      const isActive = (b.getAttribute('data-value') || '0') === value;
+      b.classList.toggle('bg-white', isActive);
+      b.classList.toggle('text-zinc-900', isActive);
+      b.classList.toggle('text-white/80', !isActive);
+      b.classList.toggle('hover:bg-white/10', !isActive);
+    });
+  };
+  const getSwitch = (switchId) => {
+    const el = document.getElementById(switchId);
+    if (!el) return false;
+    return el.getAttribute('data-value') === '1';
+  };
+
+  setSwitch('merOfficialSwitch', !!official);
+  setSwitch('merHiddenSwitch', !!hidden);
+  setSwitch('merArchivedSwitch', !!archived);
+
+  // creators chips state
+  __merEnsureCreatorsState(overlay, creators);
+  __merSyncCreatorsHiddenInput(overlay);
+  __merRenderCreatorsChips(overlay);
+  const elCreatorsSearch = document.getElementById('merCreatorsSearch');
+  if (elCreatorsSearch) elCreatorsSearch.value = '';
+
+  // hydrate creator names
+  (async () => {
+    const state = overlay?.__merCreatorsState;
+    const list = Array.isArray(state?.list) ? state.list : [];
+    if (!list.length) return;
+
+    let changed = false;
+    for (const c of list) {
+      if (c?.name) continue;
+      if (!/^\d+$/.test(String(c?.id || ''))) continue;
+      const prof = await __merFetchUserProfile(String(c.id));
+      const nm = __merUserDisplayName(prof);
+      if (nm && nm !== c.name) {
+        c.name = nm;
+        changed = true;
+      }
+    }
+    if (changed) __merRenderCreatorsChips(overlay);
+  })();
+
+  // dropdowns
+  const categoryOptions =
+    (typeof CATEGORY_OPTIONS !== 'undefined' && Array.isArray(CATEGORY_OPTIONS) && CATEGORY_OPTIONS.length)
+      ? CATEGORY_OPTIONS
+      : __MER_CATEGORY_OPTIONS;
+
+  const difficultyOptions =
+    (typeof DIFFICULTY_FINE_OPTIONS !== 'undefined' && Array.isArray(DIFFICULTY_FINE_OPTIONS) && DIFFICULTY_FINE_OPTIONS.length)
+      ? DIFFICULTY_FINE_OPTIONS
+      : __MER_DIFFICULTY_FINE_OPTIONS;
+
+  __merPopulateRadioDropdown('merCategoryDropdown', categoryOptions, 'mer_category');
+  __merPopulateRadioDropdown('merDifficultyDropdown', difficultyOptions, 'mer_difficulty');
+  __merSetRadioValue('merCategoryDropdown', category || '');
+  __merSetRadioValue('merDifficultyDropdown', difficulty || '');
+
+  (async () => {
+    let mechanicsOptions =
+      (typeof MECHANICS_OPTIONS !== 'undefined' && Array.isArray(MECHANICS_OPTIONS) && MECHANICS_OPTIONS.length)
+        ? MECHANICS_OPTIONS
+        : null;
+    let restrictionsOptions =
+      (typeof RESTRICTIONS_OPTIONS !== 'undefined' && Array.isArray(RESTRICTIONS_OPTIONS) && RESTRICTIONS_OPTIONS.length)
+        ? RESTRICTIONS_OPTIONS
+        : null;
+
+    if (!mechanicsOptions || !restrictionsOptions) {
+      const filled = await __merFillMechanicsAndRestrictions();
+      mechanicsOptions = filled.mechanicsOptions?.length ? filled.mechanicsOptions : mechanics.map((m) => ({ translated: m, value: m, raw: m }));
+      restrictionsOptions = filled.restrictionsOptions?.length ? filled.restrictionsOptions : restrictions.map((r) => ({ translated: r, value: r, raw: r }));
+    }
+
+    __merPopulateCheckboxDropdown('merMechanicsDropdown', mechanicsOptions, 'mer_mechanics');
+    __merPopulateCheckboxDropdown('merRestrictionsDropdown', restrictionsOptions, 'mer_restrictions');
+    __merSetCheckboxValues('merMechanicsDropdown', mechanics);
+    __merSetCheckboxValues('merRestrictionsDropdown', restrictions);
+  })();
+
+  // autocomplete mount once
+  const mapNameBox = document.getElementById('merMapNameSuggestions');
+  if (overlay.__merMounted?.auto !== true) {
+    __merSetupAutocomplete({
+      inputEl: elMapName,
+      boxEl: mapNameBox,
+      kind: 'map-names',
+      minChars: 1,
+      onPick: async (it) => {
+        if (!elMapName) return;
+        const raw = String(it.raw || it.label || '').trim();
+        const label = String(it.label || raw).trim();
+        elMapName.value = label;
+
+        let english = raw;
+        try {
+          const resolved = await resolveEnglishMapNameExact(raw);
+          if (resolved) english = resolved;
+        } catch {}
+        elMapName.setAttribute('data-raw-value', english || raw || label);
+      },
+    });
+
+    elMapName?.addEventListener('input', () => {
+      if (!elMapName) return;
+      elMapName.setAttribute('data-raw-value', elMapName.value || '');
+    });
+
+    const creatorBox = document.getElementById('merCreatorSuggestions');
+    __merSetupAutocomplete({
+      inputEl: elCreatorsSearch,
+      boxEl: creatorBox,
+      kind: 'users',
+      minChars: 1,
+      onPick: (it) => {
+        const pickedId = String(it.raw ?? it.data?.user_id ?? it.data?.id ?? '').trim();
+        if (!/^\d+$/.test(pickedId)) return;
+        __merAddCreatorToState(overlay, { id: pickedId, name: it.label || '' });
+        if (elCreatorsSearch) elCreatorsSearch.value = '';
+      },
+    });
+
+    overlay.__merMounted = overlay.__merMounted || {};
+    overlay.__merMounted.auto = true;
+  }
+
+  // -------------------------
+  // Baseline snapshot
+  // -------------------------
+  const baseline = {
+    code,
+    official: !!official,
+    hidden: !!hidden,
+    archived: !!archived,
+    new_code: '',
+    map_name: mapName,
+    category,
+    checkpoints: checkpoints == null ? '' : String(checkpoints),
+    difficulty,
+    mechanics: mechanics.slice(),
+    restrictions: restrictions.slice(),
+    title,
+    description,
+    custom_banner: customBanner,
+    medals: { gold: medalGold, silver: medalSilver, bronze: medalBronze },
+    creators: creators.slice(),
+  };
+
+  overlay.__merBaseline = baseline;
+  overlay.__merOpts = opts;
+
+  // -------------------------
+  // Send handler
+  // -------------------------
+  const sendBtn = document.getElementById('merSendBtn');
+  if (sendBtn && overlay.__merMounted?.send !== true) {
+    sendBtn.onclick = async () => {
+      const baselineNow = overlay.__merBaseline;
+      const optsNow = overlay.__merOpts || {};
+
+      const createdBy = __merGetSafeUserIdString?.() || null;
+      if (!createdBy) {
+        __merWarn(
+          (typeof t === 'function' && t('map_edit_request.login_required') && t('map_edit_request.login_required') !== 'map_edit_request.login_required')
+            ? t('map_edit_request.login_required')
+            : 'You must be logged in to send a map edit request.'
+        );
+        return;
+      }
+
+      const reasonEl = document.getElementById('merReason');
+      const reason = (reasonEl?.value || '').trim();
+      if (!reason) {
+        __merWarn(
+          (typeof t === 'function' && t('map_edit_request.reason_required') && t('map_edit_request.reason_required') !== 'map_edit_request.reason_required')
+            ? t('map_edit_request.reason_required')
+            : 'Please provide a reason.'
+        );
+        try { reasonEl?.focus?.(); } catch {}
+        return;
+      }
+
+      // ---------- Build flat payload----------
+      const payload = {
+        code: String(baselineNow.code),
+        created_by: String(createdBy),
+        reason: String(reason),
+      };
+
+      // new_code
+      const uiNewCode = (document.getElementById('merNewCode')?.value || '').trim();
+      if (uiNewCode) payload.new_code = uiNewCode;
+
+      // map_name
+      const elMapNameNow = document.getElementById('merMapName');
+      const uiMapName = String(elMapNameNow?.getAttribute('data-raw-value') || elMapNameNow?.value || '').trim();
+      if (!equalScalar(uiMapName, baselineNow.map_name)) payload.map_name = uiMapName === '' ? null : uiMapName;
+
+      // category/difficulty
+      const uiCategory = __merGetRadioValue('merCategoryDropdown');
+      if (!equalScalar(uiCategory, baselineNow.category)) payload.category = uiCategory === '' ? null : uiCategory;
+
+      const uiDifficulty = __merGetRadioValue('merDifficultyDropdown');
+      if (!equalScalar(uiDifficulty, baselineNow.difficulty)) payload.difficulty = uiDifficulty === '' ? null : uiDifficulty;
+
+      // checkpoints
+      const uiCheckpointsStr = String(document.getElementById('merCheckpoints')?.value ?? '').trim();
+      if (!equalScalar(uiCheckpointsStr, baselineNow.checkpoints)) {
+        const n = Number(uiCheckpointsStr);
+        payload.checkpoints = uiCheckpointsStr === '' ? null : (Number.isFinite(n) ? Math.trunc(n) : null);
+      }
+
+      // switches
+      const uiOfficial = getSwitch('merOfficialSwitch');
+      const uiHidden = getSwitch('merHiddenSwitch');
+      const uiArchived = getSwitch('merArchivedSwitch');
+      if (uiOfficial !== baselineNow.official) payload.official = uiOfficial;
+      if (uiHidden !== baselineNow.hidden) payload.hidden = uiHidden;
+      if (uiArchived !== baselineNow.archived) payload.archived = uiArchived;
+
+      // mechanics/restrictions
+      const uiMechanics = __merGetCheckboxValues('merMechanicsDropdown');
+      if (!equalArray(uiMechanics, baselineNow.mechanics)) payload.mechanics = uiMechanics.length ? uiMechanics : null;
+
+      const uiRestrictions = __merGetCheckboxValues('merRestrictionsDropdown');
+      if (!equalArray(uiRestrictions, baselineNow.restrictions)) payload.restrictions = uiRestrictions.length ? uiRestrictions : null;
+
+      // title/description
+      const uiTitle = (document.getElementById('merTitle')?.value || '').trim();
+      if (!equalScalar(uiTitle, baselineNow.title)) payload.title = uiTitle === '' ? null : uiTitle;
+
+      const uiDesc = (document.getElementById('merDescription')?.value || '').trim();
+      if (!equalScalar(uiDesc, baselineNow.description)) payload.description = uiDesc === '' ? null : uiDesc;
+
+      // custom_banner
+      const uiBanner = (document.getElementById('merCustomBanner')?.value || '').trim();
+      if (!equalScalar(uiBanner, baselineNow.custom_banner)) payload.custom_banner = uiBanner === '' ? null : uiBanner;
+
+      // medals
+      const uiGoldStr = (document.getElementById('merMedalGold')?.value || '').trim();
+      const uiSilverStr = (document.getElementById('merMedalSilver')?.value || '').trim();
+      const uiBronzeStr = (document.getElementById('merMedalBronze')?.value || '').trim();
+
+      const medalsChanged =
+        !equalScalar(uiGoldStr, baselineNow.medals.gold) ||
+        !equalScalar(uiSilverStr, baselineNow.medals.silver) ||
+        !equalScalar(uiBronzeStr, baselineNow.medals.bronze);
+
+      if (medalsChanged) {
+        const g = __merReadNumber(uiGoldStr);
+        const s = __merReadNumber(uiSilverStr);
+        const b = __merReadNumber(uiBronzeStr);
+        payload.medals = (g == null && s == null && b == null) ? null : { gold: g, silver: s, bronze: b };
+      }
+
+      // creators
+      const stateList = Array.isArray(overlay?.__merCreatorsState?.list) ? overlay.__merCreatorsState.list : [];
+      const uiCreators = stateList
+        .map((c) => ({ id: toSafeId(String(c.id || '').trim()), is_primary: !!c.is_primary }))
+        .filter((c) => String(c.id).trim().length > 0);
+
+      const baseCreatorsNorm = normalizeCreators(baselineNow.creators).map((c) => ({
+        id: toSafeId(String(c.id).trim()),
+        is_primary: !!c.is_primary,
+      }));
+
+      const sameCreators =
+        baseCreatorsNorm.length === uiCreators.length &&
+        baseCreatorsNorm.every((c, i) => String(c.id) === String(uiCreators[i].id) && !!c.is_primary === !!uiCreators[i].is_primary);
+
+      if (!sameCreators) payload.creators = uiCreators.length ? uiCreators : null;
+
+      // warn
+      const keys = Object.keys(payload);
+      if (keys.length <= 3) {
+        __merWarn(
+          (typeof t === 'function' && t('map_edit_request.no_changes') && t('map_edit_request.no_changes') !== 'map_edit_request.no_changes')
+            ? t('map_edit_request.no_changes')
+            : 'No changes detected.'
+        );
+        return;
+      }
+
+      // ---------- send ----------
+      try {
+        sendBtn.disabled = true;
+        sendBtn.classList.add('opacity-70', 'cursor-not-allowed');
+
+        const endpoint = (optsNow.endpoint || '/api/maps/map-edits');
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const contentType = resp.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await resp.json() : await resp.text();
+
+        if (!resp.ok) {
+          __merErr(__merFormatApiError(data, resp.status));
+          return;
+        }
+
+        showConfirmationMessage(t('map_edit_request.sent') || 'Map edit request sent');
+
+        const autoClose = optsNow.autoClose ?? true;
+        if (autoClose) setTimeout(() => overlay.__merClose?.(), 700);
+      } catch (e) {
+        __merErr(e?.message || 'Network error');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+    };
+
+    overlay.__merMounted = overlay.__merMounted || {};
+    overlay.__merMounted.send = true;
+  }
+
+  setTimeout(() => {
+    try { document.getElementById('merReason')?.focus?.(); } catch {}
+  }, 0);
+}
+
+async function openSearchDetailsModal(r, opts = {}) {
   if (!r) return;
+  const { fromUrl = false, syncUrl = true } = opts || {};
   ensureSearchDetailsModal();
 
+  const mapCode = r?.code || '';
+  if (syncUrl && !fromUrl && mapCode) __urlOpenModal('map', { code: mapCode }, { push: true });
+
   const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
+  // Change requests
+  const __merBtn = document.getElementById('btnOpenMapEditRequest');
+  const __merBtnText = document.getElementById('btnOpenMapEditRequestText');
+  if (__merBtnText) __merBtnText.textContent = t('map_edit_request.title');
+  if (__merBtn) {
+    const __logged = typeof window !== 'undefined' && window.user_id != null && String(window.user_id).trim() !== '';
+    __merBtn.disabled = !__logged;
+    __merBtn.classList.toggle('opacity-50', !__logged);
+    __merBtn.classList.toggle('cursor-not-allowed', !__logged);
+    __merBtn.classList.toggle('cursor-pointer', __logged);
+    __merBtn.title = __logged ? t('map_edit_request.map_edit_btn') : t('map_edit_request.map_edit_btn_login');
+    __merBtn.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!__logged) return;
+      openMapEditRequestModal(r);
+    };
+  }
+
   const esc = (s) => String(s ?? "")
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
@@ -3330,8 +6036,10 @@ async function openSearchDetailsModal(r) {
   };
 
   // data
-  const mapNameKey = (r.original_map_name || r.map_name || 'default').toLowerCase().replace(/[()\s']/g,'');
-  const cover = r.map_banner || `assets/banners/${mapNameKey}.png`;
+  const mapNameKey = (r.original_map_name || r.map_name || 'default')
+    .toLowerCase()
+    .replace(/[()\s':]/g, '');
+  const cover = cdnImage(`assets/map_banners/${mapNameKey}.png`);
   const names = (typeof pickCreatorNames === 'function' ? pickCreatorNames(r) : []).filter(Boolean);
   const typeText = Array.isArray(r.category) ? r.category.join(', ') : (r.category || 'Classic');
   const difficulty = r.difficulty || 'Easy';
@@ -3370,7 +6078,7 @@ async function openSearchDetailsModal(r) {
   const img = document.getElementById('mapModalCover');
   if (img) {
     img.src = cover;
-    const fb = `assets/banners/${mapNameKey}.png`;
+    const fb = cdnImage(`assets/map_banners/${mapNameKey}.png`);
     img.addEventListener('error', ()=>{ if (img.src !== fb) img.src = fb; }, { once:true });
   }
 
@@ -3464,7 +6172,9 @@ async function openSearchDetailsModal(r) {
     setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
     document.removeEventListener('keydown', onEsc);
     overlay.removeEventListener('pointerdown', onOutside, true);
+    if (!__suppressUrlSync) __urlHandleModalUserClose('map');
   };
+  overlay.__sfClose = close;
   const onEsc = (e)=> { if (e.key==='Escape') close(); };
   const onOutside = (e)=> { const box = document.getElementById('detailsModalBox'); if (!box.contains(e.target)) close(); };
 
@@ -3555,9 +6265,9 @@ async function displayPersonalRecordsResultsCards(rowsInput) {
 
     const medalKeyNorm = String(medal).trim().toLowerCase();
     const medalIcon =
-      medalKeyNorm === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKeyNorm === 'silver' ? '/assets/medals/silver.png' :
-      medalKeyNorm === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKeyNorm === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKeyNorm === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKeyNorm === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     const videoBtn = r.video
       ? `<a href="${escAttr(r.video)}" target="_blank" rel="noopener" class="pr-btn" title="${escAttr(t('watch')||'Watch')}">${iconPlay}<span>${esc(t('watch')||'Watch')}</span></a>`
@@ -3746,9 +6456,9 @@ async function displayPersonalRecordsResults(results) {
     const medalText = r.medal || 'N/A';
     const medalKey = String(medalText).trim().toLowerCase();
     const medalIcon =
-      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKey === 'silver' ? '/assets/medals/silver.png' :
-      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKey === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKey === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     const mapCodeCell = r.code
       ? `
@@ -3860,9 +6570,9 @@ async function displayCompletionsResultsCards(rowsInput){
   const cardsHTML = filtered.map((r, idx) => {
     const code = r.map_code || r.code || 'N/A';
     const name = r.map_name || code;
-    const nameKey = (r.map_name || code || 'default').toLowerCase().replace(/[()\s']/g,'');
-    const banner = r.map_banner || `assets/banners/${nameKey}.png`;
-    const fbBanner = `assets/banners/${nameKey}.png`;
+    const nameKey = (r.map_name || code || 'default').toLowerCase().replace(/[()\s':]/g, '');
+    const banner = cdnImage(`assets/map_banners/${nameKey}.png`);
+    const fbBanner = cdnImage(`assets/map_banners/${nameKey}.png`);
 
     const uid = r.user_id ? String(r.user_id) : '';
     const nickname = r.nickname || r.name || 'N/A';
@@ -3870,7 +6580,19 @@ async function displayCompletionsResultsCards(rowsInput){
     const fbAvatar = defaultAvatarFromId(uid || '0');
 
     const isCompletion = r.completion === true;
-    const timeDisplay = isCompletion ? (t('completion') || 'Completion') : (r.time != null ? String(r.time) : 'N/A');
+    const timeVal = r.time;
+
+    const CUTOFF = 15900;
+
+    const timeNum = Number(timeVal);
+    const hasNumericTime = timeVal != null && timeVal !== '' && Number.isFinite(timeNum);
+
+    const timeDisplay =
+      (hasNumericTime && timeNum <= CUTOFF)
+        ? timeNum.toFixed(2)
+        : (hasNumericTime && timeNum > CUTOFF)
+          ? (t('completion') || 'Completion')
+          : (isCompletion ? (t('completion') || 'Completion') : 'N/A');
 
     const medalKey = String(r.medal || '').toLowerCase();
     const medalBadge =
@@ -3882,9 +6604,9 @@ async function displayCompletionsResultsCards(rowsInput){
       medalKey === 'silver' ? 'c-medal c-medal--silver' :
       medalKey === 'bronze' ? 'c-medal c-medal--bronze' : 'c-medal c-medal--neutral';
     const medalIcon =
-      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKey === 'silver' ? '/assets/medals/silver.png' :
-      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKey === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKey === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     const diffTxt = r.difficulty || 'N/A';
     const diffColor = difficultyColors[normalizeDifficulty(diffTxt)] || '#e5e7eb';
@@ -4030,7 +6752,19 @@ async function displayCompletionsResults(results){
   const rowsHTML = filtered.map((r, idx)=>{
     const mapCode = r.map_code || r.code || 'N/A';
     const isCompletion = r.completion === true;
-    const timeDisplay = isCompletion ? t('completion') || 'Completion' : (r.time!=null ? String(r.time) : 'N/A');
+    const timeVal = r.time;
+
+    const CUTOFF = 15900;
+
+    const timeNum = Number(timeVal);
+    const hasNumericTime = timeVal != null && timeVal !== '' && Number.isFinite(timeNum);
+
+    const timeDisplay =
+      (hasNumericTime && timeNum <= CUTOFF)
+        ? timeNum.toFixed(2)
+        : (hasNumericTime && timeNum > CUTOFF)
+          ? (t('completion') || 'Completion')
+          : (isCompletion ? (t('completion') || 'Completion') : 'N/A');
     const uid = r.user_id ? String(r.user_id) : null;
     const fallback = defaultAvatarFromId(uid || '0');
     const profileHref = uid ? `rank_card?user_id=${encodeURIComponent(uid)}` : null;
@@ -4077,9 +6811,9 @@ async function displayCompletionsResults(results){
 
     const medalKey = String(r.medal || '').trim().toLowerCase();
     const medalIcon =
-      medalKey === 'gold'   ? '/assets/medals/gold.png'   :
-      medalKey === 'silver' ? '/assets/medals/silver.png' :
-      medalKey === 'bronze' ? '/assets/medals/bronze.png' : null;
+      medalKey === 'gold'   ? cdnAsset('assets/medals/gold.png')   :
+      medalKey === 'silver' ? cdnAsset('assets/medals/silver.png') :
+      medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     return `
       <div class="grid grid-completions bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
@@ -4171,13 +6905,25 @@ function ensureCompletionsDetailsModal(){
                 ${TT('completion','Completion')}
               </span>
 
-              <button type="button" id="completionModalCloseBtn"
-                class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
-                aria-label="${TT('popup.close','Close')}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
+              <div class="flex items-center gap-2">
+                <!-- Change requests -->
+                <button type="button" id="btnOpenMapEditRequestCompletion"
+                  class="group inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 ring-1 ring-white/15 hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                  </svg>
+                  <span id="btnOpenMapEditRequestCompletionText">${t('map_edit_request.title')}</span>
+                </button>
+
+                <button type="button" id="completionModalCloseBtn"
+                  class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                  aria-label="${TT('popup.close','Close')}">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -4358,21 +7104,46 @@ function ensureCompletionsDetailsModal(){
   }
 }
 
-function openCompletionsDetailsModal(r){
+function openCompletionsDetailsModal(r, opts = {}){
   if (!r) return;
+  const { fromUrl = false, syncUrl = true } = opts || {};
   ensureCompletionsDetailsModal();
 
+  const code = r?.code || r?.map_code || '';
+  if (syncUrl && !fromUrl && code) {
+    __urlOpenModal('completion', { code, user_id: r.user_id, time: r.time }, { push: true });
+  }
+
   const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
+  // Change requests
+  const __merBtn = document.getElementById('btnOpenMapEditRequestCompletion');
+  const __merBtnText = document.getElementById('btnOpenMapEditRequestCompletionText');
+  if (__merBtnText) __merBtnText.textContent = t('map_edit_request.title');
+  if (__merBtn) {
+    const __logged = typeof window !== 'undefined' && window.user_id != null && String(window.user_id).trim() !== '';
+    __merBtn.disabled = !__logged;
+    __merBtn.classList.toggle('opacity-50', !__logged);
+    __merBtn.classList.toggle('cursor-not-allowed', !__logged);
+    __merBtn.classList.toggle('cursor-pointer', __logged);
+    __merBtn.title = __logged ? t('map_edit_request.map_edit_btn') : t('map_edit_request.map_edit_btn_login');
+    __merBtn.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!__logged) return;
+      openMapEditRequestModal(r);
+    };
+  }
+
   const esc = (s) => String(s ?? "")
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const arrToText = (v)=> Array.isArray(v) ? v.filter(Boolean).join(', ') : (v || '—');
 
-  const nameKey = (r.map_name || r.map_code || r.code || 'default').toLowerCase().replace(/[()\s']/g,'');
-  const cover = r.map_banner || `assets/banners/${nameKey}.png`;
+  const nameKey = (r.map_name || r.map_code || r.code || 'default').toLowerCase().replace(/[()\s':]/g, '');
+  const cover = cdnImage(`assets/map_banners/${nameKey}.png`);
   const imgCover = document.getElementById('completionModalCover');
   if (imgCover){
-    const fb = `assets/banners/${nameKey}.png`;
+    const fb = cdnImage(`assets/map_banners/${nameKey}.png`);
     imgCover.src = cover;
     imgCover.addEventListener('error', ()=>{ if (imgCover.src!==fb) imgCover.src = fb; }, { once:true });
   }
@@ -4384,13 +7155,24 @@ function openCompletionsDetailsModal(r){
   el('completionStatus').innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400"></span> ${esc(tSafe('completion','Completion'))}`;
 
   const mapName = r.map_name || r.map || r.map_code || r.code || '—';
-  const code    = r.map_code || r.code || '—';
   el('completionMapName').textContent = mapName;
   el('completionCode').textContent    = code;
 
   const player = r.nickname || r.name || 'N/A';
   const isCompletion = r.completion === true;
-  const timeDisplay  = isCompletion ? tSafe('completion','Completion') : (r.time != null ? String(r.time) : 'N/A');
+  const timeVal = r.time;
+
+  const CUTOFF = 15900;
+
+  const timeNum = Number(timeVal);
+  const hasNumericTime = timeVal != null && timeVal !== '' && Number.isFinite(timeNum);
+
+  const timeDisplay =
+    (hasNumericTime && timeNum <= CUTOFF)
+      ? timeNum.toFixed(2)
+      : (hasNumericTime && timeNum > CUTOFF)
+        ? (t('completion') || 'Completion')
+        : (isCompletion ? (t('completion') || 'Completion') : 'N/A');
   const medal        = r.medal || '—';
   const difficulty   = r.difficulty || '—';
   const category     = arrToText(Array.isArray(r.category) ? r.category : r.category);
@@ -4441,7 +7223,9 @@ function openCompletionsDetailsModal(r){
     setTimeout(()=>{ modalOverlay.classList.add('hidden'); modalOverlay.classList.remove('flex'); }, 180);
     document.removeEventListener('keydown', onEsc);
     modalOverlay.removeEventListener('pointerdown', onOutside, true);
+    if (!__suppressUrlSync) __urlHandleModalUserClose('completion');
   };
+  modalOverlay.__sfClose = close;
   const onEsc = e=>{ if (e.key==='Escape') close(); };
 
   const onOutside = (e)=>{

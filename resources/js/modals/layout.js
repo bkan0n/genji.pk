@@ -1,4 +1,7 @@
 // ———————————————————————————————————————————————————————————————
+
+import { cdnAsset } from "../utils/cdn";
+
 // Prevent spam
 function preventExcessiveRefresh(maxRefreshes, timeWindow) {
   const storageKey = 'pageRefreshes';
@@ -177,8 +180,8 @@ toggle?.addEventListener('click', () => {
 // ———————————————————————————————————————————————————————————————
 // Logo hover
 const logo = document.getElementById('brandLogo');
-const staticLogo = 'assets/img/favicon-high.png';
-const animLogo = 'assets/img/favicon-anim.gif';
+const staticLogo = cdnAsset('assets/img/favicon-high.png');
+const animLogo = cdnAsset('assets/img/favicon-anim.gif');
 logo?.addEventListener('mouseenter', () => {
   logo.src = animLogo;
 });

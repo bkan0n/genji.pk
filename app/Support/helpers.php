@@ -13,3 +13,13 @@ if (! function_exists('csp_nonce')) {
         return $nonce;
     }
 }
+
+if (! function_exists('cdn_asset')) {
+    function cdn_asset(string $path): string
+    {
+        $cdn = rtrim(config('app.cdn_url') ?: '', '/');
+        $path = ltrim($path, '/');
+
+        return $cdn ? "{$cdn}/{$path}" : asset($path);
+    }
+}

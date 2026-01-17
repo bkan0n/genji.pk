@@ -16,6 +16,7 @@ use Throwable;
 
 class DiscordAuthController extends Controller
 {
+    private const DEVICE_SESSION_COOKIE = 'device_session_id';
     public function __construct(private GenjiApiService $api) {}
     
     private function discordRedirectUri(): string
@@ -120,15 +121,11 @@ class DiscordAuthController extends Controller
         $request->session()->put('user_name', $userData['nickname'] ?? $username);
 
         $request->session()->regenerate();
-
-        // Remember me
+        $this->queueDeviceSessionCookie($request);
         $remember = (bool) $request->session()->pull('auth_remember', false);
+        $rememberToken = null;
         if ($remember) {
             $rememberToken = $this->api->createRememberToken($id);
-            if ($rememberToken) {
-                $this->queueRememberCookie($request, $rememberToken);
-                $this->queueDiscordRememberCookies($request, $avatarHash, $avatarUrl, $bannerHash, $publicFlags, $premiumType);
-            }
         }
 
         $request->session()->put([
@@ -181,8 +178,29 @@ class DiscordAuthController extends Controller
             }
         }
         $request->session()->put('can_moderate', $canModerate);
+        $request->session()->put('is_mod', (bool) $canModerate);
 
-        return redirect()->intended('/');
+        $user = $request->session()->get('user');
+        if (is_array($user)) {
+            $user['is_mod'] = (bool) $canModerate;
+            $request->session()->put('user', $user);
+        }
+
+        if ($remember && $rememberToken) {
+            $this->queueRememberCookie($request, $rememberToken);
+            $this->queueDiscordRememberCookies(
+                $request,
+                $avatarHash,
+                $avatarUrl,
+                $bannerHash,
+                $publicFlags,
+                $premiumType,
+                (bool) $canModerate
+            );
+        }
+
+
+        return redirect('/');
     }
 
     private function queueRememberCookie(Request $request, string $token): void
@@ -205,13 +223,50 @@ class DiscordAuthController extends Controller
         ));
     }
 
+    private function queueDeviceSessionCookie(Request $request, ?string $sessionId = null): void
+    {
+        $sid = $sessionId ?? (string) $request->session()->getId();
+        if ($sid === '') {
+            return;
+        }
+
+        $days = (int) env('DEVICE_SESSION_COOKIE_DAYS', 365);
+        $minutes = max(60, $days * 24 * 60);
+
+        $domain = config('session.domain');
+        $secureCfg = config('session.secure');
+        $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
+
+        $sameSite = (string) (config('session.same_site') ?? 'lax');
+        $sameSite = ucfirst(strtolower($sameSite));
+
+        cookie()->queue(cookie(
+            self::DEVICE_SESSION_COOKIE,
+            $sid,
+            $minutes,
+            '/',
+            $domain,
+            $secure,
+            true,
+            false,
+            $sameSite
+        ));
+    }
+
+    private function forgetDeviceSessionCookie(): void
+    {
+        cookie()->queue(cookie()->forget(self::DEVICE_SESSION_COOKIE));
+    }
+
+
     private function queueDiscordRememberCookies(
         Request $request,
         $avatarHash,
         string $avatarUrl,
         $bannerHash,
         int $publicFlags,
-        int $premiumType
+        int $premiumType,
+        bool $canModerate
     ): void {
         $minutes = 60 * 24 * 30;
         $domain = config('session.domain');
@@ -223,6 +278,7 @@ class DiscordAuthController extends Controller
         $this->queueRememberDataCookie($request, 'discord_banner', (string) ($bannerHash ?? ''), $minutes, $domain, $secure);
         $this->queueRememberDataCookie($request, 'discord_public_flags', (string) $publicFlags, $minutes, $domain, $secure);
         $this->queueRememberDataCookie($request, 'discord_premium_type', (string) $premiumType, $minutes, $domain, $secure);
+        $this->queueRememberDataCookie($request, 'discord_can_moderate', $canModerate ? '1' : '0', $minutes, $domain, $secure);
     }
 
     private function queueRememberDataCookie(
@@ -288,11 +344,14 @@ class DiscordAuthController extends Controller
             'user_provider',
         ]);
         cookie()->queue(cookie()->forget('remember_token'));
+        $this->forgetDeviceSessionCookie();
+        $request->session()->forget('is_mod');
         cookie()->queue(cookie()->forget('discord_avatar'));
         cookie()->queue(cookie()->forget('discord_avatar_url'));
         cookie()->queue(cookie()->forget('discord_banner'));
         cookie()->queue(cookie()->forget('discord_public_flags'));
         cookie()->queue(cookie()->forget('discord_premium_type'));
+        cookie()->queue(cookie()->forget('discord_can_moderate'));
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

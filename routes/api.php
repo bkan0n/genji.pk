@@ -86,6 +86,13 @@ use App\Http\Controllers\Utilities\Autocomplete\UsersController;
 use App\Http\Controllers\Utilities\UploadImageController;
 use App\Http\Controllers\Utilities\LogMapClickController;
 use App\Http\Controllers\Utilities\OcrController;
+use App\Http\Controllers\Notifications\WebNotificationsController;
+use App\Http\Controllers\Map_edit\CreateMapEditRequestController;
+use App\Http\Controllers\Map_edit\GetEditRequestController;
+use App\Http\Controllers\Map_edit\GetEditRequestSubmissionViewController;
+use App\Http\Controllers\Map_edit\GetPendingEditRequestsController;
+use App\Http\Controllers\Map_edit\GetUsersEditRequestsController;
+use App\Http\Controllers\Map_edit\ResolveEditRequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -327,6 +334,53 @@ Route::prefix('mods')
             Route::delete('{thread_id}/vote',[DeleteAllPlaytestVotesController::class, 'destroy'])->whereNumber('thread_id')->name('mods.playtests.votes.delete_all');
             Route::delete('{thread_id}/vote/{user_id}', [DeletePlaytestVoteController::class, 'destroy'])->whereNumber('thread_id')->whereNumber('user_id')->name('mods.playtests.votes.delete_one');
         });
+
+        // MAP EDIT REQUESTS
+        Route::put('maps/map-edits/{edit_id}/resolve', [ResolveEditRequestController::class, 'update']);
+});
+
+/* ================== NOTIFICATIONS ================== */
+
+Route::prefix('notifications')
+    ->middleware([
+        'web',
+        \App\Http\Middleware\RequireAuthenticated::class,
+    ])
+    ->group(function () {
+
+        // Tray
+        Route::get('/unread-count', [WebNotificationsController::class, 'unreadCount']);
+        Route::get('/events', [WebNotificationsController::class, 'events']);
+
+        Route::patch('/events/{eventId}/read', [WebNotificationsController::class, 'markRead'])
+            ->whereNumber('eventId');
+
+        Route::patch('/events/{eventId}/dismiss', [WebNotificationsController::class, 'dismiss'])
+            ->whereNumber('eventId');
+
+        Route::patch('/read-all', [WebNotificationsController::class, 'markAllRead']);
+
+        // Preferences
+        Route::get('/preferences', [WebNotificationsController::class, 'preferences']);
+
+        Route::put('/preferences/bulk', [WebNotificationsController::class, 'bulkUpdatePreferences']);
+
+        Route::put('/preferences/{eventType}/{channel}', [WebNotificationsController::class, 'updatePreference'])
+            ->where('eventType', '[a-z_]+')
+            ->where('channel', 'web|discord_dm|discord_ping');
+
+        // Should deliver
+        Route::get('/should-deliver', [WebNotificationsController::class, 'shouldDeliver']);
+    });
+
+/* ================== MAP EDIT ================== */
+Route::prefix('maps/map-edits')->group(function () {
+    Route::get('pending', [GetPendingEditRequestsController::class, 'index']);
+    Route::get('user/{user_id}', [GetUsersEditRequestsController::class, 'index']);
+
+    Route::post('/', [CreateMapEditRequestController::class, 'store']);
+    Route::get('{edit_id}', [GetEditRequestController::class, 'show']);
+    Route::get('{edit_id}/submission', [GetEditRequestSubmissionViewController::class, 'show']);
 });
 
 /* ================== SENTRY ================== */

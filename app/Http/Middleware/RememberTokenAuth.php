@@ -5,15 +5,28 @@ namespace App\Http\Middleware;
 use App\Services\GenjiApiService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class RememberTokenAuth
 {
-    public function __construct(private GenjiApiService $api) {}
+    private const DEVICE_SESSION_COOKIE = 'device_session_id';
+
+    public function __construct(private GenjiApiService $api)
+    {
+    }
 
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->session()->has('user_id')) {
+            $this->syncDeviceSessionCookie($request);
+
+            if (!$request->session()->has('is_mod') && (bool) $request->session()->get('can_moderate', false) === true) {
+                $request->session()->put('is_mod', true);
+            }
+
+            $this->syncModeratorFlagFromSession($request);
             return $next($request);
         }
 
@@ -22,9 +35,28 @@ class RememberTokenAuth
             return $next($request);
         }
 
+        $previousDeviceSessionId = (string) $request->cookie(self::DEVICE_SESSION_COOKIE, '');
+        $preAuthSessionId = (string) $request->session()->getId();
+
+        $rememberedIsMod = null;
+
+        $cookieCanModerate = $request->cookie('discord_can_moderate', null);
+        if ($cookieCanModerate !== null && $cookieCanModerate !== '') {
+            $v = strtolower(trim((string) $cookieCanModerate));
+            if (in_array($v, ['1', 'true', 'yes', 'on'], true)) {
+                $rememberedIsMod = true;
+            }
+        }
+
+        if ($rememberedIsMod === null && $previousDeviceSessionId !== '') {
+            $rememberedIsMod = $this->api->sessionIsMod($previousDeviceSessionId);
+        }
+
+
         $userId = $this->api->validateRememberToken($rememberToken);
         if (!$userId) {
             cookie()->queue(cookie()->forget('remember_token'));
+            cookie()->queue(cookie()->forget(self::DEVICE_SESSION_COOKIE));
             $this->forgetRememberProfileCookies();
             return $next($request);
         }
@@ -32,6 +64,7 @@ class RememberTokenAuth
         $userData = $this->api->getUser($userId);
         if (!$userData) {
             cookie()->queue(cookie()->forget('remember_token'));
+            cookie()->queue(cookie()->forget(self::DEVICE_SESSION_COOKIE));
             $this->forgetRememberProfileCookies();
             return $next($request);
         }
@@ -61,7 +94,7 @@ class RememberTokenAuth
                 'discord_global_name' => $globalName !== '' ? $globalName : $nickname,
             ]);
 
-            $this->hydrateDiscordSessionFromRememberCookies($request, $userId, $userData);
+            $this->hydrateDiscordSessionFromRememberCookies($request, (int) $userId, $userData);
         } else {
             $username = (string) ($userData['username'] ?? ($userData['nickname'] ?? ''));
 
@@ -82,7 +115,34 @@ class RememberTokenAuth
             ]);
         }
 
-        $request->session()->regenerate();
+        if ($isDiscord && $rememberedIsMod === true) {
+            $request->session()->put('can_moderate', true);
+            $request->session()->put('is_mod', true);
+
+            $user = $request->session()->get('user');
+            if (is_array($user)) {
+                $user['is_mod'] = true;
+                $request->session()->put('user', $user);
+            }
+        }
+
+        if (!$isDiscord) {
+            $request->session()->put('is_mod', (bool) ($userData['is_mod'] ?? false));
+        }
+
+        $request->session()->regenerate(true);
+
+        $newSessionId = (string) $request->session()->getId();
+
+        if ($previousDeviceSessionId !== '' && $previousDeviceSessionId !== $newSessionId) {
+            $this->api->sessionDestroy($previousDeviceSessionId);
+        }
+
+        if ($preAuthSessionId !== '' && $preAuthSessionId !== $newSessionId && $preAuthSessionId !== $previousDeviceSessionId) {
+            $this->api->sessionDestroy($preAuthSessionId);
+        }
+
+        $this->queueDeviceSessionCookie($request, $newSessionId);
 
         return $next($request);
     }
@@ -94,6 +154,7 @@ class RememberTokenAuth
         cookie()->queue(cookie()->forget('discord_banner'));
         cookie()->queue(cookie()->forget('discord_public_flags'));
         cookie()->queue(cookie()->forget('discord_premium_type'));
+        cookie()->queue(cookie()->forget('discord_can_moderate'));
     }
 
     private function hydrateDiscordSessionFromRememberCookies(Request $request, int $userId, array $userData): void
@@ -153,6 +214,88 @@ class RememberTokenAuth
             $request->session()->put('user_premium', $premiumInt);
             $request->session()->put('discord_premium_type', $premiumInt);
         }
+
+        $cm = $request->cookie('discord_can_moderate', null);
+        if ($cm !== null && $cm !== '') {
+            $v = strtolower(trim((string) $cm));
+            if (in_array($v, ['1', 'true', 'yes', 'on'], true)) {
+                $request->session()->put('can_moderate', true);
+                if (!$request->session()->has('is_mod')) {
+                    $request->session()->put('is_mod', true);
+                }
+            }
+        }
+
+
     }
 
+    private function syncDeviceSessionCookie(Request $request): void
+    {
+        $sid = (string) $request->session()->getId();
+        if ($sid === '') {
+            return;
+        }
+
+        $cookieSid = (string) $request->cookie(self::DEVICE_SESSION_COOKIE, '');
+        if ($cookieSid !== $sid) {
+            $this->queueDeviceSessionCookie($request, $sid);
+        }
+    }
+
+    private function queueDeviceSessionCookie(Request $request, string $sessionId): void
+    {
+        $minutes = 60 * 24 * 365; // 1 year
+        $cookie = cookie(
+            self::DEVICE_SESSION_COOKIE,
+            $sessionId,
+            $minutes,
+            '/',
+            config('session.domain'),
+            (bool) (config('session.secure') ?? $request->isSecure()),
+            true,
+            false,
+            config('session.same_site', 'lax'),
+        );
+
+        cookie()->queue($cookie);
+    }
+
+    /**
+     * Ensure session('is_mod') is available for navbar + middleware checks.
+     * Source of truth is the Genji API session endpoint (read) which returns `is_mod`.
+     */
+    private function syncModeratorFlagFromSession(Request $request): void
+    {
+        if ($request->session()->has('is_mod')) {
+            return;
+        }
+
+        $sessionId = (string) $request->session()->getId();
+        if ($sessionId === '') {
+            return;
+        }
+
+        $cacheKey = "session:is_mod:{$sessionId}";
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            $request->session()->put('is_mod', (bool) $cached);
+            return;
+        }
+
+        try {
+            $isMod = $this->api->sessionIsMod($sessionId);
+
+            if ($isMod === null) {
+                return;
+            }
+
+            $request->session()->put('is_mod', (bool) $isMod);
+
+            $ttl = (int) env('SESSION_IS_MOD_TTL_SECONDS', 120);
+            Cache::put($cacheKey, (bool) $isMod, now()->addSeconds(max(10, $ttl)));
+        } catch (\Throwable $e) {
+            Log::warning('syncModeratorFlagFromSession failed', ['error' => $e->getMessage()]);
+        }
+    }
 }

@@ -73,7 +73,7 @@
         >
           <img
             class="h-full w-full object-cover"
-            src="{{ asset('assets/img/parkour_tutorial.jpg') }}"
+            src="{{ cdn_asset('assets/img/parkour_tutorial.jpg') }}"
             alt="{{ __('tutorials.techniquesImageAlt') }}"
             loading="lazy"
           />
