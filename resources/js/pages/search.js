@@ -702,6 +702,25 @@ async function selectSection(sectionId, opts = {}) {
   // Set section early
   currentSection = sectionId;
 
+  // Defaults filters
+  if (currentSection === 'map_search') {
+    const lang = String(CURRENT_LANG || 'en').toLowerCase();
+    const defOfficial = (lang === 'cn') ? 'False' : 'True';
+
+    const hasUrlFilters = __urlHasAnyFilterParams();
+
+    if (!hasUrlFilters) {
+      if (persistentFilters.official == null || String(persistentFilters.official).trim() === '') {
+        persistentFilters.official = defOfficial;
+      }
+      if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
+        persistentFilters.playtest_filter = 'All';
+      }
+    }
+
+    activeFilters = { ...persistentFilters };
+  }
+
   // clean slate
   if (changing && userNav) {
     clearFilters(true);
