@@ -5541,18 +5541,41 @@ function openMapEditRequestModal(map, opts = {}) {
   function __merFormatApiError(data, status) {
     if (typeof data === 'string') return data || `HTTP ${status}`;
 
-    const message = String(data?.message || data?.error || `HTTP ${status}`).trim();
-    const errors = data?.errors;
-    if (!errors || typeof errors !== 'object') return message;
+    const pickStr = (...vals) => {
+      for (const v of vals) {
+        if (typeof v === 'string') {
+          const s = v.trim();
+          if (s) return s;
+        }
+      }
+      return '';
+    };
 
+    const topMsg = pickStr(data?.message, data?.error);
+    const nestedMsg = pickStr(
+      data?.error?.message,
+      data?.error?.error,
+      data?.error?.detail,
+      data?.detail,
+      data?.title
+    );
+
+    const isUpstream = topMsg.toLowerCase() === 'upstream error';
+    const message = pickStr(isUpstream ? nestedMsg : topMsg, nestedMsg) || `HTTP ${status}`;
+
+    const errors = data?.errors || data?.error?.errors;
     const lines = [];
-    for (const [field, arr] of Object.entries(errors)) {
-      if (Array.isArray(arr) && arr.length) {
-        for (const one of arr) lines.push(`${field}: ${one}`);
-      } else if (typeof arr === 'string') {
-        lines.push(`${field}: ${arr}`);
+
+    if (errors && typeof errors === 'object') {
+      for (const [field, arr] of Object.entries(errors)) {
+        if (Array.isArray(arr) && arr.length) {
+          for (const one of arr) lines.push(`${field}: ${one}`);
+        } else if (typeof arr === 'string' && arr.trim()) {
+          lines.push(`${field}: ${arr.trim()}`);
+        }
       }
     }
+
     return lines.length ? `${message}\n${lines.join('\n')}` : message;
   }
 
@@ -5653,7 +5676,7 @@ function openMapEditRequestModal(map, opts = {}) {
   };
   const getSwitch = (switchId) => {
     const el = document.getElementById(switchId);
-    if (!el) return false;
+    if (!el) return null;
     return el.getAttribute('data-value') === '1';
   };
 
@@ -5860,11 +5883,12 @@ function openMapEditRequestModal(map, opts = {}) {
 
       // switches
       const uiOfficial = getSwitch('merOfficialSwitch');
-      const uiHidden = getSwitch('merHiddenSwitch');
+      const uiHidden   = getSwitch('merHiddenSwitch');
       const uiArchived = getSwitch('merArchivedSwitch');
-      if (uiOfficial !== baselineNow.official) payload.official = uiOfficial;
-      if (uiHidden !== baselineNow.hidden) payload.hidden = uiHidden;
-      if (uiArchived !== baselineNow.archived) payload.archived = uiArchived;
+
+      if (uiOfficial !== null && uiOfficial !== baselineNow.official) payload.official = uiOfficial;
+      if (uiHidden   !== null && uiHidden   !== baselineNow.hidden)   payload.hidden   = uiHidden;
+      if (uiArchived !== null && uiArchived !== baselineNow.archived) payload.archived = uiArchived;
 
       // mechanics/restrictions
       const uiMechanics = __merGetCheckboxValues('merMechanicsDropdown');
@@ -8125,7 +8149,7 @@ document.addEventListener('DOMContentLoaded', () => { void getClientIp(); });
 
 function showToast(message, type = 'ok', opts = {}) {
   const {
-    duration = 1200,
+    duration = 2000,
     enter    = 220,
     exit     = 220,
     easing   = 'cubic-bezier(0.4,0,0.2,1)',
