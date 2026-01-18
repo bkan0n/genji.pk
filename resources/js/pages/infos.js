@@ -275,14 +275,19 @@ function renderRankHelpContent(kind) {
     const CL = t('help_modal.rank_promotion.rank_info_thresholds.table.completions_label','completions');
     const NA = t('help_modal.rank_promotion.rank_info_thresholds.table.na', 'N/A');
 
+    const rankBadgeSrc = (rankKey) => {
+      const file = t(`help_modal.rank_promotion.rank_info_thresholds.rows.${rankKey}.image`, `${rankKey}.webp`);
+      return cdnAsset(`assets/ranks/${file}`);
+    };
+
     const ranks = [
-      { key: 'ninja',        diff: F('beginner','Beginner'),   count: null, img: R('ninja','image',cdnAsset('assets/ranks/ninja.webp')) },
-      { key: 'jumper',       diff: F('easy','Easy'),           count: 10,   img: R('jumper','image',cdnAsset('assets/ranks/jumper.webp')) },
-      { key: 'skilled',      diff: F('medium','Medium'),       count: 10,   img: R('skilled','image',cdnAsset('assets/ranks/skilled.webp')) },
-      { key: 'pro',          diff: F('hard','Hard'),           count: 10,   img: R('pro','image',cdnAsset('assets/ranks/pro.webp')) },
-      { key: 'master',       diff: F('very_hard','Very Hard'), count: 10,   img: R('master','image',cdnAsset('assets/ranks/master.webp')) },
-      { key: 'grand_master', diff: F('extreme','Extreme'),     count: 7,    img: R('grand_master','image',cdnAsset('assets/ranks/grand_master.webp')) },
-      { key: 'god',          diff: F('hell','Hell'),           count: 3,    img: R('god','image',cdnAsset('assets/ranks/god.webp')) },
+      { key: 'ninja',        diff: F('beginner','Beginner'),   count: null, img: rankBadgeSrc('ninja') },
+      { key: 'jumper',       diff: F('easy','Easy'),           count: 10,   img: rankBadgeSrc('jumper') },
+      { key: 'skilled',      diff: F('medium','Medium'),       count: 10,   img: rankBadgeSrc('skilled') },
+      { key: 'pro',          diff: F('hard','Hard'),           count: 10,   img: rankBadgeSrc('pro') },
+      { key: 'master',       diff: F('very_hard','Very Hard'), count: 10,   img: rankBadgeSrc('master') },
+      { key: 'grand_master', diff: F('extreme','Extreme'),     count: 7,    img: rankBadgeSrc('grand_master') },
+      { key: 'god',          diff: F('hell','Hell'),           count: 3,    img: rankBadgeSrc('god') },
     ];
 
     const cardRank = (r) => `
@@ -350,7 +355,10 @@ function renderRankHelpContent(kind) {
     };
     const DIFF_KEYS = ['beginner','easy','medium','hard','very_hard','extreme','hell'];
     const COUNTS = { beginner: null, easy: 10, medium: 10, hard: 10, very_hard: 10, extreme: 7, hell: 3 };
-    const medalImg = (k) => t(`help_modal.rank_promotion.medals_info_thresholds.images.${k}`, cdnAsset(`assets/medals/${k}.png`));
+    const medalImg = (k) => {
+      const file = t(`help_modal.rank_promotion.medals_info_thresholds.images.${k}`, `${k}.png`);
+      return cdnAsset(`assets/medals/${file}`);
+    };
     const ML = t('help_modal.rank_promotion.medals_info_thresholds.table.completions_label','medals');
     const NA = t('help_modal.rank_promotion.medals_info_thresholds.table.na','N/A');
 

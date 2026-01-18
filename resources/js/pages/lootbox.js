@@ -1,8 +1,8 @@
-import { cdnAsset } from "../utils/cdn";
+import { cdnAsset, cdnImage } from "../utils/cdn";
 
 // ====== état/appli ======
 let isRunning = false;
-const openSound = new Audio(cdnAsset('assets/sounds/lootbox-open.ogg'));
+const openSound = new Audio(cdnAsset('assets/sounds/open-box.ogg'));
 let volume = 0.25;
 
 let crate = [];

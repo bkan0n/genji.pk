@@ -142,31 +142,31 @@ return [
                 'rows' => [
                     'ninja' => [
                         'name'  => 'Ninja',
-                        'image' => '/assets/ranks/ninja.webp',
+                        'image' => 'ninja.webp',
                     ],
                     'jumper' => [
                         'name'  => 'Jumper',
-                        'image' => '/assets/ranks/jumper.webp',
+                        'image' => 'jumper.webp',
                     ],
                     'skilled' => [
                         'name'  => 'Skilled',
-                        'image' => '/assets/ranks/skilled.webp',
+                        'image' => 'skilled.webp',
                     ],
                     'pro' => [
                         'name'  => 'Pro',
-                        'image' => '/assets/ranks/pro.webp',
+                        'image' => 'pro.webp',
                     ],
                     'master' => [
                         'name'  => 'Master',
-                        'image' => '/assets/ranks/master.webp',
+                        'image' => 'master.webp',
                     ],
                     'grand_master' => [
                         'name'  => 'Grand Master',
-                        'image' => '/assets/ranks/grandmaster.webp',
+                        'image' => 'grandmaster.webp',
                     ],
                     'god' => [
                         'name'  => 'God',
-                        'image' => '/assets/ranks/god.webp',
+                        'image' => 'god.webp',
                     ],
                 ],
             ],
