@@ -336,7 +336,12 @@ Route::prefix('mods')
         });
 
         // MAP EDIT REQUESTS
-        Route::put('maps/map-edits/{edit_id}/resolve', [ResolveEditRequestController::class, 'update']);
+        Route::prefix('maps')->group(function () {
+            Route::get('/map-edits/pending', [GetPendingEditRequestsController::class, 'index']);
+            Route::get('/map-edits/{edit_id}', [GetEditRequestController::class, 'show'])->whereNumber('edit_id');
+            Route::get('/map-edits/{edit_id}/submission', [GetEditRequestSubmissionViewController::class, 'show'])->whereNumber('edit_id');
+            Route::put('/map-edits/{edit_id}/resolve', [ResolveEditRequestController::class, 'update'])->whereNumber('edit_id');
+        });
 });
 
 /* ================== NOTIFICATIONS ================== */
@@ -375,12 +380,7 @@ Route::prefix('notifications')
 
 /* ================== MAP EDIT ================== */
 Route::prefix('maps/map-edits')->group(function () {
-    Route::get('pending', [GetPendingEditRequestsController::class, 'index']);
-    Route::get('user/{user_id}', [GetUsersEditRequestsController::class, 'index']);
-
     Route::post('/', [CreateMapEditRequestController::class, 'store']);
-    Route::get('{edit_id}', [GetEditRequestController::class, 'show']);
-    Route::get('{edit_id}/submission', [GetEditRequestSubmissionViewController::class, 'show']);
 });
 
 /* ================== SENTRY ================== */

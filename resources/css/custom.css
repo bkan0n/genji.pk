@@ -1039,11 +1039,6 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .modal-panel{transform:translateY(8px) scale(.98);opacity:0;transition:transform .22s ease,opacity .22s ease}
 .modal-overlay.is-open .modal-panel{transform:translateY(0) scale(1);opacity:1}
 /* ================= MODERATOR ================= */
-.fade-in{animation:fade-in 160ms ease-out both}
-@keyframes fade-in{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
-.mod-subtab[aria-selected="true"]{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);box-shadow:0 0 0 4px rgba(34,197,94,.15)}
-.mod-subtab{transition:transform .12s ease,background .12s ease,box-shadow .12s ease}
-.mod-subtab:active{transform:translateY(1px) scale(.99)}
 /* ================= BACKGROUND ================= */
 .prism-host{position:relative;width:100%;height:600px}
 .prism-canvas{position:absolute;inset:0;display:block}
