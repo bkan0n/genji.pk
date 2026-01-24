@@ -233,7 +233,7 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
             <div>
             <h3 class="font-semibold">${title}</h3>
             ${subtitle ? `<div class="text-xs text-zinc-400 mt-0.5">${subtitle}</div>` : ''}
-            </div>
+            </span>
             <div class="flex items-center gap-2">
             <button class="copy cursor-pointer px-2 py-1 text-xs rounded-lg border border-white/10 hover:bg-white/5">Copy</button>
             <button class="close cursor-pointer px-2 py-1 text-xs rounded-lg border border-white/10 hover:bg-white/5">Close</button>
@@ -244,7 +244,9 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
         </div>
         </div>
     `;
-  document.body.appendChild(overlay);
+  const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
 
   overlay.querySelector('pre').textContent = bodyText;
 
@@ -269,7 +271,7 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
 // --- Activity log ---
 function logActivity({ title, method, url, ok, status, data }) {
   const wrap = document.createElement('div');
-  wrap.className = 'rounded-lg border border-white/10 bg-zinc-900 p-3 fade-in';
+  wrap.className = 'rounded-lg border border-white/10 bg-zinc-900 p-3 fade-in min-w-0';
   wrap.dataset.logCard = '1';
 
   const pretty = typeof data === 'string' ? data : JSON.stringify(data ?? {}, null, 2);
@@ -289,7 +291,7 @@ function logActivity({ title, method, url, ok, status, data }) {
       <span class="${ok ? 'text-emerald-400' : 'text-red-400'}">${status}</span>
     </div>
     <div class="text-[11px] text-zinc-400 mb-2">${method} ${url}</div>
-    <pre class="resp text-xs whitespace-pre-wrap break-words leading-tight ${isLong ? 'cursor-zoom-in' : ''}"></pre>
+    <pre class="resp text-xs whitespace-pre-wrap leading-tight max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
     <div class="mt-2 flex items-center gap-2">
       <button class="view-full cursor-pointer text-xs rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">View full</button>
       <button class="copy-full cursor-pointer text-xs rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">Copy</button>
@@ -533,6 +535,10 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'verif-pending') {
           ensureVerifResultsContainer();
           handleGetPendingVerifs();
+        }
+        if (name === 'verif-edits') {
+          ensureEditVerifResultsContainer();
+          handleGetPendingEditRequests();
         }
         wireFormAutocompletes(active);
       }
@@ -848,6 +854,8 @@ $$('form[data-action]').forEach((form) => {
           return handleConvertLegacy(form);
         case 'load-map-update':
           return handleLoadMapForUpdate(form);
+        case 'create-map-edit-request':
+          return handleCreateMapEditRequest(form);
 
         // MODERATION (API_MODS)
         case 'override-quality':
@@ -860,6 +868,8 @@ $$('form[data-action]').forEach((form) => {
         // VERIFICATIONS (API_MODS)
         case 'get-pending-verifs':
           return handleGetPendingVerifs();
+        case 'get-pending-edit-requests':
+          return handleGetPendingEditRequests();
         case 'verify-completion':
           return handleVerifyCompletion(form);
         default:
@@ -1782,6 +1792,2174 @@ async function handleGetPendingVerifs() {
   toast('Queue loaded', 'ok');
 }
 
+// MAP EDIT REQUESTS
+function parseCsvList(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return [];
+  return s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .slice(0, 200);
+}
+
+function triStateToBool(v) {
+  const s = String(v || '').trim().toLowerCase();
+  if (s === 'true') return true;
+  if (s === 'false') return false;
+  return null;
+}
+
+async function handleCreateMapEditRequest(form) {
+  const code = String(form?.code?.value || '').trim().toUpperCase();
+
+  if (!code) {
+    toast('Map code required', 'warn');
+    return;
+  }
+
+  let map = { code };
+  try {
+    const { ok, status, url, data } = await http('GET', '/api/maps', { query: { code } });
+
+    logActivity({ title: `Load map for edit request`, method: 'GET', url, ok, status, data });
+
+    if (ok) {
+      if (Array.isArray(data)) map = data[0] || map;
+      else if (data && typeof data === 'object') map = (data.items?.[0] ?? data) || map;
+    } else {
+      toast(`Could not load map (${status}) – opening empty form`, 'warn');
+    }
+  } catch (e) {
+    toast('Network error – opening empty form', 'warn');
+  }
+
+  openMapEditRequestModal(map, {
+    syncUrl: false,
+    fromUrl: true,
+    autoClose: false,
+    // Create endpoint
+    endpoint: '/api/maps/map-edits',
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MAP EDIT REQUEST FORM
+// ──────────────────────────────────────────────────────────────────────────────
+
+const __MER_CATEGORY_OPTIONS = [
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.classic') || 'Classic') : 'Classic'), value: 'Classic', raw: 'Classic' },
+  {
+    text: () => (typeof t === 'function' ? (t('filters_toolbar.increasing_difficulty') || 'Increasing Difficulty') : 'Increasing Difficulty'),
+    value: 'Increasing Difficulty',
+    raw: 'Increasing Difficulty',
+  },
+];
+
+const __MER_DIFFICULTY_FINE_OPTIONS = [
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.easy') || 'Easy') : 'Easy')} -`, value: 'Easy -', raw: 'Easy -' },
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.easy') || 'Easy') : 'Easy'), value: 'Easy', raw: 'Easy' },
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.easy') || 'Easy') : 'Easy')} +`, value: 'Easy +', raw: 'Easy +' },
+
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.medium') || 'Medium') : 'Medium')} -`, value: 'Medium -', raw: 'Medium -' },
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.medium') || 'Medium') : 'Medium'), value: 'Medium', raw: 'Medium' },
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.medium') || 'Medium') : 'Medium')} +`, value: 'Medium +', raw: 'Medium +' },
+
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.hard') || 'Hard') : 'Hard')} -`, value: 'Hard -', raw: 'Hard -' },
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.hard') || 'Hard') : 'Hard'), value: 'Hard', raw: 'Hard' },
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.hard') || 'Hard') : 'Hard')} +`, value: 'Hard +', raw: 'Hard +' },
+
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.very_hard') || 'Very Hard') : 'Very Hard')} -`, value: 'Very Hard -', raw: 'Very Hard -' },
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.very_hard') || 'Very Hard') : 'Very Hard'), value: 'Very Hard', raw: 'Very Hard' },
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.very_hard') || 'Very Hard') : 'Very Hard')} +`, value: 'Very Hard +', raw: 'Very Hard +' },
+
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.extreme') || 'Extreme') : 'Extreme')} -`, value: 'Extreme -', raw: 'Extreme -' },
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.extreme') || 'Extreme') : 'Extreme'), value: 'Extreme', raw: 'Extreme' },
+  { text: () => `${(typeof t === 'function' ? (t('filters_toolbar.extreme') || 'Extreme') : 'Extreme')} +`, value: 'Extreme +', raw: 'Extreme +' },
+
+  { text: () => (typeof t === 'function' ? (t('filters_toolbar.hell') || 'Hell') : 'Hell'), value: 'Hell', raw: 'Hell' },
+];
+
+// --- MER helpers
+function __merEsc(v) {
+  return escapeHtml(String(v ?? ''));
+}
+
+function __merReadNumber(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.trunc(n) : null;
+}
+
+function __merDifficultyDotClass(labelOrRaw) {
+  const L = String(labelOrRaw || '').toLowerCase();
+  if (L.startsWith('easy')) return 'bg-emerald-400';
+  if (L.startsWith('medium')) return 'bg-yellow-400';
+  if (L.startsWith('very hard')) return 'bg-orange-500';
+  if (L.startsWith('hard') && !L.startsWith('very')) return 'bg-orange-400';
+  if (L.startsWith('extreme')) return 'bg-red-500';
+  if (L.startsWith('hell')) return 'bg-rose-500';
+  return 'bg-zinc-400';
+}
+
+let __merMechRestrCache = null;
+let __merMechRestrInFlight = null;
+
+function __merToNameArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.items)) return data.items;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.results)) return data.results;
+  }
+  return [];
+}
+
+async function __merFillMechanicsAndRestrictions() {
+  if (__merMechRestrCache) return __merMechRestrCache;
+  if (__merMechRestrInFlight) return __merMechRestrInFlight;
+
+  const locale =
+    (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : (document.documentElement.lang || 'en'));
+
+  __merMechRestrInFlight = (async () => {
+    try {
+      const [mechResp, restrResp] = await Promise.all([
+        fetch('/api/autocomplete/map-mechanics', { headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
+        fetch('/api/autocomplete/map-restrictions', { headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
+      ]);
+
+      const mechanicsData = mechResp.ok ? await mechResp.json() : [];
+      const restrictionsData = restrResp.ok ? await restrResp.json() : [];
+
+      const toOpt = (data, keyPrefix) => {
+        const base = __merToNameArray(data)
+          .map((v) => (typeof v === 'string' ? v : v?.name ?? v?.value ?? v?.label ?? ''))
+          .map((s) => String(s || '').trim())
+          .filter(Boolean);
+
+        const seen = new Set();
+        const out = [];
+        for (const raw of base) {
+          if (seen.has(raw)) continue;
+          seen.add(raw);
+
+          let translated = raw;
+          if (typeof t === 'function' && locale === 'cn') {
+            const slug = raw.toLowerCase().replace(/\s+/g, '_');
+            const k = `${keyPrefix}.${slug}`;
+            const tr = t(k);
+            if (tr && tr !== k) translated = tr;
+          }
+
+          out.push({ translated, value: raw, raw });
+        }
+        return out;
+      };
+
+      const mechanicsOptions = toOpt(mechanicsData, 'mechanics');
+      const restrictionsOptions = toOpt(restrictionsData, 'restrictions');
+
+      __merMechRestrCache = { mechanicsOptions, restrictionsOptions };
+      return __merMechRestrCache;
+    } catch {
+      __merMechRestrCache = { mechanicsOptions: [], restrictionsOptions: [] };
+      return __merMechRestrCache;
+    } finally {
+      __merMechRestrInFlight = null;
+    }
+  })();
+
+  return __merMechRestrInFlight;
+}
+
+// --- Users lookup (for creators / created_by display)
+const __merUserCache = new Map();
+async function __merFetchUserProfile(userId) {
+  const id = String(userId || '').trim();
+  if (!/^\d+$/.test(id)) return null;
+
+  const cached = __merUserCache.get(id);
+  if (cached) return cached instanceof Promise ? await cached : cached;
+
+  const p = (async () => {
+    try {
+      const resp = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!resp.ok) return null;
+      return await resp.json();
+    } catch {
+      return null;
+    }
+  })();
+
+  __merUserCache.set(id, p);
+  const data = await p;
+  __merUserCache.set(id, data);
+  return data;
+}
+
+function __merUserDisplayName(profile) {
+  const name =
+    profile?.coalesced_name ||
+    profile?.global_name ||
+    profile?.name ||
+    profile?.nickname ||
+    profile?.username ||
+    '';
+  return String(name || '').trim();
+}
+
+async function __merSetUserDisplayInto(el, userId, fallback = '') {
+  if (!el) return;
+  const id = String(userId || '').trim();
+  if (!id) {
+    el.textContent = fallback || '—';
+    return;
+  }
+
+  el.textContent = fallback || '…';
+
+  const profile = await __merFetchUserProfile(id);
+  const name = __merUserDisplayName(profile);
+  el.textContent = name || fallback || id;
+}
+
+function __merEnsureCreatorsState(overlay, creators) {
+  if (!overlay) return;
+
+  let list = Array.isArray(creators) ? creators.slice() : [];
+
+  const seen = new Set();
+  list = list
+    .map((c) => ({
+      id: String(c?.id ?? c?.user_id ?? '').trim(),
+      name: String(c?.name ?? '').trim(),
+      is_primary: !!c?.is_primary,
+    }))
+    .filter((c) => /^\d+$/.test(c.id))
+    .filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+
+  const firstId = list[0]?.id || null;
+  const primaryId = list.find((c) => c.is_primary)?.id || firstId;
+  list.forEach((c) => (c.is_primary = c.id === primaryId));
+
+  overlay.__merCreatorsState = { list };
+}
+
+function __merSyncCreatorsHiddenInput(overlay) {
+  const hidden = document.getElementById('merCreators');
+  if (!hidden) return;
+
+  const list = Array.isArray(overlay?.__merCreatorsState?.list) ? overlay.__merCreatorsState.list : [];
+  hidden.value = list.map((c) => c.id).join(', ');
+}
+
+function __merRenderCreatorsChips(overlay) {
+  const host = document.getElementById('merCreatorsChips');
+  if (!host) return;
+
+  const creators = Array.isArray(overlay?.__merCreatorsState?.list) ? overlay.__merCreatorsState.list : [];
+  host.innerHTML = '';
+
+  if (!creators.length) {
+    const empty = document.createElement('div');
+    empty.className = 'text-sm text-zinc-400';
+    empty.textContent = 'N/A';
+    host.appendChild(empty);
+    return;
+  }
+
+  for (const c of creators) {
+    const chip = document.createElement('span');
+    chip.className =
+      'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-white/85';
+
+    const dot = document.createElement('span');
+    dot.className = 'h-2 w-2 rounded-full ' + (c.is_primary ? 'bg-emerald-400' : 'bg-white/50');
+
+    const name = document.createElement('span');
+    name.className = 'max-w-[180px] truncate';
+    name.textContent = c.name || c.id;
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className =
+      'ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/80 hover:bg-white/10 cursor-pointer';
+    remove.setAttribute('data-mer-remove-creator', c.id);
+    remove.innerHTML = '&times;';
+
+    chip.appendChild(dot);
+    chip.appendChild(name);
+    chip.appendChild(remove);
+    host.appendChild(chip);
+  }
+
+  host.querySelectorAll('button[data-mer-remove-creator]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-mer-remove-creator');
+      if (!id) return;
+
+      overlay.__merCreatorsState.list = creators.filter((c) => c.id !== id);
+
+      const firstId = overlay.__merCreatorsState.list[0]?.id || null;
+      const primaryId = overlay.__merCreatorsState.list.find((c) => c.is_primary)?.id || firstId;
+      overlay.__merCreatorsState.list.forEach((c) => (c.is_primary = c.id === primaryId));
+
+      __merSyncCreatorsHiddenInput(overlay);
+      __merRenderCreatorsChips(overlay);
+    });
+  });
+}
+
+function __merAddCreatorToState(overlay, { id, name }) {
+  const uid = String(id || '').trim();
+  if (!/^\d+$/.test(uid)) return;
+  const nm = String(name || '').trim();
+
+  overlay.__merCreatorsState = overlay.__merCreatorsState || { list: [] };
+  const list = Array.isArray(overlay.__merCreatorsState.list) ? overlay.__merCreatorsState.list : (overlay.__merCreatorsState.list = []);
+
+  if (list.some((c) => c.id === uid)) return;
+
+  const isPrimary = list.length === 0;
+  list.push({ id: uid, name: nm, is_primary: isPrimary });
+
+  if (isPrimary) {
+    list.forEach((c) => (c.is_primary = c.id === uid));
+  }
+
+  __merSyncCreatorsHiddenInput(overlay);
+  __merRenderCreatorsChips(overlay);
+}
+
+// --- MER banner upload / dropzone
+const __MER_BANNER_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+const __MER_BANNER_MAX_BYTES = 10 * 1024 * 1024; // 10MB
+const __MER_IMAGE_UPLOAD_ENDPOINT = '/api/utilities/image';
+
+function __merShowBusy(el) {
+  if (!el) return () => {};
+  const o = document.createElement('div');
+  o.className = 'absolute inset-0 grid place-items-center bg-black/40 backdrop-blur-sm';
+  o.innerHTML = `<div class="rounded-md bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100 ring-1 ring-emerald-500/60">${(typeof t === 'function' ? (t('record.uploading_screenshot') || 'Uploading…') : 'Uploading…')}</div>`;
+  el.appendChild(o);
+  return () => o.remove();
+}
+
+function __merFilenameWithExt(file, base = 'image') {
+  const name = String(file?.name || '').trim();
+  const ext = (name.match(/\.[a-z0-9]{2,5}$/i) || [''])[0];
+  return ext ? `${base}${ext.toLowerCase()}` : base;
+}
+
+async function __merUploadImageGeneric(file) {
+  if (!file) throw new Error('No file');
+  if (!__MER_BANNER_ALLOWED_MIME.includes(file.type)) {
+    throw new Error(typeof t === 'function' ? (t('errors.image_type') || 'Unsupported image type.') : 'Unsupported image type.');
+  }
+  if (file.size > __MER_BANNER_MAX_BYTES) {
+    throw new Error(typeof t === 'function' ? (t('errors.image_too_large') || 'Image too large.') : 'Image too large.');
+  }
+
+  const fd = new FormData();
+  fd.append('file', file, __merFilenameWithExt(file, 'banner'));
+
+  const resp = await fetch(__MER_IMAGE_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    headers: { Accept: 'text/plain' },
+    body: fd,
+    credentials: 'same-origin',
+  });
+
+  const text = await resp.text();
+  if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
+  const url = (text || '').trim();
+  if (!/^https?:\/\//i.test(url)) throw new Error('Invalid upload response.');
+  return url;
+}
+
+function __merResetBannerDropzone(overlay) {
+  const drop = document.getElementById('merBannerDrop');
+  if (!drop) return;
+
+  overlay.__merBannerFile = null;
+  overlay.__merBannerUrl = null;
+
+  const hidden = document.getElementById('merCustomBanner');
+  if (hidden) hidden.value = '';
+
+  drop.dataset.merBound = '0';
+  drop.innerHTML = `
+    <input id="merBannerInput" type="file" accept="image/*" class="hidden">
+    <div id="merBannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+      ${(typeof t === 'function' ? (t('map_edit_request.drag_and_drop') || 'Drag & drop or click to upload') : 'Drag & drop or click to upload')}
+      <div class="text-[11px] text-zinc-400 mt-1">${(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
+    </div>
+  `;
+
+  __merSetupBannerDropzone(overlay);
+}
+
+function __merSetBannerPreviewFromUrl(overlay, url) {
+  const drop = document.getElementById('merBannerDrop');
+  if (!drop) return;
+
+  overlay.__merBannerFile = null;
+  overlay.__merBannerUrl = url;
+
+  const hidden = document.getElementById('merCustomBanner');
+  if (hidden) hidden.value = url || '';
+
+  drop.dataset.merBound = '0';
+  drop.innerHTML = `
+    <div class="absolute inset-0"></div>
+    <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
+      <span class="text-xs text-white/90 truncate px-1">${__merEsc(url || '')}</span>
+      <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+        ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
+      </button>
+    </div>
+  `;
+
+  const imgHost = drop.firstElementChild;
+  const img = new Image();
+  img.alt = '';
+  img.decoding = 'async';
+  img.loading = 'eager';
+  img.draggable = false;
+  img.className = 'absolute inset-0 h-full w-full object-cover select-none pointer-events-none';
+  img.src = String(url || '');
+  imgHost.appendChild(img);
+
+  document.getElementById('merBannerRemoveBtn')?.addEventListener('click', () => __merResetBannerDropzone(overlay));
+}
+
+function __merSetupBannerDropzone(overlay) {
+  const drop = document.getElementById('merBannerDrop');
+  const input = document.getElementById('merBannerInput');
+  if (!drop || !input) return;
+
+  if (drop.dataset.merBound === '1') return;
+  drop.dataset.merBound = '1';
+
+  const pick = () => input.click();
+
+  const readAsDataURL = (file) =>
+    new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+  const setPreview = async (file) => {
+    drop.dataset.merBound = '0';
+    drop.innerHTML = `
+      <div class="absolute inset-0"></div>
+      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
+        <span class="text-xs text-white/90 truncate px-1">${__merEsc(file.name || '')}</span>
+        <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+          ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
+        </button>
+      </div>
+    `;
+
+    const imgHost = drop.firstElementChild;
+    const img = new Image();
+    img.alt = '';
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.draggable = false;
+    img.className = 'absolute inset-0 h-full w-full object-cover select-none pointer-events-none';
+
+    let blobUrl = null;
+    try {
+      blobUrl = URL.createObjectURL(file);
+      img.src = blobUrl;
+
+      img.onerror = async () => {
+        try {
+          const dataUrl = await readAsDataURL(file);
+          img.src = dataUrl;
+        } catch {
+          /* ignore */
+        } finally {
+          if (blobUrl) URL.revokeObjectURL(blobUrl);
+        }
+      };
+
+      img.onload = () => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+      };
+    } catch {
+      try {
+        const dataUrl = await readAsDataURL(file);
+        img.src = dataUrl;
+      } catch {
+        /* ignore */
+      }
+    }
+
+    imgHost.appendChild(img);
+
+    document.getElementById('merBannerRemoveBtn')?.addEventListener('click', () => __merResetBannerDropzone(overlay));
+  };
+
+  const acceptFile = async (file) => {
+    if (!file) return;
+
+    if (!__MER_BANNER_ALLOWED_MIME.includes(file.type)) {
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage(typeof t === 'function' ? (t('errors.image_type') || 'Unsupported image type.') : 'Unsupported image type.');
+      } else {
+        toast(typeof t === 'function' ? (t('errors.image_type') || 'Unsupported image type.') : 'Unsupported image type.', 'err');
+      }
+      return;
+    }
+    if (file.size > __MER_BANNER_MAX_BYTES) {
+      if (typeof showWarningMessage === 'function') {
+        showWarningMessage(typeof t === 'function' ? (t('errors.image_too_large') || 'Image too large.') : 'Image too large.');
+      } else {
+        toast(typeof t === 'function' ? (t('errors.image_too_large') || 'Image too large.') : 'Image too large.', 'warn');
+      }
+      return;
+    }
+
+    overlay.__merBannerFile = file;
+    await setPreview(file);
+
+    const endBusy = __merShowBusy(drop);
+    try {
+      const url = await __merUploadImageGeneric(file);
+      overlay.__merBannerUrl = url;
+      const hidden = document.getElementById('merCustomBanner');
+      if (hidden) hidden.value = url || '';
+
+      const ok = document.createElement('div');
+      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-white px-2 py-0.5 shadow';
+      ok.textContent = 'Uploaded';
+      drop.appendChild(ok);
+      setTimeout(() => ok.remove(), 1500);
+    } catch (e) {
+      overlay.__merBannerUrl = null;
+      const hidden = document.getElementById('merCustomBanner');
+      if (hidden) hidden.value = '';
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage(e?.message || (typeof t === 'function' ? (t('errors.upload_failed') || 'Upload failed.') : 'Upload failed.'));
+      } else {
+        toast(e?.message || (typeof t === 'function' ? (t('errors.upload_failed') || 'Upload failed.') : 'Upload failed.'), 'err');
+      }
+    } finally {
+      endBusy();
+    }
+  };
+
+  input.addEventListener('change', (e) => acceptFile(e.target.files?.[0]));
+  drop.addEventListener('click', pick);
+
+  drop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add('ring-2', 'ring-emerald-500/60');
+  });
+  drop.addEventListener('dragleave', () => {
+    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+  });
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    const file = e.dataTransfer?.files?.[0];
+    acceptFile(file);
+  });
+}
+
+function __merGetSafeUserIdString() {
+  const candidates = [];
+  try {
+    candidates.push(document.getElementById('modUserId')?.value);
+  } catch {}
+
+  if (typeof window !== 'undefined') {
+    candidates.push(window.user_id, window.userId, window.USER_ID, window.__USER_ID__);
+    candidates.push(window?.user?.id, window?.user?.user_id);
+  }
+
+  try {
+    const el = document.documentElement;
+    if (el?.dataset) candidates.push(el.dataset.userId, el.dataset.user_id);
+    const m = document.querySelector('meta[name="user-id"]');
+    candidates.push(m?.content);
+  } catch {}
+
+  for (const c of candidates) {
+    if (typeof c === 'string' && /^\d{5,25}$/.test(c)) return c;
+    if (typeof c === 'number' && Number.isSafeInteger(c) && c > 0) return String(c);
+  }
+  return null;
+}
+
+function __merGetDropdownListEl(container) {
+  return (
+    container?.querySelector('.custom-multiselect-list') ||
+    container?.querySelector('.fake-select-list') ||
+    null
+  );
+}
+
+function __merGetDropdownBtnEl(container) {
+  return (
+    container?.querySelector('.fake-select-btn, .custom-multiselect-btn') ||
+    null
+  );
+}
+
+function __merEnsureBtnLabelSpan(btn) {
+  if (!btn) return null;
+  let span = btn.querySelector('.cm-label');
+  if (!span) {
+    span = document.createElement('span');
+    span.className = 'cm-label truncate';
+    btn.insertBefore(span, btn.firstChild);
+  }
+  return span;
+}
+
+function __merHideDropdownList(list) {
+  if (!list) return;
+  if (list.classList.contains('dd-anim')) {
+    list.classList.remove('dd-in');
+    list.classList.add('dd-out');
+    setTimeout(() => {
+      list.classList.add('hidden');
+      list.style.display = 'none';
+    }, 120);
+    return;
+  }
+
+  list.classList.add('hidden');
+  list.style.display = 'none';
+}
+
+function __merShowDropdownList(list) {
+  if (!list) return;
+  list.classList.remove('hidden');
+  list.style.display = 'block';
+  if (list.classList.contains('dd-anim')) {
+    requestAnimationFrame(() => {
+      list.classList.remove('dd-out');
+      list.classList.add('dd-in');
+    });
+  }
+}
+
+function __merCloseAllFakeSelects(except) {
+  document.querySelectorAll('.fake-select[data-open="1"], .custom-multiselect[data-open="1"]').forEach((el) => {
+    if (except && el === except) return;
+    const list = __merGetDropdownListEl(el);
+    if (!list) return;
+    el.setAttribute('data-open', '0');
+    __merHideDropdownList(list);
+  });
+}
+
+function __merUpdateFakeSelectLabel(container) {
+  const btn = __merGetDropdownBtnEl(container);
+  const labelEl = __merEnsureBtnLabelSpan(btn);
+  const placeholder = btn?.getAttribute('data-placeholder') ||
+    (typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…');
+  if (!btn || !labelEl) return;
+
+  const isDifficulty = container?.id === 'merDifficultyDropdown';
+  const radio = container.querySelector('input[type="radio"]:checked');
+  if (radio) {
+    const text = String(radio.getAttribute('data-label') || radio.value || '').trim();
+    if (isDifficulty) {
+      const dotCls = __merDifficultyDotClass(text);
+      labelEl.innerHTML = `<span class="mr-2 inline-block h-2 w-2 rounded-full ${dotCls}"></span>${__merEsc(text)}`;
+    } else {
+      labelEl.textContent = text || placeholder;
+    }
+    return;
+  }
+
+  const checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked'));
+  if (checked.length > 0) {
+    const texts = checked
+      .map((c) => String(c.getAttribute('data-label') || c.value || '').trim())
+      .filter(Boolean);
+
+    if (texts.length <= 2) {
+      labelEl.textContent = texts.join(', ');
+    } else {
+      labelEl.textContent = `${texts.length} selected`;
+    }
+    return;
+  }
+
+  labelEl.textContent = placeholder;
+}
+
+function __merSetupFakeSelect(container) {
+  if (!container || container.dataset.merBound === '1') return;
+  container.dataset.merBound = '1';
+
+  const btn = __merGetDropdownBtnEl(container);
+  const list = __merGetDropdownListEl(container);
+  if (!btn || !list) return;
+
+  btn.classList.add('cursor-pointer');
+
+  list.classList.add('dropdown-list', 'dd-anim');
+  list.style.display = 'none';
+
+  const close = () => {
+    container.setAttribute('data-open', '0');
+    __merHideDropdownList(list);
+  };
+
+  const open = () => {
+    __merCloseAllFakeSelects(container);
+    container.setAttribute('data-open', '1');
+    __merShowDropdownList(list);
+  };
+
+  __merUpdateFakeSelectLabel(container);
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = container.getAttribute('data-open') === '1';
+    if (isOpen) close();
+    else open();
+  });
+
+  container.addEventListener('change', (e) => {
+    __merUpdateFakeSelectLabel(container);
+
+    const isRadio = e?.target?.type === 'radio';
+    const shouldAutoClose =
+      isRadio && (container.id === 'merCategoryDropdown' || container.id === 'merDifficultyDropdown');
+
+    if (shouldAutoClose) close();
+  });
+
+  const handleOutside = (e) => {
+    if (!container.contains(e.target)) close();
+  };
+  document.addEventListener('pointerdown', handleOutside);
+
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+}
+
+function __merPopulateRadioDropdown(dropdownId, options, inputName) {
+  const container = document.getElementById(dropdownId);
+  const list = __merGetDropdownListEl(container);
+  if (!container || !list) return;
+
+  const isDifficulty = dropdownId === 'merDifficultyDropdown';
+
+  list.innerHTML = '';
+  (options || []).forEach((opt) => {
+    const value = String(opt.raw ?? opt.value ?? '');
+    const labelText = String(
+      opt.translated ?? (typeof opt.text === 'function' ? opt.text() : (opt.text ?? opt.label ?? value))
+    );
+
+    const label = document.createElement('label');
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+
+    if (isDifficulty) {
+      const dotCls = __merDifficultyDotClass(labelText);
+      label.innerHTML = `
+        <input type="radio" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="sr-only">
+        <span class="inline-block h-2 w-2 rounded-full ${dotCls}"></span>
+        <span class="min-w-0 truncate">${__merEsc(labelText)}</span>
+      `;
+    } else {
+      label.innerHTML = `
+        <input type="radio" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
+        <span class="min-w-0 truncate">${__merEsc(labelText)}</span>
+      `;
+    }
+    list.appendChild(label);
+  });
+
+  __merSetupFakeSelect(container);
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merPopulateCheckboxDropdown(dropdownId, options, inputName) {
+  const container = document.getElementById(dropdownId);
+  const list = __merGetDropdownListEl(container);
+  if (!container || !list) return;
+
+  list.innerHTML = '';
+  (options || []).forEach((opt) => {
+    const value = String(opt.raw ?? opt.value ?? '');
+    const labelText = String(
+      opt.translated ?? (typeof opt.text === 'function' ? opt.text() : (opt.text ?? opt.label ?? value))
+    );
+
+    const label = document.createElement('label');
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+
+    label.innerHTML = `
+      <input type="checkbox" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
+      <span class="min-w-0 truncate">${__merEsc(labelText)}</span>
+    `;
+    list.appendChild(label);
+  });
+
+  __merSetupFakeSelect(container);
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merSetRadioValue(dropdownId, rawValue) {
+  const container = document.getElementById(dropdownId);
+  if (!container) return;
+  container.querySelectorAll('input[type="radio"]').forEach((r) => {
+    r.checked = String(r.value) === String(rawValue ?? '');
+  });
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merGetRadioValue(dropdownId) {
+  const container = document.getElementById(dropdownId);
+  const r = container?.querySelector('input[type="radio"]:checked');
+  return r ? String(r.value) : '';
+}
+
+function __merSetCheckboxValues(dropdownId, values) {
+  const want = new Set((Array.isArray(values) ? values : []).map(String));
+  const container = document.getElementById(dropdownId);
+  if (!container) return;
+  container.querySelectorAll('input[type="checkbox"]').forEach((c) => {
+    c.checked = want.has(String(c.value));
+  });
+  __merUpdateFakeSelectLabel(container);
+}
+
+function __merGetCheckboxValues(dropdownId) {
+  const container = document.getElementById(dropdownId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map((c) => String(c.value));
+}
+
+function __merHideSuggestionBox(box) {
+  if (!box) return;
+  box.classList.add('hidden');
+  box.innerHTML = '';
+}
+
+function __merRenderSuggestionBox(box, items, onPick) {
+  if (!box) return;
+  box.innerHTML = '';
+  const max = Math.min(items.length, 12);
+
+  for (let i = 0; i < max; i++) {
+    const it = items[i];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm text-zinc-200 hover:bg-white/10';
+    btn.textContent = it.label;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      onPick(it);
+      __merHideSuggestionBox(box);
+    });
+    box.appendChild(btn);
+  }
+
+  if (max === 0) __merHideSuggestionBox(box);
+  else box.classList.remove('hidden');
+}
+
+function buildAutocompleteUrl(kind, { value = '', locale = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : LOCALE), pageSize = 12 } = {}) {
+  if (typeof acEndpoint === 'function') return acEndpoint(kind, String(value), pageSize, locale);
+  // Fallback (should not happen in moderator.js)
+  return '';
+}
+
+async function resolveEnglishMapNameExact(v) {
+  // If a global implementation exists elsewhere on the site, use it.
+  try {
+    if (typeof window !== 'undefined' && typeof window.resolveEnglishMapNameExact === 'function') {
+      return await window.resolveEnglishMapNameExact(v);
+    }
+  } catch {}
+  return String(v ?? '');
+}
+
+function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) {
+  if (!inputEl || !boxEl) return;
+  let timer = null;
+
+  document.addEventListener('pointerdown', (e) => {
+    if (inputEl.contains(e.target) || boxEl.contains(e.target)) return;
+    __merHideSuggestionBox(boxEl);
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') __merHideSuggestionBox(boxEl);
+  });
+
+  inputEl.addEventListener('input', () => {
+    const q = String(inputEl.value || '').trim();
+    if (q.length < minChars) return __merHideSuggestionBox(boxEl);
+
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(async () => {
+      try {
+        const url = buildAutocompleteUrl(kind, {
+          value: q,
+          locale: (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : LOCALE),
+          pageSize: 12
+        });
+        const res = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        if (!res.ok) return __merHideSuggestionBox(boxEl);
+
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.items || data.data || []);
+        const items = (list || [])
+          .map((x) => {
+            if (Array.isArray(x)) {
+              const id = String(x[0] ?? '').trim();
+              const label = String(x[1] ?? id).trim();
+              return { label, raw: id, data: x };
+            }
+
+            if (typeof x === 'string') return { label: x, raw: x, data: x };
+
+            const label =
+              x.translated_map_name ||
+              x.translated ||
+              x.coalesced_name ||
+              x.global_name ||
+              x.name ||
+              x.nickname ||
+              x.username ||
+              x.map_name ||
+              x.value ||
+              '';
+
+            const isUsers = kind === 'users';
+            const raw = isUsers
+              ? (x.user_id ?? x.id ?? x.value ?? x.raw ?? label)
+              : (x.map_name ?? x.raw ?? x.value ?? x.id ?? x.user_id ?? label);
+
+            return { label: String(label), raw, data: x };
+          })
+          .filter((x) => x.label);
+
+        __merRenderSuggestionBox(boxEl, items, onPick);
+      } catch {
+        __merHideSuggestionBox(boxEl);
+      }
+    }, 220);
+  });
+}
+
+// Form creator
+function ensureMapEditRequestModal() {
+  let overlay = document.getElementById('mapEditRequestInline');
+  if (overlay) return overlay;
+
+  if (!document.getElementById('merModalStyles')) {
+    const st = document.createElement('style');
+    st.id = 'merModalStyles';
+    st.textContent = `
+      .dropdown-list.dd-anim{opacity:0;transform:translateY(-4px) scale(.99);transition:opacity .12s ease,transform .12s ease}
+      .dropdown-list.dd-anim.dd-in{opacity:1;transform:translateY(0) scale(1)}
+      .dropdown-list.dd-anim.dd-out{opacity:0;transform:translateY(-4px) scale(.99)}
+    `;
+    document.head.appendChild(st);
+  }
+
+  overlay = document.createElement('div');
+  overlay.id = 'mapEditRequestInline';
+  overlay.className = 'hidden';
+
+  overlay.innerHTML = `
+    <div class="w-full rounded-2xl border border-white/10 bg-zinc-950/80 shadow-xl ring-1 ring-white/10">
+      <div class="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-4">
+        <div class="min-w-0">
+          <div class="text-xs font-semibold tracking-wide text-zinc-400">MODERATOR</div>
+          <h2 class="mt-0.5 text-lg font-semibold text-white">Map Edit Request</h2>
+          <p class="mt-1 text-xs text-zinc-400">Send a map edit request with the same form as the public modal.</p>
+        </div>
+
+      </div>
+
+      <div class="max-h-[78vh] overflow-y-auto px-6 py-5">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <div class="text-xs font-semibold text-zinc-400">Code</div>
+            <div id="merCode" class="mt-1 font-mono text-sm tracking-wide text-zinc-200">—</div>
+          </div>
+          <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <div class="text-xs font-semibold text-zinc-400">Created by</div>
+            <div id="merCreatedBy" class="mt-1 text-sm text-zinc-200">—</div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm text-zinc-200">
+            ${(typeof t === 'function' ? (t('map_edit_request.reason') || 'Reason') : 'Reason')} <span class="text-rose-300/90">*</span>
+            <textarea id="merReason" rows="3" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="${(typeof t === 'function' ? (t('map_edit_request.reason_placeholder') || 'Explain what should change and why…') : 'Explain what should change and why…')}"></textarea>
+          </label>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div class="text-xs font-semibold text-zinc-200">${(typeof t === 'function' ? (t('map_edit_request.proposed_changes') || 'Proposed changes') : 'Proposed changes')}</div>
+          <p class="mt-1 text-xs text-zinc-400">${(typeof t === 'function' ? (t('map_edit_request.proposed_hint') || 'Fill only the fields you want to change.') : 'Fill only the fields you want to change.')}</p>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('map_edit_request.new_code') || 'New code') : 'New code')}
+              <input id="merNewCode" type="text" autocapitalize="characters" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 font-mono text-sm tracking-wide text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="NEW01">
+            </label>
+
+            <label class="block text-sm text-zinc-200 relative">
+              ${(typeof t === 'function' ? (t('filters_toolbar.map_name') || 'Map name') : 'Map name')}
+              <input id="merMapName" type="text" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Oasis">
+              <div id="merMapNameSuggestions" class="absolute z-[270] mt-1 w-full rounded-xl border border-white/10 bg-zinc-950 shadow-lg hidden"></div>
+            </label>
+
+            <div>
+              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.category') || 'Category') : 'Category')}</div>
+              <div id="merCategoryDropdown" data-open="0" class="fake-select relative mt-1">
+                <button type="button" class="fake-select-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                  <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                  <span class="text-white/60">▾</span>
+                </button>
+                <div class="fake-select-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.difficulty') || 'Difficulty') : 'Difficulty')}</div>
+              <div id="merDifficultyDropdown" data-open="0" class="fake-select relative mt-1">
+                <button type="button" class="fake-select-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                  <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                  <span class="text-white/60">▾</span>
+                </button>
+                <div class="fake-select-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden"></div>
+              </div>
+            </div>
+
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('filters_toolbar.checkpoints') || 'Checkpoints') : 'Checkpoints')}
+              <input id="merCheckpoints" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="0">
+            </label>
+
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('map.title') || 'Title') : 'Title')}
+              <input id="merTitle" type="text" maxlength="120" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Short title…">
+            </label>
+
+            <div>
+              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.mechanics') || 'Mechanics') : 'Mechanics')}</div>
+              <div id="merMechanicsDropdown" data-open="0" class="custom-multiselect relative mt-1">
+                <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                  <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                  <span class="text-white/60">▾</span>
+                </button>
+                <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.restrictions') || 'Restrictions') : 'Restrictions')}</div>
+              <div id="merRestrictionsDropdown" data-open="0" class="custom-multiselect relative mt-1">
+                <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                  <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                  <span class="text-white/60">▾</span>
+                </button>
+                <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
+              <div class="text-xs font-semibold text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.official') || 'Official') : 'Official')}</div>
+              <div id="merOfficialSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-white/10 bg-black/20 p-1">
+                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">True</button>
+                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">False</button>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
+              <div class="text-xs font-semibold text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.hidden') || 'Hidden') : 'Hidden')}</div>
+              <div id="merHiddenSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-white/10 bg-black/20 p-1">
+                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">True</button>
+                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">False</button>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
+              <div class="text-xs font-semibold text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.archived') || 'Archived') : 'Archived')}</div>
+              <div id="merArchivedSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-white/10 bg-black/20 p-1">
+                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">True</button>
+                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">False</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('medals.gold') || 'Gold') : 'Gold')}
+              <input id="merMedalGold" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
+            </label>
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('medals.silver') || 'Silver') : 'Silver')}
+              <input id="merMedalSilver" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
+            </label>
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('medals.bronze') || 'Bronze') : 'Bronze')}
+              <input id="merMedalBronze" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
+            </label>
+          </div>
+
+          <div class="mt-4">
+            <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('map.banner') || 'Banner') : 'Banner')}</div>
+            <input id="merCustomBanner" type="hidden" value="">
+            <div id="merBannerDrop" class="relative mt-1 h-36 w-full cursor-pointer overflow-hidden rounded-2xl border border-dashed border-white/15 bg-zinc-900/40"></div>
+          </div>
+
+          <div class="mt-4">
+            <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('map_edit_request.creators') || 'Creators') : 'Creators')}</div>
+            <input id="merCreators" type="hidden" value="">
+            <div class="relative mt-1">
+              <input id="merCreatorsSearch" type="text" class="w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="${(typeof t === 'function' ? (t('map_edit_request.search_users') || 'Search users…') : 'Search users…')}">
+              <div id="merCreatorSuggestions" class="absolute z-[270] mt-1 w-full rounded-xl border border-white/10 bg-zinc-950 shadow-lg hidden"></div>
+            </div>
+            <div id="merCreatorsChips" class="mt-2 flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="mt-4">
+            <label class="block text-sm text-zinc-200">
+              ${(typeof t === 'function' ? (t('map.description') || 'Description') : 'Description')}
+              <textarea id="merDescription" rows="4" maxlength="5000" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Details…"></textarea>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 border-t border-white/10 bg-zinc-950/80 px-6 py-4">
+        <button type="button" data-mer-close class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 hover:bg-white/10">Cancel</button>
+        <button type="button" id="merSendBtn" class="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400">
+          ${(typeof t === 'function' ? (t('map_edit_request.send') || 'Send request') : 'Send request')}
+        </button>
+      </div>
+    </div>
+  `;
+
+  const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
+
+  // Close wiring
+  overlay.__merShow = () => {
+    const mount = document.getElementById('mapEditRequestInlineMount');
+    if (mount) mount.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    try { overlay.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+  };
+  overlay.__merClose = () => {
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    const mount = document.getElementById('mapEditRequestInlineMount');
+    if (mount) mount.classList.add('hidden');
+    __merCloseAllFakeSelects?.();
+  };
+
+  overlay.querySelectorAll('[data-mer-close]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      overlay.__merClose?.();
+    });
+  });
+
+  // Switch click wiring
+  ['merOfficialSwitch', 'merHiddenSwitch', 'merArchivedSwitch'].forEach((switchId) => {
+    const el = document.getElementById(switchId);
+    if (!el || el.dataset.merBound === '1') return;
+    el.dataset.merBound = '1';
+
+    const apply = (value) => {
+      el.setAttribute('data-value', value);
+      el.querySelectorAll('button[data-switch]').forEach((b) => {
+        const isActive = (b.getAttribute('data-value') || '0') === value;
+        b.classList.toggle('bg-white', isActive);
+        b.classList.toggle('text-zinc-900', isActive);
+        b.classList.toggle('text-white/80', !isActive);
+        b.classList.toggle('hover:bg-white/10', !isActive);
+      });
+    };
+
+    el.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-switch]');
+      if (!btn) return;
+      e.preventDefault();
+      apply(btn.getAttribute('data-value') || '0');
+    });
+
+    apply(el.getAttribute('data-value') || '0');
+  });
+
+  // Banner dropzone wiring
+  __merResetBannerDropzone(overlay);
+
+  // Escape closes
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) overlay.__merClose?.();
+  });
+
+  return overlay;
+}
+
+function openMapEditRequestModal(map, opts = {}) {
+  const { fromUrl = false, syncUrl = true } = opts || {};
+  const code = map?.code || '';
+
+  // URL sync false
+  if (syncUrl && !fromUrl && typeof __urlOpenModal === 'function' && code) {
+    try { __urlOpenModal('map_edit_request', { code }, { push: true }); } catch {}
+  }
+
+  const overlay = ensureMapEditRequestModal();
+  if (!overlay) return;
+
+  // -------------------------
+  // Helpers
+  // -------------------------
+  const get = (...keys) => {
+    for (const k of keys) {
+      if (k == null) continue;
+      const v = map?.[k];
+      if (v !== undefined && v !== null) return v;
+    }
+    return undefined;
+  };
+
+  const toStr = (v) => (v === undefined || v === null ? '' : String(v));
+  const toBool = (v) => {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v !== 0;
+    if (typeof v === 'string') {
+      const s = v.trim().toLowerCase();
+      if (s === 'true' || s === '1' || s === 'yes' || s === 'y') return true;
+      if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === '') return false;
+    }
+    return false;
+  };
+
+  const normalizeStringList = (arr) =>
+    (Array.isArray(arr) ? arr : [])
+      .map((x) => (x == null ? '' : String(x)).trim())
+      .filter(Boolean);
+
+  const normalizeCreators = (v) => {
+    if (Array.isArray(v)) {
+      if (v.length === 0) return [];
+      if (typeof v[0] === 'object' && v[0]) {
+        return v
+          .map((c) => ({
+            id: String(c.id ?? c.user_id ?? '').trim(),
+            is_primary: !!c.is_primary,
+            name: String(c.name ?? c.coalesced_name ?? c.global_name ?? c.nickname ?? c.username ?? '').trim(),
+          }))
+          .filter((c) => /^\d+$/.test(c.id));
+      }
+      return v
+        .map((x) => ({ id: String(x).trim(), is_primary: false, name: '' }))
+        .filter((c) => /^\d+$/.test(c.id));
+    }
+
+    if (typeof v === 'string') {
+      const ids = v
+        .split(',')
+        .map((x) => x.trim())
+        .filter((x) => /^\d+$/.test(x));
+      return ids.map((id) => ({ id, is_primary: false, name: '' }));
+    }
+
+    if (v && typeof v === 'object') {
+      const primary = v.primary ?? v.primary_id ?? v.primary_user_id;
+      const others = v.others ?? v.secondary ?? [];
+      const out = [];
+      if (primary && /^\d+$/.test(String(primary))) out.push({ id: String(primary), is_primary: true, name: '' });
+      for (const x of (Array.isArray(others) ? others : [])) {
+        if (/^\d+$/.test(String(x))) out.push({ id: String(x), is_primary: false, name: '' });
+      }
+      return out;
+    }
+
+    return [];
+  };
+
+  const equalScalar = (a, b) => {
+    const na = (a === undefined || a === null) ? '' : String(a);
+    const nb = (b === undefined || b === null) ? '' : String(b);
+    return na === nb;
+  };
+
+  const equalArray = (a, b) => {
+    const aa = normalizeStringList(a);
+    const bb = normalizeStringList(b);
+    if (aa.length !== bb.length) return false;
+    for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+    return true;
+  };
+
+  const toSafeId = (s) => {
+    const str = String(s ?? '').trim();
+    const n = Number(str);
+    if (Number.isSafeInteger(n) && String(n) === str) return n;
+    return str;
+  };
+
+  function __merWarn(msg) {
+    const m = String(msg || '').trim();
+    if (!m) return;
+    if (typeof showWarningMessage === 'function') return showWarningMessage(m);
+    toast(m, 'warn');
+  }
+
+  function __merErr(msg) {
+    const m = String(msg || '').trim();
+    if (!m) return;
+    if (typeof showErrorMessage === 'function') return showErrorMessage(m);
+    toast(m, 'err');
+  }
+
+  function __merFormatApiError(data, status) {
+    if (typeof data === 'string') return data || `HTTP ${status}`;
+
+    const pickStr = (...vals) => {
+      for (const v of vals) {
+        if (typeof v === 'string') {
+          const s = v.trim();
+          if (s) return s;
+        }
+      }
+      return '';
+    };
+
+    const topMsg = pickStr(data?.message, data?.error);
+    const nestedMsg = pickStr(
+      data?.error?.message,
+      data?.error?.error,
+      data?.error?.detail,
+      data?.detail,
+      data?.title
+    );
+
+    const isUpstream = String(topMsg || '').toLowerCase() === 'upstream error';
+    const message = pickStr(isUpstream ? nestedMsg : topMsg, nestedMsg) || `HTTP ${status}`;
+
+    const errors = data?.errors || data?.error?.errors;
+    const lines = [];
+
+    if (errors && typeof errors === 'object') {
+      for (const [field, arr] of Object.entries(errors)) {
+        if (Array.isArray(arr) && arr.length) {
+          for (const one of arr) lines.push(`${field}: ${one}`);
+        } else if (typeof arr === 'string' && arr.trim()) {
+          lines.push(`${field}: ${arr.trim()}`);
+        }
+      }
+    }
+
+    return lines.length ? `${message}\n${lines.join('\n')}` : message;
+  }
+
+  // -------------------------
+  // Resolve map fields
+  // -------------------------
+  const mapName = toStr(get('map_name', 'name', 'mapName', 'translated_map_name'));
+  const category = toStr(get('category', 'type', 'map_type'));
+  const checkpoints = get('checkpoints', 'checkpoint_count', 'cp_count');
+  const difficulty = toStr(get('difficulty', 'diff', 'difficulty_name'));
+  const mechanics = normalizeStringList(get('mechanics', 'map_mechanics'));
+  const restrictions = normalizeStringList(get('restrictions', 'map_restrictions'));
+  const title = toStr(get('title'));
+  const description = toStr(get('description', 'desc'));
+  const customBanner = toStr(get('custom_banner', 'banner', 'banner_url'));
+
+  const official = toBool(get('official', 'is_official'));
+  const hidden = toBool(get('hidden', 'is_hidden'));
+  const archived = toBool(get('archived', 'is_archived'));
+
+  const medalsRaw = get('medals', 'medal_times', 'medals_times') || {};
+  const medalGold = toStr(medalsRaw.gold ?? medalsRaw.Gold ?? medalsRaw.gold_time ?? '');
+  const medalSilver = toStr(medalsRaw.silver ?? medalsRaw.Silver ?? medalsRaw.silver_time ?? '');
+  const medalBronze = toStr(medalsRaw.bronze ?? medalsRaw.Bronze ?? medalsRaw.bronze_time ?? '');
+
+  const creatorsRaw = get('creators', 'creator_ids', 'creator', 'authors');
+  const creators = normalizeCreators(creatorsRaw);
+
+  // -------------------------
+  // Fill UI
+  // -------------------------
+  overlay.__merShow?.();
+
+  const elCode = document.getElementById('merCode');
+  const elCreatedBy = document.getElementById('merCreatedBy');
+
+  if (elCode) {
+    elCode.textContent = code || 'N/A';
+    elCode.classList.add('opacity-80', 'text-zinc-300/80');
+    elCode.classList.add('pointer-events-none', 'cursor-default');
+  }
+
+  const createdByStr = __merGetSafeUserIdString?.() || null;
+  if (elCreatedBy) {
+    elCreatedBy.textContent = createdByStr || 'N/A';
+    elCreatedBy.classList.add('opacity-80', 'text-zinc-300/80');
+    elCreatedBy.classList.add('pointer-events-none', 'cursor-default');
+    if (createdByStr) __merSetUserDisplayInto(elCreatedBy, createdByStr);
+  }
+
+  const elReason = document.getElementById('merReason');
+  if (elReason) elReason.value = '';
+
+  const elNewCode = document.getElementById('merNewCode');
+  const elMapName = document.getElementById('merMapName');
+  const elCheckpoints = document.getElementById('merCheckpoints');
+  const elTitle = document.getElementById('merTitle');
+  const elDesc = document.getElementById('merDescription');
+
+  if (elNewCode) elNewCode.value = '';
+  if (elMapName) {
+    elMapName.value = mapName;
+    elMapName.setAttribute('data-raw-value', mapName || '');
+  }
+  if (elCheckpoints) elCheckpoints.value = checkpoints == null ? '' : String(checkpoints);
+  if (elTitle) elTitle.value = title;
+  if (elDesc) elDesc.value = description;
+
+  // medals
+  const elGold = document.getElementById('merMedalGold');
+  const elSilver = document.getElementById('merMedalSilver');
+  const elBronze = document.getElementById('merMedalBronze');
+  if (elGold) elGold.value = medalGold;
+  if (elSilver) elSilver.value = medalSilver;
+  if (elBronze) elBronze.value = medalBronze;
+
+  // banner
+  const elBannerHidden = document.getElementById('merCustomBanner');
+  if (elBannerHidden) elBannerHidden.value = customBanner || '';
+  if (customBanner) __merSetBannerPreviewFromUrl(overlay, customBanner);
+  else __merResetBannerDropzone(overlay);
+
+  // switches
+  const setSwitch = (switchId, boolVal) => {
+    const el = document.getElementById(switchId);
+    if (!el) return;
+    const value = boolVal ? '1' : '0';
+    el.setAttribute('data-value', value);
+    el.querySelectorAll('button[data-switch]').forEach((b) => {
+      const isActive = (b.getAttribute('data-value') || '0') === value;
+      b.classList.toggle('bg-white', isActive);
+      b.classList.toggle('text-zinc-900', isActive);
+      b.classList.toggle('text-white/80', !isActive);
+      b.classList.toggle('hover:bg-white/10', !isActive);
+    });
+  };
+  const getSwitch = (switchId) => {
+    const el = document.getElementById(switchId);
+    if (!el) return null;
+    return el.getAttribute('data-value') === '1';
+  };
+
+  setSwitch('merOfficialSwitch', !!official);
+  setSwitch('merHiddenSwitch', !!hidden);
+  setSwitch('merArchivedSwitch', !!archived);
+
+  // creators chips state
+  __merEnsureCreatorsState(overlay, creators);
+  __merSyncCreatorsHiddenInput(overlay);
+  __merRenderCreatorsChips(overlay);
+  const elCreatorsSearch = document.getElementById('merCreatorsSearch');
+  if (elCreatorsSearch) elCreatorsSearch.value = '';
+
+  // hydrate creator names
+  (async () => {
+    const state = overlay?.__merCreatorsState;
+    const list = Array.isArray(state?.list) ? state.list : [];
+    if (!list.length) return;
+
+    let changed = false;
+    for (const c of list) {
+      if (c?.name) continue;
+      if (!/^\d+$/.test(String(c?.id || ''))) continue;
+      const prof = await __merFetchUserProfile(String(c.id));
+      const nm = __merUserDisplayName(prof);
+      if (nm && nm !== c.name) {
+        c.name = nm;
+        changed = true;
+      }
+    }
+    if (changed) __merRenderCreatorsChips(overlay);
+  })();
+
+  // dropdowns
+  const categoryOptions =
+    (typeof CATEGORY_OPTIONS !== 'undefined' && Array.isArray(CATEGORY_OPTIONS) && CATEGORY_OPTIONS.length)
+      ? CATEGORY_OPTIONS
+      : __MER_CATEGORY_OPTIONS;
+
+  const difficultyOptions =
+    (typeof DIFFICULTY_FINE_OPTIONS !== 'undefined' && Array.isArray(DIFFICULTY_FINE_OPTIONS) && DIFFICULTY_FINE_OPTIONS.length)
+      ? DIFFICULTY_FINE_OPTIONS
+      : __MER_DIFFICULTY_FINE_OPTIONS;
+
+  __merPopulateRadioDropdown('merCategoryDropdown', categoryOptions, 'mer_category');
+  __merPopulateRadioDropdown('merDifficultyDropdown', difficultyOptions, 'mer_difficulty');
+  __merSetRadioValue('merCategoryDropdown', category || '');
+  __merSetRadioValue('merDifficultyDropdown', difficulty || '');
+
+  (async () => {
+    let mechanicsOptions =
+      (typeof MECHANICS_OPTIONS !== 'undefined' && Array.isArray(MECHANICS_OPTIONS) && MECHANICS_OPTIONS.length)
+        ? MECHANICS_OPTIONS
+        : null;
+    let restrictionsOptions =
+      (typeof RESTRICTIONS_OPTIONS !== 'undefined' && Array.isArray(RESTRICTIONS_OPTIONS) && RESTRICTIONS_OPTIONS.length)
+        ? RESTRICTIONS_OPTIONS
+        : null;
+
+    if (!mechanicsOptions || !restrictionsOptions) {
+      const filled = await __merFillMechanicsAndRestrictions();
+      mechanicsOptions = filled.mechanicsOptions?.length ? filled.mechanicsOptions : mechanics.map((m) => ({ translated: m, value: m, raw: m }));
+      restrictionsOptions = filled.restrictionsOptions?.length ? filled.restrictionsOptions : restrictions.map((r) => ({ translated: r, value: r, raw: r }));
+    }
+
+    __merPopulateCheckboxDropdown('merMechanicsDropdown', mechanicsOptions, 'mer_mechanics');
+    __merPopulateCheckboxDropdown('merRestrictionsDropdown', restrictionsOptions, 'mer_restrictions');
+    __merSetCheckboxValues('merMechanicsDropdown', mechanics);
+    __merSetCheckboxValues('merRestrictionsDropdown', restrictions);
+  })();
+
+  // autocomplete mount once
+  const mapNameBox = document.getElementById('merMapNameSuggestions');
+  if (overlay.__merMounted?.auto !== true) {
+    __merSetupAutocomplete({
+      inputEl: elMapName,
+      boxEl: mapNameBox,
+      kind: 'map-names',
+      minChars: 1,
+      onPick: async (it) => {
+        if (!elMapName) return;
+        const raw = String(it.raw || it.label || '').trim();
+        const label = String(it.label || raw).trim();
+        elMapName.value = label;
+
+        let english = raw;
+        try {
+          const resolved = await resolveEnglishMapNameExact(raw);
+          if (resolved) english = resolved;
+        } catch {}
+        elMapName.setAttribute('data-raw-value', english || raw || label);
+      },
+    });
+
+    elMapName?.addEventListener('input', () => {
+      if (!elMapName) return;
+      elMapName.setAttribute('data-raw-value', elMapName.value || '');
+    });
+
+    const creatorBox = document.getElementById('merCreatorSuggestions');
+    __merSetupAutocomplete({
+      inputEl: elCreatorsSearch,
+      boxEl: creatorBox,
+      kind: 'users',
+      minChars: 1,
+      onPick: (it) => {
+        const pickedId = String(it.raw ?? it.data?.user_id ?? it.data?.id ?? '').trim();
+        if (!/^\d+$/.test(pickedId)) return;
+        __merAddCreatorToState(overlay, { id: pickedId, name: it.label || '' });
+        if (elCreatorsSearch) elCreatorsSearch.value = '';
+      },
+    });
+
+    overlay.__merMounted = overlay.__merMounted || {};
+    overlay.__merMounted.auto = true;
+  }
+
+  // -------------------------
+  // Baseline snapshot
+  // -------------------------
+  const baseline = {
+    code,
+    official: !!official,
+    hidden: !!hidden,
+    archived: !!archived,
+    new_code: '',
+    map_name: mapName,
+    category,
+    checkpoints: checkpoints == null ? '' : String(checkpoints),
+    difficulty,
+    mechanics: mechanics.slice(),
+    restrictions: restrictions.slice(),
+    title,
+    description,
+    custom_banner: customBanner,
+    medals: { gold: medalGold, silver: medalSilver, bronze: medalBronze },
+    creators: creators.slice(),
+  };
+
+  overlay.__merBaseline = baseline;
+  overlay.__merOpts = opts;
+
+  // -------------------------
+  // Send handler
+  // -------------------------
+  const sendBtn = document.getElementById('merSendBtn');
+  if (sendBtn && overlay.__merMounted?.send !== true) {
+    sendBtn.onclick = async () => {
+      const baselineNow = overlay.__merBaseline;
+      const optsNow = overlay.__merOpts || {};
+
+      const createdBy = __merGetSafeUserIdString?.() || null;
+      if (!createdBy) {
+        __merWarn(
+          (typeof t === 'function' && t('map_edit_request.login_required') && t('map_edit_request.login_required') !== 'map_edit_request.login_required')
+            ? t('map_edit_request.login_required')
+            : 'You must be logged in to send a map edit request.'
+        );
+        return;
+      }
+
+      const reasonEl = document.getElementById('merReason');
+      const reason = (reasonEl?.value || '').trim();
+      if (!reason) {
+        __merWarn(
+          (typeof t === 'function' && t('map_edit_request.reason_required') && t('map_edit_request.reason_required') !== 'map_edit_request.reason_required')
+            ? t('map_edit_request.reason_required')
+            : 'Please provide a reason.'
+        );
+        try { reasonEl?.focus?.(); } catch {}
+        return;
+      }
+
+      // ---------- Build flat payload ----------
+      const payload = {
+        code: String(baselineNow.code),
+        created_by: String(createdBy),
+        reason: String(reason),
+      };
+
+      // new_code
+      const uiNewCode = (document.getElementById('merNewCode')?.value || '').trim();
+      if (uiNewCode) payload.new_code = uiNewCode;
+
+      // map_name
+      const elMapNameNow = document.getElementById('merMapName');
+      const uiMapName = String(elMapNameNow?.getAttribute('data-raw-value') || elMapNameNow?.value || '').trim();
+      if (!equalScalar(uiMapName, baselineNow.map_name)) payload.map_name = uiMapName === '' ? null : uiMapName;
+
+      // category/difficulty
+      const uiCategory = __merGetRadioValue('merCategoryDropdown');
+      if (!equalScalar(uiCategory, baselineNow.category)) payload.category = uiCategory === '' ? null : uiCategory;
+
+      const uiDifficulty = __merGetRadioValue('merDifficultyDropdown');
+      if (!equalScalar(uiDifficulty, baselineNow.difficulty)) payload.difficulty = uiDifficulty === '' ? null : uiDifficulty;
+
+      // checkpoints
+      const uiCheckpointsStr = String(document.getElementById('merCheckpoints')?.value ?? '').trim();
+      if (!equalScalar(uiCheckpointsStr, baselineNow.checkpoints)) {
+        const n = Number(uiCheckpointsStr);
+        payload.checkpoints = uiCheckpointsStr === '' ? null : (Number.isFinite(n) ? Math.trunc(n) : null);
+      }
+
+      // switches
+      const uiOfficial = getSwitch('merOfficialSwitch');
+      const uiHidden   = getSwitch('merHiddenSwitch');
+      const uiArchived = getSwitch('merArchivedSwitch');
+
+      if (uiOfficial !== null && uiOfficial !== baselineNow.official) payload.official = uiOfficial;
+      if (uiHidden   !== null && uiHidden   !== baselineNow.hidden)   payload.hidden   = uiHidden;
+      if (uiArchived !== null && uiArchived !== baselineNow.archived) payload.archived = uiArchived;
+
+      // mechanics/restrictions
+      const uiMechanics = __merGetCheckboxValues('merMechanicsDropdown');
+      if (!equalArray(uiMechanics, baselineNow.mechanics)) payload.mechanics = uiMechanics.length ? uiMechanics : null;
+
+      const uiRestrictions = __merGetCheckboxValues('merRestrictionsDropdown');
+      if (!equalArray(uiRestrictions, baselineNow.restrictions)) payload.restrictions = uiRestrictions.length ? uiRestrictions : null;
+
+      // title/description
+      const uiTitle = (document.getElementById('merTitle')?.value || '').trim();
+      if (!equalScalar(uiTitle, baselineNow.title)) payload.title = uiTitle === '' ? null : uiTitle;
+
+      const uiDesc = (document.getElementById('merDescription')?.value || '').trim();
+      if (!equalScalar(uiDesc, baselineNow.description)) payload.description = uiDesc === '' ? null : uiDesc;
+
+      // custom_banner
+      const uiBanner = (document.getElementById('merCustomBanner')?.value || '').trim();
+      if (!equalScalar(uiBanner, baselineNow.custom_banner)) payload.custom_banner = uiBanner === '' ? null : uiBanner;
+
+      // medals
+      const uiGoldStr = (document.getElementById('merMedalGold')?.value || '').trim();
+      const uiSilverStr = (document.getElementById('merMedalSilver')?.value || '').trim();
+      const uiBronzeStr = (document.getElementById('merMedalBronze')?.value || '').trim();
+
+      const medalsChanged =
+        !equalScalar(uiGoldStr, baselineNow.medals.gold) ||
+        !equalScalar(uiSilverStr, baselineNow.medals.silver) ||
+        !equalScalar(uiBronzeStr, baselineNow.medals.bronze);
+
+      if (medalsChanged) {
+        const g = __merReadNumber(uiGoldStr);
+        const s = __merReadNumber(uiSilverStr);
+        const b = __merReadNumber(uiBronzeStr);
+        payload.medals = (g == null && s == null && b == null) ? null : { gold: g, silver: s, bronze: b };
+      }
+
+      // creators
+      const stateList = Array.isArray(overlay?.__merCreatorsState?.list) ? overlay.__merCreatorsState.list : [];
+      const uiCreators = stateList
+        .map((c) => ({ id: toSafeId(String(c.id || '').trim()), is_primary: !!c.is_primary }))
+        .filter((c) => String(c.id).trim().length > 0);
+
+      const baseCreatorsNorm = normalizeCreators(baselineNow.creators).map((c) => ({
+        id: toSafeId(String(c.id).trim()),
+        is_primary: !!c.is_primary,
+      }));
+
+      const sameCreators =
+        baseCreatorsNorm.length === uiCreators.length &&
+        baseCreatorsNorm.every((c, i) => String(c.id) === String(uiCreators[i].id) && !!c.is_primary === !!uiCreators[i].is_primary);
+
+      if (!sameCreators) payload.creators = uiCreators.length ? uiCreators : null;
+
+      // warn
+      const keys = Object.keys(payload);
+      if (keys.length <= 3) {
+        __merWarn(
+          (typeof t === 'function' && t('map_edit_request.no_changes') && t('map_edit_request.no_changes') !== 'map_edit_request.no_changes')
+            ? t('map_edit_request.no_changes')
+            : 'No changes detected.'
+        );
+        return;
+      }
+
+      // ---------- send ----------
+      try {
+        sendBtn.disabled = true;
+        sendBtn.classList.add('opacity-70', 'cursor-not-allowed');
+
+        const endpoint = (optsNow.endpoint || '/api/maps/map-edits');
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          credentials: 'same-origin',
+        });
+
+        const contentType = resp.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await resp.json() : await resp.text();
+
+        if (!resp.ok) {
+          __merErr(__merFormatApiError(data, resp.status));
+          return;
+        }
+
+        if (typeof showConfirmationMessage === 'function') {
+          showConfirmationMessage((typeof t === 'function' ? (t('map_edit_request.sent') || 'Map edit request sent') : 'Map edit request sent'));
+        } else {
+          toast((typeof t === 'function' ? (t('map_edit_request.sent') || 'Map edit request sent') : 'Map edit request sent'), 'ok');
+        }
+
+        const autoClose = optsNow.autoClose ?? true;
+        if (autoClose) setTimeout(() => overlay.__merClose?.(), 700);
+      } catch (e) {
+        __merErr(e?.message || 'Network error');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+    };
+
+    overlay.__merMounted = overlay.__merMounted || {};
+    overlay.__merMounted.send = true;
+  }
+
+  setTimeout(() => {
+    try { document.getElementById('merReason')?.focus?.(); } catch {}
+  }, 0);
+}
+
+function ensureEditVerifResultsContainer() {
+  const panel = document.querySelector('[data-subpanel="verif-edits"]');
+  if (!panel) return null;
+
+  let box = panel.querySelector('#editVerifResults');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'editVerifResults';
+    box.className = 'space-y-4 max-h-[70vh] overflow-y-auto pr-1';
+    const article = panel.querySelector('article');
+    article?.insertAdjacentElement('afterend', box);
+  } else {
+    box.classList.add('max-h-[70vh]', 'overflow-y-auto', 'pr-1');
+  }
+  return box;
+}
+
+function getResolvedByForEdits() {
+  if (MOD_USER_ID) return MOD_USER_ID;
+  const input = document.getElementById('editResolvedByInput');
+  return getUserIdFrom(input);
+}
+
+function __editFormatDateTime(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return '';
+  try {
+    const d = new Date(s);
+    if (!Number.isFinite(d.getTime())) return s;
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return s;
+  }
+}
+
+function __editNormalizeChange(c) {
+  if (!c || typeof c !== 'object') return { field: 'change', from: '', to: '' };
+
+  const field =
+    c.field ?? c.key ?? c.name ?? c.path ?? c.property ?? c.type ?? c.kind ?? 'change';
+
+  const from =
+    c.old_value ?? c.oldValue ?? c.from ?? c.old ?? c.before ?? c.prev ?? c.previous ?? '';
+
+  const to =
+    c.new_value ?? c.newValue ?? c.to ?? c.new ?? c.after ?? c.next ?? c.updated ?? '';
+
+  return { field: String(field), from, to };
+}
+
+function __editParseBoolLike(v) {
+  if (v == null) return null;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+
+  const s = String(v).trim().toLowerCase();
+  if (['true', '1', 'yes', 'y', 'on'].includes(s)) return true;
+  if (['false', '0', 'no', 'n', 'off'].includes(s)) return false;
+
+  // common API renderings
+  if (s === 'not set' || s === 'n/a' || s === 'na' || s === '') return null;
+  return null;
+}
+
+function __editTextBlock(text) {
+  const s = String(text ?? '').trim();
+  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-500">—</span>`;
+  return `<div class="rounded-lg bg-white/5 px-2.5 py-1.5 text-[13px] text-zinc-100 ring-1 ring-white/10 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(s)}</div>`;
+}
+
+function __editChipList(text) {
+  const s = String(text ?? '').trim();
+  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-500">—</span>`;
+
+  // Split on commas (good enough for mechanics/restrictions)
+  const items = s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  if (!items.length) return `<span class="text-zinc-500">—</span>`;
+
+  const max = 14;
+  const chips = items.slice(0, max).map((it) =>
+    `<span class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-white/85">${escapeHtml(it)}</span>`
+  );
+
+  const more = items.length > max
+    ? `<span class="text-[11px] text-zinc-400">+${items.length - max}</span>`
+    : '';
+
+  return `<div class="flex flex-wrap gap-1.5">${chips.join('')}${more}</div>`;
+}
+
+function __editBannerPreview(url) {
+  const u = String(url ?? '').trim();
+  if (!u || /^not set$/i.test(u)) return `<span class="text-zinc-500">—</span>`;
+
+  if (!/^https?:\/\//i.test(u)) return __editTextBlock(u);
+
+  return `
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="h-12 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/20">
+        <img src="${escapeHtml(u)}" alt="" class="h-full w-full object-cover cursor-pointer" data-enlarge="${escapeHtml(u)}">
+      </div>
+      <div class="min-w-0">
+        <a href="${escapeHtml(u)}" target="_blank" class="text-xs underline decoration-dotted text-zinc-200 hover:opacity-80 break-all">${escapeHtml(u)}</a>
+        <div class="mt-1 text-[11px] text-zinc-500">click image to enlarge</div>
+      </div>
+    </div>
+  `;
+}
+
+function __editValueHtml(field, value) {
+  const f = String(field ?? '').trim();
+  const fLower = f.toLowerCase();
+  const raw = value == null ? '' : String(value);
+  const s = raw.trim();
+
+  if (!s || /^not set$/i.test(s) || s === 'N/A') return `<span class="text-zinc-500">—</span>`;
+
+  // common boolean flags
+  if (/(^|\b)(official|hidden|archived)(\b|$)/.test(fLower)) {
+    const b = __editParseBoolLike(s);
+    if (b !== null) return boolChip(b);
+  }
+
+  // special lists
+  if (fLower.includes('mechanic')) return __editChipList(s);
+  if (fLower.includes('restriction')) return __editChipList(s);
+
+  // banner
+  if (fLower.includes('banner')) return __editBannerPreview(s);
+
+  // difficulty
+  if (fLower.includes('difficulty')) {
+    const dotCls = (typeof difficultyDotClass === 'function')
+      ? difficultyDotClass(s)
+      : (String(s).toLowerCase().startsWith('easy') ? 'bg-emerald-400'
+        : String(s).toLowerCase().startsWith('medium') ? 'bg-yellow-400'
+        : String(s).toLowerCase().startsWith('very hard') ? 'bg-orange-500'
+        : String(s).toLowerCase().startsWith('hard') ? 'bg-orange-400'
+        : String(s).toLowerCase().startsWith('extreme') ? 'bg-red-500'
+        : String(s).toLowerCase().startsWith('hell') ? 'bg-rose-500'
+        : 'bg-zinc-400');
+
+    return `
+      <span class="inline-flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full ${dotCls}"></span>
+        ${decorateValue('difficulty', s)}
+      </span>
+    `;
+  }
+
+  // numbers / ids / urls
+  if (s.length > 90) return __editTextBlock(s);
+
+  // code
+  if (fLower === 'code' || fLower.includes(' code')) return monoChip(s);
+
+  // creators
+  if (fLower.includes('creator')) return __editTextBlock(s);
+
+  return decorateValue(fLower.replace(/\s+/g, '_'), s);
+}
+
+function summarizeChanges(changes) {
+  const list = Array.isArray(changes) ? changes : [];
+  if (!list.length) return `<div class="text-xs text-zinc-400">No change details.</div>`;
+
+  const header = `
+    <div class="grid grid-cols-12 gap-3 px-3 py-2 text-[11px] uppercase tracking-wide text-zinc-400 bg-white/5">
+      <div class="col-span-12 sm:col-span-3">Field</div>
+      <div class="col-span-12 sm:col-span-4">Old</div>
+      <div class="col-span-12 sm:col-span-5">New</div>
+    </div>
+  `;
+
+  const maxRows = 40;
+  const rows = list.slice(0, maxRows).map((c) => {
+    const { field, from, to } = __editNormalizeChange(c);
+    const f = String(field || 'change');
+
+    return `
+      <div class="grid grid-cols-12 gap-3 px-3 py-2 border-t border-white/10 hover:bg-white/5 transition min-w-0">
+        <div class="col-span-12 sm:col-span-3 min-w-0">
+          <div class="text-[12px] font-semibold text-zinc-200 break-words [overflow-wrap:anywhere]">${escapeHtml(f)}</div>
+        </div>
+        <div class="col-span-12 sm:col-span-4 min-w-0">
+          ${__editValueHtml(f, from)}
+        </div>
+        <div class="col-span-12 sm:col-span-5 min-w-0">
+          ${__editValueHtml(f, to)}
+        </div>
+      </div>
+    `;
+  });
+
+  const more = list.length > maxRows
+    ? `<div class="px-3 py-2 text-xs text-zinc-500 border-t border-white/10">Showing ${maxRows} / ${list.length} changes.</div>`
+    : '';
+
+  return `
+    <div class="rounded-2xl border border-white/10 bg-black/20 overflow-hidden min-w-0">
+      ${header}
+      ${rows.join('')}
+      ${more}
+    </div>
+  `;
+}
+
+function renderEditRequestCard({ row, submission }) {
+  const rid = String(row?.id ?? submission?.id ?? '').trim();
+  const code = String(submission?.code ?? row?.code ?? '').trim();
+  const mapName = String(submission?.map_name ?? row?.map_name ?? '').trim();
+  const difficulty = String(submission?.difficulty ?? row?.difficulty ?? '').trim();
+
+  const reason = String(submission?.reason ?? row?.reason ?? '').trim();
+  const createdAtRaw = submission?.created_at ?? row?.created_at ?? '';
+  const createdAt = __editFormatDateTime(createdAtRaw);
+
+  const submitterName = String(submission?.submitter_name ?? row?.submitter_name ?? '').trim();
+  const submitterId = submission?.submitter_id ?? row?.submitter_id ?? row?.created_by ?? '';
+  const messageId = submission?.message_id ?? row?.message_id ?? '';
+
+  const changes = submission?.changes ?? row?.changes ?? null;
+
+  const wrap = document.createElement('article');
+  wrap.className =
+    'rounded-2xl border border-white/10 bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16 min-w-0';
+  wrap.dataset.editId = rid;
+
+  wrap._editRow = row ?? null;
+  wrap._editSubmission = submission ?? null;
+
+  const badge = `
+    <span class="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-200 ring-1 ring-amber-400/20">
+      <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Pending
+    </span>`;
+
+  const difficultyDot = difficulty ? __editValueHtml('difficulty', difficulty) : '';
+
+  wrap.innerHTML = `
+    <div class="flex items-start justify-between gap-3 min-w-0">
+      <div class="min-w-0">
+        <h4 class="font-semibold text-lg min-w-0 break-words [overflow-wrap:anywhere]">Edit request #${escapeHtml(rid || '?')}</h4>
+        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-400 min-w-0">
+          <span class="inline-flex items-center gap-2">
+            <span class="text-zinc-500">code</span> ${monoChip(code || '—')}
+          </span>
+          ${mapName ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-500">map</span> ${decorateValue('map_name', mapName)}</span>` : ''}
+          ${difficulty ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-500">difficulty</span> ${difficultyDot}</span>` : ''}
+        </div>
+      </div>
+      <div class="flex items-end flex-col gap-2">
+        ${badge}
+        ${createdAt ? `<div class="text-[11px] text-zinc-500">${escapeHtml(createdAt)}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="mt-3 grid gap-1.5 min-w-0">
+      ${submitterName || submitterId ? kvRow('submitter', `${submitterName || ''}${submitterId ? ` (${submitterId})` : ''}`) : ''}
+      ${messageId ? kvRow('message_id', String(messageId)) : ''}
+      ${reason ? `
+        <div class="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-400">Reason</div>
+          <div class="mt-1 text-sm text-zinc-100 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(reason)}</div>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="mt-4 min-w-0">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="text-xs text-zinc-400">Changes <span class="text-zinc-500">(${Array.isArray(changes) ? changes.length : 0})</span></div>
+        <div class="text-[11px] text-zinc-500">old → new</div>
+      </div>
+      <div class="min-w-0">${summarizeChanges(changes)}</div>
+    </div>
+
+    <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
+      <button class="btn-edit-view cursor-pointer rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 text-sm font-medium hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+        View JSON
+      </button>
+      <button class="btn-edit-accept cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+        Accept
+      </button>
+      <button class="btn-edit-reject cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+        Reject
+      </button>
+    </div>
+  `;
+
+  return wrap;
+}
+
+async function handleGetPendingEditRequests() {
+  const resultsBox = ensureEditVerifResultsContainer();
+  if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Loading queue…</div>`;
+
+  const { ok, status, url, data } = await http('GET', `${API_MODS}/maps/map-edits/pending`);
+  logActivity({ title: 'Pending edit requests', method: 'GET', url, ok, status, data });
+
+  if (!ok) {
+    toast('Failed to load edit queue', 'err');
+    if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Failed to load.</div>`;
+    return;
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  if (!rows.length) {
+    if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Queue is empty.</div>`;
+    toast('No pending edit requests', 'ok');
+    return;
+  }
+
+  const limit = 25;
+  const subset = rows.slice(0, limit);
+  const cards = [];
+
+  for (const row of subset) {
+    const editId = String(row?.id ?? '').trim();
+    if (!editId) continue;
+
+    const sub = await http('GET', `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/submission`);
+    logActivity({
+      title: `Edit submission ${editId}`,
+      method: 'GET',
+      url: sub.url,
+      ok: sub.ok,
+      status: sub.status,
+      data: sub.data,
+    });
+
+    cards.push(renderEditRequestCard({ row, submission: sub.ok ? sub.data : null }));
+  }
+
+  if (resultsBox) {
+    resultsBox.innerHTML = '';
+    cards.forEach((c) => resultsBox.appendChild(c));
+    if (rows.length > limit) {
+      const note = document.createElement('div');
+      note.className = 'text-xs text-zinc-500';
+      note.textContent = `Showing ${limit} / ${rows.length}.`;
+      resultsBox.appendChild(note);
+    }
+  }
+
+  toast('Edit queue loaded', 'ok');
+}
+
 // ———————————————————————————————————————————————————————————————
 // LOOTBOX
 function showConfirmActiveKeyType() {
@@ -1803,7 +3981,9 @@ function showConfirmActiveKeyType() {
         </div>
       </div>
     `;
-    document.body.appendChild(overlay);
+    const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
 
     const close = (val) => {
       overlay.remove();
@@ -2076,8 +4256,8 @@ async function initSubmitPanel() {
   buildRadioDropdown('categoryDropdown', CATEGORY_OPTIONS, 'Select category');
 
   const [mech, rest] = await Promise.all([
-    fetchStrings('/api/autocomplete/map-mechanics?search=&limit=50'),
-    fetchStrings('/api/autocomplete/map-restrictions?search=&limit=50'),
+    fetchStrings('/api/autocomplete/map-mechanics'),
+    fetchStrings('/api/autocomplete/map-restrictions'),
   ]);
   buildCheckboxDropdown('mechanicsDropdown', mech, 'Select mechanics');
   buildCheckboxDropdown('restrictionsDropdown', rest, 'Select restrictions');
@@ -2356,8 +4536,8 @@ async function initSearchPanel() {
   buildRadioDropdown('s-categoryDropdown', CATEGORY_OPTIONS, 'Select category');
 
   const [mech, rest] = await Promise.all([
-    fetchStrings('/api/autocomplete/map-mechanics?search=&limit=50'),
-    fetchStrings('/api/autocomplete/map-restrictions?search=&limit=50'),
+    fetchStrings('/api/autocomplete/map-mechanics'),
+    fetchStrings('/api/autocomplete/map-restrictions'),
   ]);
   buildCheckboxDropdown('s-mechanicsDropdown', mech, 'Select mechanics');
   buildCheckboxDropdown('s-restrictionsDropdown', rest, 'Select restrictions');
@@ -2510,8 +4690,8 @@ async function initUpdatePanel() {
   buildRadioDropdown('u-playtestingDropdown', PLAYTESTING_OPTIONS, 'Select playtesting');
 
   const [mech, rest] = await Promise.all([
-    fetchStrings('/api/autocomplete/map-mechanics?search=&limit=50'),
-    fetchStrings('/api/autocomplete/map-restrictions?search=&limit=50'),
+    fetchStrings('/api/autocomplete/map-mechanics'),
+    fetchStrings('/api/autocomplete/map-restrictions'),
   ]);
   buildCheckboxDropdown('u-mechanicsDropdown', mech, 'Select mechanics');
   buildCheckboxDropdown('u-restrictionsDropdown', rest, 'Select restrictions');
@@ -2854,9 +5034,9 @@ function initModQualityPanel() {
 // ———————————————————————————————————————————————————————————————
 // VERIFICATION QUEUE – init & helpers
 const MOD_USER_ID = (
-  typeof window !== 'undefined' && window.user_id != null
-    ? String(window.user_id)
-    : (document.querySelector('meta[name="mod-user-id"]')?.content ?? '')
+  document.getElementById('modUserId')?.value ??
+  document.querySelector('meta[name="mod-user-id"]')?.content ??
+  (typeof window !== 'undefined' && window.user_id != null ? String(window.user_id) : '')
 ).trim();
 
 function ensureVerifResultsContainer() {
@@ -2945,7 +5125,9 @@ function openImageLightbox(src) {
       document.removeEventListener('keydown', onEsc);
     }
   });
-  document.body.appendChild(overlay);
+  const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
 }
 
 (function setupLightboxDelegation() {
@@ -3128,6 +5310,40 @@ function removeCardFromVerifList(card) {
   );
 }
 
+
+/* =========================
+   REMOVE EDIT CARD
+   ========================= */
+function removeCardFromEditList(card) {
+  if (!card) return;
+  const container = card.parentElement;
+
+  const h = card.offsetHeight;
+  card.style.height = h + 'px';
+  card.style.transition =
+    'height 200ms ease, opacity 160ms ease, transform 160ms ease, margin 200ms ease, padding 200ms ease';
+  void card.offsetHeight;
+
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(-4px)';
+  card.style.height = '0px';
+  card.style.marginTop = '0px';
+  card.style.marginBottom = '0px';
+  card.style.paddingTop = '0px';
+  card.style.paddingBottom = '0px';
+
+  card.addEventListener(
+    'transitionend',
+    () => {
+      card.remove();
+      if (container && !container.querySelector('[data-edit-id]')) {
+        container.innerHTML = `<div class="text-sm text-zinc-400">Queue is empty.</div>`;
+      }
+    },
+    { once: true }
+  );
+}
+
 /* =========================
    DENY DIALOG
    ========================= */
@@ -3154,7 +5370,9 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
       </div>
     `;
 
-    document.body.appendChild(overlay);
+    const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
     const textarea = overlay.querySelector('textarea');
     const close = (cancelled) => {
       overlay.remove();
@@ -3184,6 +5402,81 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
     document.addEventListener('keydown', onKey, { once: true });
   });
 }
+
+
+/* =========================
+   CLICK HANDLER (edit requests)
+   ========================= */
+document.addEventListener('click', async (e) => {
+  const btnView = e.target.closest('.btn-edit-view');
+  const btnAccept = e.target.closest('.btn-edit-accept');
+  const btnReject = e.target.closest('.btn-edit-reject');
+  if (!btnView && !btnAccept && !btnReject) return;
+
+  const card = e.target.closest('[data-edit-id]');
+  const editId = card?.dataset?.editId;
+  if (!editId) return;
+
+  if (btnView) {
+    e.preventDefault();
+    const payload = {
+      row: card._editRow ?? null,
+      submission: card._editSubmission ?? null,
+    };
+    showModal({
+      title: `Edit request #${editId}`,
+      subtitle: 'Row + submission view',
+      bodyText: JSON.stringify(payload, null, 2),
+    });
+    return;
+  }
+
+  const resolved_by = getResolvedByForEdits();
+  if (!isDigits(resolved_by)) {
+    toast('Resolved by user_id is required (digits)', 'warn');
+    return;
+  }
+
+  if (btnAccept) {
+    e.preventDefault();
+    const { ok, status, url, data } = await http(
+      'PUT',
+      `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+      { body: { accepted: true, resolved_by: String(resolved_by) } }
+    );
+
+    logActivity({ title: `Resolve edit ${editId} (accept)`, method: 'PUT', url, ok, status, data });
+    toast(ok ? 'Edit request accepted' : 'Failed', ok ? 'ok' : 'err');
+    if (ok) removeCardFromEditList(card);
+    return;
+  }
+
+  if (btnReject) {
+    e.preventDefault();
+    const dlg = await showDenyDialog({
+      title: `Reject edit request #${editId}`,
+      placeholder: 'Rejection reason (optional)',
+    });
+    if (dlg.cancelled) return;
+
+    const { ok, status, url, data } = await http(
+      'PUT',
+      `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+      {
+        body: {
+          accepted: false,
+          resolved_by: String(resolved_by),
+          rejection_reason: dlg.reason,
+        },
+      }
+    );
+
+    logActivity({ title: `Resolve edit ${editId} (reject)`, method: 'PUT', url, ok, status, data });
+    toast(ok ? 'Edit request rejected' : 'Failed', ok ? 'ok' : 'err');
+    if (ok) removeCardFromEditList(card);
+    return;
+  }
+});
 
 /* =========================
    CLICK HANDLER (verify/deny/auto)
@@ -3426,7 +5719,9 @@ async function openRoiEditor(imageUrl) {
         <div class="pt-3 text-[11px] text-zinc-400">Tip: drag to move, grab a side/corner to resize. Values are saved normalized (0..1).</div>
       </div>
     `;
-    document.body.appendChild(overlay);
+    const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
 
     const stage = overlay.querySelector("#roiStage");
     const img = new Image();
@@ -3736,7 +6031,9 @@ function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confi
         </div>
       </div>
     `;
-    document.body.appendChild(overlay);
+    const mount = document.getElementById('mapEditRequestInlineMount');
+  (mount || document.body).appendChild(overlay);
+
 
     const close = (val) => { overlay.remove(); resolve(val); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
@@ -3908,3 +6205,351 @@ async function handleSetFrameworkVersion(form) {
     toast(msg, 'err');
   }
 }
+
+// --- Mod UI ---
+// - URL sync: ?tab=...&sub=...
+// - Sidebar filter input
+// - Command palette (Ctrl+K)
+function initializeApp() {
+  // If already initialized, destroy previous instance
+  if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
+    window.__modUiApp.destroy();
+  }
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const tabsRoot = $('#modTabs');
+  if (!tabsRoot) {
+    window.__modUiApp = null;
+    return null;
+  }
+
+  const state = {
+    syncingFromUrl: false,
+    entries: [],
+    filtered: [],
+    activeIndex: 0,
+  };
+
+  const escapeHtml = (s) =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+  function getActiveTabId() {
+    return $('#modTabs .mod-tab.active')?.dataset?.tab || 'users';
+  }
+
+  function getActivePanel(tabId = getActiveTabId()) {
+    return document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
+  }
+
+  function setHeader(tabId) {
+    const label = $(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel;
+    const h = $('#modActiveTitle');
+    if (h) h.textContent = label || tabId;
+  }
+
+  function setUrlState({ tab, sub } = {}, { replace = false } = {}) {
+    const url = new URL(window.location.href);
+
+    if (tab) url.searchParams.set('tab', tab);
+    else url.searchParams.delete('tab');
+
+    if (sub) url.searchParams.set('sub', sub);
+    else url.searchParams.delete('sub');
+
+    if (replace) history.replaceState({}, '', url);
+    else history.pushState({}, '', url);
+  }
+
+  function activateTab(tabId) {
+    const btn = $(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`);
+    if (!btn) return false;
+    btn.click();
+    return true;
+  }
+
+  function activateSub(tabId, subId) {
+    const ok = activateTab(tabId);
+    if (!ok) return;
+    requestAnimationFrame(() => {
+      const panel = getActivePanel(tabId);
+      const subBtn = panel?.querySelector(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
+      subBtn?.click();
+    });
+  }
+
+  function applyUrlState() {
+    const sp = new URLSearchParams(window.location.search);
+    const tab = sp.get('tab');
+    const sub = sp.get('sub');
+
+    state.syncingFromUrl = true;
+    try {
+      if (tab) activateTab(tab);
+      setHeader(getActiveTabId());
+      if (sub) activateSub(tab || getActiveTabId(), sub);
+    } finally {
+      // allow event loop to flush click handlers
+      setTimeout(() => {
+        state.syncingFromUrl = false;
+      }, 0);
+    }
+  }
+
+  // Initial header
+  setHeader(getActiveTabId());
+
+  // Prefill common user_id fields
+  if (typeof MOD_USER_ID !== 'undefined' && MOD_USER_ID) {
+    const createdBy = document.querySelector('input[name="created_by_user_id"]');
+    if (createdBy && !createdBy.value) createdBy.value = MOD_USER_ID;
+
+    const resolvedBy = document.getElementById('editResolvedByInput');
+    if (resolvedBy) {
+      if (!resolvedBy.value) resolvedBy.value = MOD_USER_ID;
+      resolvedBy.readOnly = true;
+      resolvedBy.setAttribute('aria-readonly', 'true');
+      resolvedBy.classList.add('cursor-not-allowed');
+    }
+  }
+
+  // Click -> URL sync
+  const onDocClick = (e) => {
+    const tabBtn = e.target.closest('#modTabs .mod-tab');
+    if (tabBtn) {
+      const tabId = tabBtn.dataset.tab;
+      setHeader(tabId);
+      if (!state.syncingFromUrl) setUrlState({ tab: tabId, sub: '' });
+      return;
+    }
+
+    const subBtn = e.target.closest('.mod-subtab');
+    if (subBtn) {
+      const tabId = getActiveTabId();
+      const subId = subBtn.dataset.subtab;
+      if (!state.syncingFromUrl) setUrlState({ tab: tabId, sub: subId });
+      return;
+    }
+  };
+  document.addEventListener('click', onDocClick);
+
+  // Back/forward -> restore
+  const onPopState = () => applyUrlState();
+  window.addEventListener('popstate', onPopState);
+
+  // Sidebar filter (sections)
+  const navSearch = $('#modNavSearch');
+  let onNavInput = null;
+  if (navSearch) {
+    const run = () => {
+      const q = String(navSearch.value || '').trim().toLowerCase();
+      $$('#modTabs .mod-tab').forEach((b) => {
+        const label = (b.dataset.tabLabel || b.textContent || '').toLowerCase();
+        b.classList.toggle('hidden', q && !label.includes(q));
+      });
+    };
+    onNavInput = () => run();
+    navSearch.addEventListener('input', onNavInput, { passive: true });
+    run();
+  }
+
+  // Scroll helpers
+  const onScrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const onFocusActions = () => {
+    const panel = getActivePanel();
+    const first = panel?.querySelector('.mod-subtab') || panel;
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('#modScrollTop')?.addEventListener('click', onScrollTop);
+  $('#modFocusActions')?.addEventListener('click', onFocusActions);
+
+  // Command palette
+  const cmdkRoot = $('#modCmdk');
+  const cmdkInput = $('#modCmdkInput');
+  const cmdkList = $('#modCmdkList');
+  const cmdkClose = $('#modCmdkClose');
+
+  function buildEntries() {
+    const entries = [];
+    // Tabs
+    $$('#modTabs .mod-tab').forEach((b) => {
+      const tabId = b.dataset.tab;
+      const label = b.dataset.tabLabel || b.textContent.trim();
+      if (tabId) entries.push({ kind: 'tab', tabId, label });
+
+      const panel = document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
+      if (!panel) return;
+
+      // Subtabs for tab
+      panel.querySelectorAll('.mod-subtab').forEach((sb) => {
+        const subId = sb.dataset.subtab;
+        const subLabel = sb.textContent.trim();
+        if (!subId) return;
+        entries.push({ kind: 'sub', tabId, subId, label: `${label} / ${subLabel}` });
+      });
+    });
+
+    return entries;
+  }
+
+  function renderCmdk() {
+    if (!cmdkList) return;
+    cmdkList.innerHTML = '';
+
+    if (!state.filtered.length) {
+      const empty = document.createElement('div');
+      empty.className = 'rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-300';
+      empty.textContent = 'No results';
+      cmdkList.appendChild(empty);
+      return;
+    }
+
+    state.filtered.slice(0, 60).forEach((it, idx) => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className =
+        'w-full cursor-pointer text-left rounded-xl border border-white/10 px-3 py-2 text-sm transition ' +
+        (idx === state.activeIndex ? 'bg-white/10' : 'bg-white/5 hover:bg-white/10');
+
+      row.innerHTML = `
+        <div class="flex items-center justify-between gap-3">
+          <div class="font-semibold text-zinc-100">${escapeHtml(it.label)}</div>
+          <div class="text-[10px] text-zinc-400">${it.kind === 'tab' ? 'Tab' : 'Tool'}</div>
+        </div>
+      `;
+
+      row.addEventListener('click', () => openEntry(it));
+      cmdkList.appendChild(row);
+    });
+  }
+
+  function filterCmdk(q) {
+    const s = String(q || '').trim().toLowerCase();
+    state.filtered = !s ? state.entries.slice() : state.entries.filter((it) => it.label.toLowerCase().includes(s));
+    state.activeIndex = 0;
+    renderCmdk();
+  }
+
+  function closeCmdk() {
+    if (!cmdkRoot) return;
+    cmdkRoot.classList.add('hidden');
+    cmdkRoot.setAttribute('aria-hidden', 'true');
+  }
+
+  function openEntry(it) {
+    closeCmdk();
+    state.syncingFromUrl = true;
+    try {
+      if (it.kind === 'tab') {
+        activateTab(it.tabId);
+        setUrlState({ tab: it.tabId, sub: '' });
+      } else {
+        activateSub(it.tabId, it.subId);
+        setUrlState({ tab: it.tabId, sub: it.subId });
+      }
+    } finally {
+      setTimeout(() => (state.syncingFromUrl = false), 0);
+    }
+  }
+
+  function openCmdk() {
+    if (!cmdkRoot) return;
+    state.entries = buildEntries();
+    cmdkRoot.classList.remove('hidden');
+    cmdkRoot.setAttribute('aria-hidden', 'false');
+    if (cmdkInput) cmdkInput.value = '';
+    filterCmdk('');
+    setTimeout(() => cmdkInput?.focus(), 0);
+  }
+
+  // Open button
+  const onOpenCmdkClick = () => openCmdk();
+  $('#openCmdk')?.addEventListener('click', onOpenCmdkClick);
+
+  // Close
+  const onCmdkCloseClick = () => closeCmdk();
+  cmdkClose?.addEventListener('click', onCmdkCloseClick);
+
+  const onCmdkRootClick = (e) => {
+    const panel = document.getElementById('modCmdkPanel');
+    // close
+    if (panel && !panel.contains(e.target) && !e.target.closest('#openCmdk')) closeCmdk();
+  };
+  cmdkRoot?.addEventListener('click', onCmdkRootClick);
+
+  // Search / keyboard
+  const onCmdkInput = () => filterCmdk(cmdkInput.value);
+  cmdkInput?.addEventListener('input', onCmdkInput, { passive: true });
+
+  const onKeydown = (e) => {
+    // Ctrl/Cmd + K
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      openCmdk();
+      return;
+    }
+
+    // When palette open
+    if (!cmdkRoot || cmdkRoot.classList.contains('hidden')) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeCmdk();
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      state.activeIndex = Math.min(state.activeIndex + 1, Math.max(0, state.filtered.length - 1));
+      renderCmdk();
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      state.activeIndex = Math.max(state.activeIndex - 1, 0);
+      renderCmdk();
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const it = state.filtered[state.activeIndex];
+      if (it) openEntry(it);
+      return;
+    }
+  };
+  document.addEventListener('keydown', onKeydown);
+
+  // Apply URL state
+  applyUrlState();
+
+  // ---- destroy() for cleanup / re-init ----
+  state.destroy = () => {
+    document.removeEventListener('click', onDocClick);
+    window.removeEventListener('popstate', onPopState);
+
+    if (navSearch && onNavInput) navSearch.removeEventListener('input', onNavInput);
+
+    $('#modScrollTop')?.removeEventListener('click', onScrollTop);
+    $('#modFocusActions')?.removeEventListener('click', onFocusActions);
+
+    $('#openCmdk')?.removeEventListener('click', onOpenCmdkClick);
+    cmdkClose?.removeEventListener('click', onCmdkCloseClick);
+    cmdkRoot?.removeEventListener('click', onCmdkRootClick);
+    cmdkInput?.removeEventListener('input', onCmdkInput);
+
+    document.removeEventListener('keydown', onKeydown);
+  };
+
+  window.__modUiApp = state;
+  return state;
+}
+
+document.addEventListener('DOMContentLoaded', () => initializeApp(), { once: true });

@@ -5,140 +5,244 @@
 @section('og:description', 'Internal tools for moderators')
 
 @section('content')
-  <section class="min-h-[100vh] py-10 sm:py-14">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-black tracking-tight sm:text-4xl">Moderator Panel</h1>
-          <p class="mt-1 text-sm text-zinc-400">Administration tools for moderators</p>
+  <section class="mod-ui relative overflow-hidden min-h-[100vh] text-white selection:bg-emerald-500/30 selection:text-white [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed [&_button[disabled]]:cursor-not-allowed [&_button:focus]:outline-none [&_button:focus]:ring-1 [&_button:focus]:ring-emerald-500/30">
+    <input type="hidden" id="modUserId" value="{{ (string) (session('user_id') ?? session('discord_user_id') ?? session('discord_id') ?? '') }}">
+    <div class="relative mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+      <!-- Header -->
+      <header class="mb-8">
+        <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Moderator Panel</h1>
+            <p class="mt-1 text-sm text-zinc-300/80">Internal tools for moderators</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button id="openCmdk" type="button" class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" /></svg>
+              Command
+              <span class="ml-1 hidden rounded-md border border-white/10 bg-zinc-900/60 px-1.5 py-0.5 text-[10px] text-zinc-300 sm:inline">Ctrl K</span>
+            </button>
+
+            <div class="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+              <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10" aria-hidden="true">
+                <svg class="h-4 w-4 text-zinc-200" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4a4 4 0 0 0 4 4m0 2c-4.42 0-8 2-8 4v2h16v-2c0-2-3.58-4-8-4Z"/></svg>
+              </span>
+              <div class="leading-tight">
+                <div class="text-[10px] text-zinc-400">Logged as</div>
+                <div class="text-xs font-semibold text-zinc-100">{{ session('username') ?? 'Guest' }}</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div
-          class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300"
-        >
-          <span class="bg-brand-400 inline-block h-2 w-2 rounded-full"></span>
-          Logged as:
-          <span class="font-semibold">{{ session('username') ?? 'Guest' }}</span>
-        </div>
-      </div>
+      </header>
 
       @php($canModerate = session('is_mod') === true)
       @if (! $canModerate)
-        <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 text-red-200">
-          You do not have permission to access this page.
+        <div class="rounded-2xl border border-red-500/30 bg-red-950/40 p-5 text-red-100 backdrop-blur">
+          <div class="flex items-start gap-3">
+            <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/10 ring-1 ring-red-500/20" aria-hidden="true">
+              <svg class="h-4 w-4 text-red-200" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
+            </span>
+            <div>
+              <div class="font-semibold">Access denied</div>
+              <p class="mt-0.5 text-sm text-red-100/80">You do not have permission to access this page.</p>
+            </div>
+          </div>
         </div>
       @else
         <div class="grid gap-6 lg:grid-cols-12">
-          {{-- Left --}}
-          <div class="lg:col-span-8 relative z-20">
-            {{-- Onglets niveau 1 --}}
-            <div class="mb-6 flex flex-wrap gap-2" id="modTabs">
+          <!-- Left navigation -->
+          <aside class="lg:col-span-2">
+            <div class="sticky top-24 space-y-3">
+              <div class="rounded-2xl border border-white/10 bg-zinc-950/40 p-3 backdrop-blur">
+                <div class="flex items-center justify-between px-2 pb-2">
+                  <div class="text-xs font-semibold text-zinc-200">Sections</div>
+                  <div class="text-[10px] text-zinc-400">shareable URLs</div>
+                </div>
+                <label class="relative block">
+                  <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24"><path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" /></svg>
+                  </span>
+                  <input
+                    id="modNavSearch"
+                    type="text"
+                    class="w-full rounded-xl border border-white/10 bg-zinc-900/60 pl-10 pr-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    placeholder="Filter sections…"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+
+              <nav class="rounded-2xl border border-white/10 bg-zinc-950/30 p-2 backdrop-blur" aria-label="Moderator sections">
+                <div id="modTabs" class="space-y-1">
               <button
                 data-tab="users"
-                class="mod-tab active inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"
+                data-tab-label="Users"
+                class="mod-tab active group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V20h14v-1.5C15 14.17 10.33 13 8 13m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.93 1.97 3.45V20h6v-1.5c0-2.33-4.67-3.5-7-3.5Z"
-                  />
-                </svg>
-                Users
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V20h14v-1.5C15 14.17 10.33 13 8 13m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.93 1.97 3.45V20h6v-1.5c0-2.33-4.67-3.5-7-3.5Z"
+                    />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Users</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Tools</span>
               </button>
+
               <button
                 data-tab="lootbox"
-                class="mod-tab inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-tab-label="Lootbox"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M21 16V8l-9-5l-9 5v8l9 5l9-5M12 4.3L18.5 8L12 11.7L5.5 8L12 4.3m-7 6.12l6 3.33v6.92l-6-3.33v-6.92m14 6.92l-6 3.33v-6.92l6-3.33v6.92Z"
-                  />
-                </svg>
-                Lootbox
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M21 16V8l-9-5l-9 5v8l9 5l9-5M12 4.3L18.5 8L12 11.7L5.5 8L12 4.3m-7 6.12l6 3.33v6.92l-6-3.33v-6.92m14 6.92l-6 3.33v-6.92l6-3.33v6.92Z"
+                    />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Lootbox</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Rewards</span>
               </button>
+
               <button
                 data-tab="guides"
-                class="mod-tab inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-tab-label="Guides"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M4 6h16v2H4V6m0 4h10v2H4v-2m0 4h16v2H4v-2Z" />
-                </svg>
-                Guides
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M4 6h16v2H4V6m0 4h10v2H4v-2m0 4h16v2H4v-2Z" />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Guides</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Content</span>
               </button>
+
               <button
                 data-tab="maps"
-                class="mod-tab inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-tab-label="Maps"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="m15 19l-6-3l-6 3V5l6-3l6 3l6-3v14Z" />
-                </svg>
-                Maps
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="m15 19l-6-3l-6 3V5l6-3l6 3l6-3v14Z" />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Maps</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Data</span>
               </button>
+
               <button
                 data-tab="moderation"
-                class="mod-tab inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-tab-label="Moderation"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M12 1l3 5h6l-4.5 4l1.5 6l-6-3.5L6 16l1.5-6L3 6h6Z" />
-                </svg>
-                Moderation
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M12 1l3 5h6l-4.5 4l1.5 6l-6-3.5L6 16l1.5-6L3 6h6Z" />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Moderation</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Ops</span>
               </button>
+
               <button
                 data-tab="verifications"
-                class="mod-tab inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-tab-label="Verifications"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41Z" />
-                </svg>
-                Verifications
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41Z" />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Verifications</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Queue</span>
               </button>
+
               <button
                 data-tab="devs"
-                class="mod-tab inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-tab-label="Devs only"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
               >
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.7 19.3L19 15.6c-.2-.2-.5-.3-.7-.3h-.5l-1.4-1.4c.9-1.4.7-3.4-.5-4.6c-1.2-1.2-3.2-1.4-4.6-.5L9.4 7.4V6.9c0-.3-.1-.5-.3-.7L5.7 2.5C5.3 2.1 4.7 2.1 4.3 2.5L2.5 4.3c-.4.4-.4 1 0 1.4L6 9.2c.2.2.4.3.7.3h.5l1.4 1.4c-.9 1.4-.7 3.4.5 4.6c1.2 1.2 3.2 1.4 4.6.5l1.4 1.4v.5c0 .3.1.5.3.7l3.7 3.7c.4.4 1 .4 1.4 0l1.8-1.8c.4-.4.4-1 0-1.4Z"/>
-                </svg>
-                Devs only
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M22.7 19.3L19 15.6c-.2-.2-.5-.3-.7-.3h-.5l-1.4-1.4c.9-1.4.7-3.4-.5-4.6c-1.2-1.2-3.2-1.4-4.6-.5L9.4 7.4V6.9c0-.3-.1-.5-.3-.7L5.7 2.5C5.3 2.1 4.7 2.1 4.3 2.5L2.5 4.3c-.4.4-.4 1 0 1.4L6 9.2c.2.2.4.3.7.3h.5l1.4 1.4c-.9 1.4-.7 3.4.5 4.6c1.2 1.2 3.2 1.4 4.6.5l1.4 1.4v.5c0 .3.1.5.3.7l3.7 3.7c.4.4 1 .4 1.4 0l1.8-1.8c.4-.4.4-1 0-1.4Z"/>
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Devs only</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Danger</span>
               </button>
+                </div>
+              </nav>
+              
+            </div>
+          </aside>
+
+          <!-- Main -->
+          <div class="lg:col-span-7 min-w-0">
+            <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4 backdrop-blur sm:p-5">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div id="modActiveKicker" class="text-xs text-zinc-400">Section</div>
+                  <h2 id="modActiveTitle" class="text-lg font-semibold tracking-tight">Users</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="modScrollTop" type="button" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10">Top</button>
+                  <button id="modFocusActions" type="button" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10">Actions</button>
+                </div>
+              </div>
             </div>
 
-            {{-- ============ USERS ============ --}}
+            <div class="mt-6 space-y-6">
+{{-- ============ USERS ============ --}}
             <div data-panel="users" class="mod-panel space-y-4">
               {{-- Sous-nav --}}
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-get"
                 >
                   Get user
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-get-ow"
                 >
                   Get overwatch usernames
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-link"
                 >
                   Link fake → real
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-overwatch"
                 >
                   Replace overwatch usernames
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-update"
                 >
                   Update usernames
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-create"
                 >
                   Create fake member
@@ -161,7 +265,7 @@
                   </div>
                   <form data-action="get-user" autocomplete="off" class="grid gap-3 sm:grid-cols-3">
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -194,7 +298,7 @@
                     class="grid gap-3 sm:grid-cols-3"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -227,14 +331,14 @@
                     class="grid gap-3 sm:grid-cols-2"
                   >
                     <label>
-                      Fake user ID
+                      Fake User name
                       <input
                         name="fake_user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
-                      Real user ID
+                      Real User name
                       <input
                         name="real_user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -261,7 +365,7 @@
                   <form data-action="replace-overwatch" autocomplete="off" class="grid gap-4">
                     <div class="grid gap-3 sm:grid-cols-2">
                       <label>
-                        User ID
+                        User name
                         <input
                           name="user_id"
                           class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -286,7 +390,7 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
                             <span class="dd-label text-sm text-zinc-300">false</span>
                             <svg
@@ -348,7 +452,7 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
                             <span class="dd-label text-sm text-zinc-300">false</span>
                             <svg
@@ -410,7 +514,7 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
                             <span class="dd-label text-sm text-zinc-300">false</span>
                             <svg
@@ -487,7 +591,7 @@
                     class="grid gap-3 sm:grid-cols-2"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -557,55 +661,55 @@
             <div data-panel="lootbox" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-key"
                 >
                   Grant key
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-xp"
                 >
                   Grant XP
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-reward"
                 >
                   Grant reward
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-get-keys"
                 >
                   Get user keys
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-get-rewards"
                 >
                   Get user rewards
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-view-all"
                 >
                   View all rewards
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-set-active-key"
                 >
                   Set active key type
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-get-xp-multiplier"
                 >
                   Get XP Multiplier
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-set-xp-multiplier"
                 >
                   Set XP Multiplier
@@ -632,7 +736,7 @@
                     class="grid gap-3 sm:grid-cols-3"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -644,7 +748,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Classic</span>
                           <svg
@@ -711,7 +815,7 @@
                   </div>
                   <form data-action="grant-xp" autocomplete="off" class="grid gap-3 sm:grid-cols-3">
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -753,7 +857,7 @@
                     class="grid gap-3 sm:grid-cols-4"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -765,7 +869,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Classic</span>
                           <svg
@@ -817,7 +921,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -870,7 +974,7 @@
                     class="grid gap-3 sm:grid-cols-3"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -882,7 +986,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -965,7 +1069,7 @@
                     class="grid gap-3 sm:grid-cols-4"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -979,7 +1083,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -1005,7 +1109,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -1104,7 +1208,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -1131,7 +1235,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -1196,7 +1300,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Any</span>
                           <svg
@@ -1308,7 +1412,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Classic</span>
                           <svg
@@ -1434,25 +1538,25 @@
             <div data-panel="guides" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-create"
                 >
                   Create
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-edit"
                 >
                   Edit
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-delete"
                 >
                   Delete
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-get"
                 >
                   Get Guides
@@ -1492,7 +1596,7 @@
                       />
                     </label>
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         type="text"
@@ -1539,7 +1643,7 @@
                       />
                     </label>
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         type="text"
@@ -1579,7 +1683,7 @@
                       />
                     </label>
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         type="text"
@@ -1626,7 +1730,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">false</span>
                           <svg
@@ -1687,41 +1791,84 @@
             <div data-panel="maps" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-archive"
                 >
                   Archive / Unarchive
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-update"
                 >
                   Update
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-submit"
                 >
                   Submit
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-search"
                 >
                   Search
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-convert"
                 >
                   Convert legacy
                 </button>
+<button
+  class="mod-subtab cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+  data-subtab="maps-edit-request"
+>
+  Edit request
+</button>
+
               </div>
               <div
                 class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
               >
                 Choose a Maps action.
               </div>
+
+<div data-subpanel="maps-edit-request" class="hidden space-y-6">
+  <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <h3 class="font-semibold">Create map edit request</h3>
+      <span class="text-xs text-zinc-400">POST /api/maps/map-edits</span>
+    </div>
+
+    <form data-action="create-map-edit-request" autocomplete="off" class="grid gap-4">
+<div class="grid gap-4">
+  <label class="text-sm font-medium text-zinc-200">
+    Map code <span class="text-zinc-500">(required)</span>
+    <input
+      name="code"
+      type="text"
+      placeholder="e.g. 7M60H"
+      class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+      required
+    />
+  </label>
+
+  <div class="flex items-center justify-end gap-2">
+    <button
+      type="submit"
+      class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 transition-colors"
+    >
+      Open form
+    </button>
+  </div>
+</div>
+      </form>
+
+    <div id="mapEditRequestInlineMount" class="hidden mt-6 border-t border-white/10 pt-6"></div>
+  </article>
+</div>
+
 
               <div data-subpanel="maps-archive" class="hidden space-y-6">
                 <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -1737,7 +1884,7 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
                             <span class="dd-label text-sm text-zinc-300">Archive</span>
                             <svg
@@ -1794,7 +1941,7 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
                             <span class="dd-label text-sm text-zinc-300">Single</span>
                             <svg
@@ -3143,19 +3290,19 @@
             <div data-panel="moderation" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-quality"
                 >
                   Override quality
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-suspicious"
                 >
                   Set suspicious flag
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-getsusp"
                 >
                   Get suspicious flags
@@ -3194,7 +3341,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Select quality (1–6)</span>
                           <svg
@@ -3252,7 +3399,7 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
                           <span class="dd-label text-sm text-zinc-300">Cheating</span>
                           <svg
@@ -3348,7 +3495,7 @@
                     class="grid gap-3 sm:grid-cols-3"
                   >
                     <label>
-                      User ID
+                      User name
                       <input
                         name="user_id"
                         class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
@@ -3370,17 +3517,24 @@
             <div data-panel="verifications" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="verif-pending"
                 >
                   Verify completions
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="verif-playtest"
                 >
                   Verify playtests
                 </button>
+<button
+  class="mod-subtab cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+  data-subtab="verif-edits"
+>
+  Verify edits
+</button>
+
               </div>
               <div
                 class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
@@ -3403,40 +3557,75 @@
                   </form>
                 </article>
               </div>
+<div data-subpanel="verif-edits" class="hidden space-y-6">
+  <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <h3 class="font-semibold">Verify map edit requests</h3>
+      <span class="text-xs text-zinc-400">GET /api/v3/maps/map-edits/pending</span>
+    </div>
+
+    <form data-action="get-pending-edit-requests" autocomplete="off" class="grid gap-4">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="block text-sm text-zinc-300">
+          Resolved by (user_id)
+          <input
+            id="editResolvedByInput"
+            type="text"
+            name="resolved_by_user_id"
+            placeholder="Auto"
+            class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+          />
+        </label>
+
+        <div class="rounded-xl border border-white/10 bg-zinc-950/40 p-3 text-xs text-zinc-400">
+          Accept / Reject will call <span class="font-mono">PUT /resolve</span> with your user_id.
+        </div>
+      </div>
+
+      <button
+        class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30"
+      >
+        Fetch pending edit requests
+      </button>
+    </form>
+  </article>
+</div>
+
+
             </div>
 
             {{-- ============ DEVS ONLY ============ --}}
             <div data-panel="devs" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-cache-frameworks"
                   data-clear-cache="framework"
                 >
                   Delete frameworks cache
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-cache-avatars"
                   data-clear-cache="avatars"
                 >
                   Delete avatars cache
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-cache-translations"
                   data-clear-cache="translations"
                 >
                   Delete translations cache
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-overpy-commit"
                 >
                   Set overpy commit
                 </button>
                 <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-framework-version"
                 >
                   Set framework version
@@ -3624,28 +3813,67 @@
               </div>
 
             </div>
+            </div>
           </div>
 
-          {{-- Right: Activity --}}
-          <aside class="lg:col-span-4">
-            <div class="sticky top-20 z-0 rounded-2xl border border-white/10 bg-white/5 p-6">
-              <div class="mb-3 flex items-center justify-between">
-                <h3 class="font-semibold">Activity</h3>
-                <button
-                  id="clearLog"
-                  class="cursor-pointer rounded-lg border border-white/10 px-2 py-1 text-xs hover:bg-white/5"
-                >
-                  Clear
-                </button>
+          <!-- Right: Activity -->
+          <aside class="lg:col-span-3 min-w-0">
+            <div class="sticky top-24 space-y-3">
+              <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4 backdrop-blur">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-semibold">Activity</div>
+                    <div class="mt-0.5 text-[11px] text-zinc-400">Requests & responses (click to view full)</div>
+                  </div>
+                  <button
+                    id="clearLog"
+                    type="button"
+                    class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <div id="activityLog" class="mt-3 max-h-[70vh] space-y-2 overflow-y-auto overflow-x-hidden pr-1 text-sm min-w-0 break-words [overflow-wrap:anywhere]">
+                  <p class="text-zinc-400">Responses from endpoints will appear here</p>
+                </div>
               </div>
-              <div id="activityLog" class="max-h-[70vh] space-y-2 overflow-auto pr-1 text-sm">
-                <p class="text-zinc-400">Responses from endpoints will appear here</p>
+
+              <div class="hidden rounded-2xl border border-white/10 bg-zinc-950/30 p-4 backdrop-blur lg:block">
+                <div class="text-xs font-semibold text-zinc-200">Safety</div>
+                <p class="mt-2 text-xs text-zinc-300/80">Some actions are irreversible. Double-check IDs and confirmations before submitting.</p>
               </div>
             </div>
           </aside>
         </div>
       @endif
     </div>
+
+  <!-- Command Palette -->
+  <div id="modCmdk" class="hidden" aria-hidden="true">
+    <div id="modCmdkBackdrop" class="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 z-[410] flex items-start justify-center p-4 sm:p-6">
+      <div id="modCmdkPanel" class="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl ring-1 ring-white/10" role="dialog" aria-modal="true">
+        <div class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+          <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+            <svg class="h-4 w-4 text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" />
+            </svg>
+          </span>
+          <div class="flex-1">
+            <div class="text-xs text-zinc-400">Search tabs & tools</div>
+            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to search…" autocomplete="off" />
+          </div>
+          <button id="modCmdkClose" type="button" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 hover:bg-white/10">Esc</button>
+        </div>
+        <div class="max-h-[60vh] overflow-auto p-2">
+          <div id="modCmdkList" class="space-y-1"></div>
+        </div>
+        <div class="border-t border-white/10 px-4 py-3 text-[11px] text-zinc-400">
+          <span class="text-zinc-200">Enter</span> to open · <span class="text-zinc-200">↑↓</span> to navigate · <span class="text-zinc-200">Esc</span> to close
+        </div>
+      </div>
+    </div>
+  </div>
   </section>
 @endsection
 
