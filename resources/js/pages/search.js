@@ -3639,9 +3639,10 @@ function openFloating(
   ['pointerdown', 'mousedown', 'click'].forEach((type) =>
     el.addEventListener(type, (e) => e.stopPropagation())
   );
+  const align = el?.id === 'mapSearchSortOptions' ? 'right' : 'left';
 
   if (__isFloatingOpen(el)) {
-    _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align: 'left' } });
+    _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align } });
     return;
   }
 
@@ -3655,7 +3656,7 @@ function openFloating(
   el.style.opacity = 0;
   el.style.transform = 'translateY(4px) scale(0.98)';
 
-  _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align: 'left' } });
+  _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align } });
   el.classList.remove('u-d-none');
   el.classList.add('u-d-block');
 
@@ -4124,13 +4125,13 @@ function ensureSearchDetailsModal() {
          class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200"
          role="dialog" aria-modal="true" aria-labelledby="mapModalTitle">
       <!-- Gradient border wrapper (no inline CSS) -->
-      <div class="mx-4 w-[min(96vw,1080px)] max-h-[100vh] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
+      <div class="mx-4 w-[min(96vw,1080px)] max-h-[calc(100dvh-2rem)] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
         <div id="detailsModalBox"
-             class="relative min-h-[640px] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
+             class="relative min-h-0 sm:min-h-[640px] max-h-[calc(100dvh-2rem)] overflow-y-auto overflow-x-hidden rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
 
           <!-- Header / Cover -->
-          <div class="relative h-56 overflow-hidden rounded-t-3xl">
-            <img id="mapModalCover" alt="" class="h-full w-full object-cover opacity-80">
+          <div class="relative h-56 w-full overflow-hidden rounded-t-3xl">
+            <img id="mapModalCover" alt="" class="absolute inset-0 block h-full w-full min-w-full max-w-none object-cover opacity-80">
             <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-zinc-900/80"></div>
 
             <!-- Top actions -->
@@ -4165,16 +4166,16 @@ function ensureSearchDetailsModal() {
           </div>
 
           <!-- Content -->
-          <div class="grid gap-6 p-6 md:grid-cols-12">
+          <div class="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-12">
             <!-- Left -->
-            <div class="md:col-span-7 space-y-6">
+            <div class="md:col-span-7 min-w-0 space-y-6">
               <!-- Code + Copy + Guide -->
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-center justify-between gap-4">
+              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div>
                   <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapCode')}</div>
                   <div id="mapCode" class="mt-1 font-mono text-lg">—</div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
                   <!-- Guide button -->
                   <button id="btnGuide"
                           type="button"
@@ -4262,11 +4263,11 @@ function ensureSearchDetailsModal() {
             </div>
 
             <!-- Right -->
-            <div class="md:col-span-5 space-y-6">
+            <div class="md:col-span-5 min-w-0 space-y-6">
               <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
                 <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapDetails')}</div>
                 <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                  <dt class="text-xs text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="min-w-0 break-words text-sm font-medium text-white/90">—</dd>
                   <dt class="text-xs text-white/60">${t('thead.mapCheckpoints')}</dt><dd id="mapCheckpoints" class="text-sm font-medium text-white/90">—</dd>
                   <dt class="text-xs text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-white/90">—</dd>
                   <dt class="text-xs text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-white/90">—</dd>
@@ -7242,9 +7243,9 @@ function ensureCompletionsDetailsModal(){
          class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200"
          role="dialog" aria-modal="true" aria-labelledby="completionModalTitle">
 
-      <div class="mx-4 w-[min(96vw,980px)] max-h-[90vh] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
-        <div id="completionModalBox"
-             class="relative min-h-[520px] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
+      <div class="mx-4 w-[min(96vw,980px)] max-h-[calc(100dvh-2rem)] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
+        <div id="completionModalBox" 
+            class="relative min-h-0 sm:min-h-[520px] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
 
           <!-- cover -->
           <div class="relative h-56 overflow-hidden rounded-t-3xl">
