@@ -101,6 +101,8 @@ return [
         'china_server'          => 'China',
         'apply_filters'         => 'Apply filters',
         'clear_filters'         => 'Clear filters',
+        'tags'                  => 'Tags',
+        'sort'                  => 'Sort',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -426,5 +428,6 @@ return [
         'mapUpvotes' => 'Upvotes',
         'mapVerified' => 'Verified',
         'mapStatus' => 'Status',
+        'mapTags' => 'Map tags',
     ],
 ];

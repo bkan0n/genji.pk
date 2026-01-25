@@ -207,7 +207,7 @@
             </div>
 
             <div class="mt-6 space-y-6">
-{{-- ============ USERS ============ --}}
+            {{-- ============ USERS ============ --}}
             <div data-panel="users" class="mod-panel space-y-4">
               {{-- Sous-nav --}}
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
@@ -1820,12 +1820,12 @@
                 >
                   Convert legacy
                 </button>
-<button
-  class="mod-subtab cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
-  data-subtab="maps-edit-request"
->
-  Edit request
-</button>
+                <button
+                  class="mod-subtab cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                  data-subtab="maps-edit-request"
+                >
+                  Edit request
+                </button>
 
               </div>
               <div
@@ -1834,41 +1834,40 @@
                 Choose a Maps action.
               </div>
 
-<div data-subpanel="maps-edit-request" class="hidden space-y-6">
-  <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
-    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <h3 class="font-semibold">Create map edit request</h3>
-      <span class="text-xs text-zinc-400">POST /api/maps/map-edits</span>
-    </div>
+              <div data-subpanel="maps-edit-request" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h3 class="font-semibold">Create map edit request</h3>
+                    <span class="text-xs text-zinc-400">POST /api/maps/map-edits</span>
+                  </div>
 
-    <form data-action="create-map-edit-request" autocomplete="off" class="grid gap-4">
-<div class="grid gap-4">
-  <label class="text-sm font-medium text-zinc-200">
-    Map code <span class="text-zinc-500">(required)</span>
-    <input
-      name="code"
-      type="text"
-      placeholder="e.g. 7M60H"
-      class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-      required
-    />
-  </label>
+                  <form data-action="create-map-edit-request" autocomplete="off" class="grid gap-4">
+              <div class="grid gap-4">
+                <label class="text-sm font-medium text-zinc-200">
+                  Map code <span class="text-zinc-500">(required)</span>
+                  <input
+                    name="code"
+                    type="text"
+                    placeholder="e.g. 7M60H"
+                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    required
+                  />
+                </label>
 
-  <div class="flex items-center justify-end gap-2">
-    <button
-      type="submit"
-      class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 transition-colors"
-    >
-      Open form
-    </button>
-  </div>
-</div>
-      </form>
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    type="submit"
+                    class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 transition-colors"
+                  >
+                    Open form
+                  </button>
+                </div>
+              </div>
+                    </form>
 
-    <div id="mapEditRequestInlineMount" class="hidden mt-6 border-t border-white/10 pt-6"></div>
-  </article>
-</div>
-
+                  <div id="mapEditRequestInlineMount" class="hidden mt-6 border-t border-white/10 pt-6"></div>
+                </article>
+              </div>
 
               <div data-subpanel="maps-archive" class="hidden space-y-6">
                 <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -2090,7 +2089,7 @@
 
                         <!-- Map Code -->
                         <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Code (route cible)</div>
+                          <div class="text-[11px] text-zinc-400">Code</div>
                           <div class="flex items-center gap-2">
                             <div id="u-metaCode" class="text-sm text-zinc-200">N/A</div>
                             <button
@@ -2308,6 +2307,38 @@
                             ></div>
                           </div>
                         </div>
+
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-400">Select tags</label>
+                          <div id="u-tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
 
@@ -2679,6 +2710,43 @@
                               >
                                 <path
                                   d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- FLAGS -->
+                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-200">Flags</h3>
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-400">Select tags</label>
+                          <div id="tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                 />
                               </svg>
                             </button>
@@ -3126,6 +3194,43 @@
                               >
                                 <path
                                   d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- FLAGS -->
+                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-200">Flags</h3>
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-400">Select tags</label>
+                          <div id="s-tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                 />
                               </svg>
                             </button>

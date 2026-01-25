@@ -773,7 +773,7 @@ function openMapDetailsModal(mapCode) {
           <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
         </section>
 
-        <section class="grid gap-5 md:grid-cols-2">
+        <section class="grid gap-5 md:grid-cols-3">
           <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
           <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
         </section>
@@ -825,6 +825,7 @@ function openMapDetailsModal(mapCode) {
         );
       const mechanics    = Array.isArray(map.mechanics) ? map.mechanics : [];
       const restrictions = Array.isArray(map.restrictions) ? map.restrictions : [];
+      const tags         = Array.isArray(map.tags) ? map.tags : [];
       const desc =
         (map.description && String(map.description).trim()) ||
         (typeof t === 'function' ? t('common.no_description') : 'No description');
@@ -951,7 +952,7 @@ function openMapDetailsModal(mapCode) {
             </section>
 
             <!-- Mécaniques & Restrictions -->
-            <section class="grid gap-5 md:grid-cols-2">
+            <section class="grid gap-5 md:grid-cols-3">
               <div class="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
                   ${(typeof t === 'function' ? t('thead.mapMechanics') : 'Mechanics')}
@@ -970,6 +971,17 @@ function openMapDetailsModal(mapCode) {
                 ${
                   restrictions.length
                     ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(restrictions)}</div>`
+                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                }
+              </div>
+
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+                  ${(typeof t === 'function' ? (t('thead.mapTags') || t('common.tags')) : null) || 'Tags'}
+                </div>
+                ${
+                  tags.length
+                    ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(tags)}</div>`
                     : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>

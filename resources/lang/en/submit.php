@@ -263,6 +263,8 @@ return [
 
         'apply_filters'          => 'Apply filters',
         'clear_filters'          => 'Clear filters',
+
+        'tags'                   => 'Tags',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

@@ -104,6 +104,8 @@ if (typeof document !== 'undefined') {
     }
   });
 }
+const TAG_OPTIONS = ['Other Heroes', 'XP Based', 'Custom Grav/Speed'];
+
 const CATEGORY_OPTIONS = [
   { text: () => t('filters.classic'), value: 'Classic', raw: 'Classic' },
   {
@@ -1745,11 +1747,13 @@ async function setupAllCustomDropdowns() {
   const { mechanicsOptions, restrictionsOptions } = await fillMechanicsAndRestrictions();
   populateCheckboxDropdown('mechanicsDropdown', mechanicsOptions, 'mechanics[]');
   populateCheckboxDropdown('restrictionsDropdown', restrictionsOptions, 'restrictions[]');
+  populateCheckboxDropdown('tagsDropdown', TAG_OPTIONS.map(v=>({ translated: v, value: v, raw: v })), 'tags[]');
 
   setupFakeSelect('difficultyDropdown', t('filters.difficulty') || 'Select...');
   setupFakeSelect('categoryDropdown', t('filters.map_type') || 'Select...');
   setupFakeSelect('mechanicsDropdown', t('filters.mechanics') || 'Select...');
   setupFakeSelect('restrictionsDropdown', t('filters.restrictions') || 'Select...');
+  setupFakeSelect('tagsDropdown', (typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags'));
 }
 
 function setupFakeSelect(id, placeholderText = 'Select...') {
@@ -3328,6 +3332,9 @@ async function sendMapToApi() {
   const restrictions = Array.from(
     document.querySelectorAll('#restrictionsDropdown input[type="checkbox"]:checked')
   ).map((c) => c.value);
+  const tags = Array.from(
+    document.querySelectorAll('#tagsDropdown input[type="checkbox"]:checked')
+  ).map((c) => c.value);
 
   const description = (document.getElementById('optDescription')?.textContent || '').trim();
   const title = (document.getElementById('optTitleInput')?.value || '').trim().slice(0, 128);
@@ -3379,6 +3386,7 @@ async function sendMapToApi() {
   }
   if (mechanics.length) payload.mechanics = mechanics;
   if (restrictions.length) payload.restrictions = restrictions;
+  if (tags.length) payload.tags = tags;
   if (description && description !== 'N/A') payload.description = description;
   if (title) payload.title = title;
   if (custom_banner) payload.custom_banner = custom_banner;
@@ -3549,6 +3557,17 @@ function renderSubmitMapSection() {
               </button>
               <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
+            <div class="sm:col-span-1">
+              <label class="block text-xs text-zinc-400 mb-1">${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}</label>
+              <div id="tagsDropdown" class="custom-multiselect relative">
+                <button type="button" id="tagsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}">
+                  ${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}
+                  <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
+                </button>
+                <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

@@ -77,6 +77,7 @@ class UpdateMapController extends Controller
             'archived',
             'mechanics',
             'restrictions',
+            'tags',
             'title',
             'description',
             'guide_url',
@@ -109,7 +110,7 @@ class UpdateMapController extends Controller
             $in['checkpoints'] = (int) $in['checkpoints'];
         }
 
-        foreach (['mechanics', 'restrictions'] as $k) {
+        foreach (['mechanics', 'restrictions', 'tags'] as $k) {
             if (array_key_exists($k, $in)) {
                 $v = $in[$k];
                 if (is_string($v)) {

@@ -101,6 +101,8 @@ return [
         'china_server'         => 'Chine',
         'apply_filters'        => 'Appliquer les filtres',
         'clear_filters'        => 'Réinitialiser les filtres',
+        'tags'                 => 'Tags',
+        'sort'                 => 'Trier',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -426,5 +428,6 @@ return [
         'mapUpvotes'           => 'Upvotes',
         'mapVerified'          => 'Vérifié',
         'mapStatus'            => 'Statut',
+        'mapTags'              => 'Tags de map',
     ],
 ];

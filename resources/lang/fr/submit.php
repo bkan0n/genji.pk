@@ -263,6 +263,8 @@ return [
 
         'apply_filters'          => 'Appliquer les filtres',
         'clear_filters'          => 'Réinitialiser les filtres',
+
+        'tags'                   => 'Tags',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

@@ -407,6 +407,7 @@ function initializeIcons() {
     'category',
     'mechanics',
     'restrictions',
+    'tags',
     'playtest_filter',
     'completion_filter',
     'medal_filter',
@@ -436,6 +437,7 @@ function getIconSVG(id) {
       <path d="M12.9046 3.06005C12.6988 3 12.4659 3 12 3C11.5341 3 11.3012 3 11.0954 3.06005C10.7942 3.14794 10.5281 3.32808 10.3346 3.57511C10.2024 3.74388 10.1159 3.96016 9.94291 4.39272C9.69419 5.01452 9.00393 5.33471 8.36857 5.123L7.79779 4.93281C7.3929 4.79785 7.19045 4.73036 6.99196 4.7188C6.70039 4.70181 6.4102 4.77032 6.15701 4.9159C5.98465 5.01501 5.83376 5.16591 5.53197 5.4677C5.21122 5.78845 5.05084 5.94882 4.94896 6.13189C4.79927 6.40084 4.73595 6.70934 4.76759 7.01551C4.78912 7.2239 4.87335 7.43449 5.04182 7.85566C5.30565 8.51523 5.05184 9.26878 4.44272 9.63433L4.16521 9.80087C3.74031 10.0558 3.52786 10.1833 3.37354 10.3588C3.23698 10.5141 3.13401 10.696 3.07109 10.893C3 11.1156 3 11.3658 3 11.8663C3 12.4589 3 12.7551 3.09462 13.0088C3.17823 13.2329 3.31422 13.4337 3.49124 13.5946C3.69158 13.7766 3.96395 13.8856 4.50866 14.1035C5.06534 14.3261 5.35196 14.9441 5.16236 15.5129L4.94721 16.1584C4.79819 16.6054 4.72367 16.829 4.7169 17.0486C4.70875 17.3127 4.77049 17.5742 4.89587 17.8067C5.00015 18.0002 5.16678 18.1668 5.5 18.5C5.83323 18.8332 5.99985 18.9998 6.19325 19.1041C6.4258 19.2295 6.68733 19.2913 6.9514 19.2831C7.17102 19.2763 7.39456 19.2018 7.84164 19.0528L8.36862 18.8771C9.00393 18.6654 9.6942 18.9855 9.94291 19.6073C10.1159 20.0398 10.2024 20.2561 10.3346 20.4249C10.5281 20.6719 10.7942 20.8521 11.0954 20.94C11.3012 21 11.5341 21 12 21C12.4659 21 12.6988 21 12.9046 20.94C13.2058 20.8521 13.4719 20.6719 13.6654 20.4249C13.7976 20.2561 13.8841 20.0398 14.0571 19.6073C14.3058 18.9855 14.9961 18.6654 15.6313 18.8773L16.1579 19.0529C16.605 19.2019 16.8286 19.2764 17.0482 19.2832C17.3123 19.2913 17.5738 19.2296 17.8063 19.1042C17.9997 18.9999 18.1664 18.8333 18.4996 18.5001C18.8328 18.1669 18.9994 18.0002 19.1037 17.8068C19.2291 17.5743 19.2908 17.3127 19.2827 17.0487C19.2759 16.8291 19.2014 16.6055 19.0524 16.1584L18.8374 15.5134C18.6477 14.9444 18.9344 14.3262 19.4913 14.1035C20.036 13.8856 20.3084 13.7766 20.5088 13.5946C20.6858 13.4337 20.8218 13.2329 20.9054 13.0088C21 12.7551 21 12.4589 21 11.8663C21 11.3658 21 11.1156 20.9289 10.893C20.866 10.696 20.763 10.5141 20.6265 10.3588C20.4721 10.1833 20.2597 10.0558 19.8348 9.80087L19.5569 9.63416C18.9478 9.26867 18.6939 8.51514 18.9578 7.85558C19.1262 7.43443 19.2105 7.22383 19.232 7.01543C19.2636 6.70926 19.2003 6.40077 19.0506 6.13181C18.9487 5.94875 18.7884 5.78837 18.4676 5.46762C18.1658 5.16584 18.0149 5.01494 17.8426 4.91583C17.5894 4.77024 17.2992 4.70174 17.0076 4.71872C16.8091 4.73029 16.6067 4.79777 16.2018 4.93273L15.6314 5.12287C14.9961 5.33464 14.3058 5.0145 14.0571 4.39272C13.8841 3.96016 13.7976 3.74388 13.6654 3.57511C13.4719 3.32808 13.2058 3.14794 12.9046 3.06005Z" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     `,
     restrictions: `<path d="M12 14.5V16.5M7 10.0288C7.47142 10 8.05259 10 8.8 10H15.2C15.9474 10 16.5286 10 17 10.0288M7 10.0288C6.41168 10.0647 5.99429 10.1455 5.63803 10.327C5.07354 10.6146 4.6146 11.0735 4.32698 11.638C4 12.2798 4 13.1198 4 14.8V16.2C4 17.8802 4 18.7202 4.32698 19.362C4.6146 19.9265 5.07354 20.3854 5.63803 20.673C6.27976 21 7.11984 21 8.8 21H15.2C16.8802 21 17.7202 21 18.362 20.673C18.9265 20.3854 19.3854 19.9265 19.673 19.362C20 18.7202 20 17.8802 20 16.2V14.8C20 13.1198 20 12.2798 19.673 11.638C19.3854 11.0735 18.9265 10.6146 18.362 10.327C18.0057 10.1455 17.5883 10.0647 17 10.0288M7 10.0288V8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8V10.0288" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+    tags: `<path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59A2 2 0 0 0 3.83 11l9.59 9.59a2 2 0 0 0 2.83 0l4.34-4.34a2 2 0 0 0 0-2.83ZM7.5 8A1.5 1.5 0 1 1 9 6.5 1.5 1.5 0 0 1 7.5 8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     playtest_filter: `<path d="M14.2639 15.9376L12.5958 14.2835C11.7909 13.4852 11.3884 13.0861 10.9266 12.9402C10.5204 12.8119 10.0838 12.8166 9.68048 12.9537C9.22188 13.1096 8.82814 13.5173 8.04068 14.3327L4.04409 18.2802M14.2639 15.9376L14.6053 15.5991C15.4112 14.7999 15.8141 14.4003 16.2765 14.2544C16.6831 14.1262 17.12 14.1312 17.5236 14.2688C17.9824 14.4252 18.3761 14.834 19.1634 15.6515L20 16.4936M14.2639 15.9376L18.275 19.9566M18.275 19.9566C17.9176 20.0001 17.4543 20.0001 16.8 20.0001H7.2C6.07989 20.0001 5.51984 20.0001 5.09202 19.7821C4.71569 19.5904 4.40973 19.2844 4.21799 18.9081C4.12796 18.7314 4.07512 18.5322 4.04409 18.2802M18.275 19.9566C18.5293 19.9257 18.7301 19.8728 18.908 19.7821C19.2843 19.5904 19.5903 19.2844 19.782 18.9081C20 18.4803 20 17.9202 20 16.8001V16.4936M12.5 4L7.2 4.00011C6.07989 4.00011 5.51984 4.00011 5.09202 4.21809C4.71569 4.40984 4.40973 4.7158 4.21799 5.09213C4 5.51995 4 6.08 4 7.20011V16.8001C4 17.4576 4 17.9222 4.04409 18.2802M20 11.5V16.4936M14 10.0002L16.0249 9.59516C16.2015 9.55984 16.2898 9.54219 16.3721 9.5099C16.4452 9.48124 16.5146 9.44407 16.579 9.39917C16.6515 9.34859 16.7152 9.28492 16.8425 9.1576L21 5.00015C21.5522 4.44787 21.5522 3.55244 21 3.00015C20.4477 2.44787 19.5522 2.44787 19 3.00015L14.8425 7.1576C14.7152 7.28492 14.6515 7.34859 14.6009 7.42112C14.556 7.4855 14.5189 7.55494 14.4902 7.62801C14.4579 7.71033 14.4403 7.79862 14.4049 7.97518L14 10.0002Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     completion_filter: `<path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     medal_filter: `<path d="M12 11L8 3H4L8.5058 12.4622M12 11L16 3H20L15.4942 12.4622M12 11C13.344 11 14.5848 11.5635 15.4942 12.4622M12 11C10.656 11 9.41518 11.5635 8.5058 12.4622M15.4942 12.4622C16.4182 13.3753 17 14.6344 17 16C17 18.7614 14.7614 21 12 21C9.23858 21 7 18.7614 7 16C7 14.6344 7.58179 13.3753 8.5058 12.4622" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`,
@@ -509,6 +511,230 @@ async function loadDynamicOptions() {
 /* =========================
    TAB SYSTEM
    ========================= */
+const MAP_SEARCH_SORT_OPTIONS = [
+  'difficulty:asc',
+  'difficulty:desc',
+  'checkpoints:asc',
+  'checkpoints:desc',
+  'ratings:asc',
+  'ratings:desc',
+  'map_name:asc',
+  'map_name:desc',
+  'title:asc',
+  'title:desc',
+  'code:asc',
+  'code:desc',
+];
+
+function __formatMapSearchSortLabel(v) {
+  const raw = String(v || '').trim() || 'difficulty:asc';
+  const parts = raw.split(':');
+  const field = parts[0] || 'difficulty';
+  const dir = (parts[1] || 'asc').toLowerCase();
+
+  const fieldMap = {
+    difficulty: 'Difficulty',
+    checkpoints: 'Checkpoints',
+    ratings: 'Ratings',
+    map_name: 'Map name',
+    title: 'Title',
+    code: 'Code',
+  };
+
+  const niceField =
+    fieldMap[field] ||
+    field
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const arrow = dir === 'desc' ? '↓' : '↑';
+  return `${niceField} ${arrow}`;
+}
+
+function __syncMapSearchSortUI(v) {
+  const val = String(v || '').trim() || 'difficulty:asc';
+
+  const btn = document.getElementById('mapSearchSortButton');
+  if (btn) btn.dataset.value = val;
+
+  const valueEl = document.getElementById('mapSearchSortValue');
+  if (valueEl) valueEl.textContent = __formatMapSearchSortLabel(val);
+
+  const opts = document.getElementById('mapSearchSortOptions');
+  if (!opts) return;
+
+  // Mark selected
+  opts.querySelectorAll('.custom-option').forEach((el) => el.classList.remove('selected'));
+  opts.querySelectorAll('.custom-option [data-check]').forEach((c) => (c.style.opacity = '0'));
+
+  let selected = null;
+  opts.querySelectorAll('.custom-option').forEach((el) => {
+    if (el.getAttribute('data-raw-value') === val) selected = el;
+  });
+
+  if (selected) {
+    selected.classList.add('selected');
+    const mark = selected.querySelector('[data-check]');
+    if (mark) mark.style.opacity = '1';
+  }
+}
+
+function __ensureMapSearchSortDropdown(anchorBtn) {
+  if (!anchorBtn) return null;
+
+  let opts = document.getElementById('mapSearchSortOptions');
+  if (!opts) {
+    opts = document.createElement('div');
+    opts.id = 'mapSearchSortOptions';
+
+    opts.className =
+      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-white/10 rounded-lg w-64 max-h-56 overflow-y-auto';
+    opts.dataset.filterKeyRaw = 'sort';
+    opts.dataset.anchorId = anchorBtn.id;
+
+    // Build options
+    for (const raw of MAP_SEARCH_SORT_OPTIONS) {
+      const optionElement = document.createElement('div');
+      optionElement.className =
+        'custom-option cursor-pointer rounded-md px-3 py-2 text-sm text-zinc-200 hover:bg-white/10 flex items-center justify-between gap-3';
+      optionElement.setAttribute('data-raw-value', raw);
+
+      const displayText = __formatMapSearchSortLabel(raw);
+
+      optionElement.innerHTML = `
+        <span class="min-w-0 flex items-center gap-2">
+          <span class="truncate">${displayText}</span>
+        </span>
+        <svg data-check viewBox="0 0 20 20" class="h-4 w-4 opacity-0 transition-opacity" aria-hidden="true">
+          <path d="M5 10.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+
+      optionElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        const v = optionElement.getAttribute('data-raw-value') || 'difficulty:asc';
+
+        // Update state
+        persistentFilters = { ...(persistentFilters || {}), sort: v };
+        activeFilters = { ...(activeFilters || {}), sort: v };
+
+        __syncMapSearchSortUI(v);
+
+        // Close dropdown
+        closeFloating(opts);
+
+        // Apply immediately
+        if (typeof currentSection !== 'undefined' && currentSection === 'map_search') {
+          applyFilters(activeFilters, { pushUrl: false, syncUrl: true });
+        } else if (typeof __urlSyncFiltersFromState === 'function') {
+          __urlSyncFiltersFromState({ push: false });
+        }
+      });
+
+      opts.appendChild(optionElement);
+    }
+
+    document.body.appendChild(opts);
+  }
+
+  return opts;
+}
+
+
+function __ensureMapSearchSortControl() {
+  const tabsContainer = document.getElementById('searchTabs');
+  if (!tabsContainer) return null;
+
+  // Ensure flex row wrapper
+  let row = document.getElementById('searchTabsRow');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'searchTabsRow';
+    row.className = 'flex flex-wrap items-center gap-3';
+
+    const parent = tabsContainer.parentElement;
+    if (parent) parent.insertBefore(row, tabsContainer);
+    row.appendChild(tabsContainer);
+  }
+
+  let wrap = document.getElementById('mapSearchSortWrap');
+
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'mapSearchSortWrap';
+  }
+
+  wrap.classList.add('ml-auto', 'flex', 'items-center');
+  if (wrap.parentElement !== row) row.appendChild(wrap);
+
+  // Inject
+  if (!wrap.querySelector('#mapSearchSortButton')) {
+    const sortLbl =
+      ((typeof t === 'function' && (t('filters_toolbar.sort') || t('filters.sort'))) || '').trim() || 'Sort';
+
+    wrap.innerHTML = `
+      <button type="button" id="mapSearchSortButton"
+        class="toolbar-button cursor-pointer relative inline-flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/5 transition-colors">
+        <svg class="h-5 w-5 text-zinc-200" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 6v12" />
+          <path d="M3 9l3-3 3 3" />
+          <path d="M21 18H11" />
+          <path d="M21 12H13" />
+          <path d="M21 6H15" />
+        </svg>
+        <div class="icon-name text-xs text-zinc-300">${sortLbl}</div>
+        <div id="mapSearchSortValue" class="text-xs font-semibold text-zinc-100/90 truncate max-w-[11rem]"></div>
+        <svg class="ml-0.5 h-4 w-4 text-zinc-300/80" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 8l4 4 4-4" />
+        </svg>
+      </button>
+    `;
+  }
+
+  const btn = document.getElementById('mapSearchSortButton');
+  if (btn && btn.dataset.inited !== '1') {
+    btn.dataset.inited = '1';
+
+    const sp = new URL(location.href).searchParams;
+    const initial = sp.get('sort') || (persistentFilters && persistentFilters.sort) || 'difficulty:asc';
+    __syncMapSearchSortUI(initial);
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Create dropdown
+      const opts = __ensureMapSearchSortDropdown(btn);
+      if (!opts) return;
+
+      // Keep UI in sync
+      const currentVal =
+        (persistentFilters && persistentFilters.sort) ||
+        new URL(location.href).searchParams.get('sort') ||
+        'difficulty:asc';
+      __syncMapSearchSortUI(currentVal);
+
+      // Toggle
+      if (typeof __isFloatingOpen === 'function' && __isFloatingOpen(opts)) {
+        closeFloating(opts);
+      } else {
+        showDropdown(opts);
+      }
+    });
+  }
+
+  // Visibility: only show on Map Search
+  if (currentSection === 'map_search') wrap.classList.remove('hidden');
+  else wrap.classList.add('hidden');
+
+  return wrap;
+}
+
+
+
 function initSearchTabs(defaultSection = 'map_search') {
   const tabsContainer = document.getElementById('searchTabs');
   const highlight = document.getElementById('searchTabsHighlight');
@@ -520,6 +746,8 @@ function initSearchTabs(defaultSection = 'map_search') {
 
   const buttons = Array.from(tabsContainer.querySelectorAll('.search-tab'));
   if (!buttons.length) return;
+
+  const __sortWrap = __ensureMapSearchSortControl();
 
   if (getComputedStyle(tabsContainer).position === 'static') {
     tabsContainer.style.position = 'relative';
@@ -602,6 +830,16 @@ function initSearchTabs(defaultSection = 'map_search') {
     });
 
     moveHighlightTo(activeBtn, { animate: animateHighlight });
+
+    // Sort control
+    if (__sortWrap) {
+      __sortWrap.classList.toggle('hidden', String(activeSection) !== 'map_search');
+      const v =
+        (persistentFilters && persistentFilters.sort) ||
+        new URL(location.href).searchParams.get('sort') ||
+        'difficulty:asc';
+      __syncMapSearchSortUI(v);
+    }
 
     if (selectedModeEl) {
       const label = activeBtn?.textContent?.trim() || '';
@@ -702,6 +940,15 @@ async function selectSection(sectionId, opts = {}) {
   // Set section early
   currentSection = sectionId;
 
+  // Show sort only on Map Search
+  {
+    const sw = document.getElementById('mapSearchSortWrap');
+    if (sw) {
+      if (currentSection === 'map_search') sw.classList.remove('hidden');
+      else sw.classList.add('hidden');
+    }
+  }
+
   // Defaults filters
   if (currentSection === 'map_search') {
     const lang = String(CURRENT_LANG || 'en').toLowerCase();
@@ -715,6 +962,9 @@ async function selectSection(sectionId, opts = {}) {
       }
       if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
         persistentFilters.playtest_filter = 'All';
+      }
+      if (persistentFilters.sort == null || String(persistentFilters.sort).trim() === '') {
+        persistentFilters.sort = 'difficulty:asc';
       }
     }
 
@@ -752,6 +1002,14 @@ async function selectSection(sectionId, opts = {}) {
     if (!hasValue || persistentFilters.official == null || String(persistentFilters.official).trim() === '') {
       persistentFilters.official = defaultOfficial;
     }
+
+    if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
+      persistentFilters.playtest_filter = 'All';
+    }
+    if (persistentFilters.sort == null || String(persistentFilters.sort).trim() === '') {
+      persistentFilters.sort = 'difficulty:asc';
+    }
+
   }
 
   initializeToolbarButtons();
@@ -806,11 +1064,13 @@ const URL_FILTER_KEYS = new Set([
   'difficulty_exact',
   'mechanics',
   'restrictions',
+  'tags',
   'playtest_filter',
   'official',
   'user_id',
   'medal_filter',
   'completion_filter',
+  'sort',
 ]);
 
 const URL_FILTER_ALIASES = {
@@ -1267,7 +1527,13 @@ function _hideAllFloating() {
 }
 
 function clearToolbarButtons() {
-  document.querySelectorAll('.toolbar-button').forEach((btn) => btn.remove());
+  const toolbar =
+    document.querySelector('.toolbar-container .toolbar') ||
+    document.querySelector('#filterActions .toolbar') ||
+    document.querySelector('.toolbar');
+
+  if (!toolbar) return;
+  toolbar.querySelectorAll('.toolbar-button').forEach((btn) => btn.remove());
 }
 
 function hideOnClickOutside() {
@@ -1492,6 +1758,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
           case 'difficulty_exact':  labelId = 'difficulty'; break;
           case 'mechanics':         labelId = 'mechanics'; break;
           case 'restrictions':      labelId = 'restrictions'; break;
+          case 'tags':              labelId = 'tags'; break;
           case 'onlyPlaytest':      labelId = 'in playtest'; break;
           case 'ignoreCompletions': labelId = 'completed'; break;
           case 'onlyMedals':        labelId = 'medals'; break;
@@ -1511,7 +1778,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
           if (mark) mark.style.opacity = '1';
         }
 
-        if (id !== 'mechanicsOptions' && id !== 'restrictionsOptions') {
+        if (id !== 'mechanicsOptions' && id !== 'restrictionsOptions' && id !== 'tagsOptions') {
           optionsContainer.style.display = 'none';
           optionsContainer.classList.remove('show');
           _hideFloating(optionsContainer);
@@ -2112,6 +2379,14 @@ function initializeToolbarButtons() {
             false
           );
           break;
+        case 'tags':
+          optionsContainer = showOptionsContainer(
+            'tagsOptions',
+            TAG_OPTIONS,
+            button,
+            true
+          );
+          break;
         case 'playtest_filter':
           optionsContainer = showOptionsContainer(
             'playtest_filterOptions',
@@ -2170,6 +2445,7 @@ function updateActiveFilters() {
     medalFilter: 'medal_filter',
     mechanics: 'mechanics',
     restrictions: 'restrictions',
+    tags: 'tags',
     completionFilter: 'completion_filter',
     official: 'official',
   };
@@ -2180,7 +2456,7 @@ function updateActiveFilters() {
     const filterId = optionsContainer.id.replace('Options', '');
     const mappedFilterId = filterMappings[filterId] || filterId;
 
-    if (filterId === 'mechanics' || filterId === 'restrictions') {
+    if (filterId === 'mechanics' || filterId === 'restrictions' || filterId === 'tags') {
       const checkboxes = optionsContainer.querySelectorAll('.custom-checkbox:checked');
 
       if (checkboxes.length > 0) {
@@ -2374,7 +2650,7 @@ function updateToolbarButtonStates() {
     }
 
     // Mechanics/Restrictions
-    if (filterId === 'mechanics' || filterId === 'restrictions') {
+    if (filterId === 'mechanics' || filterId === 'restrictions' || filterId === 'tags') {
       return optionLabelFromWindowList(filterId, v);
     }
 
@@ -2500,6 +2776,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
     difficultyExact: 'difficulty_exact',
     mechanics: 'mechanics',
     restrictions: 'restrictions',
+    tags: 'tags',
     playtest_filter: 'playtest_filter',
     completionFilter: 'completion_filter',
     medalFilter: 'medal_filter',
@@ -2511,7 +2788,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
   const val = source[mapped];
   if (val == null) return;
 
-  if (mapped === 'mechanics' || mapped === 'restrictions') {
+  if (mapped === 'mechanics' || mapped === 'restrictions' || mapped === 'tags') {
     const selected = new Set(Array.isArray(val) ? val.map((v) => String(v).toLowerCase()) : []);
     optionsContainer.querySelectorAll('.custom-option-wrapper').forEach((w) => {
       const label = w.querySelector('.custom-option');
@@ -3977,6 +4254,10 @@ function ensureSearchDetailsModal() {
                   <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapRestrictions')}</div>
                   <div id="mapRestrictions" class="mt-2 flex flex-wrap gap-2"></div>
                 </div>
+                <div class="sm:col-span-2 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                  <div class="text-xs uppercase tracking-widest text-white/60">${(typeof t==='function' ? (t('thead.mapTags') || t('common.tags') || 'Tags') : 'Tags')}</div>
+                  <div id="mapTags" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
               </div>
             </div>
 
@@ -4348,6 +4629,21 @@ function ensureMapEditRequestModal() {
                   </button>
                   <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
                 </div>
+                <div>
+                  <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('common.tags') || 'Tags') : 'Tags')}</div>
+                  <div id="merTagsDropdown" class="custom-multiselect relative">
+                    <button type="button" id="merTagsDropdownBtn"
+                      class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                      data-placeholder="${__merEsc(typeof t === 'function' ? (t('common.tags') || 'Tags') : 'Tags')}">
+                      <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -4559,6 +4855,12 @@ function __merSetMultiLabel(labelEl, selectedSet, emptyLabel) {
   if (!n) labelEl.textContent = emptyLabel;
   else labelEl.textContent = `${n} selected`;
 }
+
+const TAG_OPTIONS = [
+  { text: 'Other Heroes', value: 'Other Heroes', raw: 'Other Heroes' },
+  { text: 'XP Based', value: 'XP Based', raw: 'XP Based' },
+  { text: 'Custom Grav/Speed', value: 'Custom Grav/Speed', raw: 'Custom Grav/Speed' },
+];
 
 /* -------------------------------------------------------------------------
    Map Edit Request controls
@@ -5764,8 +6066,10 @@ function openMapEditRequestModal(map, opts = {}) {
 
     __merPopulateCheckboxDropdown('merMechanicsDropdown', mechanicsOptions, 'mer_mechanics');
     __merPopulateCheckboxDropdown('merRestrictionsDropdown', restrictionsOptions, 'mer_restrictions');
+    __merPopulateCheckboxDropdown('merTagsDropdown', TAG_OPTIONS.map(o => ({ translated: o.text, value: o.value, raw: o.raw })), 'mer_tags');
     __merSetCheckboxValues('merMechanicsDropdown', mechanics);
     __merSetCheckboxValues('merRestrictionsDropdown', restrictions);
+    __merSetCheckboxValues('merTagsDropdown', tags);
   })();
 
   // autocomplete mount once
@@ -5829,6 +6133,7 @@ function openMapEditRequestModal(map, opts = {}) {
     difficulty,
     mechanics: mechanics.slice(),
     restrictions: restrictions.slice(),
+    tags: tags.slice(),
     title,
     description,
     custom_banner: customBanner,
@@ -5915,6 +6220,9 @@ function openMapEditRequestModal(map, opts = {}) {
 
       const uiRestrictions = __merGetCheckboxValues('merRestrictionsDropdown');
       if (!equalArray(uiRestrictions, baselineNow.restrictions)) payload.restrictions = uiRestrictions.length ? uiRestrictions : null;
+
+      const uiTags = __merGetCheckboxValues('merTagsDropdown');
+      if (!equalArray(uiTags, baselineNow.tags)) payload.tags = uiTags.length ? uiTags : null;
 
       // title/description
       const uiTitle = (document.getElementById('merTitle')?.value || '').trim();
@@ -6113,6 +6421,7 @@ async function openSearchDetailsModal(r, opts = {}) {
 
   let mechanics = Array.isArray(r.mechanics) ? r.mechanics : [];
   let restrictions = Array.isArray(r.restrictions) ? r.restrictions : [];
+  let tags = Array.isArray(r.tags) ? r.tags : [];
   if (typeof CURRENT_LANG!=='undefined' && CURRENT_LANG==='cn') {
     mechanics = mechanics.map(o=> (typeof t==='function' ? (t(`mechanics.${String(o).toLowerCase().replace(/ /g,'_')}`) || o) : o));
     restrictions = restrictions.map(o=> (typeof t==='function' ? (t(`restrictions.${String(o).toLowerCase().replace(/ /g,'_')}`) || o) : o));
@@ -6135,6 +6444,7 @@ async function openSearchDetailsModal(r, opts = {}) {
   g('mapDescription', desc);
   mountPills(document.getElementById('mapMechanics'), mechanics);
   mountPills(document.getElementById('mapRestrictions'), restrictions);
+  mountPills(document.getElementById('mapTags'), tags);
 
   g('mapCreator', names.join(', ') || 'N/A');
   g('mapCheckpoints', fmt(checkpoints));

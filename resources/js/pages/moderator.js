@@ -1396,6 +1396,7 @@ async function handleUpdateMap(form) {
   const difficulty = getSelectedRadio('#u-difficultyDropdown');
   const mechanics = getCheckedValues('#u-mechanicsDropdown');
   const restrictions = getCheckedValues('#u-restrictionsDropdown');
+  const tags = getCheckedValues('#u-tagsDropdown');
   const description = (document.getElementById('u-optDescription')?.textContent || '').trim();
   const title = (document.getElementById('u-optTitleInput')?.value || '').trim().slice(0, 128);
 
@@ -1434,6 +1435,7 @@ async function handleUpdateMap(form) {
   put('difficulty', difficulty || undefined);
   if (mechanics.length) put('mechanics', mechanics);
   if (restrictions.length) put('restrictions', restrictions);
+  if (tags.length) put('tags', tags);
   if (description && !/^n\/?a$/i.test(description)) put('description', description);
   if (title) put('title', title);
   if (custom_banner) put('custom_banner', custom_banner);
@@ -1505,6 +1507,10 @@ async function handleSubmitMap(form) {
     document.querySelectorAll('#restrictionsDropdown input[type="checkbox"]:checked')
   ).map((c) => c.value);
 
+  const tags = Array.from(
+    document.querySelectorAll('#tagsDropdown input[type="checkbox"]:checked')
+  ).map((c) => c.value);
+
   const description = (document.getElementById('optDescription')?.textContent || '').trim();
   const title = (document.getElementById('optTitleInput')?.value || '').trim().slice(0, 128);
 
@@ -1559,6 +1565,7 @@ async function handleSubmitMap(form) {
   };
   if (mechanics.length) payload.mechanics = mechanics;
   if (restrictions.length) payload.restrictions = restrictions;
+  if (tags.length) payload.tags = tags;
   if (description && !/^n\/?a$/i.test(description)) payload.description = description;
   if (title) payload.title = title;
   if (custom_banner) payload.custom_banner = custom_banner;
@@ -2889,6 +2896,16 @@ function ensureMapEditRequestModal() {
               </div>
             </div>
           </div>
+          <div>
+            <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('map.tags') || 'Tags') : 'Tags')}</div>
+            <div id="merTagsDropdown" data-open="0" class="custom-multiselect relative mt-1">
+              <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                <span class="text-white/60">▾</span>
+              </button>
+              <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
+            </div>
+          </div>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-3">
             <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
@@ -3195,6 +3212,7 @@ function openMapEditRequestModal(map, opts = {}) {
   const difficulty = toStr(get('difficulty', 'diff', 'difficulty_name'));
   const mechanics = normalizeStringList(get('mechanics', 'map_mechanics'));
   const restrictions = normalizeStringList(get('restrictions', 'map_restrictions'));
+  const tags = normalizeStringList(get('tags', 'map_tags'));
   const title = toStr(get('title'));
   const description = toStr(get('description', 'desc'));
   const customBanner = toStr(get('custom_banner', 'banner', 'banner_url'));
@@ -3350,8 +3368,14 @@ function openMapEditRequestModal(map, opts = {}) {
 
     __merPopulateCheckboxDropdown('merMechanicsDropdown', mechanicsOptions, 'mer_mechanics');
     __merPopulateCheckboxDropdown('merRestrictionsDropdown', restrictionsOptions, 'mer_restrictions');
+    const tagValues = (Array.isArray(window.MAP_TAG_OPTIONS) && window.MAP_TAG_OPTIONS.length)
+      ? window.MAP_TAG_OPTIONS
+      : ['Other Heroes', 'XP Based', 'Custom Grav/Speed'];
+    const tagsOptions = tagValues.map((v) => ({ translated: v, value: v, raw: v }));
+    __merPopulateCheckboxDropdown('merTagsDropdown', tagsOptions, 'mer_tags');
     __merSetCheckboxValues('merMechanicsDropdown', mechanics);
     __merSetCheckboxValues('merRestrictionsDropdown', restrictions);
+    __merSetCheckboxValues('merTagsDropdown', tags);
   })();
 
   // autocomplete mount once
@@ -3415,6 +3439,7 @@ function openMapEditRequestModal(map, opts = {}) {
     difficulty,
     mechanics: mechanics.slice(),
     restrictions: restrictions.slice(),
+    tags: tags.slice(),
     title,
     description,
     custom_banner: customBanner,
@@ -3501,6 +3526,9 @@ function openMapEditRequestModal(map, opts = {}) {
 
       const uiRestrictions = __merGetCheckboxValues('merRestrictionsDropdown');
       if (!equalArray(uiRestrictions, baselineNow.restrictions)) payload.restrictions = uiRestrictions.length ? uiRestrictions : null;
+
+      const uiTags = __merGetCheckboxValues('merTagsDropdown');
+      if (!equalArray(uiTags, baselineNow.tags)) payload.tags = uiTags.length ? uiTags : null;
 
       // title/description
       const uiTitle = (document.getElementById('merTitle')?.value || '').trim();
@@ -4048,6 +4076,10 @@ const CATEGORY_OPTIONS = [
   { value: 'Increasing Difficulty', text: 'Increasing difficulty' },
 ];
 
+const MAP_TAG_OPTIONS = ['Other Heroes', 'XP Based', 'Custom Grav/Speed'];
+// Expose for other modules / safety
+try { window.MAP_TAG_OPTIONS = MAP_TAG_OPTIONS; } catch {}
+
 function ddBtn(container) {
   return container?.querySelector('[data-dd-btn]');
 }
@@ -4261,6 +4293,7 @@ async function initSubmitPanel() {
   ]);
   buildCheckboxDropdown('mechanicsDropdown', mech, 'Select mechanics');
   buildCheckboxDropdown('restrictionsDropdown', rest, 'Select restrictions');
+  buildCheckboxDropdown('tagsDropdown', MAP_TAG_OPTIONS, 'Select tags');
 
   wireBannerDrop();
   bindSubmitMapEditButtons(panel);
@@ -4541,6 +4574,7 @@ async function initSearchPanel() {
   ]);
   buildCheckboxDropdown('s-mechanicsDropdown', mech, 'Select mechanics');
   buildCheckboxDropdown('s-restrictionsDropdown', rest, 'Select restrictions');
+  buildCheckboxDropdown('s-tagsDropdown', MAP_TAG_OPTIONS, 'Select tags');
 }
 
 function firstGuideUrl(item) {
@@ -4601,6 +4635,7 @@ function populateSearchPanel(item) {
 
   ddCheckByValues(form.querySelector('#s-mechanicsDropdown'), item?.mechanics || []);
   ddCheckByValues(form.querySelector('#s-restrictionsDropdown'), item?.restrictions || []);
+  ddCheckByValues(form.querySelector('#s-tagsDropdown'), item?.tags || item?.map_tags || []);
 
   // OPTIONAL
   setValue(form, '#s-optTitleInput', item?.title ?? '');
@@ -4695,6 +4730,7 @@ async function initUpdatePanel() {
   ]);
   buildCheckboxDropdown('u-mechanicsDropdown', mech, 'Select mechanics');
   buildCheckboxDropdown('u-restrictionsDropdown', rest, 'Select restrictions');
+  buildCheckboxDropdown('u-tagsDropdown', MAP_TAG_OPTIONS, 'Select tags');
 
   wireBannerDropScoped({
     dropId: 'u-bannerDrop',
@@ -4763,6 +4799,7 @@ function populateUpdatePanel(item) {
   ddSelectByValue(form.querySelector('#u-categoryDropdown'), item?.category);
   ddCheckByValues(form.querySelector('#u-mechanicsDropdown'), item?.mechanics || []);
   ddCheckByValues(form.querySelector('#u-restrictionsDropdown'), item?.restrictions || []);
+  ddCheckByValues(form.querySelector('#u-tagsDropdown'), item?.tags || item?.map_tags || []);
 
   // Flags
   form.querySelector('#u-flagHidden')?.setAttribute('checked', item?.hidden ? 'checked' : '');

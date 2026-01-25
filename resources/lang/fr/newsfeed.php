@@ -88,6 +88,7 @@ return [
         'mapCategory'    => 'Catégorie',
         'mapCreators'    => 'Créateurs',
         'mapMedals'      => 'Médailles',
+        'mapTags'        => 'Tags',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
