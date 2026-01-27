@@ -9,6 +9,7 @@
     @php($nonce = csp_nonce())
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
 
     <title>@yield('title', config('app.name'))</title>
     <meta property="og:title" content="@yield('og:title', config('app.name'))" />
@@ -34,6 +35,16 @@
         transition: none !important;
       }
     </style>
+
+    {{-- Early background: prevents white flash before Tailwind/Vite loads --}}
+    <style nonce="{{ $nonce }}">
+      html { background: #09090b; }
+      html[data-theme="light"] { background: #ffffff; }
+      body { background: transparent; }
+      #prism { background: #09090b; }
+      html[data-theme="light"] #prism { background: #ffffff; }
+    </style>
+
     
     <script nonce="{{ $nonce }}">
       (function () {
@@ -59,7 +70,11 @@
           root.dataset.theme = theme;
           root.style.colorScheme = theme;
 
-          if (theme === 'dark') root.classList.add('dark');
+          
+
+          // Prevent white flash before CSS loads
+          root.style.backgroundColor = (theme === 'dark') ? '#09090b' : '#ffffff';
+if (theme === 'dark') root.classList.add('dark');
           else root.classList.remove('dark');
 
           try { localStorage.setItem('theme', theme); } catch {}

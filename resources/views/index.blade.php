@@ -383,31 +383,43 @@
     <section class="py-10">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
-          class="border-brand-400/30 from-brand-700/40 relative overflow-hidden rounded-2xl border bg-gradient-to-r to-zinc-900 p-6 sm:p-8"
+          class="relative overflow-hidden rounded-2xl border border-brand-500/25 dark:border-brand-400/30
+                bg-gradient-to-r from-white via-zinc-50 to-zinc-100
+                dark:from-brand-700/40 dark:via-zinc-950 dark:to-zinc-900
+                p-6 sm:p-8"
         >
-          <div
-            class="bg-brand-500/20 absolute -top-8 -right-8 h-40 w-40 rounded-full blur-2xl"
-          ></div>
-          <div
-            class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between"
-          >
+
+          <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 class="text-xl font-bold">{{ __('index.cta.title') }}</h3>
-              <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('index.cta.description') }}</p>
+              <h3 class="text-xl font-bold text-zinc-900 dark:text-white">
+                {{ __('index.cta.title') }}
+              </h3>
+              <p class="text-sm text-zinc-600 dark:text-zinc-300">
+                {{ __('index.cta.description') }}
+              </p>
             </div>
+
             <div class="flex gap-3">
               <a
                 href="#login"
-                class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
+                class="inline-flex items-center gap-2 rounded-xl
+                      bg-zinc-900 text-white hover:bg-zinc-800
+                      dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100
+                      px-4 py-2 text-sm font-semibold"
               >
                 {{ __('index.cta.login') }}
-                <svg class="h-4 w-4" viewBox="0 0 24 24">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d="M14 3l7 7-7 7v-4H3v-6h11V3z" />
                 </svg>
               </a>
+
               <a
-                href="#learn"
-                class="inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+                href="{{ url('infos') }}"
+                class="inline-flex items-center gap-2 rounded-xl
+                      border border-zinc-200/80 dark:border-white/10
+                      text-zinc-900 dark:text-white
+                      px-4 py-2 text-sm font-semibold
+                      hover:bg-zinc-100 dark:hover:bg-white/5"
               >
                 {{ __('index.cta.learn_more') }}
               </a>

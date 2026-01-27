@@ -19,8 +19,8 @@ html.theme-preload #themeToggle .theme-icon-sun,
 html.theme-preload #themeToggle .theme-icon-moon { transition: none !important; }
 
 /* Prism */
-html.prism-preload body { visibility: hidden; }
-html.prism-ready body { visibility: visible; }
+html.prism-preload #prism { opacity: 0; }
+html.prism-ready #prism { opacity: 1; transition: opacity .18s ease-out; }
 
 @theme {
   --color-brand-50: #f0fdf4;

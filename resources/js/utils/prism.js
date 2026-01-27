@@ -35,7 +35,7 @@ export function bootPrism() {
           hueShift: 1.74,
           colorFrequency: 2.85,
           glow: 0.48,
-          bg: [0.90, 0.905, 0.915],
+          bg: [1.0, 1.0, 1.0],
       };
 
   const opts = { ...base, ...themeOpts() };
