@@ -15,6 +15,11 @@
   <head>
     @php($nonce = csp_nonce())
     <meta charset="utf-8" />
+    <style nonce="{{ $nonce }}">
+      html { background: var(--page-bg); }
+      body { background: var(--page-bg) !important; }
+      #prism { background: var(--page-bg); }
+    </style>
     <script nonce="{{ $nonce }}">
       (function () {
         try {
@@ -32,7 +37,7 @@
 
           const saved = pick((localStorage.getItem('theme') || localStorage.getItem('gp-theme') || '').trim());
           const cookieTheme = pick(readCookie('theme').trim());
-          const theme = saved || cookieTheme || root.dataset.theme || 'dark';
+          const theme = cookieTheme || root.dataset.theme || saved || 'dark';
 
           root.dataset.theme = theme;
           const bg = (theme === 'dark') ? '#09090b' : '#fafafa';
@@ -71,13 +76,7 @@
       }
     </style>
 
-    {{-- Early background: prevents white flash before Tailwind/Vite loads --}}
-    <style nonce="{{ $nonce }}">
-      html { background: var(--page-bg); }
-      body { background: transparent !important; }
-      #prism { background: var(--page-bg); }
-    </style>
-
+    
     
     <script nonce="{{ $nonce }}">
       (function () {
@@ -110,17 +109,20 @@
       </style>
     @endif
   </head>
-  <body class="selection:bg-brand-500/30 font-sans text-zinc-900 selection:text-white dark:text-zinc-100">
-    @include('partials.navbar')
+  <body class="selection:bg-brand-500/30 font-sans text-zinc-900 selection:text-white dark:text-zinc-100" style="background-color: var(--page-bg);">
+    <div class="fixed inset-0 z-0 pointer-events-none" aria-hidden="true" style="position: fixed; inset: 0; z-index: 0; pointer-events: none;">
+      <div id="prism" class="relative h-full w-full" style="background-color: var(--page-bg);"></div>
+    </div>
 
-    <main class="relative overflow-hidden">
-      @yield('content')
-      <div class="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
-        <div id="prism" class="relative h-full w-full"></div>
-      </div>
-    </main>
+    <div class="relative z-10" style="position: relative; z-index: 10;">
+      @include('partials.navbar')
 
-    @include('partials.footer')
+      <main class="relative overflow-hidden">
+        @yield('content')
+      </main>
+
+      @include('partials.footer')
+    </div>
 
     @stack('scripts')
 

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="dark" style="--page-bg:#09090b; background:var(--page-bg); color-scheme:dark;">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#09090b" />
+    <title>Loading...</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        background: var(--page-bg);
+      }
+      body {
+        display: grid;
+        place-items: center;
+        color: #a1a1aa;
+        font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+        letter-spacing: 0.01em;
+      }
+    </style>
+    <script>
+      (function () {
+        try {
+          var root = document.documentElement;
+          var readCookie = function (name) {
+            try {
+              var safe = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              var m = document.cookie.match(new RegExp('(?:^|;\\s*)' + safe + '=([^;]*)'));
+              return m ? decodeURIComponent(m[1]) : '';
+            } catch (e) {
+              return '';
+            }
+          };
+          var pick = function (t) { return (t === 'dark' || t === 'light') ? t : ''; };
+          var saved = pick(((localStorage.getItem('theme') || localStorage.getItem('gp-theme') || '')).trim());
+          var cookieTheme = pick(readCookie('theme').trim());
+          var theme = cookieTheme || saved || 'dark';
+          var bg = theme === 'dark' ? '#09090b' : '#fafafa';
+          root.dataset.theme = theme;
+          root.style.colorScheme = theme;
+          root.style.setProperty('--page-bg', bg);
+          root.style.backgroundColor = bg;
+          if (document.body) document.body.style.backgroundColor = bg;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div>Loading...</div>
+  </body>
+</html>
