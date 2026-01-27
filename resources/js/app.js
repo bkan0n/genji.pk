@@ -12,30 +12,6 @@ import './components/notifications-tray';
 import * as Sentry from '@sentry/browser';
 
 // ———————————————————————————————————————————————————————————————
-// Service Worker 
-if ('serviceWorker' in navigator) {
-  const SW_RELOAD_KEY = 'gp_sw_reload_once';
-  const registerSw = () =>
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-
-  registerSw();
-  navigator.serviceWorker.ready
-    .then(() => {
-      if (!navigator.serviceWorker.controller) {
-        try {
-          if (!sessionStorage.getItem(SW_RELOAD_KEY)) {
-            sessionStorage.setItem(SW_RELOAD_KEY, '1');
-            window.location.reload();
-          }
-        } catch {
-          window.location.reload();
-        }
-      }
-    })
-    .catch(() => {});
-}
-
-// ———————————————————————————————————————————————————————————————
 // Sentry
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -61,7 +37,6 @@ Sentry.init({
 
 window.Sentry = Sentry;
 
-// ———————————————————————————————————————————————————————————————
 // ———————————————————————————————————————————————————————————————
 // Theme
 (function patchDOMTokenListMultiClass() {

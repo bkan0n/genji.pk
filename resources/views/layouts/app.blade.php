@@ -61,7 +61,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ config('app.url') }}" />
     <meta property="og:image" content="{{ cdn_asset('assets/img/favicon-high.png') }}" />
-    <meta name="theme-color" content="#22c55e" />
+    <meta name="theme-color" content="{{ $pageBg }}" />
     <meta name="redirect-url" content="{{ config('app.redirect_url') }}" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="csp-nonce" content="{{ $nonce }}" />
@@ -109,7 +109,7 @@
       </style>
     @endif
   </head>
-  <body class="selection:bg-brand-500/30 font-sans text-zinc-900 selection:text-white dark:text-zinc-100" style="background-color: var(--page-bg);">
+  <body class="selection:bg-brand-500/30 font-sans text-zinc-900 selection:text-white dark:text-zinc-100" style="background-color: var(--page-bg);" bgcolor="{{ $pageBg }}">
     <div class="fixed inset-0 z-0 pointer-events-none" aria-hidden="true" style="position: fixed; inset: 0; z-index: 0; pointer-events: none;">
       <div id="prism" class="relative h-full w-full" style="background-color: var(--page-bg);"></div>
     </div>
