@@ -154,13 +154,24 @@ if (typeof document !== 'undefined') {
 }
 
 const MAP_VIEW_LS_KEY = 'map_search_view';
-let mapSearchView = (localStorage.getItem(MAP_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
+const VIEW_DEFAULTS = {
+  map_search: 'cards',
+  completions: 'table',
+  personal_records: 'cards',
+};
+const getStoredView = (key, fallback) => {
+  const v = localStorage.getItem(key);
+  if (v === 'table' || v === 'cards') return v;
+  try { localStorage.setItem(key, fallback); } catch {}
+  return fallback;
+};
+let mapSearchView = getStoredView(MAP_VIEW_LS_KEY, VIEW_DEFAULTS.map_search);
 let lastMapRows = [];
 const COMPLETIONS_VIEW_LS_KEY = 'completions_view';
-let completionsView = (localStorage.getItem(COMPLETIONS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
+let completionsView = getStoredView(COMPLETIONS_VIEW_LS_KEY, VIEW_DEFAULTS.completions);
 let lastCompletionsRows = [];
 const PERSONAL_RECORDS_VIEW_LS_KEY = 'personal_records_view';
-let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
+let personalRecordsView = getStoredView(PERSONAL_RECORDS_VIEW_LS_KEY, VIEW_DEFAULTS.personal_records);
 let lastPersonalRows = [];
 const OFFICIAL_NOTICE_ID = 'officialCodeNotice';
 
@@ -2164,9 +2175,10 @@ function mountPersonalRecordsViewSwitch() {
 
 function getSectionView(section) {
   const key = VIEW_LS_KEYS[section];
-  if (!key) return 'cards';
+  const fallback = VIEW_DEFAULTS[section] || 'cards';
+  if (!key) return fallback;
   const v = localStorage.getItem(key);
-  return v === 'table' ? 'table' : 'cards';
+  return (v === 'table' || v === 'cards') ? v : fallback;
 }
 
 function ensureOfficialNoticeElement() {
