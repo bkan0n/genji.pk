@@ -1,15 +1,50 @@
 @php
   $theme = strtolower(request()->cookie('theme') ?? 'dark');
-  $isDark = $theme !== 'light';
+  $theme = in_array($theme, ['dark', 'light'], true) ? $theme : 'dark';
+  $isDark = $theme === 'dark';
+  $pageBg = $isDark ? '#09090b' : '#fafafa';
   $logoStatic = $isDark ? 'assets/img/favicon-high.png' : 'assets/img/favicon-high-black.png';
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth" data-theme="{{ request()->cookie('theme', 'dark') }}">
+<html
+  lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+  class="scroll-smooth {{ $isDark ? 'dark' : '' }} theme-preload"
+  data-theme="{{ $theme }}"
+  style="--page-bg: {{ $pageBg }}; background-color: var(--page-bg); color-scheme: {{ $theme }};"
+>
   <head>
     @php($nonce = csp_nonce())
     <meta charset="utf-8" />
+    <script nonce="{{ $nonce }}">
+      (function () {
+        try {
+          const root = document.documentElement;
+          const readCookie = (name) => {
+            try {
+              const safe = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const m = document.cookie.match(new RegExp('(?:^|;\\s*)' + safe + '=([^;]*)'));
+              return m ? decodeURIComponent(m[1]) : '';
+            } catch {
+              return '';
+            }
+          };
+          const pick = (t) => ((t === 'dark' || t === 'light') ? t : '');
+
+          const saved = pick((localStorage.getItem('theme') || localStorage.getItem('gp-theme') || '').trim());
+          const cookieTheme = pick(readCookie('theme').trim());
+          const theme = saved || cookieTheme || root.dataset.theme || 'dark';
+
+          root.dataset.theme = theme;
+          const bg = (theme === 'dark') ? '#09090b' : '#fafafa';
+          root.style.colorScheme = theme;
+          root.style.setProperty('--page-bg', bg);
+          root.style.backgroundColor = bg;
+          root.classList.toggle('dark', theme === 'dark');
+        } catch {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="{{ $theme }}" />
 
     <title>@yield('title', config('app.name'))</title>
     <meta property="og:title" content="@yield('og:title', config('app.name'))" />
@@ -26,7 +61,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="csp-nonce" content="{{ $nonce }}" />
     <link rel="preload" as="image" href="{{ cdn_asset($logoStatic) }}">
-    <script>
+    <script nonce="{{ $nonce }}">
       document.documentElement.classList.add('prism-preload');
     </script>
     <style nonce="{{ $nonce }}">
@@ -38,11 +73,9 @@
 
     {{-- Early background: prevents white flash before Tailwind/Vite loads --}}
     <style nonce="{{ $nonce }}">
-      html { background: #09090b; }
-      html[data-theme="light"] { background: #ffffff; }
-      body { background: transparent; }
-      #prism { background: #09090b; }
-      html[data-theme="light"] #prism { background: #ffffff; }
+      html { background: var(--page-bg); }
+      body { background: transparent !important; }
+      #prism { background: var(--page-bg); }
     </style>
 
     
@@ -51,32 +84,7 @@
         try {
           const root = document.documentElement;
           root.classList.add('theme-preload');
-
-          const readCookie = (name) => {
-            try {
-              const safe = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const m = document.cookie.match(new RegExp('(?:^|;\\s*)' + safe + '=([^;]*)'));
-              return m ? decodeURIComponent(m[1]) : '';
-            } catch {
-              return '';
-            }
-          };
-          const pick = (t) => ((t === 'dark' || t === 'light') ? t : '');
-
-          const saved = pick((localStorage.getItem('theme') || localStorage.getItem('gp-theme') || '').trim());
-          const cookieTheme = pick(readCookie('theme').trim());
-          const theme = cookieTheme || saved || 'dark';
-
-          root.dataset.theme = theme;
-          root.style.colorScheme = theme;
-
-          
-
-          // Prevent white flash before CSS loads
-          root.style.backgroundColor = (theme === 'dark') ? '#09090b' : '#ffffff';
-if (theme === 'dark') root.classList.add('dark');
-          else root.classList.remove('dark');
-
+          const theme = root.dataset.theme === 'light' ? 'light' : 'dark';
           try { localStorage.setItem('theme', theme); } catch {}
           try { document.cookie = 'theme=' + encodeURIComponent(theme) + '; Path=/; Max-Age=31536000; SameSite=Lax'; } catch {}
         } catch {}
@@ -102,7 +110,7 @@ if (theme === 'dark') root.classList.add('dark');
       </style>
     @endif
   </head>
-  <body class="selection:bg-brand-500/30 bg-zinc-50 font-sans text-zinc-900 selection:text-white dark:bg-zinc-950 dark:text-zinc-100">
+  <body class="selection:bg-brand-500/30 font-sans text-zinc-900 selection:text-white dark:text-zinc-100">
     @include('partials.navbar')
 
     <main class="relative overflow-hidden">

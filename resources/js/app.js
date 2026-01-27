@@ -2,6 +2,7 @@ import './bootstrap';
 import '../css/app.css';
 import '../css/custom.css';
 import './utils/layout';
+import './utils/prism';
 import './modals/notifications-settings';
 import './modals/profile';
 import './modals/credits';
@@ -37,20 +38,6 @@ Sentry.init({
 window.Sentry = Sentry;
 
 // ———————————————————————————————————————————————————————————————
-// Background
-(function () {
-  if (!document.getElementById('prism')) return;
-
-  const loadPrism = () => import(/* @vite-ignore */ '/resources/js/utils/prism.js').catch(()=>{});
-  if ('requestIdleCallback' in window) requestIdleCallback(loadPrism, { timeout: 50 });
-  ['pointerdown','keydown','scroll'].forEach(evt => {
-    window.addEventListener(evt, function onFirst() {
-      window.removeEventListener(evt, onFirst, { passive: true });
-      loadPrism();
-    }, { once: true, passive: true });
-  });
-})();
-
 // ———————————————————————————————————————————————————————————————
 // Theme
 (function patchDOMTokenListMultiClass() {

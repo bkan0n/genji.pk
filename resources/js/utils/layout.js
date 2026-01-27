@@ -208,7 +208,10 @@ function applyTheme(theme, opts = {}) {
 
   // Tailwind is configured with darkMode selector: [data-theme="dark"]
   root.dataset.theme = t;
+  const bg = t === 'dark' ? '#09090b' : '#fafafa';
   root.style.colorScheme = t;
+  root.style.setProperty('--page-bg', bg);
+  root.style.backgroundColor = bg;
 
   // Keep legacy `.dark` class in sync (some CSS/3rd-party may still rely on it)
   root.classList.toggle('dark', t === 'dark');

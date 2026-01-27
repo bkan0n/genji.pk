@@ -19,8 +19,11 @@ html.theme-preload #themeToggle .theme-icon-sun,
 html.theme-preload #themeToggle .theme-icon-moon { transition: none !important; }
 
 /* Prism */
-html.prism-preload #prism { opacity: 0; }
-html.prism-ready #prism { opacity: 1; transition: opacity .18s ease-out; }
+html.prism-preload #prism { opacity: 1; }
+html.prism-ready #prism { opacity: 1; }
+html.dark #prism { background: #09090b; }
+html[data-theme="dark"] #prism { background: #09090b; }
+html[data-theme="light"] #prism { background: #ffffff; }
 
 @theme {
   --color-brand-50: #f0fdf4;
