@@ -5,7 +5,7 @@ module.exports = {
     './resources/partials/**/*.php',
     './resources/js/**/*.js',
   ],
-  darkMode: 'class',
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       fontFamily: {

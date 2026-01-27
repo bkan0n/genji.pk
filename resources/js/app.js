@@ -1,7 +1,7 @@
 import './bootstrap';
 import '../css/app.css';
 import '../css/custom.css';
-import './modals/layout';
+import './utils/layout';
 import './modals/notifications-settings';
 import './modals/profile';
 import './modals/credits';
@@ -10,6 +10,8 @@ import './components/notifications-tray';
 
 import * as Sentry from '@sentry/browser';
 
+// ———————————————————————————————————————————————————————————————
+// Sentry
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.VITE_APP_ENV ?? 'local',
@@ -34,10 +36,12 @@ Sentry.init({
 
 window.Sentry = Sentry;
 
+// ———————————————————————————————————————————————————————————————
+// Background
 (function () {
   if (!document.getElementById('prism')) return;
 
-  const loadPrism = () => import(/* @vite-ignore */ '/resources/js/pages/prism.js').catch(()=>{});
+  const loadPrism = () => import(/* @vite-ignore */ '/resources/js/utils/prism.js').catch(()=>{});
   if ('requestIdleCallback' in window) requestIdleCallback(loadPrism, { timeout: 50 });
   ['pointerdown','keydown','scroll'].forEach(evt => {
     window.addEventListener(evt, function onFirst() {
@@ -47,6 +51,52 @@ window.Sentry = Sentry;
   });
 })();
 
+// ———————————————————————————————————————————————————————————————
+// Theme
+(function patchDOMTokenListMultiClass() {
+  if (typeof window === 'undefined') return;
+  const proto = window.DOMTokenList && window.DOMTokenList.prototype;
+  if (!proto) return;
+  if (proto.__gpMultiClassPatched) return;
+  Object.defineProperty(proto, '__gpMultiClassPatched', { value: true });
+
+  const splitTokens = (t) =>
+    String(t ?? '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+  const _add = proto.add;
+  const _remove = proto.remove;
+  const _toggle = proto.toggle;
+
+  proto.add = function (...tokens) {
+    const flat = [];
+    for (const t of tokens) flat.push(...splitTokens(t));
+    return _add.apply(this, flat);
+  };
+
+  proto.remove = function (...tokens) {
+    const flat = [];
+    for (const t of tokens) flat.push(...splitTokens(t));
+    return _remove.apply(this, flat);
+  };
+
+  proto.toggle = function (token, force) {
+    const parts = splitTokens(token);
+    if (parts.length <= 1) {
+      return force === undefined ? _toggle.call(this, token) : _toggle.call(this, token, force);
+    }
+    let res;
+    for (const p of parts) {
+      res = force === undefined ? _toggle.call(this, p) : _toggle.call(this, p, force);
+    }
+    return res;
+  };
+})();
+
+// ———————————————————————————————————————————————————————————————
+// CSRF
 (function patchFetchForCsrf() {
   if (!CSRF || typeof window.fetch !== 'function') return;
 

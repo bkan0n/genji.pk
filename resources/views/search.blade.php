@@ -24,7 +24,7 @@
           <div>
             <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
               {{ __('search.title') }}
-              <span class="block text-sm font-medium text-zinc-300 sm:text-base">
+              <span class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">
                 {{ __('search.subtitle') }}
               </span>
             </h1>
@@ -39,28 +39,28 @@
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         <div class="relative mb-4">
-          <div id="searchTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+          <div id="searchTabs" class="inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-1">
             <button
               id="tabMapSearch"
-              class="search-tab cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+              class="search-tab cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-900"
               data-section="map_search"
             >{{ __('search.map_search') }}</button>
 
             <button
               id="tabCompletions"
-              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10"
               data-section="completions"
             >{{ __('search.completions') }}</button>
 
             <button
               id="tabGuide"
-              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10"
               data-section="guide"
             >{{ __('search.guides') }}</button>
 
             <button
               id="tabPersonalRecords"
-              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+              class="search-tab cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10"
               data-section="personal_records"
             >{{ __('search.personal_records') }}</button>
           </div>
@@ -68,19 +68,19 @@
           <span id="searchTabsHighlight" class="pointer-events-none absolute" aria-hidden="true"></span>
         </div>
 
-        <div class="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+        <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-3 sm:p-4">
           {{-- Selected mode / Toolbar --}}
           <div class="selected-mode-container">
             <div
               id="selectedMode"
-              class="selected-mode rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-300"
+              class="selected-mode rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300"
             >
               {{ __('search.select_mode') }}
             </div>
 
             <div id="filterActions" class="filter-actions mt-3 hidden">
               <div
-                class="toolbar-container relative z-[45] overflow-visible rounded-xl border border-white/10 bg-zinc-900/60 p-3"
+                class="toolbar-container relative z-[45] overflow-visible rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 p-3"
               >
                 <div id="icon-name" class="icon-name sr-only"></div>
                 <div class="toolbar relative flex flex-wrap items-center gap-2"></div>
@@ -107,7 +107,7 @@
 
     {{-- Loading bar --}}
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
+      <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-100/60 dark:bg-zinc-800/60"></div>
     </div>
 
     {{-- Pagination --}}

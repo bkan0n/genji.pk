@@ -132,10 +132,10 @@ function showToast(message, type = 'ok', opts = {}) {
 
   const palette =
     type === 'ok'
-      ? 'bg-emerald-500/90 text-white'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
       : type === 'warn'
         ? 'bg-amber-500/90 text-zinc-900'
-        : 'bg-red-600/90 text-white';
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
 
   const el = document.createElement('div');
   el.setAttribute('role', 'status');
@@ -200,7 +200,7 @@ function rarityStyle(rarity) {
       return {
         ring: 'ring-zinc-300/30',
         glow: 'shadow-[0_0_18px_rgba(212,212,216,.12)]',
-        badge: 'bg-zinc-500/10 text-zinc-300',
+        badge: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300',
       };
   }
 }
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.type = 'button';
         item.role = 'option';
         item.className =
-          'w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-white/5 border-b border-white/5 last:border-b-0';
+          'w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-zinc-900/3 dark:bg-white/5 border-b border-white/5 last:border-b-0';
         item.textContent = t(`ui.key_types.${kt}`) || kt;
         item.addEventListener('click', () => {
           rewardKeyType = kt;
@@ -473,7 +473,7 @@ function displayRewards(rewards, opts = {}) {
     );
 
     const $inner = $('<div/>').addClass(
-      `lb-inner relative h-full w-full rounded-2xl border border-white/10 bg-zinc-900/70 ring-1 ring-white/10 shadow-xl`
+      `lb-inner relative h-full w-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl`
     );
 
     const $front = $('<div/>')
@@ -482,7 +482,7 @@ function displayRewards(rewards, opts = {}) {
       )
       .append(
         $('<span/>')
-          .addClass('mt-40 text-xs font-semibold text-zinc-300')
+          .addClass('mt-40 text-xs font-semibold text-zinc-700 dark:text-zinc-300')
           .text(t('ui.pick_a_card') || 'Pick a card')
       );
 
@@ -501,9 +501,9 @@ function displayRewards(rewards, opts = {}) {
 
     $imgWrap.append($img);
 
-    const $info = $('<div/>').addClass('p-3 space-y-1 border-t border-white/10 bg-zinc-900/60');
-    const $name = $('<div/>').addClass('text-sm font-semibold truncate text-zinc-100');
-    const $type = $('<div/>').addClass('text-xs text-zinc-400');
+    const $info = $('<div/>').addClass('p-3 space-y-1 border-t border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60');
+    const $name = $('<div/>').addClass('text-sm font-semibold truncate text-zinc-900 dark:text-zinc-100');
+    const $type = $('<div/>').addClass('text-xs text-zinc-600 dark:text-zinc-400');
     const $badge = $('<span/>').addClass(
       `inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${sty.badge}`
     );
@@ -567,12 +567,12 @@ function displayRewards(rewards, opts = {}) {
 
     $inner.find('img').attr('src', img);
     $inner.find('.text-sm.font-semibold.truncate').text(name);
-    $inner.find('.text-xs.text-zinc-400').text(type);
+    $inner.find('.text-xs.text-zinc-600 dark:text-zinc-400').text(type);
     $inner.find('span').text(String(reward.rarity).toUpperCase());
 
     const el = $inner.get(0);
     if (el) {
-      $inner.removeClass('ring-white/10');
+      $inner.removeClass('ring-zinc-300/60 dark:ring-white/10');
       const toRemove = [];
       el.classList.forEach((c) => {
         if (
@@ -633,13 +633,13 @@ document.addEventListener('DOMContentLoaded', () => {
       filtered.forEach((r) => {
         const sty = rarityStyle(r.rarity);
         const card = document.createElement('div');
-        card.className = `rounded-xl overflow-hidden border border-white/10 bg-zinc-900/60 ring-1 ${sty.ring} ${sty.glow}`;
+        card.className = `rounded-xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 ring-1 ${sty.ring} ${sty.glow}`;
         card.innerHTML = `
           <div class="aspect-[4/3] bg-black/20 flex items-center justify-center">
             <img src="${r.url}" class="max-h-full object-contain">
           </div>
           <div class="p-2">
-            <div class="text-xs font-semibold text-zinc-100 truncate">${r.name}</div>
+            <div class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">${r.name}</div>
             <div class="mt-1 inline-flex items-center rounded px-2 py-0.5 ${sty.badge} text-[10px] font-semibold uppercase">${r.rarity}</div>
           </div>
         `;
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
       rewardsContainer.classList.remove('hidden');
     } catch (err) {
       console.error('Error fetching rewards:', err);
-      rewardsContainer.innerHTML = `<p class="text-sm text-zinc-300">${t('ui.error_loading_rewards')}</p>`;
+      rewardsContainer.innerHTML = `<p class="text-sm text-zinc-700 dark:text-zinc-300">${t('ui.error_loading_rewards')}</p>`;
       rewardsContainer.classList.remove('hidden');
     }
   }

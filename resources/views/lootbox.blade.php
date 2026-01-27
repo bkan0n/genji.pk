@@ -21,7 +21,7 @@
           <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
             {{ __('lootbox.header.title') }}
           </h1>
-          <p class="text-sm text-zinc-300 sm:text-base">
+          <p class="text-sm text-zinc-600 dark:text-zinc-300 sm:text-base">
             {{ __('lootbox.header.subtitle') }}
           </p>
         </div>
@@ -36,13 +36,13 @@
       <div class="flex w-full justify-center">
         <div id="box" class="flex gap-6">
           <div
-            class="loot-card card1 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-white/10 bg-zinc-800/80 shadow-lg"
+            class="loot-card card1 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-800/80 shadow-lg"
           ></div>
           <div
-            class="loot-card card2 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-white/10 bg-zinc-800/80 shadow-lg"
+            class="loot-card card2 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-800/80 shadow-lg"
           ></div>
           <div
-            class="loot-card card3 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-white/10 bg-zinc-800/80 shadow-lg"
+            class="loot-card card3 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-800/80 shadow-lg"
           ></div>
         </div>
         <ul id="crate" class="flex gap-6"></ul>
@@ -54,7 +54,7 @@
           <div id="key-wrapper" class="relative inline-block">
             <button
               id="key-type-button"
-              class="cursor-pointer rounded-lg border border-white/10 bg-zinc-900/60 px-4 py-2 text-sm font-medium transition hover:bg-white/5"
+              class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:hover:bg-white/5"
               aria-haspopup="listbox"
               aria-expanded="false"
             >
@@ -63,24 +63,24 @@
 
             <div
               id="key-dropdown"
-              class="absolute top-full left-1/2 z-20 mt-2 hidden w-40 -translate-x-1/2 rounded-lg border border-white/10 bg-zinc-900/95 shadow-xl"
+              class="absolute top-full left-1/2 z-20 mt-2 hidden w-40 -translate-x-1/2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-xl"
               role="listbox"
             ></div>
           </div>
 
-          <div id="key-count" class="text-sm text-zinc-300"></div>
+          <div id="key-count" class="text-sm text-zinc-600 dark:text-zinc-300"></div>
         </div>
       </div>
 
       <!-- Boutons -->
       <div class="flex items-center gap-4">
         <button
-          class="generate bg-brand-500 hover:bg-brand-400 cursor-pointer rounded-xl border border-white/10 px-6 py-2 font-semibold text-white shadow transition"
+          class="generate bg-brand-500 hover:bg-brand-400 cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-6 py-2 font-semibold text-white shadow transition"
         >
           {{ __('lootbox.ui.open_pack') }}
         </button>
         <button
-          class="info-button cursor-pointer rounded-full border border-white/10 bg-zinc-900/60 p-2 hover:bg-white/5"
+          class="info-button cursor-pointer rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 p-2 hover:bg-zinc-100 dark:hover:bg-white/5"
           aria-label="{{ __('lootbox.ui.info') }}"
         >
           <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -98,14 +98,14 @@
         class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/70 backdrop-blur-sm"
       >
         <div
-          class="modal-infos relative max-h-[80vh] w-full max-w-md scale-95 overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-zinc-900/95 p-6 opacity-0 shadow-xl transition duration-200 ease-out sm:max-h-[70vh]"
+          class="modal-infos relative max-h-[80vh] w-full max-w-md scale-95 overflow-y-auto overscroll-contain rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-6 opacity-0 shadow-xl transition duration-200 ease-out sm:max-h-[70vh]"
           data-modal-box
           role="dialog"
           aria-modal="true"
           aria-labelledby="lootboxInfoTitle"
         >
           <button
-            class="close-button absolute top-4 right-4 rounded-md p-1 hover:bg-white/10"
+            class="close-button absolute top-4 right-4 rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-white/10"
             aria-label="{{ __('lootbox.ui.close_modal') }}"
           >
             <span class="text-lg leading-none">&times;</span>
@@ -117,7 +117,7 @@
 
           <div class="space-y-1 text-sm">
             <div>
-              <span class="font-semibold text-zinc-200">{{ __('lootbox.ui.common') }}</span>
+              <span class="font-semibold text-zinc-800 dark:text-zinc-200">{{ __('lootbox.ui.common') }}</span>
               : 80%
             </div>
             <div>
@@ -134,25 +134,25 @@
             </div>
           </div>
 
-          <p class="mt-4 text-sm text-zinc-300">
+          <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-300">
             {{ __('lootbox.ui.lootbox_infos') }}
           </p>
 
           <div class="mt-4 flex flex-wrap gap-2">
             <button
-              class="filter-button cursor-pointer rounded-md border border-white/10 px-3 py-1.5 text-xs hover:bg-white/5"
+              class="filter-button cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-white/5"
               data-type="background"
             >
               {{ __('lootbox.ui.rewards_types.background') }}
             </button>
             <button
-              class="filter-button cursor-pointer rounded-md border border-white/10 px-3 py-1.5 text-xs hover:bg-white/5"
+              class="filter-button cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-white/5"
               data-type="spray"
             >
               {{ __('lootbox.ui.rewards_types.spray') }}
             </button>
             <button
-              class="filter-button cursor-pointer rounded-md border border-white/10 px-3 py-1.5 text-xs hover:bg-white/5"
+              class="filter-button cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-white/5"
               data-type="skin-pose"
             >
               {{ __('lootbox.ui.rewards_types.skin') }} &

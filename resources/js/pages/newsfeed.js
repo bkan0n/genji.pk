@@ -1,20 +1,20 @@
 import { cdnAsset } from "../utils/cdn";
 
 const roleClasses = {
-  Ninja: 'border border-green-900/30 bg-green-900/20 text-green-300',
-  Jumper: 'border border-green-400/30 bg-green-400/20 text-green-200',
-  Skilled: 'border border-yellow-400/30 bg-yellow-400/20 text-yellow-200',
-  Pro: 'border border-orange-300/30 bg-orange-300/20 text-orange-200',
-  Master: 'border border-orange-600/30 bg-orange-600/20 text-orange-300',
-  Grandmaster: 'border border-red-500/30 bg-red-500/20 text-red-300',
-  God: 'border border-red-800/30 bg-red-800/20 text-red-400',
+  Ninja: 'border border-green-900/30 bg-green-900/20 text-green-800 dark:text-green-300',
+  Jumper: 'border border-green-400/30 bg-green-400/20 text-green-800 dark:text-green-200',
+  Skilled: 'border border-yellow-400/30 bg-yellow-400/20 text-yellow-800 dark:text-yellow-200',
+  Pro: 'border border-orange-300/30 bg-orange-300/20 text-orange-800 dark:text-orange-200',
+  Master: 'border border-orange-600/30 bg-orange-600/20 text-orange-800 dark:text-orange-300',
+  Grandmaster: 'border border-red-500/30 bg-red-500/20 text-red-800 dark:text-red-300',
+  God: 'border border-red-800/30 bg-red-800/20 text-red-800 dark:text-red-400',
 };
 
 const difficultyTextClasses = {
-  Beginner: 'text-green-300',
-  Easy: 'text-green-400',
-  Medium: 'text-yellow-300',
-  Hard: 'text-orange-400',
+  Beginner: 'text-green-800 dark:text-green-300',
+  Easy: 'text-green-800 dark:text-green-400',
+  Medium: 'text-yellow-800 dark:text-yellow-300',
+  Hard: 'text-orange-800 dark:text-orange-400',
   'Very Hard': 'text-orange-600',
   Extreme: 'text-red-500',
   Hell: 'text-red-800',
@@ -31,10 +31,10 @@ const difficultyColors = {
 };
 
 const UPVOTE_INACTIVE_CLASSES =
-  'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-zinc-100 active:scale-[0.98]';
+  'border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5 dark:bg-white/10 hover:text-zinc-900 dark:text-zinc-100 active:scale-[0.98]';
 
 const UPVOTE_ACTIVE_CLASSES =
-  'border-emerald-500/30 bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/30';
+  'border-emerald-500/30 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 ring-1 ring-emerald-400/30';
 
 let _nfAbortController = null;
 let currentPage = 1;
@@ -115,7 +115,7 @@ document.addEventListener(
   'error',
   (e) => {
     const t = e.target;
-    if (t && t.matches && t.matches('[data-hide-on-error]')) t.classList.add('hidden');
+    if (t && t.matches && t.matches('[data-hide-on-error]')) t.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   },
   true
 );
@@ -256,7 +256,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document
     .getElementById('tabCompletions')
     ?.addEventListener('click', () => switchSection('completions'));
-  applyTabVisuals();
+  applyTabVisuals({ animateHighlight: false });
+
+  requestAnimationFrame(() => {
+    __nfTabsApi?.recalc?.();
+    window.addEventListener('resize', () => __nfTabsApi?.recalc?.());
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => __nfTabsApi?.recalc?.());
+    } else {
+      setTimeout(() => __nfTabsApi?.recalc?.(), 60);
+    }
+  });
 
   if (currentSection === 'newsfeed') {
     bindFilters();
@@ -265,56 +275,198 @@ document.addEventListener('DOMContentLoaded', () => {
     loadNewsfeed(false);
     hydrateChangelogsSidebar();
   } else {
-    document.getElementById('panel-newsfeed')?.classList.add('hidden');
-    document.getElementById('panel-completions')?.classList.remove('hidden');
+    document.getElementById('panel-newsfeed')?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    document.getElementById('panel-completions')?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     compPage = 1;
     loadCompletions(false);
   }
 });
 
-function applyTabVisuals() {
-  const btnNews = document.getElementById('tabNewsfeed');
-  const btnComp = document.getElementById('tabCompletions');
+let __nfTabsApi = null;
 
-  const activeClasses = ['bg-white', 'text-zinc-900'];
-  const inactiveClasses = ['text-white', 'hover:bg-white/10'];
+function __nfIsDark() {
+  const el = document.documentElement;
+  const dt = (el.getAttribute('data-theme') || '').toLowerCase();
+  return dt === 'dark' || el.classList.contains('dark');
+}
 
-  if (currentSection === 'newsfeed') {
-    btnNews.classList.add(...activeClasses);
-    btnNews.classList.remove(...inactiveClasses);
-    btnComp.classList.remove(...activeClasses);
-    btnComp.classList.add(...inactiveClasses);
-  } else {
-    btnComp.classList.add(...activeClasses);
-    btnComp.classList.remove(...inactiveClasses);
-    btnNews.classList.remove(...activeClasses);
-    btnNews.classList.add(...inactiveClasses);
+function initNfTabs(defaultSection = 'newsfeed') {
+  const tabsContainer = document.getElementById('nfTabs');
+  const highlight = document.getElementById('nfTabsHighlight');
+  if (!tabsContainer || !highlight) return null;
+
+  if (highlight.parentElement !== tabsContainer) {
+    tabsContainer.appendChild(highlight);
   }
+
+  const buttons = Array.from(tabsContainer.querySelectorAll('.tab-btn'));
+  if (!buttons.length) return null;
+
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
+  }
+
+  const HL_TRANSITION =
+    'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)';
+
+  Object.assign(highlight.style, {
+    position: 'absolute',
+    top: '2px',
+    bottom: '2px',
+    left: '0',
+    width: '0',
+    borderRadius: '0.625rem',
+    background: 'white',
+    boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+    transform: 'translate3d(0,0,0)',
+    transition: 'none',
+    willChange: 'transform,width',
+    zIndex: '0',
+  });
+
+  buttons.forEach((b) => {
+    b.style.position = 'relative';
+    b.style.zIndex = '1';
+
+    b.style.transition =
+      'background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease';
+
+    b.classList.remove('transition', 'transition-all', 'transition-colors');
+  });
+
+  const moveHighlightTo = (btn, { animate = true } = {}) => {
+    if (!btn) return;
+
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = Math.round(br.left - cr.left);
+    const width = Math.round(br.width);
+
+    const prevLeft = Number(highlight.dataset.hlLeft || NaN);
+    const prevWidth = Number(highlight.dataset.hlWidth || NaN);
+    if (left === prevLeft && width === prevWidth) return;
+
+    highlight.dataset.hlLeft = String(left);
+    highlight.dataset.hlWidth = String(width);
+
+    const apply = () => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    };
+
+    if (!animate) {
+      const prev = highlight.style.transition;
+      highlight.style.transition = 'none';
+      apply();
+      requestAnimationFrame(() => {
+        highlight.style.transition = prev && prev !== 'none' ? prev : HL_TRANSITION;
+      });
+      return;
+    }
+
+    if (highlight.style.transition === 'none') {
+      highlight.style.transition = HL_TRANSITION;
+    }
+    requestAnimationFrame(apply);
+  };
+
+  const setActive = (section, { animateHighlight = true } = {}) => {
+    const activeBtn =
+      buttons.find((b) => b.getAttribute('data-section') === section) || buttons[0];
+    const activeSection = activeBtn?.getAttribute('data-section') || section;
+
+    buttons.forEach((btn) => {
+      const isActive = btn === activeBtn;
+
+      btn.classList.toggle('is-active', isActive);
+
+      btn.classList.add('text-zinc-900');
+      btn.classList.toggle('dark:text-white', !isActive);
+      btn.classList.toggle('dark:text-zinc-900', isActive);
+
+      btn.classList.toggle('hover:bg-zinc-100', !isActive);
+      btn.classList.toggle('dark:hover:bg-white/10', !isActive);
+    });
+
+    moveHighlightTo(activeBtn, { animate: animateHighlight });
+    return activeSection;
+  };
+
+  const getDesired = () =>
+    new URLSearchParams(window.location.search).get('section') || defaultSection;
+
+  buttons.forEach((btn) => {
+    const section = btn.getAttribute('data-section');
+    if (!section) return;
+
+    const preselect = () => setActive(section, { animateHighlight: true });
+
+    btn.addEventListener('pointerdown', (e) => {
+      if (typeof e.button === 'number' && e.button !== 0) return;
+      preselect();
+    });
+
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') preselect();
+    });
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchSection(section);
+    });
+  });
+
+  const desired = getDesired();
+  const initialBtn = buttons.find((b) => b.getAttribute('data-section') === desired) || buttons[0];
+
+  requestAnimationFrame(() => {
+    setActive(initialBtn.getAttribute('data-section'), { animateHighlight: false });
+
+    const recalc = () => {
+      const active = buttons.find((b) => b.classList.contains('is-active')) || initialBtn;
+      moveHighlightTo(active, { animate: false });
+    };
+
+    window.addEventListener('resize', recalc);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(recalc);
+    } else {
+      setTimeout(recalc, 60);
+    }
+  });
+
+  __nfTabsApi = { tabsContainer, highlight, buttons, setActive, moveHighlightTo };
+  return __nfTabsApi;
+}
+
+function applyTabVisuals({ animateHighlight = true } = {}) {
+  if (!__nfTabsApi) initNfTabs();
+  __nfTabsApi?.setActive(currentSection, { animateHighlight });
 }
 
 function switchSection(section) {
   currentSection = section === 'completions' ? 'completions' : 'newsfeed';
 
-  document
-    .getElementById('panel-newsfeed')
-    ?.classList.toggle('hidden', currentSection !== 'newsfeed');
-  document
-    .getElementById('panel-completions')
-    ?.classList.toggle('hidden', currentSection !== 'completions');
+  __nfTabsApi?.setActive(currentSection, { animateHighlight: true });
+
+  document.getElementById('panel-newsfeed')?.classList.toggle('hidden', currentSection !== 'newsfeed');
+  document.getElementById('panel-completions')?.classList.toggle('hidden', currentSection !== 'completions');
 
   const url = new URL(window.location);
   url.searchParams.set('section', currentSection);
   history.replaceState(null, '', url);
 
-  applyTabVisuals();
-
-  if (currentSection === 'newsfeed') {
-    currentPage = 1;
-    loadNewsfeed(false);
-  } else {
-    compPage = 1;
-    loadCompletions(false);
-  }
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      if (currentSection === 'newsfeed') {
+        currentPage = 1;
+        loadNewsfeed(false);
+      } else {
+        compPage = 1;
+        loadCompletions(false);
+      }
+    }, 0);
+  });
 }
 
 async function fetchJsonResilient(input, init = {}, { timeout = 10000, retries = 2 } = {}) {
@@ -444,13 +596,13 @@ async function fetchEmoji(emojiName, emojiId) {
       try {
         await res.text();
       } catch {}
-      return `<span class="inline-block align-[-2px] text-zinc-300">:${emojiName}:</span>`;
+      return `<span class="inline-block align-[-2px] text-zinc-700 dark:text-zinc-300">:${emojiName}:</span>`;
     }
 
     const data = await res.json();
     if (data && data.emoji) return data.emoji;
   } catch (_) {}
-  return `<span class="inline-block align-[-2px] text-zinc-300">:${emojiName}:</span>`;
+  return `<span class="inline-block align-[-2px] text-zinc-700 dark:text-zinc-300">:${emojiName}:</span>`;
 }
 
 /* ---------- Helpers réponse getMapSearch.php ---------- */
@@ -513,41 +665,13 @@ function twModalStyleShell() {
   const box = document.getElementById('detailsModalBox');
   if (!overlay || !box) return;
 
-  overlay.classList.add(
-    'fixed',
-    'inset-0',
-    'z-50',
-    'bg-black/60',
-    'backdrop-blur-sm',
-    'p-4',
-    'flex',
-    'items-center',
-    'justify-center'
-  );
+  overlay.classList.add(...String('fixed').trim().split(/\s+/).filter(Boolean), ...String('inset-0').trim().split(/\s+/).filter(Boolean), ...String('z-50').trim().split(/\s+/).filter(Boolean), ...String('bg-black/60').trim().split(/\s+/).filter(Boolean), ...String('backdrop-blur-sm').trim().split(/\s+/).filter(Boolean), ...String('p-4').trim().split(/\s+/).filter(Boolean), ...String('flex').trim().split(/\s+/).filter(Boolean), ...String('items-center').trim().split(/\s+/).filter(Boolean), ...String('justify-center').trim().split(/\s+/).filter(Boolean));
 
-  box.classList.add(
-    'w-full',
-    'max-w-4xl',
-    'opacity-0',
-    'scale-95',
-    'transition',
-    'duration-200',
-    'ease-out'
-  );
+  box.classList.add(...String('w-full').trim().split(/\s+/).filter(Boolean), ...String('max-w-4xl').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean), ...String('transition').trim().split(/\s+/).filter(Boolean), ...String('duration-200').trim().split(/\s+/).filter(Boolean), ...String('ease-out').trim().split(/\s+/).filter(Boolean));
 
   const container = document.getElementById('modalDetailsContainer');
   if (container) {
-    container.classList.add(
-      'w-full',
-      'rounded-2xl',
-      'border',
-      'border-white/10',
-      'bg-zinc-950/90',
-      'shadow-2xl',
-      'ring-1',
-      'ring-white/10',
-      'overflow-hidden'
-    );
+    container.classList.add(...String('w-full').trim().split(/\s+/).filter(Boolean), ...String('rounded-2xl').trim().split(/\s+/).filter(Boolean), ...String('border').trim().split(/\s+/).filter(Boolean), ...String('border-zinc-200/80 dark:border-white/10').trim().split(/\s+/).filter(Boolean), ...String('bg-zinc-50 dark:bg-zinc-950/90').trim().split(/\s+/).filter(Boolean), ...String('shadow-2xl').trim().split(/\s+/).filter(Boolean), ...String('ring-1').trim().split(/\s+/).filter(Boolean), ...String('ring-zinc-300/60 dark:ring-white/10').trim().split(/\s+/).filter(Boolean), ...String('overflow-hidden').trim().split(/\s+/).filter(Boolean));
   }
 }
 
@@ -556,15 +680,15 @@ function twModalOpen() {
   const box = document.getElementById('detailsModalBox');
   if (!overlay || !box) return;
 
-  overlay.classList.remove('hidden');
-  overlay.classList.add('flex');
-  document.body.classList.add('overflow-hidden');
+  overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  overlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+  document.body.classList.add(...String('overflow-hidden').trim().split(/\s+/).filter(Boolean));
 
-  box.classList.add('opacity-0', 'scale-95');
+  box.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
 
   requestAnimationFrame(() => {
-    box.classList.remove('opacity-0', 'scale-95');
-    box.classList.add('opacity-100', 'scale-100');
+    box.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+    box.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
   });
 
   const closeBtn = overlay.querySelector('[data-close-details]');
@@ -576,13 +700,13 @@ function twModalClose() {
   const box = document.getElementById('detailsModalBox');
   if (!overlay || !box) return;
 
-  box.classList.add('opacity-0', 'scale-95');
-  box.classList.remove('opacity-100', 'scale-100');
+  box.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+  box.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
 
   setTimeout(() => {
-    overlay.classList.add('hidden');
-    overlay.classList.remove('flex');
-    document.body.classList.remove('overflow-hidden');
+    overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    overlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
+    document.body.classList.remove(...String('overflow-hidden').trim().split(/\s+/).filter(Boolean));
   }, 50);
 }
 
@@ -674,33 +798,33 @@ const __mm = {
     const half = n - full >= 0.5 ? 1 : 0;
     const empty = max - full - half;
     return (
-      `<span class="text-amber-300">${'★'.repeat(full)}</span>` +
-      (half ? `<span class="text-amber-300/60">★</span>` : '') +
+      `<span class="text-amber-800 dark:text-amber-300">${'★'.repeat(full)}</span>` +
+      (half ? `<span class="text-amber-800/80 dark:text-amber-300/60">★</span>` : '') +
       `<span class="text-zinc-600">${'☆'.repeat(empty)}</span>` +
-      `<span class="ml-2 text-xs text-zinc-400 align-[1px]">(${n.toFixed(2)}/${max})</span>`
+      `<span class="ml-2 text-xs text-zinc-600 dark:text-zinc-400 align-[1px]">(${n.toFixed(2)}/${max})</span>`
     );
   },
   badge: (label, tone = 'zinc') => {
     const toneMap = {
-      emerald: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
-      sky: 'border-sky-400/30 bg-sky-500/10 text-sky-200',
-      amber: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
-      red: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
-      violet: 'border-violet-400/30 bg-violet-500/10 text-violet-200',
-      zinc: 'border-white/10 bg-white/10 text-zinc-200',
+      emerald: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200',
+      sky: 'border-sky-400/30 bg-sky-500/10 text-sky-800 dark:text-sky-200',
+      amber: 'border-amber-400/30 bg-amber-500/10 text-amber-800 dark:text-amber-200',
+      red: 'border-rose-400/30 bg-rose-500/10 text-rose-800 dark:text-rose-200',
+      violet: 'border-violet-400/30 bg-violet-500/10 text-violet-800 dark:text-violet-200',
+      zinc: 'border-zinc-200/80 dark:border-white/10 bg-zinc-900/5 dark:bg-white/10 text-zinc-800 dark:text-zinc-200',
     };
     const cls = toneMap[tone] || toneMap.zinc;
     return `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${cls}">${label}</span>`;
   },
   diffTint: (label) => {
     const k = (label || '').replace(/\s*[+-]$/, '').trim();
-    return difficultyTextClasses?.[k] || 'text-zinc-200';
+    return difficultyTextClasses?.[k] || 'text-zinc-800 dark:text-zinc-200';
   },
   listChips: (arr) =>
     (arr || [])
       .map(
         (s) =>
-          `<span class="rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-200">${__mm.esc(
+          `<span class="rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-800 dark:text-zinc-200">${__mm.esc(
             s
           )}</span>`
       )
@@ -721,7 +845,7 @@ function ensureDetailsModalShell() {
   overlay.innerHTML = `
     <div id="detailsModalBox" class="relative pointer-events-auto">
       <button type="button"
-              class="absolute right-4 top-4 z-10 inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              class="absolute right-4 top-4 z-10 inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
               data-close-details aria-label="Close">✕</button>
       <div id="modalDetailsContainer"></div>
     </div>
@@ -743,9 +867,9 @@ function openMapDetailsModal(mapCode) {
   const container = document.getElementById('modalDetailsContainer');
   if (!overlay || !box || !container) return;
 
-  box.classList.add('w-full','max-w-4xl','max-h-[86vh]','flex','flex-col');
-  container.classList.remove('overflow-hidden');
-  container.classList.add('max-h-[78vh]','overflow-y-auto');
+  box.classList.add(...String('w-full').trim().split(/\s+/).filter(Boolean), ...String('max-w-4xl').trim().split(/\s+/).filter(Boolean), ...String('max-h-[86vh]').trim().split(/\s+/).filter(Boolean), ...String('flex').trim().split(/\s+/).filter(Boolean), ...String('flex-col').trim().split(/\s+/).filter(Boolean));
+  container.classList.remove(...String('overflow-hidden').trim().split(/\s+/).filter(Boolean));
+  container.classList.add(...String('max-h-[78vh]').trim().split(/\s+/).filter(Boolean), ...String('overflow-y-auto').trim().split(/\s+/).filter(Boolean));
 
   container.innerHTML = `
     <div class="relative">
@@ -757,30 +881,30 @@ function openMapDetailsModal(mapCode) {
 
       <div class="p-5 space-y-6">
         <div class="space-y-2">
-          <div class="h-7 w-56 rounded bg-white/10 animate-pulse"></div>
-          <div class="h-4 w-40 rounded bg-white/10 animate-pulse"></div>
+          <div class="h-7 w-56 rounded bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+          <div class="h-4 w-40 rounded bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
         </div>
 
         <section class="grid gap-3 sm:grid-cols-3">
-          <div class="h-16 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
-          <div class="h-16 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
-          <div class="h-16 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-16 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
+          <div class="h-16 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
+          <div class="h-16 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
         </section>
 
         <section class="grid gap-5 lg:grid-cols-3">
-          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
-          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
-          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
         </section>
 
         <section class="grid gap-5 md:grid-cols-3">
-          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
-          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
+          <div class="h-28 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 animate-pulse"></div>
         </section>
 
-        <section class="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div class="h-5 w-24 rounded bg-white/10 animate-pulse"></div>
-          <div class="mt-3 h-20 rounded bg-white/10 animate-pulse"></div>
+        <section class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+          <div class="h-5 w-24 rounded bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+          <div class="mt-3 h-20 rounded bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
         </section>
       </div>
     </div>
@@ -789,11 +913,11 @@ function openMapDetailsModal(mapCode) {
   twModalOpen();
 
   const medalItemSafe = (name, img, timeText) => `
-    <div class="medal-item grid grid-cols-[auto,1fr] items-start gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 overflow-hidden">
+    <div class="medal-item grid grid-cols-[auto,1fr] items-start gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-2 overflow-hidden">
       <img src="${img}" alt="${name}" class="h-6 w-6 shrink-0 rounded object-contain"/>
       <div class="min-w-0 text-left">
         <div class="font-semibold text-xs whitespace-normal break-words normal-case leading-tight">${name}</div>
-        <div class="text-[11px] text-zinc-400 whitespace-normal break-words normal-case leading-tight">${timeText}</div>
+        <div class="text-[11px] text-zinc-600 dark:text-zinc-400 whitespace-normal break-words normal-case leading-tight">${timeText}</div>
       </div>
     </div>
   `;
@@ -835,7 +959,7 @@ function openMapDetailsModal(mapCode) {
       const creators = (Array.isArray(map.creators) ? map.creators : [])
         .map((c) => {
           const star = c.is_primary ? '⭐ ' : '';
-          return `<span class="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[12px] text-zinc-200">${star}${__mm.esc(
+          return `<span class="inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[12px] text-zinc-800 dark:text-zinc-200">${star}${__mm.esc(
             c.name || c.id || ''
           )}</span>`;
         })
@@ -879,14 +1003,14 @@ function openMapDetailsModal(mapCode) {
             <!-- Titre + code + badges -->
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div class="min-w-0">
-                <h2 class="text-2xl font-bold tracking-tight text-zinc-100">${__mm.esc(name)}</h2>
+                <h2 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">${__mm.esc(name)}</h2>
                 <div class="mt-1 flex items-center gap-2 text-sm">
-                  <code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200"
+                  <code class="map-code cursor-pointer rounded bg-zinc-900/5 px-2 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200"
                         data-copy-code="${__mm.esc(code)}">#${__mm.esc(code)}</code>
-                  <span class="text-zinc-500">·</span>
-                  <span class="text-zinc-300">
+                  <span class="text-zinc-600 dark:text-zinc-500">·</span>
+                  <span class="text-zinc-700 dark:text-zinc-300">
                     ${(typeof t === 'function' ? t('thead.mapCheckpoints') : 'Checkpoints')}:
-                    <strong class="text-zinc-100">${__mm.esc(cp)}</strong>
+                    <strong class="text-zinc-900 dark:text-zinc-100">${__mm.esc(cp)}</strong>
                   </span>
                 </div>
               </div>
@@ -903,100 +1027,100 @@ function openMapDetailsModal(mapCode) {
             <!-- Créateurs + Médailles + Vidéo -->
             <section class="grid gap-5 lg:grid-cols-3">
               <!-- Créateurs -->
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+              <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                   ${(typeof t === 'function' ? t('thead.mapCreators') : 'Creators')}
                 </div>
                 ${
                   creators
                     ? `<div class="flex flex-wrap gap-2">${creators}</div>`
-                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                    : `<div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
 
               <!-- Médailles (overflow-safe) -->
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+              <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                   ${(typeof t === 'function' ? t('thead.mapMedals') : 'Medals')}
                 </div>
                 ${
                   (gold != null || silver != null || bronze != null)
                     ? `<div class="grid grid-cols-3 gap-2">${medalsHtml}</div>`
-                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                    : `<div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
 
               <!-- Guide vidéo -->
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+              <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                   ${(typeof t === 'function' ? t('newsfeed.video_label') : 'Video')}
                 </div>
                 ${
                   firstGuide
                     ? `
                       <div id="${vidId}"
-                           class="relative aspect-video overflow-hidden rounded-lg border border-white/10 bg-zinc-900/60"
+                           class="relative aspect-video overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60"
                            data-video-url="${__mm.esc(firstGuide)}">
                         <div class="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04))] bg-[length:200%_100%]"></div>
                       </div>
                       <div class="mt-2">
                         <a href="${__mm.esc(firstGuide)}" target="_blank" rel="noopener"
-                           class="inline-flex items-center justify-center rounded-md border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200 hover:bg-sky-500/20">
+                           class="inline-flex items-center justify-center rounded-md border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-800 dark:text-sky-200 hover:bg-sky-500/20">
                           ${(typeof t === 'function' ? t('newsfeed.watch_guide') : 'Watch guide')}
                         </a>
                       </div>
                     `
-                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                    : `<div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
             </section>
 
             <!-- Mécaniques & Restrictions -->
             <section class="grid gap-5 md:grid-cols-3">
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+              <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                   ${(typeof t === 'function' ? t('thead.mapMechanics') : 'Mechanics')}
                 </div>
                 ${
                   mechanics.length
                     ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(mechanics)}</div>`
-                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                    : `<div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
 
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+              <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                   ${(typeof t === 'function' ? t('thead.mapRestrictions') : 'Restrictions')}
                 </div>
                 ${
                   restrictions.length
                     ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(restrictions)}</div>`
-                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                    : `<div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
 
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+              <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+                <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                   ${(typeof t === 'function' ? (t('thead.mapTags') || t('common.tags')) : null) || 'Tags'}
                 </div>
                 ${
                   tags.length
                     ? `<div class="flex flex-wrap gap-1.5">${__mm.listChips(tags)}</div>`
-                    : `<div class="text-sm text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
+                    : `<div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? t('common.na') : 'N/A')}</div>`
                 }
               </div>
             </section>
 
             <!-- Description -->
-            <section class="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+            <section class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+              <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
                 ${(typeof t === 'function' ? t('thead.mapDescription') : 'Description')}
               </div>
-              <p class="whitespace-pre-wrap leading-relaxed text-zinc-200 break-words">${__mm.esc(desc)}</p>
+              <p class="whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200 break-words">${__mm.esc(desc)}</p>
             </section>
 
             <!-- Footer dates -->
-            <footer class="flex flex-wrap items-center gap-3 border-t border-white/10 pt-3 text-[12px] text-zinc-400">
+            <footer class="flex flex-wrap items-center gap-3 border-t border-zinc-200/80 dark:border-white/10 pt-3 text-[12px] text-zinc-600 dark:text-zinc-400">
               ${createdAt ? `<span>${(typeof t === 'function' ? t('common.created_at') : 'Created')}: ${__mm.esc(createdAt)}</span>` : ''}
               ${updatedAt ? `<span>${(typeof t === 'function' ? t('common.updated_at') : 'Updated')}: ${__mm.esc(updatedAt)}</span>` : ''}
             </footer>
@@ -1012,8 +1136,8 @@ function openMapDetailsModal(mapCode) {
     .catch((err) => {
       container.innerHTML = `
         <div class="p-5">
-          <p class="text-sm text-rose-300">${(typeof t === 'function' ? t('common.error') : 'Error')} fetching map details</p>
-          <pre class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-zinc-900/60 p-3 text-[12px] text-zinc-300">${__mm.esc(String(err))}</pre>
+          <p class="text-sm text-rose-800 dark:text-rose-300">${(typeof t === 'function' ? t('common.error') : 'Error')} fetching map details</p>
+          <pre class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 text-[12px] text-zinc-700 dark:text-zinc-300">${__mm.esc(String(err))}</pre>
         </div>
       `;
       console.error(err);
@@ -1023,18 +1147,18 @@ function openMapDetailsModal(mapCode) {
 /* --- small pieces --- */
 function statCard(label, valueHtml) {
   return `
-    <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-      <div class="text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
-      <div class="mt-1 text-sm text-zinc-100">${valueHtml}</div>
+    <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+      <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${label}</div>
+      <div class="mt-1 text-sm text-zinc-900 dark:text-zinc-100">${valueHtml}</div>
     </div>`;
 }
 function medalItem(name, img, timeText) {
   return `
-    <div class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2">
+    <div class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-2">
       <img src="${img}" alt="${name}" class="h-6 w-6 rounded object-cover"/>
       <div class="text-xs">
         <div class="font-semibold">${name}</div>
-        <div class="text-zinc-400">${timeText}</div>
+        <div class="text-zinc-600 dark:text-zinc-400">${timeText}</div>
       </div>
     </div>`;
 }
@@ -1097,10 +1221,10 @@ async function loadNewsfeed(append = false) {
     const animateCards = (cards) => {
       cards.forEach((card, i) => {
         if (card.dataset.animated === '1') return;
-        card.classList.add('csp-fade-enter');
+        card.classList.add(...String('csp-fade-enter').trim().split(/\s+/).filter(Boolean));
         setTimeout(() => {
-          card.classList.add('csp-fade-active');
-          card.classList.remove('csp-fade-enter');
+          card.classList.add(...String('csp-fade-active').trim().split(/\s+/).filter(Boolean));
+          card.classList.remove(...String('csp-fade-enter').trim().split(/\s+/).filter(Boolean));
           card.dataset.animated = '1';
         }, 16 + i * 60);
       });
@@ -1131,7 +1255,7 @@ async function createNewsCard(item) {
   const escAttr = (s)=>String(s??'').replace(/["&<]/g,(m)=>({'"':'&quot;','&':'&amp;','<':'&lt;'}[m]));
   const hasFn = (fn)=> typeof fn === 'function';
   const pretty = (v)=>{
-    if (v == null) return '<span class="text-zinc-400">N/A</span>';
+    if (v == null) return '<span class="text-zinc-600 dark:text-zinc-400">N/A</span>';
     if (Array.isArray(v)) return esc(v.join(', '));
     if (typeof v === 'boolean') return v ? 'true' : 'false';
     if (typeof v === 'number') return String(v);
@@ -1151,32 +1275,32 @@ async function createNewsCard(item) {
   };
 
   const DIFF = {
-    Easy:        { text:'text-lime-200',     ring:'ring-lime-400/30',     bg:'from-lime-400/10 via-lime-500/5 to-transparent',       glow:'bg-lime-500/20' },
-    Medium:      { text:'text-yellow-200',   ring:'ring-yellow-400/30',   bg:'from-yellow-400/10 via-yellow-500/5 to-transparent',    glow:'bg-yellow-500/20' },
-    Hard:        { text:'text-orange-200',   ring:'ring-orange-400/30',   bg:'from-orange-400/10 via-orange-500/5 to-transparent',    glow:'bg-orange-500/20' },
-    Veryhard:    { text:'text-orange-300',   ring:'ring-orange-500/30',   bg:'from-orange-500/10 via-orange-600/5 to-transparent',    glow:'bg-orange-600/20' },
-    Extreme:     { text:'text-red-200',      ring:'ring-red-500/35',      bg:'from-red-500/10 via-red-600/5 to-transparent',          glow:'bg-red-600/25' },
-    Hell:        { text:'text-fuchsia-200',  ring:'ring-fuchsia-500/35',  bg:'from-fuchsia-500/10 via-fuchsia-600/5 to-transparent',  glow:'bg-fuchsia-600/25' },
+    Easy:        { text:'text-lime-800 dark:text-lime-200',     ring:'ring-lime-400/30',     bg:'from-lime-400/10 via-lime-500/5 to-transparent',       glow:'bg-lime-500/20' },
+    Medium:      { text:'text-yellow-800 dark:text-yellow-200',   ring:'ring-yellow-400/30',   bg:'from-yellow-400/10 via-yellow-500/5 to-transparent',    glow:'bg-yellow-500/20' },
+    Hard:        { text:'text-orange-800 dark:text-orange-200',   ring:'ring-orange-400/30',   bg:'from-orange-400/10 via-orange-500/5 to-transparent',    glow:'bg-orange-500/20' },
+    Veryhard:    { text:'text-orange-800 dark:text-orange-300',   ring:'ring-orange-500/30',   bg:'from-orange-500/10 via-orange-600/5 to-transparent',    glow:'bg-orange-600/20' },
+    Extreme:     { text:'text-red-800 dark:text-red-200',      ring:'ring-red-500/35',      bg:'from-red-500/10 via-red-600/5 to-transparent',          glow:'bg-red-600/25' },
+    Hell:        { text:'text-fuchsia-800 dark:text-fuchsia-200',  ring:'ring-fuchsia-500/35',  bg:'from-fuchsia-500/10 via-fuchsia-600/5 to-transparent',  glow:'bg-fuchsia-600/25' },
   };
-  const diffStyleFor = (d)=> DIFF[d] || { text:'text-zinc-200', ring:'ring-white/15', bg:'from-white/5 via-transparent to-transparent', glow:'bg-white/10' };
+  const diffStyleFor = (d)=> DIFF[d] || { text:'text-zinc-800 dark:text-zinc-200', ring:'ring-zinc-300/60 dark:ring-white/15', bg:'from-white/5 via-transparent to-transparent', glow:'bg-zinc-900/5 dark:bg-white/10' };
   const diffKeyOf = (val)=> hasFn(normalizeDifficulty) ? normalizeDifficulty(val) : String(val||'').toLowerCase();
   const formatImageName = (label) =>!label? 'default.png' : `${String(label).toLowerCase().replace(/[\s\-+]+/g, '')}.png`;
 
   const THEME = {
-    announcement:   { ring:'ring-emerald-400/30', glow:'bg-emerald-500/15', badge:'border-emerald-400/30 bg-emerald-500/10 text-emerald-200' },
-    new_map:        { ring:'ring-sky-400/30',     glow:'bg-sky-500/15',     badge:'border-sky-400/30 bg-sky-500/10 text-sky-200' },
-    map_edit:       { ring:'ring-violet-400/30',  glow:'bg-violet-500/15',  badge:'border-violet-400/30 bg-violet-500/10 text-violet-200' },
-    bulk_archive:   { ring:'ring-orange-400/30',  glow:'bg-orange-500/15',  badge:'border-orange-400/30 bg-orange-500/10 text-orange-200' },
-    bulk_unarchive: { ring:'ring-lime-400/30',    glow:'bg-lime-500/15',    badge:'border-lime-400/30 bg-lime-500/10 text-lime-200' },
-    guide:          { ring:'ring-cyan-400/30',    glow:'bg-cyan-500/15',    badge:'border-cyan-400/30 bg-cyan-500/10 text-cyan-200' },
-    archive:        { ring:'ring-amber-400/30',   glow:'bg-amber-500/15',   badge:'border-amber-400/30 bg-amber-500/10 text-amber-200' },
-    unarchive:      { ring:'ring-green-400/30',   glow:'bg-green-500/15',   badge:'border-green-400/30 bg-green-500/10 text-green-200' },
-    role:           { ring:'ring-fuchsia-400/30', glow:'bg-fuchsia-500/15', badge:'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200' },
-    record:         { ring:'ring-rose-400/30',    glow:'bg-rose-500/15',    badge:'border-rose-400/30 bg-rose-500/10 text-rose-200' },
-    legacy_record:  { ring:'ring-yellow-400/30',  glow:'bg-yellow-500/15',  badge:'border-yellow-400/30 bg-yellow-500/10 text-yellow-200' },
-    linked_map:     { ring:'ring-teal-400/30',    glow:'bg-teal-500/15',    badge:'border-teal-400/30 bg-teal-500/10 text-teal-200' },
-    unlinked_map:   { ring:'ring-indigo-400/30',  glow:'bg-indigo-500/15',  badge:'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' },
-    unknown:        { ring:'ring-white/15',       glow:'bg-white/10',       badge:'border-white/15 bg-white/10 text-zinc-100' },
+    announcement:   { ring:'ring-emerald-400/30', glow:'bg-emerald-500/15', badge:'border-emerald-400/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200' },
+    new_map:        { ring:'ring-sky-400/30',     glow:'bg-sky-500/15',     badge:'border-sky-400/30 bg-sky-500/10 text-sky-800 dark:text-sky-200' },
+    map_edit:       { ring:'ring-violet-400/30',  glow:'bg-violet-500/15',  badge:'border-violet-400/30 bg-violet-500/10 text-violet-800 dark:text-violet-200' },
+    bulk_archive:   { ring:'ring-orange-400/30',  glow:'bg-orange-500/15',  badge:'border-orange-400/30 bg-orange-500/10 text-orange-800 dark:text-orange-200' },
+    bulk_unarchive: { ring:'ring-lime-400/30',    glow:'bg-lime-500/15',    badge:'border-lime-400/30 bg-lime-500/10 text-lime-800 dark:text-lime-200' },
+    guide:          { ring:'ring-cyan-400/30',    glow:'bg-cyan-500/15',    badge:'border-cyan-400/30 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200' },
+    archive:        { ring:'ring-amber-400/30',   glow:'bg-amber-500/15',   badge:'border-amber-400/30 bg-amber-500/10 text-amber-800 dark:text-amber-200' },
+    unarchive:      { ring:'ring-green-400/30',   glow:'bg-green-500/15',   badge:'border-green-400/30 bg-green-500/10 text-green-800 dark:text-green-200' },
+    role:           { ring:'ring-fuchsia-400/30', glow:'bg-fuchsia-500/15', badge:'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-800 dark:text-fuchsia-200' },
+    record:         { ring:'ring-rose-400/30',    glow:'bg-rose-500/15',    badge:'border-rose-400/30 bg-rose-500/10 text-rose-800 dark:text-rose-200' },
+    legacy_record:  { ring:'ring-yellow-400/30',  glow:'bg-yellow-500/15',  badge:'border-yellow-400/30 bg-yellow-500/10 text-yellow-800 dark:text-yellow-200' },
+    linked_map:     { ring:'ring-teal-400/30',    glow:'bg-teal-500/15',    badge:'border-teal-400/30 bg-teal-500/10 text-teal-800 dark:text-teal-200' },
+    unlinked_map:   { ring:'ring-indigo-400/30',  glow:'bg-indigo-500/15',  badge:'border-indigo-400/30 bg-indigo-500/10 text-indigo-800 dark:text-indigo-200' },
+    unknown:        { ring:'ring-zinc-300/60 dark:ring-white/15',       glow:'bg-zinc-900/5 dark:bg-white/10',       badge:'border-zinc-200/80 dark:border-white/15 bg-zinc-900/5 dark:bg-white/10 text-zinc-900 dark:text-zinc-100' },
   };
 
   const typeLabel = (k)=>{
@@ -1217,7 +1341,7 @@ async function createNewsCard(item) {
     return `
       <li class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium
                  ring-1 shadow-sm bg-gradient-to-r from-white/10 to-transparent backdrop-blur-sm transition
-                 hover:shadow-md hover:ring-2 ring-white/15 ${boost}${primary}"
+                 hover:shadow-md hover:ring-2 ring-zinc-300/60 dark:ring-white/15 ${boost}${primary}"
           title="${esc(label)}" data-tier="${esc(base)}" data-plus="${plus}">
         <img src="${escAttr(img)}" alt="${escAttr(base)}" class="h-4 w-4 object-cover"/>
         <span class="tracking-tight">${esc(base)}</span>
@@ -1253,24 +1377,24 @@ async function createNewsCard(item) {
   </span>`;
 
   let html = `
-    <article class="news-card relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 p-4 sm:p-5 ring-1 ${theme.ring}">
+    <article class="news-card relative overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 p-4 sm:p-5 ring-1 ${theme.ring}">
       <div class="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full ${theme.glow} blur-3xl"></div>
   `;
 
   // ====== NEW MAP
   const OFFICIAL_BADGE_CLS =
   'border border-emerald-400/50 bg-gradient-to-r from-emerald-600/25 via-emerald-500/15 to-teal-500/20 ' +
-  'text-emerald-100 ring-1 ring-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.35)] backdrop-blur-[2px]';
+  'text-emerald-800 dark:text-emerald-100 ring-1 ring-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.35)] backdrop-blur-[2px]';
 
   // ================== Header ==================
   if (type === 'announcement') {
     html += `
       <header class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-3">
-          <img class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/10" src="${escAttr(profileImg)}" alt="${escAttr(nickname)}">
+          <img class="h-10 w-10 rounded-lg object-cover ring-2 ring-zinc-300/60 dark:ring-white/10" src="${escAttr(profileImg)}" alt="${escAttr(nickname)}">
           <div class="leading-tight">
             <div class="font-semibold">${esc(nickname)}</div>
-            <time class="timestamp text-xs text-zinc-400" data-timestamp="${escAttr(ts)}"></time>
+            <time class="timestamp text-xs text-zinc-600 dark:text-zinc-400" data-timestamp="${escAttr(ts)}"></time>
           </div>
         </div>
         ${typeBadge}
@@ -1280,13 +1404,13 @@ async function createNewsCard(item) {
     html += `
       <header class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-3">
-          <img class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10" src="${cdnAsset('assets/profile/genjibot.png')}" alt="GenjiBot">
+          <img class="h-10 w-10 rounded-full object-cover ring-2 ring-zinc-300/60 dark:ring-white/10" src="${cdnAsset('assets/profile/genjibot.png')}" alt="GenjiBot">
           <div class="leading-tight">
             <div class="flex items-center gap-2">
               <span class="font-semibold">GenjiBot</span>
-              <span class="rounded-full border border-white/10 bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-200">BOT</span>
+              <span class="rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/5 dark:bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-800 dark:text-zinc-200">BOT</span>
             </div>
-            <time class="timestamp text-xs text-zinc-400" data-timestamp="${escAttr(ts)}"></time>
+            <time class="timestamp text-xs text-zinc-600 dark:text-zinc-400" data-timestamp="${escAttr(ts)}"></time>
           </div>
         </div>
         ${typeBadge}
@@ -1305,17 +1429,17 @@ async function createNewsCard(item) {
     if (hasFn(formatMessageContent)) messageContent = await formatMessageContent(messageContent);
 
     html += `
-      <p class="announcement-content text-sm text-zinc-200 leading-relaxed">${messageContent}</p>
-      <div id="loadingIndicator" class="loading-bar hidden items-center gap-2 text-xs text-zinc-400">
+      <p class="announcement-content text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">${messageContent}</p>
+      <div id="loadingIndicator" class="loading-bar hidden items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
         <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" stroke-width="4" opacity=".25"/><path d="M22 12a10 10 0 0 1-10 10" fill="none" stroke="currentColor" stroke-width="4"/></svg>
         ${hasFn(t)? (t('common.loading')||'Loading...') : 'Loading...'}
       </div>
       <div class="flex gap-2">
-        <button class="translate-button inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5">
+        <button class="translate-button inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-900/3 dark:bg-white/5">
           ${hasFn(t)? t('newsfeed.translate_button') : 'Translate'}
         </button>
       </div>
-      <p class="translated-text text-sm text-zinc-300"></p>
+      <p class="translated-text text-sm text-zinc-700 dark:text-zinc-300"></p>
     `;
   }
 
@@ -1325,7 +1449,7 @@ async function createNewsCard(item) {
     const mapName = p?.map_name || '';
     const diffRaw = p?.difficulty || '';
     const diffKey = diffKeyOf(diffRaw);
-    const diffTextCls = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKey]) || 'text-zinc-200';
+    const diffTextCls = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKey]) || 'text-zinc-800 dark:text-zinc-200';
     const bannerSrc =
       p?.banner_url ||
       `${cdnAsset('assets/map_banners/')}${(mapName || '')
@@ -1337,7 +1461,7 @@ async function createNewsCard(item) {
     const isOfficial = !!p?.official;
 
     html += `
-      <div class="mb-2 text-sm text-zinc-300">
+      <div class="mb-2 text-sm text-zinc-700 dark:text-zinc-300">
         ${hasFn(t)? t('newsfeed.new_map', {
           nickname: nickname,
           difficulty: `<span class="${diffTextCls} font-semibold">${esc(diffRaw || (t('common.na')||'N/A'))}</span>`,
@@ -1345,7 +1469,7 @@ async function createNewsCard(item) {
         }) : `New map by ${esc(nickname)}: ${esc(mapName)} (${esc(diffRaw)})`}
       </div>
 
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
         <div class="relative">
           <img class="h-44 w-full object-cover md:h-56" src="${escAttr(bannerSrc)}" alt="${escAttr(mapName)} Banner" loading="lazy" data-hide-on-error />
           <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
@@ -1429,17 +1553,17 @@ async function createNewsCard(item) {
               : timeText;
 
             return `
-              <div class="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2 py-1">
+              <div class="flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-1">
                 <img src="${escAttr(img)}" alt="${escAttr(label)}" class="h-5 w-5 rounded object-cover"/>
-                <span class="text-xs text-zinc-200">${esc(label)}</span>
+                <span class="text-xs text-zinc-800 dark:text-zinc-200">${esc(label)}</span>
                 <span class="ml-auto font-mono text-sm">${esc(val)}</span>
               </div>
             `;
           }).join('');
 
         return `
-          <li class="rounded-lg border border-white/10 bg-zinc-900/50 p-2.5">
-            <div class="text-[11px] uppercase tracking-wide text-zinc-400">${field}</div>
+          <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 p-2.5">
+            <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${field}</div>
             <div class="mt-2 grid gap-2 sm:grid-cols-3">
               ${chips}
             </div>
@@ -1453,40 +1577,40 @@ async function createNewsCard(item) {
         : '';
 
       return `
-        <li class="rounded-lg border border-white/10 bg-zinc-900/50 p-2.5">
-          <div class="text-[11px] uppercase tracking-wide text-zinc-400">${field}</div>
+        <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 p-2.5">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${field}</div>
           <div class="mt-1 flex flex-wrap items-center gap-2 text-sm leading-relaxed">
-            <span class="line-through text-zinc-400/90">${oldV}</span>
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" aria-hidden="true">
+            <span class="line-through text-zinc-600 dark:text-zinc-400/90">${oldV}</span>
+            <svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20" aria-hidden="true">
               <path fill="currentColor" d="M7 4l6 6-6 6"></path>
             </svg>
-            <span class="font-medium text-zinc-100 ${diffCls}">${newV}</span>
+            <span class="font-medium text-zinc-900 dark:text-zinc-100 ${diffCls}">${newV}</span>
           </div>
         </li>
       `;
     }).join('');
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${typeof t === 'function' ? t('newsfeed.map_updated', { map_code: esc(code) }) : `Map updated: ${esc(code)}`}
             </h3>
             ${ reason ? `
-              <p class="mt-1 text-xs text-zinc-300">
-                <span class="text-zinc-400">${typeof t === 'function' ? (t('common.reason')||'Reason') : 'Reason'}:</span> ${esc(reason)}
+              <p class="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+                <span class="text-zinc-600 dark:text-zinc-400">${typeof t === 'function' ? (t('common.reason')||'Reason') : 'Reason'}:</span> ${esc(reason)}
               </p>` : '' }
           </div>
           <div class="flex shrink-0 items-center gap-2">
             ${ code ? `
-              <button class="cursor-pointer rounded-md border border-white/15 bg-black/40 px-2 py-1 text-[12px] font-mono text-emerald-200"
+              <button class="cursor-pointer rounded-md border border-zinc-200/80 bg-zinc-900/5 dark:border-white/15 bg-black/40 px-2 py-1 text-[12px] font-mono text-emerald-800 dark:text-emerald-200"
                       title="${typeof t === 'function' ? (t('newsfeed.copy_code')||'Copy code') : 'Copy code'}"
                       data-copy-code="${escAttr(code)}">${esc(code)}</button>` : '' }
           </div>
         </header>
         <div class="p-3 sm:p-4">
-          ${ list ? `<ul class="grid gap-2 sm:gap-3">${list}</ul>` : `<p class="text-sm text-zinc-400">${typeof t === 'function' ? t('newsfeed.no_changes') : 'No changes'}</p>` }
+          ${ list ? `<ul class="grid gap-2 sm:gap-3">${list}</ul>` : `<p class="text-sm text-zinc-600 dark:text-zinc-400">${typeof t === 'function' ? t('newsfeed.no_changes') : 'No changes'}</p>` }
         </div>
       </article>
     `;
@@ -1504,18 +1628,18 @@ async function createNewsCard(item) {
 
     const chips = codes.map((code) => `
       <li class="group">
-        <div class="w-full max-w-full overflow-hidden flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-          <code class="min-w-0 truncate rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200">#${esc(code)}</code>
+        <div class="w-full max-w-full overflow-hidden flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-1">
+          <code class="min-w-0 truncate rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200">#${esc(code)}</code>
 
           <div class="ml-auto flex shrink-0 items-center gap-2">
             <button type="button"
-              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
               data-copy-code="${escAttr(code)}" title="Copy">
               ${icon.copy}
             </button>
 
             <button type="button"
-              class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+              class="inline-flex cursor-pointer items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-1 text-xs hover:bg-zinc-900/5 dark:bg-white/10"
               data-open-map-details data-map-code="${escAttr(code)}">
               Details
             </button>
@@ -1525,22 +1649,22 @@ async function createNewsCard(item) {
     `).join('');
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${ hasFn(t)
                   ? (type === 'bulk_unarchive' ? (t('newsfeed.bulk_unarchived', { count }) || `Unarchived (${count})`)
                                                : (t('newsfeed.bulk_archived',   { count }) || `Archived (${count})`))
                   : (type === 'bulk_unarchive' ? `Unarchived (${count})` : `Archived (${count})`) }
-              <span class="ml-2 text-xs text-zinc-400">(${count})</span>
+              <span class="ml-2 text-xs text-zinc-600 dark:text-zinc-400">(${count})</span>
             </h3>
-            ${reason ? `<p class="mt-1 text-xs text-zinc-300"><span class="text-zinc-400">${hasFn(t)?(t('common.reason')||'Reason'):'Reason'}:</span> ${esc(reason)}</p>` : ''}
+            ${reason ? `<p class="mt-1 text-xs text-zinc-700 dark:text-zinc-300"><span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)?(t('common.reason')||'Reason'):'Reason'}:</span> ${esc(reason)}</p>` : ''}
           </div>
         </header>
           ${ count
             ? `<ul class="grid [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))] gap-2 p-3 sm:p-4">${chips}</ul>`
-            : `<div class="p-4 text-sm text-zinc-400">${hasFn(t)? (t('newsfeed.no_items')||'No items') : 'No items'}</div>`
+            : `<div class="p-4 text-sm text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('newsfeed.no_items')||'No items') : 'No items'}</div>`
           }
       </article>
     `;
@@ -1553,15 +1677,15 @@ async function createNewsCard(item) {
     const reason   = (p?.reason || '').trim();
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${hasFn(t) ? (t('newsfeed.converted_to_legacy') || 'Converted to legacy') : 'Converted to legacy'}
             </h3>
             ${reason ? `
-              <p class="mt-1 text-xs text-zinc-300">
-                <span class="text-zinc-400">${hasFn(t)? (t('common.reason') || 'Reason') : 'Reason'}:</span>
+              <p class="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+                <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('common.reason') || 'Reason') : 'Reason'}:</span>
                 ${esc(reason)}
               </p>` : ''}
           </div>
@@ -1570,13 +1694,13 @@ async function createNewsCard(item) {
 
         <div class="p-3 sm:p-4">
           <div class="w-full max-w-full overflow-hidden flex flex-wrap sm:flex-nowrap items-center gap-2">
-            <code class="min-w-0 truncate rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200">
+            <code class="min-w-0 truncate rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200">
               #${esc(code || (hasFn(t)? t('common.na') : 'N/A'))}
             </code>
 
             <div class="ml-auto flex shrink-0 items-center gap-2">
               <button type="button"
-                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
                 data-copy-code="${escAttr(code)}"
                 title="${hasFn(t)? (t('sidebar.copy_code') || 'Copy') : 'Copy'}">
                 ${typeof icon !== 'undefined' && icon.copy
@@ -1586,7 +1710,7 @@ async function createNewsCard(item) {
 
               ${code ? `
                 <button type="button"
-                  class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+                  class="inline-flex cursor-pointer items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-1 text-xs hover:bg-zinc-900/5 dark:bg-white/10"
                   data-open-map-details data-map-code="${escAttr(code)}">
                   ${hasFn(t)? (t('newsfeed.details') || t('newsfeed.click_here') || 'Details') : 'Details'}
                 </button>` : ''}
@@ -1622,29 +1746,29 @@ async function createNewsCard(item) {
     const videoContainerId = `videoContainer-${(code || Math.random().toString(36).slice(2)).replace(/[^a-z0-9_-]/gi,'')}`;
 
     const platformBadge = platform
-      ? `<span class="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] text-zinc-300">${esc(platform)}</span>`
+      ? `<span class="rounded-full border border-zinc-200/80 dark:border-white/15 bg-zinc-900/5 dark:bg-white/10 px-2 py-0.5 text-[11px] text-zinc-700 dark:text-zinc-300">${esc(platform)}</span>`
       : '';
     const codeChip = code
-      ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
-      : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`;
+      ? `<code class="map-code cursor-pointer rounded border-zinc-200/80 bg-zinc-900/5 px-2 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+      : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">N/A</span>`;
 
     const watchBtn = videoUrl
       ? `<a href="${escAttr(videoUrl)}" target="_blank" rel="noopener"
-            class="inline-flex items-center justify-center rounded-md border ${theme.ring.replace('ring-','border-')} ${theme.glow.replace('bg-','bg-').replace('/15','/10')} px-2.5 py-1 text-xs hover:bg-white/10">
+            class="inline-flex items-center justify-center rounded-md border ${theme.ring.replace('ring-','border-')} ${theme.glow.replace('bg-','bg-').replace('/15','/10')} px-2.5 py-1 text-xs hover:bg-zinc-900/5 dark:bg-white/10">
           ${hasFn(t)? (t('newsfeed.watch_guide') || 'Watch guide') : 'Watch guide'}
         </a>` : '';
 
     const detailsBtn = code
       ? `<button type="button"
-            class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-zinc-200 hover:bg-white/10"
+            class="inline-flex cursor-pointer items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10"
             data-open-map-details data-map-code="${escAttr(code)}">Details</button>`
       : '';
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${hasFn(t)? t('newsfeed.has_posted_guide', { nickname: esc(poster||nickname), map_code: esc(code|| (t('common.na')||'N/A')) })
                          : `${esc(poster||nickname)} posted a guide (#${esc(code||'N/A')})`}
             </h3>
@@ -1656,7 +1780,7 @@ async function createNewsCard(item) {
 
         <div class="flex items-center gap-2 p-3 sm:p-4 pt-3">${watchBtn}${detailsBtn}</div>
         <div class="p-3 sm:p-4 pt-0">
-          <div id="${escAttr(videoContainerId)}" class="relative aspect-video overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50"
+          <div id="${escAttr(videoContainerId)}" class="relative aspect-video overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50"
                ${videoUrl ? `data-video-url="${escAttr(videoUrl)}"` : ''}>
             <div class="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04))] bg-[length:200%_100%]"></div>
           </div>
@@ -1681,42 +1805,42 @@ async function createNewsCard(item) {
     const d = diffStyleFor(diffLabel);
 
     const crown = rankNum === 1
-      ? `<span class="inline-flex items-center justify-center rounded-full bg-white/10 ring-1 ${d.ring} p-1 text-amber-300">${icon.crown}</span>`
+      ? `<span class="inline-flex items-center justify-center rounded-full bg-zinc-900/5 dark:bg-white/10 ring-1 ${d.ring} p-1 text-amber-800 dark:text-amber-300">${icon.crown}</span>`
       : '';
 
     const medalImg = medalImgFor(medal);
     const medalChip = medalImg ? `
-      <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px]">
+      <span class="inline-flex items-center gap-1 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[11px]">
         <img src="${escAttr(medalImg)}" alt="${escAttr(medal)}" class="h-4 w-4 rounded object-cover"/>
-        <span class="text-zinc-200">${esc(medal)}</span>
+        <span class="text-zinc-800 dark:text-zinc-200">${esc(medal)}</span>
       </span>` : '';
 
     html += `
       <h3 class="text-lg font-bold flex items-center gap-2">${crown}${hasFn(t)? t('newsfeed.new_wr', { nickname: nickLocal }) : `${esc(nickLocal)} set a new WR`}</h3>
-      <p class="text-sm text-zinc-300"><strong>${
+      <p class="text-sm text-zinc-700 dark:text-zinc-300"><strong>${
         hasFn(t)? t('newsfeed.new_wr_info', { map_name: mapName, creators: p?.creators || '', map_code: code })
                 : `${esc(mapName)} (#${esc(code)})`
       }</strong></p>
 
       <div class="grid gap-2 sm:grid-cols-3">
-        <div class="rounded-xl border border-white/10 bg-gradient-to-r ${d.bg} px-3 py-2 ring-1 ${d.ring}">
+        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-gradient-to-r ${d.bg} px-3 py-2 ring-1 ${d.ring}">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <span class="text-xs text-zinc-400 mr-1">${hasFn(t)? t('newsfeed.record_label'):'Record'}:</span>
+              <span class="text-xs text-zinc-600 dark:text-zinc-400 mr-1">${hasFn(t)? t('newsfeed.record_label'):'Record'}:</span>
               <span class="font-mono text-base">${recordTxt}</span>
             </div>
             <img class="inline h-5 w-5 align-[-3px]" src="${cdnAsset('assets/verifications/new/verification/wr_full.avif')}" alt="VRF" />
           </div>
         </div>
 
-        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[11px] ring-1 ${d.ring} ${d.text}">
+            <span class="inline-flex items-center rounded-full bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[11px] ring-1 ${d.ring} ${d.text}">
               ${esc(diffLabel || (hasFn(t)? t('common.na'):'N/A'))}
             </span>
             ${medalChip}
             ${ code ? `
-              <button type="button" class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/60 px-2.5 py-1 text-xs hover:bg-zinc-800"
+              <button type="button" class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2.5 py-1 text-xs hover:bg-zinc-800"
                       data-copy-code="${escAttr(code)}" aria-label="Copy code ${escAttr(code)}">
                 ${icon.copy}<span>#${esc(code)}</span>
               </button>` : '' }
@@ -1724,12 +1848,12 @@ async function createNewsCard(item) {
         </div>
 
         ${ video ? `
-        <a class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition flex items-center gap-2"
+        <a class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 hover:bg-zinc-900/5 dark:bg-white/10 transition flex items-center gap-2"
            href="${escAttr(video)}" target="_blank" rel="noopener noreferrer">
-          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ring-1 ${theme.ring}">${icon.play}</span>
+          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/5 dark:bg-white/10 ring-1 ${theme.ring}">${icon.play}</span>
           <span class="text-sm ${d.text}">${hasFn(t)? t('newsfeed.video_label'):'Video'}</span>
         </a>` : `
-        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-400">
+        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400">
           ${hasFn(t)? t('newsfeed.video_label'):'Video'}: ${hasFn(t)? t('common.na'):'N/A'}
         </div>` }
       </div>
@@ -1744,19 +1868,19 @@ async function createNewsCard(item) {
     const diffRaw  = p?.difficulty || p?.map?.difficulty || '';
     const reason   = (p?.reason || '').trim();
 
-    const diffCls  = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKeyOf(diffRaw)]) || 'text-zinc-200';
+    const diffCls  = (typeof difficultyTextClasses==='object' && difficultyTextClasses[diffKeyOf(diffRaw)]) || 'text-zinc-800 dark:text-zinc-200';
     const rankIcon = diffRaw ? `${cdnAsset('assets/ranks/')}${formatImageName(diffRaw)}` : '';
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="truncate text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${ type === 'unarchive'
                   ? (hasFn(t)? t('newsfeed.unarchived_map', { map_code: esc(code) }) : `Unarchived #${esc(code)}`)
                   : (hasFn(t)? t('newsfeed.archived_map',   { map_code: esc(code) }) : `Archived #${esc(code)}`) }
             </h3>
-            <p class="mt-1 text-xs text-zinc-300">${
+            <p class="mt-1 text-xs text-zinc-700 dark:text-zinc-300">${
               type === 'unarchive' ? (hasFn(t)? (t('newsfeed.unarchived_description')||'') : '')
                                    : (hasFn(t)? (t('newsfeed.archived_description')  ||'') : '')
             }</p>
@@ -1766,36 +1890,36 @@ async function createNewsCard(item) {
 
         <div class="p-3 sm:p-4">
           <div class="grid gap-2 sm:gap-3">
-            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
-              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.map_code')||'Map code') : 'Map code'}:</span>
-              <span class="font-medium text-zinc-100">${esc(code || (hasFn(t)? t('common.na'):'N/A'))}</span>
+            <div class="flex items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('newsfeed.map_code')||'Map code') : 'Map code'}:</span>
+              <span class="font-medium text-zinc-900 dark:text-zinc-100">${esc(code || (hasFn(t)? t('common.na'):'N/A'))}</span>
             </div>
 
             ${ mapName ? `
-            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
-              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.map_name')||'Map name') : 'Map name'}:</span>
-              <span class="font-medium text-zinc-100 truncate">${esc(mapName)}</span>
+            <div class="flex items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('newsfeed.map_name')||'Map name') : 'Map name'}:</span>
+              <span class="font-medium text-zinc-900 dark:text-zinc-100 truncate">${esc(mapName)}</span>
             </div>` : '' }
 
             ${ creators ? `
-            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
-              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.creator')||'Creator') : 'Creator'}:</span>
-              <span class="font-medium text-zinc-100 truncate">${esc(creators)}</span>
+            <div class="flex items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('newsfeed.creator')||'Creator') : 'Creator'}:</span>
+              <span class="font-medium text-zinc-900 dark:text-zinc-100 truncate">${esc(creators)}</span>
             </div>` : '' }
 
             ${ diffRaw ? `
-            <div class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
-              <span class="text-zinc-400">${hasFn(t)? (t('newsfeed.difficulty')||'Difficulty') : 'Difficulty'}:</span>
-              <span class="inline-flex items-center gap-2 font-medium text-zinc-100">
-                ${ rankIcon ? `<img class="h-5 w-5 rounded ring-1 ring-white/10" src="${escAttr(rankIcon)}" alt="${escAttr(diffRaw)}">` : '' }
+            <div class="flex items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('newsfeed.difficulty')||'Difficulty') : 'Difficulty'}:</span>
+              <span class="inline-flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-100">
+                ${ rankIcon ? `<img class="h-5 w-5 rounded ring-1 ring-zinc-300/60 dark:ring-white/10" src="${escAttr(rankIcon)}" alt="${escAttr(diffRaw)}">` : '' }
                 <span class="${diffCls}">${esc(diffRaw)}</span>
               </span>
             </div>` : '' }
 
             ${ reason ? `
-            <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
-              <span class="text-zinc-400">${hasFn(t)? (t('common.reason')||'Reason') : 'Reason'}:</span>
-              <span class="text-zinc-200">${esc(reason)}</span>
+            <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm">
+              <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('common.reason')||'Reason') : 'Reason'}:</span>
+              <span class="text-zinc-800 dark:text-zinc-200">${esc(reason)}</span>
             </div>` : '' }
           </div>
         </div>
@@ -1828,24 +1952,24 @@ async function createNewsCard(item) {
     const ptId = p?.playtest_id ?? null;
 
     const codeChip = (label, code) => `
-      <div class="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
-        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
+      <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-3 sm:p-4">
+        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${label}</div>
         <div class="flex items-center gap-2">
           ${ code
-            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
-            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`
+            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">N/A</span>`
           }
           <div class="ml-auto flex items-center gap-2">
             ${ code ? `
               <button type="button"
-                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
                 data-copy-code="${escAttr(code)}" title="Copy">
                 ${icon.copy}
               </button>
             ` : '' }
             ${ code ? `
               <button type="button"
-                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10"
+                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs hover:bg-zinc-900/5 dark:bg-white/10"
                 data-open-map-details data-map-code="${escAttr(code)}">Details</button>
             ` : '' }
           </div>
@@ -1854,16 +1978,16 @@ async function createNewsCard(item) {
     `;
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${typeof t === 'function'
                 ? (t('newsfeed.linked_map_title') || 'Linked maps')
                 : 'Linked maps'}
             </h3>
             ${ ptId != null ? `
-              <p class="mt-1 text-xs text-zinc-300">
+              <p class="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
                 ${typeof t === 'function'
                   ? (t('newsfeed.playtest_id', { id: ptId }) || `Playtest ID: ${ptId}`)
                   : `Playtest ID: ${ptId}`}
@@ -1878,7 +2002,7 @@ async function createNewsCard(item) {
           </div>
 
           ${ (off && unof) ? `
-            <div class="mt-3 rounded-lg border border-teal-400/20 bg-teal-500/10 p-2.5 text-xs text-teal-200">
+            <div class="mt-3 rounded-lg border border-teal-400/20 bg-teal-500/10 p-2.5 text-xs text-teal-800 dark:text-teal-200">
               ${typeof t === 'function'
                 ? (t('newsfeed.linked_map_hint') || 'These two map codes are now linked together.')
                 : 'These two map codes are now linked together.'}
@@ -1894,23 +2018,23 @@ async function createNewsCard(item) {
     const reason = (p?.reason || '').trim();
 
     const codeChip = (label, code) => `
-      <div class="rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
-        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-400">${label}</div>
+      <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-3 sm:p-4">
+        <div class="mb-1 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${label}</div>
         <div class="flex items-center gap-2">
           ${ code
-            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
-            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-400">N/A</span>`
+            ? `<code class="map-code cursor-pointer rounded bg-black/30 px-2 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200" data-copy-code="${escAttr(code)}">#${esc(code)}</code>`
+            : `<span class="rounded bg-black/30 px-2 py-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">N/A</span>`
           }
           <div class="ml-auto flex items-center gap-2">
             ${ code ? `
               <button type="button"
-                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-xs hover:bg-zinc-800"
                 data-copy-code="${escAttr(code)}" title="Copy">
                 ${icon.copy}
               </button>` : '' }
             ${ code ? `
               <button type="button"
-                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10"
+                class="inline-flex cursor-pointer items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs hover:bg-zinc-900/5 dark:bg-white/10"
                 data-open-map-details data-map-code="${escAttr(code)}">Details</button>` : '' }
           </div>
         </div>
@@ -1918,17 +2042,17 @@ async function createNewsCard(item) {
     `;
 
     html += `
-      <article class="rounded-2xl border border-white/10 bg-zinc-900/40 overflow-hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+      <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 overflow-hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
           <div class="min-w-0">
-            <h3 class="text-base sm:text-lg font-bold text-zinc-100">
+            <h3 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               ${typeof t === 'function'
                 ? (t('newsfeed.unlinked_map_title') || 'Unlinked maps')
                 : 'Unlinked maps'}
             </h3>
             ${ reason ? `
-              <p class="mt-1 text-xs text-zinc-300">
-                <span class="text-zinc-400">${hasFn(t)? (t('common.reason')||'Reason') : 'Reason'}:</span>
+              <p class="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+                <span class="text-zinc-600 dark:text-zinc-400">${hasFn(t)? (t('common.reason')||'Reason') : 'Reason'}:</span>
                 ${esc(reason)}
               </p>` : '' }
           </div>
@@ -1944,12 +2068,12 @@ async function createNewsCard(item) {
           </div>
 
           ${(off && unof) ? `
-            <div class="mt-3 rounded-lg border border-red-400/20 bg-red-500/10 p-2.5 text-xs text-red-200">
+            <div class="mt-3 rounded-lg border border-red-400/20 bg-red-500/10 p-2.5 text-xs text-red-800 dark:text-red-200">
               ${hasFn(t)
                 ? (t('newsfeed.unlinked_map_hint') || 'These two map codes are no longer linked.')
                 : 'These two map codes are no longer linked.'}
             </div>` : `
-            <div class="mt-3 rounded-lg border border-white/10 bg-white/5 p-2.5 text-xs text-zinc-300">
+            <div class="mt-3 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-2.5 text-xs text-zinc-700 dark:text-zinc-300">
               ${hasFn(t)? (t('newsfeed.unlinked_map_partial') || 'One of the codes is missing.') : 'One of the codes is missing.'}
             </div>`}
         </div>
@@ -1960,7 +2084,7 @@ async function createNewsCard(item) {
   // Fallback
   if (!/^(announcement|new_map|map_edit|bulk_archive|bulk_unarchive|guide|record|archive|unarchive|role|legacy_record|linked_map|unlinked_map)$/.test(type)) {
     html += `<div class="flex items-center justify-between">
-      <p class="text-sm text-zinc-300">Unknown event <code class="text-zinc-200">${esc(type)}</code></p>
+      <p class="text-sm text-zinc-700 dark:text-zinc-300">Unknown event <code class="text-zinc-800 dark:text-zinc-200">${esc(type)}</code></p>
       <span class="rounded-full px-2 py-0.5 text-[11px] ${THEME.unknown.badge}">${esc(typeLabel('unknown'))}</span>
     </div>`;
   }
@@ -2049,13 +2173,13 @@ async function formatMessageContent(messageContent) {
           const displayName = userId === '969632729643753482' ? 'GenjiBot' : data.name || userId;
           messageContent = messageContent.replace(
             `<@${userId}>`,
-            `<span class="text-sky-300 font-medium">@${displayName}</span>`
+            `<span class="text-sky-800 dark:text-sky-300 font-medium">@${displayName}</span>`
           );
         })
         .catch(() => {
           messageContent = messageContent.replace(
             `<@${userId}>`,
-            `<span class="text-sky-300 font-medium">@${userId}</span>`
+            `<span class="text-sky-800 dark:text-sky-300 font-medium">@${userId}</span>`
           );
         })
     );
@@ -2067,59 +2191,59 @@ async function formatMessageContent(messageContent) {
     messageContent
       .replace(
         /<@&1072931972663476276>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-rose-500/50 bg-rose-600/20 px-1.5 py-0.5 text-[12px] font-semibold text-rose-400">@God</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-rose-500/50 bg-rose-600/20 px-1.5 py-0.5 text-[12px] font-semibold text-rose-800 dark:text-rose-400">@God</span>'
       )
       .replace(
         /<@&868225134257897502>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-rose-400/30 bg-rose-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-rose-300">@Ancient God</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-rose-400/30 bg-rose-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-rose-800 dark:text-rose-300">@Ancient God</span>'
       )
       .replace(
         /<@&1072932080691974155>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-rose-400/30 bg-rose-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-rose-300">@Grandmaster</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-rose-400/30 bg-rose-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-rose-800 dark:text-rose-300">@Grandmaster</span>'
       )
 
       /* rôles en gris (fond gris) */
       .replace(
         /<@&1073292414271356938>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-300">@General Announcements</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">@General Announcements</span>'
       )
       .replace(
         /<@&1001688523067371582>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-300">@Mapmaker</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">@Mapmaker</span>'
       )
 
       /* rôle GenjiBot en vert (fond vert) */
       .replace(
         /<@&1072538245637865685>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-emerald-300">@GenjiBot</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-emerald-800 dark:text-emerald-300">@GenjiBot</span>'
       )
 
       /* salons en gris (fond gris) */
       .replace(
         /<#1316560101360013443>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-300">#change-requests</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">#change-requests</span>'
       )
       .replace(
         /<#1342953312000934069>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-300">#change-requests</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">#change-requests</span>'
       )
       .replace(
         /<#1326941087767462009>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-300">#xp-info</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">#xp-info</span>'
       )
       .replace(
         /<#1326941138057429083>/g,
-        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-300">#website-info</span>'
+        '<span class="inline-flex items-center gap-1 rounded-md border border-zinc-400/20 bg-zinc-500/10 px-1.5 py-0.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">#website-info</span>'
       )
 
       /* reste du formatage */
       .replace(
         /```([^`]+)```/gs,
-        '<pre class="whitespace-pre-wrap rounded-lg border border-white/10 bg-zinc-900/60 p-3 text-[12px] font-mono text-zinc-200">$1</pre>'
+        '<pre class="whitespace-pre-wrap rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 text-[12px] font-mono text-zinc-800 dark:text-zinc-200">$1</pre>'
       )
       .replace(
         /`([^`]+)`/g,
-        '<code class="rounded border border-white/10 bg-zinc-900/60 px-1 py-0.5 text-[12px] font-mono text-emerald-200">$1</code>'
+        '<code class="rounded border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-1 py-0.5 text-[12px] font-mono text-emerald-800 dark:text-emerald-200">$1</code>'
       )
       .replace(/\*\*\*([^*]+)\*\*\*/g, '<span class="font-extrabold italic">$1</span>')
       .replace(/\*\*([^*]+)\*\*/g, '<span class="font-bold">$1</span>')
@@ -2128,7 +2252,7 @@ async function formatMessageContent(messageContent) {
       .replace(/~~([^~]+)~~/g, '<span class="line-through">$1</span>')
       .replace(
         /^>\s*(.+)$/gm,
-        '<blockquote class="border-l border-white/10 pl-3 text-zinc-300">$1</blockquote>'
+        '<blockquote class="border-l border-zinc-200/80 dark:border-white/10 pl-3 text-zinc-700 dark:text-zinc-300">$1</blockquote>'
       )
       .replace(/###\s*([^\n]+)/g, '<h3 class="text-base font-semibold">$1</h3>')
       .replace(/\n/g, '<br>')
@@ -2156,7 +2280,7 @@ async function convertTenorLinks(messageContent) {
             .replace('.gif', '/tenor.gif');
           updated = updated.replace(
             tenorUrl,
-            `<img src="${gifUrl}" alt="GIF Tenor" class="max-w-full h-auto rounded-lg border border-white/10">`
+            `<img src="${gifUrl}" alt="GIF Tenor" class="max-w-full h-auto rounded-lg border border-zinc-200/80 dark:border-white/10">`
           );
         })
         .catch(() => {})
@@ -2181,10 +2305,10 @@ function nfEscapeHtml(s) {
   );
 }
 function nfPrettyVal(v) {
-  if (v === null || v === undefined) return '<span class="italic text-zinc-400">Empty</span>';
+  if (v === null || v === undefined) return '<span class="italic text-zinc-600 dark:text-zinc-400">Empty</span>';
   const str = String(v).trim();
   if (!str || str.toLowerCase() === 'empty' || str === '—')
-    return '<span class="italic text-zinc-400">Empty</span>';
+    return '<span class="italic text-zinc-600 dark:text-zinc-400">Empty</span>';
   return nfEscapeHtml(str);
 }
 
@@ -2199,7 +2323,7 @@ function createEmbeddedVideo(containerId, videoUrl) {
   let u;
   try { u = new URL(videoUrl); } catch { u = null; }
   if (!u) {
-    container.innerHTML = `<p class="p-3 text-sm text-rose-300">${t('common.video_embed_failed')}</p>`;
+    container.innerHTML = `<p class="p-3 text-sm text-rose-800 dark:text-rose-300">${t('common.video_embed_failed')}</p>`;
     return;
   }
 
@@ -2256,7 +2380,7 @@ function createEmbeddedVideo(containerId, videoUrl) {
     iframe.className = 'absolute inset-0 h-full w-full';
     container.appendChild(iframe);
   } else {
-    container.innerHTML = `<p class="p-3 text-sm text-rose-300">${t('common.video_embed_failed')}</p>`;
+    container.innerHTML = `<p class="p-3 text-sm text-rose-800 dark:text-rose-300">${t('common.video_embed_failed')}</p>`;
   }
 }
 
@@ -2277,7 +2401,7 @@ function renderPaginationButtons() {
     const showByHasMore = !!window.__nfHasMore;
 
     const shouldShow = hasKnownTotal ? showByPages : showByHasMore;
-    loadMore.classList.toggle('hidden', !shouldShow);
+(() => { const __obj = loadMore; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !shouldShow); return __last; })();
 
     loadMore.onclick = () => {
       if (!shouldShow) return;
@@ -2293,7 +2417,7 @@ function renderPaginationButtons() {
 
   const mkBtn = (label, disabled, cb) => {
     const b = document.createElement('button');
-    b.className = `px-3 py-1.5 text-sm rounded-lg border ${disabled ? 'border-white/10 text-zinc-500 cursor-not-allowed' : 'border-white/10 hover:bg-white/5'}`;
+    b.className = `px-3 py-1.5 text-sm rounded-lg border ${disabled ? 'border-zinc-200/80 dark:border-white/10 text-zinc-600 dark:text-zinc-500 cursor-not-allowed' : 'border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5'}`;
     b.textContent = label;
     b.disabled = disabled;
     if (!disabled) b.addEventListener('click', cb);
@@ -2313,7 +2437,7 @@ function renderPaginationButtons() {
     })
   );
   const span = document.createElement('span');
-  span.className = 'text-sm text-zinc-400';
+  span.className = 'text-sm text-zinc-600 dark:text-zinc-400';
   span.textContent = t('pagination.page_of', { current: currentPage, total: totalPages });
   pag.appendChild(span);
   pag.appendChild(
@@ -2355,10 +2479,10 @@ function showToast(message, type = 'ok', opts = {}) {
 
   const palette =
     type === 'ok'
-      ? 'bg-emerald-500/90 text-white'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
       : type === 'warn'
         ? 'bg-amber-500/90 text-zinc-900'
-        : 'bg-red-600/90 text-white';
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
 
   const el = document.createElement('div');
   el.setAttribute('role', 'status');
@@ -2427,12 +2551,12 @@ function reorderFilterChips() {
     chipsByKey[(b.dataset.filter || '').toLowerCase()] = b;
   });
 
-  Array.from(wrap.children).forEach((c) => c.classList.add('hidden'));
+  Array.from(wrap.children).forEach((c) => c.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)));
 
   FILTER_ORDER.forEach((key) => {
     const chip = chipsByKey[key];
     if (!chip) return;
-    chip.classList.remove('hidden');
+    chip.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     wrap.appendChild(chip);
   });
 }
@@ -2447,17 +2571,17 @@ function animateFilterBarAndTweakReset() {
   const resetCol = document.getElementById('nf-reset')?.closest('.grid');
 
   if (card) {
-    card.classList.add('csp-lift-enter');
+    card.classList.add(...String('csp-lift-enter').trim().split(/\s+/).filter(Boolean));
     requestAnimationFrame(() => {
-      card.classList.add('csp-lift-active');
-      card.classList.remove('csp-lift-enter');
+      card.classList.add(...String('csp-lift-active').trim().split(/\s+/).filter(Boolean));
+      card.classList.remove(...String('csp-lift-enter').trim().split(/\s+/).filter(Boolean));
     });
     [searchRow, tagsRow, resetCol].filter(Boolean).forEach((el, idx) => {
-      el.classList.add('csp-step-enter');
+      el.classList.add(...String('csp-step-enter').trim().split(/\s+/).filter(Boolean));
       setTimeout(
         () => {
-          el.classList.add('csp-step-active');
-          el.classList.remove('csp-step-enter');
+          el.classList.add(...String('csp-step-active').trim().split(/\s+/).filter(Boolean));
+          el.classList.remove(...String('csp-step-enter').trim().split(/\s+/).filter(Boolean));
         },
         120 + idx * 80
       );
@@ -2466,12 +2590,12 @@ function animateFilterBarAndTweakReset() {
 
   const resetBtn = document.getElementById('nf-reset');
   if (resetBtn) {
-    resetBtn.classList.remove('text-sm', 'px-3', 'py-2', 'rounded-lg');
-    resetBtn.classList.add('text-xs', 'px-2', 'py-1', 'rounded-md', 'min-h-auto');
+    resetBtn.classList.remove(...String('text-sm').trim().split(/\s+/).filter(Boolean), ...String('px-3').trim().split(/\s+/).filter(Boolean), ...String('py-2').trim().split(/\s+/).filter(Boolean), ...String('rounded-lg').trim().split(/\s+/).filter(Boolean));
+    resetBtn.classList.add(...String('text-xs').trim().split(/\s+/).filter(Boolean), ...String('px-2').trim().split(/\s+/).filter(Boolean), ...String('py-1').trim().split(/\s+/).filter(Boolean), ...String('rounded-md').trim().split(/\s+/).filter(Boolean), ...String('min-h-auto').trim().split(/\s+/).filter(Boolean));
     const svg = resetBtn.querySelector('svg');
     if (svg) {
-      svg.classList.remove('h-4', 'w-4');
-      svg.classList.add('h-3', 'w-3');
+      svg.classList.remove(...String('h-4').trim().split(/\s+/).filter(Boolean), ...String('w-4').trim().split(/\s+/).filter(Boolean));
+      svg.classList.add(...String('h-3').trim().split(/\s+/).filter(Boolean), ...String('w-3').trim().split(/\s+/).filter(Boolean));
     }
   }
 }
@@ -2492,7 +2616,7 @@ function bindFilters() {
     chips.forEach((ch) => {
       const isActive = ch.dataset.filter?.toLowerCase() === selectedType.toLowerCase();
       ch.toggleAttribute('data-active', isActive);
-      ch.classList.toggle('bg-white/10', isActive);
+(() => { const __obj = ch; let __last; for (const __c of String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
     });
   }
 
@@ -2501,10 +2625,10 @@ function bindFilters() {
     chip.addEventListener('click', () => {
       chips.forEach((c) => {
         c.removeAttribute('data-active');
-        c.classList.remove('bg-white/10');
+        c.classList.remove(...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
       });
       chip.setAttribute('data-active', 'true');
-      chip.classList.add('bg-white/10');
+      chip.classList.add(...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
 
       const val = chip.dataset.filter || '';
       selectedType = val && val !== 'all' ? val : null;
@@ -2525,13 +2649,13 @@ function bindFilters() {
     search.value = '';
     chips.forEach((c) => {
       c.removeAttribute('data-active');
-      c.classList.remove('bg-white/10');
+      c.classList.remove(...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
     });
     const all = chips.find(
       (c) => (c.dataset.filter || '').toLowerCase() === 'all' && !c.classList.contains('hidden')
     );
     all?.setAttribute('data-active', 'true');
-    all?.classList.add('bg-white/10');
+    all?.classList.add(...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
 
     selectedType = null;
     const url = new URL(window.location);
@@ -2550,7 +2674,7 @@ function applySearchFilter() {
   cards.forEach((c) => {
     const text = c.textContent.toLowerCase();
     const visible = !q || text.includes(q);
-    c.classList.toggle('hidden', !visible);
+(() => { const __obj = c; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !visible); return __last; })();
     if (visible) shown++;
   });
 
@@ -2558,7 +2682,7 @@ function applySearchFilter() {
   const emptyEl = document.getElementById('nf-empty');
   const loadMore = document.getElementById('nf-loadmore');
 
-  if (emptyEl) emptyEl.classList.toggle('hidden', !isEmpty);
+(() => { const __obj = (emptyEl) ? (emptyEl) : null; if (!__obj) return undefined; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isEmpty); return __last; })();
 }
 
 /* ---------- Clipboard for map-code ---------- */
@@ -2758,11 +2882,11 @@ async function loadCompletions(append = false) {
       animateCompCards(container.querySelectorAll('.comp-card'));
     }
 
-    document.getElementById('comp-empty')?.classList.toggle('hidden', items.length > 0);
+(() => { const __obj = (document.getElementById('comp-empty')); if (!__obj) return undefined; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, items.length > 0); return __last; })();
 
     const lm = document.getElementById('comp-loadmore');
     if (lm) {
-      lm.classList.toggle('hidden', compPage >= compTotalPages);
+(() => { const __obj = lm; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, compPage >= compTotalPages); return __last; })();
       lm.onclick = () => {
         if (compPage < compTotalPages) {
           compPage += 1;
@@ -2773,7 +2897,7 @@ async function loadCompletions(append = false) {
   } catch (e) {
     console.error('Erreur chargement completions:', e);
     removeCompSkeleton();
-    document.getElementById('comp-empty')?.classList.remove('hidden');
+    document.getElementById('comp-empty')?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 }
 
@@ -2793,9 +2917,9 @@ function safeUrl(u) {
 
 function kvLine(label, value) {
   return `
-    <div class="inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-[12px]">
-      <span class="text-zinc-400">${label}</span>
-      <span class="font-medium text-zinc-200">${value || '—'}</span>
+    <div class="inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-[12px]">
+      <span class="text-zinc-600 dark:text-zinc-400">${label}</span>
+      <span class="font-medium text-zinc-800 dark:text-zinc-200">${value || '—'}</span>
     </div>`;
 }
 
@@ -2804,8 +2928,8 @@ function kvLineDiff(label, diffRaw) {
   const color = difficultyColors[clean] || '#e5e7eb';
   const cn = ensureColorClass(color);
   return `
-    <div class="inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-[12px]">
-      <span class="text-zinc-400">${label}</span>
+    <div class="inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-[12px]">
+      <span class="text-zinc-600 dark:text-zinc-400">${label}</span>
       <span class="font-semibold ${cn}">${diffRaw || '—'}</span>
     </div>
   `;
@@ -2816,14 +2940,14 @@ function kvLineCopyable(label, value) {
   return `
     <button
       type="button"
-      class="inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-1 text-[12px] hover:bg-white/10 active:scale-[0.99] transition cursor-pointer"
+      class="inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-1 text-[12px] hover:bg-zinc-900/5 dark:bg-white/10 active:scale-[0.99] transition cursor-pointer"
       data-copy-code="${safe}"
       aria-label="Copy ${label}"
       title="Copy ${label}"
     >
-      <span class="text-zinc-400">${label}</span>
-      <span class="font-medium text-zinc-200">${safe || '—'}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-zinc-300 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <span class="text-zinc-600 dark:text-zinc-400">${label}</span>
+      <span class="font-medium text-zinc-800 dark:text-zinc-200">${safe || '—'}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <rect x="9" y="9" width="13" height="13" rx="2"></rect>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
       </svg>
@@ -2839,7 +2963,7 @@ function chip(label, classes = '') {
 
 function avatarFromName(name) {
   const letter = (name || '?').trim().charAt(0).toUpperCase();
-  return `<div class="h-10 w-10 rounded-lg border border-white/10 bg-white/10 flex items-center justify-center text-sm font-semibold">${letter}</div>`;
+  return `<div class="h-10 w-10 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/5 dark:bg-white/10 flex items-center justify-center text-sm font-semibold">${letter}</div>`;
 }
 
 function resolveStatusIcon(item) {
@@ -3021,8 +3145,8 @@ function watchPillHtml(videoUrl) {
   if (!videoUrl) return '';
   return `
     <a href="${videoUrl}" target="_blank" rel="noopener"
-       class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5
-              text-[12px] font-semibold text-zinc-200 hover:bg-white/10">
+       class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1.5
+              text-[12px] font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10">
       <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
         <path d="M8 5v14l11-7z"></path>
       </svg>
@@ -3050,12 +3174,12 @@ async function renderCompletionCard(item) {
   const avatar = await fetchDiscordAvatar(userId);
 
   return `
-    <article class="comp-card h-full rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4">
+    <article class="comp-card h-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4">
       <!-- HEADER compact -->
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-start gap-3 min-w-0">
           <img src="${avatar}" alt="${nickname}"
-               class="h-10 w-10 rounded-full object-cover ring-2 ring-white/10">
+               class="h-10 w-10 rounded-full object-cover ring-2 ring-zinc-300/60 dark:ring-white/10">
           <div class="min-w-0">
             <h3 class="text-base sm:text-lg font-extrabold tracking-tight truncate">
               ${t('completions.new_submission_from', { nickname })}
@@ -3074,7 +3198,7 @@ async function renderCompletionCard(item) {
       </div>
 
       <!-- STATUS LINE -->
-      <p class="mt-2 text-xs sm:text-sm text-zinc-200 line-clamp-2">${statusText}</p>
+      <p class="mt-2 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 line-clamp-2">${statusText}</p>
 
       <!-- SCREENSHOT compact -->
       ${
@@ -3126,10 +3250,10 @@ const ScreenshotLightbox = (() => {
 
   function open(url) {
     img.src = url || '';
-    overlay.classList.remove('hidden');
+    overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
   function close() {
-    overlay.classList.add('hidden');
+    overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     img.src = '';
   }
 
@@ -3178,7 +3302,7 @@ function notifyCodeCopied(raw) {
 document.addEventListener('error', (e) => {
   const t = e.target;
   if (t && t.matches?.('[data-hide-on-error]')) {
-    t.closest('[data-open-screenshot]')?.remove() || t.classList.add('hidden');
+    t.closest('[data-open-screenshot]')?.remove() || t.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 }, true);
 
@@ -3187,29 +3311,29 @@ document.addEventListener('error', (e) => {
    ========================= */
 function compSkeletonCard() {
   return `
-    <article class="comp-card comp-skel h-full rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 animate-pulse" aria-hidden="true">
+    <article class="comp-card comp-skel h-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4 animate-pulse" aria-hidden="true">
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-start gap-3 min-w-0">
-          <div class="h-10 w-10 rounded-full bg-white/10 ring-2 ring-white/10"></div>
+          <div class="h-10 w-10 rounded-full bg-zinc-900/5 dark:bg-white/10 ring-2 ring-zinc-300/60 dark:ring-white/10"></div>
           <div class="min-w-0 flex-1">
-            <div class="h-4 w-48 rounded bg-white/10"></div>
+            <div class="h-4 w-48 rounded bg-zinc-900/5 dark:bg-white/10"></div>
             <div class="mt-2 flex flex-wrap gap-1.5">
-              <div class="h-5 w-20 rounded-md bg-white/10"></div>
-              <div class="h-5 w-28 rounded-md bg-white/10"></div>
-              <div class="h-5 w-24 rounded-md bg-white/10"></div>
-              <div class="h-5 w-16 rounded-md bg-white/10"></div>
+              <div class="h-5 w-20 rounded-md bg-zinc-900/5 dark:bg-white/10"></div>
+              <div class="h-5 w-28 rounded-md bg-zinc-900/5 dark:bg-white/10"></div>
+              <div class="h-5 w-24 rounded-md bg-zinc-900/5 dark:bg-white/10"></div>
+              <div class="h-5 w-16 rounded-md bg-zinc-900/5 dark:bg-white/10"></div>
             </div>
           </div>
         </div>
-        <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/10 ring-1 ring-white/10"></div>
+        <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
       </div>
 
-      <div class="mt-2 h-4 w-3/4 rounded bg-white/10"></div>
+      <div class="mt-2 h-4 w-3/4 rounded bg-zinc-900/5 dark:bg-white/10"></div>
 
-      <div class="mt-3 w-full aspect-[16/9] rounded-xl border border-white/10 bg-white/5"></div>
+      <div class="mt-3 w-full aspect-[16/9] rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5"></div>
 
       <div class="mt-3 flex items-center gap-2">
-        <div class="h-9 w-14 rounded-full bg-white/10"></div>
+        <div class="h-9 w-14 rounded-full bg-zinc-900/5 dark:bg-white/10"></div>
       </div>
     </article>
   `;
@@ -3272,12 +3396,12 @@ async function hydrateChangelogsSidebar() {
     const decorated = decorateGithubHtml(bodyHtml);
 
     box.innerHTML = `
-      <article class="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
+      <article class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 p-3">
         <header class="flex items-center gap-2">
           <h4 class="text-xl font-extrabold tracking-tight">${nfEscapeHtml(r.name || r.tag || 'Release')}</h4>
-          <span class="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">${t('changelogs.latest')}</span>
+          <span class="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">${t('changelogs.latest')}</span>
         </header>
-        ${dateText ? `<div class="mt-1 text-xs text-zinc-400">${dateText}</div>` : ''}
+        ${dateText ? `<div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">${dateText}</div>` : ''}
 
         <div class="mt-3 changelog-body prose prose-invert prose-sm max-w-none">
           ${decorated}
@@ -3294,37 +3418,27 @@ function decorateGithubHtml(html) {
   tmp.innerHTML = html || '';
 
   tmp.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((h) => {
-    h.classList.add('font-semibold', 'text-zinc-100', 'mt-3', 'first:mt-0');
-    if (h.tagName === 'H2') h.classList.add('text-lg');
-    if (h.tagName === 'H3') h.classList.add('text-base');
+    h.classList.add(...String('font-semibold').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-900 dark:text-zinc-100').trim().split(/\s+/).filter(Boolean), ...String('mt-3').trim().split(/\s+/).filter(Boolean), ...String('first:mt-0').trim().split(/\s+/).filter(Boolean));
+    if (h.tagName === 'H2') h.classList.add(...String('text-lg').trim().split(/\s+/).filter(Boolean));
+    if (h.tagName === 'H3') h.classList.add(...String('text-base').trim().split(/\s+/).filter(Boolean));
   });
   tmp
     .querySelectorAll('ul')
-    .forEach((ul) => ul.classList.add('list-disc', 'pl-5', 'space-y-1', 'marker:text-zinc-400'));
+    .forEach((ul) => ul.classList.add(...String('list-disc').trim().split(/\s+/).filter(Boolean), ...String('pl-5').trim().split(/\s+/).filter(Boolean), ...String('space-y-1').trim().split(/\s+/).filter(Boolean), ...String('marker:text-zinc-600 dark:text-zinc-400').trim().split(/\s+/).filter(Boolean)));
   tmp
     .querySelectorAll('ol')
-    .forEach((ol) => ol.classList.add('list-decimal', 'pl-5', 'space-y-1', 'marker:text-zinc-400'));
-  tmp.querySelectorAll('li').forEach((li) => li.classList.add('leading-relaxed'));
+    .forEach((ol) => ol.classList.add(...String('list-decimal').trim().split(/\s+/).filter(Boolean), ...String('pl-5').trim().split(/\s+/).filter(Boolean), ...String('space-y-1').trim().split(/\s+/).filter(Boolean), ...String('marker:text-zinc-600 dark:text-zinc-400').trim().split(/\s+/).filter(Boolean)));
+  tmp.querySelectorAll('li').forEach((li) => li.classList.add(...String('leading-relaxed').trim().split(/\s+/).filter(Boolean)));
   tmp
     .querySelectorAll('p')
-    .forEach((p) => p.classList.add('text-sm', 'text-zinc-300', 'leading-relaxed', 'mt-2'));
+    .forEach((p) => p.classList.add(...String('text-sm').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-700 dark:text-zinc-300').trim().split(/\s+/).filter(Boolean), ...String('leading-relaxed').trim().split(/\s+/).filter(Boolean), ...String('mt-2').trim().split(/\s+/).filter(Boolean)));
   tmp
     .querySelectorAll('code')
     .forEach((code) =>
-      code.classList.add(
-        'rounded',
-        'border',
-        'border-white/10',
-        'bg-zinc-900/60',
-        'px-1',
-        'py-0.5',
-        'text-[12px]',
-        'font-mono',
-        'text-emerald-200'
-      )
+      code.classList.add(...String('rounded').trim().split(/\s+/).filter(Boolean), ...String('border').trim().split(/\s+/).filter(Boolean), ...String('border-zinc-200/80 dark:border-white/10').trim().split(/\s+/).filter(Boolean), ...String('bg-white/75 dark:bg-zinc-900/60').trim().split(/\s+/).filter(Boolean), ...String('px-1').trim().split(/\s+/).filter(Boolean), ...String('py-0.5').trim().split(/\s+/).filter(Boolean), ...String('text-[12px]').trim().split(/\s+/).filter(Boolean), ...String('font-mono').trim().split(/\s+/).filter(Boolean), ...String('text-emerald-800 dark:text-emerald-200').trim().split(/\s+/).filter(Boolean))
     );
   tmp.querySelectorAll('a').forEach((a) => {
-    a.classList.add('text-brand-300', 'hover:text-brand-200', 'underline', 'underline-offset-2');
+    a.classList.add(...String('text-brand-800 dark:text-brand-300').trim().split(/\s+/).filter(Boolean), ...String('hover:text-brand-800 dark:text-brand-200').trim().split(/\s+/).filter(Boolean), ...String('underline').trim().split(/\s+/).filter(Boolean), ...String('underline-offset-2').trim().split(/\s+/).filter(Boolean));
     a.setAttribute('target', '_blank');
     a.setAttribute('rel', 'noopener');
   });
@@ -3349,38 +3463,42 @@ function openChangelogsModal() {
   if (!overlay || !box || !container) return;
 
   container.className =
-    'w-full rounded-2xl border border-white/10 bg-zinc-950/90 ' +
-    'shadow-2xl ring-1 ring-white/10 overflow-hidden';
+    'w-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/90 ' +
+    'shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10 overflow-hidden';
 
   container.innerHTML = `
-    <header class="sticky top-0 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80
-                   backdrop-blur border-b border-white/10 px-4 sm:px-5 py-3
-                   flex items-center justify-between">
-      <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2">
-        <span class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5">
-          <svg class="h-3.5 w-3.5 text-zinc-300" viewBox="0 0 24 24"><path fill="currentColor" d="M20 6H4v12h16V6Zm-2 2v2h-5V8h5ZM6 8h5v2H6V8Zm12 4v4h-5v-4h5ZM6 12h5v4H6v-4Z"/></svg>
+    <header class="sticky top-0
+                  bg-gradient-to-b from-white/95 to-zinc-50/80 dark:from-zinc-950/95 dark:to-zinc-950/80
+                  backdrop-blur border-b border-zinc-200/80 dark:border-white/10 px-4 sm:px-5 py-3
+                  flex items-center justify-between">
+      <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-900 dark:text-white">
+        <span class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-white/5">
+          <svg class="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" viewBox="0 0 24 24"><path fill="currentColor" d="M20 6H4v12h16V6Zm-2 2v2h-5V8h5ZM6 8h5v2H6V8Zm12 4v4h-5v-4h5ZM6 12h5v4H6v-4Z"/></svg>
         </span>
         ${t('changelogs.title')}
       </h2>
-      <button type="button" class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+      <button type="button"
+              class="rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/5 dark:bg-white/10
+                    px-2 py-1 text-xs text-zinc-800 dark:text-zinc-100
+                    hover:bg-zinc-900/10 dark:hover:bg-white/20"
               id="closeChangelogsModal">Esc</button>
     </header>
 
     <div id="changelogsScroll"
          class="max-h-[80vh] overflow-y-auto p-4 sm:p-5 space-y-5">
       <div class="animate-pulse space-y-3">
-        <div class="h-5 w-1/3 rounded-md bg-white/5"></div>
-        <div class="h-4 w-2/3 rounded-md bg-white/5"></div>
-        <div class="h-4 w-1/2 rounded-md bg-white/5"></div>
+        <div class="h-5 w-1/3 rounded-md bg-zinc-900/3 dark:bg-white/5"></div>
+        <div class="h-4 w-2/3 rounded-md bg-zinc-900/3 dark:bg-white/5"></div>
+        <div class="h-4 w-1/2 rounded-md bg-zinc-900/3 dark:bg-white/5"></div>
       </div>
     </div>
   `;
 
-  overlay.classList.remove('hidden');
-  box.classList.add('opacity-0', 'scale-95', 'transition', 'duration-200', 'ease-out');
+  overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  box.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean), ...String('transition').trim().split(/\s+/).filter(Boolean), ...String('duration-200').trim().split(/\s+/).filter(Boolean), ...String('ease-out').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(() => {
-    box.classList.remove('opacity-0', 'scale-95');
-    box.classList.add('opacity-100', 'scale-100');
+    box.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+    box.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
   });
 
   fetch('/api/newsfeed/changelogs?limit=10', {
@@ -3394,7 +3512,7 @@ function openChangelogsModal() {
       if (!wrap) return;
 
       if (!data || data.rate_limited || !Array.isArray(data.releases) || !data.releases.length) {
-        wrap.innerHTML = `<p class="text-sm text-zinc-300">${t('changelogs.none')}</p>`;
+        wrap.innerHTML = `<p class="text-sm text-zinc-700 dark:text-zinc-300">${t('changelogs.none')}</p>`;
         return
       }
 
@@ -3414,14 +3532,14 @@ function openChangelogsModal() {
           const body = decorateGithubHtml(html);
 
           return `
-        <article class="rounded-xl border border-white/10 bg-zinc-900/50 p-3 sm:p-4">
+        <article class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 p-3 sm:p-4">
           <div class="flex items-center gap-2">
             <h4 class="text-lg font-extrabold tracking-tight">${nfEscapeHtml(name)}</h4>
-            ${idx === 0 ? `<span class="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Latest</span>` : ``}
+            ${idx === 0 ? `<span class="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">Latest</span>` : ``}
           </div>
-          ${dateTxt ? `<div class="mt-1 text-xs text-zinc-400">${dateTxt}</div>` : ``}
+          ${dateTxt ? `<div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">${dateTxt}</div>` : ``}
           <div class="mt-3 prose prose-invert prose-sm max-w-none changelog-body">${body}</div>
-          ${rel.url ? `<a class="mt-3 inline-flex items-center gap-1.5 text-xs text-brand-300 hover:text-brand-200 underline underline-offset-2" href="${rel.url}" target="_blank" rel="noopener">${t('changelogs.view_on_github')}</a>` : ``}
+          ${rel.url ? `<a class="mt-3 inline-flex items-center gap-1.5 text-xs text-brand-800 dark:text-brand-300 hover:text-brand-800 dark:text-brand-200 underline underline-offset-2" href="${rel.url}" target="_blank" rel="noopener">${t('changelogs.view_on_github')}</a>` : ``}
         </article>
       `;
         })
@@ -3431,7 +3549,7 @@ function openChangelogsModal() {
     })
     .catch(() => {
       const wrap = document.getElementById('changelogsScroll');
-      if (wrap) wrap.innerHTML = `<p class="text-sm text-rose-300">${t('changelogs.fetch_failed')}</p>`;
+      if (wrap) wrap.innerHTML = `<p class="text-sm text-rose-800 dark:text-rose-300">${t('changelogs.fetch_failed')}</p>`;
     });
 
   document
@@ -3456,10 +3574,10 @@ function closeChangelogsModal() {
   const box = document.getElementById('changelogsModalBox');
   if (!overlay || !box) return;
 
-  box.classList.add('opacity-0', 'scale-95');
-  box.classList.remove('opacity-100', 'scale-100');
+  box.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+  box.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
   setTimeout(() => {
-    overlay.classList.add('hidden');
+    overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     overlay.removeEventListener('click', onOverlayClickOnce);
     document.removeEventListener('keydown', onEscOnce);
   }, 180);
@@ -3524,12 +3642,12 @@ function closeChangelogsModal() {
 
       const li = document.createElement('li');
       li.className = dense
-        ? 'flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2'
+        ? 'flex items-center justify-between rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-2'
         : 'flex items-center justify-between';
 
       li.innerHTML = `
         <div class="flex min-w-0 items-center gap-2">
-        <div class="h-9 w-20 shrink-0 rounded-md border border-white/10 bg-zinc-900/50 overflow-hidden">
+        <div class="h-9 w-20 shrink-0 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 overflow-hidden">
           <img src="${esc(banner)}" alt="${esc(name)}"
                 class="h-full w-full object-cover"
                 data-hide-on-error />
@@ -3537,7 +3655,7 @@ function closeChangelogsModal() {
           <div class="min-w-0">
             <div class="truncate font-semibold">${esc(name)}</div>
             <button type="button"
-              class="map-code mt-0.5 inline-flex items-center gap-1 rounded border border-white/10 bg-zinc-900/60 px-1.5 py-0.5 text-[11px] font-mono text-emerald-200 hover:bg-white/10 cursor-pointer"
+              class="map-code mt-0.5 inline-flex items-center gap-1 rounded border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-1.5 py-0.5 text-[11px] font-mono text-emerald-800 dark:text-emerald-200 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer"
               title="${esc(labels.copyCode)}"
               aria-label="${esc(labels.copyCode)}"
               data-copy-code="${esc(code)}">#${esc(code)}</button>
@@ -3545,7 +3663,7 @@ function closeChangelogsModal() {
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <span class="text-zinc-300 text-sm" title="${esc(labels.upvotes)}">★ ${upv}</span>
+          <span class="text-zinc-700 dark:text-zinc-300 text-sm" title="${esc(labels.upvotes)}">★ ${upv}</span>
         </div>
       `;
       ul.appendChild(li);
@@ -3586,22 +3704,22 @@ function closeChangelogsModal() {
 
   /* --- modal --- */
   function openModal() {
-    overlay.classList.remove('hidden');
+    overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     requestAnimationFrame(() => {
-      box.classList.remove('opacity-0','scale-95');
-      box.classList.add('opacity-100','scale-100');
+      box.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+      box.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
     });
-    box.classList.add('mt-10','sm:mt-14');
+    box.classList.add(...String('mt-10').trim().split(/\s+/).filter(Boolean), ...String('sm:mt-14').trim().split(/\s+/).filter(Boolean));
     const card = box.querySelector('div.rounded-2xl.border');
     if (card) {
-      card.classList.add('max-h-[70vh]', 'overflow-y-auto', 'overflow-x-hidden');
+      card.classList.add(...String('max-h-[70vh]').trim().split(/\s+/).filter(Boolean), ...String('overflow-y-auto').trim().split(/\s+/).filter(Boolean), ...String('overflow-x-hidden').trim().split(/\s+/).filter(Boolean));
     }
     loadAllInModal();
   }
   function closeModal() {
-    box.classList.add('opacity-0','scale-95');
-    box.classList.remove('opacity-100','scale-100');
-    setTimeout(() => overlay.classList.add('hidden'), 180);
+    box.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+    box.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
+    setTimeout(() => overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)), 180);
   }
 
   openBtn?.addEventListener('click', (e) => { e.preventDefault(); openModal(); });

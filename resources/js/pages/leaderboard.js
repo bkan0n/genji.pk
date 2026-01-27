@@ -139,7 +139,7 @@ function ensureLeaderboard() {
   if (!table.querySelector('.lb-inner')) {
     table.innerHTML = `
       <div class="lb-inner">
-        <div class="lb-head lb-grid bg-zinc-900/60 text-zinc-300 rounded-lg mb-1 px-2 py-2">
+        <div class="lb-head lb-grid bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 rounded-lg mb-1 px-2 py-2">
           <div class="col-idx px-2 font-semibold">
             ${tt('leaderboard.table.number', '#')}
           </div>
@@ -427,7 +427,7 @@ function relLuma(hex) {
 const PILL_SATURATE = 0.22;
 const PILL_BG_ALPHA = 0.22;
 const PILL_BORDER_ALPHA = 0.45;
-const PILL_TEXT_TW = 'text-zinc-300';
+const PILL_TEXT_TW = 'text-zinc-700 dark:text-zinc-300';
 
 function pill(label, baseHex) {
   const vivid = saturateHex(baseHex, PILL_SATURATE);
@@ -589,12 +589,12 @@ function renderRows(data, pageNumber, pageSize) {
     row.className = `lb-row lb-grid gp-reveal-show ${__clsAnimDelay(__clamp(idx * 30, 0, 250))} tr-sf-enter`;
 
     row.innerHTML = `
-      <div class="col-idx px-2 py-2 text-zinc-400" data-sf="${escAttr(rowNum)}">${esc(rowNum)}</div>
+      <div class="col-idx px-2 py-2 text-zinc-600 dark:text-zinc-400" data-sf="${escAttr(rowNum)}">${esc(rowNum)}</div>
 
       <div class="col-nickname px-2 py-2">
         <a href="rank_card?user_id=${encodeURIComponent(player.user_id)}"
-          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5 transition max-w-full">
-          <span class="avatar-shell ring-1 ring-white/10">
+          class="inline-flex items-center gap-2 rounded-md hover:bg-zinc-900/3 dark:bg-white/5 px-1.5 py-0.5 transition max-w-full">
+          <span class="avatar-shell ring-1 ring-zinc-300/60 dark:ring-white/10">
             <img
               src="${BLANK_IMG}"
               alt=""
@@ -634,7 +634,7 @@ function renderRows(data, pageNumber, pageSize) {
         ${(Number(player.playtest_count)||0).toLocaleString()}
       </div>
 
-      <div class="col-discord px-2 py-2 text-zinc-300">
+      <div class="col-discord px-2 py-2 text-zinc-700 dark:text-zinc-300">
         <span class="truncate block max-w-[28ch]" data-sf="${escAttr(discordTag)}">${esc(discordTag)}</span>
       </div>
     `;
@@ -662,7 +662,7 @@ function renderPagination(totalResults, currentPage, perPage) {
     b.textContent = label;
     b.disabled = !!disabled;
     b.className =
-      'px-3 py-1.5 text-sm rounded-lg border border-white/10 hover:bg-white/5 disabled:opacity-50 cursor-pointer';
+      'px-3 py-1.5 text-sm rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5 disabled:opacity-50 cursor-pointer';
     b.addEventListener('click', onClick);
     return b;
   };
@@ -673,7 +673,7 @@ function renderPagination(totalResults, currentPage, perPage) {
   );
 
   const span = document.createElement('span');
-  span.className = 'px-3 text-sm text-zinc-300';
+  span.className = 'px-3 text-sm text-zinc-700 dark:text-zinc-300';
   span.textContent = `Page ${currentPage} / ${totalPages}`;
   paginationContainer.appendChild(span);
 
@@ -967,7 +967,7 @@ function renderSkeletonRows(count = pageSize) {
       <!-- Nickname + avatar : même markup/tailles que le vrai -->
       <div class="col-nickname px-2 py-2">
         <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5 max-w-full">
-          <span class="avatar-shell ring-1 ring-white/10">
+          <span class="avatar-shell ring-1 ring-zinc-300/60 dark:ring-white/10">
             <img
               src="${BLANK_IMG}"
               alt=""

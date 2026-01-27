@@ -11,7 +11,7 @@
 @section('content')
   @if (app()->getLocale() === 'cn' && !session()->has('user_id'))
     <!-- Announcement Banner -->
-    <section class="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-emerald-500/10">
+    <section class="relative overflow-hidden border-b border-zinc-200/80 dark:border-white/10 bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-emerald-500/10">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3 flex-1">
@@ -21,13 +21,13 @@
               </svg>
             </span>
             <div>
-              <p class="text-sm font-semibold text-white">{{ __('index.announcement.title') }}</p>
-              <p class="text-sm text-zinc-300">{{ __('index.announcement.text') }}</p>
+              <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ __('index.announcement.title') }}</p>
+              <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('index.announcement.text') }}</p>
             </div>
           </div>
           <button
             type="button"
-            class="flex-shrink-0 inline-flex rounded-lg bg-white/10 p-1.5 text-zinc-400 hover:bg-white/20 hover:text-white transition-colors"
+            class="flex-shrink-0 inline-flex rounded-lg bg-zinc-100/70 dark:bg-white/10 p-1.5 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/70 dark:hover:bg-white/20 hover:text-zinc-900 dark:hover:text-white transition-colors"
             onclick="this.closest('section').remove()"
             aria-label="Close announcement"
           >
@@ -46,7 +46,7 @@
       <div class="grid items-center gap-10 lg:grid-cols-12">
         <div class="space-y-6 lg:col-span-7">
           <span
-            class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300"
+            class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-300"
           >
             <span class="bg-brand-400 inline-block h-2 w-2 rounded-full"></span>
             {{ __('index.hero.badge') }}
@@ -57,13 +57,13 @@
           >
             {{ __('index.hero.title') }}
             <span
-              class="from-brand-300 block bg-gradient-to-r via-emerald-200 to-white bg-clip-text pb-1 text-transparent sm:pb-1.5"
+              class="from-brand-300 block bg-gradient-to-r via-emerald-200 to-white bg-clip-text pb-1 text-transparent sm:pb-1.5 font-mona-light"
             >
               {{ __('index.hero.tagline') }}
             </span>
           </h1>
 
-          <p class="max-w-2xl text-zinc-300">
+          <p class="max-w-2xl text-zinc-600 dark:text-zinc-300">
             {{ __('index.hero.description') }}
           </p>
 
@@ -79,7 +79,7 @@
             </a>
             <a
               href="{{ url('submit?section=submit_map') }}"
-              class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold hover:border-white/20 hover:bg-white/5"
+              class="inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 px-5 py-3 text-sm font-semibold hover:border-white/20 hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('index.hero.cta_submit') }}
               <svg class="h-4 w-4" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@
             </a>
           </div>
 
-          <div class="flex items-center gap-6 pt-2 text-sm text-zinc-400">
+          <div class="flex items-center gap-6 pt-2 text-sm text-zinc-500 dark:text-zinc-400">
             <div class="flex items-center gap-2">
               <span class="bg-brand-400 h-2 w-2 rounded-full"></span>
               {{ __('index.hero.stats.players') }}
@@ -107,7 +107,7 @@
         <div class="lg:col-span-5">
           <div
             id="topMapsCard"
-            class="relative rounded-2xl border border-white/10 bg-white/5 p-2 shadow-2xl"
+            class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-2 shadow-2xl"
             data-endpoint="/api/maps/trending?limit=3"
             data-full-endpoint="/api/maps/trending?limit=25"
             data-map-endpoint="/api/maps"
@@ -118,8 +118,8 @@
             data-upvotes-label="{{ __('index.top_maps.upvotes') }}"
             data-copy-code-label="{{ __('index.actions.copy_code') }}"
           >
-            <div class="rounded-xl bg-zinc-900/50 p-6">
-              <div class="mb-4 flex items-center justify-between text-xs text-zinc-400">
+            <div class="rounded-xl bg-white/50 dark:bg-zinc-900/50 p-6">
+              <div class="mb-4 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
                 <span>{{ __('index.top_maps.title') }}</span>
                 <button id="openTrendingModal" type="button" class="hover:text-zinc-200 cursor-pointer">
                   {{ __('index.top_maps.see_all') }}
@@ -130,15 +130,15 @@
 
               <ul id="topMapsSkeleton" class="space-y-3">
                 @for ($i = 0; $i < 3; $i++)
-                  <li class="min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3">
+                  <li class="min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 p-3">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <div class="h-4 w-20 bg-white/10 rounded animate-pulse"></div>
-                        <div class="h-4 w-14 bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-20 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-14 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
                       </div>
-                      <div class="mt-1 h-3 w-52 bg-white/10 rounded animate-pulse"></div>
+                      <div class="mt-1 h-3 w-52 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
                     </div>
-                    <div class="h-8 w-12 bg-white/10 rounded animate-pulse"></div>
+                    <div class="h-8 w-12 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
                   </li>
                 @endfor
               </ul>
@@ -154,23 +154,21 @@
             <div data-overlay class="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-200 ease-out"></div>
 
             <div data-modal-panel
-                class="relative mx-auto mt-16 w-[min(92vw,44rem)] max-h-[85vh] overflow-y-auto
-                        rounded-2xl border border-white/10 bg-zinc-900/95 p-4 shadow-2xl backdrop-blur
-                        opacity-0 translate-y-3 scale-95 transition-all duration-200 ease-out">
+                class="relative mx-auto mt-16 w-[min(92vw,44rem)] max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-4 shadow-2xl backdrop-blur opacity-0 translate-y-3 scale-95 transition-all duration-200 ease-out">
 
               <ul id="trendingModalList" class="space-y-3 pr-1"></ul>
 
               <ul id="trendingModalSkeleton" class="space-y-3">
                 @for ($i = 0; $i < 25; $i++)
-                  <li class="min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/40 p-3">
+                  <li class="min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-3">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <div class="h-4 w-20 bg-white/10 rounded animate-pulse"></div>
-                        <div class="h-4 w-14 bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-20 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-14 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
                       </div>
-                      <div class="mt-1 h-3 w-64 bg-white/10 rounded animate-pulse"></div>
+                      <div class="mt-1 h-3 w-64 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
                     </div>
-                    <div class="h-8 w-12 bg-white/10 rounded animate-pulse"></div>
+                    <div class="h-8 w-12 bg-zinc-100/70 dark:bg-white/10 rounded animate-pulse"></div>
                   </li>
                 @endfor
               </ul>
@@ -184,67 +182,65 @@
             <div data-overlay class="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-200 ease-out"></div>
 
             <div data-modal-panel
-                class="relative mx-auto mt-16 w-[min(96vw,60rem)] max-h-[88vh] overflow-y-auto
-                        rounded-2xl border border-white/10 bg-zinc-900/95 p-5 sm:p-6 shadow-2xl backdrop-blur
-                        opacity-0 translate-y-3 scale-95 transition-all duration-200 ease-out">
+                class="relative mx-auto mt-16 w-[min(96vw,60rem)] max-h-[88vh] overflow-y-auto rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-5 sm:p-6 shadow-2xl backdrop-blur opacity-0 translate-y-3 scale-95 transition-all duration-200 ease-out">
 
               <div id="mapDetailContent" class="space-y-4"></div>
 
               <div id="mapDetailSkeleton" class="space-y-6" aria-hidden="true">
-                <!-- Banner (exact same wrapper as data view) -->
+                <!-- Banner -->
                 <div class="w-full rounded-2xl overflow-hidden">
-                  <div class="h-40 sm:h-48 md:h-56 w-full bg-white/10 animate-pulse"></div>
+                  <div class="h-40 sm:h-48 md:h-56 w-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                 </div>
 
                 <div class="grid gap-6 lg:grid-cols-3">
                   <div class="lg:col-span-2 space-y-6">
                     <!-- Overview card -->
-                    <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
-                      <div class="mb-3 h-3 w-24 rounded bg-white/10 animate-pulse"></div>
-                      <ul class="divide-y divide-white/5">
+                    <section class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-5">
+                      <div class="mb-3 h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                      <ul class="divide-y divide-zinc-200/70 dark:divide-white/5">
                         <li class="flex items-center justify-between py-2">
-                          <span class="h-3 w-20 rounded bg-white/10 animate-pulse"></span>
-                          <span class="h-3 w-28 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-20 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-28 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
                         </li>
                         <li class="flex items-center justify-between py-2">
-                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
-                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
                         </li>
                         <li class="flex items-center justify-between py-2">
-                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
-                          <span class="h-3 w-16 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-16 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
                         </li>
                         <li class="flex items-center justify-between py-2">
-                          <span class="h-3 w-20 rounded bg-white/10 animate-pulse"></span>
-                          <span class="h-3 w-14 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-20 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-14 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
                         </li>
                         <li class="flex items-center justify-between py-2">
-                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
-                          <span class="h-3 w-24 rounded bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
+                          <span class="h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></span>
                         </li>
                       </ul>
                     </section>
 
                     <!-- Mechanics / Restrictions card -->
-                    <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <section class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-5">
                       <div class="grid gap-6 sm:grid-cols-2">
                         <div>
-                          <div class="mb-2 h-3 w-24 rounded bg-white/10 animate-pulse"></div>
+                          <div class="mb-2 h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                           <div class="flex flex-wrap gap-2">
-                            <div class="h-6 w-24 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-16 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-16 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-24 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-16 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-16 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                           </div>
                         </div>
                         <div>
-                          <div class="mb-2 h-3 w-24 rounded bg-white/10 animate-pulse"></div>
+                          <div class="mb-2 h-3 w-24 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                           <div class="flex flex-wrap gap-2">
-                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-24 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-16 rounded-full bg-white/10 animate-pulse"></div>
-                            <div class="h-6 w-20 rounded-full bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-24 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-16 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                            <div class="h-6 w-20 rounded-full bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                           </div>
                         </div>
                       </div>
@@ -253,11 +249,11 @@
 
                   <!-- Right column (Creators + button) -->
                   <aside class="space-y-4 lg:sticky lg:top-6">
-                    <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
-                      <div class="mb-2 h-3 w-20 rounded bg-white/10 animate-pulse"></div>
-                      <div class="h-3 w-40 rounded bg-white/10 animate-pulse"></div>
+                    <section class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-5">
+                      <div class="mb-2 h-3 w-20 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
+                      <div class="h-3 w-40 rounded bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                       <div class="mt-4 flex flex-wrap gap-2">
-                        <div class="h-8 w-24 rounded-lg bg-white/10 animate-pulse"></div>
+                        <div class="h-8 w-24 rounded-lg bg-zinc-100/70 dark:bg-white/10 animate-pulse"></div>
                       </div>
                     </section>
                   </aside>
@@ -276,7 +272,7 @@
   <section id="features" class="py-14 sm:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="mb-10 flex items-end justify-between sm:mb-14">
-        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl font-mona-light">
           {{ __('index.features.title') }}
         </h2>
         <a href="https://dsc.gg/genjiparkour" class="text-brand-300 hover:text-brand-200 text-sm">
@@ -287,29 +283,31 @@
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Card 1 -->
         <article
-          class="group rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10"
+          class="group rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10"
         >
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-semibold">{{ __('index.features.cards.leaderboard.title') }}</h3>
             <span
-              class="rounded-full bg-orange-500/15 px-2 py-0.5 text-xs text-orange-300 ring-1 ring-orange-400/25"
+              class="rounded-full bg-orange-500/20 dark:bg-orange-500/15 px-2 py-0.5 text-xs
+                    text-orange-800 dark:text-orange-300
+                    ring-1 ring-orange-500/35 dark:ring-orange-400/25"
             >
               {{ __('index.features.cards.leaderboard.pill') }}
             </span>
           </div>
-          <p class="text-sm text-zinc-300">
+          <p class="text-sm text-zinc-600 dark:text-zinc-300">
             {{ __('index.features.cards.leaderboard.description') }}
           </p>
           <div class="mt-5 flex gap-2">
             <a
               href="{{ url('leaderboard') }}"
-              class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+              class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('index.features.cards.leaderboard.links.leaderboard') }}
             </a>
             <a
               href="{{ url('statistics') }}"
-              class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+              class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('index.features.cards.leaderboard.links.stats') }}
             </a>
@@ -318,27 +316,29 @@
 
         <!-- Card 2 -->
         <article
-          class="group rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10"
+          class="group rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10"
         >
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-semibold">{{ __('index.features.cards.guides.title') }}</h3>
             <span
-              class="bg-brand-500/15 text-brand-300 ring-brand-400/25 rounded-full px-2 py-0.5 text-xs ring-1"
+              class="rounded-full bg-brand-500/20 dark:bg-brand-500/15 px-2 py-0.5 text-xs
+                    text-brand-800 dark:text-brand-300
+                    ring-1 ring-brand-500/35 dark:ring-brand-400/25"
             >
               {{ __('index.features.cards.guides.pill') }}
             </span>
           </div>
-          <p class="text-sm text-zinc-300">{{ __('index.features.cards.guides.description') }}</p>
+          <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('index.features.cards.guides.description') }}</p>
           <div class="mt-5 flex gap-2">
             <a
               href="{{ url('tutorials') }}"
-              class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+              class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('index.features.cards.guides.links.guides') }}
             </a>
             <a
               href="{{ url('submit') }}"
-              class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+              class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('index.features.cards.guides.links.submit') }}
             </a>
@@ -347,26 +347,28 @@
 
         <!-- Card 3 -->
         <article
-          class="group rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10"
+          class="group rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10"
         >
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-semibold">{{ __('index.features.cards.tools.title') }}</h3>
             <span
-              class="rounded-full bg-indigo-500/15 px-2 py-0.5 text-xs text-indigo-200 ring-1 ring-indigo-400/25"
+              class="rounded-full bg-indigo-500/20 dark:bg-indigo-500/15 px-2 py-0.5 text-xs
+                    text-indigo-800 dark:text-indigo-200
+                    ring-1 ring-indigo-500/35 dark:ring-indigo-400/25"
             >
               {{ __('index.features.cards.tools.pill') }}
             </span>
           </div>
-          <p class="text-sm text-zinc-300">{{ __('index.features.cards.tools.description') }}</p>
+          <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('index.features.cards.tools.description') }}</p>
           <div class="mt-5 flex gap-2">
             <a
               href="{{ url('convertor') }}"
-              class="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+              class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('index.features.cards.tools.links.convertor') }}
             </a>
             <!--
-            <a href="#api" class="text-sm rounded-lg border border-white/10 px-3 py-1.5 hover:bg-white/5">
+            <a href="#api" class="text-sm rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-white/5">
               {{ __('index.features.cards.tools.links.api') }}
             </a>
             -->
@@ -391,7 +393,7 @@
           >
             <div>
               <h3 class="text-xl font-bold">{{ __('index.cta.title') }}</h3>
-              <p class="text-sm text-zinc-300">{{ __('index.cta.description') }}</p>
+              <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('index.cta.description') }}</p>
             </div>
             <div class="flex gap-3">
               <a
@@ -405,7 +407,7 @@
               </a>
               <a
                 href="#learn"
-                class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/5"
+                class="inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
               >
                 {{ __('index.cta.learn_more') }}
               </a>

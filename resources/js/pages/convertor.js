@@ -1016,10 +1016,10 @@ function showToast(message, type = 'ok', opts = {}) {
 
   const palette =
     type === 'ok'
-      ? 'bg-emerald-500/90 text-white'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
       : type === 'warn'
         ? 'bg-amber-500/90 text-zinc-900'
-        : 'bg-red-600/90 text-white';
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
 
   const el = document.createElement('div');
   el.setAttribute('role', 'status');
@@ -1128,7 +1128,7 @@ function initMainTabs() {
   };
 
   const ACTIVE = ['bg-white', 'text-zinc-900'];
-  const INACTIVE = ['text-white', 'hover:bg-white/10'];
+  const INACTIVE = ['text-zinc-900 dark:text-white', 'hover:bg-zinc-900/5 dark:bg-white/10'];
 
   Object.values(btns).forEach((b) => {
     b.classList.add('tab-btn', 'transition-colors', 'duration-300');
@@ -3901,7 +3901,7 @@ function showLoader() {
         <div class="h-16 w-16 rounded-full border-8 border-white/20"></div>
         <div class="absolute inset-0 h-16 w-16 rounded-full border-8 border-transparent border-t-white animate-spin"></div>
       </div>
-      <div class="text-white/90 text-sm sm:text-base font-medium tracking-tight">${t('common.converting')}</div>
+      <div class="text-zinc-900 dark:text-white/90 text-sm sm:text-base font-medium tracking-tight">${t('common.converting')}</div>
     `;
     document.body.append(o);
   }
@@ -3992,8 +3992,8 @@ function renderGlobalBans(fullText) {
       'px-2.5 py-1',
       'text-xs sm:text-[13px] font-medium',
       'rounded-full',
-      'bg-zinc-900/70 text-zinc-200',
-      'border border-white/10 shadow-sm',
+      'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200',
+      'border border-zinc-200/80 dark:border-white/10 shadow-sm',
       'hover:bg-zinc-800/70 transition',
     ].join(' ');
     iconsContainer.appendChild(span);
@@ -4118,7 +4118,7 @@ function createCheckpointCard(idx, coords, data) {
   const card = document.createElement('div');
   card.className = [
     'checkpoint-card group relative',
-    'rounded-2xl border border-white/10',
+    'rounded-2xl border border-zinc-200/80 dark:border-white/10',
     'shadow-sm transition',
     'hover:ring-2 hover:ring-emerald-500/40 hover:border-emerald-500/30 hover:shadow-md',
     'select-none mb-3'
@@ -4144,15 +4144,15 @@ function createCheckpointCard(idx, coords, data) {
   numberCircle.className = [
     'checkpoint-number',
     'h-9 w-9 rounded-full',
-    'bg-zinc-800/90 text-zinc-100',
-    'border border-white/10 ring-1 ring-white/10 shadow-inner',
+    'bg-zinc-800/90 text-zinc-900 dark:text-zinc-100',
+    'border border-zinc-200/80 dark:border-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-inner',
     'flex items-center justify-center font-semibold'
   ].join(' ');
   numberCircle.textContent = originalIndex;
   leftGroup.appendChild(numberCircle);
 
   const coordsInline = document.createElement('div');
-  coordsInline.className = 'coords-inline font-mono tabular-nums text-[13px] sm:text-sm text-zinc-300/90 tracking-tight';
+  coordsInline.className = 'coords-inline font-mono tabular-nums text-[13px] sm:text-sm text-zinc-700 dark:text-zinc-300/90 tracking-tight';
   coordsInline.textContent = `${coords.x.toFixed(3)}, ${coords.y.toFixed(3)}, ${coords.z.toFixed(3)}`;
   leftGroup.appendChild(coordsInline);
 
@@ -4163,7 +4163,7 @@ function createCheckpointCard(idx, coords, data) {
   // Counter
   const makeBadge = (label) => {
     const b = document.createElement('span');
-    b.className = 'inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-200';
+    b.className = 'inline-flex items-center gap-1 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[11px] text-zinc-800 dark:text-zinc-200';
     b.textContent = label;
     return b;
   };
@@ -4200,7 +4200,7 @@ function createCheckpointCard(idx, coords, data) {
   });
 
   const originalLabel = document.createElement('div');
-  originalLabel.className = 'original-label text-[11px] text-zinc-300 px-2 py-0.5 rounded-full border border-white/10 bg-white/5';
+  originalLabel.className = 'original-label text-[11px] text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5';
   originalLabel.textContent = t('map_data.original_position', { index: originalIndex });
   rightGroup.appendChild(originalLabel);
 
@@ -4213,9 +4213,9 @@ function createCheckpointCard(idx, coords, data) {
   // Helpers
   const mkSection = (titleTxt) => {
     const s = document.createElement('div');
-    s.className = 'section mt-3 pt-3 border-t border-white/10';
+    s.className = 'section mt-3 pt-3 border-t border-zinc-200/80 dark:border-white/10';
     const title = document.createElement('div');
-    title.className = 'section__title text-sm font-semibold text-zinc-200 mb-2';
+    title.className = 'section__title text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-2';
     title.textContent = titleTxt;
     s.appendChild(title);
     return s;
@@ -4268,7 +4268,7 @@ function createCheckpointCard(idx, coords, data) {
   };
   const mkDetail = () => {
     const d = document.createElement('div');
-    d.className = 'detail flex items-center gap-2 text-[13px] sm:text-sm text-zinc-300';
+    d.className = 'detail flex items-center gap-2 text-[13px] sm:text-sm text-zinc-700 dark:text-zinc-300';
     return d;
   };
 
@@ -4365,7 +4365,7 @@ function createCheckpointCard(idx, coords, data) {
           const chip = document.createElement('span');
           chip.className =
             'ml-1 inline-flex items-center justify-center rounded-md ' +
-            'border border-white/10 bg-white/5 p-1 text-zinc-300';
+            'border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-1 text-zinc-700 dark:text-zinc-300';
           const icon = createLockIcon('h-4 w-4');
           chip.appendChild(icon);
           return chip;
@@ -4433,7 +4433,7 @@ function createCheckpointCard(idx, coords, data) {
   if (hasAnyBan) {
     const sec = mkSection(t('map_data.bans'));
     const row = document.createElement('div');
-    row.className = 'ban-icons flex items-center gap-2 text-sm text-zinc-300';
+    row.className = 'ban-icons flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300';
     banList.forEach(({ arr, icon }) => {
       if (arr.includes(idx)) {
         const s = document.createElement('span');
@@ -4487,8 +4487,8 @@ function createCheckpointCard(idx, coords, data) {
   const moveControls = document.createElement('div');
   moveControls.className = 'move-controls mt-3 flex items-center gap-2';
   const baseBtn =
-    'inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 ' +
-    'bg-zinc-800/70 px-2.5 py-1 text-xs sm:text-sm text-zinc-200 ' +
+    'inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-200/80 dark:border-white/10 ' +
+    'bg-zinc-800/70 px-2.5 py-1 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 ' +
     'hover:bg-zinc-700/70 hover:border-emerald-500/30 hover:text-emerald-300 ' +
     'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ' +
     'disabled:opacity-40 disabled:cursor-not-allowed transition';
@@ -4560,7 +4560,7 @@ function renderMapSettings(fullText) {
   editModeBtn.textContent = isEditMode ? t('map_data.exit_edit') : t('map_data.edit_mode');
   editModeBtn.className = [
     'rounded-full cursor-pointer px-3 py-1.5 text-sm font-medium',
-    'bg-blue-500 text-white hover:bg-blue-600',
+    'bg-blue-500 text-zinc-900 dark:text-white hover:bg-blue-600',
     'shadow-sm transition',
   ].join(' ');
 
@@ -4584,8 +4584,8 @@ function renderMapSettings(fullText) {
   globalSettingsBtn.textContent = t('map_data.global_settings');
   globalSettingsBtn.className = [
     'rounded-full cursor-pointer px-3 py-1.5 text-sm font-medium',
-    'bg-zinc-900/70 text-zinc-200 hover:bg-zinc-800/70',
-    'border border-white/10 shadow-sm transition',
+    'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-800/70',
+    'border border-zinc-200/80 dark:border-white/10 shadow-sm transition',
   ].join(' ');
   settingsButtons.appendChild(globalSettingsBtn);
 
@@ -4610,7 +4610,7 @@ function renderMapSettings(fullText) {
   if (dataModel.checkpoints.length === 0) {
     const msg = document.createElement('p');
     msg.textContent = 'No map data found';
-    msg.className = 'empty-message text-zinc-400';
+    msg.className = 'empty-message text-zinc-600 dark:text-zinc-400';
     container.appendChild(msg);
     return;
   }
@@ -4781,26 +4781,26 @@ function buildGlobalSettingsFormFields() {
   const rowMapName = document.createElement('div');
   rowMapName.className = 'modal-row space-y-2';
   rowMapName.innerHTML = `
-    <label for="mapNameInput" class="modal-label block text-sm font-semibold text-zinc-200">${t('map_data.map_name')}</label>
+    <label for="mapNameInput" class="modal-label block text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t('map_data.map_name')}</label>
     <div class="map-name-input-wrapper grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
       <div class="map-name-text-wrapper relative">
-        <input type="text" id="mapNameInput" class="modal-input2 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
-        <div class="map-name-suggestions-container absolute left-0 right-0 top-[110%] z-10 hidden rounded-xl border border-white/10 bg-zinc-900/95 shadow-lg"></div>
+        <input type="text" id="mapNameInput" class="modal-input2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+        <div class="map-name-suggestions-container absolute left-0 right-0 top-[110%] z-10 hidden rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-lg"></div>
       </div>
 
       <!-- DROPDOWN CUSTOM DE VARIANTE -->
       <div id="mapVariantDropdown" class="custom-dd relative">
         <button type="button"
-          class="custom-dd-trigger w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-left text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between"
+          class="custom-dd-trigger w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-left text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between"
           aria-haspopup="listbox" aria-expanded="false">
           <span class="custom-dd-label truncate flex items-center gap-2">Default</span>
-          <svg viewBox="0 0 24 24" class="ml-2 h-4 w-4 text-zinc-400"><path fill="currentColor" d="M7 10l5 5 5-5z"></path></svg>
+          <svg viewBox="0 0 24 24" class="ml-2 h-4 w-4 text-zinc-600 dark:text-zinc-400"><path fill="currentColor" d="M7 10l5 5 5-5z"></path></svg>
         </button>
-        <div class="custom-dd-list absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl z-20 max-h-60 overflow-auto hidden" role="listbox"></div>
+        <div class="custom-dd-list absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl z-20 max-h-60 overflow-auto hidden" role="listbox"></div>
       </div>
 
       <!-- Fallback natif si tu préfères : 
-      <select id="mapVariantSelect" class="modal-select2 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 hidden"></select>
+      <select id="mapVariantSelect" class="modal-select2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 hidden"></select>
       -->
     </div>
   `;
@@ -4809,7 +4809,7 @@ function buildGlobalSettingsFormFields() {
   const rowGlobalBans = document.createElement('div');
   rowGlobalBans.className = 'modal-row space-y-2';
   rowGlobalBans.innerHTML = `
-    <label class="modal-label block text-sm font-semibold text-zinc-200">${t('map_data.global_bans')}</label>
+    <label class="modal-label block text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t('map_data.global_bans')}</label>
     <div id="globalBansContainer" class="bans-container grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2"></div>
   `;
   form.appendChild(rowGlobalBans);
@@ -4818,8 +4818,8 @@ function buildGlobalSettingsFormFields() {
     const row = document.createElement('div');
     row.className = 'modal-row space-y-2';
     row.innerHTML = `
-      <label for="${forId}" class="modal-label block text-sm font-semibold text-zinc-200">${t(labelKey)}</label>
-      <select id="${forId}" class="modal-select rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+      <label for="${forId}" class="modal-label block text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t(labelKey)}</label>
+      <select id="${forId}" class="modal-select rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
         ${optionsHtml}
       </select>
     `;
@@ -4878,8 +4878,8 @@ function buildGlobalSettingsFormFields() {
   const rowButtons = document.createElement('div');
   rowButtons.className = 'modal-buttons2 mt-2 flex items-center justify-end gap-2';
   rowButtons.innerHTML = `
-    <button type="button" id="saveGlobalChangesBtn" class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 shadow-sm">${t('map_data.save')}</button>
-    <button type="button" id="cancelGlobalChangesBtn" class="rounded-xl cursor-pointer border border-white/10 bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800/70">${t('map_data.cancel')}</button>
+    <button type="button" id="saveGlobalChangesBtn" class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white hover:bg-emerald-500 shadow-sm">${t('map_data.save')}</button>
+    <button type="button" id="cancelGlobalChangesBtn" class="rounded-xl cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70">${t('map_data.cancel')}</button>
   `;
   form.appendChild(rowButtons);
     if (form && !form.dataset.gsDelegated) {
@@ -4908,7 +4908,7 @@ function addGlobalSettingsButton() {
   btn.id = 'globalSettingsBtn';
   btn.textContent = t('map_data.global_settings');
   btn.className =
-    'rounded-xl px-3 py-1.5 text-sm font-medium bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-white/10';
+    'rounded-xl px-3 py-1.5 text-sm font-medium bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-700 border border-zinc-200/80 dark:border-white/10';
   btn.addEventListener('click', openGlobalSettingsModal);
   globalInfos.appendChild(btn);
 }
@@ -4928,7 +4928,7 @@ async function openGlobalSettingsModal() {
       'max-h-[80vh] w-full max-w-2xl overflow-y-auto',
       'rounded-2xl shadow-2xl',
       'bg-gradient-to-b from-zinc-900/95 to-zinc-950/95',
-      'border border-white/10 ring-1 ring-white/5',
+      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5',
       'backdrop-blur-lg p-5'
     ].join(' ');
 
@@ -4940,9 +4940,9 @@ async function openGlobalSettingsModal() {
     if (title) {
       title.classList.add(
         'text-left', 'sticky', 'top-0', 'z-10',
-        'bg-zinc-900/95', 'backdrop-blur',
+        'bg-white/95 dark:bg-zinc-900/95', 'backdrop-blur',
         'pb-3', 'mb-3',
-        'border-b', 'border-white/10'
+        'border-b', 'border-zinc-200/80 dark:border-white/10'
       );
     }
   }
@@ -4966,13 +4966,13 @@ async function openGlobalSettingsModal() {
   mapNameInput?.setAttribute('autocomplete', 'off');
 
   // ==== UI helpers ============================================================
-  const selectCls = 'rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
+  const selectCls = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
   const inputCls  = selectCls;
   const chipBase  = 'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors';
-  const chipIdle  = 'border-white/10 bg-zinc-900/70 text-zinc-100 hover:bg-zinc-800/70';
+  const chipIdle  = 'border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70';
   const chipOn    = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20';
   const sectionCls= 'space-y-4';
-  const titleCls  = 'text-sm font-semibold text-zinc-200';
+  const titleCls  = 'text-sm font-semibold text-zinc-800 dark:text-zinc-200';
 
   const enhanceSelect = (el) => el && el.classList.add(...selectCls.split(' '));
   const enhanceInput  = (el) => el && el.classList.add(...inputCls.split(' '));
@@ -5115,7 +5115,7 @@ async function openGlobalSettingsModal() {
       if (!suggestionsContainer) {
         suggestionsContainer = document.createElement('div');
         suggestionsContainer.className =
-          'map-name-suggestions-container absolute left-0 right-0 top-[110%] z-10 hidden rounded-xl border border-white/10 bg-zinc-900/95 shadow-xl ring-1 ring-white/10';
+          'map-name-suggestions-container absolute left-0 right-0 top-[110%] z-10 hidden rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10';
         wrapper.appendChild(suggestionsContainer);
       }
 
@@ -5126,7 +5126,7 @@ async function openGlobalSettingsModal() {
 
       function addSuggestionRow(mapKey, label) {
         const item = document.createElement('div');
-        item.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/70';
+        item.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-800/70';
         item.textContent = label;
         item.addEventListener('mousedown', () => {
           mapNameInput.value = label;
@@ -5692,8 +5692,8 @@ function getVariantDropdownAPI() {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className =
-            'w-full cursor-pointer text-left rounded-md px-3 py-2 text-sm text-zinc-200 ' +
-            'hover:bg-white/10 focus:outline-none flex items-center gap-2';
+            'w-full cursor-pointer text-left rounded-md px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 ' +
+            'hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none flex items-center gap-2';
           btn.setAttribute('role', 'option');
           btn.setAttribute('data-value', opt.key);
           btn.setAttribute('aria-selected', 'false');
@@ -5822,7 +5822,7 @@ function openEditModal(idx) {
       'max-h-[80vh] w-full max-w-3xl overflow-y-auto',
       'rounded-2xl shadow-2xl',
       'bg-gradient-to-b from-zinc-900/95 to-zinc-950/95',
-      'border border-white/10 ring-1 ring-white/5',
+      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5',
       'backdrop-blur-lg p-5'
     ].join(' ');
   }
@@ -5838,17 +5838,17 @@ function openEditModal(idx) {
 
   // UI classes
   const inputBase =
-    'rounded-xl border border-white/10 bg-zinc-900/70 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
+    'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
   const inputSm   = `${inputBase} w-16 md:w-20 shrink-0 px-2 py-1.5 text-xs`;
   const chipBtn   =
-    'rounded-lg cursor-pointer border border-white/10 bg-zinc-900/70 px-2.5 py-1 text-sm text-zinc-100 hover:bg-zinc-800/70';
+    'rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70';
   const minusBtnCls =
     'group h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg ' +
-    'bg-red-600/90 text-white border border-white/10 ring-1 ring-white/5 shadow-sm ' +
+    'bg-red-600/90 text-zinc-900 dark:text-white border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5 shadow-sm ' +
     'hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400/60 ' +
     'transition duration-150 active:scale-95';
   const rowCls    = 'mt-2 flex flex-nowrap items-center gap-2 overflow-x-auto';
-  const titleCls  = 'text-sm font-semibold text-zinc-200';
+  const titleCls  = 'text-sm font-semibold text-zinc-800 dark:text-zinc-200';
 
   const makeSectionSpacer = () => {
     const d = document.createElement('div');
@@ -5960,7 +5960,7 @@ function openEditModal(idx) {
       const btnAdd = document.createElement('button');
       btnAdd.type = 'button';
       btnAdd.textContent = t('map_data.add_teleport');
-      btnAdd.className = `${chipBtn} bg-fuchsia-600/80 hover:bg-fuchsia-600 text-white mt-2`;
+      btnAdd.className = `${chipBtn} bg-fuchsia-600/80 hover:bg-fuchsia-600 text-zinc-900 dark:text-white mt-2`;
       btnAdd.addEventListener('click', () => {
         const cp = currentDataModel.checkpoints[idx];
         const row = document.createElement('div');
@@ -6006,7 +6006,7 @@ function openEditModal(idx) {
     const addKillBtn = document.createElement('button');
     addKillBtn.type = 'button';
     addKillBtn.textContent = t('map_data.add_kill_orb');
-    addKillBtn.className = `${chipBtn} bg-sky-600/80 hover:bg-sky-600 text-white mt-2`;
+    addKillBtn.className = `${chipBtn} bg-sky-600/80 hover:bg-sky-600 text-zinc-900 dark:text-white mt-2`;
     wrapper.appendChild(addKillBtn);
 
     const killList = document.createElement('div');
@@ -6069,7 +6069,7 @@ function openEditModal(idx) {
     const addPinBtn = document.createElement('button');
     addPinBtn.type = 'button';
     addPinBtn.textContent = t('map_data.add_bounce_orb');
-    addPinBtn.className = `${chipBtn} bg-sky-600/80 hover:bg-sky-600 text-white mt-2`;
+    addPinBtn.className = `${chipBtn} bg-sky-600/80 hover:bg-sky-600 text-zinc-900 dark:text-white mt-2`;
     wrapper.appendChild(addPinBtn);
 
     const pinList = document.createElement('div');
@@ -6105,7 +6105,7 @@ function openEditModal(idx) {
       // Locked
       {
         const wrap = document.createElement('label');
-        wrap.className = 'inline-flex items-center gap-1.5 text-zinc-200 shrink-0';
+        wrap.className = 'inline-flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200 shrink-0';
         const chk = Object.assign(document.createElement('input'), {
           type: 'checkbox',
           checked: !!pb.locked,
@@ -6121,7 +6121,7 @@ function openEditModal(idx) {
       // Ultimate
       {
         const wrap = document.createElement('label');
-        wrap.className = 'inline-flex items-center gap-1.5 text-zinc-200 shrink-0';
+        wrap.className = 'inline-flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200 shrink-0';
         const chk = Object.assign(document.createElement('input'), {
           type: 'checkbox',
           checked: !!pb.givesUlt5,
@@ -6140,7 +6140,7 @@ function openEditModal(idx) {
       // Dash
       {
         const wrap = document.createElement('label');
-        wrap.className = 'inline-flex items-center gap-1.5 text-zinc-200 shrink-0';
+        wrap.className = 'inline-flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200 shrink-0';
         const chk = Object.assign(document.createElement('input'), {
           type: 'checkbox',
           checked: !!pb.givesUlt6,
@@ -6191,7 +6191,7 @@ function openEditModal(idx) {
 
     ['ultimate', 'dash'].forEach((key) => {
       const label = document.createElement('label');
-      label.className = 'cursor-pointer inline-flex items-center gap-2 text-sm text-zinc-200';
+      label.className = 'cursor-pointer inline-flex items-center gap-2 text-sm text-zinc-800 dark:text-zinc-200';
       label.title = key === 'ultimate' ? t('map_data.ultimate_available') : t('map_data.dash_available');
 
       const chk = Object.assign(document.createElement('input'), {
@@ -6232,11 +6232,11 @@ function openEditModal(idx) {
     Object.entries(banMap).forEach(([banKey, arr]) => {
       const label = document.createElement('label');
       label.className =
-        'inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100';
+        'inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100';
       label.title = banKey;
 
       const iconWrap = document.createElement('span');
-      iconWrap.className = 'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-xs';
+      iconWrap.className = 'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-xs';
       iconWrap.textContent = BAN_ICONS[banKey] ?? '•';
 
       const chk = Object.assign(document.createElement('input'), {
@@ -6259,7 +6259,7 @@ function openEditModal(idx) {
 
   const saveBtn = document.getElementById('saveEditorChangesBtn');
   if (saveBtn) {
-    saveBtn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-4 py-2';
+    saveBtn.className = 'bg-emerald-600 hover:bg-emerald-500 text-zinc-900 dark:text-white rounded-xl px-4 py-2';
   }
 
   {
@@ -6269,7 +6269,7 @@ function openEditModal(idx) {
       deleteBtn.type = 'button';
       deleteBtn.textContent = t('map_data.remove_checkpoint');
       deleteBtn.className =
-        'delete-checkpoint-btn cursor-pointer rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500';
+        'delete-checkpoint-btn cursor-pointer rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white hover:bg-red-500';
       buttonsContainer.insertBefore(deleteBtn, buttonsContainer.firstChild);
       deleteBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -6907,7 +6907,7 @@ function initCustomSelects(root = document) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className =
-        'w-full cursor-pointer text-left rounded-md px-2 py-1 text-sm hover:bg-white/10 focus:outline-none';
+        'w-full cursor-pointer text-left rounded-md px-2 py-1 text-sm hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none';
       btn.setAttribute('role', 'option');
       btn.dataset.value = opt.value;
       btn.textContent = opt.textContent;
@@ -6936,7 +6936,7 @@ function initCustomSelects(root = document) {
       const opt = sel.options[sel.selectedIndex];
       label.textContent = opt ? opt.textContent : '—';
       Array.from(list.children).forEach((el) => {
-        el.classList.toggle('bg-white/10', el.dataset.value === sel.value);
+        el.classList.toggle('bg-zinc-900/5 dark:bg-white/10', el.dataset.value === sel.value);
       });
     }
     sel.addEventListener('change', syncFromSelect);
@@ -7011,7 +7011,7 @@ function createCustomDropdownFromSelect(select) {
   const trigger = document.createElement('button');
   trigger.type = 'button';
   trigger.className =
-    'custom-dd-trigger cursor-pointer w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-left text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between';
+    'custom-dd-trigger cursor-pointer w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-left text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between';
   trigger.setAttribute('aria-haspopup', 'listbox');
   trigger.setAttribute('aria-expanded', 'false');
 
@@ -7020,14 +7020,14 @@ function createCustomDropdownFromSelect(select) {
 
   const caret = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   caret.setAttribute('viewBox', '0 0 24 24');
-  caret.classList.add('ml-2', 'h-4', 'w-4', 'text-zinc-400');
+  caret.classList.add('ml-2', 'h-4', 'w-4', 'text-zinc-600 dark:text-zinc-400');
   caret.innerHTML = '<path fill="currentColor" d="M7 10l5 5 5-5z"/>';
 
   trigger.append(label, caret);
 
   const list = document.createElement('div');
   list.className =
-    'custom-dd-list absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl hidden z-20 max-h-60 overflow-auto';
+    'custom-dd-list absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl hidden z-20 max-h-60 overflow-auto';
 
   list.setAttribute('role', 'listbox');
 
@@ -7035,7 +7035,7 @@ function createCustomDropdownFromSelect(select) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className =
-      'w-full text-left rounded-md px-3 py-2 text-sm text-zinc-200 hover:bg-white/10 focus:outline-none flex items-center gap-2';
+      'w-full text-left rounded-md px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none flex items-center gap-2';
     btn.setAttribute('role', 'option');
     btn.dataset.value = opt.value;
 
@@ -7061,7 +7061,7 @@ function createCustomDropdownFromSelect(select) {
     }
 
     const isSelected = idx === select.selectedIndex;
-    btn.classList.toggle('bg-white/10', isSelected);
+    btn.classList.toggle('bg-zinc-900/5 dark:bg-white/10', isSelected);
     btn.setAttribute('aria-selected', String(isSelected));
     if (!isDifficulty && checkSvg) {
       checkSvg.style.visibility = isSelected ? 'visible' : 'hidden';
@@ -7122,7 +7122,7 @@ function createCustomDropdownFromSelect(select) {
 
     Array.from(list.children).forEach((btn) => {
       const active = btn.dataset.value === select.value;
-      btn.classList.toggle('bg-white/10', active);
+      btn.classList.toggle('bg-zinc-900/5 dark:bg-white/10', active);
       btn.setAttribute('aria-selected', String(active));
       if (!isDifficulty) {
         const check = btn.querySelector('svg');

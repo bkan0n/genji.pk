@@ -22,7 +22,7 @@ export default defineConfig({
         'resources/js/pages/moderator.js',
         'resources/js/pages/dashboard.js',
         'resources/js/pages/infos.js',
-        'resources/js/pages/prism.js',
+        'resources/js/utils/prism.js',
       ],
       refresh: true,
     }),

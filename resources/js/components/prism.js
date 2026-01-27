@@ -1,56 +1,69 @@
-import { Renderer, Triangle, Program, Mesh } from 'ogl';
+import { Renderer, Triangle, Program, Mesh, Color } from 'ogl';
 
-export function createPrism(container, {
-  height = 3.5,
-  baseWidth = 5.5,
-  animationType = 'rotate',      // 'rotate' | 'hover' | '3drotate' | 'none'
-  glow = 1,
-  offset = { x: 0, y: 0 },
-  noise = 0.5,
-  transparent = true,
-  scale = 3.6,
-  hueShift = 0,
-  colorFrequency = 1,
-  hoverStrength = 2,
-  inertia = 0.05,
-  bloom = 1,
-  suspendWhenOffscreen = false,
-  timeScale = 0.5,
-  quality = 'auto',              // 'auto' | 'low' | 'medium' | 'high'
-} = {}) {
+export function createPrism(
+  container,
+  {
+    height = 3.5,
+    baseWidth = 5.5,
+    animationType = 'rotate', // 'rotate' | 'hover' | '3drotate' | 'none'
+    glow = 1,
+    offset = { x: 0, y: 0 },
+    noise = 0.5,
+    transparent = true,
+    scale = 3.6,
+    hueShift = 0,
+    colorFrequency = 1,
+    hoverStrength = 2,
+    inertia = 0.05,
+    bloom = 1,
+    bg = null,
+    suspendWhenOffscreen = false,
+    timeScale = 0.5,
+    quality = 'auto', // 'auto' | 'low' | 'medium' | 'high'
+  } = {}
+) {
   if (!container) throw new Error('No container provided');
 
   const isMobile = /Mobi|Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
   const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const cores = Math.max(1, navigator.hardwareConcurrency || 4);
 
-  // --- quality heuristics -------------------------------------------------
   function computeQuality() {
     const capDesktop = 1.75;
-    const capMobile  = 1.25;
+    const capMobile = 1.25;
 
     const stepsHigh = 96;
-    const stepsMed  = 80;
-    const stepsLow  = 64;
+    const stepsMed = 80;
+    const stepsLow = 64;
 
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
     const area = w * h;
 
     let dprCap = isMobile ? capMobile : capDesktop;
-    let steps  = isMobile ? stepsLow : stepsMed;
+    let steps = isMobile ? stepsLow : stepsMed;
 
-    if (quality === 'high')   { dprCap = capDesktop; steps = stepsHigh; }
-    if (quality === 'medium') { dprCap = isMobile ? capMobile : capDesktop; steps = stepsMed; }
-    if (quality === 'low')    { dprCap = isMobile ? 1.0 : 1.25; steps = stepsLow; }
+    if (quality === 'high') {
+      dprCap = capDesktop;
+      steps = stepsHigh;
+    }
+    if (quality === 'medium') {
+      dprCap = isMobile ? capMobile : capDesktop;
+      steps = stepsMed;
+    }
+    if (quality === 'low') {
+      dprCap = isMobile ? 1.0 : 1.25;
+      steps = stepsLow;
+    }
 
     if (quality === 'auto') {
       if (area > 1_800_000 && !isMobile) {
-        dprCap = 1.5; steps = stepsMed;
+        dprCap = 1.5;
+        steps = stepsMed;
       }
       if (cores <= 4 || isMobile) {
         dprCap = Math.min(dprCap, 1.25);
-        steps  = stepsLow;
+        steps = stepsLow;
       }
     }
 
@@ -61,7 +74,8 @@ export function createPrism(container, {
     return { dprCap, steps };
   }
 
-  // --- uniforms / consts --------------------------------------------------
+  const clamp01 = (n) => Math.max(0, Math.min(1, n));
+
   const H = Math.max(0.001, height);
   const BW = Math.max(0.001, baseWidth);
   const BASE_HALF = BW * 0.5;
@@ -78,7 +92,12 @@ export function createPrism(container, {
   const HOVSTR = Math.max(0, hoverStrength || 1);
   const INERT = Math.max(0, Math.min(1, inertia || 0.12));
 
-  // Renderer
+  // ✅ init bg
+  const hasBg = Array.isArray(bg) && bg.length >= 3;
+  const bgColor = hasBg
+    ? new Color(clamp01(+bg[0] || 0), clamp01(+bg[1] || 0), clamp01(+bg[2] || 0))
+    : new Color(0, 0, 0);
+
   let { dprCap, steps: CURRENT_STEPS } = computeQuality();
   let dpr = Math.min(dprCap, window.devicePixelRatio || 1);
   const renderer = new Renderer({ dpr, alpha: transparent, antialias: false });
@@ -91,12 +110,12 @@ export function createPrism(container, {
   gl.disable(gl.CULL_FACE);
   gl.disable(gl.BLEND);
 
-  const vertex = /* glsl */`
+  const vertex = /* glsl */ `
     attribute vec2 position;
     void main(){ gl_Position = vec4(position, 0.0, 1.0); }
   `;
 
-  const fragment = /* glsl */`
+  const fragment = /* glsl */ `
     precision highp float;
 
     uniform vec2  iResolution;
@@ -120,7 +139,11 @@ export function createPrism(container, {
     uniform float uMinAxis;
     uniform float uPxScale;
     uniform float uTimeScale;
-    uniform int   uSteps;        // NEW
+    uniform int   uSteps;
+
+    // ✅ NEW
+    uniform vec3  uBg;
+    uniform int   uUseBg;
 
     vec4 tanh4(vec4 x){
       vec4 e2x = exp(2.0*x);
@@ -206,7 +229,15 @@ export function createPrism(container, {
         col = clamp(hueRotation(uHueShift) * col, 0.0, 1.0);
       }
 
-      gl_FragColor = vec4(col, o.a);
+      float a = clamp(o.a, 0.0, 1.0);
+
+      // ✅ If bg provided, we draw our own background and output alpha = 1
+      if (uUseBg == 1) {
+        vec3 outCol = mix(uBg, col, a);
+        gl_FragColor = vec4(outCol, 1.0);
+      } else {
+        gl_FragColor = vec4(col, a);
+      }
     }
   `;
 
@@ -223,7 +254,7 @@ export function createPrism(container, {
       uHeight: { value: H },
       uBaseHalf: { value: BASE_HALF },
       uUseBaseWobble: { value: 1 },
-      uRot: { value: new Float32Array([1,0,0, 0,1,0, 0,0,1]) },
+      uRot: { value: new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]) },
       uGlow: { value: GLOW },
       uOffsetPx: { value: offsetPxBuf },
       uNoise: { value: NOISE },
@@ -238,20 +269,26 @@ export function createPrism(container, {
       uMinAxis: { value: Math.min(BASE_HALF, H) },
       uPxScale: { value: 1 },
       uTimeScale: { value: TS },
-      uSteps: { value: CURRENT_STEPS },    // NEW
-    }
+      uSteps: { value: CURRENT_STEPS },
+
+      // ✅ NEW
+      uBg: { value: bgColor },
+      uUseBg: { value: hasBg ? 1 : 0 },
+    },
   });
 
   const mesh = new Mesh(gl, { geometry, program });
 
-  // --- resize / DPR ---------------------------------------------
   const resize = () => {
     const q = computeQuality();
-    if (q.dprCap !== dprCap) { dprCap = q.dprCap; }
+    if (q.dprCap !== dprCap) dprCap = q.dprCap;
     CURRENT_STEPS = q.steps;
 
     const nextDpr = Math.min(dprCap, window.devicePixelRatio || 1);
-    if (nextDpr !== dpr) { dpr = nextDpr; renderer.dpr = dpr; }
+    if (nextDpr !== dpr) {
+      dpr = nextDpr;
+      renderer.dpr = dpr;
+    }
 
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
@@ -262,7 +299,7 @@ export function createPrism(container, {
     offsetPxBuf[0] = offX * dpr;
     offsetPxBuf[1] = offY * dpr;
     program.uniforms.uPxScale.value = 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE);
-    program.uniforms.uSteps.value   = CURRENT_STEPS;
+    program.uniforms.uSteps.value = CURRENT_STEPS;
 
     renderer.render({ scene: mesh });
   };
@@ -271,12 +308,14 @@ export function createPrism(container, {
   ro.observe(container);
   resize();
 
-  // --- rotation / animation ------------------------------------------------
   const rotBuf = new Float32Array(9);
   const setMat3FromEuler = (yawY, pitchX, rollZ, out) => {
-    const cy = Math.cos(yawY), sy = Math.sin(yawY);
-    const cx = Math.cos(pitchX), sx = Math.sin(pitchX);
-    const cz = Math.cos(rollZ), sz = Math.sin(rollZ);
+    const cy = Math.cos(yawY),
+      sy = Math.sin(yawY);
+    const cx = Math.cos(pitchX),
+      sx = Math.sin(pitchX);
+    const cz = Math.cos(rollZ),
+      sz = Math.sin(rollZ);
     const r00 = cy * cz + sy * sx * sz;
     const r01 = -cy * sz + sy * sx * cz;
     const r02 = sy * cx;
@@ -286,38 +325,53 @@ export function createPrism(container, {
     const r20 = -sy * cz + cy * sx * sz;
     const r21 = sy * sz + cy * sx * cz;
     const r22 = cy * cx;
-    out[0]=r00; out[1]=r10; out[2]=r20;
-    out[3]=r01; out[4]=r11; out[5]=r21;
-    out[6]=r02; out[7]=r12; out[8]=r22;
+    out[0] = r00;
+    out[1] = r10;
+    out[2] = r20;
+    out[3] = r01;
+    out[4] = r11;
+    out[5] = r21;
+    out[6] = r02;
+    out[7] = r12;
+    out[8] = r22;
     return out;
   };
 
   const rnd = () => Math.random();
-  const RSX = 1, RSY = 1, RSZ = 1;
-  const wX = (0.3 + rnd()*0.6) * RSX;
-  const wY = (0.2 + rnd()*0.7) * RSY;
-  const wZ = (0.1 + rnd()*0.5) * RSZ;
+  const RSX = 1,
+    RSY = 1,
+    RSZ = 1;
+  const wX = (0.3 + rnd() * 0.6) * RSX;
+  const wY = (0.2 + rnd() * 0.7) * RSY;
+  const wZ = (0.1 + rnd() * 0.5) * RSZ;
   const phX = rnd() * Math.PI * 2;
   const phZ = rnd() * Math.PI * 2;
 
   let raf = 0;
   const t0 = performance.now();
-  let yaw = 0, pitch = 0, roll = 0;
-  let targetYaw = 0, targetPitch = 0;
-  const lerp = (a,b,t)=>a+(b-a)*t;
+  let yaw = 0,
+    pitch = 0,
+    roll = 0;
+  let targetYaw = 0,
+    targetPitch = 0;
+  const lerp = (a, b, t) => a + (b - a) * t;
 
   const pointer = { x: 0, y: 0, inside: true };
-  const onMove = e => {
+  const onMove = (e) => {
     const r = container.getBoundingClientRect();
-    const nx = ((e.clientX - (r.left + r.width/2)) / (r.width/2));
-    const ny = ((e.clientY - (r.top + r.height/2)) / (r.height/2));
+    const nx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+    const ny = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
     pointer.x = Math.max(-1, Math.min(1, nx));
     pointer.y = Math.max(-1, Math.min(1, ny));
-    pointer.inside = e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom;
+    pointer.inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
     start();
   };
-  const onLeave = () => { pointer.inside = false; };
-  const onBlur  = () => { pointer.inside = false; };
+  const onLeave = () => {
+    pointer.inside = false;
+  };
+  const onBlur = () => {
+    pointer.inside = false;
+  };
 
   let onPointerMove = null;
   if (animationType === 'hover') {
@@ -343,36 +397,43 @@ export function createPrism(container, {
 
     if (animationType === 'hover') {
       const maxPitch = 0.6 * HOVSTR;
-      const maxYaw   = 0.6 * HOVSTR;
-      targetYaw   = (pointer.inside ? -pointer.x : 0) * maxYaw;
-      targetPitch = (pointer.inside ?  pointer.y : 0) * maxPitch;
-      yaw   = lerp(yaw,   targetYaw,   INERT);
+      const maxYaw = 0.6 * HOVSTR;
+      targetYaw = (pointer.inside ? -pointer.x : 0) * maxYaw;
+      targetPitch = (pointer.inside ? pointer.y : 0) * maxPitch;
+      yaw = lerp(yaw, targetYaw, INERT);
       pitch = lerp(pitch, targetPitch, INERT);
-      roll  = lerp(roll,  0,           0.1);
+      roll = lerp(roll, 0, 0.1);
       program.uniforms.uRot.value = setMat3FromEuler(yaw, pitch, roll, rotBuf);
       if (NOISE_IS_ZERO) {
-        const settled = Math.abs(yaw-targetYaw)<1e-4 && Math.abs(pitch-targetPitch)<1e-4 && Math.abs(roll)<1e-4;
+        const settled =
+          Math.abs(yaw - targetYaw) < 1e-4 && Math.abs(pitch - targetPitch) < 1e-4 && Math.abs(roll) < 1e-4;
         if (settled) continueRAF = false;
       }
     } else if (animationType === '3drotate' || animationType === 'rotate') {
       const tScaled = program.uniforms.iTime.value * TS;
-      yaw   = tScaled * wY;
+      yaw = tScaled * wY;
       pitch = Math.sin(tScaled * wX + phX) * 0.6;
-      roll  = Math.sin(tScaled * wZ + phZ) * 0.5;
+      roll = Math.sin(tScaled * wZ + phZ) * 0.5;
       program.uniforms.uRot.value = setMat3FromEuler(yaw, pitch, roll, rotBuf);
       if (TS < 1e-6) continueRAF = false;
     } else {
-      rotBuf.set([1,0,0, 0,1,0, 0,0,1]);
+      rotBuf.set([1, 0, 0, 0, 1, 0, 0, 0, 1]);
       program.uniforms.uRot.value = rotBuf;
       if (TS < 1e-6) continueRAF = false;
     }
 
     renderer.render({ scene: mesh });
-    if (continueRAF) raf = requestAnimationFrame(render); else raf = 0;
+    if (continueRAF) raf = requestAnimationFrame(render);
+    else raf = 0;
   };
 
-  function start(){ if (!raf) raf = requestAnimationFrame(render); }
-  function stop(){ if (raf) cancelAnimationFrame(raf); raf = 0; }
+  function start() {
+    if (!raf) raf = requestAnimationFrame(render);
+  }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
 
   const onVis = () => (document.visibilityState === 'hidden' ? stop() : start());
   document.addEventListener('visibilitychange', onVis);
@@ -380,8 +441,8 @@ export function createPrism(container, {
 
   let io;
   if (suspendWhenOffscreen && 'IntersectionObserver' in window) {
-    io = new IntersectionObserver(entries => {
-      const vis = entries.some(e => e.isIntersecting);
+    io = new IntersectionObserver((entries) => {
+      const vis = entries.some((e) => e.isIntersecting);
       vis ? start() : stop();
     });
     io.observe(container);
@@ -390,7 +451,7 @@ export function createPrism(container, {
     start();
   }
 
-  function destroy(){
+  function destroy() {
     stop();
     ro.disconnect();
     document.removeEventListener('visibilitychange', onVis);
@@ -402,11 +463,22 @@ export function createPrism(container, {
     if (gl.canvas.parentElement === container) container.removeChild(gl.canvas);
   }
 
-  function update(opts = {}){
-    if (opts.timeScale !== undefined) program.uniforms.uTimeScale.value = Math.max(0, opts.timeScale);
-    if (opts.hueShift   !== undefined) program.uniforms.uHueShift.value = +opts.hueShift || 0;
+  function update(opts = {}) {
+    if (opts.timeScale !== undefined) program.uniforms.uTimeScale.value = Math.max(0, +opts.timeScale || 0);
+    if (opts.hueShift !== undefined) program.uniforms.uHueShift.value = +opts.hueShift || 0;
     if (opts.colorFrequency !== undefined) program.uniforms.uColorFreq.value = Math.max(0, +opts.colorFrequency || 1);
-    if (opts.noise      !== undefined) program.uniforms.uNoise.value = Math.max(0, +opts.noise || 0);
+    if (opts.noise !== undefined) program.uniforms.uNoise.value = Math.max(0, +opts.noise || 0);
+    if (opts.glow !== undefined) program.uniforms.uGlow.value = clamp01(+opts.glow || 0);
+
+    // ✅ NEW: allow bg updates + enable/disable
+    if (opts.bg !== undefined) {
+      const b = opts.bg;
+      const ok = Array.isArray(b) && b.length >= 3;
+      program.uniforms.uUseBg.value = ok ? 1 : 0;
+      if (ok) {
+        program.uniforms.uBg.value = new Color(clamp01(+b[0] || 0), clamp01(+b[1] || 0), clamp01(+b[2] || 0));
+      }
+    }
   }
 
   return { start, stop, destroy, update, gl };

@@ -171,9 +171,7 @@ function gpBindModalClose(overlayId, { closeBtnSelector, outsideRootSelector } =
 }
 
 function showToast(message, ok = true) {
-  const el = document.createElement('div');
-  el.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-2xl border transition-all duration-300 opacity-0 translate-y-2
-    ${ok ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-rose-500/20 text-rose-200 border-rose-400/30'}`;
+  const el = document.createElement('div'); el.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-2xl border transition-all duration-300 opacity-0 translate-y-2 ${ok ?'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-rose-500/20 text-rose-200 border-rose-400/30'}`;
   el.textContent = message;
   document.body.appendChild(el);
   requestAnimationFrame(() => {

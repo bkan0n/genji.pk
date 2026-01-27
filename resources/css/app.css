@@ -1,9 +1,26 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+
+/* Theme */
+html[data-theme="dark"]  #themeToggle .theme-icon-sun  { opacity: 1 !important; }
+html[data-theme="dark"]  #themeToggle .theme-icon-moon { opacity: 0 !important; }
+
+html[data-theme="light"] #themeToggle .theme-icon-sun  { opacity: 0 !important; }
+html[data-theme="light"] #themeToggle .theme-icon-moon { opacity: 1 !important; }
+
+/* No animation */
+html.theme-preload #themeToggle .theme-icon-sun,
+html.theme-preload #themeToggle .theme-icon-moon { transition: none !important; }
+
+/* Prism */
+html.prism-preload body { visibility: hidden; }
+html.prism-ready body { visibility: visible; }
 
 @theme {
   --color-brand-50: #f0fdf4;
@@ -18,7 +35,7 @@
   --color-brand-900: #14532d;
 
   --font-sans:
-    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Mona-Sans-Medium', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol', 'Noto Color Emoji';
 }
 

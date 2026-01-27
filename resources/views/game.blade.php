@@ -8,11 +8,11 @@
 
 @section('content')
   <!-- Hero -->
-  <section class="relative">
+  <section class="relative min-h-[100vh]">
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <!-- Title / lead -->
       <div class="max-w-3xl space-y-5">
-        <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
+        <h1 class="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-5xl md:text-6xl">
           GENJI PARKOUR
           <span
             class="block bg-gradient-to-r from-emerald-300 to-white bg-clip-text text-transparent"
@@ -21,7 +21,7 @@
           </span>
         </h1>
 
-        <p class="text-base text-zinc-300/90 sm:text-lg">
+        <p class="text-base text-zinc-700 dark:text-zinc-300/90 sm:text-lg">
           {{ __('game.lead') }}
         </p>
       </div>
@@ -30,22 +30,22 @@
       <div class="mt-8 flex justify-center lg:mt-12">
         <div class="w-full max-w-[860px]">
           <div
-            class="rounded-2xl bg-zinc-900/70 p-4 shadow-2xl ring-1 shadow-black/50 ring-white/10 backdrop-blur sm:p-5"
+            class="rounded-2xl bg-white/80 dark:bg-zinc-900/70 p-4 shadow-2xl ring-1 shadow-black/50 ring-zinc-300/60 dark:ring-white/10 backdrop-blur sm:p-5"
           >
             <!-- Header -->
             <div class="mb-3 flex items-center justify-between">
-              <h2 class="text-sm font-semibold text-zinc-200">{{ __('game.card_title') }}</h2>
+              <h2 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{{ __('game.card_title') }}</h2>
               <div class="flex items-center gap-2 text-xs">
                 <span
                   id="scoreDisplay"
-                  class="rounded-lg bg-white/5 px-2 py-1 text-zinc-200 ring-1 ring-white/10"
+                  class="rounded-lg bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-white/10"
                   aria-live="polite"
                 >
                   {{ __('game.score') }}: 0
                 </span>
                 <span
                   id="highScoreDisplay"
-                  class="rounded-lg bg-white/5 px-2 py-1 text-zinc-200 ring-1 ring-white/10"
+                  class="rounded-lg bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-white/10"
                   aria-live="polite"
                 >
                   {{ __('game.highest_score') }}: 0
@@ -59,21 +59,21 @@
                 id="gameCanvas"
                 width="800"
                 height="200"
-                class="block aspect-[4/1] w-full max-w-[800px] rounded-xl bg-black/40 ring-1 ring-white/10"
+                class="block aspect-[4/1] w-full max-w-[800px] rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/10"
               ></canvas>
             </div>
 
             <!-- Volume / actions -->
             <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
               <!-- Astuce -->
-              <p class="flex-1 text-xs text-zinc-400 sm:text-sm">
+              <p class="flex-1 text-xs text-zinc-600 dark:text-zinc-400 sm:text-sm">
                 {{ __('game.press_space_to_jump') }}
               </p>
 
               <!-- Slider volume  -->
-              <label class="flex items-center gap-2 text-xs text-zinc-200 sm:text-sm">
+              <label class="flex items-center gap-2 text-xs text-zinc-800 dark:text-zinc-200 sm:text-sm">
                 <svg
-                  class="h-5 w-5 text-zinc-300"
+                  class="h-5 w-5 text-zinc-700 dark:text-zinc-300"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   aria-hidden="true"
@@ -91,14 +91,14 @@
                   min="0"
                   max="100"
                   value="70"
-                  class="h-1 w-36 cursor-pointer appearance-none rounded-full bg-white/20 accent-emerald-500 md:w-44"
+                  class="h-1 w-36 cursor-pointer appearance-none rounded-full bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 accent-emerald-500 md:w-44"
                 />
               </label>
 
               <!-- Restart -->
               <button
                 id="restartButton"
-                class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+                class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-300/80 dark:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-white/60 focus-visible:outline-none"
               >
                 {{ __('game.restart_button') }}
               </button>

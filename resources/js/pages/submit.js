@@ -198,22 +198,22 @@ function __addRule(sel, body) {
 }
 
 function __show(el) {
-  if (el) el.classList.remove('hidden');
+  if (el) el.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 function __hide(el) {
-  if (el) el.classList.add('hidden');
+  if (el) el.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 function __enter(el) {
   if (!el) return;
-  el.classList.add('x-anim', 'x-enter');
+  el.classList.add(...String('x-anim').trim().split(/\s+/).filter(Boolean), ...String('x-enter').trim().split(/\s+/).filter(Boolean));
   __show(el);
   requestAnimationFrame(() => {
-    el.classList.add('x-enter-active');
-    el.classList.remove('x-enter');
+    el.classList.add(...String('x-enter-active').trim().split(/\s+/).filter(Boolean));
+    el.classList.remove(...String('x-enter').trim().split(/\s+/).filter(Boolean));
   });
   const done = () => {
-    el.classList.remove('x-enter-active', 'x-anim');
+    el.classList.remove(...String('x-enter-active').trim().split(/\s+/).filter(Boolean), ...String('x-anim').trim().split(/\s+/).filter(Boolean));
     el.removeEventListener('transitionend', done);
   };
   el.addEventListener('transitionend', done);
@@ -221,11 +221,11 @@ function __enter(el) {
 }
 function __exit(el, after) {
   if (!el) { after && after(); return; }
-  el.classList.add('x-anim', 'x-exit');
-  requestAnimationFrame(() => el.classList.add('x-exit-active'));
+  el.classList.add(...String('x-anim').trim().split(/\s+/).filter(Boolean), ...String('x-exit').trim().split(/\s+/).filter(Boolean));
+  requestAnimationFrame(() => el.classList.add(...String('x-exit-active').trim().split(/\s+/).filter(Boolean)));
   const done = () => {
     __hide(el);
-    el.classList.remove('x-exit', 'x-exit-active', 'x-anim');
+    el.classList.remove(...String('x-exit').trim().split(/\s+/).filter(Boolean), ...String('x-exit-active').trim().split(/\s+/).filter(Boolean), ...String('x-anim').trim().split(/\s+/).filter(Boolean));
     el.removeEventListener('transitionend', done);
     after && after();
   };
@@ -361,7 +361,7 @@ function initMainTabs(defaultTab = 'submit_record') {
   buttons.forEach(b => {
     b.style.position = 'relative';
     b.style.zIndex = '1';
-    b.classList.add('cursor-pointer');
+    b.classList.add(...String('cursor-pointer').trim().split(/\s+/).filter(Boolean));
   });
 
   const moveHighlightTo = (btn) => {
@@ -379,8 +379,19 @@ function initMainTabs(defaultTab = 'submit_record') {
   const showPanel = (section) => {
     Object.entries(sectionToPanelId).forEach(([sec, id]) => {
       const el = document.getElementById(id);
-      if (el) el.classList.toggle('hidden', sec !== section);
+      (() => { const __obj = (el) ? (el) : null; if (!__obj) return undefined; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, sec !== section); return __last; })();
     });
+  };
+
+  const ACTIVE_TAB_CLASSES = "tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/70 dark:bg-white/90 dark:text-zinc-900 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-colors duration-200 ease-out";
+  const INACTIVE_TAB_CLASSES = "tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-colors duration-200 ease-out";
+
+  const applyTabState = (btn, isActive) => {
+    const all = (ACTIVE_TAB_CLASSES + ' ' + INACTIVE_TAB_CLASSES).trim().split(/\s+/).filter(Boolean);
+    btn.classList.remove(...all);
+    const next = (isActive ? ACTIVE_TAB_CLASSES : INACTIVE_TAB_CLASSES).trim().split(/\s+/).filter(Boolean);
+    btn.classList.add(...next);
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
   };
 
   const setActive = (section, { updateUrl = true } = {}) => {
@@ -391,12 +402,7 @@ function initMainTabs(defaultTab = 'submit_record') {
       const sec = btnToSection.get(btn.id);
       const isActive = sec === section;
       if (isActive) activeBtn = btn;
-
-      btn.classList.toggle('bg-white', isActive);
-      btn.classList.toggle('text-zinc-900', isActive);
-
-      btn.classList.toggle('text-white', !isActive);
-      btn.classList.toggle('hover:bg-white/10', !isActive);
+      applyTabState(btn, isActive);
     });
 
     moveHighlightTo(activeBtn);
@@ -433,7 +439,11 @@ function initMainTabs(defaultTab = 'submit_record') {
       setActive(section, { updateUrl: true });
 
       if (typeof selectSection === 'function') {
-        selectSection(section);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            selectSection(section);
+          });
+        });
       }
     });
   });
@@ -482,7 +492,7 @@ function setupTabs() {
     ['submit_record', 'submit_map'].forEach((id) => {
       const btn = document.getElementById(`${id}Btn`);
       if (btn) {
-        btn.classList.add('opacity-50', 'pointer-events-none');
+        btn.classList.add(...String('opacity-50').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean));
         btn.setAttribute('aria-disabled', 'true');
         btn.title =
           typeof t === 'function'
@@ -555,12 +565,12 @@ function setActiveButtons(section) {
     if (!btn) return;
     const active = id === section;
 
-    btn.classList.toggle('active', active);
-    btn.classList.toggle('bg-white', active);
-    btn.classList.toggle('text-zinc-900', active);
-    btn.classList.toggle('text-white', !active);
+(() => { const __obj = btn; let __last; for (const __c of String('active').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, active); return __last; })();
+(() => { const __obj = btn; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, active); return __last; })();
+(() => { const __obj = btn; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, active); return __last; })();
+(() => { const __obj = btn; let __last; for (const __c of String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !active); return __last; })();
 
-    btn.classList.toggle('pointer-events-none', active);
+(() => { const __obj = btn; let __last; for (const __c of String('pointer-events-none').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, active); return __last; })();
 
     btn.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
@@ -605,19 +615,19 @@ function setActiveSectionUI(prev, next) {
   };
 
   Object.values(sections).forEach((el) => {
-    if (el) el.classList.add('hidden');
+    if (el) el.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
-  if (sections[next]) sections[next].classList.remove('hidden');
+  if (sections[next]) sections[next].classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 
   Object.keys(buttons).forEach((k) => {
     const btn = buttons[k];
     if (!btn) return;
     if (k === next) {
-      btn.classList.add('bg-white', 'text-zinc-900');
-      btn.classList.remove('text-white', 'hover:bg-white/10');
+      btn.classList.add(...String('bg-white').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-900').trim().split(/\s+/).filter(Boolean));
+      btn.classList.remove(...String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean), ...String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean));
     } else {
-      btn.classList.remove('bg-white', 'text-zinc-900');
-      btn.classList.add('text-white', 'hover:bg-white/10');
+      btn.classList.remove(...String('bg-white').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-900').trim().split(/\s+/).filter(Boolean));
+      btn.classList.add(...String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean), ...String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean));
     }
   });
 }
@@ -646,10 +656,10 @@ function showToast(message, type = 'ok', opts = {}) {
 
   const palette =
     type === 'ok'
-      ? 'bg-emerald-500/90 text-white'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
       : type === 'warn'
         ? 'bg-amber-500/90 text-zinc-900'
-        : 'bg-red-600/90 text-white';
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
 
   const el = document.createElement('div');
   el.setAttribute('role', 'status');
@@ -815,15 +825,15 @@ function animateSubmitMapSection() {
   const root = document.getElementById('submitMapSection');
   if (!root) return;
 
-  root.classList.add('x-anim');
+  root.classList.add(...String('x-anim').trim().split(/\s+/).filter(Boolean));
   __enter(root);
 
   const cards = root.querySelectorAll('#submitMapForm > .rounded-2xl');
   cards.forEach((card, i) => {
-    card.classList.add('pt-card-anim');
+    card.classList.add(...String('pt-card-anim').trim().split(/\s+/).filter(Boolean));
     setTimeout(
       () => {
-        card.classList.add('pt-in');
+        card.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
       },
       70 * i + 60
     );
@@ -846,16 +856,16 @@ function animateSubmitMapSection() {
 function animatePlaytestToolbar() {
   const bar = document.querySelector('#playtestSection .toolbar');
   if (!bar) return;
-  bar.classList.add('toolbar-anim');
-  requestAnimationFrame(() => bar.classList.add('in'));
+  bar.classList.add(...String('toolbar-anim').trim().split(/\s+/).filter(Boolean));
+  requestAnimationFrame(() => bar.classList.add(...String('in').trim().split(/\s+/).filter(Boolean)));
 
   const buttons = bar.querySelectorAll('.pt-toolbar-button');
   const baseDelay = 40;
   buttons.forEach((btn, i) => {
-    btn.classList.add('pt-card-anim');
+    btn.classList.add(...String('pt-card-anim').trim().split(/\s+/).filter(Boolean));
     setTimeout(
       () => {
-        btn.classList.add('pt-in');
+        btn.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
       },
       baseDelay * i + 60
     );
@@ -865,10 +875,10 @@ function animatePlaytestToolbar() {
 function animateSubmitRecordSection() {
   const sec = document.getElementById('submitRecordSection');
   if (!sec) return;
-  sec.classList.remove('sr-enter', 'sr-in');
+  sec.classList.remove(...String('sr-enter').trim().split(/\s+/).filter(Boolean), ...String('sr-in').trim().split(/\s+/).filter(Boolean));
   void sec.offsetWidth;
-  sec.classList.add('sr-enter');
-  requestAnimationFrame(() => sec.classList.add('sr-in'));
+  sec.classList.add(...String('sr-enter').trim().split(/\s+/).filter(Boolean));
+  requestAnimationFrame(() => sec.classList.add(...String('sr-in').trim().split(/\s+/).filter(Boolean)));
 
   const code = document.getElementById('mapCodeInput');
   if (code && !code.value) code.focus({ preventScroll: true });
@@ -909,25 +919,25 @@ function renderPlaytestSkeletonCards(count = window.itemsPerPage || 12) {
   for (let i = 0; i < count; i++) {
     const card = document.createElement('article');
     card.setAttribute('data-skeleton', '1');
-    card.className = 'rounded-xl border border-white/10 bg-zinc-900/60 p-3 animate-pulse';
+    card.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 animate-pulse';
 
     card.innerHTML = `
       <header class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 min-w-0">
-          <div class="h-8 w-8 rounded-full bg-white/10 ring-1 ring-white/10"></div>
+          <div class="h-8 w-8 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
           <div class="space-y-1">
-            <div class="h-3 w-36 max-w-[60vw] rounded bg-white/10"></div>
-            <div class="h-2.5 w-20 rounded bg-white/10"></div>
+            <div class="h-3 w-36 max-w-[60vw] rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
+            <div class="h-2.5 w-20 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
           </div>
         </div>
-        <div class="h-10 w-24 rounded-md bg-white/10 ring-1 ring-white/10"></div>
+        <div class="h-10 w-24 rounded-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
       </header>
 
       <div class="mt-3">
-        <div class="h-3 w-48 max-w-[70%] rounded bg-white/10"></div>
+        <div class="h-3 w-48 max-w-[70%] rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
         <div class="mt-2 flex items-center justify-between">
-          <div class="h-6 w-28 rounded-full bg-white/10"></div>
-          <div class="h-5 w-16 rounded-full bg-white/10"></div>
+          <div class="h-6 w-28 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
+          <div class="h-5 w-16 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
         </div>
       </div>
     `;
@@ -1016,8 +1026,8 @@ function animatePlaytestCardsAndSplitflap() {
   if (!container) return;
   const cards = container.querySelectorAll('.playtest-embed');
   cards.forEach((card, i) => {
-    card.classList.add('pt-card-anim');
-    setTimeout(() => card.classList.add('pt-in'), 80 * i);
+    card.classList.add(...String('pt-card-anim').trim().split(/\s+/).filter(Boolean));
+    setTimeout(() => card.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean)), 80 * i);
   });
   if (typeof applySplitFlap === 'function') {
     cards.forEach((card) => {
@@ -1053,13 +1063,13 @@ function mountLoadingBar() {
 function showLoadingBar() {
   mountLoadingBar();
   requestAnimationFrame(() => {
-    loadingEl.classList.add('is-visible');
+    loadingEl.classList.add(...String('is-visible').trim().split(/\s+/).filter(Boolean));
   });
 }
 
 function hideLoadingBar() {
   if (!loadingEl) return;
-  loadingEl.classList.remove('is-visible');
+  loadingEl.classList.remove(...String('is-visible').trim().split(/\s+/).filter(Boolean));
 }
 
 /* =========================
@@ -1149,10 +1159,10 @@ function setupAutocompleteInline(inputEl, dropdownEl, config = { type: 'creator'
   const typeToKind = (type) => (type === 'creator' ? 'users' : type === 'map' ? 'map-names' : '');
 
   function show() {
-    dropdownEl.classList.remove('hidden');
+    dropdownEl.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
   function hide() {
-    dropdownEl.classList.add('hidden');
+    dropdownEl.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
   function clear() {
     dropdownEl.innerHTML = '';
@@ -1163,7 +1173,7 @@ function setupAutocompleteInline(inputEl, dropdownEl, config = { type: 'creator'
     list.forEach((s) => {
       const d = document.createElement('div');
       d.className =
-        'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
       d.textContent = s.label;
       d.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1263,14 +1273,14 @@ function _fallbackGetSuggestionsContainer(containerId, input) {
     el.className = [
       'suggestions-container',
       'absolute left-0 right-0 top-full mt-1 z-50',
-      'rounded-lg border border-white/10 bg-zinc-900/95 text-sm text-zinc-100',
-      'shadow-xl ring-1 ring-white/10',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 text-sm text-zinc-900 dark:text-zinc-100',
+      'shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10',
       'max-h-56 overflow-y-auto hidden',
     ].join(' ');
 
     const wrapper = input.parentElement;
     if (wrapper && getComputedStyle(wrapper).position === 'static') {
-      wrapper.classList.add('relative');
+      wrapper.classList.add(...String('relative').trim().split(/\s+/).filter(Boolean));
     }
     (wrapper || document.body).appendChild(el);
   }
@@ -1383,7 +1393,7 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
   const suggestions = () => _getSuggestionsContainer(containerId, input);
   const hide = () => {
     const el = document.getElementById(containerId);
-    if (el) el.classList.add('hidden');
+    if (el) el.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   };
 
   function shouldSkipAutocompleteOnce() {
@@ -1409,7 +1419,7 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
     box.innerHTML = '';
 
     if (!list.length) {
-      box.classList.add('hidden');
+      box.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       box.style.display = 'none';
       return;
     }
@@ -1417,7 +1427,7 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
     list.forEach((s) => {
       const d = document.createElement('div');
       d.className =
-        'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
       d.textContent = s.label;
       d.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1428,7 +1438,7 @@ function setupAutocomplete(input, { kind, containerId, minChars = 2, pageSize = 
       box.appendChild(d);
     });
 
-    box.classList.remove('hidden', 'opacity-0', 'translate-y-2', 'scale-95');
+    box.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
     box.style.display = 'block';
   }
 
@@ -1629,15 +1639,15 @@ function _hideList(list) {
   if (!list) return;
 
   if (list.classList.contains('dd-anim')) {
-    list.classList.remove('dd-in');
-    list.classList.add('dd-out');
+    list.classList.remove(...String('dd-in').trim().split(/\s+/).filter(Boolean));
+    list.classList.add(...String('dd-out').trim().split(/\s+/).filter(Boolean));
     setTimeout(() => {
-      list.classList.add('hidden');
-      list.classList.remove('dd-out');
+      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      list.classList.remove(...String('dd-out').trim().split(/\s+/).filter(Boolean));
       list.style.display = 'none';
     }, 180);
   } else {
-    list.classList.add('hidden');
+    list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     list.style.display = 'none';
   }
 }
@@ -1645,7 +1655,7 @@ function _hideList(list) {
 function _showList(list) {
   if (!list) return;
 
-  list.classList.remove('hidden', 'dd-out');
+  list.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean), ...String('dd-out').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'block';
   list.style.maxHeight = '260px';
   list.style.overflowY = 'auto';
@@ -1653,7 +1663,7 @@ function _showList(list) {
   list.style.webkitOverflowScrolling = 'touch';
 
   if (list.classList.contains('dd-anim')) {
-    requestAnimationFrame(() => list.classList.add('dd-in'));
+    requestAnimationFrame(() => list.classList.add(...String('dd-in').trim().split(/\s+/).filter(Boolean)));
   }
 }
 
@@ -1691,13 +1701,13 @@ function populateRadioDropdown(dropdownId, options, groupName, placeholder) {
 
     const label = document.createElement('label');
     label.className = isDifficulty
-      ? 'flex items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10'
-      : 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5 cursor-pointer';
+      ? 'flex items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/10 focus:bg-zinc-100 dark:focus:bg-white/10'
+      : 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer';
 
     if (isDifficulty) {
       label.innerHTML = `
         <input type="radio" name="${groupName}" value="${raw}" class="accent-emerald-500 sr-only">
-        <span class="inline-block h-2.5 w-2.5 rounded-full ${difficultyDotClass(displayText)} ring-1 ring-inset ring-white/20"></span>
+        <span class="inline-block h-2.5 w-2.5 rounded-full ${difficultyDotClass(displayText)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20"></span>
         <span class="truncate">${displayText}</span>
       `;
     } else {
@@ -1727,7 +1737,7 @@ function populateCheckboxDropdown(dropdownId, options, inputName) {
     const raw = opt.raw || opt.value || displayText;
     const label = document.createElement('label');
     label.className =
-      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5 cursor-pointer';
+      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer';
     label.innerHTML = `
       <input type="checkbox" name="${inputName}" value="${raw}" class="accent-emerald-500">
       <span>${displayText}</span>
@@ -1773,8 +1783,8 @@ function setupFakeSelect(id, placeholderText = 'Select...') {
   if (!btn.getAttribute('data-placeholder')) btn.setAttribute('data-placeholder', placeholderText);
   const labelSpan = _ensureBtnLabelSpan(btn, placeholderText);
   _hideList(list);
-  btn.classList.add('cursor-pointer');
-  list.classList.add('dropdown-list', 'dd-anim');
+  btn.classList.add(...String('cursor-pointer').trim().split(/\s+/).filter(Boolean));
+  list.classList.add(...String('dropdown-list').trim().split(/\s+/).filter(Boolean), ...String('dd-anim').trim().split(/\s+/).filter(Boolean));
 
   const open = () => {
     const ae = document.activeElement;
@@ -1826,7 +1836,7 @@ function setupFakeSelect(id, placeholderText = 'Select...') {
       const text = sel ? (sel.closest('label')?.textContent || sel.value).trim() : null;
 
       if (container.id === 'difficultyDropdown' && text) {
-        const dot = `<span class="inline-block h-2.5 w-2.5 rounded-full ${difficultyDotClass(text)} ring-1 ring-inset ring-white/20"></span>`;
+        const dot = `<span class="inline-block h-2.5 w-2.5 rounded-full ${difficultyDotClass(text)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20"></span>`;
         labelSpan.innerHTML = `<span class="inline-flex items-center gap-2">${dot}<span class="truncate">${text}</span></span>`;
       } else {
         labelSpan.textContent = text || btn.getAttribute('data-placeholder') || placeholderText;
@@ -1980,9 +1990,9 @@ function setupForms() {
       });
 
       form.querySelectorAll('.custom-multiselect').forEach((dropdown) => {
-        dropdown.classList.remove('open');
+        dropdown.classList.remove(...String('open').trim().split(/\s+/).filter(Boolean));
         const list = dropdown.querySelector('.custom-multiselect-list');
-        if (list) list.classList.remove('show');
+        if (list) list.classList.remove(...String('show').trim().split(/\s+/).filter(Boolean));
       });
     });
   });
@@ -2061,156 +2071,176 @@ function insertUnofficialBanner() {
   if (!host || document.getElementById('srMapSubmitNotice')) return;
 
   const html = `
-    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice is-visible"
-        id="srMapSubmitNotice" role="status" aria-live="polite">
+    <div
+      class="mb-4 rounded-xl border border-amber-300/70 bg-amber-50/90 p-3 ring-1 ring-amber-400/25 sm:p-4
+             dark:border-amber-400/30 dark:bg-amber-500/10 dark:ring-amber-400/20
+             sr-notice is-visible"
+      id="srMapSubmitNotice"
+      role="status"
+      aria-live="polite"
+    >
       <div class="flex items-start gap-3">
-        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z"></path>
         </svg>
+
         <div class="min-w-0">
-          <div class="font-semibold text-amber-300">${t('unofficial_notice.title')}</div>
-          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+          <div class="font-semibold text-amber-900 dark:text-amber-300">
+            ${t('unofficial_notice.title')}
+          </div>
+
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-800 dark:text-amber-100">
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-300"></span>
               <span>${t('unofficial_notice.li1')}</span>
             </li>
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-300"></span>
               <span>${t('unofficial_notice.li2')}</span>
             </li>
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-300"></span>
               <span>${t('unofficial_notice.li3')}</span>
             </li>
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-300"></span>
               <span>${t('unofficial_notice.li4')}</span>
             </li>
           </ul>
         </div>
       </div>
     </div>`;
+
   host.insertAdjacentHTML('afterbegin', html);
 }
 
 function toggleUnofficialBanner() {
   const el = document.getElementById('srMapSubmitNotice');
   if (!el) return;
-  el.classList.toggle('hidden', !!mapOfficial);
+  (() => { const __obj = el; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !!mapOfficial); return __last; })();
 }
 
 function updateOfficialUI() {
-  document.querySelectorAll('#officialSwitch .ofc-btn').forEach((btn) => {
-    const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
-    btn.classList.toggle('bg-white', isOn);
-    btn.classList.toggle('text-zinc-900', isOn);
-    btn.classList.toggle('text-white', !isOn);
-    btn.classList.toggle('hover:bg-white/10', !isOn);
-  });
   const wrap = document.getElementById('officialSwitch');
-  if (wrap) wrap.dataset.selected = mapOfficial ? '1' : '0';
+  if (!wrap) return;
+
+  const toggle = (el, cls, on) =>
+    String(cls || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .forEach((c) => el.classList.toggle(c, !!on));
+
+  wrap.querySelectorAll('.ofc-btn').forEach((btn) => {
+    const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
+
+    toggle(btn, 'bg-white', isOn);
+    toggle(btn, 'text-zinc-900 dark:text-zinc-900', isOn);
+
+    // Inactive
+    toggle(btn, 'text-zinc-900 dark:text-white', !isOn);
+    toggle(btn, 'hover:bg-zinc-100 dark:hover:bg-white/10', !isOn);
+  });
+
+  wrap.dataset.selected = mapOfficial ? '1' : '0';
+
   const editBtn = document.getElementById('editCreatorBtn');
   if (editBtn) editBtn.classList.toggle('hidden', !!mapOfficial);
+
+  if (typeof toggleUnofficialBanner === 'function') toggleUnofficialBanner();
 }
 
 function setupOfficialSwitch() {
   const wrap = document.getElementById('officialSwitch');
-  if (!wrap || wrap.dataset.bound === '1') return;
-  wrap.dataset.bound = '1';
+  if (!wrap) return;
 
-  if (getComputedStyle(wrap).position === 'static') {
-    wrap.style.position = 'relative';
-  }
+  const highlight = wrap.querySelector('.ofc-highlight');
 
-  let highlight = wrap.querySelector('[data-ofc-highlight]');
-  if (!highlight) {
-    highlight = document.createElement('span');
-    highlight.setAttribute('data-ofc-highlight', '1');
-    Object.assign(highlight.style, {
-      position: 'absolute',
-      top: '2px',
-      bottom: '2px',
-      left: '0',
-      width: '0',
-      borderRadius: '0.625rem',
-      background: 'white',
-      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
-      transform: 'translateX(0)',
-      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
-      willChange: 'transform,width',
-      zIndex: '0'
-    });
-    wrap.appendChild(highlight);
-  }
-
-  wrap.querySelectorAll('.ofc-btn').forEach(btn => {
-    btn.style.position = 'relative';
-    btn.style.zIndex = '1';
-  });
+  const toggle = (el, cls, on) =>
+    String(cls || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .forEach((c) => el.classList.toggle(c, !!on));
 
   const moveHighlightTo = (btn) => {
-    if (!btn) return;
-    const br = btn.getBoundingClientRect();
-    const cr = wrap.getBoundingClientRect();
-    const left = br.left - cr.left;
-    const width = br.width;
+    if (!highlight || !btn) return;
+    const rWrap = wrap.getBoundingClientRect();
+    const rBtn = btn.getBoundingClientRect();
+    const left = Math.max(0, rBtn.left - rWrap.left);
+    const width = Math.max(0, rBtn.width);
+    highlight.style.transform = `translateX(${left}px)`;
+    highlight.style.width = `${width}px`;
+  };
 
-    requestAnimationFrame(() => {
-      highlight.style.width = `${Math.max(0, width)}px`;
-      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+  const updateUI = () => {
+    wrap.querySelectorAll('.ofc-btn').forEach((btn) => {
+      const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
+
+      toggle(btn, 'bg-white', isOn);
+      toggle(btn, 'text-zinc-900 dark:text-zinc-900', isOn);
+
+      toggle(btn, 'text-zinc-900 dark:text-white', !isOn);
+      toggle(btn, 'hover:bg-zinc-100 dark:hover:bg-white/10', !isOn);
+
+      if (isOn) moveHighlightTo(btn);
     });
   };
 
-  window.mapOfficial = typeof window.mapOfficial === 'boolean' ? window.mapOfficial : true;
+  const applyOfficial = (officialOnly, { syncDataset = true } = {}) => {
+    mapOfficial = !!officialOnly;
+    window.mapOfficial = mapOfficial;
 
-  function updateOfficialUI() {
-    wrap.querySelectorAll('.ofc-btn').forEach((btn) => {
-      const isOn = btn.getAttribute('data-official') === (mapOfficial ? '1' : '0');
-      btn.classList.toggle('bg-white', isOn);
-      btn.classList.toggle('text-zinc-900', isOn);
-      btn.classList.toggle('text-white', !isOn);
-      btn.classList.toggle('hover:bg-white/10', !isOn);
-      if (isOn) moveHighlightTo(btn);
-    });
-
-    wrap.dataset.selected = mapOfficial ? '1' : '0';
+    if (syncDataset) wrap.dataset.selected = mapOfficial ? '1' : '0';
 
     const editBtn = document.getElementById('editCreatorBtn');
     if (editBtn) editBtn.classList.toggle('hidden', !!mapOfficial);
 
-    if (typeof toggleUnofficialBanner === 'function') {
-      toggleUnofficialBanner();
-    }
+    if (typeof toggleUnofficialBanner === 'function') toggleUnofficialBanner();
+
+    updateUI();
+    const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
+    if (active) moveHighlightTo(active);
+  };
+
+  // init
+  if (wrap.dataset.selected === '1' || wrap.dataset.selected === '0') {
+    mapOfficial = wrap.dataset.selected === '1';
+    window.mapOfficial = mapOfficial;
+  } else {
+    wrap.dataset.selected = mapOfficial ? '1' : '0';
   }
 
-  wrap.addEventListener('click', (e) => {
-    const b = e.target.closest('.ofc-btn');
-    if (!b) return;
-    const next = b.getAttribute('data-official') === '1';
-    if (next === mapOfficial) return;
+  applyOfficial(mapOfficial, { syncDataset: false });
 
-    mapOfficial = next;
-    updateOfficialUI();
+  // click
+  wrap.querySelectorAll('.ofc-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const next = btn.getAttribute('data-official') === '1';
+      if (next === mapOfficial) return;
 
-    if (typeof primeMainCreatorFromSession === 'function') {
-      primeMainCreatorFromSession();
-    }
+      applyOfficial(next);
+
+      try {
+        await primeMainCreatorFromInput();
+        await renderSubmitResults();
+      } catch {}
+    });
   });
 
-  requestAnimationFrame(() => {
-    updateOfficialUI();
-    setTimeout(() => {
-      const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
-      moveHighlightTo(active);
-    }, 60);
-  });
-
-  const onResize = () => {
-    const active = wrap.querySelector(`.ofc-btn[data-official="${mapOfficial ? '1' : '0'}"]`);
-    moveHighlightTo(active);
-  };
-  window.addEventListener('resize', onResize);
-  document.fonts && document.fonts.ready && document.fonts.ready.then(onResize);
+  // external sync
+  if (!wrap.__ofcObs) {
+    let last = wrap.dataset.selected || (mapOfficial ? '1' : '0');
+    const obs = new MutationObserver(() => {
+      const now = wrap.dataset.selected;
+      if (now === last) return;
+      last = now;
+      if (now !== '1' && now !== '0') return;
+      applyOfficial(now === '1', { syncDataset: false });
+    });
+    obs.observe(wrap, { attributes: true, attributeFilter: ['data-selected'] });
+    wrap.__ofcObs = obs;
+  }
 }
 
 function initSubmitHelpPopovers(scopeEl = document) {
@@ -2220,49 +2250,49 @@ function initSubmitHelpPopovers(scopeEl = document) {
     meta() {
       return `
         <div class="space-y-2">
-          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.meta.title','1) Metadata')}</div>
+          <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${H('how_to_submit.meta.title','1) Metadata')}</div>
           <ul class="space-y-1.5">
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_creator','Main creator...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_code','Map code...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_name','Map name...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.meta.li_checkpoints','Checkpoints...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.meta.li_creator','Main creator...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.meta.li_code','Map code...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.meta.li_name','Map name...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.meta.li_checkpoints','Checkpoints...')}</li>
           </ul>
         </div>`;
     },
     required() {
       return `
         <div class="space-y-2">
-          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.required.title','2) Required fields')}</div>
-          <p class="text-sm text-zinc-300">${H('how_to_submit.required.p1','These fields must be provided...')}</p>
+          <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${H('how_to_submit.required.title','2) Required fields')}</div>
+          <p class="text-sm text-zinc-700 dark:text-zinc-300">${H('how_to_submit.required.p1','These fields must be provided...')}</p>
           <ul class="space-y-1.5 mt-1">
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_difficulty','Difficulty...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_category','Category...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_mechanics','Mechanics...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.required.li_restrictions','Restrictions...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.required.li_difficulty','Difficulty...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.required.li_category','Category...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.required.li_mechanics','Mechanics...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.required.li_restrictions','Restrictions...')}</li>
           </ul>
         </div>`;
     },
     medals() {
       return `
         <div class="space-y-2">
-          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.medals.title','3) Medals')}</div>
-          <p class="text-sm text-zinc-300">${H('how_to_submit.medals.p1','You may define times...')}</p>
+          <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${H('how_to_submit.medals.title','3) Medals')}</div>
+          <p class="text-sm text-zinc-700 dark:text-zinc-300">${H('how_to_submit.medals.p1','You may define times...')}</p>
           <ul class="space-y-1.5 mt-1">
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_rules','If you set one medal...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_pattern','Format: 1–5 digits...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.medals.li_rules','If you set one medal...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.medals.li_pattern','Format: 1–5 digits...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold')}</li>
           </ul>
         </div>`;
     },
     optional() {
       return `
         <div class="space-y-2">
-          <div class="text-xs font-semibold text-zinc-300">${H('how_to_submit.optional.title','4) Optional')}</div>
+          <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${H('how_to_submit.optional.title','4) Optional')}</div>
           <ul class="space-y-1.5">
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_title','Title...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_banner','Custom banner...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_description','Description...')}</li>
-            <li class="text-sm text-zinc-200">• ${H('how_to_submit.optional.li_guide','Guide URL(s)...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.optional.li_title','Title...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.optional.li_banner','Custom banner...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.optional.li_description','Description...')}</li>
+            <li class="text-sm text-zinc-800 dark:text-zinc-200">• ${H('how_to_submit.optional.li_guide','Guide URL(s)...')}</li>
           </ul>
         </div>`;
     }
@@ -2272,16 +2302,16 @@ function initSubmitHelpPopovers(scopeEl = document) {
   const pops = scopeEl.querySelectorAll('.gp-help-pop');
 
   const applyPosHidden = (pop, pos) => {
-    pop.classList.remove('top-12','bottom-12','origin-top-right','origin-bottom-right','translate-y-1','-translate-y-1');
+    pop.classList.remove(...String('top-12').trim().split(/\s+/).filter(Boolean), ...String('bottom-12').trim().split(/\s+/).filter(Boolean), ...String('origin-top-right').trim().split(/\s+/).filter(Boolean), ...String('origin-bottom-right').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean), ...String('-translate-y-1').trim().split(/\s+/).filter(Boolean));
     if (pos === 'top') {
-      pop.classList.add('bottom-24','origin-bottom-right','-translate-y-1');
+      pop.classList.add(...String('bottom-24').trim().split(/\s+/).filter(Boolean), ...String('origin-bottom-right').trim().split(/\s+/).filter(Boolean), ...String('-translate-y-1').trim().split(/\s+/).filter(Boolean));
     } else {
-      pop.classList.add('top-12','origin-top-right','translate-y-1');
+      pop.classList.add(...String('top-12').trim().split(/\s+/).filter(Boolean), ...String('origin-top-right').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean));
     }
   };
   const applyPosShown = (pop) => {
-    pop.classList.remove('translate-y-1','-translate-y-1');
-    pop.classList.add('translate-y-0');
+    pop.classList.remove(...String('translate-y-1').trim().split(/\s+/).filter(Boolean), ...String('-translate-y-1').trim().split(/\s+/).filter(Boolean));
+    pop.classList.add(...String('translate-y-0').trim().split(/\s+/).filter(Boolean));
   };
 
   const showPop = (pop, btn) => {
@@ -2293,9 +2323,9 @@ function initSubmitHelpPopovers(scopeEl = document) {
     pop.setAttribute('aria-hidden', 'false');
     btn.setAttribute('aria-expanded', 'true');
 
-    pop.classList.remove('opacity-0','scale-95','pointer-events-none');
+    pop.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean));
     applyPosShown(pop);
-    pop.classList.add('opacity-100','scale-100','pointer-events-auto');
+    pop.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-auto').trim().split(/\s+/).filter(Boolean));
   };
 
   const hidePop = (pop, btn) => {
@@ -2304,8 +2334,8 @@ function initSubmitHelpPopovers(scopeEl = document) {
     pop.setAttribute('aria-hidden', 'true');
     if (btn) btn.setAttribute('aria-expanded', 'false');
 
-    pop.classList.add('opacity-0','scale-95','pointer-events-none');
-    pop.classList.remove('opacity-100','scale-100','translate-y-0','pointer-events-auto');
+    pop.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean));
+    pop.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean), ...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-auto').trim().split(/\s+/).filter(Boolean));
     applyPosHidden(pop, pos);
   };
 
@@ -2318,10 +2348,10 @@ function initSubmitHelpPopovers(scopeEl = document) {
   };
 
   pops.forEach((p) => {
-    p.classList.add('transition','duration-200','ease-out','will-change-transform','will-change-opacity');
+    p.classList.add(...String('transition').trim().split(/\s+/).filter(Boolean), ...String('duration-200').trim().split(/\s+/).filter(Boolean), ...String('ease-out').trim().split(/\s+/).filter(Boolean), ...String('will-change-transform').trim().split(/\s+/).filter(Boolean), ...String('will-change-opacity').trim().split(/\s+/).filter(Boolean));
     p.setAttribute('aria-hidden', 'true');
     p.setAttribute('data-open', 'false');
-    p.classList.add('opacity-0','scale-95','pointer-events-none');
+    p.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean));
   });
 
   btns.forEach((btn) => {
@@ -2331,7 +2361,7 @@ function initSubmitHelpPopovers(scopeEl = document) {
     if (!pop) return;
 
     pop.setAttribute('data-help-pos', pos);
-    pop.classList.remove('top-12','bottom-12','origin-top-right','origin-bottom-right','translate-y-1','-translate-y-1','translate-y-0');
+    pop.classList.remove(...String('top-12').trim().split(/\s+/).filter(Boolean), ...String('bottom-12').trim().split(/\s+/).filter(Boolean), ...String('origin-top-right').trim().split(/\s+/).filter(Boolean), ...String('origin-bottom-right').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean), ...String('-translate-y-1').trim().split(/\s+/).filter(Boolean), ...String('translate-y-0').trim().split(/\s+/).filter(Boolean));
     applyPosHidden(pop, pos);
 
     btn.addEventListener('click', (e) => {
@@ -2408,9 +2438,9 @@ function setupBannerDropzone() {
       <div class="absolute inset-0">
         <!-- l'image est injectée via JS pour pouvoir gérer load/error -->
       </div>
-      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
-        <span class="text-xs text-white/90 truncate px-1">${file.name}</span>
-        <button type="button" id="bannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-zinc-900/7 dark:bg-black/40 backdrop-blur">
+        <span class="text-xs text-zinc-900 dark:text-white/90 truncate px-1">${file.name}</span>
+        <button type="button" id="bannerRemoveBtn" class="rounded-md cursor-pointer border border-zinc-300/80 dark:border-white/20 px-2 py-1 text-xs text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10">
           ${t('map.remove')}
         </button>
       </div>
@@ -2480,14 +2510,14 @@ function setupBannerDropzone() {
 
   drop.addEventListener('dragover', (e) => {
     e.preventDefault();
-    drop.classList.add('ring-2', 'ring-emerald-500/60');
+    drop.classList.add(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   drop.addEventListener('dragleave', () => {
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
     const file = e.dataTransfer?.files?.[0];
     acceptFile(file);
   });
@@ -2569,9 +2599,9 @@ function resetBannerDropzone() {
   window.customBannerUrl = null;
   drop.innerHTML = `
     <input id="bannerInput" type="file" accept="image/*" class="hidden">
-    <div id="bannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+    <div id="bannerPlaceholder" class="text-sm text-zinc-700 dark:text-zinc-300 px-3 text-center select-none">
       ${t('record.drag_and_drop') || 'Drag & drop or click to upload'}
-      <div class="text-[11px] text-zinc-400 mt-1">${t('map.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.'}</div>
+      <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1">${t('map.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.'}</div>
     </div>
   `;
   setupBannerDropzone();
@@ -2600,8 +2630,8 @@ async function uploadImageGeneric(file) {
 function showBusy(el) {
   if (!el) return () => {};
   const o = document.createElement('div');
-  o.className = 'absolute inset-0 grid place-items-center bg-black/40 backdrop-blur-sm';
-  o.innerHTML = `<div class="rounded-md bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100 ring-1 ring-emerald-500/60">${t('record.uploading_screenshot') || 'Uploading…'}</div>`;
+  o.className = 'absolute inset-0 grid place-items-center bg-zinc-900/7 dark:bg-black/40 backdrop-blur-sm';
+  o.innerHTML = `<div class="rounded-md bg-white/85 dark:bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 ring-1 ring-emerald-500/60">${t('record.uploading_screenshot') || 'Uploading…'}</div>`;
   el.appendChild(o);
   return () => o.remove();
 }
@@ -2614,7 +2644,7 @@ async function startBannerUpload(file) {
     window.customBannerUrl = url;
     const ok = document.createElement('div');
     ok.className =
-      'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-white px-2 py-0.5 shadow';
+      'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-zinc-900 dark:text-white px-2 py-0.5 shadow';
     ok.textContent = 'Uploaded';
     drop.appendChild(ok);
     setTimeout(() => ok.remove(), 1500);
@@ -2758,7 +2788,7 @@ function showAddSecondaryCreatorInput() {
   const metaCol = document.getElementById('metaCreatorsCol');
   const row = document.createElement('span');
   row.className = 'meta-value creator-secondary';
-  row.classList.add('flex', 'gap-2');
+  row.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean), ...String('gap-2').trim().split(/\s+/).filter(Boolean));
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -2885,7 +2915,7 @@ function editSecondaryCreator(idx) {
 
   const editRow = document.createElement('span');
   editRow.className = 'meta-value creator-secondary';
-  editRow.classList.add('flex', 'items-end', 'gap-2');
+  editRow.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean), ...String('items-end').trim().split(/\s+/).filter(Boolean), ...String('gap-2').trim().split(/\s+/).filter(Boolean));
   editRow.appendChild(wrapper);
   editRow.appendChild(buttonsBox);
 
@@ -3051,7 +3081,7 @@ function editInline(field) {
   if (label.classList.contains('editing')) return;
 
   const text = (label.textContent || '').trim();
-  label.classList.add('editing');
+  label.classList.add(...String('editing').trim().split(/\s+/).filter(Boolean));
 
   const editBtnEl = document.querySelector(`[data-edit-target="${CSS.escape(field)}"]`);
 
@@ -3068,7 +3098,7 @@ function editInline(field) {
       if (!mainRow.dataset._origClass) {
         mainRow.dataset._origClass = mainRow.className;
       }
-      mainRow.classList.add('flex', 'flex-col', 'items-start', 'gap-2');
+      mainRow.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean), ...String('flex-col').trim().split(/\s+/).filter(Boolean), ...String('items-start').trim().split(/\s+/).filter(Boolean), ...String('gap-2').trim().split(/\s+/).filter(Boolean));
     }
   }
 
@@ -3079,9 +3109,9 @@ function editInline(field) {
     input.rows = 3;
     input.className = [
       'w-full max-w-full min-w-0',
-      'rounded-lg border border-white/10 bg-zinc-900/70',
-      'px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500',
-      'shadow-lg ring-1 ring-white/10',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70',
+      'px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500',
+      'shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10',
       'focus:outline-none focus:ring-2 focus:ring-emerald-500/60',
       'resize-y',
     ].join(' ');
@@ -3090,9 +3120,9 @@ function editInline(field) {
     input.type = 'number';
     input.className = [
       'w-28 max-w-full',
-      'rounded-lg border border-white/10 bg-zinc-900/70',
-      'px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500',
-      'shadow-lg ring-1 ring-white/10',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70',
+      'px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500',
+      'shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10',
       'focus:outline-none focus:ring-2 focus:ring-emerald-500/60',
     ].join(' ');
   } else {
@@ -3101,9 +3131,9 @@ function editInline(field) {
     input.autocomplete = 'off';
     input.className = [
       'min-w-[12rem] max-w-full',
-      'rounded-lg border border-white/10 bg-zinc-900/70',
-      'px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500',
-      'shadow-lg ring-1 ring-white/10',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70',
+      'px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500',
+      'shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10',
       'focus:outline-none focus:ring-2 focus:ring-emerald-500/60',
     ].join(' ');
 
@@ -3113,8 +3143,8 @@ function editInline(field) {
       suggestionsDropdown.className = [
         'suggestions-dropdown',
         'absolute left-0 right-0 top-full z-50 mt-1',
-        'rounded-lg border border-white/10 bg-zinc-900/95',
-        'shadow-2xl ring-1 ring-white/10 backdrop-blur',
+        'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95',
+        'shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur',
         'max-h-56 overflow-y-auto hidden',
       ].join(' ');
     }
@@ -3140,10 +3170,10 @@ function editInline(field) {
   cancelBtn.textContent = (t('map.meta.cancel') || 'Cancel');
   cancelBtn.className = [
     'inline-flex items-center gap-1',
-    'rounded-lg border border-white/10',
-    'bg-white/5 text-zinc-200',
+    'rounded-lg border border-zinc-200/80 dark:border-white/10',
+    'bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200',
     'px-3 py-1.5 text-sm font-medium cursor-pointer',
-    'hover:bg-white/10',
+    'hover:bg-zinc-100 dark:hover:bg-white/10',
     'focus:outline-none focus:ring-2 focus:ring-zinc-400/40',
     'shadow-md',
   ].join(' ');
@@ -3163,8 +3193,8 @@ function editInline(field) {
     'inline-edit-container',
     'mt-2 w-full max-w-full',
     'flex flex-wrap items-start gap-2',
-    'rounded-xl border border-white/10 bg-white/5',
-    'px-2.5 py-2 ring-1 ring-white/5',
+    'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5',
+    'px-2.5 py-2 ring-1 ring-zinc-300/40 dark:ring-white/5',
   ].join(' ');
   container.appendChild(inputWrap);
   container.appendChild(buttonsBox);
@@ -3250,7 +3280,7 @@ function editInline(field) {
   function closeEdit() {
     label.style.display = '';
     if (editBtnEl) editBtnEl.style.display = '';
-    label.classList.remove('editing');
+    label.classList.remove(...String('editing').trim().split(/\s+/).filter(Boolean));
 
     if (field === 'metaCreatorMain') {
       const mainRow = document.querySelector('#metaCreatorsCol .main-creator-row');
@@ -3259,7 +3289,7 @@ function editInline(field) {
           mainRow.className = mainRow.dataset._origClass;
           delete mainRow.dataset._origClass;
         } else {
-          mainRow.classList.remove('flex', 'flex-col', 'items-start', 'gap-2');
+          mainRow.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean), ...String('flex-col').trim().split(/\s+/).filter(Boolean), ...String('items-start').trim().split(/\s+/).filter(Boolean), ...String('gap-2').trim().split(/\s+/).filter(Boolean));
         }
       }
     }
@@ -3416,7 +3446,7 @@ function renderSubmitMapSection() {
 
   const helpBtn = (key, pos = 'bottom') => `
     <button type="button"
-      class="gp-help-btn cursor-pointer absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+      class="gp-help-btn cursor-pointer absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
       aria-haspopup="dialog" aria-expanded="false" data-help-key="${key}" data-help-pos="${pos}">
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 15a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 17Zm1.35-4.9v.1a1 1 0 0 1-2 0 2.85 2.85 0 0 1 1.64-2.59 1.72 1.72 0 0 0 .99-1.46 1.9 1.9 0 0 0-3.8.05 1 1 0 0 1-2 0 3.9 3.9 0 0 1 7.8-.13 3.67 3.67 0 0 1-2.63 3.6 1 1 0 0 0-.99.93Z"/>
@@ -3425,8 +3455,8 @@ function renderSubmitMapSection() {
     </button>
     <div
       class="gp-help-pop absolute right-3 z-50 w-80
-             rounded-xl border border-white/10 bg-zinc-900/95 p-3 shadow-2xl backdrop-blur
-             supports-[backdrop-filter]:bg-zinc-900/80
+             rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-3 shadow-2xl backdrop-blur
+             supports-[backdrop-filter]:bg-white/85 dark:bg-zinc-900/80
              transition ease-out origin-top-right
              will-change-transform will-change-opacity
              opacity-0 scale-95 pointer-events-none"
@@ -3436,7 +3466,7 @@ function renderSubmitMapSection() {
       data-open="false"
       data-help-for="${key}"
     >
-      <div class="text-sm text-zinc-200 leading-relaxed" data-help-content></div>
+      <div class="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed" data-help-content></div>
     </div>
   `;
 
@@ -3444,18 +3474,18 @@ function renderSubmitMapSection() {
     <form id="submitMapForm" class="space-y-6">
 
       <!-- META -->
-      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in" data-card="meta">
+      <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 pt-card-anim pt-in" data-card="meta">
         ${helpBtn('meta')}
 
         <!-- Toggle Official / Unofficial -->
         <div class="mb-3">
-          <div id="officialSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+          <div id="officialSwitch" class="inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-1">
             <button type="button" data-official="1"
               class="ofc-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
               ${t('map.meta.official') || 'Official'}
             </button>
             <button type="button" data-official="0"
-              class="ofc-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10">
+              class="ofc-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10">
               ${t('map.meta.unofficial') || 'Unofficial'}
             </button>
           </div>
@@ -3463,13 +3493,13 @@ function renderSubmitMapSection() {
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="sm:col-span-2">
-            <span class="block text-xs text-zinc-400 mb-1">${t('map.meta.creator')}</span>
+            <span class="block text-xs text-zinc-600 dark:text-zinc-400 mb-1">${t('map.meta.creator')}</span>
             <div id="metaCreatorsCol" class="flex flex-wrap items-center gap-2">
-              <span class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5">
-                <span id="metaCreatorMain" class="text-sm text-zinc-200">N/A</span>
+              <span class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-1.5">
+                <span id="metaCreatorMain" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</span>
                 <!-- Edit btn -->
                 <button type="button" id="editCreatorBtn"
-                  class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10 hidden"
+                  class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10 hidden"
                   data-edit-target="metaCreatorMain">
                   ${t('map.meta.edit')}
                 </button>
@@ -3477,31 +3507,31 @@ function renderSubmitMapSection() {
             </div>
           </div>
 
-          <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <div class="text-[11px] text-zinc-400">${t('map.meta.code')}</div>
+          <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+            <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${t('map.meta.code')}</div>
             <div class="flex items-center gap-2">
-              <div id="metaCode" class="text-sm text-zinc-200">N/A</div>
-              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaCode">
+              <div id="metaCode" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10" data-edit-target="metaCode">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <div class="text-[11px] text-zinc-400">${t('map.meta.name')}</div>
+          <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+            <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${t('map.meta.name')}</div>
             <div class="flex items-center gap-2">
-              <div id="metaMap" class="text-sm text-zinc-200">N/A</div>
-              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaMap">
+              <div id="metaMap" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10" data-edit-target="metaMap">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <div class="text-[11px] text-zinc-400">${t('map.meta.checkpoints')}</div>
+          <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+            <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${t('map.meta.checkpoints')}</div>
             <div class="flex items-center gap-2">
-              <div id="metaCheckpoints" class="text-sm text-zinc-200">N/A</div>
-              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="metaCheckpoints">
+              <div id="metaCheckpoints" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10" data-edit-target="metaCheckpoints">
                 ${t('map.meta.edit')}
               </button>
             </div>
@@ -3510,61 +3540,61 @@ function renderSubmitMapSection() {
       </div>
 
       <!-- REQUIRED -->
-      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="required">
+      <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="required">
         ${helpBtn('required')}
-        <h3 class="text-sm font-semibold text-zinc-200">${t('map.required_title')}</h3>
+        <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t('map.required_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_difficulty')}</label>
+            <label class="block text-xs text-zinc-600 dark:text-zinc-400 mb-1">${t('map.dropdown.select_difficulty')}</label>
             <div id="difficultyDropdown" class="custom-multiselect relative">
-              <button type="button" id="difficultyDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_difficulty')}">
+              <button type="button" id="difficultyDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_difficulty')}">
                 ${t('map.dropdown.select_difficulty')}
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
+                <svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_category')}</label>
+            <label class="block text-xs text-zinc-600 dark:text-zinc-400 mb-1">${t('map.dropdown.select_category')}</label>
             <div id="categoryDropdown" class="custom-multiselect relative">
-              <button type="button" id="categoryDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_category')}">
+              <button type="button" id="categoryDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_category')}">
                 ${t('map.dropdown.select_category')}
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
+                <svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
 
           <div class="sm:col-span-1">
-            <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_mechanics')}</label>
+            <label class="block text-xs text-zinc-600 dark:text-zinc-400 mb-1">${t('map.dropdown.select_mechanics')}</label>
             <div id="mechanicsDropdown" class="custom-multiselect relative">
-              <button type="button" id="mechanicsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_mechanics')}">
+              <button type="button" id="mechanicsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_mechanics')}">
                 ${t('map.dropdown.select_mechanics')}
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
+                <svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
           </div>
 
           <div class="sm:col-span-1">
-            <label class="block text-xs text-zinc-400 mb-1">${t('map.dropdown.select_restrictions')}</label>
+            <label class="block text-xs text-zinc-600 dark:text-zinc-400 mb-1">${t('map.dropdown.select_restrictions')}</label>
             <div id="restrictionsDropdown" class="custom-multiselect relative">
-              <button type="button" id="restrictionsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_restrictions')}">
+              <button type="button" id="restrictionsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${t('map.dropdown.select_restrictions')}">
                 ${t('map.dropdown.select_restrictions')}
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
+                <svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
               </button>
-              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
+              <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
             </div>
             <div class="sm:col-span-1">
-              <label class="block text-xs text-zinc-400 mb-1">${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}</label>
+              <label class="block text-xs text-zinc-600 dark:text-zinc-400 mb-1">${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}</label>
               <div id="tagsDropdown" class="custom-multiselect relative">
-                <button type="button" id="tagsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}">
+                <button type="button" id="tagsDropdownBtn" class="custom-multiselect-btn inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm" data-placeholder="${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}">
                   ${(typeof t==='function' ? (t('filters.tags') || 'Tags') : 'Tags')}
-                  <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
+                  <svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="m5 7 5 6 5-6H5z"/></svg>
                 </button>
-                <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
+                <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl" aria-hidden="true"></div>
               </div>
             </div>
 
@@ -3573,84 +3603,84 @@ function renderSubmitMapSection() {
       </div>
 
       <!-- OPTIONAL -->
-      <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="optional">
+      <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in" data-card="optional">
         ${helpBtn('optional')}
-        <h3 class="text-sm font-semibold text-zinc-200">${t('map.optional_title')}</h3>
+        <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t('map.optional_title')}</h3>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <label class="block text-[11px] text-zinc-400 mb-1" for="optTitleInput">${t('map.title_label') || 'Title'}</label>
+          <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+            <label class="block text-[11px] text-zinc-600 dark:text-zinc-400 mb-1" for="optTitleInput">${t('map.title_label') || 'Title'}</label>
             <input id="optTitleInput" type="text" maxlength="128"
-              class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+              class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
               placeholder="${t('map.title_placeholder') || 'Optional short title (max 128 chars)'}">
           </div>
 
           <div>
-            <div class="text-[11px] text-zinc-400 mb-1">${t('map.custom_banner') || 'Custom banner'}</div>
-            <div id="bannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
+            <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-1">${t('map.custom_banner') || 'Custom banner'}</div>
+            <div id="bannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/75 dark:bg-zinc-900/60 overflow-hidden cursor-pointer">
               <input id="bannerInput" type="file" accept="image/*" class="hidden">
-              <div id="bannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+              <div id="bannerPlaceholder" class="text-sm text-zinc-700 dark:text-zinc-300 px-3 text-center select-none">
                 ${t('record.drag_and_drop') || 'Drag & drop or click to upload'}
-                <div class="text-[11px] text-zinc-400 mt-1">${t('map.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.'}</div>
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1">${t('map.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.'}</div>
               </div>
             </div>
           </div>
 
-          <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-[11px] text-zinc-400">${t('map.description_label')}</div>
-                <div id="optDescription" class="text-sm text-zinc-200">N/A</div>
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${t('map.description_label')}</div>
+                <div id="optDescription" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
               </div>
-              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="optDescription">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10" data-edit-target="optDescription">
                 ${t('map.meta.edit')}
               </button>
             </div>
           </div>
 
-          <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-[11px] text-zinc-400">${t('map.guide_label')}</div>
-                <div id="optGuide" class="text-sm text-zinc-200">N/A</div>
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${t('map.guide_label')}</div>
+                <div id="optGuide" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
               </div>
-              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10" data-edit-target="optGuide">
+              <button type="button" class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10" data-edit-target="optGuide">
                 ${t('map.meta.edit')}
               </button>
             </div>
-            <p class="mt-2 text-xs text-zinc-400">${t('map.guide_hint') || 'One URL per line; first valid URL is used.'}</p>
+            <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">${t('map.guide_hint') || 'One URL per line; first valid URL is used.'}</p>
           </div>
 
           <!-- MEDALS -->
-          <div class="relative sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2" data-card="medals">
+          <div class="relative sm:col-span-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2" data-card="medals">
             ${helpBtn('medals','top')}
-            <div class="text-[11px] text-zinc-400 mb-2">${t('table.medals') || 'Medals'}</div>
+            <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-2">${t('table.medals') || 'Medals'}</div>
             <div class="grid gap-3 sm:grid-cols-3">
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="${cdnAsset('assets/medals/gold.png')}" alt="Gold" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
-                  <span class="text-sm text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
+                  <span class="text-sm text-zinc-800 dark:text-zinc-200">${t('table.medal_gold') || 'Gold'}</span>
                 </span>
-                <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
+                <input id="medalGoldInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 5550.23" class="shrink-0 w-40 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
 
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="${cdnAsset('assets/medals/silver.png')}" alt="Silver" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
-                  <span class="text-sm text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
+                  <span class="text-sm text-zinc-800 dark:text-zinc-200">${t('table.medal_silver') || 'Silver'}</span>
                 </span>
-                <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
+                <input id="medalSilverInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 7599.33" class="shrink-0 w-40 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
 
               <label class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 min-w-0">
                   <img src="${cdnAsset('assets/medals/bronze.png')}" alt="Bronze" class="h-5 w-5 select-none pointer-events-none" loading="lazy" decoding="async">
-                  <span class="text-sm text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
+                  <span class="text-sm text-zinc-800 dark:text-zinc-200">${t('table.medal_bronze') || 'Bronze'}</span>
                 </span>
-                <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
+                <input id="medalBronzeInput" type="text" inputmode="decimal" pattern="\\d{1,5}(?:\\.\\d{1,2})?" placeholder="e.g. 8066.75" class="shrink-0 w-40 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
               </label>
             </div>
-            <p class="mt-2 text-xs text-zinc-400">${t('map.medals_hint')}</p>
+            <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">${t('map.medals_hint')}</p>
           </div>
         </div>
       </div>
@@ -3659,7 +3689,7 @@ function renderSubmitMapSection() {
         <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white text-zinc-900 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
           ${t('map.submit_label')}
         </button>
-        <button type="button" class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5" form="submitMapForm">
+        <button type="button" class="cancel-btn cursor-pointer inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10" form="submitMapForm">
           ${t('record.cancel')}
         </button>
       </div>
@@ -3719,7 +3749,7 @@ async function autoUploadScreenshot(file) {
     window.screenshotUrl = url;
     const ok = document.createElement('div');
     ok.className =
-      'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-white px-2 py-0.5 shadow';
+      'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-zinc-900 dark:text-white px-2 py-0.5 shadow';
     ok.textContent = 'Uploaded';
     dz.appendChild(ok);
     setTimeout(() => ok.remove(), 1500);
@@ -3795,14 +3825,14 @@ function showNotice() {
   if (!document.getElementById('srPlaytestingNotice')) {
     host.insertAdjacentHTML('afterbegin', bannerHTML());
     const el = document.getElementById('srPlaytestingNotice');
-    requestAnimationFrame(() => el.classList.add('is-visible'));
+    requestAnimationFrame(() => el.classList.add(...String('is-visible').trim().split(/\s+/).filter(Boolean)));
   }
 }
 
 function hideNotice() {
   const el = document.getElementById('srPlaytestingNotice');
   if (!el) return;
-  el.classList.remove('is-visible');
+  el.classList.remove(...String('is-visible').trim().split(/\s+/).filter(Boolean));
   const done = () => el.remove();
   el.addEventListener('transitionend', done, { once: true });
   setTimeout(done, 260);
@@ -3924,25 +3954,25 @@ async function openPlaytestModalForCode(code) {
   } else {
     inner.innerHTML = `
       <div class="p-4 space-y-2">
-        <div class="text-lg font-semibold text-zinc-100">${
+        <div class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">${
           (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn')
             ? mapNameToCnDisplaySmart(data.name || data.code || 'Map')
             : (data.name || data.code || 'Map')
         }</div>
-        <div class="text-sm text-zinc-300">${(typeof t === 'function' ? (t('table.map_code') || t('map.meta.code')) : 'Code')}: ${data.code || '—'}</div>
-        <div class="text-sm text-zinc-400">${(typeof t === 'function' ? (t('errors.playtests_load_failed') || 'Modal renderer missing.') : 'Modal renderer missing.')}</div>
+        <div class="text-sm text-zinc-700 dark:text-zinc-300">${(typeof t === 'function' ? (t('table.map_code') || t('map.meta.code')) : 'Code')}: ${data.code || '—'}</div>
+        <div class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? (t('errors.playtests_load_failed') || 'Modal renderer missing.') : 'Modal renderer missing.')}</div>
       </div>
     `;
   }
 
-  modal.classList.remove('hidden');
-  modal.classList.add('pt-anim');
-  inner.classList.add('pt-anim');
+  modal.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  modal.classList.add(...String('pt-anim').trim().split(/\s+/).filter(Boolean));
+  inner.classList.add(...String('pt-anim').trim().split(/\s+/).filter(Boolean));
 
   void modal.offsetWidth;
   requestAnimationFrame(() => {
-    modal.classList.add('pt-in');
-    inner.classList.add('pt-in');
+    modal.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    inner.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
   });
 
   modal.querySelector('.playtest-modal-backdrop')
@@ -4011,7 +4041,7 @@ function ensureViewModalButtonForLastCode(code) {
     'inline-flex','items-center','justify-center','cursor-pointer','ml-auto',
     'rounded-lg','px-3','py-2','text-sm',
     'border','border-amber-500/30','bg-amber-500/10','text-amber-200',
-    'hover:bg-amber-500/15','hover:text-white',
+    'hover:bg-amber-500/15','hover:text-zinc-900 dark:text-white',
     'focus:outline-none','focus-visible:ring-2','focus-visible:ring-amber-400/60'
   ].join(' ');
 
@@ -4044,14 +4074,14 @@ function ensureViewModalButtonForLastCode(code) {
   const last = btn.getAttribute('data-last-code') || '';
   if (last !== String(code)) {
     btn.setAttribute('data-last-code', String(code));
-    btn.classList.remove('gp-cta-once'); // reset
-    requestAnimationFrame(() => btn.classList.add('gp-cta-once'));
+    btn.classList.remove(...String('gp-cta-once').trim().split(/\s+/).filter(Boolean)); // reset
+    requestAnimationFrame(() => btn.classList.add(...String('gp-cta-once').trim().split(/\s+/).filter(Boolean)));
   }
 
   if (isNew || !btn.__autoArmed) {
     btn.__autoArmed = true;
-    btn.classList.add('gp-auto');
-    setTimeout(() => btn.classList.remove('gp-auto'), 2000);
+    btn.classList.add(...String('gp-auto').trim().split(/\s+/).filter(Boolean));
+    setTimeout(() => btn.classList.remove(...String('gp-auto').trim().split(/\s+/).filter(Boolean)), 2000);
   }
 }
 
@@ -4173,16 +4203,16 @@ function dragAndDrop() {
     const badge = dz.querySelector('#ocrStatus');
     const label = dz.querySelector('#ocrStatusText');
     if (!badge) return;
-    badge.classList.remove('hidden');
-    badge.classList.add('flex');
+    badge.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    badge.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
     if (label && text) label.textContent = text;
   }
 
   function hideOcrStatus() {
     const badge = dz.querySelector('#ocrStatus');
     if (!badge) return;
-    badge.classList.add('hidden');
-    badge.classList.remove('flex');
+    badge.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    badge.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
   }
 
   //OCR
@@ -4293,15 +4323,15 @@ function dragAndDrop() {
 
       <!-- OCR loading badge -->
       <div id="ocrStatus"
-          class="absolute left-2 top-2 hidden items-center gap-2 rounded-xl bg-zinc-900/70 px-2 py-1 text-[11px] font-semibold text-white/90 backdrop-blur ring-1 ring-emerald-500/60">
+          class="absolute left-2 top-2 hidden items-center gap-2 rounded-xl bg-white/80 dark:bg-zinc-900/70 px-2 py-1 text-[11px] font-semibold text-zinc-900 dark:text-white/90 backdrop-blur ring-1 ring-emerald-500/60">
         <span class="h-3.5 w-3.5 rounded-full border border-white/30 border-t-white/80 animate-spin"></span>
         <span id="ocrStatusText">${t('record.ocr_processing') || 'OCR processing…'}</span>
       </div>
 
-      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
-        <span class="text-xs text-white/90 truncate px-1">${file.name}</span>
+      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-zinc-900/7 dark:bg-black/40 backdrop-blur">
+        <span class="text-xs text-zinc-900 dark:text-white/90 truncate px-1">${file.name}</span>
         <button type="button" id="screenshotRemoveBtn"
-                class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+                class="rounded-md cursor-pointer border border-zinc-300/80 dark:border-white/20 px-2 py-1 text-xs text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10">
           ${t('map.remove')}
         </button>
       </div>
@@ -4360,15 +4390,15 @@ function dragAndDrop() {
 
   dz.addEventListener('dragover', (e) => {
     e.preventDefault();
-    dz.classList.add('dragover', 'ring-2', 'ring-emerald-500/60');
+    dz.classList.add(...String('dragover').trim().split(/\s+/).filter(Boolean), ...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   dz.addEventListener('dragleave', (e) => {
     e.preventDefault();
-    dz.classList.remove('dragover', 'ring-2', 'ring-emerald-500/60');
+    dz.classList.remove(...String('dragover').trim().split(/\s+/).filter(Boolean), ...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   dz.addEventListener('drop', (e) => {
     e.preventDefault();
-    dz.classList.remove('dragover', 'ring-2', 'ring-emerald-500/60');
+    dz.classList.remove(...String('dragover').trim().split(/\s+/).filter(Boolean), ...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
     if (e.dataTransfer?.files?.[0]) acceptFile(e.dataTransfer.files[0]);
   });
 
@@ -4454,8 +4484,8 @@ function qualitySlider() {
 
     fill.className = `quality-fill ${pctClassFor(val)} ${colorClassFor(val)}`;
 
-    root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
-    root.classList.add(`qv-${val}`);
+    root.classList.remove(...String('qv-1').trim().split(/\s+/).filter(Boolean), ...String('qv-2').trim().split(/\s+/).filter(Boolean), ...String('qv-3').trim().split(/\s+/).filter(Boolean), ...String('qv-4').trim().split(/\s+/).filter(Boolean), ...String('qv-5').trim().split(/\s+/).filter(Boolean), ...String('qv-6').trim().split(/\s+/).filter(Boolean));
+    root.classList.add(...String(`qv-${val}`).trim().split(/\s+/).filter(Boolean));
 
     range.setAttribute('aria-valuenow', String(val));
     range.setAttribute('aria-valuetext', L[val-1]);
@@ -4503,12 +4533,12 @@ function resetQualitySlider(containerOrId = 'qualityDropdown') {
 
   root.removeAttribute('data-value');
   root.removeAttribute('data-color');
-  root.classList.remove('qv-1','qv-2','qv-3','qv-4','qv-5','qv-6');
+  root.classList.remove(...String('qv-1').trim().split(/\s+/).filter(Boolean), ...String('qv-2').trim().split(/\s+/).filter(Boolean), ...String('qv-3').trim().split(/\s+/).filter(Boolean), ...String('qv-4').trim().split(/\s+/).filter(Boolean), ...String('qv-5').trim().split(/\s+/).filter(Boolean), ...String('qv-6').trim().split(/\s+/).filter(Boolean));
 
   const fill = root.querySelector('.quality-fill');
   if (fill) {
-    fill.classList.remove('pct-20','pct-40','pct-60','pct-80','pct-100');
-    fill.classList.add('pct-0');
+    fill.classList.remove(...String('pct-20').trim().split(/\s+/).filter(Boolean), ...String('pct-40').trim().split(/\s+/).filter(Boolean), ...String('pct-60').trim().split(/\s+/).filter(Boolean), ...String('pct-80').trim().split(/\s+/).filter(Boolean), ...String('pct-100').trim().split(/\s+/).filter(Boolean));
+    fill.classList.add(...String('pct-0').trim().split(/\s+/).filter(Boolean));
   }
 
   const range = root.querySelector('.quality-range');
@@ -4520,7 +4550,7 @@ function resetQualitySlider(containerOrId = 'qualityDropdown') {
   }
 
   root.querySelectorAll('.quality-mark--active')
-    .forEach(m => m.classList.remove('quality-mark--active'));
+    .forEach(m => m.classList.remove(...String('quality-mark--active').trim().split(/\s+/).filter(Boolean)));
 }
 
 function getSelectedQuality() {
@@ -4776,87 +4806,76 @@ function buildPlaytestParams(extra = {}, page = currentPage) {
 
 function difficultyClasses(label, value) {
   const base = {
-    text: 'text-zinc-200',
-    chip: 'border-white/10 bg-white/5 text-zinc-200',
+    text: 'text-zinc-800 dark:text-zinc-200',
+    chip: 'border-zinc-200/80 bg-white/85 text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200',
     dot: 'bg-zinc-400/70',
+  };
+
+  const EASY = {
+    text: 'text-emerald-700 dark:text-emerald-300',
+    chip:
+      'border-emerald-300/70 bg-emerald-100/70 text-emerald-900 ' +
+      'dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200',
+    dot: 'bg-emerald-500 dark:bg-emerald-400',
+  };
+
+  const MEDIUM = {
+    text: 'text-amber-700 dark:text-yellow-300',
+    chip:
+      'border-amber-300/70 bg-amber-100/70 text-amber-900 ' +
+      'dark:border-yellow-400/20 dark:bg-yellow-500/10 dark:text-yellow-200',
+    dot: 'bg-amber-500 dark:bg-yellow-400',
+  };
+
+  const HARD = {
+    text: 'text-orange-700 dark:text-orange-300',
+    chip:
+      'border-orange-300/70 bg-orange-100/70 text-orange-900 ' +
+      'dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-200',
+    dot: 'bg-orange-500 dark:bg-orange-400',
+  };
+
+  const VERY_HARD = {
+    text: 'text-orange-800 dark:text-orange-400',
+    chip:
+      'border-orange-400/70 bg-orange-200/70 text-orange-950 ' +
+      'dark:border-orange-500/20 dark:bg-orange-600/10 dark:text-orange-300',
+    dot: 'bg-orange-600 dark:bg-orange-500',
+  };
+
+  const EXTREME = {
+    text: 'text-red-700 dark:text-red-400',
+    chip:
+      'border-red-300/70 bg-red-100/70 text-red-900 ' +
+      'dark:border-red-500/20 dark:bg-red-600/10 dark:text-red-300',
+    dot: 'bg-red-500 dark:bg-red-500',
+  };
+
+  const HELL = {
+    text: 'text-rose-700 dark:text-rose-400',
+    chip:
+      'border-rose-300/70 bg-rose-100/70 text-rose-900 ' +
+      'dark:border-rose-500/20 dark:bg-rose-600/10 dark:text-rose-300',
+    dot: 'bg-rose-500 dark:bg-rose-500',
   };
 
   if (typeof label === 'string') {
     const L = label.toLowerCase();
-    if (L.startsWith('easy'))
-      return {
-        text: 'text-emerald-300',
-        chip: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200',
-        dot: 'bg-emerald-400',
-      };
-    if (L.startsWith('medium'))
-      return {
-        text: 'text-yellow-300',
-        chip: 'border-yellow-400/20 bg-yellow-500/10 text-yellow-200',
-        dot: 'bg-yellow-400',
-      };
-    if (L.startsWith('hard') && !L.startsWith('very'))
-      return {
-        text: 'text-orange-300',
-        chip: 'border-orange-400/20 bg-orange-500/10 text-orange-200',
-        dot: 'bg-orange-400',
-      };
-    if (L.startsWith('very hard'))
-      return {
-        text: 'text-orange-400',
-        chip: 'border-orange-500/20 bg-orange-600/10 text-orange-300',
-        dot: 'bg-orange-500',
-      };
-    if (L.startsWith('extreme'))
-      return {
-        text: 'text-red-400',
-        chip: 'border-red-500/20 bg-red-600/10 text-red-300',
-        dot: 'bg-red-500',
-      };
-    if (L.startsWith('hell'))
-      return {
-        text: 'text-rose-400',
-        chip: 'border-rose-500/20 bg-rose-600/10 text-rose-300',
-        dot: 'bg-rose-500',
-      };
+    if (L.startsWith('easy')) return EASY;
+    if (L.startsWith('medium')) return MEDIUM;
+    if (L.startsWith('hard') && !L.startsWith('very')) return HARD;
+    if (L.startsWith('very hard')) return VERY_HARD;
+    if (L.startsWith('extreme')) return EXTREME;
+    if (L.startsWith('hell')) return HELL;
   }
 
   if (Number.isFinite(value)) {
-    if (value < 2.35)
-      return {
-        text: 'text-emerald-300',
-        chip: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200',
-        dot: 'bg-emerald-400',
-      }; // Easy
-    if (value < 4.12)
-      return {
-        text: 'text-yellow-300',
-        chip: 'border-yellow-400/20 bg-yellow-500/10 text-yellow-200',
-        dot: 'bg-yellow-400',
-      }; // Medium
-    if (value < 5.88)
-      return {
-        text: 'text-orange-300',
-        chip: 'border-orange-400/20 bg-orange-500/10 text-orange-200',
-        dot: 'bg-orange-400',
-      }; // Hard
-    if (value < 7.65)
-      return {
-        text: 'text-orange-400',
-        chip: 'border-orange-500/20 bg-orange-600/10 text-orange-300',
-        dot: 'bg-orange-500',
-      }; // Very Hard
-    if (value < 9.41)
-      return {
-        text: 'text-red-400',
-        chip: 'border-red-500/20 bg-red-600/10 text-red-300',
-        dot: 'bg-red-500',
-      }; // Extreme
-    return {
-      text: 'text-rose-400',
-      chip: 'border-rose-500/20 bg-rose-600/10 text-rose-300',
-      dot: 'bg-rose-500',
-    }; // Hell
+    if (value < 2.35) return EASY;       // Easy
+    if (value < 4.12) return MEDIUM;     // Medium
+    if (value < 5.88) return HARD;       // Hard
+    if (value < 7.65) return VERY_HARD;  // Very Hard
+    if (value < 9.41) return EXTREME;    // Extreme
+    return HELL;                         // Hell
   }
 
   return base;
@@ -4937,11 +4956,11 @@ function setupPlaytestCtaDown() {
   const scroller = findScrollPort(wrap);
 
   const show = () => {
-    wrap.classList.remove('opacity-0', 'translate-y-1', 'pointer-events-none', 'hidden');
+    wrap.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('hidden').trim().split(/\s+/).filter(Boolean));
     btn.tabIndex = 0;
   };
   const hide = () => {
-    wrap.classList.add('opacity-0', 'translate-y-1', 'pointer-events-none');
+    wrap.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean));
     btn.tabIndex = -1;
   };
 
@@ -5104,10 +5123,10 @@ function _bucketizeAverage(avg) {
 }
 
 function _hideDifficultySkeleton() {
-  document.getElementById('difficultyChartSkeleton')?.classList.add('hidden');
+  document.getElementById('difficultyChartSkeleton')?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 function _showDifficultySkeleton() {
-  document.getElementById('difficultyChartSkeleton')?.classList.remove('hidden');
+  document.getElementById('difficultyChartSkeleton')?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 function _ensureChartJsBarRounded(ctx, data) {
@@ -5309,12 +5328,12 @@ function setupRatingDropdown() {
     .map(
       (d, i) => `
     <div
-      class="ptmodal-ratedropitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none"
+      class="ptmodal-ratedropitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/10 focus:bg-zinc-100 dark:focus:bg-white/10 focus:outline-none"
       data-value="${d}"
       role="menuitem"
       tabindex="${i === 0 ? 0 : -1}"
     >
-      <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(d)} ring-1 ring-inset ring-white/20"></span>
+      <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(d)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20"></span>
       <span class="truncate">${d}</span>
     </div>
   `
@@ -5325,18 +5344,18 @@ function setupRatingDropdown() {
 
   const open = () => {
     if (!canVote) return;
-    dropdown.classList.remove('hidden');
+    dropdown.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     rateQuestion.setAttribute('aria-expanded', 'true');
-    if (chevronSvg) chevronSvg.classList.add('rotate-180');
+    if (chevronSvg) chevronSvg.classList.add(...String('rotate-180').trim().split(/\s+/).filter(Boolean));
     dropdown.querySelector('.ptmodal-ratedropitem')?.focus();
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onEsc);
   };
 
   const close = () => {
-    dropdown.classList.add('hidden');
+    dropdown.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     rateQuestion.setAttribute('aria-expanded', 'false');
-    if (chevronSvg) chevronSvg.classList.remove('rotate-180');
+    if (chevronSvg) chevronSvg.classList.remove(...String('rotate-180').trim().split(/\s+/).filter(Boolean));
     document.removeEventListener('mousedown', onDocClick);
     document.removeEventListener('keydown', onEsc);
     rateQuestion.focus();
@@ -5515,7 +5534,7 @@ function setupRatingDropdown() {
   });
 
   if (!canVote) {
-    dropdown.classList.add('hidden');
+    dropdown.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     rateQuestion.setAttribute('aria-disabled', 'true');
   }
 }
@@ -5530,7 +5549,7 @@ document.addEventListener('mousedown', (e) => {
 
   if (!clickedInsideBox && !clickedInput) {
     box.style.display = 'none';
-    box.classList.add('hidden');
+    box.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 }, true);
 
@@ -5565,14 +5584,14 @@ async function appendVoterToModal(userId) {
   row.setAttribute('data-user-id', String(userId));
   row.innerHTML = `
     <img src="${avatar || cdnAsset('assets/profile/default-avatar.png')}" alt="${name || '—'}"
-         class="h-12 w-12 rounded-full object-cover ring-1 ring-white/10" loading="lazy">
-    <span class="mt-1 text-sm text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
-    <span class="text-[11px] text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
+         class="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
+    <span class="mt-1 text-sm text-zinc-800 dark:text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
+    <span class="text-[11px] text-zinc-600 dark:text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
   `;
   list.appendChild(row);
 
   requestAnimationFrame(() => {
-    row.classList.remove('opacity-0', 'translate-y-1');
+    row.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -5662,7 +5681,7 @@ async function preloadVoters(voterIds = []) {
 function buildVotersGridHTML(preloaded, voterIds) {
   const esc = (s) => String(s ?? '');
   if (!voterIds?.length) {
-    return `<div class="mt-2 text-xs text-zinc-400">"${t('playtest.no_votes')}"</div>`;
+    return `<div class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">"${t('playtest.no_votes')}"</div>`;
   }
   return `
     <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3
@@ -5677,7 +5696,7 @@ function buildVotersGridHTML(preloaded, voterIds) {
               <img
                 src="${esc(avatar)}"
                 alt="${esc(name)}"
-                class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                 data-user-id="${esc(key)}"
                 loading="lazy"
               >
@@ -5695,7 +5714,7 @@ function buildVotersGridHTML(preloaded, voterIds) {
             </div>
             <button
               type="button"
-              class="open-rank-card mt-1 max-w-[120px] truncate text-sm text-zinc-200 font-medium cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+              class="open-rank-card mt-1 max-w-[120px] truncate text-sm text-zinc-800 dark:text-zinc-200 font-medium cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
               data-user-id="${esc(key)}"
               title="${esc(name)}"
             >
@@ -5716,7 +5735,7 @@ function injectVotersGrid(modalEl, preloaded, voterIds) {
   const grid = mount.querySelector('.voters-list');
   if (grid) {
     requestAnimationFrame(() => {
-      grid.classList.remove('opacity-0', 'translate-y-1');
+      grid.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean));
     });
   }
 }
@@ -5784,12 +5803,12 @@ function hidePlaytestModal() {
   if (modal.dataset.closing === '1') return;
   modal.dataset.closing = '1';
 
-  modal.classList.remove('pt-in');
-  modalInner?.classList.remove('pt-in');
+  modal.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+  modalInner?.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
 
   const DURATION = 240;
   setTimeout(() => {
-    modal.classList.add('hidden');
+    modal.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     modal.dataset.closing = '0';
     if (modalInner) modalInner.innerHTML = '';
     closeGlobalDropdown();
@@ -5803,17 +5822,17 @@ function animatePtOpen({ animate = false } = {}) {
 
   const backdrop = modal.querySelector('.playtest-modal-backdrop');
 
-  modal.classList.remove('hidden');
+  modal.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 
   if (!animate) {
     const els = [modal, inner, backdrop].filter(Boolean);
     els.forEach(el => { el.style.transition = 'none'; });
 
-    modal.classList.add('pt-anim', 'pt-in');
-    inner.classList.add('pt-anim', 'pt-in');
+    modal.classList.add(...String('pt-anim').trim().split(/\s+/).filter(Boolean), ...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    inner.classList.add(...String('pt-anim').trim().split(/\s+/).filter(Boolean), ...String('pt-in').trim().split(/\s+/).filter(Boolean));
 
     if (backdrop) {
-      backdrop.classList.add('pt-in');
+      backdrop.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
       backdrop.style.opacity = '1';
       backdrop.style.pointerEvents = 'auto';
     }
@@ -5823,12 +5842,12 @@ function animatePtOpen({ animate = false } = {}) {
     return;
   }
 
-  modal.classList.add('pt-anim');
-  inner.classList.add('pt-anim');
+  modal.classList.add(...String('pt-anim').trim().split(/\s+/).filter(Boolean));
+  inner.classList.add(...String('pt-anim').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(() => {
-    modal.classList.add('pt-in');
-    inner.classList.add('pt-in');
-    if (backdrop) backdrop.classList.add('pt-in');
+    modal.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    inner.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    if (backdrop) backdrop.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -5839,18 +5858,18 @@ function animatePtClose({ animate = false, duration = 240 } = {}) {
   const backdrop = modal.querySelector('.playtest-modal-backdrop');
 
   if (!animate) {
-    modal.classList.remove('pt-in');
-    inner?.classList.remove('pt-in');
-    backdrop?.classList.remove('pt-in');
-    modal.classList.add('hidden');
+    modal.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    inner?.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    backdrop?.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+    modal.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     if (inner) inner.innerHTML = '';
     return;
   }
 
-  modal.classList.remove('pt-in');
-  inner?.classList.remove('pt-in');
+  modal.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
+  inner?.classList.remove(...String('pt-in').trim().split(/\s+/).filter(Boolean));
   setTimeout(() => {
-    modal.classList.add('hidden');
+    modal.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     if (inner) inner.innerHTML = '';
   }, duration + 20);
 }
@@ -5871,7 +5890,7 @@ function registerVoterIdCopyTargets(root = document) {
   nodes.forEach((el) => {
     if (el.dataset.copyBound === '1') return;
     el.dataset.copyBound = '1';
-    el.classList.add('cursor-pointer');
+    el.classList.add(...String('cursor-pointer').trim().split(/\s+/).filter(Boolean));
 
     if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
     if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
@@ -5909,7 +5928,7 @@ function registerVoterProfileTargets(root = document) {
   nodes.forEach((el) => {
     if (el.dataset.profileBound === '1') return;
     el.dataset.profileBound = '1';
-    el.classList.add('cursor-pointer');
+    el.classList.add(...String('cursor-pointer').trim().split(/\s+/).filter(Boolean));
 
     if (!el.hasAttribute('role')) el.setAttribute('role', 'link');
     if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
@@ -6008,15 +6027,15 @@ function showConfirmDialog({
     overlay.setAttribute('aria-modal', 'true');
 
     overlay.innerHTML = `
-      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
-        <div class="px-4 py-3 border-b border-white/10">
+      <div class="w-full max-w-md rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
+        <div class="px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
           <h3 class="font-semibold text-sm">${title}</h3>
         </div>
         <div class="p-4 space-y-4">
-          <p class="text-sm text-zinc-200">${message}</p>
+          <p class="text-sm text-zinc-800 dark:text-zinc-200">${message}</p>
           <div class="flex justify-end gap-2">
-            <button class="btn-confirm cursor-pointer rounded-lg ${pick(confirmVariant)} text-white px-3 py-1.5 text-sm font-semibold">${confirmText}</button>
-            <button class="btn-cancel cursor-pointer rounded-lg ${pick(cancelVariant)} text-white px-3 py-1.5 text-sm font-semibold">${cancelText}</button>
+            <button class="btn-confirm cursor-pointer rounded-lg ${pick(confirmVariant)} text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold">${confirmText}</button>
+            <button class="btn-cancel cursor-pointer rounded-lg ${pick(cancelVariant)} text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold">${cancelText}</button>
           </div>
         </div>
       </div>
@@ -6159,35 +6178,35 @@ function renderPlaytestCard(data, index) {
   const requiredVotes = requiredVotesMap[diffLabel] ?? '?';
 
   return `
-    <article class="playtest-embed rounded-xl border border-white/10 bg-zinc-900/60 hover:bg-zinc-900/80 transition cursor-pointer tr-sf-enter"
+    <article class="playtest-embed rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/55 hover:bg-white/95 dark:hover:bg-zinc-900/80 hover:border-zinc-300/80 dark:hover:border-white/20 transition-colors duration-200 ease-out cursor-pointer tr-sf-enter"
              data-ptidx="${index}" role="button" tabindex="0" aria-label="${esc(safe.name)}">
       <header class="flex items-center justify-between gap-3 p-3">
         <div class="flex items-center gap-2 min-w-0">
-          <img src="${esc(safe.avatar)}" alt="Avatar" class="h-8 w-8 rounded-full object-cover ring-1 ring-white/10" loading="lazy">
+          <img src="${esc(safe.avatar)}" alt="Avatar" class="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
           <div class="truncate">
-            <span class="block text-sm font-semibold text-zinc-200 truncate">${esc(safe.creators)}</span>
-            <span class="block text-xs text-zinc-400 truncate">${esc(safe.code)}</span>
+            <span class="block text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">${esc(safe.creators)}</span>
+            <span class="block text-xs text-zinc-600 dark:text-zinc-400 truncate">${esc(safe.code)}</span>
           </div>
         </div>
         <img src="${esc(safe.banner)}" alt="Map banner"
-             class="h-10 w-24 rounded-md object-cover shrink-0 ring-1 ring-white/10" loading="lazy">
+             class="h-10 w-24 rounded-md object-cover shrink-0 ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
       </header>
 
       <div class="px-3 pb-3">
         <div class="flex items-center justify-between gap-3">
           <div class="min-w-0">
-            <div class="text-sm font-medium text-zinc-100 truncate" data-sf="${esc(safe.name)}"></div>
+            <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate" data-sf="${esc(safe.name)}"></div>
             <div class="mt-1 inline-flex items-center gap-2">
               <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${diffCls.chip}">
                 <span class="inline-block h-1.5 w-1.5 rounded-full ${diffCls.dot}"></span>
                 <span class="${diffCls.text} font-semibold">${esc(diffLabel)}</span>
               </span>
-              ${Number.isFinite(diffValue) ? `<span class="text-[11px] text-zinc-400">(${diffValue.toFixed(2)})</span>` : ``}
+              ${Number.isFinite(diffValue) ? `<span class="text-[11px] text-zinc-600 dark:text-zinc-400">(${diffValue.toFixed(2)})</span>` : ``}
             </div>
           </div>
 
           <div class="shrink-0" title="${votes} vote(s)">
-            <span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-zinc-300">
+            <span class="inline-flex items-center gap-1 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-xs text-zinc-700 dark:text-zinc-300">
               <svg class="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                 <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5l-4 4V5a2 2 0 0 1 2-2h11"/>
               </svg>
@@ -6232,8 +6251,8 @@ function mountModeratorActions(modalEl, playtest) {
   const setBusy = (btn, on) => {
     if (!btn) return;
     btn.disabled = !!on;
-    btn.classList.toggle('opacity-50', !!on);
-    btn.classList.toggle('pointer-events-none', !!on);
+(() => { const __obj = btn; let __last; for (const __c of String('opacity-50').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !!on); return __last; })();
+(() => { const __obj = btn; let __last; for (const __c of String('pointer-events-none').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !!on); return __last; })();
     btn.setAttribute('aria-busy', on ? 'true' : 'false');
   };
 
@@ -6284,10 +6303,10 @@ function mountModeratorActions(modalEl, playtest) {
       <!-- Card: Approve -->
       <section class="ptmod-card">
         <h4>Approve</h4>
-        <p class="text-xs text-zinc-400">Marks the playtest as approved and sets you as verifier.</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Marks the playtest as approved and sets you as verifier.</p>
         <div class="ptmod-actions">
           <button type="button" id="ptModApprove"
-            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
             Approve (verifier = me)
           </button>
         </div>
@@ -6296,14 +6315,14 @@ function mountModeratorActions(modalEl, playtest) {
       <!-- Card: Force Accept -->
       <section class="ptmod-card">
         <h4>Force accept</h4>
-        <p class="text-xs text-zinc-400">Force a difficulty and accept the playtest.</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Force a difficulty and accept the playtest.</p>
         <div class="ptmod-actions">
           <div class="relative min-w-[180px]">
             <div id="ptmod-diffbutton"
-              class="ptmod-diffbutton group flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 cursor-pointer hover:bg-zinc-900/60 select-none"
+              class="ptmod-diffbutton group flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer hover:bg-white/75 dark:bg-zinc-900/60 select-none"
               role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
               <div class="inline-flex items-center gap-2 min-w-0">
-                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-white/20 shrink-0"></span>
+                <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20 shrink-0"></span>
                 <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
               </div>
               <svg class="chevron-svg h-4 w-4 opacity-80 transition-transform shrink-0" viewBox="0 0 22 22" aria-hidden="true">
@@ -6312,13 +6331,13 @@ function mountModeratorActions(modalEl, playtest) {
             </div>
 
             <div id="ptmod-diffmenu"
-              class="ptmod-diffmenu absolute left-0 right-0 top-[calc(100%+8px)] bottom-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md p-1.5"
+              class="ptmod-diffmenu absolute left-0 right-0 top-[calc(100%+8px)] bottom-auto z-[70] hidden max-h-[260px] overflow-y-auto rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur-md p-1.5"
               role="menu" aria-label="Select difficulty">
               ${DIFFICULTY_FINE_OPTIONS.map((o, i) => `
                 <div
-                  class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:outline-none rounded-lg"
+                  class="ptmod-diffitem flex items-center gap-2 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/10 focus:bg-zinc-100 dark:focus:bg-white/10 focus:outline-none rounded-lg"
                   data-value="${o.value}" data-raw="${o.raw}" role="menuitem" tabindex="${i === 0 ? 0 : -1}">
-                  <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-white/20"></span>
+                  <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(o.raw)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20"></span>
                   <span class="truncate">${o.text()}</span>
                 </div>
               `).join('')}
@@ -6326,7 +6345,7 @@ function mountModeratorActions(modalEl, playtest) {
           </div>
 
           <button type="button" id="ptModForceAccept"
-            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
             Force Accept
           </button>
         </div>
@@ -6335,13 +6354,13 @@ function mountModeratorActions(modalEl, playtest) {
       <!-- Card: Force Deny -->
       <section class="ptmod-card">
         <h4>Force deny</h4>
-        <p class="text-xs text-zinc-400">Reject the playtest with an explicit reason.</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Reject the playtest with an explicit reason.</p>
         <div class="ptmod-actions">
           <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+            class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
           <button type="button" id="ptModForceDeny"
-            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
             Force Deny
           </button>
         </div>
@@ -6350,19 +6369,19 @@ function mountModeratorActions(modalEl, playtest) {
       <!-- Card: Reset -->
       <section class="ptmod-card">
         <h4>Reset playtest</h4>
-        <p class="text-xs text-zinc-400">Reset state and optionally remove votes/completions.</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Reset state and optionally remove votes/completions.</p>
         <div class="ptmod-actions">
           <input id="ptModResetReason" type="text" placeholder="Reset reason…"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-          <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+            class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+          <label class="text-sm text-zinc-700 dark:text-zinc-300 inline-flex items-center gap-1">
             <input id="ptModResetVotes" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove votes
           </label>
-          <label class="text-sm text-zinc-300 inline-flex items-center gap-1">
+          <label class="text-sm text-zinc-700 dark:text-zinc-300 inline-flex items-center gap-1">
             <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
           </label>
           <button type="button" id="ptModReset"
-            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
             Reset Playtest
           </button>
         </div>
@@ -6371,17 +6390,17 @@ function mountModeratorActions(modalEl, playtest) {
       <!-- Card: Votes -->
       <section class="ptmod-card">
         <h4>Votes</h4>
-        <p class="text-xs text-zinc-400">Remove one user vote or purge all votes.</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Remove one user vote or purge all votes.</p>
         <div class="ptmod-actions">
           <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            class="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+            class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
           <button type="button" id="ptModDeleteVote"
-            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
             Delete user vote
           </button>
           <button type="button" id="ptModDeleteAllVotes"
-            class="ptmod-btn cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15">
+            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
             Delete all votes
           </button>
         </div>
@@ -6398,17 +6417,17 @@ function mountModeratorActions(modalEl, playtest) {
   const chevron   = diffBtn?.querySelector('.chevron-svg');
 
   const open = () => {
-    diffMenu.classList.remove('hidden');
+    diffMenu.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     diffBtn.setAttribute('aria-expanded', 'true');
-    if (chevron) chevron.classList.add('rotate-180');
+    if (chevron) chevron.classList.add(...String('rotate-180').trim().split(/\s+/).filter(Boolean));
     diffMenu.querySelector('.ptmod-diffitem')?.focus();
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onEsc);
   };
   const close = () => {
-    diffMenu.classList.add('hidden');
+    diffMenu.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     diffBtn.setAttribute('aria-expanded', 'false');
-    if (chevron) chevron.classList.remove('rotate-180');
+    if (chevron) chevron.classList.remove(...String('rotate-180').trim().split(/\s+/).filter(Boolean));
     document.removeEventListener('mousedown', onDocClick);
     document.removeEventListener('keydown', onEsc);
     diffBtn.focus();
@@ -6432,7 +6451,7 @@ function mountModeratorActions(modalEl, playtest) {
     diffLabel.textContent = opt.text();
     const dot = diffBtn.querySelector('span.rounded-full');
     if (dot) {
-      dot.className = `inline-block h-2.5 w-2.5 rounded-full ${dotClass(raw)} ring-1 ring-inset ring-white/20`;
+      dot.className = `inline-block h-2.5 w-2.5 rounded-full ${dotClass(raw)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20`;
     }
     close();
   });
@@ -6726,22 +6745,22 @@ const mapNameUi =
                 aria-label="${t('popup.click_to_copy_map_code') || 'Click to copy'}">
           ${esc(data.code)}
         </button>`
-      : `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">—</span>`;
+      : `<span class="inline-flex h-8 items-center rounded-lg border border-zinc-200/80 dark:border-white/15 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 text-xs text-zinc-800 dark:text-zinc-200 leading-none">—</span>`;
 
   const votersMount = `
     <div id="votersMount"
      class="mt-3 max-h-[300px] w-full overflow-y-hidden overflow-x-hidden pr-1 pt-2 overscroll-contain scrollbar-stable">
       <div class="max-h-[160px] overflow-hidden">
         <div class="space-y-2.5" aria-busy="true" aria-live="polite">
-          <div class="h-3.5 w-20 rounded bg-white/10 animate-pulse"></div>
+          <div class="h-3.5 w-20 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
           <div class="flex flex-col gap-2.5">
             ${Array.from({ length: 4 })
               .map(
                 () => `
               <div class="flex flex-col items-center text-center">
-                <div class="h-10 w-10 shrink-0 rounded-full bg-white/10 animate-pulse"></div>
-                <div class="mt-1 h-2.5 w-20 max-w-full rounded bg-white/10 animate-pulse"></div>
-                <div class="mt-1 h-2.5 w-24 max-w-full rounded bg-white/10 animate-pulse"></div>
+                <div class="h-10 w-10 shrink-0 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                <div class="mt-1 h-2.5 w-20 max-w-full rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                <div class="mt-1 h-2.5 w-24 max-w-full rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
               </div>
             `
               )
@@ -6754,7 +6773,7 @@ const mapNameUi =
 
   return `
     <!-- HERO -->
-    <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
+    <div class="relative overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950">
       <div class="absolute inset-0">
         <img src="${esc(data.map_banner_url || cdnAsset('assets/img/card-banner.png'))}" alt=""
              class="h-full w-full object-cover opacity-40">
@@ -6768,7 +6787,7 @@ const mapNameUi =
                 src="${esc(data.avatar || DEFAULT_AVATAR)}"
                 data-user-id="${esc(data.primary_creator_id || '')}"
                 alt="Creator avatar"
-                class="open-rank-card h-10 w-10 rounded-full object-cover ring-1 ring-white/10"
+                class="open-rank-card h-10 w-10 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10"
                 loading="lazy"
                 role="link" tabindex="0">
             <div class="min-w-0">
@@ -6785,7 +6804,7 @@ const mapNameUi =
           <div class="flex shrink-0 items-center gap-2">
             ${codeBadge}
             ${guideBadges}
-            ${data.category ? `<span class="inline-flex h-8 items-center rounded-lg border border-white/15 bg-white/10 px-3 text-xs text-zinc-200 leading-none">
+            ${data.category ? `<span class="inline-flex h-8 items-center rounded-lg border border-zinc-200/80 dark:border-white/15 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 text-xs text-zinc-800 dark:text-zinc-200 leading-none">
               ${esc(translateMapTypeUi(data.category))}
             </span>` : ''}
           </div>
@@ -6796,7 +6815,7 @@ const mapNameUi =
             <span class="inline-block h-1.5 w-1.5 rounded-full ${diffCls.dot}"></span>
             <span class="${diffCls.text} font-semibold">${esc(data.difficulty || '—')}</span>
           </span>
-          ${Number.isFinite(data.difficulty_value) ? `<span class="text-xs text-zinc-300">( ${data.difficulty_value.toFixed(2)} )</span>` : ''}
+          ${Number.isFinite(data.difficulty_value) ? `<span class="text-xs text-zinc-700 dark:text-zinc-300">( ${data.difficulty_value.toFixed(2)} )</span>` : ''}
           ${title != null ? `<span class="ml-2 rounded-md border border-emerald-300/25 bg-emerald-400/10 px-2 py-0.5 text-[11px] text-emerald-200">“${esc(title)}”</span>` : ''}
           ${time != null ? `<span class="ml-1 rounded-md border border-sky-300/25 bg-sky-400/10 px-2 py-0.5 text-[11px] text-sky-200">${t('record.time_label') || 'Time'}: ${esc(time)}</span>` : ''}
           ${medals != null ? `<div class="ml-1 flex flex-wrap gap-1">${medalsHtml}</div>` : ''}
@@ -6808,58 +6827,68 @@ const mapNameUi =
     <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
 
       <!-- CONTAINER 1 : name / checkpoints / mechanics / restrictions -->
-      <section class="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <section class="flex h-full flex-col gap-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-4">
         <div class="grid grid-cols-1 gap-2">
-          <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-            <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.map_name')}</span>
-            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-100 text-right">${esc(mapNameUi || '—')}</span>
+          <div class="flex items-start justify-between rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+            <span class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${t('table.map_name')}</span>
+            <span class="ml-2 flex-1 min-w-0 whitespace-normal break-words text-sm text-zinc-900 dark:text-zinc-100 text-right">${esc(mapNameUi || '—')}</span>
           </div>
-          <div class="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-            <span class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.checkpoints')}</span>
-            <span class="text-sm text-zinc-100">${Number.isFinite(data.checkpoints) ? esc(data.checkpoints) : '—'}</span>
+          <div class="flex items-start justify-between rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+            <span class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${t('table.checkpoints')}</span>
+            <span class="text-sm text-zinc-900 dark:text-zinc-100">${Number.isFinite(data.checkpoints) ? esc(data.checkpoints) : '—'}</span>
           </div>
         </div>
 
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
-          <div class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.mechanics')}</div>
+        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-3">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${t('table.mechanics')}</div>
           <div class="mt-2 flex flex-wrap gap-1.5">
             ${
               Array.isArray(data.mechanics) && data.mechanics.length
                 ? data.mechanics
                     .map(
                       (m) =>
-                        `<span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">${esc(translateMechanicUi(__coerceTagValue(m)))}</span>`
+                        `<span class="inline-flex items-center rounded-full
+                          border-emerald-300/70 bg-emerald-100/70 text-emerald-900
+                          dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200
+                          px-2 py-0.5 text-xs">
+                          ${esc(translateMechanicUi(__coerceTagValue(m)))}
+                        </span>`
                     )
                     .join('')
-                : `<i class="text-sm text-zinc-400">${(typeof t === "function" ? (t("common.none") || t("filters.none") || "—") : "—")}</i>`
+                : `<i class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === "function" ? (t("popup.none") || t("filters.none") || "—") : "—")}</i>`
             }
           </div>
         </div>
 
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
-          <div class="text-[11px] uppercase tracking-wide text-zinc-400">${t('table.restrictions')}</div>
+        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-3">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${t('table.restrictions')}</div>
           <div class="mt-2 flex flex-wrap gap-1.5">
             ${
               Array.isArray(data.restrictions) && data.restrictions.length
                 ? data.restrictions
                     .map(
                       (r) =>
-                        `<span class="inline-flex items-center rounded-full border border-rose-400/20 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-200">${esc(translateRestrictionUi(__coerceTagValue(r)))}</span>`
+                        `<span class="inline-flex items-center rounded-full
+                          border-rose-300/70 bg-rose-100/70 text-rose-900
+                          dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-200
+                          px-2 py-0.5 text-xs">
+                          ${esc(translateRestrictionUi(__coerceTagValue(r)))}
+                        </span>`
                     )
                     .join('')
-                : `<i class="text-sm text-zinc-400">${(typeof t === "function" ? (t("common.none") || t("filters.none") || "—") : "—")}</i>`
+                : `<i class="text-sm text-zinc-600 dark:text-zinc-400">${(typeof t === "function" ? (t("popup.none") || t("filters.none") || "—") : "—")}</i>`
             }
           </div>
         </div>
       </section>
 
       <!-- CONTAINER 2 : votes  -->
-      <aside class="flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 p-4">
+      <aside class="flex h-full flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-4">
         <div class="flex items-baseline justify-between">
-          <div class="text-[11px] uppercase tracking-wide text-zinc-400">${t('playtest.votes') || 'Votes'}</div>
-          <div id="ptVoteAvg" class="text-xs text-zinc-400">${voteAvg != null ? `avg ${voteAvg.toFixed(2)}` : ''}</div>
+          <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${t('playtest.votes') || 'Votes'}</div>
+          <div id="ptVoteAvg" class="text-xs text-zinc-600 dark:text-zinc-400">${voteAvg != null ? `avg ${voteAvg.toFixed(2)}` : ''}</div>
         </div>
-        <div id="ptVoteCount" class="mt-1 text-3xl font-semibold tracking-tight text-zinc-100">${voteCount}</div>
+        <div id="ptVoteCount" class="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">${voteCount}</div>
 
         <!-- Scrollport avatars -->
         <div class="mt-3 flex-1 min-h-0">
@@ -6873,33 +6902,33 @@ const mapNameUi =
       <button
         id="ptCtaDown"
         type="button"
-        class="pointer-events-auto cursor-pointer inline-flex items-center justify-center rounded-full border border-white/10 bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-3 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/60 pt-chev-bob">
-        <svg class="h-5 w-5 text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
+        class="pointer-events-auto cursor-pointer inline-flex items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 hover:bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 backdrop-blur px-3 py-3 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/60 pt-chev-bob">
+        <svg class="h-5 w-5 text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M7.41 8.59 12 13.17 16.59 8.59 18 10l-6 6-6-6z"/>
         </svg>
       </button>
     </div>
 
     <!-- CONTAINER 4 : difficulty rating -->
-    <div id="ptDifficultySection" class="mt-4 rounded-2xl border border-white/10 bg-white/5">
-      <div class="flex items-center justify-between gap-3 border-b border-white/10 p-3">
+    <div id="ptDifficultySection" class="mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 p-3">
         <div>
-          <div class="text-sm font-semibold text-zinc-100">${t('playtest.difficulty_rating')}</div>
-          <div class="text-xs text-zinc-400">${t('playtest.rating_sub')}</div>
+          <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${t('playtest.difficulty_rating')}</div>
+          <div class="text-xs text-zinc-600 dark:text-zinc-400">${t('playtest.rating_sub')}</div>
         </div>
-        <div class="text-sm text-zinc-300">${voteAvg != null ? `avg ${voteAvg.toFixed(2)}` : ''}</div>
+        <div class="text-sm text-zinc-700 dark:text-zinc-300">${voteAvg != null ? `avg ${voteAvg.toFixed(2)}` : ''}</div>
       </div>
 
       <div class="p-3">
-        <div class="relative rounded-xl border border-white/10 bg-zinc-900/50 p-2">
+        <div class="relative rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 p-2">
           <div id="difficultyChartSkeleton"
               class="pointer-events-none absolute inset-0 flex items-end gap-1.5 p-3">
-            <div class="h-[36%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
-            <div class="h-[58%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
-            <div class="h-[72%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
-            <div class="h-[64%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
-            <div class="h-[44%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
-            <div class="h-[28%] flex-1 rounded-t-md bg-white/10 animate-pulse"></div>
+            <div class="h-[36%] flex-1 rounded-t-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-[58%] flex-1 rounded-t-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-[72%] flex-1 rounded-t-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-[64%] flex-1 rounded-t-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-[44%] flex-1 rounded-t-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-[28%] flex-1 rounded-t-md bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
           </div>
 
           <!-- CHART -->
@@ -6908,10 +6937,10 @@ const mapNameUi =
       </div>
 
       <!-- Rate difficulty -->
-      <div class="relative border-t border-white/10 px-3 py-2">
+      <div class="relative border-t border-zinc-200/80 dark:border-white/10 px-3 py-2">
         <div
-          class="ptmodal-ratequestion group flex w-full items-center justify-between gap-3 rounded-lg border border-white/10
-            ${canRateDifficulty ? 'bg-white/5 cursor-pointer hover:bg-white/10 focus:ring-white/20' : 'bg-white/5 cursor-not-allowed opacity-60'}
+          class="ptmodal-ratequestion group flex w-full items-center justify-between gap-3 rounded-lg border border-zinc-200/80 dark:border-white/10
+            ${canRateDifficulty ? 'bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-zinc-400/60 dark:ring-white/20' : 'bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 cursor-not-allowed opacity-60'}
             px-3 py-2 select-none focus:outline-none"
           role="button"
           tabindex="0"
@@ -6926,19 +6955,19 @@ const mapNameUi =
           data-voters="${esc(Array.isArray(data.playtest_voters) ? data.playtest_voters.map((v) => String(v)).join(',') : '')}"
         >
           <div class="flex items-center gap-2">
-            <span class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-inset ring-white/10">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-inset ring-zinc-300/60 dark:ring-white/10">
               <!-- star icon -->
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#cbd5e1" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/>
               </svg>
             </span>
 
-            <span class="text-sm font-medium text-zinc-100">
+            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
               ${rateLabel}
             </span>
           </div>
 
-          <span class="chevron inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-inset ring-white/10 transition-transform duration-200 ${canRateDifficulty ? '' : 'opacity-0'}">
+          <span class="chevron inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-inset ring-zinc-300/60 dark:ring-white/10 transition-transform duration-200 ${canRateDifficulty ? '' : 'opacity-0'}">
             <svg class="chevron-svg transition-transform duration-200" width="18" height="18" viewBox="0 0 22 22" aria-hidden="true">
               <path fill="#bbb" d="M7.41 8.59 11 12.17l3.59-3.58L16 10l-5 5-5-5z"></path>
             </svg>
@@ -6946,7 +6975,7 @@ const mapNameUi =
         </div>
 
         <div
-          class="ptmodal-ratedropdown absolute left-3 right-3 bottom-[calc(100%+8px)] top-auto hidden max-h-[200px] overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-md"
+          class="ptmodal-ratedropdown absolute left-3 right-3 bottom-[calc(100%+8px)] top-auto hidden max-h-[200px] overflow-y-auto rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur-md"
           role="menu"
           aria-label="Select difficulty"
         ></div>
@@ -7076,8 +7105,8 @@ function renderPaginationButtons() {
     b.textContent = label;
     b.disabled = !!disabled;
     b.className = [
-      'inline-flex items-center justify-center rounded-lg border border-white/10 cursor-pointer',
-      'bg-zinc-900/60 hover:bg-white/5 px-3 py-1.5 text-sm',
+      'inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 cursor-pointer',
+      'bg-white/75 dark:bg-zinc-900/60 hover:bg-zinc-100 dark:hover:bg-white/10 px-3 py-1.5 text-sm',
       'disabled:opacity-50 disabled:cursor-not-allowed',
     ].join(' ');
     b.addEventListener('click', onClick);
@@ -7090,7 +7119,7 @@ function renderPaginationButtons() {
   );
 
   const indicator = document.createElement('span');
-  indicator.className = 'px-3 py-1.5 text-sm text-zinc-300';
+  indicator.className = 'px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300';
   indicator.textContent = t('pagination.page_of', { current: currentPage, total: totalPages });
   wrap.appendChild(indicator);
 
@@ -7180,7 +7209,7 @@ async function initializePlaytestToolbar() {
     document.querySelectorAll('.pt-custom-options').forEach(kill);
     document.querySelectorAll('.pt-suggestions-container').forEach(kill);
     const scope = document.getElementById('playtestSection');
-    scope?.querySelectorAll('.pt-toolbar-button.selected').forEach((b) => b.classList.remove('selected'));
+    scope?.querySelectorAll('.pt-toolbar-button.selected').forEach((b) => b.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
     document.removeEventListener('mousedown', handleOutsideClick);
   };
 
@@ -7218,13 +7247,13 @@ async function initializePlaytestToolbar() {
   toolbar.className = [
     'toolbar',
     'relative flex flex-wrap items-center gap-2',
-    'rounded-xl border border-white/10',
-    'bg-zinc-900/60 p-2',
+    'rounded-xl border border-zinc-200/80 dark:border-white/10',
+    'bg-white/75 dark:bg-zinc-900/60 p-2',
   ].join(' ');
   toolbar.innerHTML = '';
 
   const frame = toolbar.closest('.toolbar-container');
-  if (frame) frame.classList.add('overflow-x-auto');
+  if (frame) frame.classList.add(...String('overflow-x-auto').trim().split(/\s+/).filter(Boolean));
 
   const filterType = {
     map_code: 'input',
@@ -7279,8 +7308,8 @@ async function initializePlaytestToolbar() {
 
       document
         .querySelectorAll('#playtestSection .pt-toolbar-button.selected')
-        .forEach((btn) => btn.classList.remove('selected'));
-      button.classList.add('selected');
+        .forEach((btn) => btn.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
+      button.classList.add(...String('selected').trim().split(/\s+/).filter(Boolean));
 
       closeAll(true);
 
@@ -7298,10 +7327,10 @@ async function initializePlaytestToolbar() {
         input.className = [
           'pt-toolbar-input',
           'custom-toolbar-input',
-          'w-full rounded-lg border border-white/10',
-          'bg-zinc-900/95 px-3 py-2 text-sm',
-          'text-zinc-100 placeholder:text-zinc-500',
-          'shadow-xl ring-1 ring-white/10',
+          'w-full rounded-lg border border-zinc-200/80 dark:border-white/10',
+          'bg-white/95 dark:bg-zinc-900/95 px-3 py-2 text-sm',
+          'text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500',
+          'shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10',
           'outline-none focus:ring-2 focus:ring-emerald-500/60',
           hasAnimIn ? 'opacity-0 translate-y-2 scale-95' : '',
         ].filter(Boolean).join(' ');
@@ -7340,7 +7369,7 @@ async function initializePlaytestToolbar() {
           if (ev.key === 'Escape') {
             if (hasAnimOut) __animateOutAndRemove(input);
             else { input.__cleanup?.(); input.remove(); }
-            button.classList.remove('selected');
+            button.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
             currentInput = null;
             document.querySelectorAll('.pt-suggestions-container').forEach((el) => {
               if (hasAnimOut) __animateOutAndRemove(el);
@@ -7356,7 +7385,7 @@ async function initializePlaytestToolbar() {
             if (!input.contains(ev.target) && ev.target !== button) {
               if (hasAnimOut) __animateOutAndRemove(input);
               else { input.__cleanup?.(); input.remove(); }
-              if (button.isConnected) button.classList.remove('selected');
+              if (button.isConnected) button.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
               currentInput = null;
               document.removeEventListener('mousedown', handler);
             }
@@ -7371,7 +7400,7 @@ async function initializePlaytestToolbar() {
         if (opts) {
           currentOptionsContainer = opts;
           if (hasAnimIn && !opts.__animatedOnce) {
-            opts.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+            opts.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
             __animateIn(opts);
             opts.__animatedOnce = true;
           }
@@ -7446,11 +7475,11 @@ function createButton(icon) {
     'pt-toolbar-button',
     'relative inline-flex items-center gap-2',
     'h-9 cursor-pointer',
-    'rounded-lg border border-white/10 bg-zinc-900/60',
-    'px-3 text-sm text-zinc-200',
-    'hover:bg-zinc-900/70 hover:border-white/20',
+    'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60',
+    'px-3 text-sm text-zinc-800 dark:text-zinc-200',
+    'hover:bg-white/95 dark:hover:bg-white/10 hover:border-zinc-300/80 dark:hover:border-white/20',
     'focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
-    'transition',
+    'transition-colors duration-200 ease-out',
   ].join(' ');
 
   button.innerHTML = `
@@ -7460,7 +7489,7 @@ function createButton(icon) {
       </svg>
       <span class=\"icon-name leading-none\">${icon.name}</span>
     </div>
-    <span class=\"active-filter-badge filter-badge hidden absolute -top-1 -right-1 rounded-full bg-emerald-500/90 text-[10px] font-semibold text-white leading-none ring-1 ring-white/20 px-1.5 py-0.5 truncate\"></span>
+    <span class=\"active-filter-badge filter-badge hidden absolute -top-1 -right-1 rounded-full bg-emerald-500/90 text-[10px] font-semibold text-zinc-900 dark:text-white leading-none ring-1 ring-zinc-400/60 dark:ring-white/20 px-1.5 py-0.5 truncate\"></span>
   `;
   return button;
 }
@@ -7490,7 +7519,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       return null;
     } else {
       existing.style.display = 'block';
-      existing.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+      existing.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
       existing.__place?.();
       __animateIn(existing);
       return existing;
@@ -7506,8 +7535,8 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
   container.setAttribute('data-scope', 'playtest');
   container.className = [
     'pt-custom-options', 'custom-options',
-    'rounded-lg border border-white/10 bg-zinc-900/95',
-    'p-1 shadow-xl ring-1 ring-white/10',
+    'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95',
+    'p-1 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10',
     'max-h-64 overflow-y-auto',
     'opacity-0 translate-y-2 scale-95'
   ].join(' ');
@@ -7521,7 +7550,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
     if (useWrapper) {
       const wrapper = document.createElement('div');
       wrapper.className =
-        'pt-custom-option-wrapper custom-option-wrapper flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5 cursor-pointer';
+        'pt-custom-option-wrapper custom-option-wrapper flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/10';
 
       const cb = document.createElement('input');
       cb.type = 'checkbox';
@@ -7531,7 +7560,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
 
       const label = document.createElement('label');
       label.htmlFor = cb.id;
-      label.className = 'pt-custom-option custom-option text-zinc-200 select-none cursor-pointer';
+      label.className = 'pt-custom-option custom-option text-zinc-800 dark:text-zinc-200 select-none cursor-pointer';
       label.textContent = display;
       label.setAttribute('data-raw-value', raw);
 
@@ -7567,7 +7596,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
     } else {
       const el = document.createElement('div');
       el.className =
-        'pt-custom-option custom-option cursor-pointer rounded-md px-2 py-1.5 text-sm text-zinc-200 hover:bg-white/10 mx-1 my-0.5';
+        'pt-custom-option custom-option cursor-pointer rounded-md px-2 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10 mx-1 my-0.5';
       el.setAttribute('data-raw-value', raw);
 
       if (rawProp === 'difficulty') {
@@ -7577,12 +7606,12 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
         el.textContent = display;
       }
 
-      if (activeFilters[prop] === raw) el.classList.add('bg-white/10');
+      if (activeFilters[prop] === raw) el.classList.add(...String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        container.querySelectorAll('.custom-option').forEach((o) => o.classList.remove('bg-white/10'));
-        el.classList.add('bg-white/10');
+        container.querySelectorAll('.custom-option').forEach((o) => o.classList.remove(...String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)));
+        el.classList.add(...String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
         activeFilters[prop] = raw;
         updateActiveFilters();
         updateToolbarButtonStates();
@@ -7731,7 +7760,7 @@ async function applyFilters(page = 1) {
       if (cardContainer) {
         cardContainer.innerHTML = `
           <div class="col-span-full">
-            <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+            <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
               ${message}
             </div>
           </div>
@@ -7821,35 +7850,19 @@ function updateToolbarButtonStates() {
       const isActive = Array.isArray(val) ? val.length > 0 : val != null && val !== '';
       const effectiveActive = !isLockedByCode && isActive;
 
-      button.classList.remove(
-        'active-filter',
-        'border-brand-400/40',
-        'ring-1',
-        'ring-emerald-500/30',
-        'bg-zinc-900/60',
-        'border-white/10',
-        'text-zinc-200',
-        'cursor-not-allowed',
-        'pointer-events-none',
-        'is-disabled-by-code'
-      );
+      button.classList.remove(...String('active-filter').trim().split(/\s+/).filter(Boolean), ...String('border-brand-400/40').trim().split(/\s+/).filter(Boolean), ...String('ring-1').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/30').trim().split(/\s+/).filter(Boolean), ...String('bg-white/75 dark:bg-zinc-900/60').trim().split(/\s+/).filter(Boolean), ...String('border-zinc-200/80 dark:border-white/10').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-800 dark:text-zinc-200').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('is-disabled-by-code').trim().split(/\s+/).filter(Boolean));
 
-      button.classList.add('bg-zinc-900/60', 'border-white/10', 'text-zinc-200');
+      button.classList.add(...String('bg-white/75 dark:bg-zinc-900/60').trim().split(/\s+/).filter(Boolean), ...String('border-zinc-200/80 dark:border-white/10').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-800 dark:text-zinc-200').trim().split(/\s+/).filter(Boolean));
 
       if (effectiveActive && !isActionButton) {
-        button.classList.add(
-          'active-filter',
-          'border-brand-400/40',
-          'ring-1',
-          'ring-emerald-500/30'
-        );
+        button.classList.add(...String('active-filter').trim().split(/\s+/).filter(Boolean), ...String('border-brand-400/40').trim().split(/\s+/).filter(Boolean), ...String('ring-1').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/30').trim().split(/\s+/).filter(Boolean));
       }
 
       const badge = button.querySelector('.active-filter-badge');
       if (badge) {
         if (!effectiveActive || isActionButton) {
           badge.textContent = '';
-          badge.classList.add('hidden');
+          badge.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
         } else {
           let text = '';
 
@@ -7873,17 +7886,17 @@ function updateToolbarButtonStates() {
           }
 
           badge.textContent = text;
-          badge.classList.toggle('hidden', !text);
+(() => { const __obj = badge; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !text); return __last; })();
         }
       }
 
       if (isLockedByCode) {
         button.disabled = true;
-        button.classList.add('cursor-not-allowed', 'pointer-events-none', 'is-disabled-by-code');
+        button.classList.add(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('is-disabled-by-code').trim().split(/\s+/).filter(Boolean));
 
-        button.classList.remove('selected');
+        button.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
         const circle = button.querySelector('.pt-selection-circle');
-        if (circle) circle.classList.remove('circle-visible');
+        if (circle) circle.classList.remove(...String('circle-visible').trim().split(/\s+/).filter(Boolean));
       } else {
         button.disabled = false;
       }
@@ -7980,7 +7993,7 @@ function showSuggestions(event, _unused, containerId, propertyName) {
       filtered.forEach((s) => {
         const div = document.createElement('div');
         div.textContent = s.label;
-        div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+        div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
         div.setAttribute('data-raw-value', s.raw);
 
         div.addEventListener('click', (e) => {
@@ -8028,7 +8041,7 @@ function showSuggestions(event, _unused, containerId, propertyName) {
           suggestionsContainer.style.width= `${input.offsetWidth}px`;
         }
 
-        suggestionsContainer.classList.add('transform', 'opacity-0', 'translate-y-2', 'scale-95');
+        suggestionsContainer.classList.add(...String('transform').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
         __animateIn(suggestionsContainer);
         document.addEventListener('mousedown', outsideClickHandler);
       } else {
@@ -8056,7 +8069,7 @@ function showSuggestions(event, _unused, containerId, propertyName) {
         normalized.forEach((s) => {
           const div = document.createElement('div');
           div.textContent = s.label;
-          div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+          div.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
           div.setAttribute('data-raw-value', s.raw);
 
           div.addEventListener('click', (e) => {
@@ -8104,7 +8117,7 @@ function showSuggestions(event, _unused, containerId, propertyName) {
             suggestionsContainer.style.width= `${input.offsetWidth}px`;
           }
 
-          suggestionsContainer.classList.add('transform', 'opacity-0', 'translate-y-2', 'scale-95');
+          suggestionsContainer.classList.add(...String('transform').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
           __animateIn(suggestionsContainer);
           document.addEventListener('mousedown', outsideClickHandler);
         } else {
@@ -8125,8 +8138,8 @@ function getSuggestionsContainer(containerId, input) {
     suggestionsContainer.className = [
       'pt-suggestions-container',
       'suggestions-container',
-      'rounded-lg border border-white/10 bg-zinc-900/95 text-sm text-zinc-100',
-      'shadow-xl ring-1 ring-white/10',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 text-sm text-zinc-900 dark:text-zinc-100',
+      'shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10',
       'max-h-56 overflow-y-auto',
     ].join(' ');
     suggestionsContainer.setAttribute('data-scope', 'playtest');
@@ -8199,7 +8212,7 @@ function positionInputOrDropdown(input, _optionsContainer, button) {
       currentInput.__cleanup?.();
       currentInput.remove();
     }
-    input.classList.add('pt-toolbar-input', 'opacity-0', 'translate-y-2', 'scale-95');
+    input.classList.add(...String('pt-toolbar-input').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
     document.body.appendChild(input);
     placeNear(input, 6);
 
@@ -8221,22 +8234,19 @@ function positionInputOrDropdown(input, _optionsContainer, button) {
 
 function __animateIn(el) {
   if (!el) return;
-  el.classList.add(
-    'transform', 'transition', 'duration-150', 'ease-out',
-    'opacity-0', 'translate-y-2', 'scale-95'
-  );
+  el.classList.add(...String('transform').trim().split(/\s+/).filter(Boolean), ...String('transition').trim().split(/\s+/).filter(Boolean), ...String('duration-150').trim().split(/\s+/).filter(Boolean), ...String('ease-out').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
   void el.offsetWidth;
   requestAnimationFrame(() => {
-    el.classList.remove('opacity-0', 'translate-y-2', 'scale-95');
-    el.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+    el.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
+    el.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
   });
 }
 
 function __animateOutAndRemove(el, { remove = true } = {}) {
   if (!el) return;
-  el.classList.add('transform', 'transition', 'duration-125', 'ease-in');
-  el.classList.remove('opacity-100', 'translate-y-0', 'scale-100');
-  el.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+  el.classList.add(...String('transform').trim().split(/\s+/).filter(Boolean), ...String('transition').trim().split(/\s+/).filter(Boolean), ...String('duration-125').trim().split(/\s+/).filter(Boolean), ...String('ease-in').trim().split(/\s+/).filter(Boolean));
+  el.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-2').trim().split(/\s+/).filter(Boolean), ...String('scale-95').trim().split(/\s+/).filter(Boolean));
   const done = () => {
     el.removeEventListener('transitionend', done);
     if (remove) {
@@ -8266,7 +8276,7 @@ function closeOpenToolbarOverlays({ animate = true } = {}) {
   });
 
   if (scope)
-    scope.querySelectorAll('.pt-toolbar-button.selected').forEach((btn) => btn.classList.remove('selected'));
+    scope.querySelectorAll('.pt-toolbar-button.selected').forEach((btn) => btn.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
 
   document.removeEventListener('mousedown', handleOutsideClick);
 }
@@ -8287,10 +8297,10 @@ function lockSectionById(sectionId) {
     'guest-lock pointer-events-auto absolute inset-0 z-[9999] grid place-items-center rounded-2xl bg-black/55 backdrop-blur-sm';
   overlay.innerHTML = `
     <div class="text-center px-4">
-      <div class="mx-auto mb-2 h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/20 grid place-items-center">
+      <div class="mx-auto mb-2 h-10 w-10 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-400/60 dark:ring-white/20 grid place-items-center">
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e5e7eb" d="M12 1a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm-3 8V6a3 3 0 116 0v3H9z"/></svg>
       </div>
-      <div class="text-sm text-zinc-200 mb-2">
+      <div class="text-sm text-zinc-800 dark:text-zinc-200 mb-2">
         ${typeof t === 'function' ? t('popup.login_required_msg') : 'Please login to access this section'}
       </div>
       <a href="/login"

@@ -18,7 +18,7 @@
           <div>
             <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
               {{ __('submit.header.title') }}
-              <span class="block text-sm font-medium text-zinc-300 sm:text-base">
+              <span class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">
                 {{ __('submit.header.subtitle') }}
               </span>
             </h1>
@@ -30,22 +30,22 @@
     <div class="mx-auto min-h-[80vh] max-w-7xl px-4 pt-6 pb-0 sm:px-6 sm:pt-1 lg:px-8">
     <!-- Tabs -->
     <div class="mt-1 flex flex-wrap items-center gap-2">
-      <div id="mainTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+      <div id="mainTabs" class="inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-1">
         <button
           id="submitRecordBtn"
-          class="tab-btn cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/70 dark:bg-white/90 dark:text-zinc-900 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-colors duration-200 ease-out"
         >
           {{ __('submit.tabs.record') }}
         </button>
         <button
           id="playtestBtn"
-          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-colors duration-200 ease-out"
         >
           {{ __('submit.tabs.playtest') }}
         </button>
         <button
           id="submitMapBtn"
-          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-colors duration-200 ease-out"
         >
           {{ __('submit.tabs.map') }}
         </button>
@@ -53,13 +53,13 @@
     </div>
 
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-800/60"></div>
+        <div id="loadingContainer" class="loading-bar rounded-full bg-zinc-100/60 dark:bg-zinc-800/60"></div>
       </div>
 
       <!-- CONTENU ONGLET : Submit Record -->
       <div
         id="submitRecordSection"
-        class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
+        class="mt-6 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4 sm:p-6"
       >
         <form id="submitRecordForm" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-2">
           @csrf
@@ -68,7 +68,7 @@
           <div class="space-y-4">
             <!-- Map code  -->
             <div>
-              <label class="mb-1 block text-xs text-zinc-400">{{ __('submit.table.code') }}</label>
+              <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">{{ __('submit.table.code') }}</label>
               <div class="relative">
                 <input
                   type="text"
@@ -78,19 +78,19 @@
                   autocapitalize="off"
                   autocorrect="off"
                   spellcheck="false"
-                  class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
+                  class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
                   placeholder="e.g. ABCDE"
                 />
                 <div
                   id="mapCodeAutoList"
-                  class="absolute top-[110%] right-0 left-0 z-[110] hidden max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl backdrop-blur"
+                  class="absolute top-[110%] right-0 left-0 z-[110] hidden max-h-56 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl backdrop-blur"
                 ></div>
               </div>
             </div>
 
             <!-- Time -->
             <div>
-              <label class="mb-1 block text-xs text-zinc-400">{{ __('submit.table.time') }}</label>
+              <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">{{ __('submit.table.time') }}</label>
               <input
                 type="text"
                 id="inputTime"
@@ -99,33 +99,33 @@
                 autocapitalize="off"
                 autocorrect="off"
                 spellcheck="false"
-                class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
+                class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
                 placeholder="e.g. 123.56"
               />
             </div>
 
             <!-- Quality (1..6) -->
             <div>
-              <label class="mb-1 block text-xs text-zinc-400">
+              <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                 {{ __('submit.table.quality') }}
               </label>
               <div id="qualityDropdown" class="fake-select relative">
                 <button
                   type="button"
                   id="qualityDropdownBtn"
-                  class="fake-select-btn inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                  class="fake-select-btn inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm"
                 >
                   {{ __('submit.record.select_quality') }}
-                  <svg class="h-4 w-4 text-zinc-400 transform transition-transform" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400 transform transition-transform" viewBox="0 0 20 20" aria-hidden="true">
                     <path fill="currentColor" d="m5 7l5 6l5-6H5z" />
                   </svg>
                 </button>
                 <div
-                  class="fake-select-list dropdown-list dd-anim z-[110] absolute right-0 left-0 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"
+                  class="fake-select-list dropdown-list dd-anim z-[110] absolute right-0 left-0 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"
                 >
                   @for ($i=1;$i<=6;$i++)
                     <label
-                      class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                      class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                     >
                       <input
                         type="radio"
@@ -141,12 +141,12 @@
             </div>
 
             <!-- Optional -->
-            <div class="space-y-3 rounded-xl border border-white/10 bg-white/5 p-3">
-              <h3 class="text-sm font-semibold text-zinc-200">
+            <div class="space-y-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-3">
+              <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                 {{ __('submit.record.optional') }}
               </h3>
               <div>
-                <label class="mb-1 block text-xs text-zinc-400">
+                <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                   {{ __('submit.record.video') }}
                 </label>
                 <input
@@ -158,7 +158,7 @@
                   autocorrect="off"
                   spellcheck="false"
                   placeholder="https://…"
-                  class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
+                  class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60"
                 />
               </div>
             </div>
@@ -167,13 +167,13 @@
           <!-- Colonne droite -->
           <div class="min-w-0 space-y-4">
             <div>
-              <span class="mb-1 block text-xs text-zinc-400">
+              <span class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                 {{ __('submit.record.screenshot') }}
               </span>
 
               <!-- Zone responsive + anti-overflow -->
               <div id="screenshotDrop"
-                  class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60">
+                  class="group relative flex h-60 sm:h-72 md:h-80 lg:h-[20rem] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/60 dark:bg-zinc-900/60">
                 <input
                   id="screenshotInput"
                   name="screenshot"
@@ -182,7 +182,7 @@
                   class="hidden"
                 />
                 <div id="screenshotPlaceholder"
-                    class="px-2 text-center text-sm text-zinc-300 whitespace-normal break-words">
+                    class="px-2 text-center text-sm text-zinc-600 dark:text-zinc-300 whitespace-normal break-words">
                   {{ __('submit.record.drag_and_drop') }}
                 </div>
               </div>
@@ -198,7 +198,7 @@
 
               <button
                 type="button"
-                class="sr-reveal cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm [--sr-delay:640ms] hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:[animation-delay:var(--sr-delay)]"
+                class="sr-reveal cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm [--sr-delay:640ms] hover:bg-zinc-100 dark:hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:[animation-delay:var(--sr-delay)]"
                 form="submitRecordForm"
               >
                 {{ __('submit.record.cancel') }}
@@ -208,24 +208,33 @@
         </form>
 
         <div
-          class="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice"
+          class="mt-4 rounded-xl border border-amber-300/50 bg-amber-50 p-3 ring-1 ring-amber-400/20
+                dark:border-amber-400/30 dark:bg-amber-500/10 sm:p-4 sr-notice"
           id="srOcrNotice"
           role="status"
           aria-live="polite"
         >
           <div class="flex items-start gap-3">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+            <svg
+              class="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
             </svg>
+
             <div class="min-w-0">
-              <div class="font-semibold text-amber-300">{{ __('submit.ocr.title') }}</div>
-              <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+              <div class="font-semibold text-amber-800 dark:text-amber-300">
+                {{ __('submit.ocr.title') }}
+              </div>
+
+              <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-700 dark:text-amber-100">
                 <li class="flex items-center gap-2">
-                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600 dark:bg-amber-300 relative top-px"></span>
                   <span>{{ __('submit.ocr.li1') }}</span>
                 </li>
                 <li class="flex items-center gap-2">
-                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600 dark:bg-amber-300 relative top-px"></span>
                   <span>{{ __('submit.ocr.li2') }}</span>
                 </li>
               </ul>
@@ -238,12 +247,12 @@
       <!-- CONTENU ONGLET : Playtest -->
       <div
         id="playtestSection"
-        class="mt-6 hidden min-h-[520px] rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
+        class="mt-6 hidden min-h-[520px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4 sm:p-6"
       >
         <div class="mb-4 flex items-center justify-between gap-3">
-          <div id="icon-name" class="text-sm text-zinc-300"></div>
+          <div id="icon-name" class="text-sm text-zinc-600 dark:text-zinc-300"></div>
           <div
-            class="toolbar inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1"
+            class="toolbar inline-flex items-center gap-1 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-1"
           ></div>
         </div>
         <form id="playtestForm">
@@ -262,7 +271,7 @@
           class="playtest-modal-content relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-3xl items-start justify-center overflow-y-auto p-4 sm:items-center sm:p-6"
         >
           <div
-            class="max-h-[calc(100dvh-4rem)] w-full overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-zinc-900/90 p-4 ring-1 ring-white/10 sm:max-h-[calc(100dvh-6rem)]"
+            class="max-h-[calc(100dvh-4rem)] w-full overflow-y-auto overscroll-contain rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 ring-1 ring-zinc-300/60 dark:ring-white/10 sm:max-h-[calc(100dvh-6rem)]"
             data-modal-box
           >
             <div id="playtestModalInner" class="space-y-3"></div>
@@ -273,7 +282,7 @@
       <!-- Submit Map  -->
       <div
         id="submitMapSection"
-        class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
+        class="mt-6 hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4 sm:p-6"
       ></div>
     </div>
     
@@ -282,11 +291,11 @@
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm help-modal-backdrop"></div>
 
       <div id="helpModalInner"
-          class="relative mx-auto my-8 w-[min(960px,92vw)] max-h-[80vh] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 ring-1 ring-white/10 shadow-2xl x-anim hidden">
-        <header class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-          <h3 id="helpModalTitle" class="text-sm font-semibold text-zinc-100"></h3>
+          class="relative mx-auto my-8 w-[min(960px,92vw)] max-h-[80vh] overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-2xl x-anim hidden">
+        <header class="flex items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10 px-4 py-3">
+          <h3 id="helpModalTitle" class="text-sm font-semibold text-zinc-900 dark:text-zinc-100"></h3>
           <button type="button" id="helpModalClose"
-                  class="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-zinc-200 hover:bg-white/10">
+                  class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">
             {{ __('help.common.close_label') }}
           </button>
         </header>

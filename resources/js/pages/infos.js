@@ -30,26 +30,26 @@ function renderRankHelpContent(kind) {
   const li = (txt) => `
     <li class="help-li">
       <span class="dot"></span>
-      <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+      <span class="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">${txt}</span>
     </li>
   `;
 
   const card = (title, content, { showIcon = false } = {}) => `
     <section
-      class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+      class="rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
              p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20"
     >
       <div class="flex items-center gap-2 ${showIcon ? '' : 'cursor-default'}">
         ${
           showIcon
             ? `<div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-                 <svg class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                 <svg class="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                    <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm-1 15-5-5 1.414-1.414L11 13.172l6.586-6.586L19 8z"/>
                  </svg>
                </div>`
             : ''
         }
-        <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+        <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${title}</h4>
       </div>
       ${content}
     </section>
@@ -57,7 +57,7 @@ function renderRankHelpContent(kind) {
 
   const calloutInfo = (text) => `
     <div
-      class="rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-200
+      class="rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200
              px-3 py-2 text-sm font-medium leading-relaxed flex items-start gap-2 cursor-default"
     >
       <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/30 text-[10px]">i</span>
@@ -99,7 +99,7 @@ function renderRankHelpContent(kind) {
     const steps = card(
       tf('help_modal.rank_promotion.how_to_submit.steps.title', 'How to submit a completion'),
       `
-        <ol class="mt-1 space-y-3 relative border-white/10 pl-4 cursor-default">
+        <ol class="mt-1 space-y-3 relative border-zinc-200 dark:border-white/10 pl-4 cursor-default">
           ${[
             tf('help_modal.rank_promotion.how_to_submit.steps.open_tab','Open the “Submit completion” tab.'),
             tf('help_modal.rank_promotion.how_to_submit.steps.enter_code','Enter the map code and your record time.'),
@@ -111,11 +111,11 @@ function renderRankHelpContent(kind) {
               <li class="relative">
                 <div
                   class="absolute -left-4 flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900
-                         ring-2 ring-emerald-500/60 text-xs font-semibold text-emerald-100"
+                         ring-2 ring-emerald-500/60 text-xs font-semibold text-white dark:text-emerald-100"
                 >
                   ${idx + 1}
                 </div>
-                <p class="text-sm text-zinc-200 leading-relaxed">${text}</p>
+                <p class="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">${text}</p>
               </li>`
             )
             .join('')}
@@ -139,7 +139,7 @@ function renderRankHelpContent(kind) {
     const liInner = (txt) => `
       <li class="help-li">
         <span class="dot"></span>
-        <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+        <span class="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">${txt}</span>
       </li>
     `;
 
@@ -147,7 +147,7 @@ function renderRankHelpContent(kind) {
 
     const warn = (text) => `
       <div
-        class="rounded-lg border border-amber-400/40 bg-amber-500/10 text-amber-100
+        class="rounded-lg border border-amber-400/40 bg-amber-500/10 text-amber-800 dark:text-amber-100
                px-3 py-2 text-sm font-medium leading-relaxed flex items-start gap-2 cursor-default"
       >
         <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20">⚠</span>
@@ -255,12 +255,12 @@ function renderRankHelpContent(kind) {
     const liRank = (txt) => `
       <li class="help-li">
         <span class="dot"></span>
-        <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+        <span class="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">${txt}</span>
       </li>
     `;
 
     const info = `
-      <div class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+      <div class="rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
                 p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
         <ul class="mt-1 space-y-2 cursor-default">
           ${liRank(t('help_modal.rank_promotion.rank_info_thresholds.info.li_no_order', 'Ranks do not need to be acquired in order.'))}
@@ -291,24 +291,24 @@ function renderRankHelpContent(kind) {
     ];
 
     const cardRank = (r) => `
-      <div class="rank-card relative rounded-xl border border-white/10 bg-zinc-900/60 p-4 flex flex-col justify-between overflow-hidden">
+      <div class="rank-card relative rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/60 p-4 flex flex-col justify-between overflow-hidden">
         <div class="flex items-center gap-3">
           <img src="${r.img}" alt="${R(r.key, 'name', r.key)} badge" class="rank-img h-10 w-10 rounded-lg object-contain shadow-sm shadow-black/40" loading="lazy">
           <div class="min-w-0">
-            <div class="rank-name text-sm font-semibold text-zinc-100 truncate">${R(r.key, 'name', r.key)}</div>
-            <div class="rank-diff text-xs text-zinc-400">${r.diff}</div>
+            <div class="rank-name text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">${R(r.key, 'name', r.key)}</div>
+            <div class="rank-diff text-xs text-zinc-600 dark:text-zinc-400">${r.diff}</div>
           </div>
         </div>
-        <div class="rank-count mt-3 text-sm text-zinc-300">
-          ${r.count == null ? `<span class="opacity-70">— ${NA}</span>` : `<strong class="text-zinc-100">${r.count}</strong> <span class="opacity-80">${CL}</span>`}
+        <div class="rank-count mt-3 text-sm text-zinc-700 dark:text-zinc-300">
+          ${r.count == null ? `<span class="opacity-70">— ${NA}</span>` : `<strong class="text-zinc-900 dark:text-zinc-100">${r.count}</strong> <span class="opacity-80">${CL}</span>`}
         </div>
       </div>
     `;
 
     const grid = `
-      <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
+      <section class="rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
         <div class="flex items-center gap-2">
-          <h4 class="text-sm font-semibold text-zinc-100">${t('help_modal.rank_promotion.rank_info_thresholds.table.title','Rank & Difficulty chart')}</h4>
+          <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${t('help_modal.rank_promotion.rank_info_thresholds.table.title','Rank & Difficulty chart')}</h4>
         </div>
         <div class="rank-grid mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           ${ranks.map(cardRank).join('')}
@@ -327,12 +327,12 @@ function renderRankHelpContent(kind) {
     const liMed = (txt) => `
       <li class="help-li">
         <span class="dot"></span>
-        <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+        <span class="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">${txt}</span>
       </li>
     `;
 
     const info = `
-      <div class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+      <div class="rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
                p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
         <ul class="mt-1 space-y-2 cursor-default">
           ${liMed(t('help_modal.rank_promotion.medals_info_thresholds.info.li_plus_explain','To get a +, ++ or +++ rank, you must obtain the same amount of Bronze, Silver, or Gold medals as the rank normally requires (see chart below).'))}
@@ -369,19 +369,19 @@ function renderRankHelpContent(kind) {
     ];
 
     const head = DIFF_KEYS.map(
-      (k, colIndex) => `<div class="tech-hcell text-xs font-medium text-zinc-300 cursor-default" data-tech-col="${colIndex}">
+      (k, colIndex) => `<div class="tech-hcell text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-default" data-tech-col="${colIndex}">
         ${D[k]}
       </div>`
     ).join('');
 
     const cell = (count, rowIndex, colIndex) =>
-      `<div class="tech-cell text-sm text-zinc-200 px-2 rounded-lg cursor-default" data-tech-row="${rowIndex}" data-tech-col="${colIndex}">
-        ${count == null ? `<span class="opacity-70" title="${NA}">${NA}</span>` : `<strong class="text-zinc-100">${count}</strong> <span class="opacity-80">${ML}</span>`}
+      `<div class="tech-cell text-sm text-zinc-700 dark:text-zinc-200 px-2 rounded-lg cursor-default" data-tech-row="${rowIndex}" data-tech-col="${colIndex}">
+        ${count == null ? `<span class="opacity-70" title="${NA}">${NA}</span>` : `<strong class="text-zinc-900 dark:text-zinc-100">${count}</strong> <span class="opacity-80">${ML}</span>`}
       </div>`;
 
     const rows = MEDALS.map(
       (m, rowIndex) => `
-        <div class="tech-rlabel flex items-center gap-2 px-2 rounded-lg text-sm text-zinc-100 cursor-default" data-tech-row="${rowIndex}">
+        <div class="tech-rlabel flex items-center gap-2 px-2 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 cursor-default" data-tech-row="${rowIndex}">
           <img src="${m.src}" alt="${m.label}" class="h-5 w-5 object-contain" loading="lazy">
           <span>${m.label}</span>
         </div>
@@ -390,9 +390,9 @@ function renderRankHelpContent(kind) {
     ).join('');
 
     const table = `
-      <section class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
+      <section class="rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20">
         <div class="flex items-center gap-2">
-          <h4 class="text-sm font-semibold text-zinc-100">${t('help_modal.rank_promotion.medals_info_thresholds.table.title','Medal thresholds by difficulty')}</h4>
+          <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${t('help_modal.rank_promotion.medals_info_thresholds.table.title','Medal thresholds by difficulty')}</h4>
         </div>
         <div class="infos-scroll-x mt-2">
           <div class="infos-scroll-x-inner">
@@ -412,7 +412,7 @@ function renderRankHelpContent(kind) {
   }
 
   return `
-    <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300 cursor-default">
+    <div class="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 p-4 text-sm text-zinc-700 dark:text-zinc-300 cursor-default">
       ${t('help_modal.common.soon', 'Coming soon.')}
     </div>
   `;
@@ -428,17 +428,17 @@ function renderMapHelpContent(kind) {
     const li = (txt) => `
       <li class="help-li">
         <span class="dot"></span>
-        <span class="text-sm text-zinc-200 leading-relaxed">${txt}</span>
+        <span class="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">${txt}</span>
       </li>
     `;
 
     const card = (title, content) => `
       <section
-        class="rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+        class="rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
                p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20"
       >
         <div class="flex items-center gap-2">
-          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+          <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${title}</h4>
         </div>
         ${content}
       </section>
@@ -446,7 +446,7 @@ function renderMapHelpContent(kind) {
 
     const calloutWarn = (text) => `
       <div
-        class="rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-200
+        class="rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-800 dark:text-rose-200
                px-3 py-2 text-sm font-medium mt-3 leading-relaxed flex items-start gap-2 cursor-default"
       >
         <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-500/30 text-[10px]">!</span>
@@ -462,50 +462,50 @@ function renderMapHelpContent(kind) {
       P('title', 'Process'),
       `
       <div class="help-pt pt-grid cursor-default">
-        <div class="pt-phase bg-zinc-900/40">
-          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('creation','Creation Phase')}</div>
+        <div class="pt-phase bg-zinc-100 dark:bg-zinc-900/40">
+          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${P('creation','Creation Phase')}</div>
           <div class="pt-card mt-2 space-y-1.5">
-            <div class="pt-step text-sm text-zinc-200">${PS('map_is_made','Map is made')}</div>
-            <div class="pt-step text-sm text-zinc-200">${PS('map_submission_form','Map submission form')}</div>
-            <div class="pt-note text-xs text-zinc-400">${PN('change_only_by_sensei','Changing map details can only be done via a Sensei (restrictions, code, etc.).')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('map_is_made','Map is made')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('map_submission_form','Map submission form')}</div>
+            <div class="pt-note text-xs text-zinc-600 dark:text-zinc-400">${PN('change_only_by_sensei','Changing map details can only be done via a Sensei (restrictions, code, etc.).')}</div>
           </div>
         </div>
 
         <div class="pt-arrow" aria-hidden="true"></div>
 
-        <div class="pt-phase bg-zinc-900/40">
-          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('testing','Testing Phase')}</div>
+        <div class="pt-phase bg-zinc-100 dark:bg-zinc-900/40">
+          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${P('testing','Testing Phase')}</div>
           <div class="pt-card mt-2 space-y-1.5">
-            <div class="pt-step text-sm text-zinc-200">${PS('creator_suggests_difficulty','Creator suggests difficulty')}</div>
-            <div class="pt-step text-sm text-zinc-200">${PS('testers_submit_completion','Testers submit completion')}</div>
-            <div class="pt-step text-sm text-zinc-200">${PS('testers_vote_on_difficulty','Testers vote on difficulty')}</div>
-            <div class="pt-step text-sm text-zinc-200">${PS('creator_finalizes_submission','Creator finalizes submission')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('creator_suggests_difficulty','Creator suggests difficulty')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('testers_submit_completion','Testers submit completion')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('testers_vote_on_difficulty','Testers vote on difficulty')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('creator_finalizes_submission','Creator finalizes submission')}</div>
           </div>
         </div>
 
         <div class="pt-arrow" aria-hidden="true"></div>
 
-        <div class="pt-phase bg-zinc-900/40">
-          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('verification','Verification Phase')}</div>
+        <div class="pt-phase bg-zinc-100 dark:bg-zinc-900/40">
+          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${P('verification','Verification Phase')}</div>
           <div class="pt-card mt-2 space-y-1.5">
-            <div class="pt-step text-sm text-zinc-200">${PS('sensei_receive_submission_notification','Sensei receive submission notification')}</div>
-            <div class="pt-step flex items-center gap-2 text-sm text-zinc-200">
-              <span class="pt-chip pt-chip-accept inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-200">${PS('accept','accept')}</span>
-              <span class="pt-chip pt-chip-reject inline-flex items-center rounded-full bg-rose-500/15 px-2 py-0.5 text-xs text-rose-200">${PS('reject','reject')}</span>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('sensei_receive_submission_notification','Sensei receive submission notification')}</div>
+            <div class="pt-step flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+              <span class="pt-chip pt-chip-accept inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-800 dark:text-emerald-200">${PS('accept','accept')}</span>
+              <span class="pt-chip pt-chip-reject inline-flex items-center rounded-full bg-rose-500/15 px-2 py-0.5 text-xs text-rose-800 dark:text-rose-200">${PS('reject','reject')}</span>
             </div>
-            <div class="pt-step text-sm text-zinc-200">${PS('map_sent_back_previous_step','Map is sent back to a previous step*')}</div>
-            <div class="pt-note text-xs text-zinc-400">${PN('verification_removal','* Completions and votes may be removed at this step.')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('map_sent_back_previous_step','Map is sent back to a previous step*')}</div>
+            <div class="pt-note text-xs text-zinc-600 dark:text-zinc-400">${PN('verification_removal','* Completions and votes may be removed at this step.')}</div>
           </div>
         </div>
 
         <div class="pt-arrow" aria-hidden="true"></div>
 
-        <div class="pt-phase bg-zinc-900/40">
-          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-400">${P('acceptance','Acceptance')}</div>
+        <div class="pt-phase bg-zinc-100 dark:bg-zinc-900/40">
+          <div class="pt-phase-title text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">${P('acceptance','Acceptance')}</div>
           <div class="pt-card mt-2 space-y-1.5">
-            <div class="pt-step text-sm text-zinc-200">${PS('map_accepted','Map accepted')}</div>
-            <div class="pt-step text-sm text-zinc-200">${PS('map_added_to_pool','Map added to map pool')}</div>
-            <div class="pt-step text-sm text-zinc-200">${PS('testers_granted_completion_without_time','Testers granted completion (without time)')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('map_accepted','Map accepted')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('map_added_to_pool','Map added to map pool')}</div>
+            <div class="pt-step text-sm text-zinc-700 dark:text-zinc-200">${PS('testers_granted_completion_without_time','Testers granted completion (without time)')}</div>
           </div>
         </div>
       </div>
@@ -516,9 +516,9 @@ function renderMapHelpContent(kind) {
     const VC = (k, fb) => tf(`help_modal.playtesting_info.votes.counts.${k}`, fb);
 
     const voteRow = (lk, lf, ck, cf) => `
-      <div class="pt-req flex items-center justify-between rounded-lg bg-zinc-900/40 px-3 py-2 cursor-default">
-        <span class="text-sm text-zinc-200">${V(lk, lf)}</span>
-        <strong class="text-sm text-zinc-100">${VC(ck, cf)}</strong>
+      <div class="pt-req flex items-center justify-between rounded-lg bg-zinc-100 dark:bg-zinc-900/40 px-3 py-2 cursor-default">
+        <span class="text-sm text-zinc-700 dark:text-zinc-200">${V(lk, lf)}</span>
+        <strong class="text-sm text-zinc-900 dark:text-zinc-100">${VC(ck, cf)}</strong>
       </div>
     `;
 
@@ -566,24 +566,24 @@ function renderMapHelpContent(kind) {
     const li = (txt) => `
       <li class="help-li">
         <span class="dot"></span>
-        <span class="text-sm text-zinc-200">${txt}</span>
+        <span class="text-sm text-zinc-700 dark:text-zinc-200">${txt}</span>
       </li>
     `;
 
     const section = (title, content) => `
       <section
-        class="helpsec rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
+        class="helpsec rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02]
                p-4 sm:p-5 space-y-2 shadow-sm shadow-black/20"
       >
         <div class="flex items-center gap-2">
-          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+          <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${title}</h4>
         </div>
         ${content}
       </section>
     `;
 
     const callout = (text) => `
-      <div class="rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-200 px-3 py-2 text-sm cursor-default">
+      <div class="rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 px-3 py-2 text-sm cursor-default">
         ${text}
       </div>
     `;
@@ -592,12 +592,12 @@ function renderMapHelpContent(kind) {
     const intro = introText ? callout(introText) : '';
 
     const stepper = `
-      <ol class="mb-3 flex flex-wrap gap-2 text-xs text-zinc-300 cursor-default">
+      <ol class="mb-3 flex flex-wrap gap-2 text-xs text-zinc-700 dark:text-zinc-300 cursor-default">
         ${['Metadata', 'Required', 'Medals', 'Optional', 'Submit']
           .map(
             (label, idx) => `
-            <li class="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1">
-              <span class="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-200">${idx + 1}</span>
+            <li class="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-white/5 px-2 py-1">
+              <span class="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">${idx + 1}</span>
               <span>${label}</span>
             </li>`
           )
@@ -617,7 +617,7 @@ function renderMapHelpContent(kind) {
 
     const required = section(
       t('help_modal.how_to_submit.required.title', '2) Required fields'),
-      `<p class="text-sm text-zinc-300 cursor-default">${t('help_modal.how_to_submit.required.p1','These fields must be provided before you can submit:')}</p>
+      `<p class="text-sm text-zinc-700 dark:text-zinc-300 cursor-default">${t('help_modal.how_to_submit.required.p1','These fields must be provided before you can submit:')}</p>
        <ul class="mt-2 space-y-1.5 cursor-default">
         ${li(t('help_modal.how_to_submit.required.li_difficulty','Difficulty: choose (Easy → Hell).'))}
         ${li(t('help_modal.how_to_submit.required.li_category','Category / Map type: e.g., Classic, Increasing Difficulty.'))}
@@ -628,13 +628,13 @@ function renderMapHelpContent(kind) {
 
     const medals = section(
       t('help_modal.how_to_submit.medals.title', '3) Medals (optional but validated if present)'),
-      `<p class="text-sm text-zinc-300 cursor-default">${t('help_modal.how_to_submit.medals.p1','You may define times (seconds) for Gold, Silver, and Bronze.')}</p>
-       <div class="mt-2 rounded-md border border-white/10 bg-zinc-900/50 p-3 text-xs text-zinc-300 cursor-default">
+      `<p class="text-sm text-zinc-700 dark:text-zinc-300 cursor-default">${t('help_modal.how_to_submit.medals.p1','You may define times (seconds) for Gold, Silver, and Bronze.')}</p>
+       <div class="mt-2 rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-900/50 p-3 text-xs text-zinc-700 dark:text-zinc-300 cursor-default">
          <div class="font-medium mb-1">${t('help_modal.how_to_submit.medals.li_rules','If you set one medal, you must set all three.')}</div>
          <div class="grid gap-2 sm:grid-cols-3">
-           <div class="rounded-md border border-white/10 bg-white/5 px-2 py-1.5"><span class="text-amber-500 font-semibold">Bronze</span> &gt; <span class="text-zinc-200">Silver</span> &gt; <span class="text-yellow-300">Gold</span></div>
-           <div class="rounded-md border border-white/10 bg-white/5 px-2 py-1.5"><code class="text-xs text-zinc-200">${t('help_modal.how_to_submit.medals.li_pattern','Format: 1–5 digits, optional “.” with 1–2 decimals (e.g., 5550.23).')}</code></div>
-           <div class="rounded-md border border-white/10 bg-white/5 px-2 py-1.5">${t('help_modal.how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold.')}</div>
+           <div class="rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 px-2 py-1.5"><span class="text-amber-700 dark:text-amber-500 font-semibold">Bronze</span> &gt; <span class="text-zinc-700 dark:text-zinc-200">Silver</span> &gt; <span class="text-yellow-700 dark:text-yellow-300">Gold</span></div>
+           <div class="rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 px-2 py-1.5"><code class="text-xs text-zinc-700 dark:text-zinc-200">${t('help_modal.how_to_submit.medals.li_pattern','Format: 1–5 digits, optional “.” with 1–2 decimals (e.g., 5550.23).')}</code></div>
+           <div class="rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 px-2 py-1.5">${t('help_modal.how_to_submit.medals.li_order','Required ordering: Bronze > Silver > Gold.')}</div>
          </div>
        </div>`
     );
@@ -710,11 +710,11 @@ function renderMapHelpContent(kind) {
     ];
 
     const legendCard = (cls, title, text) => `
-      <div class="tech-legend-card flex items-start gap-2 rounded-lg bg-zinc-900/50 p-3 cursor-default">
+      <div class="tech-legend-card flex items-start gap-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 p-3 cursor-default">
         <span class="tick ${cls} mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs">✓</span>
         <div class="space-y-0.5">
-          <div class="text-sm font-semibold text-zinc-100">${title}</div>
-          <div class="text-xs text-zinc-300">${text}</div>
+          <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${title}</div>
+          <div class="text-xs text-zinc-700 dark:text-zinc-300">${text}</div>
         </div>
       </div>
     `;
@@ -741,7 +741,7 @@ function renderMapHelpContent(kind) {
 
     const headCells = DIFF_KEYS.map(
       (k, colIndex) =>
-        `<div class="tech-hcell text-xs font-medium text-zinc-300 cursor-default" data-tech-col="${colIndex}">
+        `<div class="tech-hcell text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-default" data-tech-col="${colIndex}">
           ${D[k]}
         </div>`
     ).join('');
@@ -755,7 +755,7 @@ function renderMapHelpContent(kind) {
 
     const rowsHtml = ROWS.map(
       (r, rowIndex) => `
-        <div class="tech-rlabel text-sm text-zinc-100 cursor-default" data-tech-row="${rowIndex}">${r.name}</div>
+        <div class="tech-rlabel text-sm text-zinc-900 dark:text-zinc-100 cursor-default" data-tech-row="${rowIndex}">${r.name}</div>
         ${r.lv.map((n, colIndex) => mark(n, rowIndex, colIndex)).join('')}
       `
     ).join('');
@@ -772,16 +772,16 @@ function renderMapHelpContent(kind) {
     `;
 
     const notes = `
-      <div class="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-zinc-300 cursor-default">
+      <div class="mt-2 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 p-3 text-xs text-zinc-700 dark:text-zinc-300 cursor-default">
         <div><span class="font-semibold">*</span> ${tf2('help_modal.difficulty_techs_info.notes.star', 'Double Jump / Slide / Wall Climb')}</div>
         <div><span class="font-semibold">**</span> ${tf2('help_modal.difficulty_techs_info.notes.double_star', 'Late Bhop / First Bhop / Emote Savebhop / Deathbhop')}</div>
       </div>
     `;
 
     const cardSection = (title, content) => `
-      <section class="helpsec rounded-xl border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-3 shadow-sm shadow-black/20">
+      <section class="helpsec rounded-xl border border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-4 sm:p-5 space-y-3 shadow-sm shadow-black/20">
         <div class="flex items-center gap-2">
-          <h4 class="text-sm font-semibold text-zinc-100">${title}</h4>
+          <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${title}</h4>
         </div>
         ${content}
       </section>
@@ -797,7 +797,7 @@ function renderMapHelpContent(kind) {
   }
 
   return `
-    <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300 cursor-default">
+    <div class="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 p-4 text-sm text-zinc-700 dark:text-zinc-300 cursor-default">
       ${t('help_modal.common.soon', 'Coming soon.')}
     </div>
   `;
@@ -829,8 +829,8 @@ function initInfosTabs() {
       left: '0',
       width: '0',
       borderRadius: '0.625rem',
-      background: 'white',
-      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      background: (document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark' || document.body?.classList.contains('dark') || document.body?.getAttribute('data-theme') === 'dark') ? 'white' : '#18181b',
+      boxShadow: (document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark' || document.body?.classList.contains('dark') || document.body?.getAttribute('data-theme') === 'dark') ? '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)' : '0 1px 0 0 rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.14)',
       transform: 'translate3d(0,0,0)',
       transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
       willChange: 'transform,width',
@@ -860,13 +860,27 @@ function initInfosTabs() {
   const setActiveTab = (group, { updateUrl = true } = {}) => {
     tabs.forEach((btn) => {
       const isActive = btn.getAttribute('data-infos-tab') === group;
+
       if (isActive) {
-        btn.classList.remove('text-white', 'hover:bg-white/10');
-        btn.classList.add('text-zinc-900');
+        // Light: white text on dark highlight
+        // Dark : dark text on white highlight
+        btn.classList.remove(
+          'text-zinc-700',
+          'hover:bg-zinc-100',
+          'dark:text-white',
+          'dark:hover:bg-white/10'
+        );
+        btn.classList.add('text-white', 'dark:text-zinc-900');
+
         moveHighlightTo(btn);
       } else {
-        btn.classList.remove('text-zinc-900');
-        btn.classList.add('text-white', 'hover:bg-white/10');
+        btn.classList.remove('text-white', 'dark:text-zinc-900');
+        btn.classList.add(
+          'text-zinc-700',
+          'hover:bg-zinc-100',
+          'dark:text-white',
+          'dark:hover:bg-white/10'
+        );
       }
     });
 

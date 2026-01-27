@@ -14,14 +14,14 @@
           <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
             {{ __('tutorials.genjiParkourTechsTitle') }}
           </h1>
-          <p class="leading-relaxed text-zinc-300">
+          <p class="leading-relaxed text-zinc-600 dark:text-zinc-300">
             {{ __('tutorials.genjiParkourTechsDescription') }}
           </p>
 
           <div class="flex items-center gap-3 pt-2">
             <a
               href="#hero2"
-              class="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-100 transition ring-inset hover:bg-white/10 focus:ring-2 focus:ring-emerald-400/40 focus:outline-none"
+              class="group inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition ring-inset hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-2 focus:ring-emerald-400/40 focus:outline-none"
             >
               <svg
                 class="h-4 w-4 opacity-80 transition group-hover:translate-y-0.5"
@@ -41,7 +41,7 @@
         </div>
 
         <div
-          class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 shadow-xl ring-1 ring-white/10"
+          class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10"
         >
           <div class="aspect-video">
             <iframe
@@ -69,7 +69,7 @@
       <!-- Image -->
       <div class="order-last lg:order-first">
         <figure
-          class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 shadow-xl ring-1 ring-white/10"
+          class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10"
         >
           <img
             class="h-full w-full object-cover"
@@ -85,13 +85,13 @@
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">
           {{ __('tutorials.tutorialTitle') }}
         </h2>
-        <p class="leading-relaxed text-zinc-300">
+        <p class="leading-relaxed text-zinc-600 dark:text-zinc-300">
           {{ __('tutorials.tutorialDescription') }}
         </p>
 
         <!-- Code -->
         <div class="mt-4">
-          <span class="text-sm text-zinc-400">{{ __('tutorials.codeLabel') }}:</span>
+          <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('tutorials.codeLabel') }}:</span>
           <code
             class="ml-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-400/30 transition ring-inset hover:bg-emerald-400/20"
             data-map-code="{{ __('tutorials.codeValue') }}"
@@ -120,7 +120,7 @@
         <div class="flex items-center gap-3 pt-2">
           <a
             href="#hero3"
-            class="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-100 transition ring-inset hover:bg-white/10 focus:ring-2 focus:ring-sky-400/40 focus:outline-none"
+            class="group inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition ring-inset hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-2 focus:ring-sky-400/40 focus:outline-none"
           >
             <svg
               class="h-4 w-4 opacity-80 transition group-hover:translate-y-0.5"
@@ -153,14 +153,14 @@
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">
           {{ __('tutorials.mapCreation') }}
         </h2>
-        <p class="leading-relaxed text-zinc-300">
+        <p class="leading-relaxed text-zinc-600 dark:text-zinc-300">
           {{ __('tutorials.mapCreationDescription') }}
         </p>
 
         <div class="flex items-center gap-3 pt-2">
           <a
             href="#hero4"
-            class="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-100 transition ring-inset hover:bg-white/10 focus:ring-2 focus:ring-purple-400/40 focus:outline-none"
+            class="group inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition ring-inset hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-2 focus:ring-purple-400/40 focus:outline-none"
           >
             <svg
               class="h-4 w-4 opacity-80 transition group-hover:translate-y-0.5"
@@ -180,7 +180,7 @@
       </div>
 
       <div
-        class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 shadow-xl ring-1 ring-white/10"
+        class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10"
       >
         <div class="aspect-video">
           <iframe
@@ -205,7 +205,7 @@
   <section id="hero4" class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
     <div class="grid items-center gap-8 lg:grid-cols-2">
       <div
-        class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 shadow-xl ring-1 ring-white/10"
+        class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10"
       >
         <div class="aspect-video">
           <iframe
@@ -223,7 +223,7 @@
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">
           {{ __('tutorials.speedrunnerTitle') }}
         </h2>
-        <p class="leading-relaxed text-zinc-300">
+        <p class="leading-relaxed text-zinc-600 dark:text-zinc-300">
           {{ __('tutorials.speedrunnerDescription') }}
         </p>
 

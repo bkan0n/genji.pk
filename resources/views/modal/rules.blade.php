@@ -15,22 +15,22 @@
     aria-labelledby="rulesTitle"
     class="pointer-events-auto relative z-10 w-full max-w-2xl translate-y-4 scale-95 transform-gpu
            rounded-[1.75rem] bg-gradient-to-tr from-emerald-400/40 via-indigo-400/35 to-transparent
-           p-[1px] opacity-0 shadow-[0_28px_80px_rgba(0,0,0,0.9)] ring-1 ring-white/15
+           p-[1px] opacity-0 shadow-[0_28px_80px_rgba(0,0,0,0.9)] ring-1 ring-zinc-300/60 dark:ring-white/15
            transition duration-200 ease-out sm:max-w-3xl"
   >
-    <div class="rounded-[1.6rem] bg-zinc-950/95 p-5 shadow-2xl sm:p-7">
+    <div class="rounded-[1.6rem] bg-zinc-50 dark:bg-zinc-950/95 p-5 shadow-2xl sm:p-7">
       <div class="mb-5 relative flex items-center justify-center">
         <h2
           id="rulesTitle"
-          class="text-lg font-semibold tracking-tight text-white sm:text-xl text-center"
+          class="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-xl text-center"
         >
           {{ __('modals.rules.title') }}
         </h2>
 
         <button
           id="rulesModalClose"
-          class="absolute right-0 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-zinc-300
-                shadow-sm ring-1 ring-white/10 hover:bg-white/10 hover:text-white focus:outline-none
+          class="absolute right-0 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-zinc-700 dark:text-zinc-300
+                shadow-sm ring-1 ring-zinc-300/60 dark:ring-white/10 hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 hover:text-zinc-900 dark:text-white focus:outline-none
                 focus:ring-2 focus:ring-emerald-400/70"
           aria-label="{{ __('modals.rules.close') }}"
         >
@@ -40,41 +40,41 @@
         </button>
       </div>
 
-      <div class="space-y-4 border-t border-white/5 pt-5 overflow-y-auto max-h-[70vh]">
+      <div class="space-y-4 border-t border-zinc-200/60 dark:border-white/5 pt-5 overflow-y-auto max-h-[70vh]">
         <div class="space-y-3">
-          <div class="pb-3 border-b border-white/5">
+          <div class="pb-3 border-b border-zinc-200/60 dark:border-white/5">
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_1_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_1_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_1_text') }}</p>
           </div>
 
-          <div class="pb-3 border-b border-white/5">
+          <div class="pb-3 border-b border-zinc-200/60 dark:border-white/5">
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_2_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_2_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_2_text') }}</p>
           </div>
 
-          <div class="pb-3 border-b border-white/5">
+          <div class="pb-3 border-b border-zinc-200/60 dark:border-white/5">
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_3_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_3_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_3_text') }}</p>
           </div>
 
-          <div class="pb-3 border-b border-white/5">
+          <div class="pb-3 border-b border-zinc-200/60 dark:border-white/5">
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_4_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_4_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_4_text') }}</p>
           </div>
 
-          <div class="pb-3 border-b border-white/5">
+          <div class="pb-3 border-b border-zinc-200/60 dark:border-white/5">
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_5_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_5_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_5_text') }}</p>
           </div>
 
-          <div class="pb-3 border-b border-white/5">
+          <div class="pb-3 border-b border-zinc-200/60 dark:border-white/5">
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_6_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_6_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_6_text') }}</p>
           </div>
 
           <div>
             <h3 class="text-sm font-semibold text-emerald-400 mb-1">{{ __('modals.rules.rule_7_title') }}</h3>
-            <p class="text-xs text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_7_text') }}</p>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ __('modals.rules.rule_7_text') }}</p>
           </div>
         </div>
       </div>

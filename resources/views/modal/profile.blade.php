@@ -68,15 +68,15 @@
 
       <article
         id="profileCard"
-        class="pointer-events-auto relative mx-auto w-full max-w-none overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 shadow-2xl backdrop-blur"
+        class="pointer-events-auto relative mx-auto w-full max-w-none overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/80 shadow-2xl backdrop-blur"
       >
         <button
           type="button"
           id="profileClose"
-          class="absolute top-3 right-3 rounded-md bg-black/30 p-2 ring-1 ring-white/10 hover:bg-black/40"
+          class="absolute top-3 right-3 rounded-md bg-zinc-900/5 dark:bg-black/30 p-2 ring-1 ring-zinc-300/60 dark:ring-white/10 hover:bg-zinc-900/7 dark:bg-black/40"
           aria-label="{{ __('modals.profile.close') }}"
         >
-          <svg class="h-4 w-4 text-zinc-300" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-4 w-4 text-zinc-700 dark:text-zinc-300" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="currentColor" d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
@@ -88,9 +88,9 @@
               alt=""
               class="absolute inset-0 h-full w-full object-cover"
             />
-            <div class="absolute inset-0 bg-black/30"></div>
+            <div class="absolute inset-0 bg-zinc-900/5 dark:bg-black/30"></div>
           @else
-            <div class="absolute inset-0 bg-zinc-800/70"></div>
+            <div class="absolute inset-0 bg-white/85 dark:bg-zinc-800/70"></div>
             <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></div>
           @endif
 
@@ -104,7 +104,7 @@
                 />
               @else
                 <div class="flex h-20 w-20 items-center justify-center rounded-full {{ $avatarBgColor }} shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24">
-                  <span class="text-2xl font-bold text-white sm:text-3xl">{{ $initials }}</span>
+                  <span class="text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl">{{ $initials }}</span>
                 </div>
               @endif
               <span
@@ -115,16 +115,16 @@
         </div>
 
         <div class="px-5 pt-12 pb-5 text-center">
-          <h2 class="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+          <h2 class="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-2xl">
             {{ $username }}
           </h2>
 
-          <p class="mt-1 flex items-center justify-center gap-2 text-xs text-zinc-400">
+          <p class="mt-1 flex items-center justify-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
             <span id="uid">{{ $userId ?? 'Unknown' }}</span>
             <button
               type="button"
               id="copyUid"
-              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[11px] hover:bg-white/5"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-[11px] hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"
             >
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -140,7 +140,7 @@
             <ul class="mt-3 flex flex-wrap items-center justify-center gap-2">
               @foreach ($badgeSrc as $src)
                 <li
-                  class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 ring-1 ring-white/10"
+                  class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10"
                 >
                   <img src="{{ $src }}" alt="Badge" class="h-4 w-4" loading="lazy" />
                 </li>
@@ -148,19 +148,19 @@
             </ul>
           @endif
 
-          <div class="mt-5 h-px bg-white/10"></div>
+          <div class="mt-5 h-px bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
 
           <div class="mt-4 grid grid-cols-2 gap-2">
             <a
               href="{{ url('/rank_card') }}"
-              class="inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-200 hover:bg-white/5"
+              class="inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"
             >
               {{ __('modals.profile.dashboard') }}
             </a>
             <a
               href="#"
               id="openSettings"
-              class="inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-200 hover:bg-white/5"
+              class="inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"
             >
               {{ __('modals.profile.settings') }}
             </a>
@@ -170,7 +170,15 @@
             @csrf
             <button
               type="submit"
-              class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-rose-400/40 bg-rose-500/20 px-4 py-2.5 text-sm font-semibold text-rose-100 hover:border-rose-300/60 hover:bg-rose-500/30"
+              class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl
+                    border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700
+                    shadow-sm shadow-rose-500/10
+                    hover:border-rose-400 hover:bg-rose-100
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                    active:translate-y-px
+                    dark:border-rose-400/40 dark:bg-rose-500/20 dark:text-rose-100
+                    dark:hover:border-rose-300/60 dark:hover:bg-rose-500/30
+                    dark:focus-visible:ring-offset-zinc-950"
             >
               <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                 <path

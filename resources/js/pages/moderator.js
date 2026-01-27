@@ -18,10 +18,10 @@ function toast(msg, type = 'ok') {
   const node = document.createElement('div');
   node.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-lg text-center ${
     type === 'ok'
-      ? 'bg-emerald-500 text-white'
+      ? 'bg-emerald-500 text-zinc-900 dark:text-white'
       : type === 'warn'
         ? 'bg-amber-500 text-zinc-900'
-        : 'bg-red-600 text-white'
+        : 'bg-red-600 text-zinc-900 dark:text-white'
   }`;
 
   node.style.opacity = '0';
@@ -101,14 +101,14 @@ async function copyText(text = '') {
     };
 
     btn.addEventListener('click', () => {
-      list.classList.toggle('hidden');
+(() => { const __obj = list; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c); return __last; })();
     });
     list.addEventListener('change', () => {
       update();
-      list.classList.add('hidden');
+      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     });
     document.addEventListener('click', (e) => {
-      if (!dd.contains(e.target)) list.classList.add('hidden');
+      if (!dd.contains(e.target)) list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     });
 
     update();
@@ -228,15 +228,15 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
   overlay.className =
     'fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
   overlay.innerHTML = `
-        <div class="w-full max-w-4xl rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div class="w-full max-w-4xl rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
             <div>
             <h3 class="font-semibold">${title}</h3>
-            ${subtitle ? `<div class="text-xs text-zinc-400 mt-0.5">${subtitle}</div>` : ''}
+            ${subtitle ? `<div class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">${subtitle}</div>` : ''}
             </span>
             <div class="flex items-center gap-2">
-            <button class="copy cursor-pointer px-2 py-1 text-xs rounded-lg border border-white/10 hover:bg-white/5">Copy</button>
-            <button class="close cursor-pointer px-2 py-1 text-xs rounded-lg border border-white/10 hover:bg-white/5">Close</button>
+            <button class="copy cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5">Copy</button>
+            <button class="close cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5">Close</button>
             </div>
         </div>
         <div class="p-4 max-h-[70vh] overflow-auto">
@@ -271,7 +271,7 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
 // --- Activity log ---
 function logActivity({ title, method, url, ok, status, data }) {
   const wrap = document.createElement('div');
-  wrap.className = 'rounded-lg border border-white/10 bg-zinc-900 p-3 fade-in min-w-0';
+  wrap.className = 'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 fade-in min-w-0';
   wrap.dataset.logCard = '1';
 
   const pretty = typeof data === 'string' ? data : JSON.stringify(data ?? {}, null, 2);
@@ -290,11 +290,11 @@ function logActivity({ title, method, url, ok, status, data }) {
       <span class="font-semibold">${title ?? 'Request'}</span>
       <span class="${ok ? 'text-emerald-400' : 'text-red-400'}">${status}</span>
     </div>
-    <div class="text-[11px] text-zinc-400 mb-2">${method} ${url}</div>
+    <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-2">${method} ${url}</div>
     <pre class="resp text-xs whitespace-pre-wrap leading-tight max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
     <div class="mt-2 flex items-center gap-2">
-      <button class="view-full cursor-pointer text-xs rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">View full</button>
-      <button class="copy-full cursor-pointer text-xs rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">Copy</button>
+      <button class="view-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">View full</button>
+      <button class="copy-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">Copy</button>
     </div>
   `;
   wrap.querySelector('.resp').textContent = preview;
@@ -391,22 +391,22 @@ function http(method, url, { body, query, headers } = {}) {
       const current = panels.find?.((p) => !p.classList.contains('hidden')) || null;
       if (current) resetSection(current);
 
-      tabs.forEach((b) => b.classList.remove('active', 'bg-white/10'));
-      btn.classList.add('active', 'bg-white/10');
+      tabs.forEach((b) => b.classList.remove(...String('active').trim().split(/\s+/).filter(Boolean), ...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)));
+      btn.classList.add(...String('active').trim().split(/\s+/).filter(Boolean), ...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
 
       const id = btn.dataset.tab;
       panels.forEach((panel) => {
         const isCurrent = panel.dataset.panel === id;
-        panel.classList.toggle('hidden', !isCurrent);
+(() => { const __obj = panel; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isCurrent); return __last; })();
         if (isCurrent) {
           const subtabBtns = $$('.mod-subtab', panel);
           subtabBtns.forEach((b) => {
             b.setAttribute('aria-selected', 'false');
-            b.classList.remove('active', 'bg-white/10');
+            b.classList.remove(...String('active').trim().split(/\s+/).filter(Boolean), ...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
           });
           const subpanels = $$('[data-subpanel]', panel);
-          subpanels.forEach((sp) => sp.classList.add('hidden'));
-          $('.empty-state', panel)?.classList.remove('hidden');
+          subpanels.forEach((sp) => sp.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)));
+          $('.empty-state', panel)?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
         }
       });
       setTimeout(() => btn.focus({ preventScroll: true }), 0);
@@ -451,22 +451,22 @@ function resetSection(root = document) {
       if (label) label.textContent = label.dataset.placeholder || 'Select';
     }
 
-    list?.classList.add('hidden');
+    list?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
 
-  root.querySelectorAll('.ac-list').forEach((l) => l.classList.add('hidden'));
+  root.querySelectorAll('.ac-list').forEach((l) => l.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)));
 
   root.querySelectorAll('#bannerDrop, #u-bannerDrop, #s-bannerDrop').forEach((drop) => {
     drop.querySelector('img')?.remove();
   });
   root
     .querySelectorAll('#bannerPlaceholder, #u-bannerPlaceholder, #s-bannerPlaceholder')
-    .forEach((ph) => ph.classList.remove('hidden'));
+    .forEach((ph) => ph.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)));
   window.customBannerFile = null;
   window.customBannerFileUpdate = null;
 
   root.querySelectorAll('.inline-edit-container').forEach((c) => c.remove());
-  root.querySelectorAll('.editing').forEach((el) => el.classList.remove('editing'));
+  root.querySelectorAll('.editing').forEach((el) => el.classList.remove(...String('editing').trim().split(/\s+/).filter(Boolean)));
 
   ['rw-rewardTypeDropdown', 'gr-rewardTypeDropdown', 'va-rewardTypeDropdown'].forEach((id) => {
     const dd = document.getElementById(id);
@@ -479,7 +479,7 @@ function resetSection(root = document) {
     const hidden = dd.querySelector('input[type="hidden"][name="reward_type"]');
     if (hidden) hidden.value = def;
 
-    dd.querySelector('[data-dd-list]')?.classList.add('hidden');
+    dd.querySelector('[data-dd-list]')?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -508,21 +508,21 @@ function scrollIntoViewWithOffset(el, offset) {
       const subpanels = $$('[data-subpanel]', panel);
       subpanels.forEach((sp) => {
         if (sp.dataset.subpanel !== name) resetSection(sp);
-        sp.classList.add('hidden');
+        sp.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       });
 
       $$('.mod-subtab', panel).forEach((b) => {
         const isActive = b === target;
         b.setAttribute('aria-selected', String(isActive));
-        b.classList.toggle('active', isActive);
-        b.classList.toggle('bg-white/10', isActive);
+(() => { const __obj = b; let __last; for (const __c of String('active').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
       });
 
       const active = panel.querySelector(`[data-subpanel="${CSS.escape(name)}"]`);
       if (active) {
-        $('.empty-state', panel)?.classList.add('hidden');
-        active.classList.remove('hidden');
-        active.classList.add('fade-in');
+        $('.empty-state', panel)?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+        active.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+        active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
         if (name === 'maps-submit') initSubmitPanel();
@@ -625,11 +625,11 @@ function wireAutocomplete(input, { kind, onPick }) {
   if (!input || input.__acBound) return;
   input.__acBound = true;
 
-  input.parentElement?.classList.add('relative');
+  input.parentElement?.classList.add(...String('relative').trim().split(/\s+/).filter(Boolean));
 
   const list = document.createElement('div');
   list.className =
-    'ac-list absolute left-0 right-0 top-full z-[9999] mt-1 rounded-lg border border-white/10 bg-zinc-900/95 shadow-2xl ring-1 ring-white/10 backdrop-blur max-h-56 overflow-auto hidden';
+    'ac-list absolute left-0 right-0 top-full z-[9999] mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur max-h-56 overflow-auto hidden';
   input.parentElement.appendChild(list);
 
   const inMapsPanel = !!input.closest(
@@ -667,22 +667,22 @@ function wireAutocomplete(input, { kind, onPick }) {
   function render() {
     list.innerHTML = '';
     if (!items.length) {
-      list.classList.add('hidden');
+      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       return;
     }
     items.forEach((it, idx) => {
       const row = document.createElement('div');
-      row.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-white/10';
+      row.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-zinc-900/5 dark:bg-white/10';
       row.dataset.index = idx;
       if (kind === 'users') {
-        row.innerHTML = `<div class="truncate">${escapeHtml(it.label)}</div><div class="text-[11px] text-zinc-400">${it.id}</div>`;
+        row.innerHTML = `<div class="truncate">${escapeHtml(it.label)}</div><div class="text-[11px] text-zinc-600 dark:text-zinc-400">${it.id}</div>`;
       } else {
         row.textContent = it.value ?? '';
       }
-      if (idx === active) row.classList.add('bg-white/10');
+      if (idx === active) row.classList.add(...String('bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean));
       list.appendChild(row);
     });
-    list.classList.remove('hidden');
+    list.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 
   const search = acDebounce(async () => {
@@ -708,7 +708,7 @@ function wireAutocomplete(input, { kind, onPick }) {
       input.value = it.value ?? '';
       if (typeof onPick === 'function') onPick({ value: it.value ?? '' });
     }
-    list.classList.add('hidden');
+    list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 
   input.addEventListener('input', () => {
@@ -729,7 +729,7 @@ function wireAutocomplete(input, { kind, onPick }) {
       e.preventDefault();
       pick(active);
     } else if (e.key === 'Escape') {
-      list.classList.add('hidden');
+      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
   });
   list.addEventListener('click', (e) => {
@@ -738,7 +738,7 @@ function wireAutocomplete(input, { kind, onPick }) {
     pick(+row.dataset.index);
   });
   document.addEventListener('click', (e) => {
-    if (!list.contains(e.target) && e.target !== input) list.classList.add('hidden');
+    if (!list.contains(e.target) && e.target !== input) list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -913,7 +913,7 @@ function setupArchiveMapsUI() {
     const modeEl = document.createElement('label');
     modeEl.innerHTML = `
       Mode
-      <select name="mode" class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2">
+      <select name="mode" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2">
         <option value="single" selected>Single</option>
         <option value="bulk">Bulk</option>
       </select>
@@ -932,8 +932,8 @@ function setupArchiveMapsUI() {
     bulkWrap.className = 'sm:col-span-3 hidden';
     bulkWrap.innerHTML = `
       <div class="flex items-center justify-between mb-1">
-        <span class="text-sm text-zinc-300">Bulk codes (max 5)</span>
-        <button type="button" class="add-code cursor-pointer text-xs rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">Add code</button>
+        <span class="text-sm text-zinc-700 dark:text-zinc-300">Bulk codes (max 5)</span>
+        <button type="button" class="add-code cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">Add code</button>
       </div>
       <div class="codes space-y-2"></div>
     `;
@@ -944,8 +944,8 @@ function setupArchiveMapsUI() {
     if (!bulkWrap.isConnected) form.insertBefore(bulkWrap, submitBtn);
     else if (bulkWrap.nextElementSibling !== submitBtn) form.insertBefore(bulkWrap, submitBtn);
 
-    submitBtn.classList.add('w-full');
-    submitBtn.classList.add('justify-self-stretch');
+    submitBtn.classList.add(...String('w-full').trim().split(/\s+/).filter(Boolean));
+    submitBtn.classList.add(...String('justify-self-stretch').trim().split(/\s+/).filter(Boolean));
   }
 
   const codesList = bulkWrap.querySelector('.codes');
@@ -957,8 +957,8 @@ function setupArchiveMapsUI() {
     const row = document.createElement('div');
     row.className = 'flex items-center gap-2';
     row.innerHTML = `
-      <input name="bulk_code[]" class="flex-1 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2" placeholder="007EX" value="${val}">
-      <button type="button" class="rm cursor-pointer text-xs rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">×</button>
+      <input name="bulk_code[]" class="flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2" placeholder="007EX" value="${val}">
+      <button type="button" class="rm cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">×</button>
     `;
     row.querySelector('.rm').addEventListener('click', () => row.remove());
     codesList.appendChild(row);
@@ -968,17 +968,17 @@ function setupArchiveMapsUI() {
 
   function applyMode() {
     const bulk = form.mode.value === 'bulk';
-    singleWrap?.classList.toggle('hidden', bulk);
-    bulkWrap.classList.toggle('hidden', !bulk);
+(() => { const __obj = (singleWrap); if (!__obj) return undefined; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, bulk); return __last; })();
+(() => { const __obj = bulkWrap; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !bulk); return __last; })();
 
-    if (submitBtn) submitBtn.classList.toggle('mt-2', bulk);
+(() => { const __obj = (submitBtn) ? (submitBtn) : null; if (!__obj) return undefined; let __last; for (const __c of String('mt-2').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, bulk); return __last; })();
 
     if (bulk && codesList.children.length === 0) addCodeInput();
   }
   form.mode.addEventListener('change', applyMode);
 
-  singleWrap?.classList.remove('hidden');
-  bulkWrap.classList.add('hidden');
+  singleWrap?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  bulkWrap.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   applyMode();
 
   const singleInput = form.querySelector('input[name="code"]');
@@ -1603,7 +1603,7 @@ async function handleConvertLegacy(form) {
 
   const btn = form.querySelector('button[type="submit"]');
   const prevLabel = btn?.innerHTML;
-  if (btn) { btn.disabled = true; btn.classList.add('opacity-60','cursor-not-allowed'); btn.textContent = 'Converting…'; }
+  if (btn) { btn.disabled = true; btn.classList.add(...String('opacity-60').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean)); btn.textContent = 'Converting…'; }
 
   const qs  = reason ? `?reason=${encodeURIComponent(reason)}` : '';
   const url = `${API_MODS}/maps/${encodeURIComponent(code)}/legacy${qs}`;
@@ -1619,7 +1619,7 @@ async function handleConvertLegacy(form) {
     });
     toast(ok ? 'Converted' : 'Failed', ok ? 'ok' : 'err');
   } finally {
-    if (btn) { btn.disabled = false; btn.classList.remove('opacity-60','cursor-not-allowed'); btn.innerHTML = prevLabel; }
+    if (btn) { btn.disabled = false; btn.classList.remove(...String('opacity-60').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean)); btn.innerHTML = prevLabel; }
   }
 }
 
@@ -1649,7 +1649,7 @@ async function handleSearchMap(form) {
 
   const target = document.querySelector('[data-subpanel="maps-search"] #s-submitMapForm');
   if (target) {
-    target.classList.remove('hidden');
+    target.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     scrollIntoViewWithOffset(target, getHeaderOffset());
   } else {
     toast('Search panel HTML (#s-submitMapForm) manquant', 'warn');
@@ -1751,7 +1751,7 @@ async function handleGetSuspicious(form) {
 async function handleGetPendingVerifs() {
   const resultsBox = ensureVerifResultsContainer();
   if (resultsBox) {
-    resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Loading queue…</div>`;
+    resultsBox.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Loading queue…</div>`;
   }
 
   const { ok, status, url, data } = await http('GET', `${API_MODS}/verifications/pending`);
@@ -1764,7 +1764,7 @@ async function handleGetPendingVerifs() {
   const rows = Array.isArray(data) ? data : [];
   if (!rows.length) {
     if (resultsBox)
-      resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Queue is empty.</div>`;
+      resultsBox.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
     toast('No pending verifications', 'ok');
     return;
   }
@@ -2078,7 +2078,7 @@ function __merRenderCreatorsChips(overlay) {
 
   if (!creators.length) {
     const empty = document.createElement('div');
-    empty.className = 'text-sm text-zinc-400';
+    empty.className = 'text-sm text-zinc-600 dark:text-zinc-400';
     empty.textContent = 'N/A';
     host.appendChild(empty);
     return;
@@ -2087,7 +2087,7 @@ function __merRenderCreatorsChips(overlay) {
   for (const c of creators) {
     const chip = document.createElement('span');
     chip.className =
-      'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-white/85';
+      'inline-flex items-center gap-2 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/5 dark:bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-zinc-900 dark:text-white/85';
 
     const dot = document.createElement('span');
     dot.className = 'h-2 w-2 rounded-full ' + (c.is_primary ? 'bg-emerald-400' : 'bg-white/50');
@@ -2099,7 +2099,7 @@ function __merRenderCreatorsChips(overlay) {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className =
-      'ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/80 hover:bg-white/10 cursor-pointer';
+      'ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-black/20 text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer';
     remove.setAttribute('data-mer-remove-creator', c.id);
     remove.innerHTML = '&times;';
 
@@ -2157,7 +2157,7 @@ function __merShowBusy(el) {
   if (!el) return () => {};
   const o = document.createElement('div');
   o.className = 'absolute inset-0 grid place-items-center bg-black/40 backdrop-blur-sm';
-  o.innerHTML = `<div class="rounded-md bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100 ring-1 ring-emerald-500/60">${(typeof t === 'function' ? (t('record.uploading_screenshot') || 'Uploading…') : 'Uploading…')}</div>`;
+  o.innerHTML = `<div class="rounded-md bg-white/80 dark:bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 ring-1 ring-emerald-500/60">${(typeof t === 'function' ? (t('record.uploading_screenshot') || 'Uploading…') : 'Uploading…')}</div>`;
   el.appendChild(o);
   return () => o.remove();
 }
@@ -2207,9 +2207,9 @@ function __merResetBannerDropzone(overlay) {
   drop.dataset.merBound = '0';
   drop.innerHTML = `
     <input id="merBannerInput" type="file" accept="image/*" class="hidden">
-    <div id="merBannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+    <div id="merBannerPlaceholder" class="text-sm text-zinc-700 dark:text-zinc-300 px-3 text-center select-none">
       ${(typeof t === 'function' ? (t('map_edit_request.drag_and_drop') || 'Drag & drop or click to upload') : 'Drag & drop or click to upload')}
-      <div class="text-[11px] text-zinc-400 mt-1">${(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
+      <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1">${(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
     </div>
   `;
 
@@ -2230,8 +2230,8 @@ function __merSetBannerPreviewFromUrl(overlay, url) {
   drop.innerHTML = `
     <div class="absolute inset-0"></div>
     <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
-      <span class="text-xs text-white/90 truncate px-1">${__merEsc(url || '')}</span>
-      <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+      <span class="text-xs text-zinc-900 dark:text-white/90 truncate px-1">${__merEsc(url || '')}</span>
+      <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-zinc-900 dark:text-white hover:bg-zinc-900/5 dark:bg-white/10">
         ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
       </button>
     </div>
@@ -2273,8 +2273,8 @@ function __merSetupBannerDropzone(overlay) {
     drop.innerHTML = `
       <div class="absolute inset-0"></div>
       <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
-        <span class="text-xs text-white/90 truncate px-1">${__merEsc(file.name || '')}</span>
-        <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+        <span class="text-xs text-zinc-900 dark:text-white/90 truncate px-1">${__merEsc(file.name || '')}</span>
+        <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-zinc-900 dark:text-white hover:bg-zinc-900/5 dark:bg-white/10">
           ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
         </button>
       </div>
@@ -2352,7 +2352,7 @@ function __merSetupBannerDropzone(overlay) {
       if (hidden) hidden.value = url || '';
 
       const ok = document.createElement('div');
-      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-white px-2 py-0.5 shadow';
+      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-zinc-900 dark:text-white px-2 py-0.5 shadow';
       ok.textContent = 'Uploaded';
       drop.appendChild(ok);
       setTimeout(() => ok.remove(), 1500);
@@ -2375,14 +2375,14 @@ function __merSetupBannerDropzone(overlay) {
 
   drop.addEventListener('dragover', (e) => {
     e.preventDefault();
-    drop.classList.add('ring-2', 'ring-emerald-500/60');
+    drop.classList.add(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   drop.addEventListener('dragleave', () => {
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
     const file = e.dataTransfer?.files?.[0];
     acceptFile(file);
   });
@@ -2442,27 +2442,27 @@ function __merEnsureBtnLabelSpan(btn) {
 function __merHideDropdownList(list) {
   if (!list) return;
   if (list.classList.contains('dd-anim')) {
-    list.classList.remove('dd-in');
-    list.classList.add('dd-out');
+    list.classList.remove(...String('dd-in').trim().split(/\s+/).filter(Boolean));
+    list.classList.add(...String('dd-out').trim().split(/\s+/).filter(Boolean));
     setTimeout(() => {
-      list.classList.add('hidden');
+      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       list.style.display = 'none';
     }, 120);
     return;
   }
 
-  list.classList.add('hidden');
+  list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'none';
 }
 
 function __merShowDropdownList(list) {
   if (!list) return;
-  list.classList.remove('hidden');
+  list.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'block';
   if (list.classList.contains('dd-anim')) {
     requestAnimationFrame(() => {
-      list.classList.remove('dd-out');
-      list.classList.add('dd-in');
+      list.classList.remove(...String('dd-out').trim().split(/\s+/).filter(Boolean));
+      list.classList.add(...String('dd-in').trim().split(/\s+/).filter(Boolean));
     });
   }
 }
@@ -2522,9 +2522,9 @@ function __merSetupFakeSelect(container) {
   const list = __merGetDropdownListEl(container);
   if (!btn || !list) return;
 
-  btn.classList.add('cursor-pointer');
+  btn.classList.add(...String('cursor-pointer').trim().split(/\s+/).filter(Boolean));
 
-  list.classList.add('dropdown-list', 'dd-anim');
+  list.classList.add(...String('dropdown-list').trim().split(/\s+/).filter(Boolean), ...String('dd-anim').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'none';
 
   const close = () => {
@@ -2583,7 +2583,7 @@ function __merPopulateRadioDropdown(dropdownId, options, inputName) {
     );
 
     const label = document.createElement('label');
-    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10';
 
     if (isDifficulty) {
       const dotCls = __merDifficultyDotClass(labelText);
@@ -2618,7 +2618,7 @@ function __merPopulateCheckboxDropdown(dropdownId, options, inputName) {
     );
 
     const label = document.createElement('label');
-    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10';
 
     label.innerHTML = `
       <input type="checkbox" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
@@ -2664,7 +2664,7 @@ function __merGetCheckboxValues(dropdownId) {
 
 function __merHideSuggestionBox(box) {
   if (!box) return;
-  box.classList.add('hidden');
+  box.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   box.innerHTML = '';
 }
 
@@ -2677,7 +2677,7 @@ function __merRenderSuggestionBox(box, items, onPick) {
     const it = items[i];
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm text-zinc-200 hover:bg-white/10';
+    btn.className = 'w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10';
     btn.textContent = it.label;
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -2688,7 +2688,7 @@ function __merRenderSuggestionBox(box, items, onPick) {
   }
 
   if (max === 0) __merHideSuggestionBox(box);
-  else box.classList.remove('hidden');
+  else box.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 function buildAutocompleteUrl(kind, { value = '', locale = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : LOCALE), pageSize = 12 } = {}) {
@@ -2797,184 +2797,184 @@ function ensureMapEditRequestModal() {
   overlay.className = 'hidden';
 
   overlay.innerHTML = `
-    <div class="w-full rounded-2xl border border-white/10 bg-zinc-950/80 shadow-xl ring-1 ring-white/10">
-      <div class="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-4">
+    <div class="w-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/80 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10">
+      <div class="flex items-start justify-between gap-4 border-b border-zinc-200/80 dark:border-white/10 px-6 py-4">
         <div class="min-w-0">
-          <div class="text-xs font-semibold tracking-wide text-zinc-400">MODERATOR</div>
-          <h2 class="mt-0.5 text-lg font-semibold text-white">Map Edit Request</h2>
-          <p class="mt-1 text-xs text-zinc-400">Send a map edit request with the same form as the public modal.</p>
+          <div class="text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">MODERATOR</div>
+          <h2 class="mt-0.5 text-lg font-semibold text-zinc-900 dark:text-white">Map Edit Request</h2>
+          <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Send a map edit request with the same form as the public modal.</p>
         </div>
 
       </div>
 
       <div class="max-h-[78vh] overflow-y-auto px-6 py-5">
         <div class="grid gap-3 sm:grid-cols-2">
-          <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <div class="text-xs font-semibold text-zinc-400">Code</div>
-            <div id="merCode" class="mt-1 font-mono text-sm tracking-wide text-zinc-200">—</div>
+          <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-3">
+            <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Code</div>
+            <div id="merCode" class="mt-1 font-mono text-sm tracking-wide text-zinc-800 dark:text-zinc-200">—</div>
           </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <div class="text-xs font-semibold text-zinc-400">Created by</div>
-            <div id="merCreatedBy" class="mt-1 text-sm text-zinc-200">—</div>
+          <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-3">
+            <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Created by</div>
+            <div id="merCreatedBy" class="mt-1 text-sm text-zinc-800 dark:text-zinc-200">—</div>
           </div>
         </div>
 
         <div class="mt-4">
-          <label class="block text-sm text-zinc-200">
+          <label class="block text-sm text-zinc-800 dark:text-zinc-200">
             ${(typeof t === 'function' ? (t('map_edit_request.reason') || 'Reason') : 'Reason')} <span class="text-rose-300/90">*</span>
-            <textarea id="merReason" rows="3" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="${(typeof t === 'function' ? (t('map_edit_request.reason_placeholder') || 'Explain what should change and why…') : 'Explain what should change and why…')}"></textarea>
+            <textarea id="merReason" rows="3" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="${(typeof t === 'function' ? (t('map_edit_request.reason_placeholder') || 'Explain what should change and why…') : 'Explain what should change and why…')}"></textarea>
           </label>
         </div>
 
-        <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div class="text-xs font-semibold text-zinc-200">${(typeof t === 'function' ? (t('map_edit_request.proposed_changes') || 'Proposed changes') : 'Proposed changes')}</div>
-          <p class="mt-1 text-xs text-zinc-400">${(typeof t === 'function' ? (t('map_edit_request.proposed_hint') || 'Fill only the fields you want to change.') : 'Fill only the fields you want to change.')}</p>
+        <div class="mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-4">
+          <div class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('map_edit_request.proposed_changes') || 'Proposed changes') : 'Proposed changes')}</div>
+          <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">${(typeof t === 'function' ? (t('map_edit_request.proposed_hint') || 'Fill only the fields you want to change.') : 'Fill only the fields you want to change.')}</p>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-2">
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('map_edit_request.new_code') || 'New code') : 'New code')}
-              <input id="merNewCode" type="text" autocapitalize="characters" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 font-mono text-sm tracking-wide text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="NEW01">
+              <input id="merNewCode" type="text" autocapitalize="characters" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 font-mono text-sm tracking-wide text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="NEW01">
             </label>
 
-            <label class="block text-sm text-zinc-200 relative">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200 relative">
               ${(typeof t === 'function' ? (t('filters_toolbar.map_name') || 'Map name') : 'Map name')}
-              <input id="merMapName" type="text" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Oasis">
-              <div id="merMapNameSuggestions" class="absolute z-[270] mt-1 w-full rounded-xl border border-white/10 bg-zinc-950 shadow-lg hidden"></div>
+              <input id="merMapName" type="text" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Oasis">
+              <div id="merMapNameSuggestions" class="absolute z-[270] mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 shadow-lg hidden"></div>
             </label>
 
             <div>
-              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.category') || 'Category') : 'Category')}</div>
+              <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.category') || 'Category') : 'Category')}</div>
               <div id="merCategoryDropdown" data-open="0" class="fake-select relative mt-1">
-                <button type="button" class="fake-select-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                <button type="button" class="fake-select-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-900/3 dark:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
                   <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                  <span class="text-white/60">▾</span>
+                  <span class="text-zinc-900 dark:text-white/60">▾</span>
                 </button>
-                <div class="fake-select-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden"></div>
+                <div class="fake-select-list absolute z-[270] mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/95 p-1 shadow-xl hidden"></div>
               </div>
             </div>
 
             <div>
-              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.difficulty') || 'Difficulty') : 'Difficulty')}</div>
+              <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.difficulty') || 'Difficulty') : 'Difficulty')}</div>
               <div id="merDifficultyDropdown" data-open="0" class="fake-select relative mt-1">
-                <button type="button" class="fake-select-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                <button type="button" class="fake-select-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-900/3 dark:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
                   <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                  <span class="text-white/60">▾</span>
+                  <span class="text-zinc-900 dark:text-white/60">▾</span>
                 </button>
-                <div class="fake-select-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden"></div>
+                <div class="fake-select-list absolute z-[270] mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/95 p-1 shadow-xl hidden"></div>
               </div>
             </div>
 
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('filters_toolbar.checkpoints') || 'Checkpoints') : 'Checkpoints')}
-              <input id="merCheckpoints" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="0">
+              <input id="merCheckpoints" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="0">
             </label>
 
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('map.title') || 'Title') : 'Title')}
-              <input id="merTitle" type="text" maxlength="120" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Short title…">
+              <input id="merTitle" type="text" maxlength="120" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Short title…">
             </label>
 
             <div>
-              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.mechanics') || 'Mechanics') : 'Mechanics')}</div>
+              <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.mechanics') || 'Mechanics') : 'Mechanics')}</div>
               <div id="merMechanicsDropdown" data-open="0" class="custom-multiselect relative mt-1">
-                <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-900/3 dark:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
                   <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                  <span class="text-white/60">▾</span>
+                  <span class="text-zinc-900 dark:text-white/60">▾</span>
                 </button>
-                <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
+                <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
               </div>
             </div>
 
             <div>
-              <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.restrictions') || 'Restrictions') : 'Restrictions')}</div>
+              <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('filters_toolbar.restrictions') || 'Restrictions') : 'Restrictions')}</div>
               <div id="merRestrictionsDropdown" data-open="0" class="custom-multiselect relative mt-1">
-                <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+                <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-900/3 dark:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
                   <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                  <span class="text-white/60">▾</span>
+                  <span class="text-zinc-900 dark:text-white/60">▾</span>
                 </button>
-                <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
+                <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
               </div>
             </div>
           </div>
           <div>
-            <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('map.tags') || 'Tags') : 'Tags')}</div>
+            <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('map.tags') || 'Tags') : 'Tags')}</div>
             <div id="merTagsDropdown" data-open="0" class="custom-multiselect relative mt-1">
-              <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white hover:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
+              <button type="button" class="custom-multiselect-btn inline-flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-900/3 dark:bg-white/5" data-placeholder="${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}">
                 <span class="cm-label truncate">${(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                <span class="text-white/60">▾</span>
+                <span class="text-zinc-900 dark:text-white/60">▾</span>
               </button>
-              <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
+              <div class="custom-multiselect-list absolute z-[270] mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/95 p-1 shadow-xl hidden max-h-56 overflow-auto"></div>
             </div>
           </div>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
-              <div class="text-xs font-semibold text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.official') || 'Official') : 'Official')}</div>
-              <div id="merOfficialSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-white/10 bg-black/20 p-1">
-                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">True</button>
-                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">False</button>
+            <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/50 p-3">
+              <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.official') || 'Official') : 'Official')}</div>
+              <div id="merOfficialSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-black/20 p-1">
+                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer">True</button>
+                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer">False</button>
               </div>
             </div>
 
-            <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
-              <div class="text-xs font-semibold text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.hidden') || 'Hidden') : 'Hidden')}</div>
-              <div id="merHiddenSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-white/10 bg-black/20 p-1">
-                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">True</button>
-                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">False</button>
+            <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/50 p-3">
+              <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.hidden') || 'Hidden') : 'Hidden')}</div>
+              <div id="merHiddenSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-black/20 p-1">
+                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer">True</button>
+                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer">False</button>
               </div>
             </div>
 
-            <div class="rounded-xl border border-white/10 bg-zinc-950/50 p-3">
-              <div class="text-xs font-semibold text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.archived') || 'Archived') : 'Archived')}</div>
-              <div id="merArchivedSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-white/10 bg-black/20 p-1">
-                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">True</button>
-                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 cursor-pointer">False</button>
+            <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/50 p-3">
+              <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">${(typeof t === 'function' ? (t('filters_toolbar.archived') || 'Archived') : 'Archived')}</div>
+              <div id="merArchivedSwitch" data-value="0" class="mt-2 inline-flex w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-black/20 p-1">
+                <button type="button" data-switch data-value="1" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer">True</button>
+                <button type="button" data-switch data-value="0" class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10 cursor-pointer">False</button>
               </div>
             </div>
           </div>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-3">
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('medals.gold') || 'Gold') : 'Gold')}
-              <input id="merMedalGold" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
+              <input id="merMedalGold" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
             </label>
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('medals.silver') || 'Silver') : 'Silver')}
-              <input id="merMedalSilver" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
+              <input id="merMedalSilver" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
             </label>
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('medals.bronze') || 'Bronze') : 'Bronze')}
-              <input id="merMedalBronze" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
+              <input id="merMedalBronze" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="—">
             </label>
           </div>
 
           <div class="mt-4">
-            <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('map.banner') || 'Banner') : 'Banner')}</div>
+            <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('map.banner') || 'Banner') : 'Banner')}</div>
             <input id="merCustomBanner" type="hidden" value="">
-            <div id="merBannerDrop" class="relative mt-1 h-36 w-full cursor-pointer overflow-hidden rounded-2xl border border-dashed border-white/15 bg-zinc-900/40"></div>
+            <div id="merBannerDrop" class="relative mt-1 h-36 w-full cursor-pointer overflow-hidden rounded-2xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/70 dark:bg-zinc-900/40"></div>
           </div>
 
           <div class="mt-4">
-            <div class="text-sm text-zinc-200">${(typeof t === 'function' ? (t('map_edit_request.creators') || 'Creators') : 'Creators')}</div>
+            <div class="text-sm text-zinc-800 dark:text-zinc-200">${(typeof t === 'function' ? (t('map_edit_request.creators') || 'Creators') : 'Creators')}</div>
             <input id="merCreators" type="hidden" value="">
             <div class="relative mt-1">
-              <input id="merCreatorsSearch" type="text" class="w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="${(typeof t === 'function' ? (t('map_edit_request.search_users') || 'Search users…') : 'Search users…')}">
-              <div id="merCreatorSuggestions" class="absolute z-[270] mt-1 w-full rounded-xl border border-white/10 bg-zinc-950 shadow-lg hidden"></div>
+              <input id="merCreatorsSearch" type="text" class="w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="${(typeof t === 'function' ? (t('map_edit_request.search_users') || 'Search users…') : 'Search users…')}">
+              <div id="merCreatorSuggestions" class="absolute z-[270] mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 shadow-lg hidden"></div>
             </div>
             <div id="merCreatorsChips" class="mt-2 flex flex-wrap gap-2"></div>
           </div>
 
           <div class="mt-4">
-            <label class="block text-sm text-zinc-200">
+            <label class="block text-sm text-zinc-800 dark:text-zinc-200">
               ${(typeof t === 'function' ? (t('map.description') || 'Description') : 'Description')}
-              <textarea id="merDescription" rows="4" maxlength="5000" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Details…"></textarea>
+              <textarea id="merDescription" rows="4" maxlength="5000" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" placeholder="Details…"></textarea>
             </label>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-3 border-t border-white/10 bg-zinc-950/80 px-6 py-4">
-        <button type="button" data-mer-close class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 hover:bg-white/10">Cancel</button>
+      <div class="flex items-center justify-end gap-3 border-t border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/80 px-6 py-4">
+        <button type="button" data-mer-close class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10">Cancel</button>
         <button type="button" id="merSendBtn" class="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400">
           ${(typeof t === 'function' ? (t('map_edit_request.send') || 'Send request') : 'Send request')}
         </button>
@@ -2989,16 +2989,16 @@ function ensureMapEditRequestModal() {
   // Close wiring
   overlay.__merShow = () => {
     const mount = document.getElementById('mapEditRequestInlineMount');
-    if (mount) mount.classList.remove('hidden');
-    overlay.classList.remove('hidden');
+    if (mount) mount.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     overlay.setAttribute('aria-hidden', 'false');
     try { overlay.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
   };
   overlay.__merClose = () => {
-    overlay.classList.add('hidden');
+    overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     overlay.setAttribute('aria-hidden', 'true');
     const mount = document.getElementById('mapEditRequestInlineMount');
-    if (mount) mount.classList.add('hidden');
+    if (mount) mount.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     __merCloseAllFakeSelects?.();
   };
 
@@ -3019,10 +3019,10 @@ function ensureMapEditRequestModal() {
       el.setAttribute('data-value', value);
       el.querySelectorAll('button[data-switch]').forEach((b) => {
         const isActive = (b.getAttribute('data-value') || '0') === value;
-        b.classList.toggle('bg-white', isActive);
-        b.classList.toggle('text-zinc-900', isActive);
-        b.classList.toggle('text-white/80', !isActive);
-        b.classList.toggle('hover:bg-white/10', !isActive);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
       });
     };
 
@@ -3239,15 +3239,15 @@ function openMapEditRequestModal(map, opts = {}) {
 
   if (elCode) {
     elCode.textContent = code || 'N/A';
-    elCode.classList.add('opacity-80', 'text-zinc-300/80');
-    elCode.classList.add('pointer-events-none', 'cursor-default');
+    elCode.classList.add(...String('opacity-80').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-700 dark:text-zinc-300/80').trim().split(/\s+/).filter(Boolean));
+    elCode.classList.add(...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('cursor-default').trim().split(/\s+/).filter(Boolean));
   }
 
   const createdByStr = __merGetSafeUserIdString?.() || null;
   if (elCreatedBy) {
     elCreatedBy.textContent = createdByStr || 'N/A';
-    elCreatedBy.classList.add('opacity-80', 'text-zinc-300/80');
-    elCreatedBy.classList.add('pointer-events-none', 'cursor-default');
+    elCreatedBy.classList.add(...String('opacity-80').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-700 dark:text-zinc-300/80').trim().split(/\s+/).filter(Boolean));
+    elCreatedBy.classList.add(...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('cursor-default').trim().split(/\s+/).filter(Boolean));
     if (createdByStr) __merSetUserDisplayInto(elCreatedBy, createdByStr);
   }
 
@@ -3291,10 +3291,10 @@ function openMapEditRequestModal(map, opts = {}) {
     el.setAttribute('data-value', value);
     el.querySelectorAll('button[data-switch]').forEach((b) => {
       const isActive = (b.getAttribute('data-value') || '0') === value;
-      b.classList.toggle('bg-white', isActive);
-      b.classList.toggle('text-zinc-900', isActive);
-      b.classList.toggle('text-white/80', !isActive);
-      b.classList.toggle('hover:bg-white/10', !isActive);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
     });
   };
   const getSwitch = (switchId) => {
@@ -3589,7 +3589,7 @@ function openMapEditRequestModal(map, opts = {}) {
       // ---------- send ----------
       try {
         sendBtn.disabled = true;
-        sendBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        sendBtn.classList.add(...String('opacity-70').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean));
 
         const endpoint = (optsNow.endpoint || '/api/maps/map-edits');
         const resp = await fetch(endpoint, {
@@ -3619,7 +3619,7 @@ function openMapEditRequestModal(map, opts = {}) {
         __merErr(e?.message || 'Network error');
       } finally {
         sendBtn.disabled = false;
-        sendBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        sendBtn.classList.remove(...String('opacity-70').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean));
       }
     };
 
@@ -3644,7 +3644,7 @@ function ensureEditVerifResultsContainer() {
     const article = panel.querySelector('article');
     article?.insertAdjacentElement('afterend', box);
   } else {
-    box.classList.add('max-h-[70vh]', 'overflow-y-auto', 'pr-1');
+    box.classList.add(...String('max-h-[70vh]').trim().split(/\s+/).filter(Boolean), ...String('overflow-y-auto').trim().split(/\s+/).filter(Boolean), ...String('pr-1').trim().split(/\s+/).filter(Boolean));
   }
   return box;
 }
@@ -3704,13 +3704,13 @@ function __editParseBoolLike(v) {
 
 function __editTextBlock(text) {
   const s = String(text ?? '').trim();
-  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-500">—</span>`;
-  return `<div class="rounded-lg bg-white/5 px-2.5 py-1.5 text-[13px] text-zinc-100 ring-1 ring-white/10 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(s)}</div>`;
+  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
+  return `<div class="rounded-lg bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1.5 text-[13px] text-zinc-900 dark:text-zinc-100 ring-1 ring-zinc-300/60 dark:ring-white/10 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(s)}</div>`;
 }
 
 function __editChipList(text) {
   const s = String(text ?? '').trim();
-  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-500">—</span>`;
+  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
 
   // Split on commas (good enough for mechanics/restrictions)
   const items = s
@@ -3718,15 +3718,15 @@ function __editChipList(text) {
     .map((x) => x.trim())
     .filter(Boolean);
 
-  if (!items.length) return `<span class="text-zinc-500">—</span>`;
+  if (!items.length) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
 
   const max = 14;
   const chips = items.slice(0, max).map((it) =>
-    `<span class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-white/85">${escapeHtml(it)}</span>`
+    `<span class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[11px] text-zinc-900 dark:text-white/85">${escapeHtml(it)}</span>`
   );
 
   const more = items.length > max
-    ? `<span class="text-[11px] text-zinc-400">+${items.length - max}</span>`
+    ? `<span class="text-[11px] text-zinc-600 dark:text-zinc-400">+${items.length - max}</span>`
     : '';
 
   return `<div class="flex flex-wrap gap-1.5">${chips.join('')}${more}</div>`;
@@ -3734,18 +3734,18 @@ function __editChipList(text) {
 
 function __editBannerPreview(url) {
   const u = String(url ?? '').trim();
-  if (!u || /^not set$/i.test(u)) return `<span class="text-zinc-500">—</span>`;
+  if (!u || /^not set$/i.test(u)) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
 
   if (!/^https?:\/\//i.test(u)) return __editTextBlock(u);
 
   return `
     <div class="flex items-center gap-3 min-w-0">
-      <div class="h-12 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/20">
+      <div class="h-12 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-black/20">
         <img src="${escapeHtml(u)}" alt="" class="h-full w-full object-cover cursor-pointer" data-enlarge="${escapeHtml(u)}">
       </div>
       <div class="min-w-0">
-        <a href="${escapeHtml(u)}" target="_blank" class="text-xs underline decoration-dotted text-zinc-200 hover:opacity-80 break-all">${escapeHtml(u)}</a>
-        <div class="mt-1 text-[11px] text-zinc-500">click image to enlarge</div>
+        <a href="${escapeHtml(u)}" target="_blank" class="text-xs underline decoration-dotted text-zinc-800 dark:text-zinc-200 hover:opacity-80 break-all">${escapeHtml(u)}</a>
+        <div class="mt-1 text-[11px] text-zinc-600 dark:text-zinc-500">click image to enlarge</div>
       </div>
     </div>
   `;
@@ -3757,7 +3757,7 @@ function __editValueHtml(field, value) {
   const raw = value == null ? '' : String(value);
   const s = raw.trim();
 
-  if (!s || /^not set$/i.test(s) || s === 'N/A') return `<span class="text-zinc-500">—</span>`;
+  if (!s || /^not set$/i.test(s) || s === 'N/A') return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
 
   // common boolean flags
   if (/(^|\b)(official|hidden|archived)(\b|$)/.test(fLower)) {
@@ -3806,10 +3806,10 @@ function __editValueHtml(field, value) {
 
 function summarizeChanges(changes) {
   const list = Array.isArray(changes) ? changes : [];
-  if (!list.length) return `<div class="text-xs text-zinc-400">No change details.</div>`;
+  if (!list.length) return `<div class="text-xs text-zinc-600 dark:text-zinc-400">No change details.</div>`;
 
   const header = `
-    <div class="grid grid-cols-12 gap-3 px-3 py-2 text-[11px] uppercase tracking-wide text-zinc-400 bg-white/5">
+    <div class="grid grid-cols-12 gap-3 px-3 py-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400 bg-zinc-900/3 dark:bg-white/5">
       <div class="col-span-12 sm:col-span-3">Field</div>
       <div class="col-span-12 sm:col-span-4">Old</div>
       <div class="col-span-12 sm:col-span-5">New</div>
@@ -3822,9 +3822,9 @@ function summarizeChanges(changes) {
     const f = String(field || 'change');
 
     return `
-      <div class="grid grid-cols-12 gap-3 px-3 py-2 border-t border-white/10 hover:bg-white/5 transition min-w-0">
+      <div class="grid grid-cols-12 gap-3 px-3 py-2 border-t border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5 transition min-w-0">
         <div class="col-span-12 sm:col-span-3 min-w-0">
-          <div class="text-[12px] font-semibold text-zinc-200 break-words [overflow-wrap:anywhere]">${escapeHtml(f)}</div>
+          <div class="text-[12px] font-semibold text-zinc-800 dark:text-zinc-200 break-words [overflow-wrap:anywhere]">${escapeHtml(f)}</div>
         </div>
         <div class="col-span-12 sm:col-span-4 min-w-0">
           ${__editValueHtml(f, from)}
@@ -3837,11 +3837,11 @@ function summarizeChanges(changes) {
   });
 
   const more = list.length > maxRows
-    ? `<div class="px-3 py-2 text-xs text-zinc-500 border-t border-white/10">Showing ${maxRows} / ${list.length} changes.</div>`
+    ? `<div class="px-3 py-2 text-xs text-zinc-600 dark:text-zinc-500 border-t border-zinc-200/80 dark:border-white/10">Showing ${maxRows} / ${list.length} changes.</div>`
     : '';
 
   return `
-    <div class="rounded-2xl border border-white/10 bg-black/20 overflow-hidden min-w-0">
+    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/20 overflow-hidden min-w-0">
       ${header}
       ${rows.join('')}
       ${more}
@@ -3867,7 +3867,7 @@ function renderEditRequestCard({ row, submission }) {
 
   const wrap = document.createElement('article');
   wrap.className =
-    'rounded-2xl border border-white/10 bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16 min-w-0';
+    'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16 min-w-0';
   wrap.dataset.editId = rid;
 
   wrap._editRow = row ?? null;
@@ -3884,17 +3884,17 @@ function renderEditRequestCard({ row, submission }) {
     <div class="flex items-start justify-between gap-3 min-w-0">
       <div class="min-w-0">
         <h4 class="font-semibold text-lg min-w-0 break-words [overflow-wrap:anywhere]">Edit request #${escapeHtml(rid || '?')}</h4>
-        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-400 min-w-0">
+        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 min-w-0">
           <span class="inline-flex items-center gap-2">
-            <span class="text-zinc-500">code</span> ${monoChip(code || '—')}
+            <span class="text-zinc-600 dark:text-zinc-500">code</span> ${monoChip(code || '—')}
           </span>
-          ${mapName ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-500">map</span> ${decorateValue('map_name', mapName)}</span>` : ''}
-          ${difficulty ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-500">difficulty</span> ${difficultyDot}</span>` : ''}
+          ${mapName ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-600 dark:text-zinc-500">map</span> ${decorateValue('map_name', mapName)}</span>` : ''}
+          ${difficulty ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-600 dark:text-zinc-500">difficulty</span> ${difficultyDot}</span>` : ''}
         </div>
       </div>
       <div class="flex items-end flex-col gap-2">
         ${badge}
-        ${createdAt ? `<div class="text-[11px] text-zinc-500">${escapeHtml(createdAt)}</div>` : ''}
+        ${createdAt ? `<div class="text-[11px] text-zinc-600 dark:text-zinc-500">${escapeHtml(createdAt)}</div>` : ''}
       </div>
     </div>
 
@@ -3902,29 +3902,29 @@ function renderEditRequestCard({ row, submission }) {
       ${submitterName || submitterId ? kvRow('submitter', `${submitterName || ''}${submitterId ? ` (${submitterId})` : ''}`) : ''}
       ${messageId ? kvRow('message_id', String(messageId)) : ''}
       ${reason ? `
-        <div class="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3">
-          <div class="text-[11px] uppercase tracking-wide text-zinc-400">Reason</div>
-          <div class="mt-1 text-sm text-zinc-100 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(reason)}</div>
+        <div class="mt-2 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-3">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">Reason</div>
+          <div class="mt-1 text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(reason)}</div>
         </div>
       ` : ''}
     </div>
 
     <div class="mt-4 min-w-0">
       <div class="flex items-center justify-between gap-3 mb-2">
-        <div class="text-xs text-zinc-400">Changes <span class="text-zinc-500">(${Array.isArray(changes) ? changes.length : 0})</span></div>
-        <div class="text-[11px] text-zinc-500">old → new</div>
+        <div class="text-xs text-zinc-600 dark:text-zinc-400">Changes <span class="text-zinc-600 dark:text-zinc-500">(${Array.isArray(changes) ? changes.length : 0})</span></div>
+        <div class="text-[11px] text-zinc-600 dark:text-zinc-500">old → new</div>
       </div>
       <div class="min-w-0">${summarizeChanges(changes)}</div>
     </div>
 
     <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
-      <button class="btn-edit-view cursor-pointer rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 text-sm font-medium hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+      <button class="btn-edit-view cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-sm font-medium hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
         View JSON
       </button>
-      <button class="btn-edit-accept cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+      <button class="btn-edit-accept cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
         Accept
       </button>
-      <button class="btn-edit-reject cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+      <button class="btn-edit-reject cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
         Reject
       </button>
     </div>
@@ -3935,20 +3935,20 @@ function renderEditRequestCard({ row, submission }) {
 
 async function handleGetPendingEditRequests() {
   const resultsBox = ensureEditVerifResultsContainer();
-  if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Loading queue…</div>`;
+  if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Loading queue…</div>`;
 
   const { ok, status, url, data } = await http('GET', `${API_MODS}/maps/map-edits/pending`);
   logActivity({ title: 'Pending edit requests', method: 'GET', url, ok, status, data });
 
   if (!ok) {
     toast('Failed to load edit queue', 'err');
-    if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Failed to load.</div>`;
+    if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Failed to load.</div>`;
     return;
   }
 
   const rows = Array.isArray(data) ? data : [];
   if (!rows.length) {
-    if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-400">Queue is empty.</div>`;
+    if (resultsBox) resultsBox.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
     toast('No pending edit requests', 'ok');
     return;
   }
@@ -3979,7 +3979,7 @@ async function handleGetPendingEditRequests() {
     cards.forEach((c) => resultsBox.appendChild(c));
     if (rows.length > limit) {
       const note = document.createElement('div');
-      note.className = 'text-xs text-zinc-500';
+      note.className = 'text-xs text-zinc-600 dark:text-zinc-500';
       note.textContent = `Showing ${limit} / ${rows.length}.`;
       resultsBox.appendChild(note);
     }
@@ -3996,15 +3996,15 @@ function showConfirmActiveKeyType() {
     overlay.className =
       'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
     overlay.innerHTML = `
-      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
-        <div class="px-4 py-3 border-b border-white/10">
+      <div class="w-full max-w-md rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
+        <div class="px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
           <h3 class="font-semibold text-sm">Confirm change</h3>
         </div>
         <div class="p-4 space-y-4">
-          <p class="text-sm text-zinc-200">Are you sure you want to modify the global active key type ?</p>
+          <p class="text-sm text-zinc-800 dark:text-zinc-200">Are you sure you want to modify the global active key type ?</p>
           <div class="flex justify-end gap-2">
-            <button class="btn-confirm cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400">I know what I'm doing</button>
-            <button class="btn-cancel cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">Cancel</button>
+            <button class="btn-confirm cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400">I know what I'm doing</button>
+            <button class="btn-cancel cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">Cancel</button>
           </div>
         </div>
       </div>
@@ -4087,10 +4087,10 @@ function ddList(container) {
   return container?.querySelector('[data-dd-list]');
 }
 function ddHide(list) {
-  list?.classList.add('hidden');
+  list?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 function ddShow(list) {
-  list?.classList.remove('hidden');
+  list?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 function buildRadioDropdown(id, options, placeholder) {
@@ -4108,8 +4108,8 @@ function buildRadioDropdown(id, options, placeholder) {
     const raw = opt.value ?? txt;
     const label = document.createElement('label');
     label.className = isDifficulty
-      ? 'flex items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-200 cursor-pointer hover:bg-white/10'
-      : 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5 cursor-pointer';
+      ? 'flex items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 cursor-pointer hover:bg-zinc-900/5 dark:bg-white/10'
+      : 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-900/3 dark:bg-white/5 cursor-pointer';
     label.innerHTML = isDifficulty
       ? `<input type="radio" name="${id}-radio" value="${raw}" class="sr-only">
          <span class="inline-block h-2.5 w-2.5 rounded-full ${difficultyDotClass(txt)} ring-1 ring-inset ring-white/20"></span>
@@ -4152,7 +4152,7 @@ function buildCheckboxDropdown(id, values, placeholder) {
   values.forEach((v) => {
     const row = document.createElement('label');
     row.className =
-      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5 cursor-pointer';
+      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-900/3 dark:bg-white/5 cursor-pointer';
     row.innerHTML = `<input type="checkbox" value="${v}" class="accent-emerald-500"><span>${v}</span>`;
     list.appendChild(row);
   });
@@ -4210,22 +4210,22 @@ function wireBannerDrop() {
     const f = input.files?.[0];
     if (f) {
       window.customBannerFile = f;
-      placeholder?.classList.add('hidden');
+      placeholder?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       showPreview(f);
     }
   });
   drop.addEventListener('dragover', (e) => {
     e.preventDefault();
-    drop.classList.add('ring-2', 'ring-emerald-500/60');
+    drop.classList.add(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
-  drop.addEventListener('dragleave', () => drop.classList.remove('ring-2', 'ring-emerald-500/60'));
+  drop.addEventListener('dragleave', () => drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean)));
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
     const f = e.dataTransfer.files?.[0];
     if (f) {
       window.customBannerFile = f;
-      placeholder?.classList.add('hidden');
+      placeholder?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       showPreview(f);
     }
   });
@@ -4330,7 +4330,7 @@ function editInline(field) {
   if (!label || label.classList.contains('editing')) return;
 
   const text = (label.textContent || '').trim();
-  label.classList.add('editing');
+  label.classList.add(...String('editing').trim().split(/\s+/).filter(Boolean));
 
   const editBtnEl = document.querySelector(`[data-edit-target="${CSS.escape(field)}"]`);
   const hostRow = editBtnEl
@@ -4346,18 +4346,18 @@ function editInline(field) {
     input = document.createElement('textarea');
     input.rows = 3;
     input.className =
-      'w-full max-w-full min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 resize-y';
+      'w-full max-w-full min-w-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 resize-y';
   } else if (field === 'metaCheckpoints') {
     input = document.createElement('input');
     input.type = 'number';
     input.className =
-      'w-28 max-w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
+      'w-28 max-w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
   } else {
     input = document.createElement('input');
     input.type = 'text';
     input.autocomplete = 'off';
     input.className =
-      'min-w-[12rem] max-w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
+      'min-w-[12rem] max-w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
     if (
       field === 'metaCreatorMain' ||
       field === 'metaCreatorSecond' ||
@@ -4386,7 +4386,7 @@ function editInline(field) {
   cancelBtn.type = 'button';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.className =
-    'inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 text-sm hover:bg-white/10';
+    'inline-flex items-center gap-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-900/5 dark:bg-white/10';
 
   const inputWrap = document.createElement('div');
   inputWrap.className = 'relative flex-1 min-w-[12rem] max-w-full';
@@ -4399,7 +4399,7 @@ function editInline(field) {
 
   const container = document.createElement('div');
   container.className =
-    'inline-edit-container mt-2 w-full max-w-full flex flex-wrap items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 ring-1 ring-white/5';
+    'inline-edit-container mt-2 w-full max-w-full flex flex-wrap items-start gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-2 ring-1 ring-white/5';
   container.appendChild(inputWrap);
   container.appendChild(buttonsBox);
 
@@ -4409,7 +4409,7 @@ function editInline(field) {
     : null;
 
   if (rowToHide) {
-    rowToHide.classList.add('hidden');
+    rowToHide.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   } else {
     label.style.display = 'none';
     if (editBtnEl) editBtnEl.style.display = 'none';
@@ -4434,12 +4434,12 @@ function editInline(field) {
 
   function closeEdit() {
     if (rowToHide) {
-      rowToHide.classList.remove('hidden');
+      rowToHide.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     } else {
       label.style.display = '';
       if (editBtnEl) editBtnEl.style.display = '';
     }
-    label.classList.remove('editing');
+    label.classList.remove(...String('editing').trim().split(/\s+/).filter(Boolean));
     container.remove();
   }
 
@@ -4554,9 +4554,9 @@ function showBannerPreviewScoped(root, url) {
     img.alt = 'Banner preview';
     img.className = 'absolute inset-0 h-full w-full object-cover';
     drop.appendChild(img);
-    ph?.classList.add('hidden');
+    ph?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   } else {
-    ph?.classList.remove('hidden');
+    ph?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 }
 
@@ -4657,7 +4657,7 @@ function populateSearchPanel(item) {
     setValue(form, '#s-medalBronzeInput', '');
   }
 
-  form.classList.remove('hidden');
+  form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 // ———————————————————————————————————————————————————————————————
@@ -4694,22 +4694,22 @@ function wireBannerDropScoped({ dropId, inputId, placeholderId, stateKey }) {
     const f = input.files?.[0];
     if (f) {
       window[stateKey] = f;
-      placeholder?.classList.add('hidden');
+      placeholder?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       showPreview(f);
     }
   });
   drop.addEventListener('dragover', (e) => {
     e.preventDefault();
-    drop.classList.add('ring-2', 'ring-emerald-500/60');
+    drop.classList.add(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
-  drop.addEventListener('dragleave', () => drop.classList.remove('ring-2', 'ring-emerald-500/60'));
+  drop.addEventListener('dragleave', () => drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean)));
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
     const f = e.dataTransfer.files?.[0];
     if (f) {
       window[stateKey] = f;
-      placeholder?.classList.add('hidden');
+      placeholder?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       showPreview(f);
     }
   });
@@ -4824,9 +4824,9 @@ function populateUpdatePanel(item) {
     img.alt = 'Banner preview';
     img.className = 'absolute inset-0 h-full w-full object-cover';
     drop?.appendChild(img);
-    form.querySelector('#u-bannerPlaceholder')?.classList.add('hidden');
+    form.querySelector('#u-bannerPlaceholder')?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   } else {
-    form.querySelector('#u-bannerPlaceholder')?.classList.remove('hidden');
+    form.querySelector('#u-bannerPlaceholder')?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   }
 
   const medals = item?.medals || null;
@@ -4834,7 +4834,7 @@ function populateUpdatePanel(item) {
   setValue(form, '#u-medalSilverInput', medals?.silver ?? '');
   setValue(form, '#u-medalBronzeInput', medals?.bronze ?? '');
 
-  form.classList.remove('hidden');
+  form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 // ———————————————————————————————————————————————————————————————
@@ -4866,7 +4866,7 @@ function editInlineGeneric(fieldRef, triggerBtn) {
   if (!label || label.classList.contains('editing')) return;
 
   const text = (label.textContent || '').trim();
-  label.classList.add('editing');
+  label.classList.add(...String('editing').trim().split(/\s+/).filter(Boolean));
 
   const editBtnEl =
     triggerBtn ||
@@ -4890,18 +4890,18 @@ function editInlineGeneric(fieldRef, triggerBtn) {
     input = document.createElement('textarea');
     input.rows = 3;
     input.className =
-      'w-full max-w-full min-w-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 resize-y';
+      'w-full max-w-full min-w-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 resize-y';
   } else if (suffix === 'metaCheckpoints') {
     input = document.createElement('input');
     input.type = 'number';
     input.className =
-      'w-28 max-w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
+      'w-28 max-w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
   } else {
     input = document.createElement('input');
     input.type = 'text';
     input.autocomplete = 'off';
     input.className =
-      'min-w-[12rem] max-w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
+      'min-w-[12rem] max-w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/60';
   }
 
   if (suffix === 'metaCreatorMain' || suffix === 'metaCreatorSecond') {
@@ -4923,7 +4923,7 @@ function editInlineGeneric(fieldRef, triggerBtn) {
   cancelBtn.type = 'button';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.className =
-    'inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 text-sm hover:bg-white/10';
+    'inline-flex items-center gap-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-900/5 dark:bg-white/10';
 
   const inputWrap = document.createElement('div');
   inputWrap.className = 'relative flex-1 min-w-[12rem] max-w-full';
@@ -4936,7 +4936,7 @@ function editInlineGeneric(fieldRef, triggerBtn) {
 
   const container = document.createElement('div');
   container.className =
-    'inline-edit-container mt-2 w-full max-w-full flex flex-wrap items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2';
+    'inline-edit-container mt-2 w-full max-w-full flex flex-wrap items-start gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-2';
   container.appendChild(inputWrap);
   container.appendChild(buttonsBox);
 
@@ -4946,7 +4946,7 @@ function editInlineGeneric(fieldRef, triggerBtn) {
       : null;
 
   if (rowToHide) {
-    rowToHide.classList.add('hidden');
+    rowToHide.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   } else {
     label.style.display = 'none';
     if (editBtnEl) editBtnEl.style.display = 'none';
@@ -4970,12 +4970,12 @@ function editInlineGeneric(fieldRef, triggerBtn) {
 
   function closeEdit() {
     if (rowToHide) {
-      rowToHide.classList.remove('hidden');
+      rowToHide.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     } else {
       label.style.display = '';
       if (editBtnEl) editBtnEl.style.display = '';
     }
-    label.classList.remove('editing');
+    label.classList.remove(...String('editing').trim().split(/\s+/).filter(Boolean));
     container.remove();
   }
 
@@ -5088,7 +5088,7 @@ function ensureVerifResultsContainer() {
     const article = panel.querySelector('article');
     article?.insertAdjacentElement('afterend', box);
   } else {
-    box.classList.add('max-h-[70vh]', 'overflow-y-auto', 'pr-1');
+    box.classList.add(...String('max-h-[70vh]').trim().split(/\s+/).filter(Boolean), ...String('overflow-y-auto').trim().split(/\s+/).filter(Boolean), ...String('pr-1').trim().split(/\s+/).filter(Boolean));
   }
   return box;
 }
@@ -5097,7 +5097,7 @@ function kvRow(label, value, { rawHtml = false } = {}) {
   const shown = rawHtml ? value : decorateValue(label, value);
   return `
     <div class="grid grid-cols-3 gap-2 text-sm">
-      <div class="col-span-1 text-zinc-400">${escapeHtml(label)}</div>
+      <div class="col-span-1 text-zinc-600 dark:text-zinc-400">${escapeHtml(label)}</div>
       <div class="col-span-2 break-all">${shown}</div>
     </div>`;
 }
@@ -5113,10 +5113,10 @@ function decorateValue(label, v) {
 }
 
 function monoChip(text) {
-  return `<span class="inline-block rounded-md bg-black/30 px-1.5 py-0.5 font-mono text-[12px] tracking-tight ring-1 ring-white/10">${escapeHtml(String(text))}</span>`;
+  return `<span class="inline-block rounded-md bg-black/30 px-1.5 py-0.5 font-mono text-[12px] tracking-tight ring-1 ring-zinc-300/60 dark:ring-white/10">${escapeHtml(String(text))}</span>`;
 }
 function stringChip(text) {
-  return `<span class="inline-block rounded-md bg-white/5 px-2 py-0.5 text-[13px] font-medium text-zinc-100 ring-1 ring-white/10">${escapeHtml(String(text))}</span>`;
+  return `<span class="inline-block rounded-md bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[13px] font-medium text-zinc-900 dark:text-zinc-100 ring-1 ring-zinc-300/60 dark:ring-white/10">${escapeHtml(String(text))}</span>`;
 }
 function linkOrDash(url) {
   if (!url) return '—';
@@ -5145,10 +5145,10 @@ function openImageLightbox(src) {
     'fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4';
   overlay.innerHTML = `
     <div class="relative max-w-[92vw] max-h-[86vh]">
-      <img src="${escapeHtml(src)}" alt="screenshot" class="max-w-full cursor-pointer max-h-[86vh] rounded-xl border border-white/10 shadow-2xl object-contain">
+      <img src="${escapeHtml(src)}" alt="screenshot" class="max-w-full cursor-pointer max-h-[86vh] rounded-xl border border-zinc-200/80 dark:border-white/10 shadow-2xl object-contain">
       <div class="absolute -top-3 -right-3 flex gap-2">
         <a href="${escapeHtml(src)}" target="_blank" class="rounded-lg bg-white text-zinc-900 text-xs px-2 py-1 font-semibold hover:bg-zinc-100">Open</a>
-        <button class="lb-close cursor-pointer rounded-lg border border-white/10 bg-white/5 text-white text-xs px-2 py-1 hover:bg-white/10">Close</button>
+        <button class="lb-close cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-900 dark:text-white text-xs px-2 py-1 hover:bg-zinc-900/5 dark:bg-white/10">Close</button>
       </div>
     </div>
   `;
@@ -5213,7 +5213,7 @@ function renderSubmissionCard(item) {
 
   const wrap = document.createElement('article');
   wrap.className =
-    'rounded-2xl border border-white/10 bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16';
+    'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16';
   wrap.dataset.recordId       = rid;
   wrap.dataset.verificationId = verId;
   wrap.dataset.screenshot     = shot;
@@ -5225,18 +5225,18 @@ function renderSubmissionCard(item) {
     ? `
       <div class="space-y-1">
         <button type="button" data-enlarge="${escapeHtml(shot)}"
-                class="relative cursor-pointer group block overflow-hidden rounded-xl border border-white/10 ring-1 ring-white/10 bg-black/20">
+                class="relative cursor-pointer group block overflow-hidden rounded-xl border border-zinc-200/80 dark:border-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10 bg-black/20">
           <img src="${escapeHtml(shot)}" alt="screenshot"
                class="w-full h-full object-cover max-h-[240px] md:max-h-[360px] transition-transform duration-200 group-hover:scale-[1.02]">
           <span class="pointer-events-none absolute inset-0 rounded-xl ring-0 group-hover:ring-2 group-hover:ring-emerald-400/40"></span>
         </button>
-        <div class="text-[11px] text-zinc-400 text-right">
+        <div class="text-[11px] text-zinc-600 dark:text-zinc-400 text-right">
           <a href="${escapeHtml(shot)}" target="_blank" class="hover:underline decoration-dotted">Open original</a>
         </div>
       </div>
     `
     : `
-      <div class="w-full h-[200px] md:h-[280px] rounded-xl border border-white/10 bg-zinc-900/40 grid place-items-center text-xs text-zinc-400">
+      <div class="w-full h-[200px] md:h-[280px] rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 grid place-items-center text-xs text-zinc-600 dark:text-zinc-400">
         No screenshot
       </div>`;
 
@@ -5246,18 +5246,18 @@ function renderSubmissionCard(item) {
 
   const calibrateBtnHtml = canCalibrate
     ? `
-      <button class="btn-calibrate-ocr cursor-pointer rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 font-medium hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+      <button class="btn-calibrate-ocr cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 font-medium hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
         Calibrate OCR
       </button>`
     : ``;
 
   const autoVerifyBtnHtml = canAutoVerify
   ? `
-    <button class="btn-auto-verify cursor-pointer rounded-lg bg-emerald-700 text-white px-3 py-1.5 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/40">
+    <button class="btn-auto-verify cursor-pointer rounded-lg bg-emerald-700 text-zinc-900 dark:text-white px-3 py-1.5 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/40">
       Auto verify
     </button>`
   : `
-    <button class="btn-auto-verify rounded-lg bg-zinc-800 text-zinc-400 px-3 py-1.5 font-semibold opacity-60 cursor-not-allowed" disabled
+    <button class="btn-auto-verify rounded-lg bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-3 py-1.5 font-semibold opacity-60 cursor-not-allowed" disabled
             title="Auto verify is restricted to specific moderators.">
       Auto verify
     </button>`;
@@ -5268,7 +5268,7 @@ function renderSubmissionCard(item) {
       <div class="flex-1 order-1 space-y-3">
         <div class="flex items-start justify-between">
           <h4 class="font-semibold text-lg">Submission #${escapeHtml(rid)}</h4>
-          <div class="text-xs text-zinc-400">verification_id: ${decorateValue('verification_id', verId)}</div>
+          <div class="text-xs text-zinc-600 dark:text-zinc-400">verification_id: ${decorateValue('verification_id', verId)}</div>
         </div>
 
         <div class="grid gap-1.5">
@@ -5299,14 +5299,14 @@ function renderSubmissionCard(item) {
 
     <!-- ACTIONS -->
     <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
-      <button class="btn-verify cursor-pointer rounded-lg bg-emerald-500 text-white px-3 py-1.5 font-semibold hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+      <button class="btn-verify cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 dark:text-white px-3 py-1.5 font-semibold hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
         Verify
       </button>
 
       ${autoVerifyBtnHtml}
       ${calibrateBtnHtml}
 
-      <button class="btn-deny cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">
+      <button class="btn-deny cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">
         Deny
       </button>
     </div>
@@ -5340,7 +5340,7 @@ function removeCardFromVerifList(card) {
     () => {
       card.remove();
       if (container && !container.querySelector('[data-record-id]')) {
-        container.innerHTML = `<div class="text-sm text-zinc-400">Queue is empty.</div>`;
+        container.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
       }
     },
     { once: true }
@@ -5374,7 +5374,7 @@ function removeCardFromEditList(card) {
     () => {
       card.remove();
       if (container && !container.querySelector('[data-edit-id]')) {
-        container.innerHTML = `<div class="text-sm text-zinc-400">Queue is empty.</div>`;
+        container.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
       }
     },
     { once: true }
@@ -5391,17 +5391,17 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
       'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
 
     overlay.innerHTML = `
-      <div class="w-full max-w-md rounded-xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+      <div class="w-full max-w-md rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
           <h3 class="font-semibold text-sm">${title}</h3>
-          <button class="btn-x cursor-pointer px-2 py-1 text-xs rounded-lg border border-white/10 hover:bg-white/5">Close</button>
+          <button class="btn-x cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5">Close</button>
         </div>
         <div class="p-4 space-y-3">
-          <label class="text-sm text-zinc-300">Reason <span class="text-zinc-500 text-xs">(optional)</span></label>
-          <textarea rows="3" class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-rose-500/60" placeholder="${placeholder}"></textarea>
+          <label class="text-sm text-zinc-700 dark:text-zinc-300">Reason <span class="text-zinc-600 dark:text-zinc-500 text-xs">(optional)</span></label>
+          <textarea rows="3" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-rose-500/60" placeholder="${placeholder}"></textarea>
           <div class="pt-1 flex justify-end gap-2">
-            <button class="btn-cancel cursor-pointer rounded-lg border border-white/10 bg-white/5 text-zinc-200 px-3 py-1.5 text-sm hover:bg-white/10">Cancel</button>
-            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">Deny</button>
+            <button class="btn-cancel cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-900/5 dark:bg-white/10">Cancel</button>
+            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">Deny</button>
           </div>
         </div>
       </div>
@@ -5639,7 +5639,7 @@ async function autoVerifyCard(card) {
   if (btn) {
     btn.disabled = true;
     btn.textContent = "Auto verifying…";
-    btn.classList.add("opacity-70", "cursor-wait");
+    btn.classList.add(...String("opacity-70").trim().split(/\s+/).filter(Boolean), ...String("cursor-wait").trim().split(/\s+/).filter(Boolean));
   }
 
   const w = getAutoVerifyWorker();
@@ -5672,7 +5672,7 @@ async function autoVerifyCard(card) {
   if (btn) {
     btn.disabled = false;
     btn.textContent = original || "Auto verify";
-    btn.classList.remove("opacity-70", "cursor-wait");
+    btn.classList.remove(...String("opacity-70").trim().split(/\s+/).filter(Boolean), ...String("cursor-wait").trim().split(/\s+/).filter(Boolean));
   }
 
   if (result.error) {
@@ -5741,19 +5741,19 @@ async function openRoiEditor(imageUrl) {
     const overlay = document.createElement("div");
     overlay.className = "fixed inset-0 z-[500] bg-black/70 backdrop-blur-sm p-6 flex items-center justify-center";
     overlay.innerHTML = `
-      <div class="relative bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-4">
-        <div class="text-sm text-zinc-300 pb-2 flex items-center justify-between gap-4">
+      <div class="relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-2xl p-4">
+        <div class="text-sm text-zinc-700 dark:text-zinc-300 pb-2 flex items-center justify-between gap-4">
           <b>ROI Calibrator</b>
           <div class="space-x-2">
-            <button id="roiReset"  class="px-2 py-1 rounded bg-white/10">Reset</button>
-            <button id="roiCancel" class="px-2 py-1 rounded bg-white/10">Cancel</button>
-            <button id="roiSave"   class="px-3 py-1 rounded bg-emerald-600 text-white">Save</button>
+            <button id="roiReset"  class="px-2 py-1 rounded bg-zinc-900/5 dark:bg-white/10">Reset</button>
+            <button id="roiCancel" class="px-2 py-1 rounded bg-zinc-900/5 dark:bg-white/10">Cancel</button>
+            <button id="roiSave"   class="px-3 py-1 rounded bg-emerald-600 text-zinc-900 dark:text-white">Save</button>
           </div>
         </div>
         <div class="relative overflow-auto max-w-[90vw] max-h-[78vh]">
           <div id="roiStage" class="relative inline-block"></div>
         </div>
-        <div class="pt-3 text-[11px] text-zinc-400">Tip: drag to move, grab a side/corner to resize. Values are saved normalized (0..1).</div>
+        <div class="pt-3 text-[11px] text-zinc-600 dark:text-zinc-400">Tip: drag to move, grab a side/corner to resize. Values are saved normalized (0..1).</div>
       </div>
     `;
     const mount = document.getElementById('mapEditRequestInlineMount');
@@ -6055,15 +6055,15 @@ function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confi
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
     overlay.innerHTML = `
-      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
-        <div class="px-4 py-3 border-b border-white/10">
+      <div class="w-full max-w-md rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
+        <div class="px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
           <h3 class="font-semibold text-sm">${title}</h3>
         </div>
         <div class="p-4 space-y-4">
-          <p class="text-sm text-zinc-200 whitespace-pre-wrap">${message}</p>
+          <p class="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">${message}</p>
           <div class="flex justify-end gap-2">
-            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">${confirm}</button>
-            <button class="btn-cancel cursor-pointer rounded-lg bg-zinc-700 text-white px-3 py-1.5 text-sm font-semibold hover:bg-zinc-600">${cancel}</button>
+            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">${confirm}</button>
+            <button class="btn-cancel cursor-pointer rounded-lg bg-zinc-700 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-zinc-600">${cancel}</button>
           </div>
         </div>
       </div>
@@ -6352,7 +6352,7 @@ function initializeApp() {
       if (!resolvedBy.value) resolvedBy.value = MOD_USER_ID;
       resolvedBy.readOnly = true;
       resolvedBy.setAttribute('aria-readonly', 'true');
-      resolvedBy.classList.add('cursor-not-allowed');
+      resolvedBy.classList.add(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean));
     }
   }
 
@@ -6388,7 +6388,7 @@ function initializeApp() {
       const q = String(navSearch.value || '').trim().toLowerCase();
       $$('#modTabs .mod-tab').forEach((b) => {
         const label = (b.dataset.tabLabel || b.textContent || '').toLowerCase();
-        b.classList.toggle('hidden', q && !label.includes(q));
+(() => { const __obj = b; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, q && !label.includes(q)); return __last; })();
       });
     };
     onNavInput = () => run();
@@ -6441,7 +6441,7 @@ function initializeApp() {
 
     if (!state.filtered.length) {
       const empty = document.createElement('div');
-      empty.className = 'rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-300';
+      empty.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300';
       empty.textContent = 'No results';
       cmdkList.appendChild(empty);
       return;
@@ -6451,13 +6451,13 @@ function initializeApp() {
       const row = document.createElement('button');
       row.type = 'button';
       row.className =
-        'w-full cursor-pointer text-left rounded-xl border border-white/10 px-3 py-2 text-sm transition ' +
-        (idx === state.activeIndex ? 'bg-white/10' : 'bg-white/5 hover:bg-white/10');
+        'w-full cursor-pointer text-left rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm transition ' +
+        (idx === state.activeIndex ? 'bg-zinc-900/5 dark:bg-white/10' : 'bg-zinc-900/3 dark:bg-white/5 hover:bg-zinc-900/5 dark:bg-white/10');
 
       row.innerHTML = `
         <div class="flex items-center justify-between gap-3">
-          <div class="font-semibold text-zinc-100">${escapeHtml(it.label)}</div>
-          <div class="text-[10px] text-zinc-400">${it.kind === 'tab' ? 'Tab' : 'Tool'}</div>
+          <div class="font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(it.label)}</div>
+          <div class="text-[10px] text-zinc-600 dark:text-zinc-400">${it.kind === 'tab' ? 'Tab' : 'Tool'}</div>
         </div>
       `;
 
@@ -6475,7 +6475,7 @@ function initializeApp() {
 
   function closeCmdk() {
     if (!cmdkRoot) return;
-    cmdkRoot.classList.add('hidden');
+    cmdkRoot.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     cmdkRoot.setAttribute('aria-hidden', 'true');
   }
 
@@ -6498,7 +6498,7 @@ function initializeApp() {
   function openCmdk() {
     if (!cmdkRoot) return;
     state.entries = buildEntries();
-    cmdkRoot.classList.remove('hidden');
+    cmdkRoot.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     cmdkRoot.setAttribute('aria-hidden', 'false');
     if (cmdkInput) cmdkInput.value = '';
     filterCmdk('');
