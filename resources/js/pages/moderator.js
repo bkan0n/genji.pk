@@ -5727,9 +5727,9 @@ const ROI_LS_KEY = "gp_ocr_rois";
 
 const DEFAULT_ROIS = {
   TOPLEFT:    [0.010, 0.020, 0.360, 0.300],
-  BANNER:     [0.240, 0.230, 0.760, 0.380],
-  TOPRIGHT:   [0.800, 0.170, 0.985, 0.470],
-  BOTTOMLEFT: [0.070, 0.895, 0.260, 0.980],
+  BANNER:     [0.240, 0.168, 0.760, 0.380],
+  TOPRIGHT:   [0.821, 0.077, 0.985, 0.565],
+  BOTTOMLEFT: [0.050, 0.825, 0.330, 0.990],
 };
 
 function loadRois() {
@@ -5746,7 +5746,7 @@ async function openRoiEditor(imageUrl) {
     const overlay = document.createElement("div");
     overlay.className = "fixed inset-0 z-[500] bg-black/70 backdrop-blur-sm p-6 flex items-center justify-center";
     overlay.innerHTML = `
-      <div class="relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-2xl p-4">
+      <div class="relative w-[96vw] max-w-[96vw] max-h-[92vh] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-2xl p-4">
         <div class="text-sm text-zinc-700 dark:text-zinc-300 pb-2 flex items-center justify-between gap-4">
           <b>ROI Calibrator</b>
           <div class="space-x-2">
@@ -5755,7 +5755,7 @@ async function openRoiEditor(imageUrl) {
             <button id="roiSave"   class="px-3 py-1 rounded bg-emerald-600 text-zinc-900 dark:text-white">Save</button>
           </div>
         </div>
-        <div class="relative overflow-auto max-w-[90vw] max-h-[78vh]">
+        <div class="relative w-[96vw] max-w-[96vw] h-[84vh] max-h-[84vh] overflow-hidden" data-roi-viewport>
           <div id="roiStage" class="relative inline-block"></div>
         </div>
         <div class="pt-3 text-[11px] text-zinc-600 dark:text-zinc-400">Tip: drag to move, grab a side/corner to resize. Values are saved normalized (0..1).</div>
@@ -5763,14 +5763,23 @@ async function openRoiEditor(imageUrl) {
     `;
     appendOverlay(overlay);
 
+    await new Promise((r) => requestAnimationFrame(r));
 
     const stage = overlay.querySelector("#roiStage");
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = imageUrl;
     await img.decode();
-    stage.style.width  = img.naturalWidth + "px";
-    stage.style.height = img.naturalHeight + "px";
+    const viewport = overlay.querySelector("[data-roi-viewport]");
+    const maxW = Math.floor(viewport?.clientWidth || window.innerWidth * 0.96);
+    const maxH = Math.floor(viewport?.clientHeight || window.innerHeight * 0.84);
+    const scale = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);
+    const displayW = Math.max(1, Math.floor(img.naturalWidth * scale));
+    const displayH = Math.max(1, Math.floor(img.naturalHeight * scale));
+    img.width = displayW;
+    img.height = displayH;
+    stage.style.width  = displayW + "px";
+    stage.style.height = displayH + "px";
     stage.appendChild(img);
 
     const COLORS = { TOPLEFT:"#22d3ee", BANNER:"#a855f7", TOPRIGHT:"#ef4444", BOTTOMLEFT:"#10b981" };
@@ -5808,7 +5817,7 @@ async function openRoiEditor(imageUrl) {
     }
 
     function placeFromRois() {
-      const W = img.naturalWidth, H = img.naturalHeight;
+      const W = displayW, H = displayH;
       for (const k of Object.keys(COLORS)) {
         if (!boxes[k]) addBox(k);
         const [x1,y1,x2,y2] = rois[k];
@@ -5870,7 +5879,7 @@ async function openRoiEditor(imageUrl) {
 
     stage.addEventListener("pointerup", ()=>{
       if (!cur) return;
-      const W = img.naturalWidth, H = img.naturalHeight;
+      const W = displayW, H = displayH;
       const st = cur.box.style;
       const x = parseFloat(st.left), y = parseFloat(st.top),
             w = parseFloat(st.width), h = parseFloat(st.height);
@@ -6593,4 +6602,3 @@ function initializeApp() {
 }
 
 document.addEventListener('DOMContentLoaded', () => initializeApp(), { once: true });
-
