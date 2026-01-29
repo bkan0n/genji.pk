@@ -222,6 +222,16 @@ async function copyText(text = '') {
   roots.forEach(remember);
 })();
 
+function appendOverlay(overlay) {
+  const mount = document.getElementById('mapEditRequestInlineMount');
+  let canMount = false;
+  if (mount && mount.isConnected) {
+    const style = window.getComputedStyle(mount);
+    canMount = style && style.display !== 'none' && style.visibility !== 'hidden';
+  }
+  (canMount ? mount : document.body).appendChild(overlay);
+}
+
 // --- Modal ---
 function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
   const overlay = document.createElement('div');
@@ -244,8 +254,7 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
         </div>
         </div>
     `;
-  const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+  appendOverlay(overlay);
 
 
   overlay.querySelector('pre').textContent = bodyText;
@@ -2982,8 +2991,7 @@ function ensureMapEditRequestModal() {
     </div>
   `;
 
-  const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+  appendOverlay(overlay);
 
 
   // Close wiring
@@ -4009,8 +4017,7 @@ function showConfirmActiveKeyType() {
         </div>
       </div>
     `;
-    const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+    appendOverlay(overlay);
 
 
     const close = (val) => {
@@ -5162,8 +5169,7 @@ function openImageLightbox(src) {
       document.removeEventListener('keydown', onEsc);
     }
   });
-  const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+  appendOverlay(overlay);
 
 }
 
@@ -5407,8 +5413,7 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
       </div>
     `;
 
-    const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+    appendOverlay(overlay);
 
     const textarea = overlay.querySelector('textarea');
     const close = (cancelled) => {
@@ -5756,8 +5761,7 @@ async function openRoiEditor(imageUrl) {
         <div class="pt-3 text-[11px] text-zinc-600 dark:text-zinc-400">Tip: drag to move, grab a side/corner to resize. Values are saved normalized (0..1).</div>
       </div>
     `;
-    const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+    appendOverlay(overlay);
 
 
     const stage = overlay.querySelector("#roiStage");
@@ -6068,8 +6072,7 @@ function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confi
         </div>
       </div>
     `;
-    const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount || document.body).appendChild(overlay);
+    appendOverlay(overlay);
 
 
     const close = (val) => { overlay.remove(); resolve(val); };
@@ -6590,3 +6593,4 @@ function initializeApp() {
 }
 
 document.addEventListener('DOMContentLoaded', () => initializeApp(), { once: true });
+
