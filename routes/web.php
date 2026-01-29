@@ -74,6 +74,13 @@ Route::post('/email/resend', [EmailAuthController::class, 'resendVerification'])
 
 Route::post('/logout', [EmailAuthController::class, 'logout'])->middleware('auth.any')->name('logout');
 
+//CSRF refresh
+Route::get('/csrf-token', function (Request $request) {
+    return response()
+        ->json(['csrf_token' => csrf_token()])
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+})->name('csrf.token');
+
 //IP 
 Route::get('/api/my-ip', function (Request $request) {
     $cf  = $request->header('CF-Connecting-IP');

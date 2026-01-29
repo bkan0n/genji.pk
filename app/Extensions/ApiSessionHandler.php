@@ -27,7 +27,13 @@ class ApiSessionHandler implements SessionHandlerInterface
     public function read($sessionId): string
     {
         $payload = $this->api->sessionRead((string) $sessionId);
-        return is_string($payload) ? $payload : '';
+        $value = is_string($payload) ? $payload : '';
+        $this->debug('read', [
+            'session_id' => $this->hashId((string) $sessionId),
+            'payload_len' => strlen($value),
+        ]);
+
+        return $value;
     }
 
     public function write($sessionId, $data): bool
@@ -64,17 +70,37 @@ class ApiSessionHandler implements SessionHandlerInterface
             // ignore
         }
 
-        return $this->api->sessionWrite($sessionId, $payload, $userId, $ip, $ua);
+        $ok = $this->api->sessionWrite($sessionId, $payload, $userId, $ip, $ua);
+        $this->debug('write', [
+            'session_id' => $this->hashId($sessionId),
+            'payload_len' => strlen($payload),
+            'user_id' => $this->safeUserId($userId),
+            'ok' => $ok,
+        ]);
+
+        return $ok;
     }
 
     public function destroy($sessionId): bool
     {
-        return $this->api->sessionDestroy((string) $sessionId);
+        $ok = $this->api->sessionDestroy((string) $sessionId);
+        $this->debug('destroy', [
+            'session_id' => $this->hashId((string) $sessionId),
+            'ok' => $ok,
+        ]);
+
+        return $ok;
     }
 
     public function gc($maxLifetime): int
     {
-        return $this->api->sessionGc((int) $maxLifetime);
+        $count = $this->api->sessionGc((int) $maxLifetime);
+        $this->debug('gc', [
+            'max_lifetime' => (int) $maxLifetime,
+            'count' => $count,
+        ]);
+
+        return $count;
     }
 
     private function extractUserIdFromPayload(string $payload): int|string|null
@@ -126,5 +152,44 @@ class ApiSessionHandler implements SessionHandlerInterface
         }
 
         return (string) $uid;
+    }
+
+    private function debug(string $event, array $data = []): void
+    {
+        if (!filter_var(env('SESSION_HANDLER_DEBUG', false), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        try {
+            Log::build([
+                'driver' => 'single',
+                'path' => storage_path('logs/session-handler-debug.log'),
+            ])->debug('session_handler', array_merge(['event' => $event], $data));
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
+
+    private function hashId(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        return substr(hash('sha256', $value), 0, 12);
+    }
+
+    private function safeUserId(int|string|null $userId): int|string|null
+    {
+        if ($userId === null || $userId === '') {
+            return null;
+        }
+
+        if (is_int($userId)) {
+            return $userId;
+        }
+
+        $value = (string) $userId;
+        return $value === '' ? null : $value;
     }
 }

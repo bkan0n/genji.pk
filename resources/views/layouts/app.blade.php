@@ -149,7 +149,19 @@
       window.NOTIFICATIONS_I18N = @json(\Illuminate\Support\Facades\Lang::get('modals'));
       window.user_id = @json(session('user_id'));
       window.currentLang = @json($lang);
-      const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      window.SESSION_COOKIE_NAME = @json(config('session.cookie'));
+      var CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      window.CSRF = CSRF;
+      window.__setCsrfToken = (token) => {
+        if (!token) return;
+        CSRF = token;
+        window.CSRF = token;
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) meta.setAttribute('content', token);
+        document.querySelectorAll('input[name="_token"]').forEach((el) => {
+          el.value = token;
+        });
+      };
       
       // Auto-open reset password modal if reset_token is in session
       const hasResetToken = @json(session()->has('reset_token'));

@@ -131,6 +131,7 @@ class RememberTokenAuth
         }
 
         $request->session()->regenerate(true);
+        $request->session()->regenerateToken();
 
         $newSessionId = (string) $request->session()->getId();
 

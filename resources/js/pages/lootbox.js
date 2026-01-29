@@ -30,10 +30,30 @@ const sounds = {
 Object.values(sounds).forEach((s) => (s.preload = 'auto'));
 
 // ====== helpers ajax ======
-const XSRF = document.cookie
-  .split('; ')
-  .find((c) => c.startsWith('XSRF-TOKEN='))
-  ?.split('=')[1];
+const readCookie = (name) => {
+  try {
+    const safe = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + safe + '=([^;]*)'));
+    return match ? match[1] : '';
+  } catch {
+    return '';
+  }
+};
+
+const getXsrfToken = () => {
+  const raw = readCookie('XSRF-TOKEN');
+  if (!raw) return '';
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+};
+
+const getCsrfToken = () => {
+  if (typeof window.getCsrfToken === 'function') return window.getCsrfToken();
+  return window.CSRF || document.querySelector('meta[name="csrf-token"]')?.content || '';
+};
 
 $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
   options.xhrFields = options.xhrFields || {};
@@ -41,9 +61,19 @@ $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
 
   const method = (options.type || 'GET').toUpperCase();
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    if (CSRF) jqXHR.setRequestHeader('X-CSRF-TOKEN', CSRF);
-    if (XSRF) jqXHR.setRequestHeader('X-XSRF-TOKEN', decodeURIComponent(XSRF));
+    const csrf = getCsrfToken();
+    if (csrf) jqXHR.setRequestHeader('X-CSRF-TOKEN', csrf);
+
+    const xsrf = getXsrfToken();
+    if (xsrf) jqXHR.setRequestHeader('X-XSRF-TOKEN', xsrf);
+
+    if (typeof window.__hasSessionCookie === 'function' && !window.__hasSessionCookie()) {
+      if (typeof window.__refreshCsrfToken === 'function') {
+        window.__refreshCsrfToken();
+      }
+    }
   }
+
   jqXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 });
 
