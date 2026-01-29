@@ -130,8 +130,15 @@ class RememberTokenAuth
             $request->session()->put('is_mod', (bool) ($userData['is_mod'] ?? false));
         }
 
+        $incomingCsrf = $this->isStateChanging($request)
+            ? $this->getIncomingCsrfToken($request)
+            : '';
+
         $request->session()->regenerate(true);
-        $request->session()->regenerateToken();
+
+        if ($incomingCsrf !== '') {
+            $request->session()->put('_token', $incomingCsrf);
+        }
 
         $newSessionId = (string) $request->session()->getId();
 
@@ -298,5 +305,30 @@ class RememberTokenAuth
         } catch (\Throwable $e) {
             Log::warning('syncModeratorFlagFromSession failed', ['error' => $e->getMessage()]);
         }
+    }
+
+    private function isStateChanging(Request $request): bool
+    {
+        return !in_array(strtoupper((string) $request->method()), ['GET', 'HEAD', 'OPTIONS'], true);
+    }
+
+    private function getIncomingCsrfToken(Request $request): string
+    {
+        $token = (string) $request->header('X-CSRF-TOKEN', '');
+        if ($token !== '') {
+            return $token;
+        }
+
+        $token = (string) $request->header('X-XSRF-TOKEN', '');
+        if ($token !== '') {
+            return $token;
+        }
+
+        $token = (string) $request->input('_token', '');
+        if ($token !== '') {
+            return $token;
+        }
+
+        return (string) $request->cookies->get('XSRF-TOKEN', '');
     }
 }

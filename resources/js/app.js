@@ -134,7 +134,8 @@ window.Sentry = Sentry;
     }
   };
 
-  const hasSessionCookie = () => Boolean(readCookie(getSessionCookieName()));
+  const hasSessionCookie = () =>
+    Boolean(readCookie(getSessionCookieName()) || readCookie('XSRF-TOKEN'));
 
   window.getCsrfToken = getCsrfToken;
   window.__hasSessionCookie = hasSessionCookie;
