@@ -4316,7 +4316,29 @@ function dragAndDrop() {
         code.trim()
       ) {
         mapCodeInput.dataset.skipNextAutocomplete = '1';
-        mapCodeInput.value = String(code).toUpperCase();
+        
+        // Fetch autocomplete suggestions for the OCR code
+        try {
+          const acResp = await fetch(`/api/autocomplete/map-codes?search=${encodeURIComponent(String(code).toUpperCase())}&limit=10`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+          });
+          if (acResp.ok) {
+            const suggestions = await acResp.json().catch(() => null);
+            if (Array.isArray(suggestions) && suggestions.length > 0) {
+              // Use the first suggestion
+              mapCodeInput.value = String(suggestions[0]).toUpperCase();
+            } else {
+              // no suggestions found
+              mapCodeInput.value = String(code).toUpperCase();
+            }
+          } else {
+            mapCodeInput.value = String(code).toUpperCase();
+          }
+        } catch (e) {
+          mapCodeInput.value = String(code).toUpperCase();
+        }
+        
         mapCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
         // ocr filled
         try { mapCodeInput.dataset.filledByOcr = '1'; } catch (e) {}
