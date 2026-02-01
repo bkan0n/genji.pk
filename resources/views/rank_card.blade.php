@@ -12,12 +12,12 @@
   <main class="relative overflow-hidden">
     <div class="mx-auto min-h-[100vh] max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       {{-- En-tête : avatar + username + tabs + recherche --}}
-      <header class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-xl sm:p-5">
+      <header class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4 shadow-xl sm:p-5">
         <div class="flex flex-col gap-4">
           {{-- Ligne 1 : avatar + username + tabs --}}
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-center gap-3">
-              <div class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-white/10">
+              <div class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-zinc-300/60 dark:ring-white/10">
               <img
                 id="headerAvatar"
                 src="{{ $avatar_url ?: cdn_asset('assets/img/default-avatar.jpg') }}"
@@ -32,13 +32,13 @@
             <div class="flex items-center gap-2">
               <button
                 id="btnRankCard"
-                class="tab-btn inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm"
+                class="tab-btn inline-flex cursor-pointer items-center justify-center rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm"
               >
                 {{ __('rank_card.tab_rankcard') }}
               </button>
               <button
                 id="btnBadges"
-                class="tab-btn inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold hover:bg-white/10"
+                class="tab-btn inline-flex cursor-pointer items-center justify-center rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-5 py-2.5 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10"
               >
                 {{ __('rank_card.tab_badges') }}
               </button>
@@ -52,7 +52,7 @@
                 id="searchUserName"
                 type="text"
                 placeholder="{{ __('rank_card.search_placeholder') }}"
-                class="focus:ring-brand-400/40 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm ring-1 ring-white/10 outline-none ring-inset placeholder:text-zinc-400"
+                class="focus:ring-brand-400/40 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2.5 text-sm ring-1 ring-zinc-300/60 dark:ring-white/10 outline-none ring-inset placeholder:text-zinc-400"
               />
             </div>
             <div class="flex items-center gap-2">
@@ -64,7 +64,7 @@
               </button>
               <button
                 id="resetFilter"
-                class="cursor-pointer rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/5"
+                class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
               >
                 {{ __('rank_card.reset_filter_button') }}
               </button>
@@ -78,9 +78,8 @@
         {{-- Rank Card --}}
         <div
           id="rankCardContent"
-          class="rank-card-container tab-content active gp-panel-anim hidden rounded-2xl border border-white/10 bg-white/5 p-3 shadow-xl sm:p-5"
+          class="rank-card-container tab-content active gp-panel-anim hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-3 shadow-xl sm:p-5"
         >
-          {{-- Rempli par JS (innerHTML) --}}
         </div>
 
         {{-- Badges --}}
@@ -104,7 +103,7 @@
             class="badge-viewer-rotatable mx-auto max-h-[70vh] rounded-xl p-2 shadow-2xl"
           />
           <button
-            class="badge-viewer-close absolute -top-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10"
+            class="badge-viewer-close absolute -top-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10"
             onclick="closeBadgeViewer()"
             aria-label="{{ __('rank_card.close') }}"
           >
@@ -123,7 +122,7 @@
         class="loading-bar fixed top-20 left-1/2 z-[110] hidden -translate-x-1/2"
       >
         <div
-          class="h-1.5 w-64 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/10 ring-inset"
+          class="h-1.5 w-64 overflow-hidden rounded-full bg-zinc-100/70 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10 ring-inset"
         >
           <div class="h-full w-1/3 animate-[loading_1.1s_ease_infinite] bg-white/70"></div>
         </div>
@@ -132,22 +131,22 @@
       {{-- Boutons d’action (affichés par JS selon conditions) --}}
       <div
         id="buttonContainer"
-        class="mt-6 hidden items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4"
+        class="mt-6 hidden items-center justify-between gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-3 sm:p-4"
       >
         <button
-          class="change-button-settings cursor-pointer rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/5"
+          class="change-button-settings cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
           id="changeBadges"
         >
           {{ __('rank_card.change_badges_button') }}
         </button>
         <button
-          class="change-button-settings cursor-pointer rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/5"
+          class="change-button-settings cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
           id="changeAvatar"
         >
           {{ __('rank_card.change_avatar_button') }}
         </button>
         <button
-          class="change-button-settings cursor-pointer rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/5"
+          class="change-button-settings cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
           id="changeBackground"
         >
           {{ __('rank_card.change_background_button') }}

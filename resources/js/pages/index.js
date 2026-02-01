@@ -185,7 +185,7 @@
     for (const m of items) {
       const li = document.createElement('li');
       li.className =
-        'min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3 hover:bg-white/5 transition-colors';
+        'min-h-[70px] flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 hover:bg-zinc-900/3 dark:bg-white/5 transition-colors';
 
       li.innerHTML = `
         <div class="min-w-0">
@@ -198,17 +198,17 @@
               tabindex="0"
               title="${esc(copyCodeLabel)}"
               aria-label="${esc(copyCodeLabel)}"
-              class="cursor-pointer select-none shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] leading-none text-zinc-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
+              class="cursor-pointer select-none shrink-0 rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[11px] leading-none text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5 dark:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
               data-copy-code="${esc(m.code)}"
             >#${esc(m.code)}</span>
           </div>
 
-          <div class="mt-1 text-xs text-zinc-400">
+          <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
             ${esc(scoreLabel)} ${fmt2(m.trend_score)} · ${m.completions ?? 0} ${esc(completionsLabel)} · ${m.upvotes ?? 0} ${esc(upvotesLabel)}
           </div>
         </div>
 
-        <button class="h-8 shrink-0 cursor-pointer rounded-lg border border-white/10 px-3 text-xs hover:bg-white/5"
+        <button class="h-8 shrink-0 cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 text-xs hover:bg-zinc-900/3 dark:bg-white/5"
                 data-map-code="${esc(m.code)}">${esc(playLabel)}</button>
       `;
       ul.appendChild(li);
@@ -242,10 +242,10 @@
     const creators = Array.isArray(map.creators) ? map.creators.map(c => c.name).join(', ') : '—';
 
     const chip = (html) =>
-      `<span class="inline-flex items-center rounded-full border border-white/10 bg-white/5/80 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-zinc-200 hover:bg-white/10 transition">${html}</span>`;
+      `<span class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5/80 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10 transition">${html}</span>`;
 
     const pillRow = (arr) => (!Array.isArray(arr) || !arr.length)
-      ? `<div class="text-xs text-zinc-500">—</div>`
+      ? `<div class="text-xs text-zinc-600 dark:text-zinc-500">—</div>`
       : `<div class="flex flex-wrap gap-2">${arr.map(x => chip(esc(x))).join('')}</div>`;
 
     const banner = map.map_banner
@@ -263,26 +263,26 @@
       : '';
 
     const overview = `
-      <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h4 class="mb-3 text-xs font-semibold text-zinc-300">${esc(D_overview)}</h4>
+      <section class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-5">
+        <h4 class="mb-3 text-xs font-semibold text-zinc-700 dark:text-zinc-300">${esc(D_overview)}</h4>
         <ul class="divide-y divide-white/5">
-          ${map.category   ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-400">${esc(D_category)}</span><span class="text-sm text-zinc-200">${esc(map.category)}</span></li>` : ''}
-          ${map.difficulty ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-400">${esc(D_difficulty)}</span><span class="text-sm text-zinc-200">${esc(map.difficulty)}</span></li>` : ''}
-          <li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-400">${esc(D_checkpoints)}</span><span class="text-sm text-zinc-200">${esc(map.checkpoints ?? 0)}</span></li>
-          ${map.official !== undefined ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-400">${esc(D_official)}</span><span class="text-sm text-zinc-200">${map.official ? esc(D_yes) : esc(D_no)}</span></li>` : ''}
-          ${map.playtesting ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-400">${esc(D_playtesting)}</span><span class="text-sm text-zinc-200">${esc(map.playtesting)}</span></li>` : ''}
+          ${map.category   ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-600 dark:text-zinc-400">${esc(D_category)}</span><span class="text-sm text-zinc-800 dark:text-zinc-200">${esc(map.category)}</span></li>` : ''}
+          ${map.difficulty ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-600 dark:text-zinc-400">${esc(D_difficulty)}</span><span class="text-sm text-zinc-800 dark:text-zinc-200">${esc(map.difficulty)}</span></li>` : ''}
+          <li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-600 dark:text-zinc-400">${esc(D_checkpoints)}</span><span class="text-sm text-zinc-800 dark:text-zinc-200">${esc(map.checkpoints ?? 0)}</span></li>
+          ${map.official !== undefined ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-600 dark:text-zinc-400">${esc(D_official)}</span><span class="text-sm text-zinc-800 dark:text-zinc-200">${map.official ? esc(D_yes) : esc(D_no)}</span></li>` : ''}
+          ${map.playtesting ? `<li class="flex items-center justify-between py-2"><span class="text-xs text-zinc-600 dark:text-zinc-400">${esc(D_playtesting)}</span><span class="text-sm text-zinc-800 dark:text-zinc-200">${esc(map.playtesting)}</span></li>` : ''}
         </ul>
       </section>`;
 
     const techs = `
-      <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <section class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-5">
         <div class="grid gap-6 sm:grid-cols-2">
           <div>
-            <h4 class="mb-2 text-xs font-semibold text-zinc-300">${esc(D_mechanics)}</h4>
+            <h4 class="mb-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300">${esc(D_mechanics)}</h4>
             ${pillRow(map.mechanics)}
           </div>
           <div>
-            <h4 class="mb-2 text-xs font-semibold text-zinc-300">${esc(D_restrictions)}</h4>
+            <h4 class="mb-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300">${esc(D_restrictions)}</h4>
             ${pillRow(map.restrictions)}
           </div>
         </div>
@@ -290,9 +290,9 @@
 
     const sidePanel = `
       <aside class="space-y-4 lg:sticky lg:top-6">
-        <section class="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h4 class="mb-2 text-xs font-semibold text-zinc-300">${esc(D_creators)}</h4>
-          <p class="text-xs text-zinc-200">${esc(creators)}</p>
+        <section class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-5">
+          <h4 class="mb-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300">${esc(D_creators)}</h4>
+          <p class="text-xs text-zinc-800 dark:text-zinc-200">${esc(creators)}</p>
           <div class="mt-4 flex flex-wrap gap-2">
             <button
               class="rounded-lg cursor-pointer bg-white text-zinc-900 px-3 py-1 text-xs font-medium hover:bg-zinc-100"
@@ -305,7 +305,7 @@
 
     mapContentEl.innerHTML = `
       <div class="mb-4">
-        <h2 class="text-2xl font-bold text-white">${esc(getMapName(map))}</h2>
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">${esc(getMapName(map))}</h2>
       </div>
       <div class="space-y-6">
         ${banner}
@@ -437,9 +437,9 @@
     }
 
     const palette =
-      type === 'ok'   ? 'bg-emerald-500/90 text-white' :
+      type === 'ok'   ? 'bg-emerald-500/90 text-zinc-900 dark:text-white' :
       type === 'warn' ? 'bg-amber-500/90 text-zinc-900' :
-                        'bg-red-600/90 text-white';
+                        'bg-red-600/90 text-zinc-900 dark:text-white';
 
     const el = document.createElement('div');
     el.setAttribute('role', 'status');

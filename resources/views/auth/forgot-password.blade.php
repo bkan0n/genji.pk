@@ -3,7 +3,7 @@
   <button
     id="forgotPasswordBackdrop"
     type="button"
-    class="absolute inset-0 bg-black/70 opacity-0 transition-opacity duration-200 ease-out"
+    class="absolute inset-0 bg-black/60 dark:bg-black/70 opacity-0 transition-opacity duration-200 ease-out"
     aria-label="Close"
   ></button>
 
@@ -11,50 +11,53 @@
   <div
     id="forgotPasswordPanel"
     class="relative w-[min(92vw,60rem)] max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden
-           rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl backdrop-blur
+           rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/70 shadow-2xl backdrop-blur
            opacity-0 translate-y-3 scale-[0.98] transition-all duration-200 ease-out"
   >
-    <div class="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
-    <div class="pointer-events-none absolute -bottom-52 right-[-120px] h-[420px] w-[420px] rounded-full bg-blue-500/10 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-52 right-[-120px] h-[420px] w-[420px] rounded-full bg-blue-500/10 blur-3xl"></div>
 
     {{-- Close btn --}}
     <button
       id="forgotPasswordClose"
       type="button"
-      class="absolute right-4 top-4 z-10 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
+      class="absolute right-4 top-4 z-10 rounded-xl border border-zinc-200/80 dark:border-white/10
+             bg-white/70 dark:bg-black/30 px-3 py-2 text-xs font-extrabold
+             text-zinc-800 dark:text-white/80 hover:bg-zinc-100/80 dark:hover:bg-white/10"
       aria-label="Close"
     >
-      
+      Esc
     </button>
 
     <div class="px-7 py-10 sm:px-10">
       <div class="mx-auto max-w-md">
-        <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-          <span class="bg-emerald-400 inline-block h-2 w-2 rounded-full"></span>
+        <div class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 dark:border-white/10
+                    bg-white/60 dark:bg-white/5 px-3 py-1 text-xs text-zinc-700 dark:text-zinc-300">
+          <span class="bg-emerald-500 inline-block h-2 w-2 rounded-full"></span>
           {{ __('auth.forgot_password.badge') }}
         </div>
 
-        <h2 class="mt-5 text-2xl font-black tracking-tight text-white sm:text-3xl">
+        <h2 class="mt-5 text-2xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
           {{ __('auth.forgot_password.title') }}
         </h2>
-        <p class="mt-2 text-sm text-zinc-300">
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
           {{ __('auth.forgot_password.description') }}
         </p>
 
         @if (session('success'))
-          <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
             {{ session('success') }}
           </div>
         @endif
 
         @if (session('error'))
-          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
             {{ session('error') }}
           </div>
         @endif
 
         @if ($errors->any())
-          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
             <ul class="list-disc pl-5">
               @foreach ($errors->all() as $e)
                 <li>{{ $e }}</li>
@@ -67,27 +70,36 @@
           @csrf
 
           <div>
-            <label class="block text-xs font-extrabold text-zinc-200">{{ __('auth.forgot_password.email_label') }}</label>
+            <label class="block text-xs font-extrabold text-zinc-700 dark:text-zinc-200">
+              {{ __('auth.forgot_password.email_label') }}
+            </label>
             <input
               name="email"
               type="email"
               autocomplete="email"
               required
               value="{{ old('email') }}"
-              class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-white/90 placeholder:text-zinc-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+              class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10
+                     bg-white dark:bg-zinc-950/60 px-3 py-2.5 text-sm text-zinc-900 dark:text-white/90
+                     placeholder:text-zinc-400 dark:placeholder:text-zinc-500
+                     focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="you@example.com"
             />
           </div>
 
           <button
             type="submit"
-            class="inline-flex cursor-pointer w-full items-center justify-center rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-extrabold text-black transition hover:bg-emerald-400"
+            class="inline-flex cursor-pointer w-full items-center justify-center rounded-xl
+                   bg-emerald-500/90 px-4 py-3 text-sm font-extrabold text-black transition
+                   hover:bg-emerald-400"
           >
             {{ __('auth.forgot_password.submit_button') }}
           </button>
 
-          <div class="text-center text-xs text-zinc-400">
-            <button type="button" data-open-login class="text-zinc-300 cursor-pointer hover:text-white">{{ __('auth.forgot_password.back_to_login') }}</button>
+          <div class="text-center text-xs text-zinc-500 dark:text-zinc-400">
+            <button type="button" data-open-login class="text-zinc-700 dark:text-zinc-300 cursor-pointer hover:text-zinc-900 dark:hover:text-white">
+              {{ __('auth.forgot_password.back_to_login') }}
+            </button>
           </div>
         </form>
       </div>

@@ -24,7 +24,7 @@
   <div
     id="loginPanel"
     class="relative w-[min(92vw,60rem)] max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden
-           rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl backdrop-blur
+           rounded-3xl border border-zinc-200/80 bg-white/80 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-zinc-950/70
            opacity-0 translate-y-3 scale-[0.98] transition-all duration-200 ease-out"
   >
     {{-- subtle glow --}}
@@ -33,19 +33,19 @@
 
     <div class="grid max-h-[88vh] overflow-y-auto lg:grid-cols-2">
       {{-- LEFT --}}
-      <aside class="relative overflow-hidden border-b border-white/10 bg-zinc-900/40 px-7 py-10 sm:px-10 lg:border-b-0 lg:border-r">
+      <aside class="relative overflow-hidden border-b border-zinc-200/80 bg-zinc-50/80 dark:border-white/10 dark:bg-zinc-900/40 px-7 py-10 sm:px-10 lg:border-b-0 lg:border-r">
         <div class="absolute left-6 top-10 hidden flex-col gap-3 lg:flex">
-          <div class="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-black/30 text-white/80">
+          <div class="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200/80 bg-white/80 text-zinc-700 dark:border-white/10 dark:bg-black/30 dark:text-white/80">
             <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm1 15h-2v-6h2Zm0-8h-2V7h2Z"/>
             </svg>
           </div>
-          <div class="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-black/30 text-white/80">
+          <div class="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200/80 bg-white/80 text-zinc-700 dark:border-white/10 dark:bg-black/30 dark:text-white/80">
             <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4Zm0 11h7c-.53 3.06-2.72 5.86-7 6.92V12H5V6.3l7-3.11V12Z"/>
             </svg>
           </div>
-          <div class="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-black/30 text-white/80">
+          <div class="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200/80 bg-white/80 text-zinc-700 dark:border-white/10 dark:bg-black/30 dark:text-white/80">
             <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M7 2h10a2 2 0 0 1 2 2v16l-7-3-7 3V4a2 2 0 0 1 2-2Z"/>
             </svg>
@@ -53,30 +53,30 @@
         </div>
 
         <div class="lg:pl-14">
-          <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+          <div class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-zinc-100 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
             <span class="bg-emerald-400 inline-block h-2 w-2 rounded-full"></span>
             Genji Parkour
           </div>
 
-          <h2 class="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl">
+          <h2 class="mt-5 text-3xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
             {{ __('auth.login.subtitle_part_1') }}
-            <span class="block from-brand-300 block bg-gradient-to-r via-emerald-200 to-white bg-clip-text pb-1 text-transparent">
+            <span class="block bg-gradient-to-r from-brand-500 via-emerald-500 to-zinc-900 dark:from-brand-300 dark:via-emerald-200 dark:to-white bg-clip-text pb-1 text-transparent">
               {{ __('auth.login.subtitle_part_2') }}
             </span>
           </h2>
 
-          <p class="mt-4 max-w-md text-sm leading-relaxed text-zinc-300">
+          <p class="mt-4 max-w-md text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
             {{ __('auth.login.description') }}
           </p>
 
           <div class="mt-8 grid gap-3 sm:grid-cols-2">
-            <div class="rounded-2xl border border-white/10 bg-black/25 p-4">
-              <div class="text-xs font-extrabold text-white/90">{{ __('auth.login.fast') }}</div>
-              <div class="mt-1 text-xs text-zinc-300">{{ __('auth.login.fast_desc') }}</div>
+            <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-black/25">
+              <div class="text-xs font-extrabold text-zinc-900 dark:text-white/90">{{ __('auth.login.fast') }}</div>
+              <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{{ __('auth.login.fast_desc') }}</div>
             </div>
-            <div class="rounded-2xl border border-white/10 bg-black/25 p-4">
-              <div class="text-xs font-extrabold text-white/90">{{ __('auth.login.secure') }}</div>
-              <div class="mt-1 text-xs text-zinc-300">{{ __('auth.login.secure_desc') }}</div>
+            <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-black/25">
+              <div class="text-xs font-extrabold text-zinc-900 dark:text-white/90">{{ __('auth.login.secure') }}</div>
+              <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{{ __('auth.login.secure_desc') }}</div>
             </div>
           </div>
         </div>
@@ -87,10 +87,10 @@
         <div class="mx-auto max-w-md">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <h3 class="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              <h3 class="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-2xl">
                 {{ __('auth.login.sign_in') }}
               </h3>
-              <p class="mt-1 text-sm text-zinc-300">
+              <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
                 {{ __('auth.login.providers_description') }}
               </p>
             </div>
@@ -98,7 +98,7 @@
             <button
               id="loginClose"
               type="button"
-              class="rounded-xl cursor-pointer border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
+              class="rounded-xl cursor-pointer border border-zinc-200/80 bg-white/80 px-3 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10"
               aria-label="Close"
             >
               ✕
@@ -106,37 +106,37 @@
           </div>
 
           @if (session('login_error'))
-            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
               {{ session('login_error') }}
             </div>
           @endif
 
           @if (session('register_error'))
-            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
               {{ session('register_error') }}
             </div>
           @endif
 
           @if (session('success'))
-            <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
               {{ session('success') }}
             </div>
           @endif
 
           @if (session('error'))
-            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
               {{ session('error') }}
             </div>
           @endif
 
           @if (session('warning'))
-            <div class="mt-5 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
+            <div class="mt-5 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-900 dark:text-yellow-100">
               {{ session('warning') }}
             </div>
           @endif
 
           @if ($errors->any())
-            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
               <div class="font-extrabold">{{ __('auth.login.please_fix') }}</div>
               <ul class="mt-2 list-disc pl-5">
                 @foreach ($errors->all() as $e)
@@ -164,11 +164,11 @@
                 {{ __('auth.login.recommended') }}
               </span>
             </a>
-            <label class="mt-2 inline-flex items-center gap-2 text-xs text-zinc-300 select-none">
+            <label class="mt-2 inline-flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 select-none">
               <input
                 id="rememberDiscord"
                 type="checkbox"
-                class="h-4 w-4 rounded cursor-pointer border-white/20 bg-black/30 text-emerald-400 focus:ring-emerald-500/20"
+                class="h-4 w-4 rounded cursor-pointer border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500/20 dark:border-white/20 dark:bg-black/30 dark:text-emerald-400"
               />
               {{ __('auth.login.remember_me') }}
             </label>
@@ -177,56 +177,56 @@
             <button
               id="emailToggle"
               type="button"
-              class="group inline-flex cursor-pointer w-full items-center justify-between rounded-xl border border-white/10 bg-zinc-900/40 px-4 py-3.5 text-sm font-semibold text-white/90 transition hover:bg-zinc-900/55"
+              class="group inline-flex cursor-pointer w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white px-4 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-900/40 dark:text-white/90 dark:hover:bg-zinc-900/55"
               aria-expanded="false"
               aria-controls="emailFormWrap"
             >
               <span class="inline-flex items-center gap-3">
-                <span class="grid h-5 w-5 place-items-center rounded-md text-white/90">
+                <span class="grid h-5 w-5 place-items-center rounded-md text-zinc-900 dark:text-white/90">
                   @
                 </span>
                 {{ __('auth.login.email_login') }}
               </span>
-              <span class="rounded-lg bg-black/25 px-2 py-1 text-[11px] font-extrabold text-white/80 ring-1 ring-white/10">
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 text-[11px] font-extrabold text-zinc-700 ring-1 ring-zinc-200/80 dark:bg-black/25 dark:text-white/80 dark:ring-white/10">
                 {{ __('auth.login.password_badge') }}
               </span>
             </button>
 
-            <div id="emailFormWrap" class="hidden rounded-2xl border border-white/10 bg-black/20 p-4">
+            <div id="emailFormWrap" class="hidden rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-black/20">
               <form method="POST" action="{{ url('/login') }}" class="space-y-3">
                 @csrf
                 <input type="hidden" name="remember" id="rememberEmail" value="0">
                 <div>
-                  <label class="block text-xs font-extrabold text-zinc-200">{{ __('auth.login.email_label') }}</label>
+                  <label class="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{{ __('auth.login.email_label') }}</label>
                   <input
                     name="email"
                     type="email"
                     autocomplete="email"
                     required
                     value="{{ old('email') }}"
-                    class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-white/90 placeholder:text-zinc-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+                    class="mt-1 w-full rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-zinc-950/60 dark:text-white/90 dark:placeholder:text-zinc-500"
                     placeholder="you@example.com"
                   />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-extrabold text-zinc-200">{{ __('auth.login.password_label') }}</label>
+                  <label class="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{{ __('auth.login.password_label') }}</label>
                   <input
                     name="password"
                     type="password"
                     autocomplete="current-password"
                     required
-                    class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-white/90 placeholder:text-zinc-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+                    class="mt-1 w-full rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-zinc-950/60 dark:text-white/90 dark:placeholder:text-zinc-500"
                     placeholder="••••••••"
                   />
                 </div>
 
-                <label class="mt-4 flex items-center gap-2 text-xs text-zinc-300">
+                <label class="mt-4 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
                   <input
                     type="checkbox"
                     name="remember"
                     value="1"
-                    class="h-4 w-4 cursor-pointer rounded border-white/20 bg-white/5 text-emerald-400 focus:ring-emerald-400/30"
+                    class="h-4 w-4 cursor-pointer rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-400/30 dark:border-white/20 dark:bg-white/5 dark:text-emerald-400"
                     id="rememberMe"
                   />
                   {{ __('auth.login.remember_me') }}
@@ -240,10 +240,10 @@
                 </button>
 
                 <div class="flex items-center justify-between text-xs">
-                  <button type="button" data-open-forgot-password class="text-zinc-300 cursor-pointer hover:text-white">
+                  <button type="button" data-open-forgot-password class="text-zinc-600 cursor-pointer hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
                     {{ __('auth.login.forgot_password') }}
                   </button>
-                  <button type="button" data-open-register class="text-zinc-300 cursor-pointer hover:text-white">
+                  <button type="button" data-open-register class="text-zinc-600 cursor-pointer hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
                     {{ __('auth.login.create_account') }}
                   </button>
                 </div>
@@ -251,7 +251,7 @@
             </div>
           </div>
 
-          <div class="mt-6 text-center text-xs text-zinc-400">
+          <div class="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
             {{ __('auth.login.agreement') }}
           </div>
         </div>

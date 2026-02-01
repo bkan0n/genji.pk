@@ -23,19 +23,18 @@ return Application::configure(basePath: dirname(__DIR__))
             \Monicahq\Cloudflare\Http\Middleware\TrustProxies::class
         );
 
-        // CSP
-        $middleware->web(
-            append: [
-                \Illuminate\Cookie\Middleware\EncryptCookies::class,
-                \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-                \Illuminate\Session\Middleware\StartSession::class,
-                \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-                \Illuminate\Routing\Middleware\SubstituteBindings::class,
-                \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-                \App\Http\Middleware\DetectLanguage::class,
-                \App\Http\Middleware\RememberTokenAuth::class,
-            ],
-        );
+        // Web middleware
+        $middleware->group('web', [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \App\Http\Middleware\HydrateSessionFromDeviceCookie::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \App\Http\Middleware\RememberTokenAuth::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\DetectLanguage::class,
+        ]);
 
         // Aliases
         $middleware->alias([

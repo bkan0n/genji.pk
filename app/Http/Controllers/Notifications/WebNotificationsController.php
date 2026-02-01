@@ -31,17 +31,14 @@ class WebNotificationsController extends Controller
 
     private function userId(Request $request): int
     {
-        // 1) Laravel auth (si activé un jour)
         $u = $request->user();
         if ($u) {
             return (int) ($u->user_id ?? $u->id ?? 0);
         }
 
-        // 2) Ton auth session (actuel)
         $sid = (int) $request->session()->get('user_id', 0);
         if ($sid > 0) return $sid;
 
-        // 3) fallback si tu stockes un array user en session
         $su = $request->session()->get('user', null);
         if (is_array($su)) {
             return (int) ($su['user_id'] ?? $su['id'] ?? 0);
@@ -55,10 +52,6 @@ class WebNotificationsController extends Controller
         return response()->json($payload, $status);
     }
 
-    /**
-     * Upstream peut renvoyer 204. Ton front fait fetch().json(),
-     * donc on convertit 204 => 200 {ok:true}.
-     */
     private function passthroughSafe($response, array $fallback = ['ok' => true])
     {
         $status = (int) $response->status();
@@ -84,11 +77,6 @@ class WebNotificationsController extends Controller
     // TRAY
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Doc: GET /api/v3/notifications/users/{user_id}/unread-count
-     * Upstream: { "count": 1 }
-     * On normalise pour le front: { unread_count: n, count: n }
-     */
     public function unreadCount(Request $request)
     {
         $userId = $this->userId($request);
@@ -111,12 +99,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: GET /api/v3/notifications/users/{user_id}/events
-     * Query: unread_only(bool), limit(int), offset(int)
-     * Upstream: ARRAY d'events
-     * On normalise: { events: [...], has_more: bool, total: null }
-     */
     public function events(Request $request)
     {
         $userId = $this->userId($request);
@@ -141,7 +123,6 @@ class WebNotificationsController extends Controller
 
             $data = $res->json();
 
-            // doc => array direct
             $events = is_array($data) ? $data : [];
             $hasMore = count($events) >= $limit;
 
@@ -156,10 +137,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: PATCH /api/v3/notifications/events/{event_id}/read
-     * Upstream: 204
-     */
     public function markRead(Request $request, int $eventId)
     {
         try {
@@ -171,10 +148,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: PATCH /api/v3/notifications/events/{event_id}/dismiss
-     * Upstream: 204
-     */
     public function dismiss(Request $request, int $eventId)
     {
         try {
@@ -186,10 +159,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: PATCH /api/v3/notifications/users/{user_id}/read-all
-     * Upstream: peut être 200 json ou 204
-     */
     public function markAllRead(Request $request)
     {
         $userId = $this->userId($request);
@@ -206,14 +175,26 @@ class WebNotificationsController extends Controller
         }
     }
 
+    public function dismissAll(Request $request)
+    {
+        $userId = $this->userId($request);
+        if ($userId <= 0) {
+            return $this->jsonOk(['ok' => true], 200);
+        }
+
+        try {
+            $res = $this->http()->patch("/api/v3/notifications/users/{$userId}/dismiss-all");
+            return $this->passthroughSafe($res, ['ok' => true]);
+        } catch (\Throwable $e) {
+            Log::error('Notifications dismissAll proxy failed', ['error' => $e->getMessage()]);
+            return $this->jsonOk(['ok' => false], 500);
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────
-    // PREFERENCES (DOC)
+    // PREFERENCES
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Doc: GET /api/v3/notifications/users/{user_id}/preferences
-     * Upstream: array [{ event_type, channels: { web, discord_dm, discord_ping } }]
-     */
     public function preferences(Request $request)
     {
         $userId = $this->userId($request);
@@ -233,10 +214,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: PUT /api/v3/notifications/users/{user_id}/preferences/{event_type}/{channel}?enabled=true
-     * Upstream: 204
-     */
     public function updatePreference(Request $request, string $eventType, string $channel)
     {
         $userId = $this->userId($request);
@@ -268,11 +245,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: PUT /api/v3/notifications/users/{user_id}/preferences/bulk
-     * Body: array of { event_type, channel, enabled }
-     * Upstream: 204
-     */
     public function bulkUpdatePreferences(Request $request)
     {
         $userId = $this->userId($request);
@@ -285,7 +257,6 @@ class WebNotificationsController extends Controller
             return $this->jsonOk(['ok' => false, 'message' => 'Body must be an array'], 422);
         }
 
-        // validation légère (évite d’envoyer n’importe quoi)
         foreach ($payload as $i => $row) {
             if (!is_array($row)) {
                 return $this->jsonOk(['ok' => false, 'message' => "Row {$i} must be an object"], 422);
@@ -304,10 +275,6 @@ class WebNotificationsController extends Controller
         }
     }
 
-    /**
-     * Doc: GET /api/v3/notifications/users/{user_id}/should-deliver?event_type=...&channel=...
-     * Response: { should_deliver: true/false }
-     */
     public function shouldDeliver(Request $request)
     {
         $userId = $this->userId($request);

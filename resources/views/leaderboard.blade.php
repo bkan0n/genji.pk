@@ -13,7 +13,7 @@
           <div>
             <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
               {{ __('leaderboard.header.title') }}
-              <span class="block text-sm font-medium text-zinc-300 sm:text-base">
+              <span class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">
                 {{ __('leaderboard.header.subtitle') }}
               </span>
             </h1>
@@ -25,17 +25,17 @@
     <!-- Filtres -->
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+        <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-3 sm:p-4">
           <div id="filtersGrid" class="grid gap-3 sm:grid-cols-4">
             <!-- Player search -->
             <label class="block">
-              <span class="mb-1 block text-xs font-medium text-zinc-300">
+              <span class="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 {{ __('leaderboard.filters.player_label') }}
               </span>
               <div
-                class="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2"
+                class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2"
               >
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 24 24">
+                <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L19 20.5 20.5 19 15.5 14zM10 14a4 4 0 110-8 4 4 0 010 8z"
@@ -52,33 +52,33 @@
 
             <!-- Sort by -->
             <div class="relative">
-              <span class="mb-1 block text-xs font-medium text-zinc-300">
+              <span class="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 {{ __('leaderboard.filters.sort_label') }}
               </span>
               <button
                 id="sortBtn"
-                class="inline-flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/5"
+                class="inline-flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                 aria-expanded="false"
                 aria-controls="sortMenu"
               >
                 <span class="flex items-center gap-2">
-                  <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 24 24">
+                  <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M7 10h10v2H7zM5 6h14v2H5zM9 14h6v2H9z" />
                   </svg>
                   <span class="label">{{ __('leaderboard.filters.sort_options.xp') }}</span>
                 </span>
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+                <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
                   <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
                 </svg>
               </button>
               <ul
                 id="sortMenu"
-                class="invisible absolute right-0 left-0 z-50 mt-2 max-h-36 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+                class="invisible absolute right-0 left-0 z-50 mt-2 max-h-36 translate-y-1 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
               >
                 <li>
                   <button
                     data-value="xp"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.sort_options.xp') }}
                     <span class="check hidden">✓</span>
@@ -87,7 +87,7 @@
                 <li>
                   <button
                     data-value="wr"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.sort_options.wr') }}
                     <span class="check hidden">✓</span>
@@ -96,7 +96,7 @@
                 <li>
                   <button
                     data-value="maps"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.sort_options.maps') }}
                     <span class="check hidden">✓</span>
@@ -105,7 +105,7 @@
                 <li>
                   <button
                     data-value="votes"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.sort_options.votes') }}
                     <span class="check hidden">✓</span>
@@ -116,28 +116,28 @@
 
             <!-- Search rank -->
             <div class="relative">
-              <span class="mb-1 block text-xs font-medium text-zinc-300">
+              <span class="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 {{ __('leaderboard.filters.rank_label') }}
               </span>
               <button
                 id="rankBtn"
-                class="inline-flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/5"
+                class="inline-flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                 aria-expanded="false"
                 aria-controls="rankMenu"
               >
                 <span class="label">{{ __('leaderboard.filters.rank_options.all') }}</span>
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+                <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
                   <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
                 </svg>
               </button>
               <ul
                 id="rankMenu"
-                class="invisible absolute right-0 left-0 z-50 mt-2 max-h-36 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+                class="invisible absolute right-0 left-0 z-50 mt-2 max-h-36 translate-y-1 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
               >
                 <li>
                   <button
                     data-value=""
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.all') }}
                     <span class="check hidden">✓</span>
@@ -146,7 +146,7 @@
                 <li>
                   <button
                     data-value="Ninja"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.ninja') }}
                     <span class="check hidden">✓</span>
@@ -155,7 +155,7 @@
                 <li>
                   <button
                     data-value="Jumper"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.jumper') }}
                     <span class="check hidden">✓</span>
@@ -164,7 +164,7 @@
                 <li>
                   <button
                     data-value="Skilled"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.skilled') }}
                     <span class="check hidden">✓</span>
@@ -173,7 +173,7 @@
                 <li>
                   <button
                     data-value="Pro"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.pro') }}
                     <span class="check hidden">✓</span>
@@ -182,7 +182,7 @@
                 <li>
                   <button
                     data-value="Master"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.master') }}
                     <span class="check hidden">✓</span>
@@ -191,7 +191,7 @@
                 <li>
                   <button
                     data-value="Grandmaster"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.grandmaster') }}
                     <span class="check hidden">✓</span>
@@ -200,7 +200,7 @@
                 <li>
                   <button
                     data-value="God"
-                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-200 hover:bg-white/10"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.rank_options.god') }}
                     <span class="check hidden">✓</span>
@@ -213,7 +213,7 @@
             <div class="flex items-end">
               <button
                 id="resetFiltersBtn"
-                class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/5"
+                class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
               >
                 <svg
                   class="h-4 w-4"
@@ -236,10 +236,10 @@
     <!-- Table -->
     <section class="relative pb-10 sm:pb-16">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+        <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5">
           <div class="overflow-auto">
             <table id="leaderboard" class="min-w-full table-fixed text-sm">
-              <thead class="bg-zinc-900/60 text-zinc-300">
+              <thead class="bg-white/60 dark:bg-zinc-900/60 text-zinc-600 dark:text-zinc-300">
                 <tr class="thead-wrapper">
                   <th
                     class="col-idx px-4 py-3 text-left align-middle font-semibold whitespace-nowrap"

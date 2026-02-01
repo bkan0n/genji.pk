@@ -13,6 +13,10 @@ class OcrController extends Controller
     {
         $data = $request->validate([
             'image_url' => ['required', 'string', 'url'],
+            'code'      => ['nullable', 'string'],
+            'time'      => ['nullable', 'numeric'],
+            'names'     => ['nullable', 'array'],
+            'names.*'   => ['nullable', 'string'],
         ]);
 
         $url = trim($data['image_url'] ?? '');
@@ -38,11 +42,25 @@ class OcrController extends Controller
 
         $endpoint = $base . '/extract';
 
+        // Build payload with all provided fields
+        $payload = [
+            'image_url' => $url,
+        ];
+        
+        if (isset($data['code'])) {
+            $payload['code'] = $data['code'];
+        }
+        if (isset($data['time'])) {
+            $payload['time'] = $data['time'];
+        }
+        if (isset($data['names'])) {
+            $names = array_map(fn($n) => $n === null ? '' : (string)$n, $data['names']);
+            $payload['names'] = $names;
+        }
+
         $resp = Http::acceptJson()
             ->timeout((int) config('services.ocr.timeout', 10))
-            ->post($endpoint, [
-                'image_url' => $url,
-            ]);
+            ->post($endpoint, $payload);
 
         if (! $resp->successful()) {
             return response()->json([

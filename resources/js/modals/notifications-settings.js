@@ -175,10 +175,10 @@ function gpChannelLabel(channel) {
 
 function gpSwitchSpanClass() {
   return (
-    "relative h-5 w-9 rounded-full bg-zinc-700 transition-colors duration-200 ease-in-out " +
-    "peer-checked:bg-emerald-500 peer-disabled:bg-zinc-800 peer-disabled:opacity-60 " +
+    "relative h-5 w-9 rounded-full bg-zinc-200 dark:bg-zinc-700 transition-colors duration-200 ease-in-out" +
+    "peer-checked:bg-emerald-500 peer-disabled:bg-zinc-800 peer-disabled:opacity-60" +
     "after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:translate-x-0 " +
-    "after:rounded-full after:bg-white after:transition-transform after:duration-200 after:ease-in-out " +
+    "after:rounded-full after:bg-white after:transition-transform after:duration-200 after:ease-in-out" +
     "after:content-[''] peer-checked:after:translate-x-4 active:after:scale-95 peer-disabled:after:bg-zinc-200"
   );
 }
@@ -195,11 +195,11 @@ function gpEnsurePreferenceRow(eventType) {
 
   const row = document.createElement('div');
   row.className =
-    'grid grid-cols-1 sm:grid-cols-4 items-start gap-4 rounded-lg border border-white/10 bg-zinc-900/50 px-3 py-2';
+    'grid grid-cols-1 sm:grid-cols-4 items-start gap-4 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 px-3 py-2';
   row.dataset.eventRow = eventType;
 
   const label = document.createElement('div');
-  label.className = 'min-w-0 text-sm leading-snug text-zinc-200';
+  label.className = 'min-w-0 text-sm leading-snug text-zinc-800 dark:text-zinc-200';
   label.textContent = gpEventTypeToLabel(eventType);
   row.appendChild(label);
 
@@ -212,7 +212,7 @@ function gpEnsurePreferenceRow(eventType) {
 
     const mobileLabel = document.createElement('span');
     mobileLabel.className =
-      'sm:hidden text-[11px] font-extrabold uppercase tracking-wider text-zinc-400';
+      'sm:hidden text-[11px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400';
     mobileLabel.textContent = gpChannelLabel(channel);
     cell.appendChild(mobileLabel);
 
@@ -649,10 +649,10 @@ function loadOverwatchUsername() {
       usernames.forEach((userObj) => {
         const row = document.createElement('div');
         row.className =
-          'flex items-center justify-between rounded-lg border border-white/10 bg-zinc-900/50 px-3 py-2';
+          'flex items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 px-3 py-2';
 
         const userSpan = document.createElement('span');
-        userSpan.className = 'text-sm font-semibold text-zinc-100';
+        userSpan.className = 'text-sm font-semibold text-zinc-900 dark:text-zinc-100';
         userSpan.textContent = userObj.username + (userObj.is_primary ? ` (${t('popup.primary')})` : '');
         userSpan.style.cursor = userObj.is_primary ? 'default' : 'pointer';
         userSpan.title = userObj.is_primary ? '' : t('popup.set_primary_username');
@@ -661,7 +661,7 @@ function loadOverwatchUsername() {
         });
 
         const btnDelete = document.createElement('button');
-        btnDelete.className = 'rounded-md cursor-pointer p-1.5 hover:bg-white/10 text-rose-300';
+        btnDelete.className = 'rounded-md cursor-pointer p-1.5 hover:bg-zinc-100 dark:hover:bg-white/10 text-rose-300';
         btnDelete.title = t('popup.delete_username');
         btnDelete.innerHTML = '❌';
         btnDelete.addEventListener('click', () => deleteUsername(userObj.username));

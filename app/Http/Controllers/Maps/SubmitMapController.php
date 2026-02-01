@@ -36,6 +36,9 @@ final class SubmitMapController extends Controller
             'restrictions' => ['sometimes', 'array'],
             'restrictions.*' => ['string', 'max:64'],
 
+            'tags' => ['sometimes', 'nullable', 'array'],
+            'tags.*' => ['string', Rule::in(['Other Heroes', 'XP Based', 'Custom Grav/Speed'])],
+
             'custom_banner' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'guide_url' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -83,7 +86,7 @@ final class SubmitMapController extends Controller
                 $payload[$s] = $validated[$s];
             }
         }
-        foreach (['mechanics', 'restrictions', 'medals'] as $arr) {
+        foreach (['mechanics', 'restrictions', 'tags', 'medals'] as $arr) {
             if (array_key_exists($arr, $validated)) {
                 $payload[$arr] = $validated[$arr];
             }

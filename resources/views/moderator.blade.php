@@ -5,7 +5,7 @@
 @section('og:description', 'Internal tools for moderators')
 
 @section('content')
-  <section class="mod-ui relative overflow-hidden min-h-[100vh] text-white selection:bg-emerald-500/30 selection:text-white [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed [&_button[disabled]]:cursor-not-allowed [&_button:focus]:outline-none [&_button:focus]:ring-1 [&_button:focus]:ring-emerald-500/30">
+  <section class="mod-ui relative overflow-hidden min-h-[100vh] text-zinc-900 dark:text-white selection:bg-emerald-500/30 selection:text-white [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed [&_button[disabled]]:cursor-not-allowed [&_button:focus]:outline-none [&_button:focus]:ring-1 [&_button:focus]:ring-emerald-500/30">
     <input type="hidden" id="modUserId" value="{{ (string) (session('user_id') ?? session('discord_user_id') ?? session('discord_id') ?? '') }}">
     <div class="relative mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
       <!-- Header -->
@@ -13,23 +13,23 @@
         <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Moderator Panel</h1>
-            <p class="mt-1 text-sm text-zinc-300/80">Internal tools for moderators</p>
+            <p class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">Internal tools for moderators</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
-            <button id="openCmdk" type="button" class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10">
+            <button id="openCmdk" type="button" class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
               <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" /></svg>
               Command
-              <span class="ml-1 hidden rounded-md border border-white/10 bg-zinc-900/60 px-1.5 py-0.5 text-[10px] text-zinc-300 sm:inline">Ctrl K</span>
+              <span class="ml-1 hidden rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:text-zinc-300 sm:inline">Ctrl K</span>
             </button>
 
-            <div class="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-              <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10" aria-hidden="true">
-                <svg class="h-4 w-4 text-zinc-200" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4a4 4 0 0 0 4 4m0 2c-4.42 0-8 2-8 4v2h16v-2c0-2-3.58-4-8-4Z"/></svg>
+            <div class="inline-flex items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+              <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10" aria-hidden="true">
+                <svg class="h-4 w-4 text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4a4 4 0 0 0 4 4m0 2c-4.42 0-8 2-8 4v2h16v-2c0-2-3.58-4-8-4Z"/></svg>
               </span>
               <div class="leading-tight">
-                <div class="text-[10px] text-zinc-400">Logged as</div>
-                <div class="text-xs font-semibold text-zinc-100">{{ session('username') ?? 'Guest' }}</div>
+                <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Logged as</div>
+                <div class="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{{ session('username') ?? 'Guest' }}</div>
               </div>
             </div>
           </div>
@@ -54,34 +54,34 @@
           <!-- Left navigation -->
           <aside class="lg:col-span-2">
             <div class="sticky top-24 space-y-3">
-              <div class="rounded-2xl border border-white/10 bg-zinc-950/40 p-3 backdrop-blur">
+              <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-3 backdrop-blur">
                 <div class="flex items-center justify-between px-2 pb-2">
-                  <div class="text-xs font-semibold text-zinc-200">Sections</div>
-                  <div class="text-[10px] text-zinc-400">shareable URLs</div>
+                  <div class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Sections</div>
+                  <div class="text-[10px] text-zinc-500 dark:text-zinc-400">shareable URLs</div>
                 </div>
                 <label class="relative block">
-                  <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" aria-hidden="true">
+                  <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400" aria-hidden="true">
                     <svg class="h-4 w-4" viewBox="0 0 24 24"><path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" /></svg>
                   </span>
                   <input
                     id="modNavSearch"
                     type="text"
-                    class="w-full rounded-xl border border-white/10 bg-zinc-900/60 pl-10 pr-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    class="w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 pl-10 pr-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                     placeholder="Filter sections…"
                     autocomplete="off"
                   />
                 </label>
               </div>
 
-              <nav class="rounded-2xl border border-white/10 bg-zinc-950/30 p-2 backdrop-blur" aria-label="Moderator sections">
+              <nav class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-2 backdrop-blur" aria-label="Moderator sections">
                 <div id="modTabs" class="space-y-1">
               <button
                 data-tab="users"
                 data-tab-label="Users"
-                class="mod-tab active group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab active group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       fill="currentColor"
@@ -96,10 +96,10 @@
               <button
                 data-tab="lootbox"
                 data-tab-label="Lootbox"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       fill="currentColor"
@@ -114,10 +114,10 @@
               <button
                 data-tab="guides"
                 data-tab-label="Guides"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M4 6h16v2H4V6m0 4h10v2H4v-2m0 4h16v2H4v-2Z" />
                   </svg>
@@ -129,10 +129,10 @@
               <button
                 data-tab="maps"
                 data-tab-label="Maps"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="m15 19l-6-3l-6 3V5l6-3l6 3l6-3v14Z" />
                   </svg>
@@ -144,10 +144,10 @@
               <button
                 data-tab="moderation"
                 data-tab-label="Moderation"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M12 1l3 5h6l-4.5 4l1.5 6l-6-3.5L6 16l1.5-6L3 6h6Z" />
                   </svg>
@@ -159,10 +159,10 @@
               <button
                 data-tab="verifications"
                 data-tab-label="Verifications"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41Z" />
                   </svg>
@@ -174,10 +174,10 @@
               <button
                 data-tab="devs"
                 data-tab-label="Devs only"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition group-hover:bg-white/10">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M22.7 19.3L19 15.6c-.2-.2-.5-.3-.7-.3h-.5l-1.4-1.4c.9-1.4.7-3.4-.5-4.6c-1.2-1.2-3.2-1.4-4.6-.5L9.4 7.4V6.9c0-.3-.1-.5-.3-.7L5.7 2.5C5.3 2.1 4.7 2.1 4.3 2.5L2.5 4.3c-.4.4-.4 1 0 1.4L6 9.2c.2.2.4.3.7.3h.5l1.4 1.4c-.9 1.4-.7 3.4.5 4.6c1.2 1.2 3.2 1.4 4.6.5l1.4 1.4v.5c0 .3.1.5.3.7l3.7 3.7c.4.4 1 .4 1.4 0l1.8-1.8c.4-.4.4-1 0-1.4Z"/>
                   </svg>
@@ -193,56 +193,56 @@
 
           <!-- Main -->
           <div class="lg:col-span-7 min-w-0">
-            <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4 backdrop-blur sm:p-5">
+            <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 backdrop-blur sm:p-5">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div id="modActiveKicker" class="text-xs text-zinc-400">Section</div>
+                  <div id="modActiveKicker" class="text-xs text-zinc-500 dark:text-zinc-400">Section</div>
                   <h2 id="modActiveTitle" class="text-lg font-semibold tracking-tight">Users</h2>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button id="modScrollTop" type="button" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10">Top</button>
-                  <button id="modFocusActions" type="button" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10">Actions</button>
+                  <button id="modScrollTop" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">Top</button>
+                  <button id="modFocusActions" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">Actions</button>
                 </div>
               </div>
             </div>
 
             <div class="mt-6 space-y-6">
-{{-- ============ USERS ============ --}}
+            {{-- ============ USERS ============ --}}
             <div data-panel="users" class="mod-panel space-y-4">
               {{-- Sous-nav --}}
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-get"
                 >
                   Get user
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-get-ow"
                 >
                   Get overwatch usernames
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-link"
                 >
                   Link fake → real
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-overwatch"
                 >
                   Replace overwatch usernames
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-update"
                 >
                   Update usernames
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-create"
                 >
                   Create fake member
@@ -251,24 +251,24 @@
 
               {{-- Empty state tant qu’aucune sous-action n’est choisie --}}
               <div
-                class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
+                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
                 Choose a Users action above.
               </div>
 
               {{-- Subpanel: GET USER --}}
               <div data-subpanel="users-get" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get User</h3>
-                    <span class="text-xs text-zinc-400">GET /api/mods/users/{user_id}</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/mods/users/{user_id}</span>
                   </div>
                   <form data-action="get-user" autocomplete="off" class="grid gap-3 sm:grid-cols-3">
                     <label>
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="12345"
                       />
                     </label>
@@ -285,10 +285,10 @@
 
               {{-- Subpanel: GET OW USERNAMES --}}
               <div data-subpanel="users-get-ow" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get Overwatch Usernames</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       GET /api/mods/users/{user_id}/overwatch
                     </span>
                   </div>
@@ -301,7 +301,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="12345"
                       />
                     </label>
@@ -318,10 +318,10 @@
 
               {{-- Subpanel: LINK --}}
               <div data-subpanel="users-link" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Link fake member to real user</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       PUT /api/mods/users/fake/{fake_user_id}/link/{real_user_id}
                     </span>
                   </div>
@@ -334,14 +334,14 @@
                       Fake User name
                       <input
                         name="fake_user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
                       Real User name
                       <input
                         name="real_user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <button
@@ -355,10 +355,10 @@
 
               {{-- Subpanel: REPLACE OW --}}
               <div data-subpanel="users-overwatch" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Replace Overwatch Usernames</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       PUT /api/mods/users/{user_id}/overwatch
                     </span>
                   </div>
@@ -368,7 +368,7 @@
                         User name
                         <input
                           name="user_id"
-                          class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                           placeholder="12345"
                         />
                       </label>
@@ -380,7 +380,7 @@
                         Username #1
                         <input
                           name="username_1"
-                          class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                           placeholder="Genji#1111"
                         />
                       </label>
@@ -390,11 +390,11 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
-                            <span class="dd-label text-sm text-zinc-300">false</span>
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">false</span>
                             <svg
-                              class="h-4 w-4 text-zinc-400"
+                              class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -405,10 +405,10 @@
                           </button>
                           <div
                             data-dd-list
-                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                           >
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -421,7 +421,7 @@
                               <span>false</span>
                             </label>
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -442,7 +442,7 @@
                         Username #2
                         <input
                           name="username_2"
-                          class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                           placeholder="Genji#2222"
                         />
                       </label>
@@ -452,11 +452,11 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
-                            <span class="dd-label text-sm text-zinc-300">false</span>
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">false</span>
                             <svg
-                              class="h-4 w-4 text-zinc-400"
+                              class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -467,10 +467,10 @@
                           </button>
                           <div
                             data-dd-list
-                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                           >
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -483,7 +483,7 @@
                               <span>false</span>
                             </label>
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -504,7 +504,7 @@
                         Username #3
                         <input
                           name="username_3"
-                          class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                           placeholder="Genji#3333"
                         />
                       </label>
@@ -514,11 +514,11 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
-                            <span class="dd-label text-sm text-zinc-300">false</span>
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">false</span>
                             <svg
-                              class="h-4 w-4 text-zinc-400"
+                              class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -529,10 +529,10 @@
                           </button>
                           <div
                             data-dd-list
-                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                           >
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -545,7 +545,7 @@
                               <span>false</span>
                             </label>
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -561,7 +561,7 @@
                       </label>
                     </div>
 
-                    <p class="-mt-1 text-xs text-zinc-400">
+                    <p class="-mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                       Tip: Define exactly one “is primary” to
                       <span class="font-semibold text-emerald-300">true</span>
                       .
@@ -580,10 +580,10 @@
 
               {{-- Subpanel: UPDATE NAMES --}}
               <div data-subpanel="users-update" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Update user names</h3>
-                    <span class="text-xs text-zinc-400">PATCH /api/mods/users/{user_id}</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/users/{user_id}</span>
                   </div>
                   <form
                     data-action="update-names"
@@ -594,7 +594,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="12345"
                       />
                     </label>
@@ -603,7 +603,7 @@
                       Global name
                       <input
                         name="global_name"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="(opt.)"
                       />
                     </label>
@@ -611,11 +611,11 @@
                       Nickname
                       <input
                         name="nickname"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="(opt.)"
                       />
                     </label>
-                    <div class="text-xs text-zinc-400 sm:col-span-2">
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 sm:col-span-2">
                       At least one of the two fields is required.
                     </div>
                     <button
@@ -629,21 +629,21 @@
 
               {{-- Subpanel: CREATE FAKE --}}
               <div data-subpanel="users-create" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Create fake member</h3>
-                    <span class="text-xs text-zinc-400">POST /api/mods/users/fake?name=</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/users/fake?name=</span>
                   </div>
                   <form
                     data-action="create-fake"
                     autocomplete="off"
                     class="grid gap-3 sm:grid-cols-2"
                   >
-                    <label class="text-sm text-zinc-300 sm:col-span-2">
+                    <label class="text-sm text-zinc-600 dark:text-zinc-300 sm:col-span-2">
                       Name
                       <input
                         name="name"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="Fake Player"
                       />
                     </label>
@@ -661,72 +661,72 @@
             <div data-panel="lootbox" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-key"
                 >
                   Grant key
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-xp"
                 >
                   Grant XP
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-reward"
                 >
                   Grant reward
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-get-keys"
                 >
                   Get user keys
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-get-rewards"
                 >
                   Get user rewards
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-view-all"
                 >
                   View all rewards
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-set-active-key"
                 >
                   Set active key type
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-get-xp-multiplier"
                 >
                   Get XP Multiplier
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="lootbox-set-xp-multiplier"
                 >
                   Set XP Multiplier
                 </button>
               </div>
               <div
-                class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
+                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
                 Choose a Lootbox action.
               </div>
 
               {{-- Grant key --}}
               <div data-subpanel="lootbox-key" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Grant key to user</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       POST /api/mods/lootbox/users/{user_id}/keys/{key_type}
                     </span>
                   </div>
@@ -739,7 +739,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -748,11 +748,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Classic</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Classic</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -763,10 +763,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -779,7 +779,7 @@
                             <span>Classic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -806,10 +806,10 @@
 
               {{-- Grant XP --}}
               <div data-subpanel="lootbox-xp" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Grant XP to User</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       POST /api/mods/lootbox/users/{user_id}/xp
                     </span>
                   </div>
@@ -818,7 +818,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -826,7 +826,7 @@
                       <input
                         name="amount"
                         type="number"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="100"
                       />
                     </label>
@@ -843,10 +843,10 @@
 
               {{-- Grant reward (debug) --}}
               <div data-subpanel="lootbox-reward" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Grant reward (debug)</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       POST
                       /api/mods/lootbox/users/debug/{user_id}/{key_type}/{reward_type}/{reward_name}
                     </span>
@@ -860,7 +860,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -869,11 +869,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Classic</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Classic</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -884,10 +884,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -900,7 +900,7 @@
                             <span>Classic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -921,11 +921,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -936,7 +936,7 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         ></div>
                       </div>
                     </label>
@@ -944,7 +944,7 @@
                       Reward name
                       <input
                         name="reward_name"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="reward_name"
                       />
                     </label>
@@ -961,10 +961,10 @@
 
               {{-- Get User Keys --}}
               <div data-subpanel="lootbox-get-keys" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get User Keys</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       GET /api/lootbox/users/{user_id}/keys?key_type=Classic|Winter
                     </span>
                   </div>
@@ -977,7 +977,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -986,11 +986,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1001,10 +1001,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1017,7 +1017,7 @@
                             <span>Any</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1029,7 +1029,7 @@
                             <span>Classic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1056,10 +1056,10 @@
 
               {{-- Get User Rewards --}}
               <div data-subpanel="lootbox-get-rewards" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get User Rewards</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       GET /api/lootbox/users/{user_id}/rewards?reward_type=&key_type=&rarity=
                     </span>
                   </div>
@@ -1072,7 +1072,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -1083,11 +1083,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1099,7 +1099,7 @@
 
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         ></div>
                       </div>
                     </label>
@@ -1109,11 +1109,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1124,10 +1124,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1140,7 +1140,7 @@
                             <span>Any</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1152,7 +1152,7 @@
                             <span>Classic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1170,7 +1170,7 @@
                       Rarity (opt.)
                       <input
                         name="rarity"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="Common, Epic, ..."
                       />
                     </label>
@@ -1187,10 +1187,10 @@
 
               {{-- View All Rewards --}}
               <div data-subpanel="lootbox-view-all" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">View All Rewards</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       GET /api/lootbox/rewards?reward_type=&key_type=&rarity=
                     </span>
                   </div>
@@ -1208,11 +1208,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1223,7 +1223,7 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         ></div>
                       </div>
                     </label>
@@ -1235,11 +1235,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1250,10 +1250,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1266,7 +1266,7 @@
                             <span>Any</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1278,7 +1278,7 @@
                             <span>Classic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1300,11 +1300,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Any</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Any</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1315,10 +1315,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1331,7 +1331,7 @@
                             <span>Any</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1343,7 +1343,7 @@
                             <span>Common</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1355,7 +1355,7 @@
                             <span>Rare</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1367,7 +1367,7 @@
                             <span>Epic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1395,10 +1395,10 @@
 
               <!-- Set Active Key Type -->
               <div data-subpanel="lootbox-set-active-key" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set Active Key Type</h3>
-                    <span class="text-xs text-zinc-400">PATCH /api/lootbox/keys/key_type</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/lootbox/keys/key_type</span>
                   </div>
 
                   <form
@@ -1412,11 +1412,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Classic</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Classic</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1428,10 +1428,10 @@
 
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1444,7 +1444,7 @@
                             <span>Classic</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1472,16 +1472,16 @@
               
               <!-- Get XP Multiplier -->
               <div data-subpanel="lootbox-get-xp-multiplier" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get XP Multiplier</h3>
-                    <span class="text-xs text-zinc-400">GET /api/lootbox/xp/multiplier</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/lootbox/xp/multiplier</span>
                   </div>
 
                   <form data-action="get-xp-multiplier" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <div class="sm:col-span-2 text-sm text-zinc-300">
-                      Returns the current XP multiplier (e.g., <span class="text-zinc-100 font-semibold">1</span>,
-                      <span class="text-zinc-100 font-semibold">2</span> for double XP).
+                    <div class="sm:col-span-2 text-sm text-zinc-600 dark:text-zinc-300">
+                      Returns the current XP multiplier (e.g., <span class="text-zinc-900 dark:text-zinc-100 font-semibold">1</span>,
+                      <span class="text-zinc-900 dark:text-zinc-100 font-semibold">2</span> for double XP).
                     </div>
 
                     <div class="sm:col-span-2">
@@ -1497,10 +1497,10 @@
 
               <!-- Set XP Multiplier -->
               <div data-subpanel="lootbox-set-xp-multiplier" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set XP Multiplier</h3>
-                    <span class="text-xs text-zinc-400">POST /api/lootbox/xp/multiplier</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/lootbox/xp/multiplier</span>
                   </div>
 
                   <form data-action="set-xp-multiplier" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
@@ -1513,7 +1513,7 @@
                         max="10"
                         step="1"
                         placeholder="1"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
 
@@ -1525,8 +1525,8 @@
                       </button>
                     </div>
 
-                    <div class="sm:col-span-2 text-xs text-zinc-400">
-                      Tip: set <span class="text-zinc-200 font-semibold">1</span> to disable bonus XP.
+                    <div class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      Tip: set <span class="text-zinc-800 dark:text-zinc-200 font-semibold">1</span> to disable bonus XP.
                     </div>
                   </form>
                 </article>
@@ -1538,41 +1538,41 @@
             <div data-panel="guides" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-create"
                 >
                   Create
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-edit"
                 >
                   Edit
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-delete"
                 >
                   Delete
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="guides-get"
                 >
                   Get Guides
                 </button>
               </div>
               <div
-                class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
+                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
                 Choose a Guides action.
               </div>
 
               <div data-subpanel="guides-create" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Create Guide</h3>
-                    <span class="text-xs text-zinc-400">POST /api/v3/maps/{code}/guides</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/v3/maps/{code}/guides</span>
                   </div>
                   <form
                     data-action="create-guide"
@@ -1583,7 +1583,7 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="7SFBH"
                       />
                     </label>
@@ -1591,7 +1591,7 @@
                       URL
                       <input
                         name="url"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="https://..."
                       />
                     </label>
@@ -1601,7 +1601,7 @@
                         name="user_id"
                         type="text"
                         inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <div class="sm:col-span-3">
@@ -1616,10 +1616,10 @@
               </div>
 
               <div data-subpanel="guides-edit" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Edit Guide</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       PATCH /api/v3/maps/{code}/guides/{user_id}?url=
                     </span>
                   </div>
@@ -1632,14 +1632,14 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
                       New URL
                       <input
                         name="url"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -1648,7 +1648,7 @@
                         name="user_id"
                         type="text"
                         inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <div class="sm:col-span-3">
@@ -1663,10 +1663,10 @@
               </div>
 
               <div data-subpanel="guides-delete" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete Guide</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       DELETE /api/v3/maps/{code}/guides/{user_id}
                     </span>
                   </div>
@@ -1679,7 +1679,7 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <label>
@@ -1688,12 +1688,12 @@
                         name="user_id"
                         type="text"
                         inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl border border-white/10 px-4 py-2 font-semibold hover:bg-white/5"
+                        class="w-full cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Delete
                       </button>
@@ -1704,10 +1704,10 @@
 
               {{-- Get Guides --}}
               <div data-subpanel="guides-get" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get guides</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       GET /api/v3/maps/{code}/guides?include_records=
                     </span>
                   </div>
@@ -1720,7 +1720,7 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="7SFBH"
                       />
                     </label>
@@ -1730,11 +1730,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">false</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">false</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -1745,10 +1745,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1761,7 +1761,7 @@
                             <span>false</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -1791,90 +1791,89 @@
             <div data-panel="maps" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-archive"
                 >
                   Archive / Unarchive
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-update"
                 >
                   Update
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-submit"
                 >
                   Submit
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-search"
                 >
                   Search
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="maps-convert"
                 >
                   Convert legacy
                 </button>
-<button
-  class="mod-subtab cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
-  data-subtab="maps-edit-request"
->
-  Edit request
-</button>
+                <button
+                  class="mod-subtab cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                  data-subtab="maps-edit-request"
+                >
+                  Edit request
+                </button>
 
               </div>
               <div
-                class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
+                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
                 Choose a Maps action.
               </div>
 
-<div data-subpanel="maps-edit-request" class="hidden space-y-6">
-  <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
-    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <h3 class="font-semibold">Create map edit request</h3>
-      <span class="text-xs text-zinc-400">POST /api/maps/map-edits</span>
-    </div>
+              <div data-subpanel="maps-edit-request" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                  <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h3 class="font-semibold">Create map edit request</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/maps/map-edits</span>
+                  </div>
 
-    <form data-action="create-map-edit-request" autocomplete="off" class="grid gap-4">
-<div class="grid gap-4">
-  <label class="text-sm font-medium text-zinc-200">
-    Map code <span class="text-zinc-500">(required)</span>
-    <input
-      name="code"
-      type="text"
-      placeholder="e.g. 7M60H"
-      class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-      required
-    />
-  </label>
+                  <form data-action="create-map-edit-request" autocomplete="off" class="grid gap-4">
+              <div class="grid gap-4">
+                <label class="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  Map code <span class="text-zinc-500">(required)</span>
+                  <input
+                    name="code"
+                    type="text"
+                    placeholder="e.g. 7M60H"
+                    class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    required
+                  />
+                </label>
 
-  <div class="flex items-center justify-end gap-2">
-    <button
-      type="submit"
-      class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 transition-colors"
-    >
-      Open form
-    </button>
-  </div>
-</div>
-      </form>
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    type="submit"
+                    class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 transition-colors"
+                  >
+                    Open form
+                  </button>
+                </div>
+              </div>
+                    </form>
 
-    <div id="mapEditRequestInlineMount" class="hidden mt-6 border-t border-white/10 pt-6"></div>
-  </article>
-</div>
-
+                  <div id="mapEditRequestInlineMount" class="hidden mt-6 border-t border-zinc-200/80 dark:border-white/10 pt-6"></div>
+                </article>
+              </div>
 
               <div data-subpanel="maps-archive" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Archive or Unarchive maps</h3>
-                    <span class="text-xs text-zinc-400">PATCH /api/v3/maps/archive?code=</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/v3/maps/archive?code=</span>
                   </div>
                   <form data-action="archive-maps" autocomplete="off" class="grid gap-3">
                     <div class="grid gap-3 sm:grid-cols-3">
@@ -1884,11 +1883,11 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
-                            <span class="dd-label text-sm text-zinc-300">Archive</span>
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Archive</span>
                             <svg
-                              class="h-4 w-4 text-zinc-400"
+                              class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -1899,10 +1898,10 @@
                           </button>
                           <div
                             data-dd-list
-                            class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                           >
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -1915,7 +1914,7 @@
                               <span>Archive</span>
                             </label>
                             <label
-                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                              class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                             >
                               <input
                                 type="radio"
@@ -1941,11 +1940,11 @@
                           <button
                             type="button"
                             data-dd-btn
-                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                           >
-                            <span class="dd-label text-sm text-zinc-300">Single</span>
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Single</span>
                             <svg
-                              class="h-4 w-4 text-zinc-400"
+                              class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -1956,9 +1955,9 @@
                           </button>
                           <div
                             data-dd-list
-                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                            class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                           >
-                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5">
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
                               <input
                                 type="radio"
                                 name="mode_ui"
@@ -1970,7 +1969,7 @@
                               <span>Single</span>
                             </label>
 
-                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5">
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
                               <input
                                 type="radio"
                                 name="mode_ui"
@@ -1987,7 +1986,7 @@
                         Single code (opt.)
                         <input
                           name="code"
-                          class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                           placeholder="007EX"
                         />
                       </label>
@@ -2003,10 +2002,10 @@
               </div>
 
               <div data-subpanel="maps-update" class="hidden min-h-[75vh] space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Update Map</h3>
-                    <span class="text-xs text-zinc-400">PATCH /api/v3/maps/{code}</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/v3/maps/{code}</span>
                   </div>
 
                   <!-- Charger une carte à éditer -->
@@ -2019,7 +2018,7 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="01AZC"
                       />
                     </label>
@@ -2040,26 +2039,26 @@
                     class="mt-6 hidden space-y-6"
                   >
                     <!-- META -->
-                    <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+                    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Creators -->
                         <div class="sm:col-span-2">
-                          <span class="mb-1 block text-xs text-zinc-400">Creator</span>
+                          <span class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Creator</span>
                           <div id="u-metaCreatorsCol" class="flex flex-wrap items-center gap-2">
                             <!-- Primary -->
                             <span
-                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
                               <span
                                 id="u-metaCreatorMain"
-                                class="text-sm text-zinc-200"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
                                 data-raw-id=""
                               >
                                 N/A
                               </span>
                               <button
                                 type="button"
-                                class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                                class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                                 data-edit-target="u-metaCreatorMain"
                               >
                                 Edit
@@ -2068,18 +2067,18 @@
 
                             <!-- Secondary (même affichage que le primary) -->
                             <span
-                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
                               <span
                                 id="u-metaCreatorSecond"
-                                class="text-sm text-zinc-200"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
                                 data-raw-id=""
                               >
                                 N/A
                               </span>
                               <button
                                 type="button"
-                                class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                                class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                                 data-edit-target="u-metaCreatorSecond"
                               >
                                 Edit
@@ -2089,13 +2088,13 @@
                         </div>
 
                         <!-- Map Code -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Code (route cible)</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Code</div>
                           <div class="flex items-center gap-2">
-                            <div id="u-metaCode" class="text-sm text-zinc-200">N/A</div>
+                            <div id="u-metaCode" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="u-metaCode"
                             >
                               Edit
@@ -2104,13 +2103,13 @@
                         </div>
 
                         <!-- Map Name -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Map name</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Map name</div>
                           <div class="flex items-center gap-2">
-                            <div id="u-metaMap" class="text-sm text-zinc-200">N/A</div>
+                            <div id="u-metaMap" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="u-metaMap"
                             >
                               Edit
@@ -2119,13 +2118,13 @@
                         </div>
 
                         <!-- Checkpoints -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Checkpoints</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Checkpoints</div>
                           <div class="flex items-center gap-2">
-                            <div id="u-metaCheckpoints" class="text-sm text-zinc-200">N/A</div>
+                            <div id="u-metaCheckpoints" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="u-metaCheckpoints"
                             >
                               Edit
@@ -2136,22 +2135,22 @@
                     </div>
 
                     <!-- REQUIRED -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Required</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Required</h3>
 
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Difficulty -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select difficulty</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select difficulty</label>
                           <div id="u-difficultyDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select difficulty</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select difficulty</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2162,23 +2161,23 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Category -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select category</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select category</label>
                           <div id="u-categoryDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select category</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select category</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2189,23 +2188,23 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Mechanics -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select mechanics</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select mechanics</label>
                           <div id="u-mechanicsDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select mechanics</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select mechanics</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2216,27 +2215,27 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Restrictions -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                             Select restrictions
                           </label>
                           <div id="u-restrictionsDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">
                                 Select restrictions
                               </span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2247,7 +2246,7 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
@@ -2255,45 +2254,45 @@
                     </div>
 
                     <!-- FLAGS & REVIEW -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Flags</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Flags</h3>
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Hidden -->
                         <label
-                          class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                          class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2"
                         >
                           <input id="u-flagHidden" type="checkbox" class="accent-emerald-500" />
-                          <span class="text-sm text-zinc-200">Hidden</span>
+                          <span class="text-sm text-zinc-800 dark:text-zinc-200">Hidden</span>
                         </label>
 
                         <!-- Archived -->
                         <label
-                          class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                          class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2"
                         >
                           <input id="u-flagArchived" type="checkbox" class="accent-emerald-500" />
-                          <span class="text-sm text-zinc-200">Archived</span>
+                          <span class="text-sm text-zinc-800 dark:text-zinc-200">Archived</span>
                         </label>
 
                         <!-- Official -->
                         <label
-                          class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                          class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2"
                         >
                           <input id="u-flagOfficial" type="checkbox" class="accent-emerald-500" />
-                          <span class="text-sm text-zinc-200">Official</span>
+                          <span class="text-sm text-zinc-800 dark:text-zinc-200">Official</span>
                         </label>
 
                         <!-- Playtesting -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Playtesting</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Playtesting</label>
                           <div id="u-playtestingDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select playtesting</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select playtesting</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2304,46 +2303,78 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
+
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select tags</label>
+                          <div id="u-tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
 
                     <!-- OPTIONAL -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Optional</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Optional</h3>
 
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Title -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <label class="mb-1 block text-[11px] text-zinc-400" for="u-optTitleInput">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <label class="mb-1 block text-[11px] text-zinc-500 dark:text-zinc-400" for="u-optTitleInput">
                             Title
                           </label>
                           <input
                             id="u-optTitleInput"
                             type="text"
                             maxlength="128"
-                            class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                             placeholder="Optional short title (max 128 chars)"
                           />
                         </div>
 
                         <!-- Custom banner -->
                         <div>
-                          <div class="mb-1 text-[11px] text-zinc-400">Custom banner</div>
+                          <div class="mb-1 text-[11px] text-zinc-500 dark:text-zinc-400">Custom banner</div>
                           <div
                             id="u-bannerDrop"
-                            class="group relative flex h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60"
+                            class="group relative flex h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/60 dark:bg-zinc-900/60"
                           >
                             <input id="u-bannerInput" type="file" accept="image/*" class="hidden" />
                             <div
                               id="u-bannerPlaceholder"
-                              class="px-3 text-center text-sm text-zinc-300 select-none"
+                              class="px-3 text-center text-sm text-zinc-600 dark:text-zinc-300 select-none"
                             >
                               Drag & drop or click to upload
-                              <div class="mt-1 text-[11px] text-zinc-400">
+                              <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                                 Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.
                               </div>
                             </div>
@@ -2351,15 +2382,15 @@
                         </div>
 
                         <!-- Description -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                           <div class="flex items-center justify-between">
                             <div>
-                              <div class="text-[11px] text-zinc-400">Description</div>
-                              <div id="u-optDescription" class="text-sm text-zinc-200">N/A</div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Description</div>
+                              <div id="u-optDescription" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             </div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="u-optDescription"
                             >
                               Edit
@@ -2368,34 +2399,34 @@
                         </div>
 
                         <!-- Guide URLs -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                           <div class="flex items-center justify-between">
                             <div>
-                              <div class="text-[11px] text-zinc-400">Guide (URL)</div>
-                              <div id="u-optGuide" class="text-sm text-zinc-200">N/A</div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Guide (URL)</div>
+                              <div id="u-optGuide" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             </div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="u-optGuide"
                             >
                               Edit
                             </button>
                           </div>
-                          <p class="mt-2 text-xs text-zinc-400">
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                             One URL per line; first valid URL is used.
                           </p>
                         </div>
 
                         <!-- Medals -->
                         <div
-                          class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 sm:col-span-2"
+                          class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 sm:col-span-2"
                         >
-                          <div class="mb-2 text-[11px] text-zinc-400">Medals</div>
+                          <div class="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Medals</div>
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥇 Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
                               </span>
                               <input
                                 id="u-medalGoldInput"
@@ -2403,13 +2434,13 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 5550.23"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                               />
                             </label>
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥈 Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
                               </span>
                               <input
                                 id="u-medalSilverInput"
@@ -2417,13 +2448,13 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 7599.33"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                               />
                             </label>
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥉 Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
                               </span>
                               <input
                                 id="u-medalBronzeInput"
@@ -2431,11 +2462,11 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 8066.75"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                               />
                             </label>
                           </div>
-                          <p class="mt-2 text-xs text-zinc-400">
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                             Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
@@ -2453,7 +2484,7 @@
                       </button>
                       <button
                         type="button"
-                        class="cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
+                        class="cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                         onclick="document.getElementById('u-updateMapForm')?.classList.add('hidden')"
                       >
                         Cancel
@@ -2464,10 +2495,10 @@
               </div>
 
               <div data-subpanel="maps-submit" class="hidden min-h-[75vh] space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Submit Map</h3>
-                    <span class="text-xs text-zinc-400">POST /api/maps</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/maps</span>
                   </div>
 
                   <form
@@ -2477,26 +2508,26 @@
                     class="space-y-6"
                   >
                     <!-- META -->
-                    <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+                    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Creators -->
                         <div class="sm:col-span-2">
-                          <span class="mb-1 block text-xs text-zinc-400">Creator</span>
+                          <span class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Creator</span>
                           <div id="metaCreatorsCol" class="flex flex-wrap items-center gap-2">
                             <!-- Primary -->
                             <span
-                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
                               <span
                                 id="metaCreatorMain"
-                                class="text-sm text-zinc-200"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
                                 data-raw-id=""
                               >
                                 N/A
                               </span>
                               <button
                                 type="button"
-                                class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                                class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                                 data-edit-target="metaCreatorMain"
                               >
                                 Edit
@@ -2505,18 +2536,18 @@
 
                             <!-- Secondary (même système que primary) -->
                             <span
-                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
                               <span
                                 id="metaCreatorSecond"
-                                class="text-sm text-zinc-200"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
                                 data-raw-id=""
                               >
                                 N/A
                               </span>
                               <button
                                 type="button"
-                                class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                                class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                                 data-edit-target="metaCreatorSecond"
                               >
                                 Edit
@@ -2526,13 +2557,13 @@
                         </div>
 
                         <!-- Map Code -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Code</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Code</div>
                           <div class="flex items-center gap-2">
-                            <div id="metaCode" class="text-sm text-zinc-200" data-ac="off">N/A</div>
+                            <div id="metaCode" class="text-sm text-zinc-800 dark:text-zinc-200" data-ac="off">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="metaCode"
                             >
                               Edit
@@ -2541,13 +2572,13 @@
                         </div>
 
                         <!-- Map Name -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Map name</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Map name</div>
                           <div class="flex items-center gap-2">
-                            <div id="metaMap" class="text-sm text-zinc-200">N/A</div>
+                            <div id="metaMap" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="metaMap"
                             >
                               Edit
@@ -2556,13 +2587,13 @@
                         </div>
 
                         <!-- Checkpoints -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Checkpoints</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Checkpoints</div>
                           <div class="flex items-center gap-2">
-                            <div id="metaCheckpoints" class="text-sm text-zinc-200">N/A</div>
+                            <div id="metaCheckpoints" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="metaCheckpoints"
                             >
                               Edit
@@ -2573,22 +2604,22 @@
                     </div>
 
                     <!-- REQUIRED -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Required</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Required</h3>
 
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Difficulty (radio) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select difficulty</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select difficulty</label>
                           <div id="difficultyDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select difficulty</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select difficulty</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2599,23 +2630,23 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Category (radio) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select category</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select category</label>
                           <div id="categoryDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select category</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select category</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2626,23 +2657,23 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Mechanics (checkboxes) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select mechanics</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select mechanics</label>
                           <div id="mechanicsDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select mechanics</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select mechanics</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2653,27 +2684,27 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Restrictions (checkboxes) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                             Select restrictions
                           </label>
                           <div id="restrictionsDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">
                                 Select restrictions
                               </span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -2684,7 +2715,44 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- FLAGS -->
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Flags</h3>
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select tags</label>
+                          <div id="tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
@@ -2692,38 +2760,38 @@
                     </div>
 
                     <!-- OPTIONAL -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Optional</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Optional</h3>
 
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Title -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <label class="mb-1 block text-[11px] text-zinc-400" for="optTitleInput">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <label class="mb-1 block text-[11px] text-zinc-500 dark:text-zinc-400" for="optTitleInput">
                             Title
                           </label>
                           <input
                             id="optTitleInput"
                             type="text"
                             maxlength="128"
-                            class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                             placeholder="Optional short title (max 128 chars)"
                           />
                         </div>
 
                         <!-- Custom banner -->
                         <div>
-                          <div class="mb-1 text-[11px] text-zinc-400">Custom banner</div>
+                          <div class="mb-1 text-[11px] text-zinc-500 dark:text-zinc-400">Custom banner</div>
                           <div
                             id="bannerDrop"
-                            class="group relative flex h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60"
+                            class="group relative flex h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/60 dark:bg-zinc-900/60"
                           >
                             <input id="bannerInput" type="file" accept="image/*" class="hidden" />
                             <div
                               id="bannerPlaceholder"
-                              class="px-3 text-center text-sm text-zinc-300 select-none"
+                              class="px-3 text-center text-sm text-zinc-600 dark:text-zinc-300 select-none"
                             >
                               Drag & drop or click to upload
-                              <div class="mt-1 text-[11px] text-zinc-400">
+                              <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                                 Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.
                               </div>
                             </div>
@@ -2731,15 +2799,15 @@
                         </div>
 
                         <!-- Description -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                           <div class="flex items-center justify-between">
                             <div>
-                              <div class="text-[11px] text-zinc-400">Description</div>
-                              <div id="optDescription" class="text-sm text-zinc-200">N/A</div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Description</div>
+                              <div id="optDescription" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             </div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="optDescription"
                             >
                               Edit
@@ -2748,34 +2816,34 @@
                         </div>
 
                         <!-- Guide URLs -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                           <div class="flex items-center justify-between">
                             <div>
-                              <div class="text-[11px] text-zinc-400">Guide (URL)</div>
-                              <div id="optGuide" class="text-sm text-zinc-200">N/A</div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Guide (URL)</div>
+                              <div id="optGuide" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             </div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm hover:bg-white/10"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
                               data-edit-target="optGuide"
                             >
                               Edit
                             </button>
                           </div>
-                          <p class="mt-2 text-xs text-zinc-400">
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                             One URL per line; first valid URL is used.
                           </p>
                         </div>
 
                         <!-- Medals -->
                         <div
-                          class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 sm:col-span-2"
+                          class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 sm:col-span-2"
                         >
-                          <div class="mb-2 text-[11px] text-zinc-400">Medals</div>
+                          <div class="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Medals</div>
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥇 Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
                               </span>
                               <input
                                 id="medalGoldInput"
@@ -2783,13 +2851,13 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 5550.23"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                               />
                             </label>
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥈 Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
                               </span>
                               <input
                                 id="medalSilverInput"
@@ -2797,13 +2865,13 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 7599.33"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                               />
                             </label>
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥉 Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
                               </span>
                               <input
                                 id="medalBronzeInput"
@@ -2811,11 +2879,11 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 8066.75"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                               />
                             </label>
                           </div>
-                          <p class="mt-2 text-xs text-zinc-400">
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                             Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
@@ -2833,7 +2901,7 @@
                       </button>
                       <button
                         type="button"
-                        class="cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
+                        class="cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Cancel
                       </button>
@@ -2843,10 +2911,10 @@
               </div>
 
               <div data-subpanel="maps-convert" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Convert To Legacy Map</h3>
-                    <span class="text-xs text-zinc-400">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
                       POST /api/v3/maps/{code}/legacy?reason=...
                     </span>
                   </div>
@@ -2860,7 +2928,7 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="e.g. 123456"
                       />
                     </label>
@@ -2871,10 +2939,10 @@
                         name="reason"
                         rows="2"
                         maxlength="200"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none resize-y"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none resize-y"
                         placeholder="Why converting this map to legacy?"
                       ></textarea>
-                      <div class="mt-1 flex items-center justify-between text-xs text-zinc-400">
+                      <div class="mt-1 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
                         <span>Sent as query (?reason=...)</span>
                         <span data-reason-count>0/200</span>
                       </div>
@@ -2883,7 +2951,7 @@
                     <div class="sm:col-span-3">
                       <button
                         type="submit"
-                        class="w-full cursor-pointer rounded-xl border border-white/10 px-4 py-2 font-semibold hover:bg-white/5"
+                        class="w-full cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Convert
                       </button>
@@ -2893,10 +2961,10 @@
               </div>
 
               <div data-subpanel="maps-search" class="hidden min-h-[75vh] space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Search Map</h3>
-                    <span class="text-xs text-zinc-400">GET /api/maps?code=</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/maps?code=</span>
                   </div>
 
                   <form
@@ -2908,7 +2976,7 @@
                       Map code
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="7SFBH"
                       />
                     </label>
@@ -2928,26 +2996,26 @@
                     data-readonly="1"
                   >
                     <!-- META -->
-                    <div class="rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
+                    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Creators -->
                         <div class="sm:col-span-2">
-                          <span class="mb-1 block text-xs text-zinc-400">Creator</span>
+                          <span class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Creator</span>
                           <div id="s-metaCreatorsCol" class="flex flex-wrap items-center gap-2">
                             <!-- Primary -->
                             <span
-                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
                               <span
                                 id="s-metaCreatorMain"
-                                class="text-sm text-zinc-200"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
                                 data-raw-id=""
                               >
                                 N/A
                               </span>
                               <button
                                 type="button"
-                                class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-white/10"
+                                class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-zinc-100 dark:hover:bg-white/10"
                                 disabled
                                 data-edit-target="s-metaCreatorMain"
                               >
@@ -2957,18 +3025,18 @@
 
                             <!-- Secondary -->
                             <span
-                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
                               <span
                                 id="s-metaCreatorSecond"
-                                class="text-sm text-zinc-200"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
                                 data-raw-id=""
                               >
                                 N/A
                               </span>
                               <button
                                 type="button"
-                                class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-white/10"
+                                class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-zinc-100 dark:hover:bg-white/10"
                                 disabled
                                 data-edit-target="s-metaCreatorSecond"
                               >
@@ -2979,13 +3047,13 @@
                         </div>
 
                         <!-- Map Code -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Code</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Code</div>
                           <div class="flex items-center gap-2">
-                            <div id="s-metaCode" class="text-sm text-zinc-200">N/A</div>
+                            <div id="s-metaCode" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-white/10"
+                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-zinc-100 dark:hover:bg-white/10"
                               disabled
                               data-edit-target="s-metaCode"
                             >
@@ -2995,21 +3063,21 @@
                         </div>
 
                         <!-- Map Name -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Map name</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Map name</div>
                           <div class="flex items-center gap-2">
-                            <div id="s-metaMap" class="text-sm text-zinc-200">N/A</div>
+                            <div id="s-metaMap" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                           </div>
                         </div>
 
                         <!-- Checkpoints -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <div class="text-[11px] text-zinc-400">Checkpoints</div>
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Checkpoints</div>
                           <div class="flex items-center gap-2">
-                            <div id="s-metaCheckpoints" class="text-sm text-zinc-200">N/A</div>
+                            <div id="s-metaCheckpoints" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-white/10"
+                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-zinc-100 dark:hover:bg-white/10"
                               disabled
                               data-edit-target="s-metaCheckpoints"
                             >
@@ -3021,21 +3089,21 @@
                     </div>
 
                     <!-- REQUIRED -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Required</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Required</h3>
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Difficulty (radio) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select difficulty</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select difficulty</label>
                           <div id="s-difficultyDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select difficulty</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select difficulty</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -3046,23 +3114,23 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Category (radio) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select category</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select category</label>
                           <div id="s-categoryDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select category</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select category</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -3073,23 +3141,23 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Mechanics (checkboxes) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">Select mechanics</label>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select mechanics</label>
                           <div id="s-mechanicsDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">Select mechanics</span>
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select mechanics</span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -3100,27 +3168,27 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
 
                         <!-- Restrictions (checkboxes) -->
                         <div>
-                          <label class="mb-1 block text-xs text-zinc-400">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                             Select restrictions
                           </label>
                           <div id="s-restrictionsDropdown" class="relative">
                             <button
                               type="button"
                               data-dd-btn
-                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left"
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
                             >
-                              <span class="dd-label text-sm text-zinc-300">
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">
                                 Select restrictions
                               </span>
                               <svg
-                                class="h-4 w-4 text-zinc-400"
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -3131,7 +3199,44 @@
                             </button>
                             <div
                               data-dd-list
-                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- FLAGS -->
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Flags</h3>
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select tags</label>
+                          <div id="s-tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                             ></div>
                           </div>
                         </div>
@@ -3139,20 +3244,20 @@
                     </div>
 
                     <!-- OPTIONAL -->
-                    <div class="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-                      <h3 class="text-sm font-semibold text-zinc-200">Optional</h3>
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Optional</h3>
 
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- Title -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                          <label class="mb-1 block text-[11px] text-zinc-400" for="s-optTitleInput">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <label class="mb-1 block text-[11px] text-zinc-500 dark:text-zinc-400" for="s-optTitleInput">
                             Title
                           </label>
                           <input
                             id="s-optTitleInput"
                             type="text"
                             maxlength="128"
-                            class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                             placeholder="Optional short title (max 128 chars)"
                             disabled
                           />
@@ -3160,10 +3265,10 @@
 
                         <!-- Custom banner -->
                         <div>
-                          <div class="mb-1 text-[11px] text-zinc-400">Custom banner</div>
+                          <div class="mb-1 text-[11px] text-zinc-500 dark:text-zinc-400">Custom banner</div>
                           <div
                             id="s-bannerDrop"
-                            class="group relative flex h-36 items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-zinc-900/60"
+                            class="group relative flex h-36 items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/60 dark:bg-zinc-900/60"
                           >
                             <input
                               id="s-bannerInput"
@@ -3174,10 +3279,10 @@
                             />
                             <div
                               id="s-bannerPlaceholder"
-                              class="px-3 text-center text-sm text-zinc-300 select-none"
+                              class="px-3 text-center text-sm text-zinc-600 dark:text-zinc-300 select-none"
                             >
                               Drag & drop or click to upload
-                              <div class="mt-1 text-[11px] text-zinc-400">
+                              <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                                 Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.
                               </div>
                             </div>
@@ -3185,15 +3290,15 @@
                         </div>
 
                         <!-- Description -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                           <div class="flex items-center justify-between">
                             <div>
-                              <div class="text-[11px] text-zinc-400">Description</div>
-                              <div id="s-optDescription" class="text-sm text-zinc-200">N/A</div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Description</div>
+                              <div id="s-optDescription" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             </div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-white/10"
+                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-zinc-100 dark:hover:bg-white/10"
                               disabled
                               data-edit-target="s-optDescription"
                             >
@@ -3203,35 +3308,35 @@
                         </div>
 
                         <!-- Guide URLs -->
-                        <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                           <div class="flex items-center justify-between">
                             <div>
-                              <div class="text-[11px] text-zinc-400">Guide (URL)</div>
-                              <div id="s-optGuide" class="text-sm text-zinc-200">N/A</div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Guide (URL)</div>
+                              <div id="s-optGuide" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                             </div>
                             <button
                               type="button"
-                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-white/10"
+                              class="block-edit-btn cursor-not-allowed cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm opacity-50 hover:bg-zinc-100 dark:hover:bg-white/10"
                               disabled
                               data-edit-target="s-optGuide"
                             >
                               Edit
                             </button>
                           </div>
-                          <p class="mt-2 text-xs text-zinc-400">
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                             One URL per line; first valid URL is used.
                           </p>
                         </div>
 
                         <!-- Medals -->
                         <div
-                          class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 sm:col-span-2"
+                          class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 sm:col-span-2"
                         >
-                          <div class="mb-2 text-[11px] text-zinc-400">Medals</div>
+                          <div class="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Medals</div>
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥇 Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
                               </span>
                               <input
                                 id="s-medalGoldInput"
@@ -3239,14 +3344,14 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 5550.23"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                                 disabled
                               />
                             </label>
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥈 Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
                               </span>
                               <input
                                 id="s-medalSilverInput"
@@ -3254,14 +3359,14 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 7599.33"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                                 disabled
                               />
                             </label>
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-200">🥉 Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
                               </span>
                               <input
                                 id="s-medalBronzeInput"
@@ -3269,12 +3374,12 @@
                                 inputmode="decimal"
                                 pattern="\\d{1,5}(?:\\.\\d{1,2})?"
                                 placeholder="e.g. 8066.75"
-                                class="w-40 shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                                 disabled
                               />
                             </label>
                           </div>
-                          <p class="mt-2 text-xs text-zinc-400">
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                             Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
@@ -3290,35 +3395,35 @@
             <div data-panel="moderation" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-quality"
                 >
                   Override quality
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-suspicious"
                 >
                   Set suspicious flag
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-getsusp"
                 >
                   Get suspicious flags
                 </button>
               </div>
               <div
-                class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
+                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
                 Choose a Moderation action.
               </div>
 
               <div data-subpanel="mod-quality" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Override Quality Votes</h3>
-                    <span class="text-xs text-zinc-400">POST /api/mods/maps/{code}/quality</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/maps/{code}/quality</span>
                   </div>
 
                   <form
@@ -3327,25 +3432,25 @@
                     class="grid gap-3 sm:grid-cols-3 sm:items-end"
                   >
                     <label class="block">
-                      <span class="block text-xs text-zinc-400">Map code</span>
+                      <span class="block text-xs text-zinc-500 dark:text-zinc-400">Map code</span>
                       <input
                         name="code"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="01AZC"
                       />
                     </label>
 
                     <label class="block">
-                      <span class="block text-xs text-zinc-400">Quality (1–6)</span>
+                      <span class="block text-xs text-zinc-500 dark:text-zinc-400">Quality (1–6)</span>
                       <div id="q-qualityDropdown" class="relative mt-1">
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Select quality (1–6)</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select quality (1–6)</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -3356,7 +3461,7 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         ></div>
                       </div>
                     </label>
@@ -3374,10 +3479,10 @@
 
               <!-- Set Suspicious Flag -->
               <div data-subpanel="mod-suspicious" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set Suspicious Flag</h3>
-                    <span class="text-xs text-zinc-400">POST /api/mods/completions/suspicious</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/completions/suspicious</span>
                   </div>
                   <form
                     data-action="set-suspicious"
@@ -3388,7 +3493,7 @@
                       Context
                       <input
                         name="context"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="tool-assisted, impossible, …"
                       />
                     </label>
@@ -3399,11 +3504,11 @@
                         <button
                           type="button"
                           data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-300">Cheating</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Cheating</span>
                           <svg
-                            class="h-4 w-4 text-zinc-400"
+                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
@@ -3414,10 +3519,10 @@
                         </button>
                         <div
                           data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 shadow-xl"
+                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
                         >
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -3430,7 +3535,7 @@
                             <span>Cheating</span>
                           </label>
                           <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/5"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                           >
                             <input
                               type="radio"
@@ -3449,7 +3554,7 @@
                       Flagged user (uid)
                       <input
                         name="flagged_by"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
 
@@ -3458,7 +3563,7 @@
                       <input
                         name="message_id"
                         type="number"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
 
@@ -3467,13 +3572,13 @@
                       <input
                         name="verification_id"
                         type="number"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
 
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl border border-white/10 px-4 py-2 font-semibold hover:bg-white/5"
+                        class="w-full cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Flag
                       </button>
@@ -3484,10 +3589,10 @@
 
               <!-- Get Suspicious Flags -->
               <div data-subpanel="mod-getsusp" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get Suspicious Flags</h3>
-                    <span class="text-xs text-zinc-400">GET /api/mods/completions/suspicious</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/mods/completions/suspicious</span>
                   </div>
                   <form
                     data-action="get-suspicious"
@@ -3498,7 +3603,7 @@
                       User name
                       <input
                         name="user_id"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
                     <div class="sm:col-span-3">
@@ -3517,19 +3622,19 @@
             <div data-panel="verifications" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="verif-pending"
                 >
                   Verify completions
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="verif-playtest"
                 >
                   Verify playtests
                 </button>
 <button
-  class="mod-subtab cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+  class="mod-subtab cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
   data-subtab="verif-edits"
 >
   Verify edits
@@ -3537,16 +3642,16 @@
 
               </div>
               <div
-                class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300"
+                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
                 Choose a Verifications action.
               </div>
 
               <div data-subpanel="verif-pending" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Get Pending Verifications</h3>
-                    <span class="text-xs text-zinc-400">GET /api/v3/verifications/pending</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/v3/verifications/pending</span>
                   </div>
                   <form data-action="get-pending-verifs" autocomplete="off" class="grid gap-3">
                     <button
@@ -3558,26 +3663,26 @@
                 </article>
               </div>
 <div data-subpanel="verif-edits" class="hidden space-y-6">
-  <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+  <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
     <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <h3 class="font-semibold">Verify map edit requests</h3>
-      <span class="text-xs text-zinc-400">GET /api/v3/maps/map-edits/pending</span>
+      <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/v3/maps/map-edits/pending</span>
     </div>
 
     <form data-action="get-pending-edit-requests" autocomplete="off" class="grid gap-4">
       <div class="grid gap-3 sm:grid-cols-2">
-        <label class="block text-sm text-zinc-300">
+        <label class="block text-sm text-zinc-600 dark:text-zinc-300">
           Resolved by (user_id)
           <input
             id="editResolvedByInput"
             type="text"
             name="resolved_by_user_id"
             placeholder="Auto"
-            class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
           />
         </label>
 
-        <div class="rounded-xl border border-white/10 bg-zinc-950/40 p-3 text-xs text-zinc-400">
+        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-3 text-xs text-zinc-500 dark:text-zinc-400">
           Accept / Reject will call <span class="font-mono">PUT /resolve</span> with your user_id.
         </div>
       </div>
@@ -3598,34 +3703,34 @@
             <div data-panel="devs" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-cache-frameworks"
                   data-clear-cache="framework"
                 >
                   Delete frameworks cache
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-cache-avatars"
                   data-clear-cache="avatars"
                 >
                   Delete avatars cache
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-cache-translations"
                   data-clear-cache="translations"
                 >
                   Delete translations cache
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-overpy-commit"
                 >
                   Set overpy commit
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="dev-framework-version"
                 >
                   Set framework version
@@ -3633,24 +3738,24 @@
 
               </div>
 
-              <div class="empty-state rounded-2xl border border-white/10 bg-white/5 p-6 text-zinc-300">
+              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
                 Choose a Dev action.
               </div>
 
               {{-- Subpanel: Delete frameworks cache --}}
               <div data-subpanel="dev-cache-frameworks" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete frameworks cache</h3>
-                    <span class="text-xs text-zinc-400">POST /api/mods/cache/frameworks/clear</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/frameworks/clear</span>
                   </div>
                   <form data-action="clear-frameworks-cache" autocomplete="off" class="space-y-3">
-                    <p class="text-sm text-zinc-300">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       This will clear convertor/framework caches.
                     </p>
-                    <label class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
-                      <span class="text-sm text-zinc-200">I understand this may cause a short downtime.</span>
+                      <span class="text-sm text-zinc-800 dark:text-zinc-200">I understand this may cause a short downtime.</span>
                     </label>
                     <button
                       class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
@@ -3663,18 +3768,18 @@
 
               {{-- Subpanel: Delete avatars cache --}}
               <div data-subpanel="dev-cache-avatars" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete avatars cache</h3>
-                    <span class="text-xs text-zinc-400">POST /api/mods/cache/avatars/clear</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/avatars/clear</span>
                   </div>
                   <form data-action="clear-avatars-cache" autocomplete="off" class="space-y-3">
-                    <p class="text-sm text-zinc-300">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Purge cached avatar images / URLs (e.g. CDN or local cached copies).
                     </p>
-                    <label class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
-                      <span class="text-sm text-zinc-200">Confirm deletion of avatars cache.</span>
+                      <span class="text-sm text-zinc-800 dark:text-zinc-200">Confirm deletion of avatars cache.</span>
                     </label>
                     <button
                       class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
@@ -3687,18 +3792,18 @@
 
               {{-- Subpanel: Delete translations cache --}}
               <div data-subpanel="dev-cache-translations" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete translations cache</h3>
-                    <span class="text-xs text-zinc-400">POST /api/mods/cache/translations/clear</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/translations/clear</span>
                   </div>
                   <form data-action="clear-translations-cache" autocomplete="off" class="space-y-3">
-                    <p class="text-sm text-zinc-300">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Clear cached translation files/arrays. Useful after updating language files.
                     </p>
-                    <label class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
-                      <span class="text-sm text-zinc-200">Yes, clear the translations cache.</span>
+                      <span class="text-sm text-zinc-800 dark:text-zinc-200">Yes, clear the translations cache.</span>
                     </label>
                     <button
                       class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
@@ -3711,38 +3816,38 @@
 
               {{-- Subpanel: Set overpy commit --}}
               <div data-subpanel="dev-overpy-commit" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set overpy commit</h3>
-                    <span class="text-xs text-zinc-400">PATCH /api/mods/overpy-commit</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/overpy-commit</span>
                   </div>
 
                   <!-- Current value -->
-                  <div class="rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm">
-                    <div class="text-[11px] text-zinc-400">Current commit</div>
-                    <div id="overpyCommitCurrent" class="mt-0.5 font-mono text-zinc-100">—</div>
+                  <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm">
+                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Current commit</div>
+                    <div id="overpyCommitCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">—</div>
                   </div>
 
                   <form data-action="set-overpy-commit" autocomplete="off" class="space-y-3">
-                    <p class="text-sm text-zinc-300">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Change the <code class="font-mono">OVERPY_COMMIT</code> constant used by <code>convertor.js</code>.
                     </p>
 
-                    <label class="block text-sm text-zinc-300">
+                    <label class="block text-sm text-zinc-600 dark:text-zinc-300">
                       New commit SHA (7–40 hex)
                       <input
                         type="text"
                         name="commit"
                         placeholder="e.g. dd8fc2d25459243053f8214478e13d85fda759af"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         required
                         pattern="^[a-fA-F0-9]{7,40}$"
                       />
                     </label>
 
-                    <label class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" id="confirm" class="accent-emerald-500" />
-                      <span class="text-sm text-zinc-200">
+                      <span class="text-sm text-zinc-800 dark:text-zinc-200">
                         I understand this will update <code>OVERPY_COMMIT</code> in <code>convertor.js</code>.
                       </span>
                     </label>
@@ -3758,45 +3863,45 @@
 
               {{-- Subpanel: Set framework version --}}
               <div data-subpanel="dev-framework-version" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-white/10 bg-white/5 p-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set framework version</h3>
-                    <span class="text-xs text-zinc-400">PATCH /api/mods/framework-version</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/framework-version</span>
                   </div>
 
                   <!-- Current value -->
-                  <div class="rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm">
-                    <div class="text-[11px] text-zinc-400">Current version</div>
-                    <div id="frameworkVersionCurrent" class="mt-0.5 font-mono text-zinc-100">—</div>
+                  <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm">
+                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Current version</div>
+                    <div id="frameworkVersionCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">—</div>
                   </div>
 
                   <form id="formSetFrameworkVersion" data-action="set-framework-version" autocomplete="off" novalidate class="space-y-3">
-                    <p class="text-sm text-zinc-300">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Change the <code class="font-mono">genji-framework</code> CDN version used by
                       <code>convertor.js</code>:<br>
                       <code class="font-mono">https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@VERSION/</code>
                     </p>
 
-                    <label class="block text-sm text-zinc-300">
+                    <label class="block text-sm text-zinc-600 dark:text-zinc-300">
                       New version (e.g. <code class="font-mono">1.10.4A</code>)
                       <input
                         type="text"
                         name="version"
                         placeholder="1.10.4A"
-                        class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         required
                         autocapitalize="characters"
                         spellcheck="false"
                         aria-describedby="fwVersionHelp"
                       />
                     </label>
-                    <p id="fwVersionHelp" class="text-xs text-zinc-400">
+                    <p id="fwVersionHelp" class="text-xs text-zinc-500 dark:text-zinc-400">
                       Use <strong>X.Y.Z</strong> with an optional <strong>UPPERCASE</strong> suffix (e.g. <code>1.10.4</code>, <code>1.10.4A</code>, <code>1.10.4RC1</code>).
                     </p>
 
-                    <label class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
-                      <span class="text-sm text-zinc-200">
+                      <span class="text-sm text-zinc-800 dark:text-zinc-200">
                         I understand this will update the framework CDN URL in <code>convertor.js</code>.
                       </span>
                     </label>
@@ -3819,27 +3924,27 @@
           <!-- Right: Activity -->
           <aside class="lg:col-span-3 min-w-0">
             <div class="sticky top-24 space-y-3">
-              <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4 backdrop-blur">
+              <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 backdrop-blur">
                 <div class="flex items-center justify-between">
                   <div>
                     <div class="text-xs font-semibold">Activity</div>
-                    <div class="mt-0.5 text-[11px] text-zinc-400">Requests & responses (click to view full)</div>
+                    <div class="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">Requests & responses (click to view full)</div>
                   </div>
                   <button
                     id="clearLog"
                     type="button"
-                    class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 transition hover:bg-white/10"
+                    class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     Clear
                   </button>
                 </div>
                 <div id="activityLog" class="mt-3 max-h-[70vh] space-y-2 overflow-y-auto overflow-x-hidden pr-1 text-sm min-w-0 break-words [overflow-wrap:anywhere]">
-                  <p class="text-zinc-400">Responses from endpoints will appear here</p>
+                  <p class="text-zinc-500 dark:text-zinc-400">Responses from endpoints will appear here</p>
                 </div>
               </div>
 
-              <div class="hidden rounded-2xl border border-white/10 bg-zinc-950/30 p-4 backdrop-blur lg:block">
-                <div class="text-xs font-semibold text-zinc-200">Safety</div>
+              <div class="hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 backdrop-blur lg:block">
+                <div class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Safety</div>
                 <p class="mt-2 text-xs text-zinc-300/80">Some actions are irreversible. Double-check IDs and confirmations before submitting.</p>
               </div>
             </div>
@@ -3852,24 +3957,24 @@
   <div id="modCmdk" class="hidden" aria-hidden="true">
     <div id="modCmdkBackdrop" class="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm"></div>
     <div class="fixed inset-0 z-[410] flex items-start justify-center p-4 sm:p-6">
-      <div id="modCmdkPanel" class="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl ring-1 ring-white/10" role="dialog" aria-modal="true">
-        <div class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-          <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
-            <svg class="h-4 w-4 text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
+      <div id="modCmdkPanel" class="w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10" role="dialog" aria-modal="true">
+        <div class="flex items-center gap-3 border-b border-zinc-200/80 dark:border-white/10 px-4 py-3">
+          <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10">
+            <svg class="h-4 w-4 text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" />
             </svg>
           </span>
           <div class="flex-1">
-            <div class="text-xs text-zinc-400">Search tabs & tools</div>
-            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to search…" autocomplete="off" />
+            <div class="text-xs text-zinc-500 dark:text-zinc-400">Search tabs & tools</div>
+            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to search…" autocomplete="off" />
           </div>
-          <button id="modCmdkClose" type="button" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-200 hover:bg-white/10">Esc</button>
+          <button id="modCmdkClose" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Esc</button>
         </div>
         <div class="max-h-[60vh] overflow-auto p-2">
           <div id="modCmdkList" class="space-y-1"></div>
         </div>
-        <div class="border-t border-white/10 px-4 py-3 text-[11px] text-zinc-400">
-          <span class="text-zinc-200">Enter</span> to open · <span class="text-zinc-200">↑↓</span> to navigate · <span class="text-zinc-200">Esc</span> to close
+        <div class="border-t border-zinc-200/80 dark:border-white/10 px-4 py-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span class="text-zinc-800 dark:text-zinc-200">Enter</span> to open · <span class="text-zinc-800 dark:text-zinc-200">↑↓</span> to navigate · <span class="text-zinc-800 dark:text-zinc-200">Esc</span> to close
         </div>
       </div>
     </div>

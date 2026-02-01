@@ -17,7 +17,7 @@
   <div
     id="resetPasswordPanel"
     class="relative w-[min(92vw,60rem)] max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden
-           rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl backdrop-blur
+           rounded-3xl border border-zinc-200/80 bg-white/80 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-zinc-950/70
            opacity-0 translate-y-3 scale-[0.98] transition-all duration-200 ease-out"
   >
     {{-- subtle glow --}}
@@ -28,7 +28,7 @@
     <button
       id="resetPasswordClose"
       type="button"
-      class="absolute right-4 top-4 z-10 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
+      class="absolute right-4 top-4 z-10 rounded-xl border border-zinc-200/80 bg-white/80 px-3 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:bg-black/30 dark:text-white/80 dark:hover:bg-white/10"
       aria-label="Close"
     >
       ✕
@@ -36,29 +36,29 @@
 
     <div class="px-7 py-10 sm:px-10">
       <div class="mx-auto max-w-md">
-        <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+        <div class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-zinc-100 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
           <span class="bg-emerald-400 inline-block h-2 w-2 rounded-full"></span>
           {{ __('auth.reset_password.badge') }}
         </div>
 
-        <h2 class="mt-5 text-2xl font-black tracking-tight text-white sm:text-3xl">
+        <h2 class="mt-5 text-2xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
           {{ __('auth.reset_password.title') }}
         </h2>
 
         @if (session('success'))
-          <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
             {{ session('success') }}
           </div>
         @endif
 
         @if (session('error'))
-          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
             {{ session('error') }}
           </div>
         @endif
 
         @if ($errors->any())
-          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div class="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
             <ul class="list-disc pl-5">
               @foreach ($errors->all() as $err)
                 <li>{{ $err }}</li>
@@ -72,15 +72,15 @@
           <input type="hidden" name="token" value="{{ $token }}">
 
           <div>
-            <label class="block text-xs font-extrabold text-zinc-200">{{ __('auth.reset_password.password_label') }}</label>
+            <label class="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{{ __('auth.reset_password.password_label') }}</label>
             <input name="password" type="password" required minlength="8"
-                   class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-white/90 placeholder:text-zinc-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20">
+                   class="mt-1 w-full rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-zinc-950/60 dark:text-white/90 dark:placeholder:text-zinc-500">
           </div>
 
           <div>
-            <label class="block text-xs font-extrabold text-zinc-200">{{ __('auth.reset_password.password_confirm_label') }}</label>
+            <label class="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{{ __('auth.reset_password.password_confirm_label') }}</label>
             <input name="password_confirmation" type="password" required minlength="8"
-                   class="mt-1 w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-white/90 placeholder:text-zinc-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20">
+                   class="mt-1 w-full rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-zinc-950/60 dark:text-white/90 dark:placeholder:text-zinc-500">
           </div>
 
           <button type="submit"
@@ -88,8 +88,8 @@
             {{ __('auth.reset_password.submit_button') }}
           </button>
 
-          <div class="text-center text-xs text-zinc-400">
-            <button type="button" data-open-login class="text-zinc-300 hover:text-white">{{ __('auth.reset_password.back_to_login') }}</button>
+          <div class="text-center text-xs text-zinc-500 dark:text-zinc-400">
+            <button type="button" data-open-login class="text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">{{ __('auth.reset_password.back_to_login') }}</button>
           </div>
         </form>
       </div>

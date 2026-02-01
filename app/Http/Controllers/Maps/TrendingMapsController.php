@@ -42,7 +42,7 @@ class TrendingMapsController extends Controller
         try {
             $resp = Http::withHeaders($headers)
                 ->withOptions(['verify' => $verify, 'timeout' => 8])
-                ->post($url);
+                ->get($url);
 
             if (! $resp->successful()) {
                 return response()->json([

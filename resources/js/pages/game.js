@@ -5,6 +5,35 @@ const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
 const scoreDisplay = document.getElementById('scoreDisplay');
 const highScoreDisplay = document.getElementById('highScoreDisplay');
+
+window.addEventListener(
+  'keydown',
+  (e) => {
+    const code = e.code || '';
+    const isSpace = code === 'Space' || e.key === ' ';
+    if (!isSpace) return;
+
+    const t = e.target;
+    const tag = (t && t.tagName ? String(t.tagName).toLowerCase() : '');
+    const role = (t && t.getAttribute ? String(t.getAttribute('role') || '').toLowerCase() : '');
+
+    const isInteractive =
+      tag === 'input' ||
+      tag === 'textarea' ||
+      tag === 'select' ||
+      tag === 'button' ||
+      tag === 'a' ||
+      role === 'button' ||
+      role === 'link' ||
+      (t && t.isContentEditable);
+
+    if (!isInteractive) {
+      e.preventDefault();
+    }
+  },
+  { passive: false }
+);
+
 let startScreenImage = new Image();
 
 const CURRENT_LANG = (document.documentElement.lang || 'en').toLowerCase();
@@ -125,6 +154,8 @@ let jackFrameSpeed = 300;
 let jackStartTime = performance.now();
 let maxScore = 10000;
 const genjiYOffset = -30;
+const OBSTACLE_HITBOX_INSET = 12;
+
 const keyPressed = {};
 
 const backgroundImage = new Image();
@@ -444,11 +475,17 @@ function updateGame() {
       drawObstacles();
       for (let i = 0; i < obstacles.length; i++) {
         const obs = obstacles[i];
+        const inset = OBSTACLE_HITBOX_INSET;
+        const left = obs.x + inset;
+        const right = obs.x + obs.width - inset;
+        const top = obs.y + inset;
+        const bottom = obs.y + obs.height - inset;
+
         if (
-          genji.x < obs.x + obs.width &&
-          genji.x + genji.width > obs.x &&
-          genji.y + genjiYOffset < obs.y + obs.height &&
-          genji.y + genjiYOffset + genji.height > obs.y
+          genji.x < right &&
+          genji.x + genji.width > left &&
+          genji.y + genjiYOffset < bottom &&
+          genji.y + genjiYOffset + genji.height > top
         ) {
           gameRunning = false;
           isGenjiDead = true;

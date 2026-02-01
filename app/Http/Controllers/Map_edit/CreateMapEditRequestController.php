@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Map_edit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class CreateMapEditRequestController extends BaseMapEditController
 {
@@ -34,6 +35,9 @@ class CreateMapEditRequestController extends BaseMapEditController
 
             'restrictions'   => ['sometimes', 'nullable', 'array'],
             'restrictions.*' => ['string', 'max:64'],
+
+            'tags'           => ['sometimes', 'nullable', 'array'],
+            'tags.*'         => ['string', Rule::in(['Other Heroes', 'XP Based', 'Custom Grav/Speed'])],
 
             'medals'         => ['sometimes', 'nullable', 'array'],
 

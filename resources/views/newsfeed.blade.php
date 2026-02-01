@@ -16,7 +16,7 @@
         <div>
           <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
             {{ __('newsfeed.title') }}
-            <span class="block text-sm font-medium text-zinc-300 sm:text-base">
+            <span class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">
               {{ __('newsfeed.subtitle') }}
             </span>
           </h1>
@@ -28,16 +28,19 @@
   <!-- Sections (Newsfeed / Completions) -->
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mt-1">
-      <div id="nfTabs" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+      <div id="nfTabs" class="relative inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-1">
+        <span id="nfTabsHighlight" aria-hidden="true"></span>
         <button
           id="tabNewsfeed"
-          class="tab-btn cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+          data-section="newsfeed"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white"
         >
           {{ __('newsfeed.tabs.newsfeed') }}
         </button>
         <button
           id="tabCompletions"
-          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+          data-section="completions"
+          class="tab-btn cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white"
         >
           {{ __('newsfeed.tabs.completions') }}
         </button>
@@ -50,14 +53,14 @@
     <!-- Filters / search -->
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+        <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-3 sm:p-4">
           <div class="grid gap-3 lg:grid-cols-[1fr_auto]">
             <!-- Search + tags -->
             <div class="space-y-3">
               <div
-                class="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2"
+                class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2"
               >
-                <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 24 24">
+                <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1016 9.5c0 1.61-.59 3.09-1.57 4.23l.27.27h.79L20.5 19 19 20.5 15.5 17zM10 14a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"
@@ -70,7 +73,7 @@
                   class="w-full bg-transparent text-sm outline-none placeholder:text-zinc-500"
                 />
                 <kbd
-                  class="hidden rounded border border-white/10 px-1 py-0.5 text-[10px] text-zinc-400 sm:block"
+                  class="hidden rounded border border-zinc-200/80 dark:border-white/10 px-1 py-0.5 text-[10px] text-zinc-500 dark:text-zinc-400 sm:block"
                 >
                   /
                 </kbd>
@@ -80,7 +83,7 @@
                 @php($tags = ['all', 'announcement', 'guide', 'new_map', 'role', 'record', 'map_edit', 'legacy_record', 'archive', 'unarchive', 'linked_map', 'unlinked_map'])
                 @foreach ($tags as $i => $tag)
                   <button
-                    class="nf-chip {{ $i === 0 ? 'bg-white/10' : '' }} inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+                    class="nf-chip {{ $i === 0 ? 'bg-white/10' : '' }} inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
                     data-filter="{{ $tag }}"
                     {!! $i === 0 ? 'data-active="true"' : '' !!}
                   >
@@ -94,7 +97,7 @@
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
               <button
                 id="nf-reset"
-                class="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/5"
+                class="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
               >
                 <svg
                   class="h-4 w-4"
@@ -123,12 +126,12 @@
 
             <div
               id="nf-empty"
-              class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-8 text-center"
+              class="mt-6 hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-8 text-center"
             >
               <div
-                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10"
+                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10"
               >
-                <svg class="h-6 w-6 text-zinc-300" viewBox="0 0 24 24">
+                <svg class="h-6 w-6 text-zinc-600 dark:text-zinc-300" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M19 3H5a2 2 0 0 0-2 2v14l4-4h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"
@@ -136,14 +139,14 @@
                 </svg>
               </div>
               <h3 class="text-lg font-semibold">{{ __('newsfeed.empty.title') }}</h3>
-              <p class="mt-1 text-sm text-zinc-400">{{ __('newsfeed.empty.subtitle') }}</p>
+              <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('newsfeed.empty.subtitle') }}</p>
             </div>
 
             <!-- Load more  -->
             <div class="mt-4 flex items-center justify-center">
               <button
                 id="nf-loadmore"
-                class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/5"
+                class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
               >
                 {{ __('newsfeed.load_more') }}
               </button>
@@ -155,7 +158,7 @@
           <!-- Community Picks -->
           <div
             id="communityPicksCard"
-            class="rounded-2xl border border-white/10 bg-white/5 p-4"
+            class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4"
             data-endpoint="/api/maps/trending?limit=3"
             data-full-endpoint="/api/maps/trending?limit=25"
           >
@@ -176,24 +179,24 @@
               @for ($i=0; $i<3; $i++)
                 <li class="flex items-center justify-between animate-pulse">
                   <div class="flex min-w-0 items-center gap-2">
-                    <div class="h-9 w-20 rounded-md border border-white/10 bg-zinc-900/50"></div>
+                    <div class="h-9 w-20 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50"></div>
 
                     <div class="min-w-0">
-                      <div class="h-4 w-28 rounded bg-white/10"></div>
-                      <div class="mt-1 h-5 w-16 rounded-md border border-white/10 bg-white/5"></div>
+                      <div class="h-4 w-28 rounded bg-zinc-100/70 dark:bg-white/10"></div>
+                      <div class="mt-1 h-5 w-16 rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5"></div>
                     </div>
                   </div>
 
                   <div class="flex items-center gap-1 shrink-0">
-                    <div class="h-4 w-4 rounded bg-white/10"></div>
-                    <div class="h-4 w-6 rounded bg-white/10"></div>
+                    <div class="h-4 w-4 rounded bg-zinc-100/70 dark:bg-white/10"></div>
+                    <div class="h-4 w-6 rounded bg-zinc-100/70 dark:bg-white/10"></div>
                   </div>
                 </li>
               @endfor
             </ul>
 
             <!-- Erreur -->
-            <div id="cpError" class="mt-3 hidden text-sm text-rose-300">
+            <div id="cpError" class="mt-3 hidden text-sm text-rose-700 dark:text-rose-300">
               {{ __('common.error') }}
             </div>
           </div>
@@ -201,10 +204,10 @@
           <!-- Community Picks: modal -->
           <div id="cpModalOverlay" class="fixed inset-0 z-50 hidden bg-black/60 p-4 backdrop-blur-sm">
             <div id="cpModalBox" class="mx-auto w-full max-w-2xl opacity-0 scale-95 transition duration-200 ease-out">
-              <div class="w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl ring-1 ring-white/10">
-                <header class="sticky top-0 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80 px-4 py-3 backdrop-blur">
+              <div class="w-full overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
+                <header class="sticky top-0 flex items-center justify-between border-b border-zinc-200/80 dark:border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80 px-4 py-3 backdrop-blur">
                   <h2 class="text-base font-bold tracking-tight">{{ __('newsfeed.sidebar.community_picks') }}</h2>
-                  <button id="closeCpModal" type="button" class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs hover:bg-white/20">Esc</button>
+                  <button id="closeCpModal" type="button" class="rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-100/70 dark:bg-white/10 px-2 py-1 text-xs hover:bg-zinc-200/70 dark:hover:bg-white/20">Esc</button>
                 </header>
 
                 <div class="p-3">
@@ -212,24 +215,24 @@
 
                   <ul id="cpModalSkeleton" class="space-y-2" aria-hidden="true">
                     @for ($i=0; $i<25; $i++)
-                      <li class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2 animate-pulse">
+                      <li class="flex items-center justify-between rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-2 animate-pulse">
                         <div class="flex items-center gap-2">
-                          <div class="h-9 w-14 rounded-md border border-white/10 bg-white/10"></div>
-                          <div class="h-4 w-36 rounded bg-white/10"></div>
+                          <div class="h-9 w-14 rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-100/70 dark:bg-white/10"></div>
+                          <div class="h-4 w-36 rounded bg-zinc-100/70 dark:bg-white/10"></div>
                         </div>
-                        <div class="h-4 w-20 rounded bg-white/10"></div>
+                        <div class="h-4 w-20 rounded bg-zinc-100/70 dark:bg-white/10"></div>
                       </li>
                     @endfor
                   </ul>
 
-                  <div id="cpModalError" class="hidden text-sm text-rose-300 mt-2">{{ __('common.error') }}</div>
+                  <div id="cpModalError" class="hidden text-sm text-rose-700 dark:text-rose-300 mt-2">{{ __('common.error') }}</div>
                 </div>
               </div>
             </div>
           </div>
 
             <!-- Changelogs -->
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4">
               <div class="flex items-center justify-between">
                 <h3 class="font-semibold">{{ __('newsfeed.sidebar.changelogs') }}</h3>
                 <a
@@ -242,7 +245,7 @@
               </div>
 
               {{-- Hydraté par JS --}}
-              <div id="nf-changelogs" class="mt-3 space-y-3 text-sm text-zinc-300"></div>
+              <div id="nf-changelogs" class="mt-3 space-y-3 text-sm text-zinc-600 dark:text-zinc-300"></div>
             </div>
 
           </aside>
@@ -274,7 +277,7 @@
   <div id="panel-completions" class="mt-6 hidden min-h-[100vh]">
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 min-h-[100vh]">
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-4">
           <div class="mb-4 flex items-center justify-between">
             <h2 class="font-semibold">{{ __('newsfeed.tabs.completions') }}</h2>
           </div>
@@ -284,12 +287,12 @@
 
           <div
             id="comp-empty"
-            class="mt-6 hidden rounded-2xl border border-white/10 bg-white/5 p-8 text-center"
+            class="mt-6 hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-8 text-center"
           >
             <div
-              class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10"
+              class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10"
             >
-              <svg class="h-6 w-6 text-zinc-300" viewBox="0 0 24 24">
+              <svg class="h-6 w-6 text-zinc-600 dark:text-zinc-300" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M19 3H5a2 2 0 0 0-2 2v14l4-4h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"
@@ -297,14 +300,14 @@
               </svg>
             </div>
             <h3 class="text-lg font-semibold">{{ __('newsfeed.empty.title') }}</h3>
-            <p class="mt-1 text-sm text-zinc-400">{{ __('newsfeed.empty.subtitle') }}</p>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('newsfeed.empty.subtitle') }}</p>
           </div>
 
           <!-- Load more -->
           <div class="mt-4 flex items-center justify-center">
             <button
               id="comp-loadmore"
-              class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/5"
+              class="inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
             >
               {{ __('newsfeed.load_more') }}
             </button>

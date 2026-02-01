@@ -61,15 +61,15 @@ function enhanceDropdown(selectOrId) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className =
-    'inline-flex cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-500/40';
+    'inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-500/40';
   btn.setAttribute('aria-haspopup', 'listbox');
   btn.setAttribute('aria-expanded', 'false');
-  btn.innerHTML = `<span class="truncate"></span><svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="M5 8l5 5 5-5H5z"/></svg>`;
+  btn.innerHTML = `<span class="truncate"></span><svg class="h-4 w-4 text-zinc-600 dark:text-zinc-400" viewBox="0 0 20 20"><path fill="currentColor" d="M5 8l5 5 5-5H5z"/></svg>`;
   wrapper.insertBefore(btn, select);
 
   const menu = document.createElement('ul');
   menu.className =
-    'invisible opacity-0 translate-y-1 transition absolute left-0 mt-2 min-w-40 rounded-lg bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-white/10 py-1.5 z-50 max-h-56 overflow-y-auto';
+    'invisible opacity-0 translate-y-1 transition absolute left-0 mt-2 min-w-40 rounded-lg bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 py-1.5 z-50 max-h-56 overflow-y-auto';
   menu.setAttribute('role', 'listbox');
   wrapper.appendChild(menu);
 
@@ -87,7 +87,7 @@ function enhanceDropdown(selectOrId) {
       li.setAttribute('role', 'option');
       li.setAttribute('data-value', opt.value);
       li.className =
-        'px-3 py-1.5 text-sm text-zinc-200 hover:bg-white/10 cursor-pointer flex items-center justify-between';
+        'px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 cursor-pointer flex items-center justify-between';
       if (opt.disabled) li.classList.add('opacity-50', 'cursor-not-allowed');
       const isSel = opt.value === select.value;
       li.innerHTML = `<span class="truncate">${opt.textContent}</span>${isSel ? '<svg class="h-4 w-4 text-emerald-400" viewBox="0 0 20 20"><path fill="currentColor" d="M7.6 13.2L4.4 10l-1.4 1.4 4.6 4.6L18 6.6 16.6 5.2z"/></svg>' : ''}`;
@@ -134,7 +134,7 @@ function enhanceDropdown(selectOrId) {
   }
   function highlightActive() {
     [...menu.children].forEach((el, i) => {
-      el.classList.toggle('bg-white/10', i === activeIndex);
+      el.classList.toggle('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10', i === activeIndex);
       if (i === activeIndex) el.scrollIntoView({ block: 'nearest' });
     });
   }
@@ -241,8 +241,8 @@ function createBaseModal(titleText) {
   const box = document.createElement('div');
   box.setAttribute('data-modal-box', '');
   box.className = [
-    'w-[92vw] h-[82vh] max-w-7xl rounded-2xl border border-white/10',
-    'bg-zinc-950/95 ring-1 ring-white/10 shadow-2xl overflow-hidden flex flex-col',
+    'w-[92vw] h-[82vh] max-w-7xl rounded-2xl border border-zinc-200/80 dark:border-white/10',
+    'bg-zinc-50 dark:bg-zinc-950/95 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-2xl overflow-hidden flex flex-col',
     'transform-gpu transition-all duration-300 ease-out',
     'opacity-0 translate-y-2 scale-95'
   ].join(' ');
@@ -250,11 +250,11 @@ function createBaseModal(titleText) {
 
   const header = document.createElement('header');
   header.className =
-    'flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80';
+    'flex items-center justify-between px-4 sm:px-5 py-3 border-b border-zinc-200/80 dark:border-white/10 bg-gradient-to-b from-zinc-950/95 to-zinc-950/80';
   header.innerHTML = `
-    <div class="text-sm font-semibold text-zinc-200 truncate">${titleText || 'Chart'}</div>
+    <div class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">${titleText || 'Chart'}</div>
     <div class="flex items-center gap-2">
-      <button id="chartModalClose" class="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/5">Esc</button>
+      <button id="chartModalClose" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">Esc</button>
     </div>`;
   box.appendChild(header);
 

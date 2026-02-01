@@ -139,16 +139,16 @@ function setItemReadVisual(itemEl, read) {
   if (!itemEl) return;
 
   itemEl.classList.remove('border-emerald-500/30', 'bg-emerald-500/10');
-  itemEl.classList.remove('border-white/10', 'bg-white/5');
-  itemEl.classList.add(read ? 'border-white/10' : 'border-emerald-500/30');
-  itemEl.classList.add(read ? 'bg-white/5' : 'bg-emerald-500/10');
+  itemEl.classList.remove('border-zinc-200/80 dark:border-white/10', 'bg-zinc-900/3 dark:bg-white/5');
+  itemEl.classList.add(read ? 'border-zinc-200/80 dark:border-white/10' : 'border-emerald-500/30');
+  itemEl.classList.add(read ? 'bg-zinc-900/3 dark:bg-white/5' : 'bg-emerald-500/10');
 
   const title = itemEl.querySelector('[data-notif-title]');
   if (title) {
-    title.classList.remove('font-extrabold', 'text-white/95');
-    title.classList.remove('font-bold', 'text-white/85');
+    title.classList.remove('font-extrabold', 'text-zinc-900 dark:text-white/95');
+    title.classList.remove('font-bold', 'text-zinc-900 dark:text-white/85');
     title.classList.add(read ? 'font-bold' : 'font-extrabold');
-    title.classList.add(read ? 'text-white/85' : 'text-white/95');
+    title.classList.add(read ? 'text-zinc-900 dark:text-white/85' : 'text-zinc-900 dark:text-white/95');
   }
 }
 
@@ -169,6 +169,7 @@ export function initNotifications() {
   const list = document.getElementById('notifList');
   const empty = document.getElementById('notifEmpty');
   const markAllBtn = document.getElementById('notifMarkAllBtn');
+  const dismissAllBtn = document.getElementById('notifDismissAllBtn');
   const footer = document.getElementById('notifFooter');
   const loadMoreBtn = document.getElementById('notifLoadMoreBtn');
 
@@ -286,10 +287,20 @@ export function initNotifications() {
     lastUnread = n;
 
     if (n > 0) {
-      badge.textContent = n > 99 ? '99+' : String(n);
+      const txt = n > 99 ? '99+' : String(n);
+      badge.textContent = txt;
+      // Helpful for CSS-only badge patterns / future-proofing
+      badge.dataset.count = txt;
+
+      // Avoid blink if CSS isn't ready yet (or on very fast navigations)
       badge.classList.remove('hidden');
+      badge.style.display = 'inline-flex';
     } else {
+      badge.textContent = '';
+      badge.dataset.count = '';
+
       badge.classList.add('hidden');
+      badge.style.display = 'none';
     }
   }
 
@@ -405,10 +416,10 @@ export function initNotifications() {
     empty.style.opacity = '0';
 
     for (let i = 0; i < 5; i++) {
-      const sk = el('div', 'mb-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2', '');
+      const sk = el('div', 'mb-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-3 py-2', '');
       sk.setAttribute('data-notif-skel', '1');
       sk.innerHTML =
-        '<div class="h-3 w-2/3 rounded bg-white/10"></div><div class="mt-2 h-3 w-full rounded bg-white/10"></div><div class="mt-2 h-3 w-1/2 rounded bg-white/10"></div>';
+        '<div class="h-3 w-2/3 rounded bg-zinc-900/5 dark:bg-white/10"></div><div class="mt-2 h-3 w-full rounded bg-zinc-900/5 dark:bg-white/10"></div><div class="mt-2 h-3 w-1/2 rounded bg-zinc-900/5 dark:bg-white/10"></div>';
       list.appendChild(sk);
     }
   }
@@ -448,7 +459,7 @@ export function initNotifications() {
         [
           'mb-2 cursor-pointer rounded-xl border px-3 py-2',
           'transition-[opacity,transform] duration-200 ease-out transform-gpu',
-          isUnread(ev) ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-white/10 bg-white/5',
+          isUnread(ev) ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5',
         ].join(' ')
       );
       item.setAttribute('data-notif-item', '1');
@@ -458,15 +469,15 @@ export function initNotifications() {
 
       const title = el(
         'div',
-        ['truncate text-[13px]', isUnread(ev) ? 'font-extrabold text-white/95' : 'font-bold text-white/85'].join(' '),
+        ['truncate text-[13px]', isUnread(ev) ? 'font-extrabold text-zinc-900 dark:text-white/95' : 'font-bold text-zinc-900 dark:text-white/85'].join(' '),
         ev.title || tt('modals.notifications.fallback_title', 'Notification')
       );
 
       title.setAttribute('data-notif-title', '1');
 
-      const body = el('div', 'mt-0.5 line-clamp-2 text-[12px] text-white/70', ev.body || '');
+      const body = el('div', 'mt-0.5 line-clamp-2 text-[12px] text-zinc-900 dark:text-white/70', ev.body || '');
 
-      const metaRow = el('div', 'mt-2 flex items-center gap-2 text-[11px] text-white/55');
+      const metaRow = el('div', 'mt-2 flex items-center gap-2 text-[11px] text-zinc-900 dark:text-white/55');
       metaRow.appendChild(el('span', '', relTime(ev.created_at)));
 
       left.appendChild(title);
@@ -478,7 +489,7 @@ export function initNotifications() {
       // Only dismiss button (Read removed)
       const dismissBtn = el(
         'button',
-        'cursor-pointer rounded-lg border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white'
+        'cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-2 text-zinc-900 dark:text-white/70 hover:bg-zinc-900/5 dark:bg-white/10 hover:text-zinc-900 dark:text-white'
       );
       dismissBtn.type = 'button';
       dismissBtn.title = tt('modals.notifications.dismiss', 'Dismiss');
@@ -661,6 +672,33 @@ export function initNotifications() {
       if (markAllBtn) {
         markAllBtn.disabled = false;
         markAllBtn.classList.remove('opacity-60', 'pointer-events-none');
+      }
+    }
+  });
+
+  dismissAllBtn?.addEventListener('click', async () => {
+    try {
+      dismissAllBtn.disabled = true;
+      dismissAllBtn.classList.add('opacity-60', 'pointer-events-none');
+
+      await httpJson('/api/notifications/dismiss-all', { method: 'PATCH' });
+
+      const items = list.querySelectorAll('[data-notif-item]');
+      items.forEach((itemEl) => animateDismissItem(itemEl));
+
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      renderEmpty();
+
+      applyUnreadCount(0);
+      writeCachedUnreadCount(0);
+
+      fetchUnreadCount();
+    } catch (_) {}
+    finally {
+      if (dismissAllBtn) {
+        dismissAllBtn.disabled = false;
+        dismissAllBtn.classList.remove('opacity-60', 'pointer-events-none');
       }
     }
   });

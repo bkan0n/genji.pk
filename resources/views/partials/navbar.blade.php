@@ -44,10 +44,14 @@
     $colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-red-500', 'bg-orange-500', 'bg-cyan-500', 'bg-violet-500'];
     $avatarBgColor = $colors[$hash % count($colors)];
   }
+
+  $theme = strtolower(request()->cookie('theme') ?? 'dark');
+  $isDark = $theme !== 'light';
+  $logoStatic = $isDark ? 'assets/img/favicon-high.png' : 'assets/img/favicon-high-black.png';
 @endphp
 
 <header
-  class="sticky top-0 z-50 border-b border-white/10 bg-zinc-900/90 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/70"
+  class="sticky top-0 z-50 border-b border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 supports-[backdrop-filter]:dark:bg-zinc-900/70"
 >
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4">
@@ -55,22 +59,28 @@
     <div class="flex min-w-0 items-center gap-2 md:gap-3">
       <a
         href="{{ url('game') }}"
-        class="inline-block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        class="inline-block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-white/60"
         aria-label="Genji Parkour – Accueil"
       >
-        <img
-          id="brandLogo"
-          src="{{ cdn_asset('assets/img/favicon-high.png') }}"
-          alt="Genji Parkour Logo"
-          class="h-9 w-9 flex-none rounded-xl object-cover transition hover:opacity-90"
-        />
+      <img
+        id="brandLogo"
+        src="{{ cdn_asset($isDark ? 'assets/img/favicon-high.png' : 'assets/img/favicon-high-black.png') }}"
+        data-static-dark="{{ cdn_asset('assets/img/favicon-high.png') }}"
+        data-anim-dark="{{ cdn_asset('assets/img/favicon-anim.gif') }}"
+        data-static-light="{{ cdn_asset('assets/img/favicon-high-black.png') }}"
+        data-anim-light="{{ cdn_asset('assets/img/favicon-anim-black.gif') }}"
+        class="h-9 w-9 flex-none rounded-xl object-cover hover:opacity-90"
+        width="256"
+        height="256"
+        alt="Genji Parkour"
+      />
       </a>
 
       <div class="min-w-0 leading-tight">
-        <div class="truncate text-base font-extrabold tracking-tight text-white sm:text-lg md:text-xl">
+        <div class="truncate text-base font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-lg md:text-xl">
           {{ __('navbar.brand_title') }}
         </div>
-        <div class="hidden truncate text-[10px] text-zinc-400 sm:block sm:text-xs">
+        <div class="hidden truncate text-[10px] text-zinc-500 dark:text-zinc-400 sm:block sm:text-xs">
           {{ __('navbar.brand_tagline') }}
         </div>
       </div>
@@ -80,13 +90,13 @@
       <nav class="hidden items-center gap-1 justify-self-center md:flex">
         <a
           href="{{ url('/') }}"
-          class="rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
+          class="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
         >
           {{ __('navbar.home') }}
         </a>
         <a
           href="{{ url('/leaderboard') }}"
-          class="rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
+          class="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
         >
           {{ __('navbar.leaderboard') }}
         </a>
@@ -95,22 +105,22 @@
         <div class="relative">
           <button
             id="searchBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="searchMenu"
           >
             {{ __('navbar.search') }}
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </button>
           <ul
             id="searchMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-40 translate-y-1 rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+            class="invisible absolute left-0 z-50 mt-2 min-w-40 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
           >
             <li>
               <a
-                class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/search?section=map_search') }}"
               >
                 {{ __('navbar.maps') }}
@@ -118,7 +128,7 @@
             </li>
             <li>
               <a
-                class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/search?section=guide') }}"
               >
                 {{ __('navbar.guides') }}
@@ -126,7 +136,7 @@
             </li>
             <li>
               <a
-                class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/search?section=completions') }}"
               >
                 {{ __('navbar.completions') }}
@@ -139,22 +149,22 @@
         <div class="relative">
           <button
             id="communityBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="communityMenu"
           >
             {{ __('navbar.community') }}
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </button>
           <ul
             id="communityMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-48 translate-y-1 rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+            class="invisible absolute left-0 z-50 mt-2 min-w-48 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
           >
             <li>
               <a
-                class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/newsfeed') }}"
               >
                 {{ __('navbar.newsfeed') }}
@@ -162,7 +172,7 @@
             </li>
             <li>
               <a
-                class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/tutorials') }}"
               >
                 {{ __('navbar.tutorial') }}
@@ -170,7 +180,7 @@
             </li>
             <li>
               <a
-                class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/statistics') }}"
               >
                 {{ __('navbar.statistics') }}
@@ -183,39 +193,39 @@
         <div class="relative">
           <button
             id="submitBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="submitMenu"
           >
             {{ __('navbar.submit') }}
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </button>
           <ul
             id="submitMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-44 translate-y-1 rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+            class="invisible absolute left-0 z-50 mt-2 min-w-44 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
           >
             <li>
-              <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+              <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/submit') }}?section=submit_record">
                 {{ __('navbar.submit_record') }}
               </a>
             </li>
             <li>
-              <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+              <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/submit') }}?section=playtest">
                 {{ __('navbar.submit_playtest') }}
               </a>
             </li>
             <li>
-              <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+              <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/submit') }}?section=submit_map">
                 {{ __('navbar.submit_map') }}
               </a>
             </li>
             <li>
-              <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+              <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/infos') }}">
                 {{ __('navbar.infos') }}
               </a>
@@ -231,19 +241,19 @@
         <div class="relative">
           <button
             id="langBtn"
-            class="hidden cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm hover:border-white/20 hover:bg-white/5 sm:inline-flex"
+            class="hidden cursor-pointer items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:border-white/20 hover:bg-zinc-100 dark:hover:bg-white/5 sm:inline-flex"
             aria-expanded="false"
             aria-controls="langMenu"
           >
-            <i class="flag {{ $selectedLangData['flag'] ?? 'flag-us' }}"></i>
+            <i class="flag lang-flag {{ $selectedLangData['flag'] ?? 'flag-us' }}"></i>
             <span class="uppercase">{{ $selectedLangData['name'] ?? 'EN' }}</span>
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </button>
           <ul
             id="langMenu"
-            class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition dark:bg-zinc-900/95"
+            class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
           >
             @foreach ($languages as $code => $data)
               @if (empty($data['translated']))
@@ -253,11 +263,11 @@
               <li>
                 <a
                   href="{{ route('lang.switch', $code) }}"
-                  class="flex items-center gap-2 px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   data-message="{{ $data['modalMessage'] ?? 'This language is not fully translated yet.' }}"
                   data-close-text="{{ $data['closeButtonText'] ?? 'Close' }}"
                 >
-                  <i class="flag {{ $data['flag'] ?? '' }}"></i>
+                  <i class="flag lang-flag {{ $data['flag'] ?? '' }}"></i>
                   {{ $data['name'] ?? strtoupper($code) }}
                 </a>
               </li>
@@ -268,7 +278,7 @@
         @if ($isMod)
           <a
             href="{{ url('/moderator') }}"
-            class="group inline-flex items-center justify-center rounded-xl border border-white/10 p-2 hover:border-emerald-400/30 hover:bg-emerald-500/10 focus-visible:ring-2 focus-visible:ring-emerald-400/40 focus-visible:outline-none"
+            class="group inline-flex items-center justify-center rounded-xl border border-zinc-200/80 dark:border-white/10 p-2 hover:border-emerald-400/30 hover:bg-emerald-500/10 focus-visible:ring-2 focus-visible:ring-emerald-400/40 focus-visible:outline-none"
           >
             <svg
               class="h-5 w-5 text-emerald-400 transition group-hover:text-emerald-300"
@@ -287,12 +297,23 @@
           </a>
         @endif
 
-        <!-- Theme
-        <button id="themeToggle" class="cursor-pointer rounded-lg p-2 border border-white/10 hover:bg_WHITE/5" aria-label="Toggle Dark Mode">
-          <svg id="iconSun" class="h-5 w-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5a1 1 0 011 1V7a1 1 0 11-2 0V5.5a1 1 0 011-1zM12 16.5a1 1 0 011 1V19a1 1 0 11-2 0v-1.5a1 1 0 011-1zM4.5 11a1 1 0 011-1H7a1 1 0 110 2H5.5a1 1 0 01-1-1zM16.5 11a1 1 0 011-1H19a1 1 0 110 2h-1.5a1 1 0 01-1-1zM7.05 7.05a1 1 0 011.4 0l1.06 1.06a1 1 0 01-1.42 1.42L7.05 8.47a1 1 0 010-1.42zM14.49 14.49a1 1 0 011.42 0l1.06 1.06a1 1 0 01-1.42 1.42l-1.06-1.06a1 1 0 010-1.42zM16.95 7.05a1 1 0 010 1.42l-1.06 1.06a1 1 0 11-1.42-1.42L15.53 7.05a1 1 0 011.42 0zM9.51 14.49a1 1 0 010 1.42L8.45 17a1 1 0 11-1.42-1.42l1.06-1.06a1 1 0 011.42 0zM12 8.5A3.5 3.5 0 1112 15.5 3.5 3.5 0 0112 8.5z"/></svg>
-          <svg id="iconMoon" class="h-5 w-5 hidden text-zinc-300" fill="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
+        <!-- Theme -->
+        <button
+          id="themeToggle"
+          class="cursor-pointer rounded-lg p-2 border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/5"
+          aria-label="Toggle theme"
+          aria-pressed="false"
+        >
+          <span class="relative block h-5 w-5">
+            <svg id="iconSun" class="theme-icon-sun pointer-events-none absolute inset-0 h-5 w-5 text-yellow-500 opacity-100 transition-opacity duration-150" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 4.5a1 1 0 011 1V7a1 1 0 11-2 0V5.5a1 1 0 011-1zM12 16.5a1 1 0 011 1V19a1 1 0 11-2 0v-1.5a1 1 0 011-1zM4.5 11a1 1 0 011-1H7a1 1 0 110 2H5.5a1 1 0 01-1-1zM16.5 11a1 1 0 011-1H19a1 1 0 110 2h-1.5a1 1 0 01-1-1zM7.05 7.05a1 1 0 011.4 0l1.06 1.06a1 1 0 01-1.42 1.42L7.05 8.47a1 1 0 010-1.42zM14.49 14.49a1 1 0 011.42 0l1.06 1.06a1 1 0 01-1.42 1.42l-1.06-1.06a1 1 0 010-1.42zM16.95 7.05a1 1 0 010 1.42l-1.06 1.06a1 1 0 11-1.42-1.42L15.53 7.05a1 1 0 011.42 0zM9.51 14.49a1 1 0 010 1.42L8.45 17a1 1 0 11-1.42-1.42l1.06-1.06a1 1 0 011.42 0zM12 8.5A3.5 3.5 0 1112 15.5 3.5 3.5 0 0112 8.5z"/>
+            </svg>
+
+            <svg id="iconMoon" class="theme-icon-moon pointer-events-none absolute inset-0 h-5 w-5 text-zinc-700 dark:text-zinc-300 opacity-0 transition-opacity duration-150" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/>
+            </svg>
+          </span>
         </button>
-        -->
 
         <!-- Auth -->
 
@@ -300,7 +321,7 @@
           <div class="relative">
             <button
               id="avatarBtn"
-              class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 p-1.5 hover:bg-white/5"
+              class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 p-1.5 hover:bg-zinc-100 dark:hover:bg-white/5"
               aria-expanded="false"
               aria-controls="avatarMenu"
             >
@@ -312,50 +333,50 @@
                     class="h-8 w-8 rounded-full object-cover"
                   />
                 @else
-                  <div class="flex h-8 w-8 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-white">
+                  <div class="flex h-8 w-8 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
                       {{ $initials }}
                   </div>
                 @endif
-                <span class="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-zinc-950/80 text-[10px] font-extrabold text-white/85 backdrop-blur">
+                <span class="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/80 text-[10px] font-extrabold text-zinc-800/90 dark:text-white/85 backdrop-blur">
                   {{ $providerMark }}
                 </span>
               </div>
-              <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+              <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
                 <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
               </svg>
             </button>
 
             <ul
               id="avatarMenu"
-              class="invisible absolute right-0 z-50 mt-2 w-48 translate-y-1 rounded-lg bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-white/10 backdrop-blur transition"
+              class="invisible absolute right-0 z-50 mt-2 w-48 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
             >
               <li class="px-4 pb-2">
-                <div class="text-xs font-extrabold text-white/90">
+                <div class="text-xs font-extrabold text-zinc-800 dark:text-white/90">
                   {{ $username }}
                 </div>
-                <div class="mt-1 inline-flex items-center rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-[11px] font-semibold text-white/80">
+                <div class="mt-1 inline-flex items-center rounded-lg border border-zinc-200/80 dark:border-white/10 bg-black/30 px-2 py-1 text-[11px] font-semibold text-zinc-700 dark:text-white/80">
                   Connected via {{ $providerLabel }}
                 </div>
               </li>
 
-              <li><div class="my-2 h-px bg-white/10"></div></li>
+              <li><div class="my-2 h-px bg-zinc-100/70 dark:bg-white/10"></div></li>
               <li>
-                <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" href="{{ url('/lootbox') }}">
+                <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10" href="{{ url('/lootbox') }}">
                   {{ __('navbar.lootbox') }}
                 </a>
               </li>
               <li>
-                <a class="block cursor-pointer px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" id="user-profile">
+                <a class="block cursor-pointer px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10" id="user-profile">
                   {{ __('navbar.profile') }}
                 </a>
               </li>
               <li>
-                <a class="block px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" href="{{ url('/rank_card') }}">
+                <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10" href="{{ url('/rank_card') }}">
                   {{ __('navbar.rank_card') }}
                 </a>
               </li>
               <li>
-                <a class="block cursor-pointer px-4 py-2 text-sm text-zinc-200 hover:bg-white/10" id="user-settings">
+                <a class="block cursor-pointer px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10" id="user-settings">
                   {{ __('navbar.settings') }}
                 </a>
               </li>
@@ -366,7 +387,7 @@
           <button
             type="button"
             data-open-login
-            class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-white/20 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-white/60 focus-visible:outline-none"
             aria-haspopup="dialog"
             aria-controls="loginModal"
           >
@@ -381,7 +402,7 @@
         <!-- Mobile menu -->
         <button
           id="menuBtn"
-          class="inline-flex items-center justify-center rounded-xl border border-white/10 p-2 hover:bg-white/5 md:hidden"
+          class="inline-flex items-center justify-center rounded-xl border border-zinc-200/80 dark:border-white/10 p-2 hover:bg-zinc-100 dark:hover:bg-white/5 md:hidden"
           aria-controls="mobileMenu"
           aria-expanded="false"
         >
@@ -396,42 +417,42 @@
       <nav class="grid gap-1">
         <a
           href="{{ url('/') }}"
-          class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+          class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
         >
           {{ __('navbar.home') }}
         </a>
         <a
           href="{{ url('/leaderboard') }}"
-          class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+          class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
         >
           {{ __('navbar.leaderboard') }}
         </a>
 
         <details class="px-3 py-2">
           <summary
-            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
           >
             <span>{{ __('navbar.search') }}</span>
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </summary>
           <div class="mt-1 ml-2 grid">
             <a
               href="{{ url('/search') }}?section=map_search"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.maps') }}
             </a>
             <a
               href="{{ url('/search') }}?section=guide"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.guides') }}
             </a>
             <a
               href="{{ url('/search') }}?section=completions"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.completions') }}
             </a>
@@ -440,29 +461,29 @@
 
         <details class="px-3 py-2">
           <summary
-            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
           >
             <span>{{ __('navbar.community') }}</span>
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </summary>
           <div class="mt-1 ml-2 grid">
             <a
               href="{{ url('/newsfeed') }}"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.newsfeed') }}
             </a>
             <a
               href="{{ url('/tutorials') }}"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.tutorial') }}
             </a>
             <a
               href="{{ url('/statistics') }}"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.statistics') }}
             </a>
@@ -471,24 +492,24 @@
 
         <details class="px-3 py-2">
           <summary
-            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
           >
             <span>{{ __('navbar.submit') }}</span>
-            <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20">
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
               <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
             </svg>
           </summary>
           <div class="mt-1 ml-2 grid">
             <a href="{{ url('/submit') }}?section=submit_record"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
               {{ __('navbar.submit_record') }}
             </a>
             <a href="{{ url('/submit') }}?section=playtest"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
               {{ __('navbar.submit_playtest') }}
             </a>
             <a href="{{ url('/submit') }}?section=submit_map"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
               {{ __('navbar.submit_map') }}
             </a>
           </div>

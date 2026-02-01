@@ -69,8 +69,8 @@ function createContributorItem({ name, avatar, role, note, discord, discordLabel
   if (role) {
     wrap.className = [
       'contributor group flex items-center gap-4',
-      'rounded-2xl bg-zinc-900/80 px-4 py-3',
-      'ring-1 ring-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.7)]',
+      'rounded-2xl bg-white/80 dark:bg-zinc-900/80 px-4 py-3',
+      'ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.7)]',
       'hover:bg-zinc-900 hover:ring-emerald-400/40 transition'
     ].join(' ');
 
@@ -82,17 +82,16 @@ function createContributorItem({ name, avatar, role, note, discord, discordLabel
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
           <p class="truncate text-sm font-semibold text-white/95">${name}</p>
-          <span class="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5
-                       text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+          <span class="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
             ${role}
           </span>
         </div>
-        <div class="mt-0.5 space-y-0.5 text-xs text-zinc-400">
+        <div class="mt-0.5 space-y-0.5 text-xs text-zinc-500 dark:text-zinc-400">
           ${note ? `<p class="line-clamp-2">${note}</p>` : ''}
           ${discord
             ? `<p class="font-mono text-[11px] text-zinc-500">
                  ${(discordLabel || 'Discord')}:
-                 <span class="text-zinc-300">${discord}</span>
+                 <span class="text-zinc-600 dark:text-zinc-300">${discord}</span>
                </p>`
             : ''
           }
@@ -102,14 +101,14 @@ function createContributorItem({ name, avatar, role, note, discord, discordLabel
   } else {
     wrap.className = [
       'contributor inline-flex items-center gap-2',
-      'rounded-full bg-white/5 px-3 py-1.5',
-      'ring-1 ring-white/10 shadow-sm'
+      'rounded-full bg-zinc-100 dark:bg-white/5 px-3 py-1.5',
+      'ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-sm'
     ].join(' ');
 
     wrap.innerHTML = `
       <img src="${avatar}" alt="${name}"
-           class="h-8 w-8 rounded-full object-cover ring-1 ring-white/10">
-      <span class="text-xs font-medium text-zinc-100">${name}</span>
+           class="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10">
+      <span class="text-xs font-medium text-zinc-900 dark:text-zinc-100">${name}</span>
     `;
   }
 

@@ -263,6 +263,8 @@ return [
 
         'apply_filters'          => 'Apply filters',
         'clear_filters'          => 'Clear filters',
+
+        'tags'                   => 'Tags',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -326,6 +328,7 @@ return [
         'copy_failed'             => 'Failed to copy.',
         'login'                   => 'Login',
         'user_id_copied'          => 'User ID {id} copied to clipboard!',
+        'none'                    => 'N/A',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

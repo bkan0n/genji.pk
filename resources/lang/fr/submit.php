@@ -263,6 +263,8 @@ return [
 
         'apply_filters'          => 'Appliquer les filtres',
         'clear_filters'          => 'Réinitialiser les filtres',
+
+        'tags'                   => 'Tags',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -326,6 +328,7 @@ return [
         'copy_failed'            => 'Échec de la copie.',
         'login'                  => 'Connexion',
         'user_id_copied'         => 'User ID {id} copié dans le presse-papiers !',
+        'none'                   => 'N/A',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

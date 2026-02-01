@@ -154,13 +154,24 @@ if (typeof document !== 'undefined') {
 }
 
 const MAP_VIEW_LS_KEY = 'map_search_view';
-let mapSearchView = (localStorage.getItem(MAP_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
+const VIEW_DEFAULTS = {
+  map_search: 'cards',
+  completions: 'table',
+  personal_records: 'cards',
+};
+const getStoredView = (key, fallback) => {
+  const v = localStorage.getItem(key);
+  if (v === 'table' || v === 'cards') return v;
+  try { localStorage.setItem(key, fallback); } catch {}
+  return fallback;
+};
+let mapSearchView = getStoredView(MAP_VIEW_LS_KEY, VIEW_DEFAULTS.map_search);
 let lastMapRows = [];
 const COMPLETIONS_VIEW_LS_KEY = 'completions_view';
-let completionsView = (localStorage.getItem(COMPLETIONS_VIEW_LS_KEY) === 'cards') ? 'cards' : 'table';
+let completionsView = getStoredView(COMPLETIONS_VIEW_LS_KEY, VIEW_DEFAULTS.completions);
 let lastCompletionsRows = [];
 const PERSONAL_RECORDS_VIEW_LS_KEY = 'personal_records_view';
-let personalRecordsView = (localStorage.getItem(PERSONAL_RECORDS_VIEW_LS_KEY) === 'table') ? 'table' : 'cards';
+let personalRecordsView = getStoredView(PERSONAL_RECORDS_VIEW_LS_KEY, VIEW_DEFAULTS.personal_records);
 let lastPersonalRows = [];
 const OFFICIAL_NOTICE_ID = 'officialCodeNotice';
 
@@ -287,18 +298,18 @@ function __ms(n) {
 
 function showEl(el) {
   if (!el) return;
-  el.classList.remove('u-d-none');
-  el.classList.add('u-d-block');
+  el.classList.remove(...String('u-d-none').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('u-d-block').trim().split(/\s+/).filter(Boolean));
 }
 function showFlex(el) {
   if (!el) return;
-  el.classList.remove('u-d-none');
-  el.classList.add('u-flex');
+  el.classList.remove(...String('u-d-none').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('u-flex').trim().split(/\s+/).filter(Boolean));
 }
 function hideEl(el) {
   if (!el) return;
-  el.classList.remove('u-d-block', 'u-flex');
-  el.classList.add('u-d-none');
+  el.classList.remove(...String('u-d-block').trim().split(/\s+/).filter(Boolean), ...String('u-flex').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('u-d-none').trim().split(/\s+/).filter(Boolean));
 }
 
 const __madeAnim = new Set();
@@ -348,9 +359,9 @@ function __clsPos(top, left, minW) {
 }
 function __applyPos(el, top, left, minW) {
   const prev = el.dataset.posCls;
-  if (prev) el.classList.remove(prev);
+  if (prev) el.classList.remove(...String(prev).trim().split(/\s+/).filter(Boolean));
   const cls = __clsPos(top, left, minW);
-  el.classList.add(cls);
+  el.classList.add(...String(cls).trim().split(/\s+/).filter(Boolean));
   el.dataset.posCls = cls;
 }
 
@@ -407,6 +418,7 @@ function initializeIcons() {
     'category',
     'mechanics',
     'restrictions',
+    'tags',
     'playtest_filter',
     'completion_filter',
     'medal_filter',
@@ -436,6 +448,7 @@ function getIconSVG(id) {
       <path d="M12.9046 3.06005C12.6988 3 12.4659 3 12 3C11.5341 3 11.3012 3 11.0954 3.06005C10.7942 3.14794 10.5281 3.32808 10.3346 3.57511C10.2024 3.74388 10.1159 3.96016 9.94291 4.39272C9.69419 5.01452 9.00393 5.33471 8.36857 5.123L7.79779 4.93281C7.3929 4.79785 7.19045 4.73036 6.99196 4.7188C6.70039 4.70181 6.4102 4.77032 6.15701 4.9159C5.98465 5.01501 5.83376 5.16591 5.53197 5.4677C5.21122 5.78845 5.05084 5.94882 4.94896 6.13189C4.79927 6.40084 4.73595 6.70934 4.76759 7.01551C4.78912 7.2239 4.87335 7.43449 5.04182 7.85566C5.30565 8.51523 5.05184 9.26878 4.44272 9.63433L4.16521 9.80087C3.74031 10.0558 3.52786 10.1833 3.37354 10.3588C3.23698 10.5141 3.13401 10.696 3.07109 10.893C3 11.1156 3 11.3658 3 11.8663C3 12.4589 3 12.7551 3.09462 13.0088C3.17823 13.2329 3.31422 13.4337 3.49124 13.5946C3.69158 13.7766 3.96395 13.8856 4.50866 14.1035C5.06534 14.3261 5.35196 14.9441 5.16236 15.5129L4.94721 16.1584C4.79819 16.6054 4.72367 16.829 4.7169 17.0486C4.70875 17.3127 4.77049 17.5742 4.89587 17.8067C5.00015 18.0002 5.16678 18.1668 5.5 18.5C5.83323 18.8332 5.99985 18.9998 6.19325 19.1041C6.4258 19.2295 6.68733 19.2913 6.9514 19.2831C7.17102 19.2763 7.39456 19.2018 7.84164 19.0528L8.36862 18.8771C9.00393 18.6654 9.6942 18.9855 9.94291 19.6073C10.1159 20.0398 10.2024 20.2561 10.3346 20.4249C10.5281 20.6719 10.7942 20.8521 11.0954 20.94C11.3012 21 11.5341 21 12 21C12.4659 21 12.6988 21 12.9046 20.94C13.2058 20.8521 13.4719 20.6719 13.6654 20.4249C13.7976 20.2561 13.8841 20.0398 14.0571 19.6073C14.3058 18.9855 14.9961 18.6654 15.6313 18.8773L16.1579 19.0529C16.605 19.2019 16.8286 19.2764 17.0482 19.2832C17.3123 19.2913 17.5738 19.2296 17.8063 19.1042C17.9997 18.9999 18.1664 18.8333 18.4996 18.5001C18.8328 18.1669 18.9994 18.0002 19.1037 17.8068C19.2291 17.5743 19.2908 17.3127 19.2827 17.0487C19.2759 16.8291 19.2014 16.6055 19.0524 16.1584L18.8374 15.5134C18.6477 14.9444 18.9344 14.3262 19.4913 14.1035C20.036 13.8856 20.3084 13.7766 20.5088 13.5946C20.6858 13.4337 20.8218 13.2329 20.9054 13.0088C21 12.7551 21 12.4589 21 11.8663C21 11.3658 21 11.1156 20.9289 10.893C20.866 10.696 20.763 10.5141 20.6265 10.3588C20.4721 10.1833 20.2597 10.0558 19.8348 9.80087L19.5569 9.63416C18.9478 9.26867 18.6939 8.51514 18.9578 7.85558C19.1262 7.43443 19.2105 7.22383 19.232 7.01543C19.2636 6.70926 19.2003 6.40077 19.0506 6.13181C18.9487 5.94875 18.7884 5.78837 18.4676 5.46762C18.1658 5.16584 18.0149 5.01494 17.8426 4.91583C17.5894 4.77024 17.2992 4.70174 17.0076 4.71872C16.8091 4.73029 16.6067 4.79777 16.2018 4.93273L15.6314 5.12287C14.9961 5.33464 14.3058 5.0145 14.0571 4.39272C13.8841 3.96016 13.7976 3.74388 13.6654 3.57511C13.4719 3.32808 13.2058 3.14794 12.9046 3.06005Z" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     `,
     restrictions: `<path d="M12 14.5V16.5M7 10.0288C7.47142 10 8.05259 10 8.8 10H15.2C15.9474 10 16.5286 10 17 10.0288M7 10.0288C6.41168 10.0647 5.99429 10.1455 5.63803 10.327C5.07354 10.6146 4.6146 11.0735 4.32698 11.638C4 12.2798 4 13.1198 4 14.8V16.2C4 17.8802 4 18.7202 4.32698 19.362C4.6146 19.9265 5.07354 20.3854 5.63803 20.673C6.27976 21 7.11984 21 8.8 21H15.2C16.8802 21 17.7202 21 18.362 20.673C18.9265 20.3854 19.3854 19.9265 19.673 19.362C20 18.7202 20 17.8802 20 16.2V14.8C20 13.1198 20 12.2798 19.673 11.638C19.3854 11.0735 18.9265 10.6146 18.362 10.327C18.0057 10.1455 17.5883 10.0647 17 10.0288M7 10.0288V8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8V10.0288" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+    tags: `<path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59A2 2 0 0 0 3.83 11l9.59 9.59a2 2 0 0 0 2.83 0l4.34-4.34a2 2 0 0 0 0-2.83ZM7.5 8A1.5 1.5 0 1 1 9 6.5 1.5 1.5 0 0 1 7.5 8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     playtest_filter: `<path d="M14.2639 15.9376L12.5958 14.2835C11.7909 13.4852 11.3884 13.0861 10.9266 12.9402C10.5204 12.8119 10.0838 12.8166 9.68048 12.9537C9.22188 13.1096 8.82814 13.5173 8.04068 14.3327L4.04409 18.2802M14.2639 15.9376L14.6053 15.5991C15.4112 14.7999 15.8141 14.4003 16.2765 14.2544C16.6831 14.1262 17.12 14.1312 17.5236 14.2688C17.9824 14.4252 18.3761 14.834 19.1634 15.6515L20 16.4936M14.2639 15.9376L18.275 19.9566M18.275 19.9566C17.9176 20.0001 17.4543 20.0001 16.8 20.0001H7.2C6.07989 20.0001 5.51984 20.0001 5.09202 19.7821C4.71569 19.5904 4.40973 19.2844 4.21799 18.9081C4.12796 18.7314 4.07512 18.5322 4.04409 18.2802M18.275 19.9566C18.5293 19.9257 18.7301 19.8728 18.908 19.7821C19.2843 19.5904 19.5903 19.2844 19.782 18.9081C20 18.4803 20 17.9202 20 16.8001V16.4936M12.5 4L7.2 4.00011C6.07989 4.00011 5.51984 4.00011 5.09202 4.21809C4.71569 4.40984 4.40973 4.7158 4.21799 5.09213C4 5.51995 4 6.08 4 7.20011V16.8001C4 17.4576 4 17.9222 4.04409 18.2802M20 11.5V16.4936M14 10.0002L16.0249 9.59516C16.2015 9.55984 16.2898 9.54219 16.3721 9.5099C16.4452 9.48124 16.5146 9.44407 16.579 9.39917C16.6515 9.34859 16.7152 9.28492 16.8425 9.1576L21 5.00015C21.5522 4.44787 21.5522 3.55244 21 3.00015C20.4477 2.44787 19.5522 2.44787 19 3.00015L14.8425 7.1576C14.7152 7.28492 14.6515 7.34859 14.6009 7.42112C14.556 7.4855 14.5189 7.55494 14.4902 7.62801C14.4579 7.71033 14.4403 7.79862 14.4049 7.97518L14 10.0002Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     completion_filter: `<path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     medal_filter: `<path d="M12 11L8 3H4L8.5058 12.4622M12 11L16 3H20L15.4942 12.4622M12 11C13.344 11 14.5848 11.5635 15.4942 12.4622M12 11C10.656 11 9.41518 11.5635 8.5058 12.4622M15.4942 12.4622C16.4182 13.3753 17 14.6344 17 16C17 18.7614 14.7614 21 12 21C9.23858 21 7 18.7614 7 16C7 14.6344 7.58179 13.3753 8.5058 12.4622" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`,
@@ -509,6 +522,228 @@ async function loadDynamicOptions() {
 /* =========================
    TAB SYSTEM
    ========================= */
+const MAP_SEARCH_SORT_OPTIONS = [
+  'difficulty:asc',
+  'difficulty:desc',
+  'checkpoints:asc',
+  'checkpoints:desc',
+  'ratings:asc',
+  'ratings:desc',
+  'map_name:asc',
+  'map_name:desc',
+  'title:asc',
+  'title:desc',
+  'code:asc',
+  'code:desc',
+];
+
+function __formatMapSearchSortLabel(v) {
+  const raw = String(v || '').trim() || 'difficulty:asc';
+  const parts = raw.split(':');
+  const field = parts[0] || 'difficulty';
+  const dir = (parts[1] || 'asc').toLowerCase();
+
+  const fieldMap = {
+    difficulty: 'Difficulty',
+    checkpoints: 'Checkpoints',
+    ratings: 'Ratings',
+    map_name: 'Map name',
+    title: 'Title',
+    code: 'Code',
+  };
+
+  const niceField =
+    fieldMap[field] ||
+    field
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const arrow = dir === 'desc' ? '↓' : '↑';
+  return `${niceField} ${arrow}`;
+}
+
+function __syncMapSearchSortUI(v) {
+  const val = String(v || '').trim() || 'difficulty:asc';
+
+  const btn = document.getElementById('mapSearchSortButton');
+  if (btn) btn.dataset.value = val;
+
+  const valueEl = document.getElementById('mapSearchSortValue');
+  if (valueEl) valueEl.textContent = __formatMapSearchSortLabel(val);
+
+  const opts = document.getElementById('mapSearchSortOptions');
+  if (!opts) return;
+
+  // Mark selected
+  opts.querySelectorAll('.custom-option').forEach((el) => el.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
+  opts.querySelectorAll('.custom-option [data-check]').forEach((c) => (c.style.opacity = '0'));
+
+  let selected = null;
+  opts.querySelectorAll('.custom-option').forEach((el) => {
+    if (el.getAttribute('data-raw-value') === val) selected = el;
+  });
+
+  if (selected) {
+    selected.classList.add(...String('selected').trim().split(/\s+/).filter(Boolean));
+    const mark = selected.querySelector('[data-check]');
+    if (mark) mark.style.opacity = '1';
+  }
+}
+
+function __ensureMapSearchSortDropdown(anchorBtn) {
+  if (!anchorBtn) return null;
+
+  let opts = document.getElementById('mapSearchSortOptions');
+  if (!opts) {
+    opts = document.createElement('div');
+    opts.id = 'mapSearchSortOptions';
+
+    opts.className =
+      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-64 max-h-56 overflow-y-auto';
+    opts.dataset.filterKeyRaw = 'sort';
+    opts.dataset.anchorId = anchorBtn.id;
+
+    // Build options
+    for (const raw of MAP_SEARCH_SORT_OPTIONS) {
+      const optionElement = document.createElement('div');
+      optionElement.className =
+        'custom-option cursor-pointer rounded-md px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/10 flex items-center justify-between gap-3';
+      optionElement.setAttribute('data-raw-value', raw);
+
+      const displayText = __formatMapSearchSortLabel(raw);
+
+      optionElement.innerHTML = `
+        <span class="min-w-0 flex items-center gap-2">
+          <span class="truncate">${displayText}</span>
+        </span>
+        <svg data-check viewBox="0 0 20 20" class="h-4 w-4 opacity-0 transition-opacity" aria-hidden="true">
+          <path d="M5 10.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+
+      optionElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        const v = optionElement.getAttribute('data-raw-value') || 'difficulty:asc';
+
+        // Update state
+        persistentFilters = { ...(persistentFilters || {}), sort: v };
+        activeFilters = { ...(activeFilters || {}), sort: v };
+
+        __syncMapSearchSortUI(v);
+
+        // Close dropdown
+        closeFloating(opts);
+
+        // Apply immediately
+        if (typeof currentSection !== 'undefined' && currentSection === 'map_search') {
+          applyFilters(activeFilters, { pushUrl: false, syncUrl: true });
+        } else if (typeof __urlSyncFiltersFromState === 'function') {
+          __urlSyncFiltersFromState({ push: false });
+        }
+      });
+
+      opts.appendChild(optionElement);
+    }
+
+    document.body.appendChild(opts);
+  }
+
+  return opts;
+}
+
+
+function __ensureMapSearchSortControl() {
+  const tabsContainer = document.getElementById('searchTabs');
+  if (!tabsContainer) return null;
+
+  // Ensure flex row wrapper
+  let row = document.getElementById('searchTabsRow');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'searchTabsRow';
+    row.className = 'flex flex-wrap items-center gap-3';
+
+    const parent = tabsContainer.parentElement;
+    if (parent) parent.insertBefore(row, tabsContainer);
+    row.appendChild(tabsContainer);
+  }
+
+  let wrap = document.getElementById('mapSearchSortWrap');
+
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'mapSearchSortWrap';
+  }
+
+  wrap.classList.add(...String('ml-auto').trim().split(/\s+/).filter(Boolean), ...String('flex').trim().split(/\s+/).filter(Boolean), ...String('items-center').trim().split(/\s+/).filter(Boolean));
+  if (wrap.parentElement !== row) row.appendChild(wrap);
+
+  // Inject
+  if (!wrap.querySelector('#mapSearchSortButton')) {
+    const sortLbl =
+      ((typeof t === 'function' && (t('filters_toolbar.sort') || t('filters.sort'))) || '').trim() || 'Sort';
+
+    wrap.innerHTML = `
+      <button type="button" id="mapSearchSortButton"
+        class="toolbar-button cursor-pointer relative inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/95 dark:hover:bg-white/10 hover:border-zinc-300/80 dark:hover:border-white/20 transition-colors duration-200 ease-out">
+        <svg class="h-5 w-5 text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 6v12" />
+          <path d="M3 9l3-3 3 3" />
+          <path d="M21 18H11" />
+          <path d="M21 12H13" />
+          <path d="M21 6H15" />
+        </svg>
+        <div class="icon-name text-xs text-zinc-700 dark:text-zinc-300">${sortLbl}</div>
+        <div id="mapSearchSortValue" class="text-xs font-semibold text-zinc-900 dark:text-zinc-100/90 truncate max-w-[11rem]"></div>
+        <svg class="ml-0.5 h-4 w-4 text-zinc-700 dark:text-zinc-300/80" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 8l4 4 4-4" />
+        </svg>
+      </button>
+    `;
+  }
+
+  const btn = document.getElementById('mapSearchSortButton');
+  if (btn && btn.dataset.inited !== '1') {
+    btn.dataset.inited = '1';
+
+    const sp = new URL(location.href).searchParams;
+    const initial = sp.get('sort') || (persistentFilters && persistentFilters.sort) || 'difficulty:asc';
+    __syncMapSearchSortUI(initial);
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Create dropdown
+      const opts = __ensureMapSearchSortDropdown(btn);
+      if (!opts) return;
+
+      // Keep UI in sync
+      const currentVal =
+        (persistentFilters && persistentFilters.sort) ||
+        new URL(location.href).searchParams.get('sort') ||
+        'difficulty:asc';
+      __syncMapSearchSortUI(currentVal);
+
+      // Toggle
+      if (typeof __isFloatingOpen === 'function' && __isFloatingOpen(opts)) {
+        closeFloating(opts);
+      } else {
+        showDropdown(opts);
+      }
+    });
+  }
+
+  // Visibility: only show on Map Search
+  if (currentSection === 'map_search') wrap.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  else wrap.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+
+  return wrap;
+}
+
 function initSearchTabs(defaultSection = 'map_search') {
   const tabsContainer = document.getElementById('searchTabs');
   const highlight = document.getElementById('searchTabsHighlight');
@@ -520,6 +755,8 @@ function initSearchTabs(defaultSection = 'map_search') {
 
   const buttons = Array.from(tabsContainer.querySelectorAll('.search-tab'));
   if (!buttons.length) return;
+
+  const __sortWrap = __ensureMapSearchSortControl();
 
   if (getComputedStyle(tabsContainer).position === 'static') {
     tabsContainer.style.position = 'relative';
@@ -595,13 +832,25 @@ function initSearchTabs(defaultSection = 'map_search') {
 
     buttons.forEach((btn) => {
       const isActive = btn === activeBtn;
-      btn.classList.toggle('bg-white', isActive);
-      btn.classList.toggle('text-zinc-900', isActive);
-      btn.classList.toggle('text-white', !isActive);
-      btn.classList.toggle('hover:bg-white/10', !isActive);
+        (() => { const __obj = btn; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+        (() => { const __obj = btn; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+        
+        (() => { const __obj = btn; let __last; for (const __c of String('dark:text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+        (() => { const __obj = btn; let __last; for (const __c of String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+        (() => { const __obj = btn; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
     });
 
     moveHighlightTo(activeBtn, { animate: animateHighlight });
+
+    // Sort control
+    if (__sortWrap) {
+      (() => { const __obj = __sortWrap; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, String(activeSection) !== 'map_search'); return __last; })();
+      const v =
+        (persistentFilters && persistentFilters.sort) ||
+        new URL(location.href).searchParams.get('sort') ||
+        'difficulty:asc';
+      __syncMapSearchSortUI(v);
+    }
 
     if (selectedModeEl) {
       const label = activeBtn?.textContent?.trim() || '';
@@ -702,6 +951,15 @@ async function selectSection(sectionId, opts = {}) {
   // Set section early
   currentSection = sectionId;
 
+  // Show sort only on Map Search
+  {
+    const sw = document.getElementById('mapSearchSortWrap');
+    if (sw) {
+      if (currentSection === 'map_search') sw.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      else sw.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    }
+  }
+
   // Defaults filters
   if (currentSection === 'map_search') {
     const lang = String(CURRENT_LANG || 'en').toLowerCase();
@@ -715,6 +973,9 @@ async function selectSection(sectionId, opts = {}) {
       }
       if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
         persistentFilters.playtest_filter = 'All';
+      }
+      if (persistentFilters.sort == null || String(persistentFilters.sort).trim() === '') {
+        persistentFilters.sort = 'difficulty:asc';
       }
     }
 
@@ -736,9 +997,9 @@ async function selectSection(sectionId, opts = {}) {
   if (addFilterMessage) hideEl(addFilterMessage);
   if (selectedModeText) hideEl(selectedModeText);
 
-  document.querySelectorAll('.tab-buttons button').forEach((btn) => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-buttons button').forEach((btn) => btn.classList.remove(...String('active').trim().split(/\s+/).filter(Boolean)));
   const tabBtn = document.getElementById(`${sectionId}Btn`);
-  if (tabBtn) tabBtn.classList.add('active');
+  if (tabBtn) tabBtn.classList.add(...String('active').trim().split(/\s+/).filter(Boolean));
 
   //Server
   if (sectionId === 'map_search') {
@@ -752,6 +1013,14 @@ async function selectSection(sectionId, opts = {}) {
     if (!hasValue || persistentFilters.official == null || String(persistentFilters.official).trim() === '') {
       persistentFilters.official = defaultOfficial;
     }
+
+    if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
+      persistentFilters.playtest_filter = 'All';
+    }
+    if (persistentFilters.sort == null || String(persistentFilters.sort).trim() === '') {
+      persistentFilters.sort = 'difficulty:asc';
+    }
+
   }
 
   initializeToolbarButtons();
@@ -806,11 +1075,13 @@ const URL_FILTER_KEYS = new Set([
   'difficulty_exact',
   'mechanics',
   'restrictions',
+  'tags',
   'playtest_filter',
   'official',
   'user_id',
   'medal_filter',
   'completion_filter',
+  'sort',
 ]);
 
 const URL_FILTER_ALIASES = {
@@ -1195,19 +1466,19 @@ function _placeBelow(anchorRect, elWidth, elHeight, { offset = 8, pad = 8, align
 function _measure(el) {
   const prevClass = el.className;
   const prevDisp = el.classList.contains('u-d-block');
-  el.classList.add('is-measuring', 'u-d-block');
+  el.classList.add(...String('is-measuring').trim().split(/\s+/).filter(Boolean), ...String('u-d-block').trim().split(/\s+/).filter(Boolean));
   const rect = el.getBoundingClientRect();
   const width = rect.width || el.offsetWidth || 0;
   const height = rect.height || el.offsetHeight || 0;
-  el.classList.remove('is-measuring');
-  if (!prevDisp) el.classList.remove('u-d-block');
+  el.classList.remove(...String('is-measuring').trim().split(/\s+/).filter(Boolean));
+  if (!prevDisp) el.classList.remove(...String('u-d-block').trim().split(/\s+/).filter(Boolean));
   return { width, height };
 }
 
 function _ensureFloating(el, anchorEl, opts = {}) {
   if (!el || !anchorEl) return;
   if (el.parentElement !== document.body) document.body.appendChild(el);
-  el.classList.add('u-absolute');
+  el.classList.add(...String('u-absolute').trim().split(/\s+/).filter(Boolean));
   el.dataset.anchorId = anchorEl.id || '';
 
   const doPosition = () => {
@@ -1246,14 +1517,14 @@ function _ensureFloating(el, anchorEl, opts = {}) {
   window.addEventListener('resize', doPosition, true);
   _floatingRegistry.add(el);
 
-  el.classList.add('u-d-block');
+  el.classList.add(...String('u-d-block').trim().split(/\s+/).filter(Boolean));
   doPosition();
 }
 
 function _hideFloating(el) {
   if (!el) return;
-  el.classList.remove('u-d-block');
-  el.classList.add('u-d-none');
+  el.classList.remove(...String('u-d-block').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('u-d-none').trim().split(/\s+/).filter(Boolean));
   if (el._floatingHandlers) {
     window.removeEventListener('scroll', el._floatingHandlers.onScroll, true);
     window.removeEventListener('resize', el._floatingHandlers.onResize, true);
@@ -1267,7 +1538,13 @@ function _hideAllFloating() {
 }
 
 function clearToolbarButtons() {
-  document.querySelectorAll('.toolbar-button').forEach((btn) => btn.remove());
+  const toolbar =
+    document.querySelector('.toolbar-container .toolbar') ||
+    document.querySelector('#filterActions .toolbar') ||
+    document.querySelector('.toolbar');
+
+  if (!toolbar) return;
+  toolbar.querySelectorAll('.toolbar-button').forEach((btn) => btn.remove());
 }
 
 function hideOnClickOutside() {
@@ -1283,10 +1560,10 @@ function hideOnClickOutside() {
         hideAllActiveSuggestions();
         document
           .querySelectorAll('.selection-circle')
-          .forEach((c) => c.classList.remove('circle-visible'));
+          .forEach((c) => c.classList.remove(...String('circle-visible').trim().split(/\s+/).filter(Boolean)));
         document
           .querySelectorAll('.toolbar-button')
-          .forEach((btn) => btn.classList.remove('selected'));
+          .forEach((btn) => btn.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
       }
     },
     true
@@ -1298,7 +1575,7 @@ function hideOnClickOutside() {
       hideAllActiveSuggestions();
       document
         .querySelectorAll('.toolbar-button')
-        .forEach((btn) => btn.classList.remove('selected'));
+        .forEach((btn) => btn.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
     }
   });
 }
@@ -1325,12 +1602,12 @@ function hideAllFilters(exceptEl = null) {
     closeFloating(el);
   });
 
-  document.querySelectorAll('.toolbar-button').forEach((btn) => btn.classList.remove('selected'));
+  document.querySelectorAll('.toolbar-button').forEach((btn) => btn.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
 }
 
 function hideAllActiveSuggestions() {
   document.querySelectorAll('.suggestions-container').forEach((el) => {
-    el.classList.remove('active');
+    el.classList.remove(...String('active').trim().split(/\s+/).filter(Boolean));
     closeFloating(el);
   });
 }
@@ -1343,7 +1620,7 @@ function getOrCreateInput(id, placeholder, parentButton) {
     input.placeholder = t(placeholder) || placeholder;
     input.id = id;
     input.className =
-      'filter-input mt-0 w-56 rounded-lg border border-white/10 bg-zinc-900/90 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-lg ring-1 ring-white/10 focus:outline-none u-d-none';
+      'filter-input mt-0 w-56 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none u-d-none';
     input.autocomplete = 'off';
     input.autocorrect = 'off';
     input.autocapitalize = 'off';
@@ -1390,13 +1667,13 @@ function positionInputOrDropdown(input, optionsContainer) {
 function createButton(icon) {
   const button = document.createElement('button');
   button.className =
-    'toolbar-button cursor-pointer relative inline-flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/5 transition-colors';
+    'toolbar-button cursor-pointer relative inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-3 py-2 text-sm hover:bg-white/95 dark:hover:bg-white/10 hover:border-zinc-300/80 dark:hover:border-white/20 transition-colors duration-200 ease-out';
   button.setAttribute('data-name', icon.name);
   button.id = `${icon.id}FilterButton`;
   button.innerHTML = `
-    <svg class="h-5 w-5 text-zinc-200" viewBox="${icon.viewBox || '0 0 24 24'}" xmlns="http://www.w3.org/2000/svg">${icon.svg}</svg>
-    <div class="icon-name text-xs text-zinc-300">${icon.name}</div>
-    <span class="filter-badge hidden absolute -top-1 -right-1 rounded-full bg-emerald-500/90 text-[10px] font-semibold text-white leading-none ring-1 ring-white/20 px-1.5 py-0.5"></span>
+    <svg class="h-5 w-5 text-zinc-800 dark:text-zinc-200" viewBox="${icon.viewBox || '0 0 24 24'}" xmlns="http://www.w3.org/2000/svg">${icon.svg}</svg>
+    <div class="icon-name text-xs text-zinc-700 dark:text-zinc-300">${icon.name}</div>
+    <span class="filter-badge hidden absolute -top-1 -right-1 rounded-full bg-emerald-500/90 text-[10px] font-semibold text-zinc-900 dark:text-white leading-none ring-1 ring-zinc-400/60 dark:ring-white/20 px-1.5 py-0.5"></span>
   `;
   return button;
 }
@@ -1407,8 +1684,8 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
     optionsContainer = document.createElement('div');
     optionsContainer.id = id;
     optionsContainer.className =
-      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-white/10 rounded-lg w-60 max-h-56 overflow-y-auto';
-    optionsContainer.classList.add(useWrapper ? 'with-wrapper' : 'without-wrapper');
+      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-60 max-h-56 overflow-y-auto';
+    optionsContainer.classList.add(...String(useWrapper ? 'with-wrapper' : 'without-wrapper').trim().split(/\s+/).filter(Boolean));
 
     optionsContainer.dataset.filterKeyRaw = id.replace('Options', '');
     document.body.appendChild(optionsContainer);
@@ -1425,7 +1702,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       if (useWrapper) {
         wrapper = document.createElement('label');
         wrapper.className =
-          'custom-option-wrapper group flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer hover:bg-white/5 focus-within:ring-1 focus-within:ring-brand-400/40';
+          'custom-option-wrapper group flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/10 focus-within:ring-1 focus-within:ring-brand-400/40';
 
         checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -1435,7 +1712,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
         const ui = document.createElement('span');
         ui.className = [
           'inline-flex h-4 w-4 items-center justify-center rounded',
-          'border border-white/15 bg-zinc-900 ring-1 ring-inset ring-white/5',
+          'border border-zinc-200/80 dark:border-white/15 bg-white dark:bg-zinc-900 ring-1 ring-inset ring-zinc-300/40 dark:ring-white/5',
           'transition',
           'group-hover:border-white/25 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-400/60',
           'peer-checked:bg-emerald-500 peer-checked:border-emerald-500 peer-checked:ring-emerald-500/30',
@@ -1448,7 +1725,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
         `;
 
         const label = document.createElement('span');
-        label.className = 'custom-option flex-1 text-sm text-zinc-200 group-hover:text-white';
+        label.className = 'custom-option flex-1 text-sm text-zinc-800 dark:text-zinc-200 transition-colors group-hover:text-zinc-900 dark:group-hover:text-white';
         label.textContent = displayText;
         label.setAttribute('data-raw-value', rawValue);
 
@@ -1462,13 +1739,13 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
       } else {
         optionElement = document.createElement('div');
         optionElement.className =
-          'custom-option cursor-pointer rounded-md px-3 py-2 text-sm text-zinc-200 hover:bg-white/10 flex items-center justify-between gap-3';
+          'custom-option cursor-pointer rounded-md px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/10 flex items-center justify-between gap-3';
         optionElement.setAttribute('data-raw-value', rawValue);
 
         let dotHTML = '';
         if (isDifficulty) {
           const { dot } = difficultyClasses(rawValue);
-          dotHTML = `<span class="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white/20 shrink-0 ${dot}" aria-hidden="true"></span>`;
+          dotHTML = `<span class="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-zinc-400/60 dark:ring-white/20 shrink-0 ${dot}" aria-hidden="true"></span>`;
         }
 
         optionElement.innerHTML = `
@@ -1492,6 +1769,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
           case 'difficulty_exact':  labelId = 'difficulty'; break;
           case 'mechanics':         labelId = 'mechanics'; break;
           case 'restrictions':      labelId = 'restrictions'; break;
+          case 'tags':              labelId = 'tags'; break;
           case 'onlyPlaytest':      labelId = 'in playtest'; break;
           case 'ignoreCompletions': labelId = 'completed'; break;
           case 'onlyMedals':        labelId = 'medals'; break;
@@ -1501,8 +1779,8 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
         if (!useWrapper) {
           optionsContainer
             .querySelectorAll('.custom-option')
-            .forEach((opt) => opt.classList.remove('selected'));
-          optionElement.classList.add('selected');
+            .forEach((opt) => opt.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
+          optionElement.classList.add(...String('selected').trim().split(/\s+/).filter(Boolean));
 
           optionsContainer
             .querySelectorAll('.custom-option [data-check]')
@@ -1511,9 +1789,9 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
           if (mark) mark.style.opacity = '1';
         }
 
-        if (id !== 'mechanicsOptions' && id !== 'restrictionsOptions') {
+        if (id !== 'mechanicsOptions' && id !== 'restrictionsOptions' && id !== 'tagsOptions') {
           optionsContainer.style.display = 'none';
-          optionsContainer.classList.remove('show');
+          optionsContainer.classList.remove(...String('show').trim().split(/\s+/).filter(Boolean));
           _hideFloating(optionsContainer);
         }
 
@@ -1545,13 +1823,13 @@ function openPlaytestStatusPanel(button) {
     opts = document.createElement('div');
     opts.id = 'playtestStatusOptions';
     opts.className =
-      'custom-options opacity-0 translate-y-1 transition p-3 mt-0 z-45 bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-white/10 rounded-lg w-56';
+      'custom-options opacity-0 translate-y-1 transition p-3 mt-0 z-45 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-56';
     opts.dataset.filterKeyRaw = 'playtestStatus';
     opts.dataset.anchorId = button.id;
 
     opts.innerHTML = `
       <label for="playtestStatusCheckbox" class="flex items-center justify-between gap-3 select-none">
-        <span data-role="pt-status-label" class="text-sm text-zinc-200">${labelInProgress}</span>
+        <span data-role="pt-status-label" class="text-sm text-zinc-800 dark:text-zinc-200">${labelInProgress}</span>
         <span class="relative inline-flex cursor-pointer items-center">
           <input id="playtestStatusCheckbox" type="checkbox" class="peer sr-only" />
           <span
@@ -1631,9 +1909,9 @@ function openPlaytestStatusPanel(button) {
 
 function difficultyClasses(label, value) {
   const base = {
-    text: 'text-zinc-200',
-    chip: 'border-white/10 bg-white/5 text-zinc-200',
-    dot: 'bg-zinc-900/60',
+    text: 'text-zinc-800 dark:text-zinc-200',
+    chip: 'border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200',
+    dot: 'bg-white/75 dark:bg-zinc-900/60',
   };
 
   if (typeof label === 'string') {
@@ -1728,11 +2006,11 @@ function mountMapViewSwitch() {
     wrap = document.createElement('div');
     wrap.id = 'mapViewSwitch';
     wrap.className =
-      'ml-auto inline-flex items-center gap-0 rounded-lg border border-white/10 overflow-hidden ' +
-      'bg-zinc-900/60 backdrop-blur ring-1 ring-white/10';
+      'ml-auto inline-flex items-center gap-0 rounded-lg border border-zinc-200/80 dark:border-white/10 overflow-hidden ' +
+      'bg-white/75 dark:bg-zinc-900/60 backdrop-blur ring-1 ring-zinc-300/60 dark:ring-white/10';
     wrap.innerHTML = `
       <button type="button" data-view="cards"
-        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${mapSearchView==='cards'?'bg-white/10 ring-1 ring-white/10':''}"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${mapSearchView==='cards'?'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10':''}"
         aria-pressed="${mapSearchView==='cards'}">
         <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/>
@@ -1740,7 +2018,7 @@ function mountMapViewSwitch() {
         <span class="hidden sm:inline"></span>
       </button>
       <button type="button" data-view="table"
-        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${mapSearchView==='table'?'bg-white/10 ring-1 ring-white/10':''}"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${mapSearchView==='table'?'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10':''}"
         aria-pressed="${mapSearchView==='table'}">
         <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/>
@@ -1763,9 +2041,9 @@ function mountMapViewSwitch() {
     wrap.querySelectorAll('button[data-view]').forEach(b => {
       const on = (b.dataset.view === mapSearchView);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.classList.toggle('bg-white/10', on);
-      b.classList.toggle('ring-1', on);
-      b.classList.toggle('ring-white/10', on);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('ring-1').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('ring-zinc-300/60 dark:ring-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
     });
 
     if (Array.isArray(lastMapRows) && lastMapRows.length) {
@@ -1787,11 +2065,11 @@ function mountCompletionsViewSwitch() {
     wrap = document.createElement('div');
     wrap.id = 'completionsViewSwitch';
     wrap.className =
-      'ml-auto inline-flex items-center gap-0 rounded-lg border border-white/10 overflow-hidden ' +
-      'bg-zinc-900/60 backdrop-blur ring-1 ring-white/10';
+      'ml-auto inline-flex items-center gap-0 rounded-lg border border-zinc-200/80 dark:border-white/10 overflow-hidden ' +
+      'bg-white/75 dark:bg-zinc-900/60 backdrop-blur ring-1 ring-zinc-300/60 dark:ring-white/10';
     wrap.innerHTML = `
       <button type="button" data-view="cards"
-        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${completionsView==='cards'?'bg-white/10 ring-1 ring-white/10':''}"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${completionsView==='cards'?'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10':''}"
         aria-pressed="${completionsView==='cards'}">
         <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/>
@@ -1799,7 +2077,7 @@ function mountCompletionsViewSwitch() {
         <span class="hidden sm:inline"></span>
       </button>
       <button type="button" data-view="table"
-        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${completionsView==='table'?'bg-white/10 ring-1 ring-white/10':''}"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${completionsView==='table'?'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10':''}"
         aria-pressed="${completionsView==='table'}">
         <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/>
@@ -1822,9 +2100,9 @@ function mountCompletionsViewSwitch() {
     wrap.querySelectorAll('button[data-view]').forEach(b => {
       const on = (b.dataset.view === completionsView);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.classList.toggle('bg-white/10', on);
-      b.classList.toggle('ring-1', on);
-      b.classList.toggle('ring-white/10', on);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('ring-1').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('ring-zinc-300/60 dark:ring-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
     });
 
     if (Array.isArray(lastCompletionsRows) && lastCompletionsRows.length) {
@@ -1847,11 +2125,11 @@ function mountPersonalRecordsViewSwitch() {
     wrap = document.createElement('div');
     wrap.id = 'personalViewSwitch';
     wrap.className =
-      'ml-auto inline-flex items-center gap-0 rounded-lg border border-white/10 overflow-hidden '+
-      'bg-zinc-900/60 backdrop-blur ring-1 ring-white/10';
+      'ml-auto inline-flex items-center gap-0 rounded-lg border border-zinc-200/80 dark:border-white/10 overflow-hidden '+
+      'bg-white/75 dark:bg-zinc-900/60 backdrop-blur ring-1 ring-zinc-300/60 dark:ring-white/10';
     wrap.innerHTML = `
       <button type="button" data-view="cards"
-        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${personalRecordsView==='cards'?'bg-white/10 ring-1 ring-white/10':''}"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${personalRecordsView==='cards'?'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10':''}"
         aria-pressed="${personalRecordsView==='cards'}">
         <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/>
@@ -1859,7 +2137,7 @@ function mountPersonalRecordsViewSwitch() {
         <span class="hidden sm:inline"></span>
       </button>
       <button type="button" data-view="table"
-        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${personalRecordsView==='table'?'bg-white/10 ring-1 ring-white/10':''}"
+        class="cursor-pointer px-2.5 py-1.5 text-xs flex items-center gap-1 ${personalRecordsView==='table'?'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10':''}"
         aria-pressed="${personalRecordsView==='table'}">
         <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/>
@@ -1882,9 +2160,9 @@ function mountPersonalRecordsViewSwitch() {
     wrap.querySelectorAll('button[data-view]').forEach(b => {
       const on = (b.dataset.view === personalRecordsView);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.classList.toggle('bg-white/10', on);
-      b.classList.toggle('ring-1', on);
-      b.classList.toggle('ring-white/10', on);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('ring-1').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('ring-zinc-300/60 dark:ring-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
     });
 
     if (Array.isArray(lastPersonalRows) && lastPersonalRows.length) {
@@ -1897,9 +2175,10 @@ function mountPersonalRecordsViewSwitch() {
 
 function getSectionView(section) {
   const key = VIEW_LS_KEYS[section];
-  if (!key) return 'cards';
+  const fallback = VIEW_DEFAULTS[section] || 'cards';
+  if (!key) return fallback;
   const v = localStorage.getItem(key);
-  return v === 'table' ? 'table' : 'cards';
+  return (v === 'table' || v === 'cards') ? v : fallback;
 }
 
 function ensureOfficialNoticeElement() {
@@ -1983,7 +2262,7 @@ function initializeToolbarButtons() {
       hideAllFilters();
       hideAllActiveSuggestions();
 
-      button.classList.add('selected');
+      button.classList.add(...String('selected').trim().split(/\s+/).filter(Boolean));
 
       let input, optionsContainer;
       switch (icon.id) {
@@ -2112,6 +2391,14 @@ function initializeToolbarButtons() {
             false
           );
           break;
+        case 'tags':
+          optionsContainer = showOptionsContainer(
+            'tagsOptions',
+            TAG_OPTIONS,
+            button,
+            true
+          );
+          break;
         case 'playtest_filter':
           optionsContainer = showOptionsContainer(
             'playtest_filterOptions',
@@ -2170,6 +2457,7 @@ function updateActiveFilters() {
     medalFilter: 'medal_filter',
     mechanics: 'mechanics',
     restrictions: 'restrictions',
+    tags: 'tags',
     completionFilter: 'completion_filter',
     official: 'official',
   };
@@ -2180,7 +2468,7 @@ function updateActiveFilters() {
     const filterId = optionsContainer.id.replace('Options', '');
     const mappedFilterId = filterMappings[filterId] || filterId;
 
-    if (filterId === 'mechanics' || filterId === 'restrictions') {
+    if (filterId === 'mechanics' || filterId === 'restrictions' || filterId === 'tags') {
       const checkboxes = optionsContainer.querySelectorAll('.custom-checkbox:checked');
 
       if (checkboxes.length > 0) {
@@ -2374,7 +2662,7 @@ function updateToolbarButtonStates() {
     }
 
     // Mechanics/Restrictions
-    if (filterId === 'mechanics' || filterId === 'restrictions') {
+    if (filterId === 'mechanics' || filterId === 'restrictions' || filterId === 'tags') {
       return optionLabelFromWindowList(filterId, v);
     }
 
@@ -2419,40 +2707,22 @@ function updateToolbarButtonStates() {
     const effectiveActive = !isLockedByCode && isActive;
 
     if (effectiveActive) {
-      button.classList.add(
-        'active-filter',
-        'border-brand-400/40',
-        'ring-1',
-        'ring-emerald-500/30'
-      );
+      button.classList.add(...String('active-filter').trim().split(/\s+/).filter(Boolean), ...String('border-brand-400/40').trim().split(/\s+/).filter(Boolean), ...String('ring-1').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/30').trim().split(/\s+/).filter(Boolean));
     } else {
-      button.classList.remove(
-        'active-filter',
-        'border-brand-400/40',
-        'ring-1',
-        'ring-emerald-500/30'
-      );
+      button.classList.remove(...String('active-filter').trim().split(/\s+/).filter(Boolean), ...String('border-brand-400/40').trim().split(/\s+/).filter(Boolean), ...String('ring-1').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/30').trim().split(/\s+/).filter(Boolean));
     }
 
     // ====== Lock ======
     if (isLockedByCode) {
       button.disabled = true;
-      button.classList.add(
-        'cursor-not-allowed',
-        'pointer-events-none',
-        'is-disabled-by-code'
-      );
+      button.classList.add(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('is-disabled-by-code').trim().split(/\s+/).filter(Boolean));
 
-      button.classList.remove('selected');
+      button.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
       const circle = button.querySelector('.selection-circle');
-      if (circle) circle.classList.remove('circle-visible');
+      if (circle) circle.classList.remove(...String('circle-visible').trim().split(/\s+/).filter(Boolean));
     } else {
       button.disabled = false;
-      button.classList.remove(
-        'cursor-not-allowed',
-        'pointer-events-none',
-        'is-disabled-by-code'
-      );
+      button.classList.remove(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean), ...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('is-disabled-by-code').trim().split(/\s+/).filter(Boolean));
     }
 
     // ====== Badge ======
@@ -2460,7 +2730,7 @@ function updateToolbarButtonStates() {
     if (!badge) return;
 
     if (!effectiveActive) {
-      badge.classList.add('hidden');
+      badge.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       badge.textContent = '';
       return;
     }
@@ -2488,7 +2758,7 @@ function updateToolbarButtonStates() {
     }
 
     badge.textContent = text;
-    badge.classList.remove('hidden');
+    badge.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -2500,6 +2770,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
     difficultyExact: 'difficulty_exact',
     mechanics: 'mechanics',
     restrictions: 'restrictions',
+    tags: 'tags',
     playtest_filter: 'playtest_filter',
     completionFilter: 'completion_filter',
     medalFilter: 'medal_filter',
@@ -2511,7 +2782,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
   const val = source[mapped];
   if (val == null) return;
 
-  if (mapped === 'mechanics' || mapped === 'restrictions') {
+  if (mapped === 'mechanics' || mapped === 'restrictions' || mapped === 'tags') {
     const selected = new Set(Array.isArray(val) ? val.map((v) => String(v).toLowerCase()) : []);
     optionsContainer.querySelectorAll('.custom-option-wrapper').forEach((w) => {
       const label = w.querySelector('.custom-option');
@@ -2526,8 +2797,8 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
   optionsContainer.querySelectorAll('.custom-option').forEach((opt) => {
     const raw = opt.getAttribute('data-raw-value');
     const match = String(val) === raw;
-    if (match) opt.classList.add('selected');
-    else opt.classList.remove('selected');
+    if (match) opt.classList.add(...String('selected').trim().split(/\s+/).filter(Boolean));
+    else opt.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
   });
 
   const allChecks = optionsContainer.querySelectorAll('.custom-option [data-check]');
@@ -2583,18 +2854,13 @@ function clearFilters(silent = false) {
   document.querySelectorAll('.custom-checkbox').forEach((cb) => (cb.checked = false));
   document
     .querySelectorAll('.custom-option.selected')
-    .forEach((opt) => opt.classList.remove('selected'));
+    .forEach((opt) => opt.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean)));
   document
     .querySelectorAll('.custom-option [data-check]')
     .forEach((svg) => (svg.style.opacity = '0'));
 
   document.querySelectorAll('.toolbar-button').forEach((btn) =>
-    btn.classList.remove(
-      'active-filter',
-      'border-brand-400/40',
-      'ring-1',
-      'ring-emerald-500/30'
-    )
+    btn.classList.remove(...String('active-filter').trim().split(/\s+/).filter(Boolean), ...String('border-brand-400/40').trim().split(/\s+/).filter(Boolean), ...String('ring-1').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/30').trim().split(/\s+/).filter(Boolean))
   );
 
   // Server
@@ -2822,8 +3088,8 @@ function getSuggestionsContainer(containerId, input) {
     suggestionsContainer.id = containerId;
     suggestionsContainer.className = [
       'suggestions-container z-[1110]',
-      'rounded-lg border border-white/10 bg-zinc-900/95 text-sm text-zinc-100',
-      'shadow-xl ring-1 ring-white/10',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 text-sm text-zinc-900 dark:text-zinc-100',
+      'shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10',
       'max-h-56 overflow-y-auto',
       'u-d-none',
     ].join(' ');
@@ -2872,7 +3138,7 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
         const d = document.createElement('div');
         d.textContent = label;
         d.className =
-          'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-200 hover:bg-white/10';
+          'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
         d.setAttribute('data-raw-value', raw);
         d.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -2898,9 +3164,9 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
           const parentId = input.getAttribute('data-parent') || '';
           const parentBtn = parentId ? document.getElementById(parentId) : null;
           if (parentBtn) {
-            parentBtn.classList.remove('selected');
+            parentBtn.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
             const circle = parentBtn.querySelector('.selection-circle');
-            if (circle) circle.classList.remove('circle-visible');
+            if (circle) circle.classList.remove(...String('circle-visible').trim().split(/\s+/).filter(Boolean));
           }
         });
         return d;
@@ -3191,7 +3457,7 @@ document.addEventListener('DOMContentLoaded', () => {
    INTERACTIVITY
    ========================= */
 function qualityMicroBarHTML(value, max = 6) {
-  if (value == null || isNaN(value)) return '<span class="text-zinc-500">N/A</span>';
+  if (value == null || isNaN(value)) return '<span class="text-zinc-600 dark:text-zinc-500">N/A</span>';
   const vnum = Number(value);
   const v = Math.max(0, Math.min(max, vnum));
   const percent = (v / max) * 100;
@@ -3223,11 +3489,11 @@ function animateQualityBars() {
     if (!fill) return;
     const target = parseFloat(bar.dataset.target) || 0;
     const color = bar.dataset.color || '#22c55e';
-    bar.classList.add(__clsQmbColor(color));
+    bar.classList.add(...String(__clsQmbColor(color)).trim().split(/\s+/).filter(Boolean));
     const delayCls = __clsTransDelay(Math.min(i * 30, 300));
-    fill.classList.add(delayCls);
+    fill.classList.add(...String(delayCls).trim().split(/\s+/).filter(Boolean));
     requestAnimationFrame(() => {
-      bar.classList.add(__clsWidthPct(target));
+      bar.classList.add(...String(__clsWidthPct(target)).trim().split(/\s+/).filter(Boolean));
       bar.dataset.anim = 'done';
     });
   });
@@ -3266,8 +3532,8 @@ function applySplitFlap(root = document) {
 
 function cascadeRows() {
   document.querySelectorAll('tbody tr').forEach((tr, i) => {
-    tr.classList.add(__clsAnimDelay(__clamp(i * 30, 0, 250)), 'tr-sf-enter');
-    tr.addEventListener('animationend', () => tr.classList.remove('tr-sf-enter'), { once: true });
+    tr.classList.add(...String(__clsAnimDelay(__clamp(i * 30, 0, 250))).trim().split(/\s+/).filter(Boolean), ...String('tr-sf-enter').trim().split(/\s+/).filter(Boolean));
+    tr.addEventListener('animationend', () => tr.classList.remove(...String('tr-sf-enter').trim().split(/\s+/).filter(Boolean)), { once: true });
   });
 }
 
@@ -3276,12 +3542,12 @@ function mountToolbarAnimation() {
   if (!c) return;
   if (!c.classList.contains('is-mounted')) {
     requestAnimationFrame(() => {
-      c.classList.add('is-mounted');
+      c.classList.add(...String('is-mounted').trim().split(/\s+/).filter(Boolean));
       const btns = c.querySelectorAll('.toolbar-button');
       btns.forEach((b, i) => {
         const delay = Math.min(220, i * 35);
-        b.classList.add(__clsTransDelay(delay));
-        requestAnimationFrame(() => b.classList.add('sf-in'));
+        b.classList.add(...String(__clsTransDelay(delay)).trim().split(/\s+/).filter(Boolean));
+        requestAnimationFrame(() => b.classList.add(...String('sf-in').trim().split(/\s+/).filter(Boolean)));
       });
     });
   }
@@ -3290,9 +3556,9 @@ function mountToolbarAnimation() {
 function refreshToolbarAnimation() {
   const c = document.querySelector('.toolbar-container');
   if (!c) return;
-  c.classList.remove('is-mounted');
+  c.classList.remove(...String('is-mounted').trim().split(/\s+/).filter(Boolean));
   c.querySelectorAll('.toolbar-button').forEach((b) => {
-    b.classList.remove('sf-in');
+    b.classList.remove(...String('sf-in').trim().split(/\s+/).filter(Boolean));
   });
   requestAnimationFrame(mountToolbarAnimation);
 }
@@ -3307,12 +3573,12 @@ function escAttr(v) {
 function smoothRevealTableRows(rootEl) {
   const rows = rootEl.querySelectorAll('tbody tr');
   if (!rows.length) return;
-  rows.forEach((tr) => tr.classList.add('gp-reveal'));
+  rows.forEach((tr) => tr.classList.add(...String('gp-reveal').trim().split(/\s+/).filter(Boolean)));
   requestAnimationFrame(() => {
     rows.forEach((tr, i) => {
       const delay = __clamp(i * 18, 0, 280);
-      tr.classList.add(__clsTransDelay(delay), 'gp-reveal-show');
-      tr.classList.remove('gp-reveal');
+      tr.classList.add(...String(__clsTransDelay(delay)).trim().split(/\s+/).filter(Boolean), ...String('gp-reveal-show').trim().split(/\s+/).filter(Boolean));
+      tr.classList.remove(...String('gp-reveal').trim().split(/\s+/).filter(Boolean));
     });
   });
 }
@@ -3343,13 +3609,13 @@ function mountLoadingBar() {
 function showLoadingBar() {
   mountLoadingBar();
   requestAnimationFrame(() => {
-    loadingEl.classList.add('is-visible');
+    loadingEl.classList.add(...String('is-visible').trim().split(/\s+/).filter(Boolean));
   });
 }
 
 function hideLoadingBar() {
   if (!loadingEl) return;
-  loadingEl.classList.remove('is-visible');
+  loadingEl.classList.remove(...String('is-visible').trim().split(/\s+/).filter(Boolean));
 }
 
 function openFloating(
@@ -3362,25 +3628,26 @@ function openFloating(
   ['pointerdown', 'mousedown', 'click'].forEach((type) =>
     el.addEventListener(type, (e) => e.stopPropagation())
   );
+  const align = el?.id === 'mapSearchSortOptions' ? 'right' : 'left';
 
   if (__isFloatingOpen(el)) {
-    _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align: 'left' } });
+    _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align } });
     return;
   }
 
   el.dataset.floatOpen = '1';
   el.style.transformOrigin = origin;
 
-  el.classList.remove('invisible', 'u-invisible');
+  el.classList.remove(...String('invisible').trim().split(/\s+/).filter(Boolean), ...String('u-invisible').trim().split(/\s+/).filter(Boolean));
   el.style.visibility = 'visible';
 
   el.style.transition = 'none';
   el.style.opacity = 0;
   el.style.transform = 'translateY(4px) scale(0.98)';
 
-  _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align: 'left' } });
-  el.classList.remove('u-d-none');
-  el.classList.add('u-d-block');
+  _ensureFloating(el, anchor, { matchAnchorWidth, place: { offset, pad: 8, align } });
+  el.classList.remove(...String('u-d-none').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('u-d-block').trim().split(/\s+/).filter(Boolean));
 
   requestAnimationFrame(() => {
     el.style.transition = `opacity ${dur}ms ease-out, transform ${dur}ms ease-out`;
@@ -3400,8 +3667,8 @@ function closeFloating(el, { dur = 120 } = {}) {
   el.style.transform = 'translateY(4px) scale(0.98)';
 
   const done = () => {
-    el.classList.remove('u-d-block');
-    el.classList.add('u-d-none');
+    el.classList.remove(...String('u-d-block').trim().split(/\s+/).filter(Boolean));
+    el.classList.add(...String('u-d-none').trim().split(/\s+/).filter(Boolean));
     el.style.transition = '';
     el.style.opacity = '';
     el.style.transform = '';
@@ -3469,7 +3736,7 @@ async function displayMapSearchResultsCards(rowsInput) {
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -3531,7 +3798,7 @@ async function displayMapSearchResultsCards(rowsInput) {
       user_id && r.medal_type === 'Bronze' ? 'mx-card--bronze' : '';
 
     return `
-      <article class="mx-card ${diffCls} ${medalClass}">
+      <article class="mx-card is-in ${diffCls} ${medalClass}">
         <div class="mx-hero">
           <div class="mx-skel"></div>
           <img src="${escAttr(bannerPath)}" alt="" data-fallback-src="${escAttr(bannerFB)}" />
@@ -3640,8 +3907,8 @@ async function displayMapSearchResultsCards(rowsInput) {
   resultsRoot.querySelectorAll('.mx-hero').forEach((hero) => {
     const img = hero.querySelector('img'); if (!img) return;
     const fb = img.getAttribute('data-fallback-src');
-    if (img.complete && img.naturalWidth > 0) hero.classList.remove('is-loading');
-    else img.addEventListener('load', () => hero.classList.remove('is-loading'), { once:true });
+    if (img.complete && img.naturalWidth > 0) hero.classList.remove(...String('is-loading').trim().split(/\s+/).filter(Boolean));
+    else img.addEventListener('load', () => hero.classList.remove(...String('is-loading').trim().split(/\s+/).filter(Boolean)), { once:true });
     img.addEventListener('error', () => { if (fb && img.src !== fb) img.src = fb; }, { once:true });
   });
 
@@ -3653,10 +3920,7 @@ async function displayMapSearchResultsCards(rowsInput) {
     })
   );
 
-  Array.from(resultsRoot.querySelectorAll('.mx-card')).forEach((el, i) =>
-    setTimeout(() => el.classList.add('is-in'), 24 * i)
-  );
-}
+  }
 // ================== TABLE DISPLAY ============== //
 async function displayMapSearchResultsTable(rowsInput) {
   const rows = Array.isArray(rowsInput) ? rowsInput : normalizeToRows(rowsInput, 'map');
@@ -3668,7 +3932,7 @@ async function displayMapSearchResultsTable(rowsInput) {
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -3684,7 +3948,7 @@ async function displayMapSearchResultsTable(rowsInput) {
   };
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
       <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
       <div class="whitespace-nowrap">${t('thead.mapName')}</div>
       <div class="whitespace-nowrap">${t('thead.mapType')}</div>
@@ -3719,12 +3983,12 @@ async function displayMapSearchResultsTable(rowsInput) {
       const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
       return `
         <a href="${escAttr(profileHref)}"
-          class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+          class="inline-flex items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
           title="${escAttr(name)}">
           <img
             src="${escAttr(fallback)}"
             alt=""
-            class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+            class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
             loading="lazy" decoding="async" referrerpolicy="no-referrer"
             data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
             data-fallback-src="${escAttr(fallback)}"
@@ -3741,8 +4005,8 @@ async function displayMapSearchResultsTable(rowsInput) {
     const codeChip = code !== 'N/A'
       ? `
         <button type="button"
-                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
-                       text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
+                       text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                        w-full min-w-0"
                 data-code="${escAttr(code)}"
                 aria-label="${escAttr(t('popup.copy_map_code'))}"
@@ -3757,7 +4021,7 @@ async function displayMapSearchResultsTable(rowsInput) {
       : `<span data-sf="N/A"></span>`;
 
     return `
-      <div class="${halo} grid grid-map_search bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+      <div class="${halo} grid grid-map_search bg-white/70 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-white/10 transition px-3 py-2">
         <div class="min-w-0">${codeChip}</div>
         <div class="min-w-0"><span class="gp-td-mapname truncate block" data-sf="${escAttr(r.map_name || 'N/A')}"></span></div>
         <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(mapType)}"></span></div>
@@ -3767,7 +4031,7 @@ async function displayMapSearchResultsTable(rowsInput) {
         <div class="min-w-0">
           <button
             type="button"
-            class="js-open-map-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
+            class="js-open-map-details inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer"
             data-index="${idx}">
             ${esc(t('thead.mapView'))}
           </button>
@@ -3776,7 +4040,7 @@ async function displayMapSearchResultsTable(rowsInput) {
   }).join('');
 
   const shell = `
-    <div class="rounded-2xl border border-white/10 bg-white/5 gp-wrap">
+    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 gp-wrap">
       <div class="results-xscroll" tabindex="0">
         <div class="minw-map_search">
           ${headerHTML}
@@ -3847,19 +4111,19 @@ function ensureSearchDetailsModal() {
          class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200"
          role="dialog" aria-modal="true" aria-labelledby="mapModalTitle">
       <!-- Gradient border wrapper (no inline CSS) -->
-      <div class="mx-4 w-[min(96vw,1080px)] max-h-[100vh] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
+      <div class="mx-4 w-[min(96vw,1080px)] max-h-[calc(100dvh-2rem)] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-zinc-300/60 dark:ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
         <div id="detailsModalBox"
-             class="relative min-h-[640px] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
+             class="relative min-h-0 sm:min-h-[640px] max-h-[calc(100dvh-2rem)] overflow-y-auto overflow-x-hidden rounded-3xl bg-white/90 dark:bg-zinc-900/90 text-zinc-900 dark:text-zinc-100 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
 
           <!-- Header / Cover -->
-          <div class="relative h-56 overflow-hidden rounded-t-3xl">
-            <img id="mapModalCover" alt="" class="h-full w-full object-cover opacity-80">
+          <div class="relative h-56 w-full overflow-hidden rounded-t-3xl">
+            <img id="mapModalCover" alt="" class="absolute inset-0 block h-full w-full min-w-full max-w-none object-cover opacity-80">
             <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-zinc-900/80"></div>
 
             <!-- Top actions -->
             <div class="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
               <span id="mapCompleted"
-                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/80 ring-1 ring-white/15">
+                    class="inline-flex items-center gap-2 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-1 text-sm font-medium text-zinc-900 dark:text-white/80 ring-1 ring-zinc-300/60 dark:ring-white/15">
                 <span class="h-2 w-2 rounded-full bg-white/60"></span>
                 ${t('card.completed')}
               </span>
@@ -3867,8 +4131,8 @@ function ensureSearchDetailsModal() {
               <div class="flex items-center gap-2">
                 <!-- Change requests -->
                 <button type="button" id="btnOpenMapEditRequest"
-                  class="group inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 ring-1 ring-white/15 hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  class="group inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-white/85 ring-1 ring-zinc-300/60 dark:ring-white/15 hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15 hover:text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/80 group-hover:text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
                   </svg>
@@ -3877,9 +4141,9 @@ function ensureSearchDetailsModal() {
 
                 <!-- Close -->
                 <button type="button" id="modalCloseBtn"
-                  class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                  class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
                   aria-label="${t('popup.close')}">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-zinc-900 dark:text-white/85 group-hover:text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                   </svg>
                 </button>
@@ -3888,20 +4152,27 @@ function ensureSearchDetailsModal() {
           </div>
 
           <!-- Content -->
-          <div class="grid gap-6 p-6 md:grid-cols-12">
+          <div class="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-12">
             <!-- Left -->
-            <div class="md:col-span-7 space-y-6">
+            <div class="md:col-span-7 min-w-0 space-y-6">
               <!-- Code + Copy + Guide -->
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-center justify-between gap-4">
+              <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                  <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapCode')}</div>
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapCode')}</div>
                   <div id="mapCode" class="mt-1 font-mono text-lg">—</div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
                   <!-- Guide button -->
                   <button id="btnGuide"
                           type="button"
-                          class="hidden inline-flex cursor-pointer items-center rounded-xl bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40 hover:bg-indigo-500/25 hover:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+                          class="hidden inline-flex cursor-pointer items-center rounded-xl px-3 py-2 text-sm font-semibold
+                              bg-indigo-100 text-indigo-900 ring-1 ring-indigo-300
+                              hover:bg-indigo-200 hover:text-indigo-950
+                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40
+                              dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-400/40
+                              dark:hover:bg-indigo-500/25 dark:hover:text-indigo-100
+                              dark:focus:ring-indigo-400/60
+                              transition-colors duration-150"
                           aria-disabled="true">
                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M4 19.5V6a2 2 0 0 1 2-2h9.5A2.5 2.5 0 0 1 18 6.5V18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -3913,7 +4184,14 @@ function ensureSearchDetailsModal() {
 
                   <button id="btnCopyCode"
                           title="${t('popup.copy_map_code')}"
-                          class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                          class="inline-flex cursor-pointer items-center rounded-xl px-3 py-2 text-sm font-semibold
+                              bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300
+                              hover:bg-emerald-200 hover:text-emerald-950
+                              focus:outline-none focus:ring-2 focus:ring-emerald-500/40
+                              dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30
+                              dark:hover:bg-emerald-500/20 dark:hover:text-emerald-200
+                              dark:focus:ring-emerald-400/60
+                              transition-colors duration-150">
                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -3925,11 +4203,11 @@ function ensureSearchDetailsModal() {
 
               <!-- Linked official/unofficial code -->
               <div id="linkedCodeContainer"
-                  class="mt-3 hidden rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-center justify-between gap-4">
+                  class="mt-3 hidden rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4 flex items-center justify-between gap-4">
                 <div>
-                  <div id="linkedCodeLabel" class="text-xs uppercase tracking-widest text-white/60">
+                  <div id="linkedCodeLabel" class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">
                   </div>
-                  <div id="linkedCode" class="mt-1 font-mono text-sm text-white/90">—</div>
+                  <div id="linkedCode" class="mt-1 font-mono text-sm text-zinc-900 dark:text-white/90">—</div>
                 </div>
                 <button id="btnCopyLinkedCode"
                         title="${t('popup.copy_map_code')}"
@@ -3943,62 +4221,66 @@ function ensureSearchDetailsModal() {
               </div>
 
               <!-- Medals -->
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapMedal')}</div>
+              <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapMedal')}</div>
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div class="rounded-xl p-3 ring-1 bg-yellow-500/10 ring-yellow-400/30">
-                    <div class="text-xs text-white/70">${t('thead.mapGold')}</div>
+                    <div class="text-xs text-zinc-900 dark:text-white/70">${t('thead.mapGold')}</div>
                     <div id="mapGold" class="text-lg font-semibold">—</div>
                   </div>
                   <div class="rounded-xl p-3 ring-1 bg-slate-300/10 ring-slate-300/30">
-                    <div class="text-xs text-white/70">${t('thead.mapSilver')}</div>
+                    <div class="text-xs text-zinc-900 dark:text-white/70">${t('thead.mapSilver')}</div>
                     <div id="mapSilver" class="text-lg font-semibold">—</div>
                   </div>
                   <div class="rounded-xl p-3 ring-1 bg-amber-700/10 ring-amber-600/30">
-                    <div class="text-xs text-white/70">${t('thead.mapBronze')}</div>
+                    <div class="text-xs text-zinc-900 dark:text-white/70">${t('thead.mapBronze')}</div>
                     <div id="mapBronze" class="text-lg font-semibold">—</div>
                   </div>
                 </div>
               </div>
 
               <!-- Description -->
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapDescription')}</div>
-                <p id="mapDescription" class="mt-2 leading-relaxed text-white/85">—</p>
+              <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapDescription')}</div>
+                <p id="mapDescription" class="mt-2 leading-relaxed text-zinc-900 dark:text-white/85">—</p>
               </div>
 
               <!-- Mechanics / Restrictions -->
               <div class="grid gap-4 sm:grid-cols-2">
-                <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                  <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapMechanics')}</div>
+                <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapMechanics')}</div>
                   <div id="mapMechanics" class="mt-2 flex flex-wrap gap-2"></div>
                 </div>
-                <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                  <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapRestrictions')}</div>
+                <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapRestrictions')}</div>
                   <div id="mapRestrictions" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
+                <div class="sm:col-span-2 rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${(typeof t==='function' ? (t('thead.mapTags') || t('filters_toolbar.tags') || 'Tags') : 'Tags')}</div>
+                  <div id="mapTags" class="mt-2 flex flex-wrap gap-2"></div>
                 </div>
               </div>
             </div>
 
             <!-- Right -->
-            <div class="md:col-span-5 space-y-6">
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                <div class="text-xs uppercase tracking-widest text-white/60">${t('thead.mapDetails')}</div>
+            <div class="md:col-span-5 min-w-0 space-y-6">
+              <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapDetails')}</div>
                 <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                  <dt class="text-xs text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${t('thead.mapCheckpoints')}</dt><dd id="mapCheckpoints" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${t('thead.mapStatus', 'Status')}</dt>
-                  <dd id="mapStatus" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${t('thead.mapQuality')}</dt><dd id="mapQualityDetail" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="min-w-0 break-words text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapCheckpoints')}</dt><dd id="mapCheckpoints" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapStatus', 'Status')}</dt>
+                  <dd id="mapStatus" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapQuality')}</dt><dd id="mapQualityDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
                 </dl>
               </div>
 
-              <div class="rounded-2xl bg-gradient-to-b from-white/5 to-white/0 ring-1 ring-white/10 p-4">
+              <div class="rounded-2xl bg-gradient-to-b from-white/5 to-white/0 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
                 <div class="flex items-center justify-between">
-                  <div class="text-xs uppercase tracking-widest text-white/60">${t('chart.record_progression_time')}</div>
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('chart.record_progression_time')}</div>
                 </div>
                 <div id="chartContainer" class="mt-2"></div>
               </div>
@@ -4170,16 +4452,16 @@ function ensureMapEditRequestModal() {
       : 'Close';
 
   overlay.innerHTML = `
-    <div data-mer-box class="mx-4 flex w-[min(96vw,1100px)] max-h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl ring-1 ring-white/10">
+    <div data-mer-box class="mx-4 flex w-[min(96vw,1100px)] max-h-full flex-col overflow-hidden rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/70 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
       <!-- Header -->
-      <div class="flex items-start justify-between gap-4 border-b border-white/10 bg-zinc-900/40 px-5 py-4">
+      <div class="flex items-start justify-between gap-4 border-b border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 px-5 py-4">
         <div class="min-w-0">
-          <div class="text-lg font-semibold text-white">${__merEsc(title)}</div>
-          <div class="mt-0.5 text-sm text-zinc-300">${__merEsc(subtitle)}</div>
+          <div class="text-lg font-semibold text-zinc-900 dark:text-white">${__merEsc(title)}</div>
+          <div class="mt-0.5 text-sm text-zinc-700 dark:text-zinc-300">${__merEsc(subtitle)}</div>
         </div>
 
         <button type="button" data-mer-close
-          class="inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-white/80 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
+          class="inline-flex cursor-pointer items-center justify-center rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-2 text-zinc-900 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
             <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -4192,24 +4474,24 @@ function ensureMapEditRequestModal() {
         <div id="merLoginNotice" class="hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"></div>
 
         <!-- Request -->
-        <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4">
+        <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 space-y-4">
           <div class="grid gap-4 sm:grid-cols-2">
-            <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.code') || 'Code') : 'Code')}</div>
+            <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+              <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.code') || 'Code') : 'Code')}</div>
               <div id="merCode"
-                class="mt-1 w-full select-none pointer-events-none cursor-default rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100">N/A</div>
+                class="mt-1 w-full select-none pointer-events-none cursor-default rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">N/A</div>
             </div>
 
-            <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.created_by') || 'Created by') : 'Created by')}</div>
+            <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+              <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.created_by') || 'Created by') : 'Created by')}</div>
               <div id="merCreatedBy"
-                class="mt-1 w-full select-none pointer-events-none cursor-default rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100">N/A</div>
+                class="mt-1 w-full select-none pointer-events-none cursor-default rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">N/A</div>
             </div>
 
-            <div class="sm:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <div class="text-[11px] text-zinc-400">${__merEsc(reasonLabel)}</div>
+            <div class="sm:col-span-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+              <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(reasonLabel)}</div>
               <textarea id="merReason" rows="3"
-                class="mt-1 w-full resize-y rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                class="mt-1 w-full resize-y rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                 placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.reason_placeholder') || 'Explain why you want to change this map…') : 'Explain why you want to change this map…')}"></textarea>
             </div>
           </div>
@@ -4218,69 +4500,69 @@ function ensureMapEditRequestModal() {
         <!-- Proposed changes -->
         <div class="space-y-6">
           <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-white/90">
+            <div class="text-sm font-semibold text-zinc-900 dark:text-white/90">
               ${__merEsc(typeof t === 'function' ? (t('map_edit_request.proposed_changes') || 'Proposed changes') : 'Proposed changes')}
             </div>
-            <div class="text-xs text-zinc-400">
+            <div class="text-xs text-zinc-600 dark:text-zinc-400">
               ${__merEsc(typeof t === 'function' ? (t('map_edit_request.proposed_hint') || 'Only changed fields will be sent') : 'Only changed fields will be sent')}
             </div>
           </div>
 
           <!-- META (submitMapForm-like) -->
-          <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 pt-card-anim pt-in">
+          <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 pt-card-anim pt-in">
             <div class="mb-4 flex flex-wrap items-center gap-3">
 
-              <div id="merArchivedSwitch" class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1" data-value="0">
+              <div id="merArchivedSwitch" class="inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-1" data-value="0">
                 <button type="button" data-switch="archived" data-value="0"
                   class="mer-switch-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
                   ${__merEsc(typeof t === 'function' ? (t('map_edit_request.active') || 'Active') : 'Active')}
                 </button>
                 <button type="button" data-switch="archived" data-value="1"
-                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-white/80 hover:bg-white/10">
+                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10">
                   ${__merEsc(typeof t === 'function' ? (t('map_edit_request.archived') || 'Archived') : 'Archived')}
                 </button>
               </div>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
-              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.new_code') || 'New code') : 'New code')}</div>
+              <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.new_code') || 'New code') : 'New code')}</div>
                 <input id="merNewCode" type="text" inputmode="text" autocomplete="off"
-                  class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                   placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.new_code_placeholder') || 'Leave empty to keep current') : 'Leave empty to keep current')}" />
               </div>
 
-              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.map_name') || 'Map name') : 'Map name')}</div>
+              <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.map_name') || 'Map name') : 'Map name')}</div>
                 <div class="relative mt-1">
                   <input id="merMapName" type="text" autocomplete="off"
-                    class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                    class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
                   <div id="merMapNameSuggestions"
-                    class="absolute left-0 right-0 z-[120] mt-1 hidden rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+                    class="absolute left-0 right-0 z-[120] mt-1 hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"></div>
                 </div>
               </div>
 
-              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.checkpoints') || 'Checkpoints') : 'Checkpoints')}</div>
+              <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.checkpoints') || 'Checkpoints') : 'Checkpoints')}</div>
                 <input id="merCheckpoints" type="number" inputmode="numeric" min="0" step="1"
-                  class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                  class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
               </div>
 
-              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.creators') || 'Creators') : 'Creators')}</div>
+              <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.creators') || 'Creators') : 'Creators')}</div>
                 <input id="merCreators" type="hidden" />
 
                 <div id="merCreatorsChips" class="mt-2 flex flex-wrap gap-2"></div>
 
                 <div class="relative mt-2">
                   <input id="merCreatorsSearch" type="text" autocomplete="off"
-                    class="w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                     placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.creator_search') || 'Search a user…') : 'Search a user…')}" />
                   <div id="merCreatorSuggestions"
-                    class="absolute left-0 right-0 z-[120] mt-1 hidden rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                    class="absolute left-0 right-0 z-[120] mt-1 hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
                 </div>
 
-                <div class="mt-2 text-[11px] text-zinc-400">
+                <div class="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">
                   ${__merEsc(typeof t === 'function' ? (t('map_edit_request.creator_hint') || 'Select users to add. First creator is primary.') : 'Select users to add. First creator is primary.')}
                 </div>
               </div>
@@ -4288,123 +4570,138 @@ function ensureMapEditRequestModal() {
           </div>
 
           <!-- REQUIRED (submitMapForm-like) -->
-          <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in">
+          <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in">
             <div class="grid gap-4 md:grid-cols-2">
               <div>
-                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.category') || 'Category') : 'Category')}</div>
+                <div class="mb-1 text-xs text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.category') || 'Category') : 'Category')}</div>
                 <div id="merCategoryDropdown" class="custom-multiselect relative">
                   <button type="button" id="merCategoryDropdownBtn"
-                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm"
                     data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.category') || 'Category') : 'Category')}">
                     <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/70" viewBox="0 0 24 24" fill="none">
                       <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl"></div>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"></div>
                 </div>
               </div>
 
               <div>
-                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.difficulty') || 'Difficulty') : 'Difficulty')}</div>
+                <div class="mb-1 text-xs text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.difficulty') || 'Difficulty') : 'Difficulty')}</div>
                 <div id="merDifficultyDropdown" class="custom-multiselect relative">
                   <button type="button" id="merDifficultyDropdownBtn"
-                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm"
                     data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.difficulty') || 'Difficulty') : 'Difficulty')}">
                     <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/70" viewBox="0 0 24 24" fill="none">
                       <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
                 </div>
               </div>
 
               <div>
-                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.mechanics') || 'Mechanics') : 'Mechanics')}</div>
+                <div class="mb-1 text-xs text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.mechanics') || 'Mechanics') : 'Mechanics')}</div>
                 <div id="merMechanicsDropdown" class="custom-multiselect relative">
                   <button type="button" id="merMechanicsDropdownBtn"
-                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm"
                     data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.mechanics') || 'Mechanics') : 'Mechanics')}">
                     <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/70" viewBox="0 0 24 24" fill="none">
                       <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
                 </div>
               </div>
 
               <div>
-                <div class="mb-1 text-xs text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.restrictions') || 'Restrictions') : 'Restrictions')}</div>
+                <div class="mb-1 text-xs text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.restrictions') || 'Restrictions') : 'Restrictions')}</div>
                 <div id="merRestrictionsDropdown" class="custom-multiselect relative">
                   <button type="button" id="merRestrictionsDropdownBtn"
-                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm"
+                    class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm"
                     data-placeholder="${__merEsc(typeof t === 'function' ? (t('map_edit_request.restrictions') || 'Restrictions') : 'Restrictions')}">
                     <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/70" viewBox="0 0 24 24" fill="none">
                       <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                  <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
                 </div>
+                <div>
+                  <div class="mb-1 text-xs text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('filters_toolbar.tags') || 'Tags') : 'Tags')}</div>
+                  <div id="merTagsDropdown" class="custom-multiselect relative">
+                    <button type="button" id="merTagsDropdownBtn"
+                      class="custom-multiselect-btn cursor-pointer inline-flex w-full items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm"
+                      data-placeholder="${__merEsc(typeof t === 'function' ? (t('filters_toolbar.tags') || 'Tags') : 'Tags')}">
+                      <span class="cm-label truncate">${__merEsc(typeof t === 'function' ? (t('map_edit_request.select') || 'Select…') : 'Select…')}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/70" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div class="custom-multiselect-list hidden absolute left-0 right-0 mt-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl max-h-[260px] overflow-auto"></div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
 
           <!-- OPTIONAL -->
-          <div class="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in">
+          <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 space-y-4 pt-card-anim pt-in">
             <div class="grid gap-4 md:grid-cols-2">
-              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.optional_title') || 'Title') : 'Title')}</div>
+              <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.optional_title') || 'Title') : 'Title')}</div>
                 <input id="merTitle" type="text" autocomplete="off"
-                  class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                  class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
               </div>
 
-              <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400 mb-1">${__merEsc(typeof t === 'function' ? (t('map_edit_request.custom_banner') || t('map.optional.custom_banner') || 'Custom banner') : 'Custom banner')}</div>
+              <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-1">${__merEsc(typeof t === 'function' ? (t('map_edit_request.custom_banner') || t('map.optional.custom_banner') || 'Custom banner') : 'Custom banner')}</div>
                 <input id="merCustomBanner" type="hidden" autocomplete="off" />
-                <div id="merBannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/60 overflow-hidden cursor-pointer">
+                <div id="merBannerDrop" class="group relative flex h-36 items-center justify-center rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/75 dark:bg-zinc-900/60 overflow-hidden cursor-pointer">
                   <input id="merBannerInput" type="file" accept="image/*" class="hidden">
-                  <div id="merBannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+                  <div id="merBannerPlaceholder" class="text-sm text-zinc-700 dark:text-zinc-300 px-3 text-center select-none">
                     ${__merEsc(typeof t === 'function' ? (t('map_edit_request.drag_and_drop') || 'Drag & drop or click to upload') : 'Drag & drop or click to upload')}
-                    <div class="text-[11px] text-zinc-400 mt-1">${__merEsc(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
+                    <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1">${__merEsc(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
                   </div>
                 </div>
               </div>
 
-              <div class="md:col-span-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.optional_description') || 'Description') : 'Description')}</div>
+              <div class="md:col-span-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.optional_description') || 'Description') : 'Description')}</div>
                 <textarea id="merDescription" rows="4"
-                  class="mt-1 w-full resize-y rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"></textarea>
+                  class="mt-1 w-full resize-y rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"></textarea>
               </div>
 
               <div class="md:col-span-2 grid gap-3 sm:grid-cols-3">
-                <div class="relative rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_gold') || 'Gold medal') : 'Gold medal')}</div>
+                <div class="relative rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                  <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_gold') || 'Gold medal') : 'Gold medal')}</div>
                   <input id="merMedalGold" type="text" autocomplete="off"
-                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                    class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
                 </div>
-                <div class="relative rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_silver') || 'Silver medal') : 'Silver medal')}</div>
+                <div class="relative rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                  <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_silver') || 'Silver medal') : 'Silver medal')}</div>
                   <input id="merMedalSilver" type="text" autocomplete="off"
-                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                    class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
                 </div>
-                <div class="relative rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <div class="text-[11px] text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_bronze') || 'Bronze medal') : 'Bronze medal')}</div>
+                <div class="relative rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-3 py-2">
+                  <div class="text-[11px] text-zinc-600 dark:text-zinc-400">${__merEsc(typeof t === 'function' ? (t('map_edit_request.medal_bronze') || 'Bronze medal') : 'Bronze medal')}</div>
                   <input id="merMedalBronze" type="text" autocomplete="off"
-                    class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
+                    class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="merStatus" class="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-200"></div>
+        <div id="merStatus" class="hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-4 py-3 text-sm text-zinc-800 dark:text-zinc-200"></div>
       </div>
 
       <!-- Footer -->
-      <div class="flex items-center gap-3 border-t border-white/10 bg-zinc-900/30 px-5 py-4">
+      <div class="flex items-center gap-3 border-t border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/30 px-5 py-4">
         <button type="button" id="merSendBtn"
           class="ml-auto inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60">
           ${__merEsc(sendLabel)}
@@ -4419,16 +4716,16 @@ function ensureMapEditRequestModal() {
   const statusEl = overlay.querySelector('#merStatus');
 
   const close = () => {
-    overlay.classList.add('hidden');
-    overlay.classList.remove('flex');
-    if (statusEl) statusEl.classList.add('hidden');
+    overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    overlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
+    if (statusEl) statusEl.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     if (!__suppressUrlSync) __urlHandleModalUserClose('map_edit_request');
   };
 
   const show = () => {
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
-    if (statusEl) statusEl.classList.add('hidden');
+    overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    overlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+    if (statusEl) statusEl.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   };
 
   overlay.querySelectorAll('[data-mer-close]').forEach((btn) => btn.addEventListener('click', close));
@@ -4447,10 +4744,10 @@ function ensureMapEditRequestModal() {
 
     groupEl.querySelectorAll('button[data-switch]').forEach((b) => {
       const isActive = (b.getAttribute('data-value') || '0') === val;
-      b.classList.toggle('bg-white', isActive);
-      b.classList.toggle('text-zinc-900', isActive);
-      b.classList.toggle('text-white/80', !isActive);
-      b.classList.toggle('hover:bg-white/10', !isActive);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
     });
   });
 
@@ -4534,10 +4831,10 @@ function __merRenderChecklist(menuEl, options, selectedSet, onChange) {
       const label = opt.translated ?? opt.label ?? opt.text ?? raw;
       const checked = selectedSet.has(String(raw)) ? 'checked' : '';
       return `
-        <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-white/5">
-          <input type="checkbox" class="h-4 w-4 rounded border-white/20 bg-black/30 text-emerald-400 focus:ring-emerald-400/30"
+        <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-white/10">
+          <input type="checkbox" class="h-4 w-4 rounded border-zinc-300/80 dark:border-white/20 bg-zinc-900/5 dark:bg-black/30 text-emerald-400 focus:ring-emerald-400/30"
                  value="${__merEsc(raw)}" ${checked}>
-          <span class="text-sm text-zinc-200">${__merEsc(label)}</span>
+          <span class="text-sm text-zinc-800 dark:text-zinc-200">${__merEsc(label)}</span>
         </label>
       `;
     })
@@ -4559,6 +4856,12 @@ function __merSetMultiLabel(labelEl, selectedSet, emptyLabel) {
   if (!n) labelEl.textContent = emptyLabel;
   else labelEl.textContent = `${n} selected`;
 }
+
+const TAG_OPTIONS = [
+  { text: 'Other Heroes', value: 'Other Heroes', raw: 'Other Heroes' },
+  { text: 'XP Based', value: 'XP Based', raw: 'XP Based' },
+  { text: 'Custom Grav/Speed', value: 'Custom Grav/Speed', raw: 'Custom Grav/Speed' },
+];
 
 /* -------------------------------------------------------------------------
    Map Edit Request controls
@@ -4777,7 +5080,7 @@ function __merRenderCreatorsChips(overlay) {
 
   if (!creators.length) {
     const empty = document.createElement('div');
-    empty.className = 'text-sm text-zinc-400';
+    empty.className = 'text-sm text-zinc-600 dark:text-zinc-400';
     empty.textContent = 'N/A';
     host.appendChild(empty);
     return;
@@ -4786,7 +5089,7 @@ function __merRenderCreatorsChips(overlay) {
   for (const c of creators) {
     const chip = document.createElement('span');
     chip.className =
-      'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-white/85';
+      'inline-flex items-center gap-2 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-zinc-900 dark:text-white/85';
 
     const dot = document.createElement('span');
     dot.className = 'h-2 w-2 rounded-full ' + (c.is_primary ? 'bg-emerald-400' : 'bg-white/50');
@@ -4798,7 +5101,7 @@ function __merRenderCreatorsChips(overlay) {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className =
-      'ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/80 hover:bg-white/10 cursor-pointer';
+      'ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-black/20 text-zinc-900 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer';
     remove.setAttribute('data-mer-remove-creator', c.id);
     remove.innerHTML = '&times;';
 
@@ -4854,8 +5157,8 @@ const __MER_IMAGE_UPLOAD_ENDPOINT = '/api/utilities/image';
 function __merShowBusy(el) {
   if (!el) return () => {};
   const o = document.createElement('div');
-  o.className = 'absolute inset-0 grid place-items-center bg-black/40 backdrop-blur-sm';
-  o.innerHTML = `<div class="rounded-md bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-100 ring-1 ring-emerald-500/60">${(typeof t === 'function' ? (t('record.uploading_screenshot') || 'Uploading…') : 'Uploading…')}</div>`;
+  o.className = 'absolute inset-0 grid place-items-center bg-zinc-900/7 dark:bg-black/40 backdrop-blur-sm';
+  o.innerHTML = `<div class="rounded-md bg-white/85 dark:bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 ring-1 ring-emerald-500/60">${(typeof t === 'function' ? (t('record.uploading_screenshot') || 'Uploading…') : 'Uploading…')}</div>`;
   el.appendChild(o);
   return () => o.remove();
 }
@@ -4905,9 +5208,9 @@ function __merResetBannerDropzone(overlay) {
   drop.dataset.merBound = '0';
   drop.innerHTML = `
     <input id="merBannerInput" type="file" accept="image/*" class="hidden">
-    <div id="merBannerPlaceholder" class="text-sm text-zinc-300 px-3 text-center select-none">
+    <div id="merBannerPlaceholder" class="text-sm text-zinc-700 dark:text-zinc-300 px-3 text-center select-none">
       ${(typeof t === 'function' ? (t('map_edit_request.drag_and_drop') || 'Drag & drop or click to upload') : 'Drag & drop or click to upload')}
-      <div class="text-[11px] text-zinc-400 mt-1">${(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
+      <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1">${(typeof t === 'function' ? (t('map_edit_request.banner_hint') || 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.') : 'Recommended 16:9. JPG/PNG/WebP/AVIF, max 10MB.')}</div>
     </div>
   `;
 
@@ -4927,9 +5230,9 @@ function __merSetBannerPreviewFromUrl(overlay, url) {
   drop.dataset.merBound = '0';
   drop.innerHTML = `
     <div class="absolute inset-0"></div>
-    <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
-      <span class="text-xs text-white/90 truncate px-1">${__merEsc(url || '')}</span>
-      <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+    <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-zinc-900/7 dark:bg-black/40 backdrop-blur">
+      <span class="text-xs text-zinc-900 dark:text-white/90 truncate px-1">${__merEsc(url || '')}</span>
+      <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-zinc-300/80 dark:border-white/20 px-2 py-1 text-xs text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10">
         ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
       </button>
     </div>
@@ -4970,9 +5273,9 @@ function __merSetupBannerDropzone(overlay) {
     drop.dataset.merBound = '0';
     drop.innerHTML = `
       <div class="absolute inset-0"></div>
-      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-black/40 backdrop-blur">
-        <span class="text-xs text-white/90 truncate px-1">${__merEsc(file.name || '')}</span>
-        <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10">
+      <div class="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between bg-zinc-900/7 dark:bg-black/40 backdrop-blur">
+        <span class="text-xs text-zinc-900 dark:text-white/90 truncate px-1">${__merEsc(file.name || '')}</span>
+        <button type="button" id="merBannerRemoveBtn" class="rounded-md cursor-pointer border border-zinc-300/80 dark:border-white/20 px-2 py-1 text-xs text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/10">
           ${(typeof t === 'function' ? (t('map.remove') || 'Remove') : 'Remove')}
         </button>
       </div>
@@ -5046,7 +5349,7 @@ function __merSetupBannerDropzone(overlay) {
       if (hidden) hidden.value = url || '';
 
       const ok = document.createElement('div');
-      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-white px-2 py-0.5 shadow';
+      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-zinc-900 dark:text-white px-2 py-0.5 shadow';
       ok.textContent = 'Uploaded';
       drop.appendChild(ok);
       setTimeout(() => ok.remove(), 1500);
@@ -5067,14 +5370,14 @@ function __merSetupBannerDropzone(overlay) {
 
   drop.addEventListener('dragover', (e) => {
     e.preventDefault();
-    drop.classList.add('ring-2', 'ring-emerald-500/60');
+    drop.classList.add(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   drop.addEventListener('dragleave', () => {
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
   });
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    drop.classList.remove('ring-2', 'ring-emerald-500/60');
+    drop.classList.remove(...String('ring-2').trim().split(/\s+/).filter(Boolean), ...String('ring-emerald-500/60').trim().split(/\s+/).filter(Boolean));
     const file = e.dataTransfer?.files?.[0];
     acceptFile(file);
   });
@@ -5130,27 +5433,27 @@ function __merEnsureBtnLabelSpan(btn) {
 function __merHideDropdownList(list) {
   if (!list) return;
   if (list.classList.contains('dd-anim')) {
-    list.classList.remove('dd-in');
-    list.classList.add('dd-out');
+    list.classList.remove(...String('dd-in').trim().split(/\s+/).filter(Boolean));
+    list.classList.add(...String('dd-out').trim().split(/\s+/).filter(Boolean));
     setTimeout(() => {
-      list.classList.add('hidden');
+      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       list.style.display = 'none';
     }, 120);
     return;
   }
 
-  list.classList.add('hidden');
+  list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'none';
 }
 
 function __merShowDropdownList(list) {
   if (!list) return;
-  list.classList.remove('hidden');
+  list.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'block';
   if (list.classList.contains('dd-anim')) {
     requestAnimationFrame(() => {
-      list.classList.remove('dd-out');
-      list.classList.add('dd-in');
+      list.classList.remove(...String('dd-out').trim().split(/\s+/).filter(Boolean));
+      list.classList.add(...String('dd-in').trim().split(/\s+/).filter(Boolean));
     });
   }
 }
@@ -5210,9 +5513,9 @@ function __merSetupFakeSelect(container) {
   const list = __merGetDropdownListEl(container);
   if (!btn || !list) return;
 
-  btn.classList.add('cursor-pointer');
+  btn.classList.add(...String('cursor-pointer').trim().split(/\s+/).filter(Boolean));
 
-  list.classList.add('dropdown-list', 'dd-anim');
+  list.classList.add(...String('dropdown-list').trim().split(/\s+/).filter(Boolean), ...String('dd-anim').trim().split(/\s+/).filter(Boolean));
   list.style.display = 'none';
 
   const close = () => {
@@ -5271,7 +5574,7 @@ function __merPopulateRadioDropdown(dropdownId, options, inputName) {
     );
 
     const label = document.createElement('label');
-    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
 
     if (isDifficulty) {
       const dotCls = __merDifficultyDotClass(labelText);
@@ -5306,7 +5609,7 @@ function __merPopulateCheckboxDropdown(dropdownId, options, inputName) {
     );
 
     const label = document.createElement('label');
-    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-200 hover:bg-white/10';
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
 
     label.innerHTML = `
       <input type="checkbox" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
@@ -5352,7 +5655,7 @@ function __merGetCheckboxValues(dropdownId) {
 
 function __merHideSuggestionBox(box) {
   if (!box) return;
-  box.classList.add('hidden');
+  box.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   box.innerHTML = '';
 }
 
@@ -5365,7 +5668,7 @@ function __merRenderSuggestionBox(box, items, onPick) {
     const it = items[i];
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm text-zinc-200 hover:bg-white/10';
+    btn.className = 'w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
     btn.textContent = it.label;
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -5376,7 +5679,7 @@ function __merRenderSuggestionBox(box, items, onPick) {
   }
 
   if (max === 0) __merHideSuggestionBox(box);
-  else box.classList.remove('hidden');
+  else box.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) {
@@ -5607,6 +5910,7 @@ function openMapEditRequestModal(map, opts = {}) {
   const difficulty = toStr(get('difficulty', 'diff', 'difficulty_name'));
   const mechanics = normalizeStringList(get('mechanics', 'map_mechanics'));
   const restrictions = normalizeStringList(get('restrictions', 'map_restrictions'));
+  const tags = normalizeStringList(get('tags', 'map_tags', 'tag', 'tag_list'));
   const title = toStr(get('title'));
   const description = toStr(get('description', 'desc'));
   const customBanner = toStr(get('custom_banner', 'banner', 'banner_url'));
@@ -5634,15 +5938,15 @@ function openMapEditRequestModal(map, opts = {}) {
   // Grey
   if (elCode) {
     elCode.textContent = code || 'N/A';
-    elCode.classList.add('opacity-80', 'text-zinc-300/80');
-    elCode.classList.add('pointer-events-none', 'cursor-default');
+    elCode.classList.add(...String('opacity-80').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-700 dark:text-zinc-300/80').trim().split(/\s+/).filter(Boolean));
+    elCode.classList.add(...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('cursor-default').trim().split(/\s+/).filter(Boolean));
   }
 
   const createdByStr = __merGetSafeUserIdString?.() || null;
   if (elCreatedBy) {
     elCreatedBy.textContent = createdByStr || 'N/A';
-    elCreatedBy.classList.add('opacity-80', 'text-zinc-300/80');
-    elCreatedBy.classList.add('pointer-events-none', 'cursor-default');
+    elCreatedBy.classList.add(...String('opacity-80').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-700 dark:text-zinc-300/80').trim().split(/\s+/).filter(Boolean));
+    elCreatedBy.classList.add(...String('pointer-events-none').trim().split(/\s+/).filter(Boolean), ...String('cursor-default').trim().split(/\s+/).filter(Boolean));
     // display coalesced_name
     if (createdByStr) __merSetUserDisplayInto(elCreatedBy, createdByStr);
   }
@@ -5687,10 +5991,10 @@ function openMapEditRequestModal(map, opts = {}) {
     el.setAttribute('data-value', value);
     el.querySelectorAll('button[data-switch]').forEach((b) => {
       const isActive = (b.getAttribute('data-value') || '0') === value;
-      b.classList.toggle('bg-white', isActive);
-      b.classList.toggle('text-zinc-900', isActive);
-      b.classList.toggle('text-white/80', !isActive);
-      b.classList.toggle('hover:bg-white/10', !isActive);
+(() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
     });
   };
   const getSwitch = (switchId) => {
@@ -5764,8 +6068,10 @@ function openMapEditRequestModal(map, opts = {}) {
 
     __merPopulateCheckboxDropdown('merMechanicsDropdown', mechanicsOptions, 'mer_mechanics');
     __merPopulateCheckboxDropdown('merRestrictionsDropdown', restrictionsOptions, 'mer_restrictions');
+    __merPopulateCheckboxDropdown('merTagsDropdown', TAG_OPTIONS.map(o => ({ translated: o.text, value: o.value, raw: o.raw })), 'mer_tags');
     __merSetCheckboxValues('merMechanicsDropdown', mechanics);
     __merSetCheckboxValues('merRestrictionsDropdown', restrictions);
+    __merSetCheckboxValues('merTagsDropdown', tags);
   })();
 
   // autocomplete mount once
@@ -5829,6 +6135,7 @@ function openMapEditRequestModal(map, opts = {}) {
     difficulty,
     mechanics: mechanics.slice(),
     restrictions: restrictions.slice(),
+    tags: tags.slice(),
     title,
     description,
     custom_banner: customBanner,
@@ -5916,6 +6223,9 @@ function openMapEditRequestModal(map, opts = {}) {
       const uiRestrictions = __merGetCheckboxValues('merRestrictionsDropdown');
       if (!equalArray(uiRestrictions, baselineNow.restrictions)) payload.restrictions = uiRestrictions.length ? uiRestrictions : null;
 
+      const uiTags = __merGetCheckboxValues('merTagsDropdown');
+      if (!equalArray(uiTags, baselineNow.tags)) payload.tags = uiTags.length ? uiTags : null;
+
       // title/description
       const uiTitle = (document.getElementById('merTitle')?.value || '').trim();
       if (!equalScalar(uiTitle, baselineNow.title)) payload.title = uiTitle === '' ? null : uiTitle;
@@ -5975,7 +6285,7 @@ function openMapEditRequestModal(map, opts = {}) {
       // ---------- send ----------
       try {
         sendBtn.disabled = true;
-        sendBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        sendBtn.classList.add(...String('opacity-70').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean));
 
         const endpoint = (optsNow.endpoint || '/api/maps/map-edits');
         const resp = await fetch(endpoint, {
@@ -6000,7 +6310,7 @@ function openMapEditRequestModal(map, opts = {}) {
         __merErr(e?.message || 'Network error');
       } finally {
         sendBtn.disabled = false;
-        sendBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        sendBtn.classList.remove(...String('opacity-70').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean));
       }
     };
 
@@ -6029,9 +6339,9 @@ async function openSearchDetailsModal(r, opts = {}) {
   if (__merBtn) {
     const __logged = typeof window !== 'undefined' && window.user_id != null && String(window.user_id).trim() !== '';
     __merBtn.disabled = !__logged;
-    __merBtn.classList.toggle('opacity-50', !__logged);
-    __merBtn.classList.toggle('cursor-not-allowed', !__logged);
-    __merBtn.classList.toggle('cursor-pointer', __logged);
+(() => { const __obj = __merBtn; let __last; for (const __c of String('opacity-50').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !__logged); return __last; })();
+(() => { const __obj = __merBtn; let __last; for (const __c of String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !__logged); return __last; })();
+(() => { const __obj = __merBtn; let __last; for (const __c of String('cursor-pointer').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, __logged); return __last; })();
     __merBtn.title = __logged ? t('map_edit_request.map_edit_btn') : t('map_edit_request.map_edit_btn_login');
     __merBtn.onclick = (ev) => {
       ev.preventDefault();
@@ -6064,7 +6374,7 @@ async function openSearchDetailsModal(r, opts = {}) {
       el.className = 'inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-300 ring-1 ring-emerald-400/30';
       el.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-400"></span> ' + esc(tSafe('card.completed','Completed'));
     } else {
-      el.className = 'inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/80 ring-1 ring-white/15';
+      el.className = 'inline-flex items-center gap-2 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-1 text-sm font-medium text-zinc-900 dark:text-white/80 ring-1 ring-zinc-300/60 dark:ring-white/15';
       el.innerHTML = '<span class="h-2 w-2 rounded-full bg-white/60"></span> ' + esc(tSafe('card.not_completed','Not completed'));
     }
   };
@@ -6072,7 +6382,7 @@ async function openSearchDetailsModal(r, opts = {}) {
     container.innerHTML = '';
     items.filter(Boolean).forEach(txt=>{
       const s = document.createElement('span');
-      s.className = 'inline-flex items-center rounded-full border border-white/10 bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-white/85';
+      s.className = 'inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 backdrop-blur px-2.5 py-1 text-[11px] leading-none text-zinc-900 dark:text-white/85';
       s.textContent = txt;
       container.appendChild(s);
     });
@@ -6113,6 +6423,7 @@ async function openSearchDetailsModal(r, opts = {}) {
 
   let mechanics = Array.isArray(r.mechanics) ? r.mechanics : [];
   let restrictions = Array.isArray(r.restrictions) ? r.restrictions : [];
+  let tags = Array.isArray(r.tags) ? r.tags : [];
   if (typeof CURRENT_LANG!=='undefined' && CURRENT_LANG==='cn') {
     mechanics = mechanics.map(o=> (typeof t==='function' ? (t(`mechanics.${String(o).toLowerCase().replace(/ /g,'_')}`) || o) : o));
     restrictions = restrictions.map(o=> (typeof t==='function' ? (t(`restrictions.${String(o).toLowerCase().replace(/ /g,'_')}`) || o) : o));
@@ -6135,6 +6446,7 @@ async function openSearchDetailsModal(r, opts = {}) {
   g('mapDescription', desc);
   mountPills(document.getElementById('mapMechanics'), mechanics);
   mountPills(document.getElementById('mapRestrictions'), restrictions);
+  mountPills(document.getElementById('mapTags'), tags);
 
   g('mapCreator', names.join(', ') || 'N/A');
   g('mapCheckpoints', fmt(checkpoints));
@@ -6153,13 +6465,13 @@ async function openSearchDetailsModal(r, opts = {}) {
   if (guideBtn) {
     if (guides.length) {
       const href = String(guides[0]);
-      guideBtn.classList.remove('hidden');
+      guideBtn.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
       guideBtn.setAttribute('data-href', href);
       guideBtn.setAttribute('aria-disabled', 'false');
       guideBtn.title = tSafe('card.open_guide', 'Open guide');
     } else {
-      guideBtn.classList.add('hidden');
-      guideBtn.classList.remove('inline-flex');
+      guideBtn.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      guideBtn.classList.remove(...String('inline-flex').trim().split(/\s+/).filter(Boolean));
       guideBtn.removeAttribute('data-href');
       guideBtn.setAttribute('aria-disabled', 'true');
       guideBtn.title = '';
@@ -6179,9 +6491,9 @@ async function openSearchDetailsModal(r, opts = {}) {
       linkedLabelEl.textContent = label;
       linkedCodeEl.textContent  = linkedCode;
 
-      linkedWrap.classList.remove('hidden');
+      linkedWrap.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
     } else {
-      linkedWrap.classList.add('hidden');
+      linkedWrap.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
   }
 
@@ -6202,17 +6514,17 @@ async function openSearchDetailsModal(r, opts = {}) {
 
   const overlay = document.getElementById('detailsModalOverlay');
   const gradientWrap = overlay.querySelector('.bg-gradient-to-tr');
-  overlay.classList.remove('hidden'); overlay.classList.add('flex');
+  overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); overlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(() => {
-    overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100');
-    gradientWrap.classList.remove('translate-y-3','opacity-0'); gradientWrap.classList.add('translate-y-0','opacity-100');
+    overlay.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); overlay.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    gradientWrap.classList.remove(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.add(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
   });
 
   const closeBtn = document.getElementById('modalCloseBtn');
   const close = () => {
-    overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100');
-    gradientWrap.classList.add('translate-y-3','opacity-0'); gradientWrap.classList.remove('translate-y-0','opacity-100');
-    setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 180);
+    overlay.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); overlay.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    gradientWrap.classList.add(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.remove(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    setTimeout(() => { overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)); overlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean)); }, 180);
     document.removeEventListener('keydown', onEsc);
     overlay.removeEventListener('pointerdown', onOutside, true);
     if (!__suppressUrlSync) __urlHandleModalUserClose('map');
@@ -6255,7 +6567,7 @@ async function displayPersonalRecordsResultsCards(rowsInput) {
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -6416,7 +6728,7 @@ async function displayPersonalRecordsResultsCards(rowsInput) {
   }
 
   Array.from(root.querySelectorAll('.pr-card')).forEach((el, i) =>
-    setTimeout(() => el.classList.add('is-in'), 24 * i)
+    setTimeout(() => el.classList.add(...String('is-in').trim().split(/\s+/).filter(Boolean)), 24 * i)
   );
 }
 
@@ -6432,7 +6744,7 @@ async function displayPersonalRecordsResults(results) {
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -6460,7 +6772,7 @@ async function displayPersonalRecordsResults(results) {
   }
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
       <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
       <div class="whitespace-nowrap">${t('thead.mapNickname')}</div>
       <div class="whitespace-nowrap">${t('thead.mapDiscordTag')}</div>
@@ -6506,8 +6818,8 @@ async function displayPersonalRecordsResults(results) {
     const mapCodeCell = r.code
       ? `
         <button type="button"
-          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
-                 text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+          class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
+                 text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                  w-[6.5rem]"
           data-code="${escAttr(r.code)}"
           title="${escAttr(t('popup.copy_map_code'))}">
@@ -6522,9 +6834,9 @@ async function displayPersonalRecordsResults(results) {
   const nicknameBlock = profileHref
     ? `
       <a href="${escAttr(profileHref)}"
-        class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+        class="inline-flex items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
         title="${escAttr(nickname)}">
-        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
             alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
             src="${escAttr(fallback)}"
             data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
@@ -6533,7 +6845,7 @@ async function displayPersonalRecordsResults(results) {
       </a>`
     : `
       <div class="flex items-center gap-2">
-        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
             alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
             src="${escAttr(fallback)}"
             data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
@@ -6542,7 +6854,7 @@ async function displayPersonalRecordsResults(results) {
       </div>`;
 
     return `
-      <div class="grid grid-personal_records bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+      <div class="grid grid-personal_records bg-white/70 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-white/10 transition px-3 py-2">
         <div class="min-w-0">${mapCodeCell}</div>
         <div class="min-w-0">${nicknameBlock}</div>
         <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(also)}">${esc(also)}</span></div>
@@ -6563,7 +6875,7 @@ async function displayPersonalRecordsResults(results) {
   }).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-personal_records">
           ${headerHTML}
@@ -6602,7 +6914,7 @@ async function displayCompletionsResultsCards(rowsInput){
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -6663,7 +6975,7 @@ async function displayCompletionsResultsCards(rowsInput){
     const icDiff  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 4h16v2H4zm0 7h16v2H4zm0 7h16v2H4z"/></svg>';
 
     return `
-      <article class="mx-card ${medalBadge}">
+      <article class="mx-card is-in ${medalBadge}">
         <div class="mx-hero is-loading">
           <div class="mx-skel"></div>
           <img src="${escAttr(banner)}" alt="" data-fallback-src="${escAttr(fbBanner)}"/>
@@ -6731,8 +7043,8 @@ async function displayCompletionsResultsCards(rowsInput){
   root.querySelectorAll('.mx-hero').forEach(hero=>{
     const img = hero.querySelector('img'); if (!img) return;
     const fb = img.getAttribute('data-fallback-src');
-    if (img.complete && img.naturalWidth>0) hero.classList.remove('is-loading');
-    else img.addEventListener('load', ()=> hero.classList.remove('is-loading'), { once:true });
+    if (img.complete && img.naturalWidth>0) hero.classList.remove(...String('is-loading').trim().split(/\s+/).filter(Boolean));
+    else img.addEventListener('load', ()=> hero.classList.remove(...String('is-loading').trim().split(/\s+/).filter(Boolean)), { once:true });
     img.addEventListener('error', ()=>{ if (fb && img.src!==fb) img.src = fb; }, { once:true });
   });
 
@@ -6757,7 +7069,6 @@ async function displayCompletionsResultsCards(rowsInput){
     });
   }
 
-  Array.from(root.querySelectorAll('.mx-card')).forEach((el,i)=> setTimeout(()=> el.classList.add('is-in'), 24*i));
 }
 
 // ================== TABLE DISPLAY ============== //
@@ -6771,7 +7082,7 @@ async function displayCompletionsResults(results){
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -6782,7 +7093,7 @@ async function displayCompletionsResults(results){
   const currentUid = window.user_id ? String(window.user_id) : null;
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/95 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-completions px-3 py-2">
       <div class="whitespace-nowrap">${t('thead.mapCode')}</div>
       <div class="whitespace-nowrap">${t('thead.mapNickname')}</div>
       <div class="whitespace-nowrap">${t('thead.mapDiscordTag')}</div>
@@ -6816,8 +7127,8 @@ async function displayCompletionsResults(results){
 
     const codeCell = mapCode !== 'N/A' ? `
       <button type="button"
-        class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-white/10 bg-zinc-900/60 px-2 py-0.5
-               text-xs font-semibold text-zinc-100 hover:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+        class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
+               text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                w-[6.5rem]"
         data-code="${escAttr(mapCode)}" title="${escAttr(t('popup.copy_map_code'))}">
         <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -6829,9 +7140,9 @@ async function displayCompletionsResults(results){
 
     const nicknameBlock = profileHref ? `
       <a href="${escAttr(profileHref)}"
-         class="inline-flex items-center gap-2 rounded-md hover:bg-white/5 px-1.5 py-0.5"
+         class="inline-flex items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
          title="${currentUid && uid && currentUid===uid ? t('popup.you') : escAttr(nickname)}">
-        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
              alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
              src="${escAttr(fallback)}"
              data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
@@ -6839,7 +7150,7 @@ async function displayCompletionsResults(results){
         <span data-sf="${escAttr(nickname)}"></span>
       </a>` : `
       <div class="flex items-center gap-2">
-        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-white/10 bg-zinc-800"
+        <img class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
              alt="" referrerpolicy="no-referrer" loading="lazy" decoding="async"
              src="${escAttr(fallback)}"
              data-avatar-id="${escAttr(uid || '')}" data-avatar-size="64"
@@ -6859,7 +7170,7 @@ async function displayCompletionsResults(results){
       medalKey === 'bronze' ? cdnAsset('assets/medals/bronze.png') : null;
 
     return `
-      <div class="grid grid-completions bg-zinc-900/40 hover:bg-white/5 transition px-3 py-2">
+      <div class="grid grid-completions bg-white/70 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-white/10 transition px-3 py-2">
         <div class="min-w-0">${codeCell}</div>
         <div class="min-w-0">${nicknameBlock}</div>
         <div class="min-w-0"><span class="truncate block" data-sf="${escAttr(also)}">${esc(also)}</span></div>
@@ -6873,7 +7184,7 @@ async function displayCompletionsResults(results){
         </div>
         <div class="min-w-0">${videoCell}</div>
         <div class="min-w-0">
-          <button class="js-open-completion-details inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs hover:bg-white/10 cursor-pointer"
+          <button class="js-open-completion-details inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer"
                   data-index="${idx}">
             ${esc(t('thead.mapView') || 'View')}
           </button>
@@ -6882,7 +7193,7 @@ async function displayCompletionsResults(results){
   }).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-completions">
           ${headerHTML}
@@ -6932,9 +7243,9 @@ function ensureCompletionsDetailsModal(){
          class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200"
          role="dialog" aria-modal="true" aria-labelledby="completionModalTitle">
 
-      <div class="mx-4 w-[min(96vw,980px)] max-h-[90vh] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
-        <div id="completionModalBox"
-             class="relative min-h-[520px] overflow-y-auto rounded-3xl bg-zinc-900/90 text-zinc-100 shadow-2xl ring-1 ring-white/10">
+      <div class="mx-4 w-[min(96vw,980px)] max-h-[calc(100dvh-2rem)] p-px rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 ring-1 ring-zinc-300/60 dark:ring-white/10 translate-y-3 opacity-0 transition-all duration-200">
+        <div id="completionModalBox" 
+            class="relative min-h-0 sm:min-h-[520px] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-white/90 dark:bg-zinc-900/90 text-zinc-900 dark:text-zinc-100 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
 
           <!-- cover -->
           <div class="relative h-56 overflow-hidden rounded-t-3xl">
@@ -6943,7 +7254,7 @@ function ensureCompletionsDetailsModal(){
 
             <div class="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
               <span id="completionStatus"
-                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/80 ring-1 ring-white/15">
+                    class="inline-flex items-center gap-2 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-1 text-sm font-medium text-zinc-900 dark:text-white/80 ring-1 ring-zinc-300/60 dark:ring-white/15">
                 <span class="h-2 w-2 rounded-full bg-white/60"></span>
                 ${TT('completion','Completion')}
               </span>
@@ -6951,8 +7262,8 @@ function ensureCompletionsDetailsModal(){
               <div class="flex items-center gap-2">
                 <!-- Change requests -->
                 <button type="button" id="btnOpenMapEditRequestCompletion"
-                  class="group inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 ring-1 ring-white/15 hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  class="group inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-white/85 ring-1 ring-zinc-300/60 dark:ring-white/15 hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15 hover:text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-900 dark:text-white/80 group-hover:text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
                   </svg>
@@ -6960,9 +7271,9 @@ function ensureCompletionsDetailsModal(){
                 </button>
 
                 <button type="button" id="completionModalCloseBtn"
-                  class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-black/40 ring-1 ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                  class="group inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/15 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
                   aria-label="${TT('popup.close','Close')}">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/85 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-zinc-900 dark:text-white/85 group-hover:text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                   </svg>
                 </button>
@@ -6976,21 +7287,28 @@ function ensureCompletionsDetailsModal(){
             <div class="md:col-span-7 space-y-6">
 
               <!-- Map + Code -->
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 flex items-start justify-between gap-4">
+              <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4 flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                  <div class="text-xs uppercase tracking-widest text-white/60" id="completionMapLabel">${TT('thead.mapName','Name')}</div>
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60" id="completionMapLabel">${TT('thead.mapName','Name')}</div>
                   <div id="completionMapName" class="mt-1 font-semibold text-lg truncate">—</div>
-                  <div class="mt-2 text-xs uppercase tracking-widest text-white/60" id="completionCodeLabel">${TT('thead.mapCode','Code')}</div>
+                  <div class="mt-2 text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60" id="completionCodeLabel">${TT('thead.mapCode','Code')}</div>
                   <div id="completionCode" class="mt-1 font-mono text-lg break-all">—</div>
                 </div>
                 <div class="flex flex-col gap-2 shrink-0">
                   <a id="btnOpenCompletionVideo" href="#" target="_blank" rel="noopener"
-                     class="hidden inline-flex items-center justify-center rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 ring-1 ring-white/15 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                     class="hidden inline-flex items-center justify-center rounded-xl bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-white/85 ring-1 ring-zinc-300/60 dark:ring-white/15 hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
                     <svg viewBox="0 0 24 24" class="mr-2 h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
                     <span>${TT('watch','Watch')}</span>
                   </a>
                   <button id="btnCopyCompletionCode"
-                          class="inline-flex items-center justify-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 cursor-pointer"
+                          class="inline-flex cursor-pointer items-center rounded-xl px-3 py-2 text-sm font-semibold
+                              bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300
+                              hover:bg-emerald-200 hover:text-emerald-950
+                              focus:outline-none focus:ring-2 focus:ring-emerald-500/40
+                              dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30
+                              dark:hover:bg-emerald-500/20 dark:hover:text-emerald-200
+                              dark:focus:ring-emerald-400/60
+                              transition-colors duration-150"
                           title="${TT('popup.copy_map_code','Copy map code')}" aria-label="${TT('popup.copy_map_code','Copy map code')}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -7002,13 +7320,13 @@ function ensureCompletionsDetailsModal(){
               </div>
 
               <!-- Screenshot -->
-              <div id="completionProofSection" class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4" hidden>
-                <div class="text-xs uppercase tracking-widest text-white/60" id="completionProofLabel">${TT('screenshot','Screenshot')}</div>
+              <div id="completionProofSection" class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4" hidden>
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60" id="completionProofLabel">${TT('screenshot','Screenshot')}</div>
                 <button id="completionProofZoom" type="button"
-                        class="group mt-2 relative w-full overflow-hidden rounded-xl bg-black/30 aspect-[16/9] ring-1 ring-white/10 hover:ring-emerald-400/40 focus:outline-none cursor-pointer hover:cursor-zoom-in">
+                        class="group mt-2 relative w-full overflow-hidden rounded-xl bg-zinc-900/5 dark:bg-black/30 aspect-[16/9] ring-1 ring-zinc-300/60 dark:ring-white/10 hover:ring-emerald-400/40 focus:outline-none cursor-pointer hover:cursor-zoom-in">
                   <img id="completionProofImg" alt="" class="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-200" />
                   <span class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                    <span class="rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white/90">${TT('open_screenshot','Open screenshot')}</span>
+                    <span class="rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-zinc-900 dark:text-white/90">${TT('open_screenshot','Open screenshot')}</span>
                   </span>
                 </button>
               </div>
@@ -7017,14 +7335,14 @@ function ensureCompletionsDetailsModal(){
 
             <!-- droite -->
             <div class="md:col-span-5 space-y-6">
-              <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                <div class="text-xs uppercase tracking-widest text-white/60">${TT('thead.mapDetails','Details')}</div>
+              <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${TT('thead.mapDetails','Details')}</div>
                 <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                  <dt class="text-xs text-white/60">${TT('filters.player_name','Player')}</dt><dd id="completionPlayer" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${TT('thead.mapTime','Time')}</dt><dd id="completionTime" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${TT('thead.mapMedal','Medal')}</dt><dd id="completionMedal" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${TT('thead.mapDifficulty','Difficulty')}</dt><dd id="completionDifficulty" class="text-sm font-medium text-white/90">—</dd>
-                  <dt class="text-xs text-white/60">${TT('thead.mapType','Type')}</dt><dd id="completionCategory" class="text-sm font-medium text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('filters.player_name','Player')}</dt><dd id="completionPlayer" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapTime','Time')}</dt><dd id="completionTime" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapMedal','Medal')}</dt><dd id="completionMedal" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapDifficulty','Difficulty')}</dt><dd id="completionDifficulty" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapType','Type')}</dt><dd id="completionCategory" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
                 </dl>
               </div>
             </div>
@@ -7037,13 +7355,13 @@ function ensureCompletionsDetailsModal(){
       <div id="imgZoomOverlay"
            class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200">
         <button id="imgZoomClose"
-                class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-black/50 ring-1 ring-white/20 text-white/90 hover:bg-black/70"
+                class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900/10 dark:bg-black/50 ring-1 ring-zinc-400/60 dark:ring-white/20 text-zinc-900 dark:text-white/90 hover:bg-black/70"
                 aria-label="${TT('popup.close','Close')}" title="${TT('popup.close','Close')}">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
-        <img id="imgZoomTarget" alt="" class="max-h-[92vh] max-w-[92vw] rounded-2xl shadow-2xl ring-1 ring-white/10"/>
+        <img id="imgZoomTarget" alt="" class="max-h-[92vh] max-w-[92vw] rounded-2xl shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10"/>
       </div>
     </div>`;
     document.body.appendChild(tpl.firstElementChild);
@@ -7119,8 +7437,8 @@ function ensureCompletionsDetailsModal(){
       const modalOverlay = document.getElementById('completionModalOverlay');
       img.src = src;
       modalOverlay.dataset.zoom = '1';
-      ov.classList.remove('hidden'); ov.classList.add('flex');
-      requestAnimationFrame(()=>{ ov.classList.remove('opacity-0'); ov.classList.add('opacity-100'); });
+      ov.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); ov.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+      requestAnimationFrame(()=>{ ov.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); ov.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean)); });
       const onEsc = (e)=>{ if (e.key==='Escape') closeZoom(); };
       ov.__esc = onEsc; document.addEventListener('keydown', onEsc);
     };
@@ -7128,8 +7446,8 @@ function ensureCompletionsDetailsModal(){
     const closeZoom = ()=>{
       const ov = document.getElementById('imgZoomOverlay');
       const modalOverlay = document.getElementById('completionModalOverlay');
-      ov.classList.add('opacity-0'); ov.classList.remove('opacity-100');
-      setTimeout(()=>{ ov.classList.add('hidden'); ov.classList.remove('flex'); }, 160);
+      ov.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); ov.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+      setTimeout(()=>{ ov.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)); ov.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean)); }, 160);
       if (ov.__esc){ document.removeEventListener('keydown', ov.__esc); ov.__esc = null; }
       delete modalOverlay.dataset.zoom;
     };
@@ -7165,9 +7483,9 @@ function openCompletionsDetailsModal(r, opts = {}){
   if (__merBtn) {
     const __logged = typeof window !== 'undefined' && window.user_id != null && String(window.user_id).trim() !== '';
     __merBtn.disabled = !__logged;
-    __merBtn.classList.toggle('opacity-50', !__logged);
-    __merBtn.classList.toggle('cursor-not-allowed', !__logged);
-    __merBtn.classList.toggle('cursor-pointer', __logged);
+(() => { const __obj = __merBtn; let __last; for (const __c of String('opacity-50').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !__logged); return __last; })();
+(() => { const __obj = __merBtn; let __last; for (const __c of String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !__logged); return __last; })();
+(() => { const __obj = __merBtn; let __last; for (const __c of String('cursor-pointer').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, __logged); return __last; })();
     __merBtn.title = __logged ? t('map_edit_request.map_edit_btn') : t('map_edit_request.map_edit_btn_login');
     __merBtn.onclick = (ev) => {
       ev.preventDefault();
@@ -7227,8 +7545,8 @@ function openCompletionsDetailsModal(r, opts = {}){
 
   const videoBtn = el('btnOpenCompletionVideo');
   if (videoBtn){
-    if (r.video){ videoBtn.href = r.video; videoBtn.classList.remove('hidden'); videoBtn.querySelector('span').textContent = tSafe('watch','Watch'); }
-    else { videoBtn.classList.add('hidden'); }
+    if (r.video){ videoBtn.href = r.video; videoBtn.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); videoBtn.querySelector('span').textContent = tSafe('watch','Watch'); }
+    else { videoBtn.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)); }
   }
 
   const proofSection = el('completionProofSection');
@@ -7239,12 +7557,12 @@ function openCompletionsDetailsModal(r, opts = {}){
   const looksLikeImg = proof && (/^data:image\//.test(proof) || /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?.*)?$/i.test(proof));
 
   proofSection.hidden = true;
-  proofImg.src = ''; proofImg.classList.add('opacity-0');
+  proofImg.src = ''; proofImg.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean));
   if (proofBtn) proofBtn.dataset.zoomSrc = '';
 
   if (looksLikeImg){
     proofSection.hidden = false;
-    const onLoad  = ()=>{ proofImg.classList.remove('opacity-0'); if (proofBtn) proofBtn.dataset.zoomSrc = proof; };
+    const onLoad  = ()=>{ proofImg.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); if (proofBtn) proofBtn.dataset.zoomSrc = proof; };
     const onError = ()=>{ proofSection.hidden = true; };
     proofImg.addEventListener('load', onLoad, { once:true });
     proofImg.addEventListener('error', onError, { once:true });
@@ -7253,17 +7571,17 @@ function openCompletionsDetailsModal(r, opts = {}){
 
   const modalOverlay = document.getElementById('completionModalOverlay');
   const gradientWrap = modalOverlay.querySelector('.bg-gradient-to-tr');
-  modalOverlay.classList.remove('hidden'); modalOverlay.classList.add('flex');
+  modalOverlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(()=>{
-    modalOverlay.classList.remove('opacity-0'); modalOverlay.classList.add('opacity-100');
-    gradientWrap.classList.remove('translate-y-3','opacity-0'); gradientWrap.classList.add('translate-y-0','opacity-100');
+    modalOverlay.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    gradientWrap.classList.remove(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.add(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
   });
 
   const closeBtn = document.getElementById('completionModalCloseBtn');
   const close = ()=>{
-    modalOverlay.classList.add('opacity-0'); modalOverlay.classList.remove('opacity-100');
-    gradientWrap.classList.add('translate-y-3','opacity-0'); gradientWrap.classList.remove('translate-y-0','opacity-100');
-    setTimeout(()=>{ modalOverlay.classList.add('hidden'); modalOverlay.classList.remove('flex'); }, 180);
+    modalOverlay.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    gradientWrap.classList.add(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.remove(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    setTimeout(()=>{ modalOverlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean)); }, 180);
     document.removeEventListener('keydown', onEsc);
     modalOverlay.removeEventListener('pointerdown', onOutside, true);
     if (!__suppressUrlSync) __urlHandleModalUserClose('completion');
@@ -7296,7 +7614,7 @@ function displayGuideResults(results) {
     const rc = document.getElementById('resultsContainer');
     if (rc) {
       rc.innerHTML = `
-        <div class="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-300">
+        <div class="mt-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-4 py-6 text-center text-sm text-zinc-700 dark:text-zinc-300">
           ${message}
         </div>
       `;
@@ -7305,7 +7623,7 @@ function displayGuideResults(results) {
   }
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-guide px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-guide px-3 py-2">
       <div class="whitespace-nowrap text-center">${t('thead.mapVideo')}</div>
     </div>
   `;
@@ -7313,19 +7631,19 @@ function displayGuideResults(results) {
   const rowsHTML = filtered.map((r) => {
     const embedUrl = getEmbedUrl(r.url);
     return `
-      <div class="grid grid-guide bg-zinc-900/40 hover:bg-white/5 transition px-3 py-4">
+      <div class="grid grid-guide bg-white/70 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-white/10 transition px-3 py-4">
         <div class="text-center">
           ${
             embedUrl
               ? ` <div class="mx-auto w-full max-w-3xl">
-                  <div class="video-embed ring-1 ring-white/10">
+                  <div class="video-embed ring-1 ring-zinc-300/60 dark:ring-white/10">
                     <iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                   </div>
                    ${
                      Array.isArray(r.usernames) && r.usernames.length > 1
-                       ? `<div class="mt-2 text-center text-xs text-zinc-400">
+                       ? `<div class="mt-2 text-center text-xs text-zinc-600 dark:text-zinc-400">
                             ${esc(t('thead.mapNickname'))}:
-                            <span class="text-zinc-200">${esc(r.usernames[1])}</span>
+                            <span class="text-zinc-800 dark:text-zinc-200">${esc(r.usernames[1])}</span>
                           </div>`
                        : ``
                    }
@@ -7337,7 +7655,7 @@ function displayGuideResults(results) {
   }).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-guide">
           ${headerHTML}
@@ -7411,8 +7729,8 @@ function showProgressionLoading() {
   const el = document.getElementById('chartContainer');
   if (!el) return;
   el.innerHTML = `
-    <div class="rounded-xl bg-zinc-900/60 ring-1 ring-white/10 p-4">
-      <div class="h-[280px] w-full grid place-items-center text-white/60 text-sm">
+    <div class="rounded-xl bg-white/75 dark:bg-zinc-900/60 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
+      <div class="h-[280px] w-full grid place-items-center text-zinc-900 dark:text-white/60 text-sm">
         ${typeof t==='function' ? t('labels.loading') : 'Loading…'}
       </div>
     </div>`;
@@ -7448,7 +7766,7 @@ function sAvatar() { return `<div class="skel skel-avatar"></div>`; }
 function sNick(width = '12ch') {
   return `
     <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5">
-      <div class="h-6 w-6 rounded-full ring-1 ring-white/10 bg-zinc-800 overflow-hidden">
+      <div class="h-6 w-6 rounded-full ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         ${sAvatar()}
       </div>
       ${sBar(width,'sm')}
@@ -7458,11 +7776,11 @@ function sNick(width = '12ch') {
 
 function skeletonTableShell(headHTML, bodyRowsHTML, colgroupHTML = '') {
   return `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="overflow-hidden hide-scrollbar">
           ${colgroupHTML}
-          <thead class="bg-zinc-900/60 text-zinc-300">${headHTML}</thead>
+          <thead class="bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300">${headHTML}</thead>
           <tbody>${bodyRowsHTML}</tbody>
         </table>
       </div>
@@ -7472,35 +7790,35 @@ function skeletonTableShell(headHTML, bodyRowsHTML, colgroupHTML = '') {
 
 function renderMapSearchCardsSkeleton(count = Math.min(pageSize || 12, 12)) {
   const oneCard = () => `
-    <article class="mx-card overflow-hidden rounded-2xl border border-white/10 bg-white/5 ring-1 ring-white/5">
+    <article class="mx-card overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/40 dark:ring-white/5">
       <div class="mx-hero relative">
-        <div class="absolute inset-0 animate-pulse bg-white/5"></div>
+        <div class="absolute inset-0 animate-pulse bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"></div>
 
         <div class="mx-titlebar absolute inset-x-0 top-0 p-3 sm:p-1">
           <div class="mx-head flex items-center justify-between gap-3">
             <h3 class="mx-title">
-              <span class="block h-5 w-40 rounded bg-white/20 animate-pulse"></span>
+              <span class="block h-5 w-40 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </h3>
-            <span class="mx-status inline-flex items-center gap-2 rounded-full bg-white/15 px-2.5 py-1 text-xs ring-1 ring-white/20">
+            <span class="mx-status inline-flex items-center gap-2 rounded-full bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15 px-2.5 py-1 text-xs ring-1 ring-zinc-400/60 dark:ring-white/20">
               <i class="mx-dot h-2 w-2 rounded-full bg-white/70"></i>
               <span class="block h-3 w-16 rounded bg-white/30 animate-pulse"></span>
             </span>
           </div>
           <div class="mx-meta mt-2">
             <span class="mx-meta-item inline-flex items-center gap-2 text-sm">
-              <svg viewBox="0 0 24 24" class="h-4 w-4 text-white/60" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="h-4 w-4 text-zinc-900 dark:text-white/60" aria-hidden="true">
                 <path fill="currentColor" d="M5 3a1 1 0 0 0-1 1v16l7-3 7 3V4a1 1 0 0 0-1-1H5z"/>
               </svg>
-              <span class="h-3 w-10 rounded bg-white/20 animate-pulse"></span>
-              <span class="sep text-white/40">•</span>
-              <span class="h-3 w-14 rounded bg-white/20 animate-pulse"></span>
+              <span class="h-3 w-10 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
+              <span class="sep text-zinc-900 dark:text-white/40">•</span>
+              <span class="h-3 w-14 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </span>
           </div>
         </div>
 
         <div class="mx-actions-vert absolute right-2 top-2 flex flex-col gap-2">
-          <span class="mx-icon h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
-          <span class="mx-icon mx-icon--primary h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
+          <span class="mx-icon h-8 w-8 rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
+          <span class="mx-icon mx-icon--primary h-8 w-8 rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
         </div>
 
         <div class="mx-bottom absolute inset-x-0 bottom-0 p-1 sm:p-1">
@@ -7508,16 +7826,16 @@ function renderMapSearchCardsSkeleton(count = Math.min(pageSize || 12, 12)) {
 
             <div class="mx-b-left flex min-w-0 items-center gap-2">
               <div class="flex -space-x-2">
-                <span class="h-6 w-6 rounded-full bg-white/20 ring-1 ring-white/10 animate-pulse"></span>
+                <span class="h-6 w-6 rounded-full bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
               </div>
-              <span class="ml-1 h-4 w-24 rounded bg-white/20 animate-pulse"></span>
+              <span class="ml-1 h-4 w-24 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </div>
 
             <div class="mx-b-right flex items-center gap-2">
-              <span class="mx-code-inline inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5">
-                <span class="h-4 w-16 rounded bg-white/20 animate-pulse"></span>
+              <span class="mx-code-inline inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2.5 py-1.5">
+                <span class="h-4 w-16 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
               </span>
-              <span class="mx-diff inline-flex h-4 w-12 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/10 animate-pulse"></span>
+              <span class="mx-diff inline-flex h-4 w-12 items-center justify-center rounded-full bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
             </div>
 
           </div>
@@ -7538,7 +7856,7 @@ function renderMapSearchCardsSkeleton(count = Math.min(pageSize || 12, 12)) {
 
   const root = document.getElementById('resultsContainer');
   Array.from(root.querySelectorAll('.mx-card')).forEach((el, i) =>
-    setTimeout(() => el.classList.add('is-in'), 22 * i)
+    setTimeout(() => el.classList.add(...String('is-in').trim().split(/\s+/).filter(Boolean)), 22 * i)
   );
 }
 
@@ -7546,7 +7864,7 @@ function renderMapSearchCardsSkeleton(count = Math.min(pageSize || 12, 12)) {
 function renderMapSearchSkeleton(rows = 8) {
   ensureSkeletonCSS();
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-map_search px-3 py-2">
       <div>${t('thead.mapCode')}</div>
       <div>${t('thead.mapName')}</div>
       <div>${t('thead.mapType')}</div>
@@ -7558,7 +7876,7 @@ function renderMapSearchSkeleton(rows = 8) {
   `;
 
   const row = `
-    <div class="grid grid-map_search bg-zinc-900/40 px-3 py-2">
+    <div class="grid grid-map_search bg-white/70 dark:bg-zinc-900/40 px-3 py-2">
       <div>${sChip(116)}</div>
       <div>${sBar(150,'sm')}</div>
       <div>${sBar(100,'sm')}</div>
@@ -7572,7 +7890,7 @@ function renderMapSearchSkeleton(rows = 8) {
   const body = new Array(rows).fill(row).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-map_search">
           ${headerHTML}
@@ -7594,10 +7912,10 @@ function isDefaultBannerURL(u) {
 
 function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
   const oneCard = () => `
-    <article class="mx-card overflow-hidden rounded-2xl border border-white/10 bg-white/5 ring-1 ring-white/5">
+    <article class="mx-card overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/40 dark:ring-white/5">
       <div class="mx-hero relative">
         <!-- Hero skeleton (aucune image réelle ici) -->
-        <div class="absolute inset-0 animate-pulse bg-white/5"></div>
+        <div class="absolute inset-0 animate-pulse bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"></div>
         <div class="mx-grain pointer-events-none"></div>
 
         <!-- Barre supérieure : chips (temps + difficulté) -->
@@ -7607,13 +7925,13 @@ function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
               <svg viewBox="0 0 24 24" aria-hidden="true" class="opacity-80">
                 <path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20Zm1 5v5.2l3 1.8a1 1 0 11-1 1.7l-3.6-2.1A1 1 0 0 1 10.5 13V7a1 1 0 1 1 2 0Z"/>
               </svg>
-              <span class="block h-3 w-16 rounded bg-white/20 animate-pulse"></span>
+              <span class="block h-3 w-16 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </span>
             <span class="c-chip">
               <svg viewBox="0 0 24 24" aria-hidden="true" class="opacity-80">
                 <path fill="currentColor" d="M4 4h16v2H4zm0 7h16v2H4zm0 7h16v2H4z"/>
               </svg>
-              <span class="block h-3 w-14 rounded bg-white/20 animate-pulse"></span>
+              <span class="block h-3 w-14 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </span>
           </div>
         </div>
@@ -7625,8 +7943,8 @@ function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
 
         <!-- Actions verticales (placeholders d'icônes) -->
         <div class="mx-actions-vert flex flex-col gap-2">
-          <span class="mx-icon h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
-          <span class="mx-icon h-8 w-8 rounded-xl bg-black/40 ring-1 ring-white/10 animate-pulse"></span>
+          <span class="mx-icon h-8 w-8 rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
+          <span class="mx-icon h-8 w-8 rounded-xl bg-zinc-900/7 dark:bg-black/40 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
         </div>
 
         <!-- Footer -->
@@ -7634,17 +7952,17 @@ function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
           <div class="flex items-center justify-between gap-3">
             <!-- Left: avatar + nickname -->
             <div class="mx-b-left flex min-w-0 items-center gap-2">
-              <span class="h-6 w-6 rounded-full bg-white/20 ring-1 ring-white/10 animate-pulse"></span>
-              <span class="ml-1 h-4 w-24 rounded bg-white/20 animate-pulse"></span>
+              <span class="h-6 w-6 rounded-full bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
+              <span class="ml-1 h-4 w-24 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </div>
 
             <!-- Right: code + médaille -->
             <div class="mx-b-right flex items-center gap-2">
-              <span class="mx-code-inline inline-flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 py-1.5">
-                <span class="h-4 w-16 rounded bg-white/20 animate-pulse"></span>
+              <span class="mx-code-inline inline-flex items-center gap-2 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2.5 py-1.5">
+                <span class="h-4 w-16 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
               </span>
-              <span class="c-medal inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/10 px-3 ring-0">
-                <span class="h-3 w-10 rounded bg-white/20 animate-pulse"></span>
+              <span class="c-medal inline-flex h-7 items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 ring-0">
+                <span class="h-3 w-10 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
               </span>
             </div>
           </div>
@@ -7665,7 +7983,7 @@ function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
 
   const root = document.getElementById('resultsContainer');
   Array.from(root.querySelectorAll('.mx-card')).forEach((el, i) =>
-    setTimeout(() => el.classList.add('is-in'), 22 * i)
+    setTimeout(() => el.classList.add(...String('is-in').trim().split(/\s+/).filter(Boolean)), 22 * i)
   );
 }
 
@@ -7673,7 +7991,7 @@ function renderCompletionsSkeleton(rows = 8) {
   ensureSkeletonCSS();
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-completions px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-completions px-3 py-2">
       <div>${t('thead.mapCode')}</div>
       <div>${t('thead.mapNickname')}</div>
       <div>${t('thead.mapDiscordTag')}</div>
@@ -7685,7 +8003,7 @@ function renderCompletionsSkeleton(rows = 8) {
   `;
 
   const row = `
-    <div class="grid grid-completions bg-zinc-900/40 px-3 py-2">
+    <div class="grid grid-completions bg-white/70 dark:bg-zinc-900/40 px-3 py-2">
       <div>${sChip(116)}</div>
       <div>${sNick('12ch')}</div>
       <div>${sBar(130,'sm')}</div>
@@ -7699,7 +8017,7 @@ function renderCompletionsSkeleton(rows = 8) {
   const body = new Array(rows).fill(row).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-completions">
           ${headerHTML}
@@ -7768,7 +8086,7 @@ function renderPersonalRecordsSkeleton(rows = 8) {
   ensureSkeletonCSS();
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-personal_records px-3 py-2">
       <div>${t('thead.mapCode')}</div>
       <div>${t('thead.mapNickname')}</div>
       <div>${t('thead.mapDiscordTag')}</div>
@@ -7779,7 +8097,7 @@ function renderPersonalRecordsSkeleton(rows = 8) {
   `;
 
   const row = `
-    <div class="grid grid-personal_records bg-zinc-900/40 px-3 py-2">
+    <div class="grid grid-personal_records bg-white/70 dark:bg-zinc-900/40 px-3 py-2">
       <div>${sChip(116)}</div>
       <div>${sNick('12ch')}</div>
       <div>${sBar(130,'sm')}</div>
@@ -7792,7 +8110,7 @@ function renderPersonalRecordsSkeleton(rows = 8) {
   const body = new Array(rows).fill(row).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-personal_records">
           ${headerHTML}
@@ -7810,16 +8128,16 @@ function renderGuidesSkeleton(rows = 2) {
   ensureSkeletonCSS();
 
   const headerHTML = `
-    <div class="sticky top-0 z-10 bg-zinc-900/60 text-zinc-300 font-semibold grid grid-guide px-3 py-2">
+    <div class="sticky top-0 z-10 bg-white/75 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 font-semibold grid grid-guide px-3 py-2">
       <div class="text-center">${t('thead.mapVideo')}</div>
     </div>
   `;
 
   const row = `
-    <div class="grid grid-guide bg-zinc-900/40 px-3 py-4">
+    <div class="grid grid-guide bg-white/70 dark:bg-zinc-900/40 px-3 py-4">
       <div class="text-center">
         <div class="mx-auto w-full max-w-3xl">
-          <div class="video-embed ring-1 ring-white/10">
+          <div class="video-embed ring-1 ring-zinc-300/60 dark:ring-white/10">
             <div class="skel skel-vid"></div>
           </div>
           <div class="mt-2 flex justify-center">${sBar(160,'sm')}</div>
@@ -7831,7 +8149,7 @@ function renderGuidesSkeleton(rows = 2) {
   const body = new Array(rows).fill(row).join('');
 
   const shell = `
-    <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div class="overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5">
       <div class="overflow-auto">
         <div class="minw-guide">
           ${headerHTML}
@@ -7856,7 +8174,7 @@ function renderSkeletonForSection(sectionId) {
     setResultsHTML(`
       <div class="grid gap-2">
         ${Array.from({ length: 10 }, () =>
-          `<div class="h-10 rounded-lg bg-white/10 animate-pulse"></div>`
+          `<div class="h-10 rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>`
         ).join('')}
       </div>
     `);
@@ -7941,8 +8259,8 @@ function renderPaginationButtons() {
     b.textContent = label;
     b.disabled = !!disabled;
     b.className = [
-      'inline-flex items-center justify-center rounded-lg border border-white/10 cursor-pointer',
-      'bg-zinc-900/60 hover:bg-white/5 px-3 py-1.5 text-sm',
+      'inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 cursor-pointer',
+      'bg-white/75 dark:bg-zinc-900/60 hover:bg-zinc-100 dark:hover:bg-white/10 px-3 py-1.5 text-sm',
       'disabled:opacity-50 disabled:cursor-not-allowed',
     ].join(' ');
     b.addEventListener('click', onClick);
@@ -7955,7 +8273,7 @@ function renderPaginationButtons() {
   );
 
   const indicator = document.createElement('span');
-  indicator.className = 'px-3 py-1.5 text-sm text-zinc-300';
+  indicator.className = 'px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300';
   indicator.textContent = t('pagination.page_of', { current: currentPage, total: totalPages });
   wrap.appendChild(indicator);
 
@@ -8190,10 +8508,10 @@ function showToast(message, type = 'ok', opts = {}) {
 
   const palette =
     type === 'ok'
-      ? 'bg-emerald-500/90 text-white'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
       : type === 'warn'
         ? 'bg-amber-500/90 text-zinc-900'
-        : 'bg-red-600/90 text-white';
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
 
   const el = document.createElement('div');
   el.setAttribute('role', 'status');
@@ -8237,9 +8555,9 @@ const showWarningMessage      = (m) => showToast(m, 'warn');
 // --- Pills  ---
 function showPill(message, { variant = 'info', duration = 1000 } = {}) {
   const palette = {
-    info: 'bg-zinc-800/90 text-zinc-100 ring-white/10',
-    success: 'bg-emerald-600 text-white ring-white/10',
-    error: 'bg-rose-500/20 text-rose-200 ring-white/10 border border-rose-400/30',
+    info: 'bg-white/90 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 ring-zinc-300/60 dark:ring-white/10',
+    success: 'bg-emerald-600 text-zinc-900 dark:text-white ring-zinc-300/60 dark:ring-white/10',
+    error: 'bg-rose-500/20 text-rose-200 ring-zinc-300/60 dark:ring-white/10 border border-rose-400/30',
   };
 
   const el = document.createElement('div');
@@ -8256,13 +8574,13 @@ function showPill(message, { variant = 'info', duration = 1000 } = {}) {
 
   document.body.appendChild(el);
   requestAnimationFrame(() => {
-    el.classList.remove('opacity-0', 'scale-90');
-    el.classList.add('opacity-100', 'scale-100');
+    el.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-90').trim().split(/\s+/).filter(Boolean));
+    el.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
   });
 
   setTimeout(() => {
-    el.classList.remove('opacity-100', 'scale-100');
-    el.classList.add('opacity-0', 'scale-90');
+    el.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean), ...String('scale-100').trim().split(/\s+/).filter(Boolean));
+    el.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('scale-90').trim().split(/\s+/).filter(Boolean));
     el.addEventListener('transitionend', () => el.remove(), { once: true });
   }, duration);
 }
@@ -8291,7 +8609,7 @@ function ensureImageLightbox() {
                 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200">
       <button id="imageLightboxClose"
         class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center
-               rounded-full bg-white/10 text-zinc-300 hover:bg-white/20
+               rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20
                focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
         aria-label="Close image">
         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
@@ -8301,7 +8619,7 @@ function ensureImageLightbox() {
       <div class="max-w-[96vw] max-h-[92vh] p-2">
         <div id="lightboxSkel" class="skel skel-vid"></div>
         <img id="imageLightboxImg"
-             class="max-w-full max-h-[90vh] rounded-2xl ring-1 ring-white/10 object-contain hidden" alt="">
+             class="max-w-full max-h-[90vh] rounded-2xl ring-1 ring-zinc-300/60 dark:ring-white/10 object-contain hidden" alt="">
       </div>
     </div>`;
   document.body.appendChild(shell.firstElementChild);
@@ -8309,8 +8627,8 @@ function ensureImageLightbox() {
   ov = document.getElementById('imageLightboxOverlay');
   const btn = document.getElementById('imageLightboxClose');
   const close = () => {
-    ov.classList.add('opacity-0'); ov.classList.remove('opacity-100');
-    setTimeout(() => ov.classList.add('hidden'), 180);
+    ov.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); ov.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    setTimeout(() => ov.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)), 180);
   };
   btn.addEventListener('click', close);
   ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
@@ -8326,18 +8644,18 @@ function openImageLightbox(src, alt = '') {
   const img = document.getElementById('imageLightboxImg');
   const sk  = document.getElementById('lightboxSkel');
 
-  img.classList.add('hidden');
+  img.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   sk.style.display = 'block';
 
-  img.onload = () => { sk.style.display = 'none'; img.classList.remove('hidden'); };
-  img.onerror = () => { sk.style.display = 'none'; img.classList.remove('hidden'); img.alt = 'Image failed to load'; };
+  img.onload = () => { sk.style.display = 'none'; img.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); };
+  img.onerror = () => { sk.style.display = 'none'; img.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); img.alt = 'Image failed to load'; };
 
   img.src = src;
   img.alt = alt || '';
 
-  ov.classList.remove('hidden');
+  ov.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(() => {
-    ov.classList.remove('opacity-0'); ov.classList.add('opacity-100');
+    ov.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); ov.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -8413,7 +8731,7 @@ async function fetchProgression(mapCode) {
     }
 
     if (!Array.isArray(data) || data.length === 0) {
-      chartContainer.innerHTML = `<p class="text-center font-semibold text-zinc-100">${t('popup.no_results')}</p>`;
+      chartContainer.innerHTML = `<p class="text-center font-semibold text-zinc-900 dark:text-zinc-100">${t('popup.no_results')}</p>`;
       return [];
     }
 
@@ -8439,13 +8757,13 @@ async function fetchProgression(mapCode) {
 function renderProgressionChart(data, stats = { min: null, max: null, avg: null }) {
   const chartContainer = document.getElementById('chartContainer');
   chartContainer.innerHTML = `
-    <div class="rounded-xl bg-zinc-900/60 ring-1 ring-white/10 p-4">
+    <div class="rounded-xl bg-white/75 dark:bg-zinc-900/60 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
       <canvas id="progressionChart" class="w-full h-[280px]"></canvas>
     </div>
   `;
 
   if (!Array.isArray(data) || data.length === 0) {
-    chartContainer.innerHTML = `<p class="text-center font-semibold text-zinc-100">No valid progression data available to display</p>`;
+    chartContainer.innerHTML = `<p class="text-center font-semibold text-zinc-900 dark:text-zinc-100">No valid progression data available to display</p>`;
     return;
   }
   if (typeof Chart === 'undefined') {

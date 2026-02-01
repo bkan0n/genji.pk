@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Maps;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class MapSearchController extends Controller
 {
@@ -30,6 +31,8 @@ class MapSearchController extends Controller
             'creator_names',
             'mechanics',
             'restrictions',
+            'tags',
+            'sort',
         ];
         foreach ($arrayish as $k) {
             if (! array_key_exists($k, $payload)) {
@@ -73,6 +76,12 @@ class MapSearchController extends Controller
 
             'restrictions' => ['nullable', 'array'],
             'restrictions.*' => ['string'],
+
+            'tags' => ['sometimes', 'nullable', 'array'],
+            'tags.*' => ['string', Rule::in(['Other Heroes', 'XP Based', 'Custom Grav/Speed'])],
+
+            'sort' => ['sometimes', 'nullable', 'array'],
+            'sort.*' => ['string', Rule::in(['difficulty:asc', 'difficulty:desc', 'checkpoints:asc', 'checkpoints:desc', 'ratings:asc', 'ratings:desc', 'map_name:asc', 'map_name:desc', 'title:asc', 'title:desc', 'code:asc', 'code:desc'])],
 
             'difficulty_exact' => ['nullable', 'string'],
             'difficulty_range_min' => ['nullable', 'string'],
@@ -172,6 +181,52 @@ class MapSearchController extends Controller
         }
         if (isset($validated['restrictions'])) {
             $query['restrictions'] = $listSanitize($validated['restrictions']);
+        }
+
+
+        $normalizeTag = function ($s) {
+            $s = trim((string) $s);
+            if ($s === '') return '';
+            $key = strtolower($s);
+            $key = preg_replace('/\s+/', '', $key);
+            $key = str_replace(['-', '_', '/'], '', $key);
+            $map = [
+                'otherheroes' => 'Other Heroes',
+                'xpbased' => 'XP Based',
+                'customgravspeed' => 'Custom Grav/Speed',
+            ];
+            return $map[$key] ?? $s;
+        };
+        if (isset($validated['tags'])) {
+            $tags = $listSanitize($validated['tags']);
+            $tags = array_values(array_unique(array_filter(array_map($normalizeTag, $tags), fn($v) => $v !== '')));
+            if (!empty($tags)) $query['tags'] = $tags;
+        }
+
+        // Sort
+        $normalizeSort = function ($s) {
+            $s = trim((string) $s);
+            if ($s === '') return '';
+            return $s;
+        };
+        if (isset($validated['sort'])) {
+            $sort = $listSanitize($validated['sort']);
+            $seen = [];
+            $out = [];
+            foreach ($sort as $s) {
+                $s = $normalizeSort($s);
+                if ($s === '') {
+                    continue;
+                }
+                if (isset($seen[$s])) {
+                    continue;
+                }
+                $seen[$s] = true;
+                $out[] = $s;
+            }
+            if (! empty($out)) {
+                $query['sort'] = $out;
+            }
         }
 
         $root = rtrim((string) config('services.genji_api.root'), '/');

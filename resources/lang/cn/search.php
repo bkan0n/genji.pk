@@ -100,6 +100,8 @@ return [
         'china_server'          => '中国',
         'apply_filters'         => '应用筛选',
         'clear_filters'         => '重置筛选',
+        'tags'                  => '标签',
+        'sort'                  => '排序',
     ],
 
     // ───────────────────────────────────────────────────────────────────────
@@ -428,5 +430,6 @@ return [
         'mapUpvotes'            => '点赞数',
         'mapVerified'           => '已验证',
         'mapStatus'             => '状态',
+        'mapTags'               => '地图标签',
     ],
 ];

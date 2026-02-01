@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-<section class="relative overflow-visible min-h-[100vh]">
+<section class="relative overflow-visible min-h-[100vh] text-zinc-900 dark:text-white">
   <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
 
   {{-- Hero --}}
@@ -18,7 +18,7 @@
       <div>
         <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
           {{ __('infos.hero.title') }}
-          <span class="block text-sm font-medium text-zinc-300 sm:text-base">
+          <span class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">
             {{ __('infos.hero.subtitle') ?? 'ranks · submissions · playtesting · techniques' }}
           </span>
         </h1>
@@ -28,22 +28,22 @@
 
     {{-- Tabs --}}
     <div class="mb-8">
-      <div id="infosTabs" class="relative inline-flex rounded-xl border border-white/10 bg-white/5 p-1 text-xs sm:text-sm">
-        <div id="tabHighlight" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] rounded-lg bg-white transition-all duration-300 ease-out will-change-transform"></div>
+      <div id="infosTabs" class="relative inline-flex rounded-xl border border-zinc-200 bg-white/70 p-1 text-xs shadow-sm backdrop-blur sm:text-sm dark:border-white/10 dark:bg-white/5">
+        <div id="tabHighlight" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] rounded-lg bg-zinc-900 shadow-[0_1px_0_rgba(0,0,0,.06),0_12px_30px_rgba(0,0,0,.14)] transition-all duration-300 ease-out will-change-transform dark:bg-white dark:shadow-[0_1px_0_rgba(255,255,255,.06),0_8px_30px_rgba(0,0,0,.25)]"></div>
 
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="ranking_process" data-active="true">
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="ranking_process" data-active="true">
           {{ __('infos.tabs.ranking_process') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="ranks_threshold">
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="ranks_threshold">
           {{ __('infos.tabs.ranks_threshold') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="playtesting">
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="playtesting">
           {{ __('infos.tabs.playtesting') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="submit">
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="submit">
           {{ __('infos.tabs.submit_map') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-white hover:bg-white/10" data-infos-tab="techs">
+        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="techs">
           {{ __('infos.tabs.techs') }}
         </button>
       </div>

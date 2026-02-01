@@ -138,30 +138,30 @@ async function initRankCard() {
   const searchButton = byId('searchButton');
   const resetFilter = byId('resetFilter');
 
-  badgeMasteryContent.classList.add('hidden');
-  btnRankCard.classList.add('active');
+  badgeMasteryContent.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  btnRankCard.classList.add(...String('active').trim().split(/\s+/).filter(Boolean));
 
   const disableButtons = () => {
     [btnRankCard, btnBadges, searchButton, resetFilter].forEach((b) => {
       b.disabled = true;
-      b.classList.add('cursor-not-allowed', 'opacity-50');
+      b.classList.add(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean), ...String('opacity-50').trim().split(/\s+/).filter(Boolean));
     });
   };
   const enableButtons = () => {
     [btnRankCard, btnBadges, searchButton, resetFilter].forEach((b) => {
       b.disabled = false;
-      b.classList.remove('cursor-not-allowed', 'opacity-50');
+      b.classList.remove(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean), ...String('opacity-50').trim().split(/\s+/).filter(Boolean));
     });
   };
 
   disableButtons();
 
   function toggleTabs(showContent, hideContent, activeBtn, inactiveBtn) {
-    activeBtn.classList.add('active', 'bg-white', 'text-zinc-900', 'border-white/60');
-    inactiveBtn.classList.remove('active', 'bg-white', 'text-zinc-900', 'border-white/60');
-    inactiveBtn.classList.add('bg-white/5', 'hover:bg-white/10', 'text-white');
-    showContent.classList.remove('hidden');
-    hideContent.classList.add('hidden');
+    activeBtn.classList.add(...String('active').trim().split(/\s+/).filter(Boolean), ...String('bg-white').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-900').trim().split(/\s+/).filter(Boolean), ...String('border-white/60').trim().split(/\s+/).filter(Boolean));
+    inactiveBtn.classList.remove(...String('active').trim().split(/\s+/).filter(Boolean), ...String('bg-white').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-900').trim().split(/\s+/).filter(Boolean), ...String('border-white/60').trim().split(/\s+/).filter(Boolean));
+    inactiveBtn.classList.add(...String('bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5').trim().split(/\s+/).filter(Boolean), ...String('hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean), ...String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean));
+    showContent.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    hideContent.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
 
     const targetId = getTargetUserId();
 
@@ -223,11 +223,11 @@ async function initRankCard() {
     try {
       if (isBadgesTabActive) {
         hideRankCardContainer();
-        badgeMasteryContent.classList.remove('hidden');
-        badgeMasteryContent.classList.add('grid');
+        badgeMasteryContent.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+        badgeMasteryContent.classList.add(...String('grid').trim().split(/\s+/).filter(Boolean));
       } else {
-        badgeMasteryContent.classList.add('hidden');
-        badgeMasteryContent.classList.remove('grid');
+        badgeMasteryContent.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+        badgeMasteryContent.classList.remove(...String('grid').trim().split(/\s+/).filter(Boolean));
       }
 
       if (isBadgesTabActive) {
@@ -282,19 +282,19 @@ async function initRankCard() {
 
     if (!me) {
       hideRankCardContainer();
-      badgeMasteryContent.innerHTML = `<p class="text-sm text-white/70">${t('no_badges_found')}</p>`;
+      badgeMasteryContent.innerHTML = `<p class="text-sm text-zinc-900 dark:text-white/70">${t('no_badges_found')}</p>`;
     } else {
       await fetchUserMastery(me);
       badgeMasteryContent.dataset.loadedFor = String(me);
     }
 
     if (wasBadgesTab) {
-      badgeMasteryContent.classList.remove('hidden');
-      badgeMasteryContent.classList.add('grid');
-      rankCardContent.classList.add('hidden');
+      badgeMasteryContent.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      badgeMasteryContent.classList.add(...String('grid').trim().split(/\s+/).filter(Boolean));
+      rankCardContent.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     } else {
-      badgeMasteryContent.classList.add('hidden');
-      badgeMasteryContent.classList.remove('grid');
+      badgeMasteryContent.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      badgeMasteryContent.classList.remove(...String('grid').trim().split(/\s+/).filter(Boolean));
     }
 
     updateButtonContainerVisibility();
@@ -370,8 +370,8 @@ function updateButtonContainerVisibility() {
   const shouldShow = isOwnCard && !isBadgesTabActive;
   const nothingToShow = !currentUserId && !hasTarget;
 
-  buttonContainer.classList.toggle('hidden', !shouldShow || nothingToShow);
-  buttonContainer.classList.toggle('flex', shouldShow && !nothingToShow);
+(() => { const __obj = buttonContainer; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !shouldShow || nothingToShow); return __last; })();
+(() => { const __obj = buttonContainer; let __last; for (const __c of String('flex').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, shouldShow && !nothingToShow); return __last; })();
 
   setEditButtonsState(shouldShow && !nothingToShow);
   setResetFilterEnabled(!!currentUserId);
@@ -392,15 +392,15 @@ function animateValue(element, start, end, duration) {
 function showLoadingBar() {
   const el = byId('loadingContainer');
   if (!el) return;
-  el.classList.remove('hidden', 'opacity-0');
-  el.classList.add('flex', 'opacity-100');
+  el.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
 }
 
 function hideLoadingBar() {
   const el = byId('loadingContainer');
   if (!el) return;
-  el.classList.add('opacity-0');
-  setTimeout(() => el.classList.add('hidden'), 200);
+  el.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean));
+  setTimeout(() => el.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)), 200);
 }
 
 const PROGRESS_COLORS = {
@@ -415,8 +415,8 @@ const PROGRESS_COLORS = {
 function applyProgressColors(scopeEl = document) {
   Object.entries(PROGRESS_COLORS).forEach(([slug, color]) => {
     scopeEl.querySelectorAll(`.progress-${slug}`).forEach((el) => {
-      el.classList.remove('bg-white/80');
-      el.classList.add(color);
+      el.classList.remove(...String('bg-white/80').trim().split(/\s+/).filter(Boolean));
+      el.classList.add(...String(color).trim().split(/\s+/).filter(Boolean));
     });
   });
 }
@@ -447,8 +447,8 @@ function setEditButtonsState(enabled) {
     const b = byId(id);
     if (!b) return;
     b.disabled = !effective;
-    b.classList.toggle('cursor-not-allowed', !effective);
-    b.classList.toggle('opacity-50', !effective);
+(() => { const __obj = b; let __last; for (const __c of String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !effective); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('opacity-50').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !effective); return __last; })();
 
     const tipKey = t('loading_rewards');
     const msg = tipKey && tipKey !== 'loading_rewards' ? tipKey : t('loading_rewards');
@@ -461,8 +461,8 @@ function setResetFilterEnabled(enabled) {
   const btn = byId('resetFilter');
   if (!btn) return;
   btn.disabled = !enabled;
-  btn.classList.toggle('disabled:cursor-not-allowed', !enabled);
-  btn.classList.toggle('opacity-50', !enabled);
+(() => { const __obj = btn; let __last; for (const __c of String('disabled:cursor-not-allowed').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !enabled); return __last; })();
+(() => { const __obj = btn; let __last; for (const __c of String('opacity-50').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !enabled); return __last; })();
 }
 
 function revealRankCardContainer() {
@@ -473,15 +473,15 @@ function revealRankCardContainer() {
     updateButtonContainerVisibility();
   }
 
-  el.classList.remove('hidden');
-  el.classList.remove('gp-panel-leave', 'gp-panel-leave-to');
-  el.classList.add('gp-panel-anim', 'gp-panel-enter');
+  el.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  el.classList.remove(...String('gp-panel-leave').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-leave-to').trim().split(/\s+/).filter(Boolean));
+  el.classList.add(...String('gp-panel-anim').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-enter').trim().split(/\s+/).filter(Boolean));
 
   void el.getBoundingClientRect();
-  el.classList.add('gp-panel-enter-to');
+  el.classList.add(...String('gp-panel-enter-to').trim().split(/\s+/).filter(Boolean));
   const onEnd = (e) => {
     if (e.target !== el) return;
-    el.classList.remove('gp-panel-enter', 'gp-panel-enter-to');
+    el.classList.remove(...String('gp-panel-enter').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-enter-to').trim().split(/\s+/).filter(Boolean));
     el.removeEventListener('transitionend', onEnd);
   };
   el.addEventListener('transitionend', onEnd);
@@ -491,16 +491,16 @@ function hideRankCardContainer() {
   const el = byId('rankCardContent');
   if (!el || el.classList.contains('hidden')) return;
 
-  el.classList.remove('gp-panel-enter', 'gp-panel-enter-to');
+  el.classList.remove(...String('gp-panel-enter').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-enter-to').trim().split(/\s+/).filter(Boolean));
 
-  el.classList.add('gp-panel-anim', 'gp-panel-leave');
+  el.classList.add(...String('gp-panel-anim').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-leave').trim().split(/\s+/).filter(Boolean));
   void el.getBoundingClientRect();
-  el.classList.add('gp-panel-leave-to');
+  el.classList.add(...String('gp-panel-leave-to').trim().split(/\s+/).filter(Boolean));
   const onEnd = (e) => {
     if (e.target !== el) return;
     if (!el.classList.contains('gp-panel-leave-to')) return;
-    el.classList.remove('gp-panel-leave', 'gp-panel-leave-to');
-    el.classList.add('hidden');
+    el.classList.remove(...String('gp-panel-leave').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-leave-to').trim().split(/\s+/).filter(Boolean));
+    el.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     el.removeEventListener('transitionend', onEnd);
   };
   el.addEventListener('transitionend', onEnd);
@@ -532,15 +532,15 @@ function toastBase(msg, extra = '') {
   node.textContent = msg;
   document.body.appendChild(node);
   setTimeout(() => {
-    node.classList.add('opacity-0', 'translate-y-1');
+    node.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean), ...String('translate-y-1').trim().split(/\s+/).filter(Boolean));
   }, 1600);
   setTimeout(() => node.remove(), 2000);
 }
 function toastSuccess(msg) {
-  toastBase(msg, 'bg-emerald-600/90 text-white ring-emerald-300/40');
+  toastBase(msg, 'bg-emerald-600/90 text-zinc-900 dark:text-white ring-emerald-300/40');
 }
 function toastError(msg) {
-  toastBase(msg, 'bg-rose-600/90 text-white ring-rose-300/40');
+  toastBase(msg, 'bg-rose-600/90 text-zinc-900 dark:text-white ring-rose-300/40');
 }
 
 /* =========================
@@ -590,7 +590,7 @@ async function loadRankCardContent() {
           </div>
 
           <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
-            <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight">
+            <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight text-white/90">
               ${data.nickname}
             </div>
 
@@ -628,7 +628,7 @@ async function loadRankCardContent() {
                           <div class="rank-row grid items-center gap-0.5 sm:gap-2
                             grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
                             sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
-                            <span class="rank-title text-[13px] sm:text-base whitespace-nowrap pr-1 sm:pr-0">
+                            <span class="rank-title text-[13px] sm:text-base whitespace-nowrap pr-1 sm:pr-0 text-white/90">
                               ${t('difficulties.' + key)}
                             </span>
 
@@ -653,15 +653,15 @@ async function loadRankCardContent() {
                   <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('xp')}</span>
-                      <span class="stat-value text-lg font-semibold" data-value="${Number(data.xp || 0)}">0</span>
+                      <span class="stat-value text-lg font-semibold text-white/90" data-value="${Number(data.xp || 0)}">0</span>
                     </div>
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('prestige_level')}</span>
-                      <span class="text-base font-semibold">${Number(data.prestige_level ?? 0)}</span>
+                      <span class="text-base font-semibold text-white/90">${Number(data.prestige_level ?? 0)}</span>
                     </div>
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('community_rank')}</span>
-                      <span class="text-base font-semibold">${data.community_rank || '—'}</span>
+                      <span class="text-base font-semibold text-white/90">${data.community_rank || '—'}</span>
                     </div>
                   </div>
 
@@ -684,15 +684,15 @@ async function loadRankCardContent() {
                     <div class="stats-section grid grid-cols-3 gap-2 rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
                       <div class="stat-item text-center">
                         <span class="stat-label block text-xs text-white/70">${t('maps_label')}</span>
-                        <span class="stat-value text-lg font-semibold" data-value="${data.total_maps_created}">0</span>
+                        <span class="stat-value text-lg font-semibold text-white/90" data-value="${data.total_maps_created}">0</span>
                       </div>
                       <div class="stat-item text-center">
                         <span class="stat-label block text-xs text-white/70">${t('playtests_label')}</span>
-                        <span class="stat-value text-lg font-semibold" data-value="${data.total_playtests}">0</span>
+                        <span class="stat-value text-lg font-semibold text-white/90" data-value="${data.total_playtests}">0</span>
                       </div>
                       <div class="stat-item text-center">
                         <span class="stat-label block text-xs text-white/70">${t('world_records_label')}</span>
-                        <span class="stat-value text-lg font-semibold" data-value="${data.world_records}">0</span>
+                        <span class="stat-value text-lg font-semibold text-white/90" data-value="${data.world_records}">0</span>
                       </div>
                     </div>
                   </div>
@@ -806,7 +806,7 @@ async function fetchUserRankCard(userId, opts = {}) {
           </div>
 
           <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
-            <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight">
+            <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight text-white/90">
               ${data.nickname}
             </div>
 
@@ -839,7 +839,7 @@ async function fetchUserRankCard(userId, opts = {}) {
                           <div class="rank-row grid items-center gap-0.5 sm:gap-2
                             grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
                             sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
-                          <span class="rank-title text-[13px] sm:text-base whitespace-nowrap pr-1 sm:pr-0">${t('difficulties.' + key)}</span>
+                          <span class="rank-title text-[13px] sm:text-base whitespace-nowrap pr-1 sm:pr-0 text-white/90">${t('difficulties.' + key)}</span>
                           <div class="relative group w-full">
                             <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/10 ring-1 ring-white/10">
                               <div class="progress progress-${slug} absolute left-0 top-0 h-full w-0" data-width="${pct}"></div>
@@ -860,15 +860,15 @@ async function fetchUserRankCard(userId, opts = {}) {
                   <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('xp')}</span>
-                      <span class="stat-value text-lg font-semibold" data-value="${Number(data.xp || 0)}">0</span>
+                      <span class="stat-value text-lg font-semibold text-white/90" data-value="${Number(data.xp || 0)}">0</span>
                     </div>
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('prestige_level')}</span>
-                      <span class="text-base font-semibold">${Number(data.prestige_level ?? 0)}</span>
+                      <span class="text-base font-semibold text-white/90">${Number(data.prestige_level ?? 0)}</span>
                     </div>
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('community_rank')}</span>
-                      <span class="text-base font-semibold">${data.community_rank || '—'}</span>
+                      <span class="text-base font-semibold text-white/90">${data.community_rank || '—'}</span>
                     </div>
                   </div>
 
@@ -890,15 +890,15 @@ async function fetchUserRankCard(userId, opts = {}) {
                     <div class="stats-section grid grid-cols-3 gap-2 rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
                       <div class="stat-item text-center">
                         <span class="stat-label block text-xs text-white/70">${t('maps_label')}</span>
-                        <span class="stat-value text-lg font-semibold" data-value="${data.total_maps_created}">0</span>
+                        <span class="stat-value text-lg font-semibold text-white/90" data-value="${data.total_maps_created}">0</span>
                       </div>
                       <div class="stat-item text-center">
                         <span class="stat-label block text-xs text-white/70">${t('playtests_label')}</span>
-                        <span class="stat-value text-lg font-semibold" data-value="${data.total_playtests}">0</span>
+                        <span class="stat-value text-lg font-semibold text-white/90" data-value="${data.total_playtests}">0</span>
                       </div>
                       <div class="stat-item text-center">
                         <span class="stat-label block text-xs text-white/70">${t('world_records_label')}</span>
-                        <span class="stat-value text-lg font-semibold" data-value="${data.world_records}">0</span>
+                        <span class="stat-value text-lg font-semibold text-white/90" data-value="${data.world_records}">0</span>
                       </div>
                     </div>
                   </div>
@@ -985,13 +985,13 @@ function loadUserMasteryContent() {
   }
 
   container.dataset.loadedFor = String(targetId || '');
-  container.classList.remove('hidden');
-  container.classList.add('grid');
+  container.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  container.classList.add(...String('grid').trim().split(/\s+/).filter(Boolean));
 
   const buttonContainer = byId('buttonContainer');
   if (buttonContainer) {
-    buttonContainer.classList.add('hidden');
-    buttonContainer.classList.remove('flex');
+    buttonContainer.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    buttonContainer.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
   }
 }
 
@@ -1001,9 +1001,9 @@ async function fetchUserMastery(userId) {
   const container = byId('badgeMasteryContent');
   container.innerHTML = `
     <div class="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6">
-      <section class="relative w-full rounded-2xl bg-black/30 ring-1 ring-white/10 backdrop-blur p-3 sm:p-4">
+      <section class="relative w-full rounded-2xl bg-zinc-900/5 dark:bg-black/30 ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur p-3 sm:p-4">
         <div class="mb-3 flex items-center justify-between gap-2">
-          <span id="badgeCount" class="text-xs text-white/60">—</span>
+          <span id="badgeCount" class="text-xs text-zinc-900 dark:text-white/60">—</span>
         </div>
 
         <div id="badgeScroller"
@@ -1011,7 +1011,7 @@ async function fetchUserMastery(userId) {
                     grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6
                     max-h-[460px] sm:max-h-[60vh]">
 
-          <div class="col-span-full h-24 animate-pulse rounded-xl bg-white/5"></div>
+          <div class="col-span-full h-24 animate-pulse rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"></div>
         </div>
 
         <div class="pointer-events-none absolute inset-x-0 top-0 h-6 rounded-t-2xl bg-gradient-to-b from-black/40 to-transparent"></div>
@@ -1031,7 +1031,7 @@ async function fetchUserMastery(userId) {
     scroller.innerHTML = '';
 
     if (!Array.isArray(data) || data.length === 0) {
-      scroller.innerHTML = `<p class="col-span-full text-sm text-white/70">${t('no_badges_found')}</p>`;
+      scroller.innerHTML = `<p class="col-span-full text-sm text-zinc-900 dark:text-white/70">${t('no_badges_found')}</p>`;
       counter.textContent = '0';
       container.dataset.loadedFor = String(userId);
       return;
@@ -1048,28 +1048,28 @@ async function fetchUserMastery(userId) {
           : badgeLevel === 'Gold'
             ? 'bg-yellow-600/80 text-yellow-50'
             : badgeLevel === 'Silver'
-              ? 'bg-slate-500/80 text-white'
+              ? 'bg-slate-500/80 text-zinc-900 dark:text-white'
               : badgeLevel === 'Bronze'
                 ? 'bg-amber-700/80 text-amber-50'
-                : 'bg-white/10 text-white/80';
+                : 'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 text-zinc-900 dark:text-white/80';
 
       const el = document.createElement('article');
       el.className =
-        'group rounded-xl bg-white/5 ring-1 ring-white/10 transition p-3 ' +
-        'hover:bg-white/10 hover:ring-white/20';
+        'group rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition p-3 ' +
+        'hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 hover:ring-zinc-400/60 dark:ring-white/20';
       el.innerHTML = `
         <div class="relative">
           <img src="${badge.icon_url}" alt="${badge.map_name}"
-               class="mx-auto h-16 w-16 rounded-lg object-contain ring-white/10
-                      group-hover:ring-white/20 cursor-pointer"
+               class="mx-auto h-16 w-16 rounded-lg object-contain ring-zinc-300/60 dark:ring-white/10
+                      group-hover:ring-zinc-400/60 dark:ring-white/20 cursor-pointer"
                onclick="showBadgeViewer('${badge.icon_url}', '${badge.map_name.replace(/'/g, "\\'")}')">
-          <span class="absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-[10px] ring-1 ring-white/10 shadow ${pillClass}">
+          <span class="absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-[10px] ring-1 ring-zinc-300/60 dark:ring-white/10 shadow ${pillClass}">
             ${badgeLevel}
           </span>
         </div>
         <div class="mt-2 space-y-0.5">
           <p class="text-center text-sm font-semibold leading-tight">${badge.map_name}</p>
-          <p class="text-center text-[11px] text-white/70">
+          <p class="text-center text-[11px] text-zinc-900 dark:text-white/70">
             ${t('completions', { amount: badge.amount })}
           </p>
         </div>
@@ -1079,7 +1079,7 @@ async function fetchUserMastery(userId) {
     });
 
     if (!count) {
-      scroller.innerHTML = `<p class="col-span-full text-sm text-white/70">Aucun badge trouvé.</p>`;
+      scroller.innerHTML = `<p class="col-span-full text-sm text-zinc-900 dark:text-white/70">Aucun badge trouvé.</p>`;
     }
     counter.textContent = `${count}`;
     container.dataset.loadedFor = String(userId);
@@ -1104,8 +1104,8 @@ function showBadgeViewer(iconUrl, mapName) {
   img.setAttribute('data-current-rotation', '0');
   img.src = iconUrl;
   img.alt = mapName;
-  overlay.classList.remove('hidden');
-  overlay.classList.add('flex');
+  overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  overlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
 
   img.style.transition = 'none';
   img.addEventListener('mousedown', startBadgeRotation);
@@ -1114,8 +1114,8 @@ function closeBadgeViewer() {
   const overlay = byId('badgeViewer');
   const img = byId('badgeViewerImage');
 
-  overlay.classList.add('hidden');
-  overlay.classList.remove('flex');
+  overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  overlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
   img.style.transform = 'rotateY(0deg)';
   img.setAttribute('data-current-rotation', '0');
   img.removeEventListener('mousedown', startBadgeRotation);
@@ -1176,12 +1176,12 @@ function createSearchSuggestions() {
   const searchInput = byId('searchUserName');
   if (!searchInput) return;
 
-  searchInput.parentNode.classList.add('relative');
+  searchInput.parentNode.classList.add(...String('relative').trim().split(/\s+/).filter(Boolean));
 
   const container = document.createElement('div');
   container.id = 'suggestionsContainer';
   container.className =
-    'absolute z-50 mt-2 w-full rounded-xl bg-zinc-900/95 ring-1 ring-white/10 shadow-xl backdrop-blur hidden max-h-72 overflow-auto';
+    'absolute z-50 mt-2 w-full rounded-xl bg-white/95 dark:bg-zinc-900/95 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl backdrop-blur hidden max-h-72 overflow-auto';
   searchInput.parentNode.appendChild(container);
 
   let items = [];
@@ -1216,11 +1216,11 @@ function createSearchSuggestions() {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className =
-        'w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg hover:bg-white/10';
+        'w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10';
       btn.innerHTML = `
         <div class="flex items-center justify-between gap-3">
           <span class="truncate">${escapeHTML(u.label)}</span>
-          <span class="text-[11px] text-white/40 font-mono">${escapeHTML(u.user_id)}</span>
+          <span class="text-[11px] text-zinc-900 dark:text-white/40 font-mono">${escapeHTML(u.user_id)}</span>
         </div>`;
       btn.addEventListener('click', () => selectIndex(i));
       container.appendChild(btn);
@@ -1252,7 +1252,7 @@ function createSearchSuggestions() {
     }
 
     Array.from(container.children).forEach((el, idx) => {
-      el.classList.toggle('bg-white/10', idx === active);
+(() => { const __obj = el; let __last; for (const __c of String('bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, idx === active); return __last; })();
     });
 
     const el = container.children[active];
@@ -1299,26 +1299,26 @@ function createSearchSuggestions() {
 function displaySuggestions(suggestions, container) {
   container.innerHTML = '';
   if (!suggestions || suggestions.length === 0) {
-    container.classList.add('hidden');
+    container.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     return;
   }
 
   suggestions.forEach((user) => {
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded-lg';
+    item.className = 'w-full text-left px-3 py-2 text-sm hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 rounded-lg';
     item.textContent = user.name;
     item.addEventListener('click', () => {
       const input = byId('searchUserName');
       input.value = user.name;
       input.dataset.userId = String(user.user_id);
       selectedUserId = String(user.user_id);
-      container.classList.add('hidden');
+      container.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     });
     container.appendChild(item);
   });
 
-  container.classList.remove('hidden');
+  container.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 /* =========================
@@ -1330,12 +1330,12 @@ function initBadgesChanges() {
   const overlay = document.createElement('div');
   overlay.id = 'badgesModal';
   overlay.className =
-    'fixed inset-0 z-[300] hidden items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm';
+    'fixed inset-0 z-[300] hidden items-center justify-center p-4 sm:p-6 bg-zinc-900/10 dark:bg-black/50 backdrop-blur-sm';
   document.body.appendChild(overlay);
 
   const card = document.createElement('div');
   card.className =
-    'rounded-2xl bg-zinc-900/90 ring-1 ring-white/10 p-4 w-[340px] sm:w-[420px] max-h-[80vh] overflow-auto';
+    'rounded-2xl bg-white/90 dark:bg-zinc-900/90 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4 w-[340px] sm:w-[420px] max-h-[80vh] overflow-auto';
   overlay.appendChild(card);
 
   const actionRow = document.createElement('div');
@@ -1345,14 +1345,14 @@ function initBadgesChanges() {
   const resetBadgesButton = document.createElement('button');
   resetBadgesButton.id = 'resetBadges';
   resetBadgesButton.className =
-    'rounded-lg bg-rose-600/90 px-3 py-1.5 text-sm text-white cursor-pointer';
+    'rounded-lg bg-rose-600/90 px-3 py-1.5 text-sm text-zinc-900 dark:text-white cursor-pointer';
   resetBadgesButton.textContent = t('reset_badges_button');
   actionRow.appendChild(resetBadgesButton);
 
   const saveBadgeChangesButton = document.createElement('button');
   saveBadgeChangesButton.id = 'saveBadgeChanges';
   saveBadgeChangesButton.className =
-    'inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white cursor-pointer';
+    'inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-zinc-900 dark:text-white cursor-pointer';
   saveBadgeChangesButton.textContent = '✓';
   actionRow.appendChild(saveBadgeChangesButton);
 
@@ -1369,7 +1369,7 @@ function initBadgesChanges() {
   const rewardsContainer = document.createElement('div');
   rewardsContainer.id = 'rewardsContainer';
   rewardsContainer.className =
-    'absolute z-[310] hidden max-h-56 w-60 overflow-auto rounded-xl bg-zinc-900/95 p-2 text-sm ring-1 ring-white/10 shadow-xl';
+    'absolute z-[310] hidden max-h-56 w-60 overflow-auto rounded-xl bg-white/95 dark:bg-zinc-900/95 p-2 text-sm ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl';
   document.body.appendChild(rewardsContainer);
 
   resetBadgesButton.addEventListener('click', () => {
@@ -1385,7 +1385,7 @@ function initBadgesChanges() {
   for (let i = 0; i < 6; i++) {
     const circle = document.createElement('div');
     circle.className =
-      'relative flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-sm ring-1 ring-white/10 hover:bg-white/10 cursor-pointer overflow-hidden';
+      'relative flex h-16 w-16 items-center justify-center rounded-full bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-sm ring-1 ring-zinc-300/60 dark:ring-white/10 hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 cursor-pointer overflow-hidden';
     circle.textContent = (i + 1).toString();
     circlesWrap.appendChild(circle);
     circles.push(circle);
@@ -1403,12 +1403,12 @@ function initBadgesChanges() {
       rewardsContainer.style.left = `${rect.left + window.scrollX}px`;
       rewardsContainer.style.top = `${rect.bottom + 8 + window.scrollY}px`;
       rewardsContainer.innerHTML = '';
-      rewardsContainer.classList.remove('hidden');
+      rewardsContainer.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 
       preloadedRewards.forEach((badge) => {
         const row = document.createElement('button');
         row.type = 'button';
-        row.className = 'badge-items w-full rounded-lg px-3 py-2 text-left hover:bg-white/10';
+        row.className = 'badge-items w-full rounded-lg px-3 py-2 text-left hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10';
         row.textContent = `${badge.name} (${badge.rarity})`;
         row.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1419,7 +1419,7 @@ function initBadgesChanges() {
           img.alt = badge.name || '';
           img.className = 'h-full w-full rounded-full object-cover';
           activeCircle.appendChild(img);
-          rewardsContainer.classList.add('hidden');
+          rewardsContainer.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
           activeCircle = null;
         });
         rewardsContainer.appendChild(row);
@@ -1588,11 +1588,11 @@ function initBadgesChanges() {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       closeModal(overlay);
-      rewardsContainer.classList.add('hidden');
+      rewardsContainer.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
   });
   document.addEventListener('click', (e) => {
-    if (!rewardsContainer.contains(e.target)) rewardsContainer.classList.add('hidden');
+    if (!rewardsContainer.contains(e.target)) rewardsContainer.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
 }
 
@@ -1609,7 +1609,7 @@ function updateBadgesContainer(badges) {
     .map(
       (b) => `
       <img src="${cdnifyAssetUrl(b.url)}" alt="${b.name || 'Badge'}"
-           class="badge h-8 w-8 sm:h-10 sm:w-10 flex-none rounded-full ring-1 ring-white/10 object-cover">
+           class="badge h-8 w-8 sm:h-10 sm:w-10 flex-none rounded-full ring-1 ring-zinc-300/60 dark:ring-white/10 object-cover">
     `
     )
     .join('');
@@ -1686,13 +1686,13 @@ function initBackgroundChanges() {
   const overlay = document.createElement('div');
   overlay.id = 'backgroundModal';
   overlay.className =
-    'fixed inset-0 z-[300] hidden items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm';
+    'fixed inset-0 z-[300] hidden items-center justify-center p-4 sm:p-6 bg-zinc-900/10 dark:bg-black/50 backdrop-blur-sm';
   document.body.appendChild(overlay);
 
   const holder = document.createElement('div');
   holder.id = 'backgroundContainer';
   holder.className =
-    'flex w-[360px] sm:w-[420px] flex-col gap-3 rounded-2xl bg-zinc-900/90 p-4 ring-1 ring-white/10 max-h-[88vh] overflow-auto';
+    'flex w-[360px] sm:w-[420px] flex-col gap-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 p-4 ring-1 ring-zinc-300/60 dark:ring-white/10 max-h-[88vh] overflow-auto';
   overlay.appendChild(holder);
 
   const actions = document.createElement('div');
@@ -1702,14 +1702,14 @@ function initBackgroundChanges() {
   const resetBtn = document.createElement('button');
   resetBtn.id = 'resetBackground';
   resetBtn.textContent = t('reset_background_button');
-  resetBtn.className = 'rounded-lg bg-rose-600/90 px-3 py-1.5 text-sm text-white cursor-pointer';
+  resetBtn.className = 'rounded-lg bg-rose-600/90 px-3 py-1.5 text-sm text-zinc-900 dark:text-white cursor-pointer';
   actions.appendChild(resetBtn);
 
   const saveBtn = document.createElement('button');
   saveBtn.id = 'saveBackgroundChanges';
   saveBtn.textContent = '✓';
   saveBtn.className =
-    'inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white cursor-pointer';
+    'inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-zinc-900 dark:text-white cursor-pointer';
   actions.appendChild(saveBtn);
 
   let selectedBackground = null;
@@ -1717,14 +1717,14 @@ function initBackgroundChanges() {
   const preview = document.createElement('div');
   preview.id = 'backgroundPreview';
   preview.className =
-    'relative flex h-28 w-full items-center justify-center rounded-xl bg-white/5 text-sm font-bold text-zinc-400 ring-1 ring-white/10';
+    'relative flex h-28 w-full items-center justify-center rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-sm font-bold text-zinc-600 dark:text-zinc-400 ring-1 ring-zinc-300/60 dark:ring-white/10';
   preview.textContent = '+';
   holder.appendChild(preview);
 
   const options = document.createElement('div');
   options.id = 'backgroundOptions';
   options.className =
-    'absolute z-[310] hidden max-h-60 w-[320px] overflow-auto rounded-xl bg-zinc-900/95 p-2 text-sm ring-1 ring-white/10 shadow-xl';
+    'absolute z-[310] hidden max-h-60 w-[320px] overflow-auto rounded-xl bg-white/95 dark:bg-zinc-900/95 p-2 text-sm ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl';
   document.body.appendChild(options);
 
   resetBtn.addEventListener('click', () => {
@@ -1743,7 +1743,7 @@ function initBackgroundChanges() {
     preloadedBackgrounds.forEach((bg) => {
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'background-option w-full rounded-lg px-3 py-2 text-left hover:bg-white/10';
+      row.className = 'background-option w-full rounded-lg px-3 py-2 text-left hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10';
       row.textContent = `${bg.name} (${bg.rarity})`;
       row.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1752,7 +1752,7 @@ function initBackgroundChanges() {
         preview.style.backgroundSize = 'cover';
         preview.style.backgroundPosition = 'center';
         preview.textContent = '';
-        options.classList.add('hidden');
+        options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       });
       options.appendChild(row);
     });
@@ -1761,12 +1761,12 @@ function initBackgroundChanges() {
     options.style.top = `${rect.bottom + 8 + window.scrollY}px`;
     options.style.left = `${rect.left + window.scrollX}px`;
     options.style.width = `${rect.width}px`;
-    options.classList.remove('hidden');
+    options.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   };
 
   preview.addEventListener('click', () => {
     if (options.classList.contains('hidden')) displayBackgroundOptions();
-    else options.classList.add('hidden');
+    else options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
 
   saveBtn.addEventListener('click', () => {
@@ -1818,7 +1818,7 @@ function initBackgroundChanges() {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       closeModal(overlay);
-      options.classList.add('hidden');
+      options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
   });
 }
@@ -1894,13 +1894,13 @@ function initAvatarChanges() {
   const overlay = document.createElement('div');
   overlay.id = 'avatarModal';
   overlay.className =
-    'fixed inset-0 z-[300] hidden items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm';
+    'fixed inset-0 z-[300] hidden items-center justify-center p-4 sm:p-6 bg-zinc-900/10 dark:bg-black/50 backdrop-blur-sm';
   document.body.appendChild(overlay);
 
   const container = document.createElement('div');
   container.id = 'avatarContainer';
   container.className =
-    'flex w-[360px] sm:w-[420px] flex-col gap-3 rounded-2xl bg-zinc-900/90 p-4 pb-2 ring-1 ring-white/10 max-h-[80vh] overflow-auto';
+    'flex w-[360px] sm:w-[420px] flex-col gap-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 p-4 pb-2 ring-1 ring-zinc-300/60 dark:ring-white/10 max-h-[80vh] overflow-auto';
   overlay.appendChild(container);
 
   const topRow = document.createElement('div');
@@ -1910,14 +1910,14 @@ function initAvatarChanges() {
   const resetBtn = document.createElement('button');
   resetBtn.id = 'resetAvatar';
   resetBtn.textContent = t('reset_avatar_button');
-  resetBtn.className = 'rounded-lg bg-rose-600/90 px-3 py-1.5 text-sm text-white cursor-pointer';
+  resetBtn.className = 'rounded-lg bg-rose-600/90 px-3 py-1.5 text-sm text-zinc-900 dark:text-white cursor-pointer';
   topRow.appendChild(resetBtn);
 
   const saveBtn = document.createElement('button');
   saveBtn.id = 'saveAvatarChanges';
   saveBtn.textContent = '✓';
   saveBtn.className =
-    'inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white cursor-pointer hover:bg-emerald-400';
+    'inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-zinc-900 dark:text-white cursor-pointer hover:bg-emerald-400';
   topRow.appendChild(saveBtn);
 
   const buttonGroup = document.createElement('div');
@@ -1925,8 +1925,8 @@ function initAvatarChanges() {
   container.appendChild(buttonGroup);
 
   const BTN_BASE =
-    'rounded-lg border border-white/10 px-3 py-2 text-sm transition-colors cursor-pointer';
-  const BTN_INACTIVE = 'bg-white/5 text-zinc-100 hover:bg-white/10';
+    'rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm transition-colors cursor-pointer';
+  const BTN_INACTIVE = 'bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-zinc-900 dark:text-zinc-100 hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10';
   const BTN_ACTIVE = 'bg-white text-zinc-900 hover:bg-zinc-100';
 
   const changeSkinButton = document.createElement('button');
@@ -1944,21 +1944,21 @@ function initAvatarChanges() {
   const skinPreview = document.createElement('div');
   skinPreview.id = 'avatarSkinPreview';
   skinPreview.className =
-    'hidden h-56 sm:h-64 w-full items-center justify-center rounded-xl bg-white/5 text-sm font-bold text-zinc-400 ring-1 ring-white/10 bg-no-repeat bg-center';
+    'hidden h-56 sm:h-64 w-full items-center justify-center rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-sm font-bold text-zinc-600 dark:text-zinc-400 ring-1 ring-zinc-300/60 dark:ring-white/10 bg-no-repeat bg-center';
   skinPreview.textContent = '+';
   container.appendChild(skinPreview);
 
   const posePreview = document.createElement('div');
   posePreview.id = 'avatarPosePreview';
   posePreview.className =
-    'hidden h-56 sm:h-64 w-full items-center justify-center rounded-xl bg-white/5 text-sm font-bold text-zinc-400 ring-1 ring-white/10 bg-no-repeat bg-center';
+    'hidden h-56 sm:h-64 w-full items-center justify-center rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 text-sm font-bold text-zinc-600 dark:text-zinc-400 ring-1 ring-zinc-300/60 dark:ring-white/10 bg-no-repeat bg-center';
   posePreview.textContent = '+';
   container.appendChild(posePreview);
 
   const options = document.createElement('div');
   options.id = 'avatarOptions';
   options.className =
-    'absolute z-[310] hidden max-h-60 w-full overflow-auto rounded-xl bg-zinc-900/95 p-2 text-sm ring-1 ring-white/10 shadow-xl';
+    'absolute z-[310] hidden max-h-60 w-full overflow-auto rounded-xl bg-white/95 dark:bg-zinc-900/95 p-2 text-sm ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl';
   document.body.appendChild(options);
 
   let selectedSkin = null;
@@ -1972,15 +1972,15 @@ function initAvatarChanges() {
     btn.className = `${BTN_BASE} ${BTN_ACTIVE}`;
 
     if (btn === changeSkinButton) {
-      skinPreview.classList.remove('hidden');
-      skinPreview.classList.add('flex');
-      posePreview.classList.add('hidden');
-      posePreview.classList.remove('flex');
+      skinPreview.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      skinPreview.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+      posePreview.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      posePreview.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
     } else {
-      posePreview.classList.remove('hidden');
-      posePreview.classList.add('flex');
-      skinPreview.classList.add('hidden');
-      skinPreview.classList.remove('flex');
+      posePreview.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      posePreview.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+      skinPreview.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      skinPreview.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
     }
   };
 
@@ -2036,7 +2036,7 @@ function initAvatarChanges() {
     list.forEach((item) => {
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'avatar-option w-full rounded-lg px-3 py-2 text-left hover:bg-white/10';
+      row.className = 'avatar-option w-full rounded-lg px-3 py-2 text-left hover:bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10';
       row.textContent = `${item.name} (${item.rarity})`;
       row.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2055,7 +2055,7 @@ function initAvatarChanges() {
           posePreview.style.backgroundRepeat = 'no-repeat';
           posePreview.textContent = '';
         }
-        options.classList.add('hidden');
+        options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       });
       options.appendChild(row);
     });
@@ -2063,7 +2063,7 @@ function initAvatarChanges() {
     options.style.top = `${rect.bottom + 8 + window.scrollY}px`;
     options.style.left = `${rect.left + window.scrollX}px`;
     options.style.width = `${rect.width}px`;
-    options.classList.remove('hidden');
+    options.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   };
 
   skinPreview.addEventListener('click', () => displayAvatarOptions('skin'));
@@ -2146,7 +2146,7 @@ function initAvatarChanges() {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       closeModal(overlay);
-      options.classList.add('hidden');
+      options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
   });
 }
@@ -2186,8 +2186,8 @@ function preloadAvatarPreviews() {
           skinPreview.style.backgroundSize = 'contain';
           skinPreview.style.backgroundPosition = 'center';
           skinPreview.style.backgroundRepeat = 'no-repeat';
-          skinPreview.classList.add('flex');
-          skinPreview.classList.remove('hidden');
+          skinPreview.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+          skinPreview.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
           skinPreview.textContent = '';
         }
       })
@@ -2206,8 +2206,8 @@ function preloadAvatarPreviews() {
           posePreview.style.backgroundSize = 'contain';
           posePreview.style.backgroundPosition = 'center';
           posePreview.style.backgroundRepeat = 'no-repeat';
-          posePreview.classList.add('flex');
-          posePreview.classList.remove('hidden');
+          posePreview.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
+          posePreview.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
           posePreview.textContent = '';
         }
       })
@@ -2287,8 +2287,8 @@ function preloadAllRewards() {
 function openModal(overlayEl) {
   if (!overlayEl) return;
   const panel = overlayEl.firstElementChild;
-  overlayEl.classList.remove('hidden');
-  overlayEl.classList.add('flex');
+  overlayEl.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+  overlayEl.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
 
   overlayEl.style.opacity = 0;
   if (panel) {
@@ -2322,8 +2322,8 @@ function closeModal(overlayEl) {
   }
 
   const onEnd = () => {
-    overlayEl.classList.add('hidden');
-    overlayEl.classList.remove('flex');
+    overlayEl.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+    overlayEl.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean));
 
     overlayEl.style.opacity = '';
     overlayEl.style.transition = '';
@@ -2339,7 +2339,7 @@ function closeModal(overlayEl) {
 
 function openDropdown(el) {
   if (!el || !el.classList.contains('hidden')) return;
-  el.classList.remove('hidden');
+  el.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 
   el.style.transformOrigin = 'top center';
   el.style.opacity = 0;
@@ -2359,7 +2359,7 @@ function closeDropdown(el) {
   el.style.transform = 'translateY(4px) scale(0.98)';
 
   const done = () => {
-    el.classList.add('hidden');
+    el.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     el.style.transition = '';
     el.style.opacity = '';
     el.style.transform = '';
@@ -2374,17 +2374,17 @@ function closeDropdown(el) {
 function rankCardSkeletonHTML() {
   return `
     <div class="rank-card-container relative">
-      <div class="relative overflow-hidden rounded-2xl ring-1 ring-white/10">
+      <div class="relative overflow-hidden rounded-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
         <!-- BG (même wrapper .background que le rendu réel) -->
         <div class="background absolute inset-0">
-          <div class="h-full w-full bg-white/10"></div>
+          <div class="h-full w-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
         </div>
 
         <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
 
           <!-- Titre joueur -->
           <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight">
-            <div class="mx-auto h-[1.2em] w-56 sm:w-72 rounded bg-white/10 animate-pulse"></div>
+            <div class="mx-auto h-[1.2em] w-56 sm:w-72 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
           </div>
 
           <!-- Grille identique -->
@@ -2392,18 +2392,18 @@ function rankCardSkeletonHTML() {
 
             <!-- Colonne gauche -->
             <div class="rank-details-container md:col-start-1 md:row-start-1 space-y-4">
-              <div class="rank-section-container h-[410px] rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col overflow-hidden">
+              <div class="rank-section-container h-[410px] rounded-xl bg-zinc-900/5 dark:bg-black/30 ring-1 ring-zinc-300/60 dark:ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col overflow-hidden">
 
                 <!-- Médailles -->
                 <div class="rank-section space-y-3">
-                  <div class="medals-header grid items-center text-sm text-white/80 gap-0.5 sm:gap-2
+                  <div class="medals-header grid items-center text-sm text-zinc-900 dark:text-white/80 gap-0.5 sm:gap-2
                     grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
                     sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
                     <span class="col-start-1 col-end-2"></span>
                     <span class="col-start-2 col-end-3"></span>
-                    <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
-                    <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
-                    <span class="mx-auto h-4 w-4 rounded-full bg-white/10 animate-pulse"></span>
+                    <span class="mx-auto h-4 w-4 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
+                    <span class="mx-auto h-4 w-4 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
+                    <span class="mx-auto h-4 w-4 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
                   </div>
 
                   <!-- Difficultés -->
@@ -2411,15 +2411,15 @@ function rankCardSkeletonHTML() {
                     <div class="rank-row grid items-center gap-0.5 sm:gap-2
                       grid-cols-[max-content_1fr_minmax(1.25rem,auto)_minmax(1.25rem,auto)_minmax(1.25rem,auto)]
                       sm:grid-cols-[8rem_1fr_minmax(2rem,auto)_minmax(2rem,auto)_minmax(2rem,auto)]">
-                      <span class="h-4 w-24 rounded bg-white/10 animate-pulse"></span>
+                      <span class="h-4 w-24 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
                       <div class="relative group w-full">
-                        <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/10 ring-1 ring-white/10">
-                          <div class="absolute left-0 top-0 h-full w-1/3 bg-white/20 animate-pulse"></div>
+                        <div class="progress-bar relative h-2 w-full overflow-hidden rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10">
+                          <div class="absolute left-0 top-0 h-full w-1/3 bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></div>
                         </div>
                       </div>
-                      <span class="mx-auto h-4 w-6 rounded bg-white/10 animate-pulse"></span>
-                      <span class="mx-auto h-4 w-6 rounded bg-white/10 animate-pulse"></span>
-                      <span class="mx-auto h-4 w-6 rounded bg-white/10 animate-pulse"></span>
+                      <span class="mx-auto h-4 w-6 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
+                      <span class="mx-auto h-4 w-6 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
+                      <span class="mx-auto h-4 w-6 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></span>
                     </div>
                   `).join('')}
                 </div>
@@ -2427,28 +2427,28 @@ function rankCardSkeletonHTML() {
                 <!-- Stats inline -->
                 <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
                   ${Array.from({ length: 3 }).map(() => `
-                    <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
-                      <div class="mx-auto h-3 w-16 rounded bg-white/10 animate-pulse"></div>
-                      <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/10 animate-pulse"></div>
+                    <div class="rounded-lg bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-2 ring-1 ring-zinc-300/60 dark:ring-white/10 text-center">
+                      <div class="mx-auto h-3 w-16 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                      <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                     </div>
                   `).join('')}
                 </div>
 
                 <!-- Bas: badges + mini stats -->
                 <div class="combined-container mt-3 grid gap-4 md:grid-cols-2 items-stretch">
-                  <div class="badges-container rounded-xl bg-white/5 p-2 ring-1 ring-white/10 min-w-0 overflow-hidden">
+                  <div class="badges-container rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-2 ring-1 ring-zinc-300/60 dark:ring-white/10 min-w-0 overflow-hidden">
                     <div class="badges-grid grid grid-cols-[repeat(auto-fit,minmax(2.5rem,1fr))] gap-2 sm:gap-3 place-items-center">
                       ${Array.from({ length: 8 }).map(() => `
-                        <div class="badge h-10 w-10 rounded-full bg-white/10 animate-pulse"></div>
+                        <div class="badge h-10 w-10 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                       `).join('')}
                     </div>
                   </div>
 
-                  <div class="stats-section grid grid-cols-3 gap-2 rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
+                  <div class="stats-section grid grid-cols-3 gap-2 rounded-xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-2 ring-1 ring-zinc-300/60 dark:ring-white/10">
                     ${Array.from({ length: 3 }).map(() => `
                       <div class="stat-item text-center">
-                        <div class="mx-auto h-3 w-16 rounded bg-white/10 animate-pulse"></div>
-                        <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/10 animate-pulse"></div>
+                        <div class="mx-auto h-3 w-16 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                        <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                       </div>
                     `).join('')}
                   </div>
@@ -2457,14 +2457,14 @@ function rankCardSkeletonHTML() {
             </div>
 
             <!-- Colonne droite -->
-            <div class="player-info h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
+            <div class="player-info h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-zinc-900/5 dark:bg-black/30 p-4 ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur overflow-hidden">
               <div class="inline-flex items-center gap-2">
-                <div class="h-4 w-28 rounded bg-white/10 animate-pulse"></div>
-                <div class="h-5 w-5 rounded bg-white/10 animate-pulse"></div>
+                <div class="h-4 w-28 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                <div class="h-5 w-5 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
               </div>
 
               <div class="player-avatar mt-4 w-full max-w-[220px]">
-                <div class="w-full rounded-lg bg-white/10 animate-pulse aspect-[3/4] sm:aspect-[2/3]"></div>
+                <div class="w-full rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse aspect-[3/4] sm:aspect-[2/3]"></div>
               </div>
             </div>
 
