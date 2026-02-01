@@ -77,6 +77,7 @@ return [
             'events' => [
                 'verification_approved' => 'Verification approved',
                 'verification_rejected' => 'Verification rejected',
+                'auto_verify_failed' => 'Auto verify failed',
                 'record_removed' => 'Record removed',
                 'skill_role_update' => 'Skill role update',
                 'xp_gain' => 'XP gain',
@@ -85,6 +86,9 @@ return [
                 'mastery_earned' => 'Mastery earned',
                 'lootbox_earned' => 'Lootbox earned',
                 'playtest_update' => 'Playtest update',
+                'record_edited' => 'Record edited',
+                'map_edit_approved' => 'Map edit approved',
+                'map_edit_rejected' => 'Map edit rejected',
             ],
 
             'dm_on_verification' => 'Message me on verification',

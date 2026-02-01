@@ -85,6 +85,7 @@ return [
             'events' => [
                 'verification_approved'     => '验证通过',
                 'verification_rejected'     => '验证被拒绝',
+                'auto_verify_failed'        => '自动验证失败',
                 'record_removed'            => '记录已移除',
                 'skill_role_update'         => '技能身份组更新',
                 'xp_gain'                   => '获得经验值',
@@ -93,6 +94,9 @@ return [
                 'mastery_earned'            => '精通达成',
                 'lootbox_earned'            => '获得战利品箱',
                 'playtest_update'           => '测试更新',
+                'record_edited'             => '记录已编辑',
+                'map_edit_approved'         => '地图编辑已批准',
+                'map_edit_rejected'         => '地图编辑已拒绝',
             ],
 
         ],

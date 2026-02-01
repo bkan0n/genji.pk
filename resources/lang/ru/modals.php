@@ -84,6 +84,7 @@ return [
             'events' => [
                 'verification_approved' => 'Верификация одобрена',
                 'verification_rejected' => 'Верификация отклонена',
+                'auto_verify_failed' => 'Автоматическая верификация не удалась',
                 'record_removed' => 'Запись удалена',
                 'skill_role_update' => 'Обновление роли навыка',
                 'xp_gain' => 'Получение XP',
@@ -92,6 +93,9 @@ return [
                 'mastery_earned' => 'Получено мастерство',
                 'lootbox_earned' => 'Получен лутбокс',
                 'playtest_update' => 'Обновление плейтеста',
+                'record_edited' => 'Запись отредактирована',
+                'map_edit_approved' => 'Редактирование карты одобрено',
+                'map_edit_rejected' => 'Редактирование карты отклонено',
             ],
         ],
         'close' => 'Закрыть модальное окно настроек',

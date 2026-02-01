@@ -87,6 +87,7 @@ return [
             'events' => [
                 'verification_approved' => 'Vérification approuvée',
                 'verification_rejected' => 'Vérification refusée',
+                'auto_verify_failed'    => 'Vérification automatique échouée',
                 'record_removed'        => 'Record supprimé',
                 'skill_role_update'     => 'Mise à jour du rang de compétence',
                 'xp_gain'               => 'Gain d’XP',
@@ -95,6 +96,9 @@ return [
                 'mastery_earned'        => 'Maîtrise obtenue',
                 'lootbox_earned'        => 'Lootbox obtenue',
                 'playtest_update'       => 'Mise à jour de playtest',
+                'record_edited'         => 'Record édité',
+                'map_edit_approved'     => 'Édition de map approuvée',
+                'map_edit_rejected'     => 'Édition de map refusée',
             ],
         ],
         'close' => 'Fermer les paramètres',

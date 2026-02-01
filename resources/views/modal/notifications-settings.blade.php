@@ -117,6 +117,7 @@
                 $events = [
                   'verification_approved' => $tr('modals.settings.notifications.events.verification_approved', 'Verification approved'),
                   'verification_rejected' => $tr('modals.settings.notifications.events.verification_rejected', 'Verification rejected'),
+                  'auto_verify_failed'    => $tr('modals.settings.notifications.events.auto_verify_failed', 'Auto verify failed'),
                   'record_removed'        => $tr('modals.settings.notifications.events.record_removed', 'Record removed'),
                   'skill_role_update'     => $tr('modals.settings.notifications.events.skill_role_update', 'Skill role update'),
                   'xp_gain'               => $tr('modals.settings.notifications.events.xp_gain', 'XP gain'),
@@ -125,6 +126,9 @@
                   'mastery_earned'        => $tr('modals.settings.notifications.events.mastery_earned', 'Mastery earned'),
                   'lootbox_earned'        => $tr('modals.settings.notifications.events.lootbox_earned', 'Lootbox earned'),
                   'playtest_update'       => $tr('modals.settings.notifications.events.playtest_update', 'Playtest update'),
+                  'record_edited'         => $tr('modals.settings.notifications.events.record_edited', 'Record edited'),
+                  'map_edit_approved'     => $tr('modals.settings.notifications.events.map_edit_approved', 'Map edit approved'),
+                  'map_edit_rejected'     => $tr('modals.settings.notifications.events.map_edit_rejected', 'Map edit rejected'),
                 ];
 
                 $channels = [
