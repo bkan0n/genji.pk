@@ -365,6 +365,8 @@ Route::prefix('notifications')
 
         Route::patch('/read-all', [WebNotificationsController::class, 'markAllRead']);
 
+        Route::patch('/dismiss-all', [WebNotificationsController::class, 'dismissAll']);
+
         // Preferences
         Route::get('/preferences', [WebNotificationsController::class, 'preferences']);
 

@@ -68,11 +68,19 @@
       <div class="flex items-center justify-between gap-2 border-b border-zinc-200/80 dark:border-white/10 px-3 py-2">
         <div class="text-[13px] font-extrabold text-zinc-800 dark:text-white/90">{{ __('modals.notifications.title') }}</div>
 
-        <button id="notifMarkAllBtn"
-          type="button"
-          class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-zinc-700 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white">
-          {{ __('modals.notifications.mark_all_read') }}
-        </button>
+        <div class="flex gap-2">
+          <button id="notifMarkAllBtn"
+            type="button"
+            class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-zinc-700 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white">
+            {{ __('modals.notifications.mark_all_read') }}
+          </button>
+
+          <button id="notifDismissAllBtn"
+            type="button"
+            class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-zinc-700 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white">
+            {{ __('modals.notifications.dismiss_all') }}
+          </button>
+        </div>
       </div>
 
       <div id="notifList" class="max-h-[420px] overflow-auto p-2">

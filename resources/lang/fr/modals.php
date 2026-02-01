@@ -27,6 +27,7 @@ return [
         'empty'         => 'Aucune notification',
         'load_more'     => 'Charger plus',
         'mark_all_read' => 'Tout marquer comme lu',
+        'dismiss_all'   => 'Tout ignorer',
         'dismiss'       => 'Ignorer',
         'bell_aria'     => 'Ouvrir les notifications',
         'fallback_title'=> 'Notification',

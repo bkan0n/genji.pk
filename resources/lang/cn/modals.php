@@ -28,6 +28,7 @@ return [
         'empty'          => '暂无通知',
         'load_more'      => '加载更多',
         'mark_all_read'  => '全部标为已读',
+        'dismiss_all'    => '全部忽略',
         'bell_aria'      => '打开通知',
         'dismiss'        => '忽略',
         'fallback_title' => '通知',

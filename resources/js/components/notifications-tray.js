@@ -169,6 +169,7 @@ export function initNotifications() {
   const list = document.getElementById('notifList');
   const empty = document.getElementById('notifEmpty');
   const markAllBtn = document.getElementById('notifMarkAllBtn');
+  const dismissAllBtn = document.getElementById('notifDismissAllBtn');
   const footer = document.getElementById('notifFooter');
   const loadMoreBtn = document.getElementById('notifLoadMoreBtn');
 
@@ -671,6 +672,33 @@ export function initNotifications() {
       if (markAllBtn) {
         markAllBtn.disabled = false;
         markAllBtn.classList.remove('opacity-60', 'pointer-events-none');
+      }
+    }
+  });
+
+  dismissAllBtn?.addEventListener('click', async () => {
+    try {
+      dismissAllBtn.disabled = true;
+      dismissAllBtn.classList.add('opacity-60', 'pointer-events-none');
+
+      await httpJson('/api/notifications/dismiss-all', { method: 'PATCH' });
+
+      const items = list.querySelectorAll('[data-notif-item]');
+      items.forEach((itemEl) => animateDismissItem(itemEl));
+
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      renderEmpty();
+
+      applyUnreadCount(0);
+      writeCachedUnreadCount(0);
+
+      fetchUnreadCount();
+    } catch (_) {}
+    finally {
+      if (dismissAllBtn) {
+        dismissAllBtn.disabled = false;
+        dismissAllBtn.classList.remove('opacity-60', 'pointer-events-none');
       }
     }
   });

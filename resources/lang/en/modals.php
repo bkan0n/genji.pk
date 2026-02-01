@@ -27,6 +27,7 @@ return [
         'empty'          => 'No notifications',
         'load_more'      => 'Load more',
         'mark_all_read'  => 'Mark all as read',
+        'dismiss_all'    => 'Dismiss all',
         'dismiss'        => 'Dismiss',
         'bell_aria'      => 'Open notifications',
         'fallback_title' => 'Notification',

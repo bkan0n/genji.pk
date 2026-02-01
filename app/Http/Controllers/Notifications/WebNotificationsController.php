@@ -175,6 +175,22 @@ class WebNotificationsController extends Controller
         }
     }
 
+    public function dismissAll(Request $request)
+    {
+        $userId = $this->userId($request);
+        if ($userId <= 0) {
+            return $this->jsonOk(['ok' => true], 200);
+        }
+
+        try {
+            $res = $this->http()->patch("/api/v3/notifications/users/{$userId}/dismiss-all");
+            return $this->passthroughSafe($res, ['ok' => true]);
+        } catch (\Throwable $e) {
+            Log::error('Notifications dismissAll proxy failed', ['error' => $e->getMessage()]);
+            return $this->jsonOk(['ok' => false], 500);
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────
     // PREFERENCES
     // ─────────────────────────────────────────────────────────────
