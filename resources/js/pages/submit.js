@@ -4120,6 +4120,10 @@ async function sendCompletionToApi() {
       user_id: String(user_id),
       video,
     };
+    // if OCR produced names, include them in the payload
+    if (Array.isArray(window.ocrNames)) {
+      payload.names = window.ocrNames;
+    }
 
     const resp = await fetch(COMPLETION_SUBMIT_ENDPOINT, {
       method: 'POST',
@@ -4246,6 +4250,39 @@ function dragAndDrop() {
 
       showOcrStatus(t('record.ocr_processing') || 'OCR processing…');
 
+      // Fetch user data to get overwatch_usernames before calling OCR
+      let userNames = [null, null, null];
+      try {
+        if (typeof window.user_id !== 'undefined' && window.user_id != null) {
+          const uresp = await fetch(`/api/users/${encodeURIComponent(window.user_id)}`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+          });
+          if (uresp.ok) {
+            const ujson = await uresp.json().catch(() => null) || {};
+            const ow = Array.isArray(ujson.overwatch_usernames)
+              ? ujson.overwatch_usernames.filter(v => typeof v === 'string' && v.trim() !== '')
+              : [];
+            for (let i = 0; i < 3; i++) {
+              userNames[i] = ow[i] || null;
+            }
+          }
+        }
+      } catch (e) {
+        // ignore user fetch errors
+      }
+
+      // Build OCR request body with all current form values
+      const mapCodeInput = document.getElementById('mapCodeInput');
+      const inputTime = document.getElementById('inputTime');
+      
+      const ocrPayload = {
+        image_url: imageUrl,
+        code: (mapCodeInput?.value || '').trim(),
+        time: inputTime?.value ? (isNaN(inputTime.value) ? null : parseFloat(inputTime.value)) : null,
+        names: userNames,
+      };
+
       const resp = await fetch(OCR_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -4253,7 +4290,7 @@ function dragAndDrop() {
           Accept: 'application/json',
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ image_url: imageUrl }),
+        body: JSON.stringify(ocrPayload),
       });
 
       if (jobId !== ocrSeq) return;
@@ -4272,9 +4309,6 @@ function dragAndDrop() {
 
       const { time, code } = extracted;
 
-      const mapCodeInput = document.getElementById('mapCodeInput');
-      const inputTime = document.getElementById('inputTime');
-
       if (
         mapCodeInput &&
         !mapCodeInput.value.trim() &&
@@ -4284,6 +4318,8 @@ function dragAndDrop() {
         mapCodeInput.dataset.skipNextAutocomplete = '1';
         mapCodeInput.value = String(code).toUpperCase();
         mapCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
+        // ocr filled
+        try { mapCodeInput.dataset.filledByOcr = '1'; } catch (e) {}
       }
 
       if (
@@ -4295,6 +4331,20 @@ function dragAndDrop() {
         inputTime.value = String(time).replace(',', '.');
         inputTime.dispatchEvent(new Event('input', { bubbles: true }));
         inputTime.dispatchEvent(new Event('change', { bubbles: true }));
+        try { inputTime.dataset.filledByOcr = '1'; } catch (e) {}
+      }
+
+      // If OCR is used for submission, prepare names prioritizing user's overwatch_usernames
+      try {
+        const names = [];
+        for (let i = 0; i < 3; i++) {
+          const fromUser = userNames[i] || '';
+          const fromExtracted = Array.isArray(extracted?.names) ? String(extracted.names[i] || '') : '';
+          names.push(fromUser || fromExtracted || '');
+        }
+        window.ocrNames = names;
+      } catch (e) {
+        // ignore
       }
 
       hideOcrStatus();
