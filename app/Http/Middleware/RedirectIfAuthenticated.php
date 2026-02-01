@@ -11,7 +11,7 @@ class RedirectIfAuthenticated
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->session()->has('user_id')) {
-            return redirect()->route('/');
+            return redirect('/');
         }
 
         return $next($request);
