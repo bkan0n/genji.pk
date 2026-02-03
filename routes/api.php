@@ -82,6 +82,7 @@ use App\Http\Controllers\Utilities\Autocomplete\MapCodesController;
 use App\Http\Controllers\Utilities\Autocomplete\MapMechanicsController;
 use App\Http\Controllers\Utilities\Autocomplete\MapNamesController;
 use App\Http\Controllers\Utilities\Autocomplete\MapRestrictionsController;
+use App\Http\Controllers\Utilities\Autocomplete\TagsController;
 use App\Http\Controllers\Utilities\Autocomplete\UsersController;
 use App\Http\Controllers\Utilities\UploadImageController;
 use App\Http\Controllers\Utilities\LogMapClickController;
@@ -148,6 +149,7 @@ Route::prefix('autocomplete')->group(function () {
     Route::get('map-restrictions', MapRestrictionsController::class)->name(
         'api.autocomplete.map-restrictions',
     );
+    Route::get('tags', TagsController::class)->name('api.autocomplete.tags');
     Route::get('users', UsersController::class)->name('api.autocomplete.users');
 });
 Route::middleware(['web'])->prefix('utilities')->name('utilities.')->group(function () {

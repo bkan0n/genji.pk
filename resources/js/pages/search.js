@@ -4512,13 +4512,14 @@ function ensureMapEditRequestModal() {
           <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 p-4 pt-card-anim pt-in">
             <div class="mb-4 flex flex-wrap items-center gap-3">
 
-              <div id="merArchivedSwitch" class="inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-1" data-value="0">
+              <div id="merArchivedSwitch" class="inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-1 relative" data-value="0">
+                <span id="merArchivedSwitchHighlight" aria-hidden="true"></span>
                 <button type="button" data-switch="archived" data-value="0"
-                  class="mer-switch-btn cursor-pointer rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900">
+                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold relative z-1">
                   ${__merEsc(typeof t === 'function' ? (t('map_edit_request.active') || 'Active') : 'Active')}
                 </button>
                 <button type="button" data-switch="archived" data-value="1"
-                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/10">
+                  class="mer-switch-btn cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold relative z-1">
                   ${__merEsc(typeof t === 'function' ? (t('map_edit_request.archived') || 'Archived') : 'Archived')}
                 </button>
               </div>
@@ -4728,6 +4729,69 @@ function ensureMapEditRequestModal() {
     if (statusEl) statusEl.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
   };
 
+  const __moveHighlightTo = (switchId, btn, animate = true) => {
+    const container = document.getElementById(switchId);
+    if (!container || !btn) return;
+    const highlight = document.getElementById(`${switchId}Highlight`);
+    if (!highlight) return;
+
+    const br = btn.getBoundingClientRect();
+    const cr = container.getBoundingClientRect();
+    const left = Math.round(br.left - cr.left);
+    const width = Math.round(br.width);
+
+    const HL_TRANSITION = 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)';
+
+    const apply = () => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    };
+
+    if (!animate) {
+      const prev = highlight.style.transition;
+      highlight.style.transition = 'none';
+      apply();
+      requestAnimationFrame(() => {
+        highlight.style.transition = HL_TRANSITION;
+      });
+      return;
+    }
+
+    if (highlight.style.transition === 'none') {
+      highlight.style.transition = HL_TRANSITION;
+    }
+    requestAnimationFrame(apply);
+  };
+
+  const setSwitch = (switchId, boolVal) => {
+    const el = document.getElementById(switchId);
+    if (!el) return;
+    const value = boolVal ? '1' : '0';
+    el.setAttribute('data-value', value);
+
+    // Update button classes
+    const activeBtn = el.querySelector(`button[data-value="${value}"]`);
+    el.querySelectorAll('button[data-switch]').forEach((b) => {
+      const isActive = b === activeBtn;
+      (() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('dark:text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+    });
+
+    // Move highlight
+    if (activeBtn) {
+      __moveHighlightTo(switchId, activeBtn, true);
+    }
+  };
+
+  const getSwitch = (switchId) => {
+    const el = document.getElementById(switchId);
+    if (!el) return null;
+    return el.getAttribute('data-value') === '1';
+  };
+
   overlay.querySelectorAll('[data-mer-close]').forEach((btn) => btn.addEventListener('click', close));
   overlay.addEventListener('pointerdown', (e) => {
     if (!box.contains(e.target)) close();
@@ -4738,17 +4802,9 @@ function ensureMapEditRequestModal() {
     if (!btn) return;
     const group = btn.getAttribute('data-switch');
     const val = btn.getAttribute('data-value') || '0';
-    const groupEl = overlay.querySelector(`#mer${group.charAt(0).toUpperCase()}${group.slice(1)}Switch`);
-    if (!groupEl) return;
-    groupEl.setAttribute('data-value', val);
+    const switchId = `mer${group.charAt(0).toUpperCase()}${group.slice(1)}Switch`;
 
-    groupEl.querySelectorAll('button[data-switch]').forEach((b) => {
-      const isActive = (b.getAttribute('data-value') || '0') === val;
-(() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
-    });
+    setSwitch(switchId, val === '1');
   });
 
   overlay.__merMounted = overlay.__merMounted || {};
@@ -4857,11 +4913,34 @@ function __merSetMultiLabel(labelEl, selectedSet, emptyLabel) {
   else labelEl.textContent = `${n} selected`;
 }
 
-const TAG_OPTIONS = [
-  { text: 'Other Heroes', value: 'Other Heroes', raw: 'Other Heroes' },
-  { text: 'XP Based', value: 'XP Based', raw: 'XP Based' },
-  { text: 'Custom Grav/Speed', value: 'Custom Grav/Speed', raw: 'Custom Grav/Speed' },
-];
+let TAG_OPTIONS = [];
+
+// Autocomplete tags filters options
+const __loadTagOptions = async () => {
+  try {
+    const resp = await fetch('/api/autocomplete/tags?search=&limit=20', { 
+      headers: { 'Accept': 'application/json' } 
+    });
+    if (resp.ok) {
+      const json = await resp.json().catch(() => null);
+      if (Array.isArray(json) && json.length) {
+        TAG_OPTIONS = json.map(tag => ({ 
+          text: String(tag || ''), 
+          value: String(tag || ''), 
+          raw: String(tag || '') 
+        }));
+        return;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load tag options:', e);
+  }
+  // Fallback
+  TAG_OPTIONS = [];
+};
+
+// Initialize tags on page load
+__loadTagOptions().catch(e => console.error('Error loading tags:', e));
 
 /* -------------------------------------------------------------------------
    Map Edit Request controls
@@ -5984,25 +6063,104 @@ function openMapEditRequestModal(map, opts = {}) {
   else __merResetBannerDropzone(overlay);
 
   // switches
+  const __initSwitchHighlight = (switchId) => {
+    const container = document.getElementById(switchId);
+    if (!container) return;
+    const highlight = document.getElementById(`${switchId}Highlight`);
+    if (!highlight) return;
+    
+    // Setup highlight
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      background: 'white',
+      boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+      transform: 'translate3d(0,0,0)',
+      transition: 'none',
+      willChange: 'transform,width',
+      zIndex: '0',
+      pointerEvents: 'none'
+    });
+
+    container.querySelectorAll('button[data-switch]').forEach((b) => {
+      b.style.position = 'relative';
+      b.style.zIndex = '1';
+    });
+  };
+
+  const __moveHighlightTo = (switchId, btn, animate = true) => {
+    const container = document.getElementById(switchId);
+    if (!container || !btn) return;
+    const highlight = document.getElementById(`${switchId}Highlight`);
+    if (!highlight) return;
+
+    const br = btn.getBoundingClientRect();
+    const cr = container.getBoundingClientRect();
+    const left = Math.round(br.left - cr.left);
+    const width = Math.round(br.width);
+
+    const HL_TRANSITION = 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)';
+
+    const apply = () => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    };
+
+    if (!animate) {
+      const prev = highlight.style.transition;
+      highlight.style.transition = 'none';
+      apply();
+      requestAnimationFrame(() => {
+        highlight.style.transition = HL_TRANSITION;
+      });
+      return;
+    }
+
+    if (highlight.style.transition === 'none') {
+      highlight.style.transition = HL_TRANSITION;
+    }
+    requestAnimationFrame(apply);
+  };
+
   const setSwitch = (switchId, boolVal) => {
     const el = document.getElementById(switchId);
     if (!el) return;
     const value = boolVal ? '1' : '0';
     el.setAttribute('data-value', value);
+
+    // Update
+    const activeBtn = el.querySelector(`button[data-value="${value}"]`);
     el.querySelectorAll('button[data-switch]').forEach((b) => {
-      const isActive = (b.getAttribute('data-value') || '0') === value;
-(() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+      const isActive = b === activeBtn;
+      (() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('dark:text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
+      (() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-100 dark:hover:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
     });
+
+    // Move highlight
+    if (activeBtn) {
+      __moveHighlightTo(switchId, activeBtn, true);
+    }
   };
+
   const getSwitch = (switchId) => {
     const el = document.getElementById(switchId);
     if (!el) return null;
     return el.getAttribute('data-value') === '1';
   };
 
+  // Initialize highlights
+  __initSwitchHighlight('merOfficialSwitch');
+  __initSwitchHighlight('merHiddenSwitch');
+  __initSwitchHighlight('merArchivedSwitch');
+
+  // Set values
   setSwitch('merOfficialSwitch', !!official);
   setSwitch('merHiddenSwitch', !!hidden);
   setSwitch('merArchivedSwitch', !!archived);
@@ -6068,7 +6226,23 @@ function openMapEditRequestModal(map, opts = {}) {
 
     __merPopulateCheckboxDropdown('merMechanicsDropdown', mechanicsOptions, 'mer_mechanics');
     __merPopulateCheckboxDropdown('merRestrictionsDropdown', restrictionsOptions, 'mer_restrictions');
-    __merPopulateCheckboxDropdown('merTagsDropdown', TAG_OPTIONS.map(o => ({ translated: o.text, value: o.value, raw: o.raw })), 'mer_tags');
+
+    try {
+      const resp = await fetch(`/api/autocomplete/tags?search=&limit=20`, { headers: { Accept: 'application/json' } });
+      if (resp.ok) {
+        const json = await resp.json().catch(() => null);
+        if (Array.isArray(json) && json.length) {
+          const opts = json.map((it) => ({ translated: String(it || ''), value: String(it || ''), raw: String(it || '') }));
+          __merPopulateCheckboxDropdown('merTagsDropdown', opts, 'mer_tags');
+        } else {
+          __merPopulateCheckboxDropdown('merTagsDropdown', TAG_OPTIONS.map(o => ({ translated: o.text, value: o.value, raw: o.raw })), 'mer_tags');
+        }
+      } else {
+        __merPopulateCheckboxDropdown('merTagsDropdown', TAG_OPTIONS.map(o => ({ translated: o.text, value: o.value, raw: o.raw })), 'mer_tags');
+      }
+    } catch (e) {
+      __merPopulateCheckboxDropdown('merTagsDropdown', TAG_OPTIONS.map(o => ({ translated: o.text, value: o.value, raw: o.raw })), 'mer_tags');
+    }
     __merSetCheckboxValues('merMechanicsDropdown', mechanics);
     __merSetCheckboxValues('merRestrictionsDropdown', restrictions);
     __merSetCheckboxValues('merTagsDropdown', tags);
