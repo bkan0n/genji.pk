@@ -37,7 +37,7 @@ class CreateMapEditRequestController extends BaseMapEditController
             'restrictions.*' => ['string', 'max:64'],
 
             'tags'           => ['sometimes', 'nullable', 'array'],
-            'tags.*'         => ['string', Rule::in(['Other Heroes', 'XP Based', 'Custom Grav/Speed'])],
+            'tags.*'         => ['string', 'max:64'],
 
             'medals'         => ['sometimes', 'nullable', 'array'],
 

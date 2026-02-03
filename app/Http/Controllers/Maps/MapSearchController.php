@@ -78,7 +78,7 @@ class MapSearchController extends Controller
             'restrictions.*' => ['string'],
 
             'tags' => ['sometimes', 'nullable', 'array'],
-            'tags.*' => ['string', Rule::in(['Other Heroes', 'XP Based', 'Custom Grav/Speed'])],
+            'tags.*' => ['string', 'max:64'],
 
             'sort' => ['sometimes', 'nullable', 'array'],
             'sort.*' => ['string', Rule::in(['difficulty:asc', 'difficulty:desc', 'checkpoints:asc', 'checkpoints:desc', 'ratings:asc', 'ratings:desc', 'map_name:asc', 'map_name:desc', 'title:asc', 'title:desc', 'code:asc', 'code:desc'])],
@@ -182,25 +182,8 @@ class MapSearchController extends Controller
         if (isset($validated['restrictions'])) {
             $query['restrictions'] = $listSanitize($validated['restrictions']);
         }
-
-
-        $normalizeTag = function ($s) {
-            $s = trim((string) $s);
-            if ($s === '') return '';
-            $key = strtolower($s);
-            $key = preg_replace('/\s+/', '', $key);
-            $key = str_replace(['-', '_', '/'], '', $key);
-            $map = [
-                'otherheroes' => 'Other Heroes',
-                'xpbased' => 'XP Based',
-                'customgravspeed' => 'Custom Grav/Speed',
-            ];
-            return $map[$key] ?? $s;
-        };
         if (isset($validated['tags'])) {
-            $tags = $listSanitize($validated['tags']);
-            $tags = array_values(array_unique(array_filter(array_map($normalizeTag, $tags), fn($v) => $v !== '')));
-            if (!empty($tags)) $query['tags'] = $tags;
+            $query['tags'] = $listSanitize($validated['tags']);
         }
 
         // Sort
