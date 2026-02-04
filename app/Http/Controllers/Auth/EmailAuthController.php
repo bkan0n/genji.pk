@@ -131,7 +131,7 @@ class EmailAuthController extends Controller
 
     private function queueRememberCookie(Request $request, string $token): void
     {
-        $minutes = 60 * 24 * 30;
+        $minutes = 60 * 24 * 90;
         $domain = config('session.domain');
         $secureCfg = config('session.secure');
         $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;

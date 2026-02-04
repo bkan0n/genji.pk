@@ -120,9 +120,35 @@ class DiscordAuthController extends Controller
         $request->session()->put('user_provider', 'discord');
         $request->session()->put('user_name', $userData['nickname'] ?? $username);
 
+        $previousDeviceSessionId = (string) $request->cookie(self::DEVICE_SESSION_COOKIE, '');
+        $preAuthSessionId = (string) $request->session()->getId();
+
         $request->session()->regenerate();
         $this->queueDeviceSessionCookie($request);
+
         $remember = (bool) $request->session()->pull('auth_remember', false);
+
+        try {
+            $newSessionId = (string) $request->session()->getId();
+            $payload = json_encode([
+                'user_id' => $id,
+                'is_mod' => (bool) $canModerate,
+            ]);
+
+            $this->api->sessionWrite($newSessionId, (string) $payload, $id, $request->ip() ?? null, $request->userAgent() ?? null);
+
+            $sessions = $this->api->getUserSessions($id);
+            if (is_array($sessions)) {
+                foreach ($sessions as $s) {
+                    $sid = (string) ($s['id'] ?? '');
+                    if ($sid !== '' && $sid !== $newSessionId) {
+                        $this->api->sessionDestroy($sid);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Discord login: session write/cleanup failed', ['error' => $e->getMessage()]);
+        }
         $rememberToken = null;
         if ($remember) {
             $rememberToken = $this->api->createRememberToken($id);
@@ -199,13 +225,26 @@ class DiscordAuthController extends Controller
             );
         }
 
+        try {
+            $newSessionId = (string) $request->session()->getId();
+
+            if (!empty($previousDeviceSessionId) && $previousDeviceSessionId !== $newSessionId) {
+                $this->api->sessionDestroy($previousDeviceSessionId);
+            }
+
+            if (!empty($preAuthSessionId) && $preAuthSessionId !== $newSessionId && $preAuthSessionId !== $previousDeviceSessionId) {
+                $this->api->sessionDestroy($preAuthSessionId);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to cleanup previous sessions after Discord login', ['error' => $e->getMessage()]);
+        }
 
         return redirect('/');
     }
 
     private function queueRememberCookie(Request $request, string $token): void
     {
-        $minutes = 60 * 24 * 30;
+        $minutes = 60 * 24 * 90;
         $domain = config('session.domain');
         $secureCfg = config('session.secure');
         $secure = is_null($secureCfg) ? $request->isSecure() : (bool) $secureCfg;
@@ -230,7 +269,8 @@ class DiscordAuthController extends Controller
             return;
         }
 
-        $days = (int) env('DEVICE_SESSION_COOKIE_DAYS', 365);
+        // align default to 90 days to match remember token lifecycle
+        $days = (int) env('DEVICE_SESSION_COOKIE_DAYS', 90);
         $minutes = max(60, $days * 24 * 60);
 
         $domain = config('session.domain');
@@ -278,7 +318,7 @@ class DiscordAuthController extends Controller
         $this->queueRememberDataCookie($request, 'discord_banner', (string) ($bannerHash ?? ''), $minutes, $domain, $secure);
         $this->queueRememberDataCookie($request, 'discord_public_flags', (string) $publicFlags, $minutes, $domain, $secure);
         $this->queueRememberDataCookie($request, 'discord_premium_type', (string) $premiumType, $minutes, $domain, $secure);
-        $this->queueRememberDataCookie($request, 'discord_can_moderate', $canModerate ? '1' : '0', $minutes, $domain, $secure);
+        // ✅ SÉCURITÉ: Ne PAS stocker can_moderate en cookie (permissions vérifiées côté API)
     }
 
     private function queueRememberDataCookie(
@@ -351,7 +391,6 @@ class DiscordAuthController extends Controller
         cookie()->queue(cookie()->forget('discord_banner'));
         cookie()->queue(cookie()->forget('discord_public_flags'));
         cookie()->queue(cookie()->forget('discord_premium_type'));
-        cookie()->queue(cookie()->forget('discord_can_moderate'));
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

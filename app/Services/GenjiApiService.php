@@ -323,6 +323,23 @@ class GenjiApiService
                 return null;
             }
 
+            // Verify valid session
+            try {
+                $userSessions = $this->getUserSessions($userId);
+                if (!$userSessions || !is_array($userSessions) || count($userSessions) === 0) {
+                    Log::debug('validateRememberToken: user has no active sessions', [
+                        'user_id' => $userId,
+                    ]);
+                    return null;
+                }
+            } catch (\Exception $sessionCheckError) {
+                Log::debug('validateRememberToken: failed to check user sessions', [
+                    'user_id' => $userId,
+                    'error' => $sessionCheckError->getMessage(),
+                ]);
+                // Continue despite the error
+            }
+
             return (string) $userId;
         } catch (\Exception $e) {
             Log::error('Validate remember token API exception', ['error' => $e->getMessage()]);
