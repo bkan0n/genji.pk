@@ -107,21 +107,6 @@ class RememberTokenAuth
             ]);
         }
 
-        if ($isDiscord && $rememberedIsMod === true) {
-            $request->session()->put('can_moderate', true);
-            $request->session()->put('is_mod', true);
-
-            $user = $request->session()->get('user');
-            if (is_array($user)) {
-                $user['is_mod'] = true;
-                $request->session()->put('user', $user);
-            }
-        }
-
-        if (!$isDiscord) {
-            $request->session()->put('is_mod', (bool) ($userData['is_mod'] ?? false));
-        }
-
         $incomingCsrf = $this->isStateChanging($request)
             ? $this->getIncomingCsrfToken($request)
             : '';
