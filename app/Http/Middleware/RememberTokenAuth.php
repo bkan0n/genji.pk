@@ -40,15 +40,7 @@ class RememberTokenAuth
 
         $rememberedIsMod = null;
 
-        $cookieCanModerate = $request->cookie('discord_can_moderate', null);
-        if ($cookieCanModerate !== null && $cookieCanModerate !== '') {
-            $v = strtolower(trim((string) $cookieCanModerate));
-            if (in_array($v, ['1', 'true', 'yes', 'on'], true)) {
-                $rememberedIsMod = true;
-            }
-        }
-
-        if ($rememberedIsMod === null && $previousDeviceSessionId !== '') {
+        if ($previousDeviceSessionId !== '') {
             $rememberedIsMod = $this->api->sessionIsMod($previousDeviceSessionId);
         }
 
@@ -223,14 +215,12 @@ class RememberTokenAuth
             $request->session()->put('discord_premium_type', $premiumInt);
         }
 
-        $cm = $request->cookie('discord_can_moderate', null);
-        if ($cm !== null && $cm !== '') {
-            $v = strtolower(trim((string) $cm));
-            if (in_array($v, ['1', 'true', 'yes', 'on'], true)) {
-                $request->session()->put('can_moderate', true);
-                if (!$request->session()->has('is_mod')) {
-                    $request->session()->put('is_mod', true);
-                }
+        $canModerate = (bool) ($userData['can_moderate'] ?? false);
+        $isMod = (bool) ($userData['is_mod'] ?? false);
+        if ($canModerate || $isMod) {
+            $request->session()->put('can_moderate', true);
+            if (!$request->session()->has('is_mod')) {
+                $request->session()->put('is_mod', true);
             }
         }
 
@@ -252,7 +242,7 @@ class RememberTokenAuth
 
     private function queueDeviceSessionCookie(Request $request, string $sessionId): void
     {
-        $minutes = 60 * 24 * 365; // 1 year
+        $minutes = 60 * 24 * 90; // 90 days
         $cookie = cookie(
             self::DEVICE_SESSION_COOKIE,
             $sessionId,
