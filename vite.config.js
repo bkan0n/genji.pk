@@ -23,6 +23,7 @@ export default defineConfig({
         'resources/js/pages/dashboard.js',
         'resources/js/pages/infos.js',
         'resources/js/utils/prism.js',
+        'resources/js/pages/editor.js',
       ],
       refresh: true,
     }),

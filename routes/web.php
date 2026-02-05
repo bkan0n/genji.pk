@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\DiscordController;
 use App\Http\Controllers\Auth\EmailAuthController;
 use App\Http\Controllers\Auth\DiscordAuthController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Middleware\RequireDiscordEditorRole;
+use App\Http\Controllers\Maps\ProtectedMapsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,7 +33,8 @@ Route::view('game', 'game')->name('game');
 Route::view('infos', 'infos')->name('infos');
 Route::view('moderator', 'moderator')->middleware('discord.moderator')->name('moderator.panel');
 Route::view('/ip', 'ip-temp');
-
+Route::get('/editor', fn () => view('editor'))->middleware(RequireDiscordEditorRole::class);
+Route::view('/editor', 'editor')->middleware(RequireDiscordEditorRole::class)->name('editor.panel');
 // Langues
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
 
