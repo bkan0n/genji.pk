@@ -29,7 +29,8 @@
           "*.woff2",
           "*.avif",
           "*.json",
-          "*.ogg"
+          "*.ogg",
+          "*.glb"
         ]
       },
       "action": {
