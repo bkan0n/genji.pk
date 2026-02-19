@@ -1,4 +1,6 @@
+// resources/js/pages/lootbox.js
 import { cdnAsset, cdnImage } from "../utils/cdn";
+import { createLootbox3D } from "../utils/animations";
 
 // ====== état/appli ======
 let isRunning = false;
@@ -16,6 +18,11 @@ let awaitingPick = false;
 const API_BASE = '/api/lootbox';
 let openSession = null;
 let redeeming = false;
+let lootbox3dPromise = null;
+let lootbox3d = null;
+let openSoundTimer = null;
+let openSoundToken = 0;
+const CARD_BACK_LOGO_URL = cdnAsset("/assets/img/favicon-high.png");
 
 const CURRENT_LANG = document.documentElement.lang || 'en';
 const BASE_I18N = window.LOOTBOX_I18N || {};
@@ -238,6 +245,41 @@ function rarityStyle(rarity) {
 // ====== init ======
 async function initializeApp() {
   await loadTranslations();
+  hideCrate();
+
+  // init
+  try {
+    const mountEl = document.getElementById("box");
+    if (mountEl) {
+      lootbox3dPromise = createLootbox3D({
+        mountEl,
+        modelUrl: "/assets/models/gp_static.glb",
+      }).then((ctrl) => {
+        lootbox3d = ctrl;
+        ctrl.setCardPickHandler?.((pickedIndex, reward) => {
+          if (!awaitingPick) return;
+          if (!reward || !window.user_id) return;
+
+          playSound(reward.rarity);
+          grantReward(user_id, reward);
+
+          awaitingPick = false;
+          restoreCrate();
+        });
+        return ctrl;
+      }).catch((e) => {
+        console.warn("[lootbox3d] init failed:", e);
+        lootbox3dPromise = null;
+        lootbox3d = null;
+        // showCrate();
+        return null;
+      });
+    }
+  } catch (e) {
+    console.warn("[lootbox3d] init failed:", e);
+    lootbox3dPromise = null;
+    lootbox3d = null;
+  }
 }
 $(document).ready(() => {
   initializeApp();
@@ -404,7 +446,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Toggle
     keyTypeButton.addEventListener('click', (e) => {
       e.stopPropagation();
       const willHide = keyDropdown.classList.toggle('hidden');
@@ -425,9 +466,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ====== Open pack flow ======
-function proceedWithLootBoxOpening() {
+async function proceedWithLootBoxOpening() {
   if (keys <= 0) {
-    showWarningMessage(t('lootbox.no_keys_available'));
+    showWarningMessage(t("lootbox.no_keys_available"));
     return;
   }
   if (isRunning) return;
@@ -437,44 +478,148 @@ function proceedWithLootBoxOpening() {
   isRunning = true;
   pauseCrate();
   crate = [];
+  hideCrate();
+  deleteCards();
 
-  openSound.volume = volume;
-  openSound.play().catch(() => {});
+  // Audio
+  const AUDIO_OFFSET_FIRST_MS  = 0;
+  const AUDIO_OFFSET_REOPEN_MS = 50;
+  const AUDIO_OFFSET_MS = packOpened ? AUDIO_OFFSET_REOPEN_MS : AUDIO_OFFSET_FIRST_MS;
 
+  const myAudioToken = ++openSoundToken;
+  if (openSoundTimer) {
+    clearTimeout(openSoundTimer);
+    openSoundTimer = null;
+  }
+
+  const playOpenSoundNow = () => {
+    try { openSound.pause(); } catch {}
+    try { openSound.currentTime = 0; } catch {}
+    openSound.volume = volume;
+    openSound.play().catch(() => {});
+  };
+
+  let audioPlayed = false;
+  const onOpenStart = () => {
+    if (audioPlayed) return;
+    audioPlayed = true;
+
+    const play = () => {
+      if (openSoundToken !== myAudioToken) return;
+      playOpenSoundNow();
+    };
+
+    if (AUDIO_OFFSET_MS > 0) {
+      openSoundTimer = setTimeout(play, AUDIO_OFFSET_MS);
+    } else {
+      play();
+    }
+  };
+
+  //3D timings
+  let revealAt = null;
+  let totalAt = null;
+  let using3D = false;
+
+  try {
+    const ctrl = lootbox3d || (lootbox3dPromise ? await lootbox3dPromise : null);
+    if (ctrl) {
+      const mode = packOpened ? "repeat" : "first";
+
+      // offsetMs
+      const timings = ctrl.playOpen({
+        mode,
+        onOpenStart,
+        audioOffsetMs: AUDIO_OFFSET_MS,
+      });
+
+      revealAt = timings?.revealAt ?? null;
+      totalAt = timings?.total ?? null;
+      using3D = revealAt != null;
+    } else {
+      onOpenStart();
+    }
+  } catch (e) {
+    console.warn("[lootbox3d] playOpen failed:", e);
+    onOpenStart();
+  }
+
+  //DOM timings
   const firstTimeDelays = { separation: 600, cardOut: 700, cardIn: 500 };
   const subsequent = { flip: 500, disintegration: 400, cardIn: 400 };
   const D = packOpened ? subsequent : firstTimeDelays;
 
-  const appearDelays = [1700, 2000, 2200];
+  const appearDelays = using3D ? [0, 220, 440] : [1700, 2000, 2200];
 
-  const replaceWithRewards = () => {
+  const replaceWithRewards = async () => {
     deleteCards();
+    hideCrate();
+
+    const ctrl = lootbox3d || (lootbox3dPromise ? await lootbox3dPromise : null);
+
+    if (ctrl?.cards3d?.setRewards && ctrl?.cards3d?.open) {
+      ctrl.cards3d.setRewards(generatedRewards, {
+        pickLabel: t("ui.pick_a_card") || "Pick a card",
+        backLogoUrl: CARD_BACK_LOGO_URL,
+      });
+
+      ctrl.cards3d.open({ appearDelaysMs: appearDelays });
+      awaitingPick = true;
+      return;
+    }
+
+    showCrate();
     displayRewards(generatedRewards, { appearDelays });
     awaitingPick = true;
   };
 
-  if (!packOpened) {
-    $('#box .loot-card').each((i, el) => {
-      el.classList.add('lb-box-out');
-    });
-    setTimeout(replaceWithRewards, D.separation + D.cardOut);
+  if (revealAt != null) {
+    setTimeout(replaceWithRewards, revealAt);
   } else {
-    $('.card').each((i, el) => {
-      el.classList.add('lb-shrink-out');
-    });
-    setTimeout(replaceWithRewards, subsequent.flip + subsequent.disintegration + subsequent.cardIn);
+    if (!packOpened) {
+      $("#box .loot-card, #crate .loot-card").each((i, el) => el.classList.add("lb-box-out"));
+      setTimeout(replaceWithRewards, D.separation + D.cardOut);
+    } else {
+      $(".card").each((i, el) => el.classList.add("lb-shrink-out"));
+      setTimeout(replaceWithRewards, subsequent.flip + subsequent.disintegration + subsequent.cardIn);
+    }
   }
 
   const maxAppear = Math.max(...appearDelays) + 600;
+  const endAt = totalAt != null ? Math.max(totalAt, maxAppear) : maxAppear;
+
   setTimeout(() => {
     isRunning = false;
     packOpened = true;
-  }, maxAppear);
+  }, endAt);
 }
+
 function deleteCards() {
+  // remove reward cards
   $('#crate li').remove();
-  $('#box').remove();
+  // remove placeholders
+  $('#box .loot-card, #crate .loot-card').remove();
 }
+
+function hideCrate() {
+  const el = document.getElementById('crate');
+  if (!el) return;
+  el.classList.add('hidden', 'pointer-events-none');
+  el.classList.remove('opacity-100');
+  el.classList.add('opacity-0');
+}
+
+function showCrate() {
+  const el = document.getElementById('crate');
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.classList.remove('pointer-events-none');
+  requestAnimationFrame(() => {
+    el.classList.remove('opacity-0');
+    el.classList.add('opacity-100');
+  });
+}
+
 
 // ====== RENDER cartes ======
 const HATCH_CLASS =
@@ -503,7 +648,7 @@ function displayRewards(rewards, opts = {}) {
     );
 
     const $inner = $('<div/>').addClass(
-      `lb-inner relative h-full w-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl`
+      `lb-inner relative h-full w-full rounded-2xl border border-white/10 bg-zinc-900/80 ring-1 ring-white/10 shadow-xl`
     );
 
     const $front = $('<div/>')
@@ -512,7 +657,7 @@ function displayRewards(rewards, opts = {}) {
       )
       .append(
         $('<span/>')
-          .addClass('mt-40 text-xs font-semibold text-zinc-700 dark:text-zinc-300')
+          .addClass('mt-40 text-xs font-semibold text-zinc-200/80')
           .text(t('ui.pick_a_card') || 'Pick a card')
       );
 
@@ -520,20 +665,26 @@ function displayRewards(rewards, opts = {}) {
       'lb-back absolute inset-0 flex flex-col rounded-2xl overflow-hidden'
     );
 
-    const $imgWrap = $('<div/>').addClass('flex-1 bg-black/20 flex items-center justify-center');
+    const $imgWrap = $('<div/>').addClass('relative flex-1 bg-black/30 overflow-hidden flex items-center justify-center');
 
     const isBg = String(reward.type).toLowerCase() === 'background';
+
     const $img = $('<img/>')
       .attr('alt', reward.name)
       .addClass(
-        isBg ? 'max-h-32 w-[80%] rounded-2xl object-cover shadow' : 'max-h-48 object-contain'
+        isBg
+          ? 'h-full w-full object-cover'
+          : 'max-h-[85%] max-w-[85%] object-contain'
       );
 
     $imgWrap.append($img);
 
-    const $info = $('<div/>').addClass('p-3 space-y-1 border-t border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60');
-    const $name = $('<div/>').addClass('text-sm font-semibold truncate text-zinc-900 dark:text-zinc-100');
-    const $type = $('<div/>').addClass('text-xs text-zinc-600 dark:text-zinc-400');
+    const $info = $('<div/>').addClass(
+      'p-3 space-y-1 border-t border-white/10 bg-zinc-950/30'
+    );
+
+    const $name = $('<div/>').addClass('text-sm font-semibold truncate text-zinc-100');
+    const $type = $('<div/>').addClass('text-xs text-zinc-400');
     const $badge = $('<span/>').addClass(
       `inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${sty.badge}`
     );
@@ -597,12 +748,12 @@ function displayRewards(rewards, opts = {}) {
 
     $inner.find('img').attr('src', img);
     $inner.find('.text-sm.font-semibold.truncate').text(name);
-    $inner.find('.text-xs.text-zinc-600 dark:text-zinc-400').text(type);
+    $inner.find('.text-xs.text-zinc-400').text(type);
     $inner.find('span').text(String(reward.rarity).toUpperCase());
 
     const el = $inner.get(0);
     if (el) {
-      $inner.removeClass('ring-zinc-300/60 dark:ring-white/10');
+      $inner.removeClass('ring-white/10');
       const toRemove = [];
       el.classList.forEach((c) => {
         if (
@@ -621,7 +772,6 @@ function displayRewards(rewards, opts = {}) {
     const sty = rarityStyle(reward.rarity);
     $inner.addClass(`${sty.ring} ${sty.glow}`);
 
-    // flip via classe (plus d'inline style)
     $card.addClass('lb-flipped');
     $card.attr('data-turned', '1');
 
@@ -882,7 +1032,7 @@ $(document).ready(function () {
   }
 });
 
-// (petit contrôleur modal additionnel, inchangé)
+// modal controller
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('infoModal');
   const panel = modal?.querySelector('[data-modal-box]');

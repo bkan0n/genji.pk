@@ -32,20 +32,14 @@
   <!-- Contenu -->
   <section class="relative mt-8 min-h-[100vh] pb-16">
     <div class="mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 sm:px-6 lg:px-8">
-      <!-- Cartes / Pack -->
-      <div class="flex w-full justify-center">
-        <div id="box" class="flex gap-6">
-          <div
-            class="loot-card card1 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-800/80 shadow-lg"
-          ></div>
-          <div
-            class="loot-card card2 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-800/80 shadow-lg"
-          ></div>
-          <div
-            class="loot-card card3 lb-placeholder h-[320px] w-[220px] rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-800/80 shadow-lg"
-          ></div>
+      <!-- Stage 3D  -->
+      <div class="w-full flex justify-center">
+        <div class="relative w-full max-w-[980px]">
+          <!-- Mount 3D -->
+          <div id="box" class="w-full"></div>
+
+          <ul id="crate" class="absolute inset-0 hidden opacity-0 pointer-events-none"></ul>
         </div>
-        <ul id="crate" class="flex gap-6"></ul>
       </div>
 
       <!-- Sélecteur de clé -->
