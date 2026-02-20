@@ -1,68 +1,95 @@
 import * as THREE from "three";
 
-function _makeCardBackTexture({ pickLabel = "Pick a card", logoUrl = null } = {}) {
-  const c = document.createElement("canvas");
-  c.width = 512;
-  c.height = 768;
-  const ctx = c.getContext("2d");
+function _makeCardBackTexture(
+  { pickLabel = "Pick a card", logoUrl = null, noStripes = false } = {},
+  rendererRef = null
+) {
+  const { c, ctx, W, H, dpr } = _makeHiDPICanvas(512, 768, { dprMin: 2, dprCap: 3 });
+  const snap = (v) => Math.round(v * dpr) / dpr;
 
-  const g = ctx.createLinearGradient(0, 0, 0, c.height);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, "#1b1c20");
   g.addColorStop(1, "#0f1013");
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillRect(0, 0, W, H);
 
   ctx.strokeStyle = "rgba(255,255,255,0.18)";
   ctx.lineWidth = 10;
-  ctx.strokeRect(14, 14, c.width - 28, c.height - 28);
+  ctx.strokeRect(14, 14, W - 28, H - 28);
 
   ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 18;
-  ctx.strokeRect(30, 30, c.width - 60, c.height - 60);
+  ctx.strokeRect(30, 30, W - 60, H - 60);
 
-  ctx.save();
-  ctx.globalAlpha = 0.06;
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 6;
-  for (let i = -c.height; i <= c.width; i += 24) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i + c.height, c.height);
-    ctx.stroke();
+  if (!noStripes) {
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 6;
+    for (let i = -H; i <= W; i += 24) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + H, H);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
-  ctx.restore();
 
   ctx.fillStyle = "rgba(255,255,255,0.90)";
   ctx.font = "bold 86px system-ui, -apple-system, Segoe UI, Roboto";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("GP", c.width / 2, c.height * 0.42);
+  ctx.fillText("GP", snap(W / 2), snap(H * 0.42));
 
   ctx.fillStyle = "rgba(255,255,255,0.70)";
   ctx.font = "700 40px system-ui, -apple-system, Segoe UI, Roboto";
-  ctx.fillText(pickLabel, c.width / 2, c.height * 0.78);
+  ctx.fillText(pickLabel, snap(W / 2), snap(H * 0.78));
 
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.needsUpdate = true;
+  const tex = _configureTextTexture(new THREE.CanvasTexture(c), rendererRef, { mipmaps: true });
 
   if (logoUrl) {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      try {
-        const w = 220, h = 220;
-        ctx.save();
-        ctx.globalAlpha = 0.95;
-        ctx.drawImage(img, (c.width - w) / 2, c.height * 0.20, w, h);
-        ctx.restore();
-        tex.needsUpdate = true;
-      } catch {}
+      const w = 220,
+        h = 220;
+      ctx.save();
+      ctx.globalAlpha = 0.95;
+      ctx.drawImage(img, snap((W - w) / 2), snap(H * 0.20), w, h);
+      ctx.restore();
+      tex.needsUpdate = true;
     };
-    img.onerror = () => {};
     img.src = logoUrl;
   }
 
+  return tex;
+}
+
+function _makeHiDPICanvas(W, H, { dprMin = 2, dprCap = 2 } = {}) {
+  const dpr = Math.min(dprCap, Math.max(dprMin, window.devicePixelRatio || 1));
+  const c = document.createElement("canvas");
+  c.width = Math.round(W * dpr);
+  c.height = Math.round(H * dpr);
+
+  const ctx = c.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  return { c, ctx, W, H, dpr };
+}
+
+function _configureTextTexture(tex, renderer, { mipmaps = true } = {}) {
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+
+  const maxAniso = renderer?.capabilities?.getMaxAnisotropy?.();
+  tex.anisotropy = typeof maxAniso === "number" && maxAniso > 0 ? maxAniso : 8;
+
+  tex.generateMipmaps = !!mipmaps;
+  tex.minFilter = mipmaps ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+
+  tex.needsUpdate = true;
   return tex;
 }
 
@@ -102,15 +129,15 @@ function _rarityToGlow(rarity) {
 function _rarityProfile(rarity) {
   const r = String(rarity || "").toLowerCase();
   if (r === "legendary") {
-    return { color: _rarityToGlow(r), ringAlpha: 0.95, haloAlpha: 0.85, haloScale: 1.40, lightIntensity: 2.0, pulseSpeed: 0.0022 };
+    return { color: _rarityToGlow(r), ringAlpha: 0.95, haloAlpha: 0.85, haloScale: 1.4, lightIntensity: 2.0, pulseSpeed: 0.0022 };
   }
   if (r === "epic") {
-    return { color: _rarityToGlow(r), ringAlpha: 0.85, haloAlpha: 0.70, haloScale: 1.28, lightIntensity: 1.45, pulseSpeed: 0.0020 };
+    return { color: _rarityToGlow(r), ringAlpha: 0.85, haloAlpha: 0.7, haloScale: 1.28, lightIntensity: 1.45, pulseSpeed: 0.002 };
   }
   if (r === "rare") {
-    return { color: _rarityToGlow(r), ringAlpha: 0.78, haloAlpha: 0.60, haloScale: 1.18, lightIntensity: 1.15, pulseSpeed: 0.0019 };
+    return { color: _rarityToGlow(r), ringAlpha: 0.78, haloAlpha: 0.6, haloScale: 1.18, lightIntensity: 1.15, pulseSpeed: 0.0019 };
   }
-  return { color: _rarityToGlow(r), ringAlpha: 0.70, haloAlpha: 0.48, haloScale: 1.08, lightIntensity: 0.85, pulseSpeed: 0.0018 };
+  return { color: _rarityToGlow(r), ringAlpha: 0.7, haloAlpha: 0.48, haloScale: 1.08, lightIntensity: 0.85, pulseSpeed: 0.0018 };
 }
 
 function _easeInOutCubic(t) {
@@ -136,6 +163,9 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
   const texCache = new Map();
   const frontCache = new Map();
 
+  let backTexStriped = null;
+  let backTexClean = null;
+
   function _drawRoundedRect(ctx, x, y, w, h, r) {
     const rr = Math.min(r, w * 0.5, h * 0.5);
     ctx.beginPath();
@@ -146,11 +176,11 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
     ctx.arcTo(x, y, x + w, y, rr);
     ctx.closePath();
   }
+
   function _setMatAlpha(mat, a) {
     if (!mat) return;
 
     const alpha = _clamp01(a);
-
     const shouldBeTransparent = alpha < 0.999;
 
     if (mat.transparent !== shouldBeTransparent) {
@@ -158,9 +188,7 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
       mat.needsUpdate = true;
     }
 
-    if ("opacity" in mat) {
-      mat.opacity = shouldBeTransparent ? alpha : 1.0;
-    }
+    if ("opacity" in mat) mat.opacity = shouldBeTransparent ? alpha : 1.0;
 
     if ("depthTest" in mat) mat.depthTest = true;
     if ("depthWrite" in mat) mat.depthWrite = !shouldBeTransparent;
@@ -173,6 +201,7 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     for (const m of mats) _setMatAlpha(m, a);
   }
+
   function _drawContain(ctx, img, x, y, w, h) {
     const s = Math.min(w / img.width, h / img.height);
     const dw = img.width * s;
@@ -185,7 +214,10 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
   function _drawCover(ctx, img, x, y, w, h) {
     const ir = img.width / img.height;
     const rr = w / h;
-    let sx = 0, sy = 0, sw = img.width, sh = img.height;
+    let sx = 0,
+      sy = 0,
+      sw = img.width,
+      sh = img.height;
 
     if (ir > rr) {
       sh = img.height;
@@ -202,99 +234,241 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 
-  function _makeRewardFrontTexture(reward) {
-    const c = document.createElement("canvas");
-    c.width = 512;
-    c.height = 768;
-    const ctx = c.getContext("2d");
+  function _makeRewardFrontTexture(reward, rendererRef = null, { noStripes = false } = {}) {
+    const W = 512;
+    const H = 768;
 
-    ctx.fillStyle = "#131317";
-    ctx.fillRect(0, 0, c.width, c.height);
+    const { c, ctx, dpr } = _makeHiDPICanvas(W, H, { dprMin: 2, dprCap: 3 });
+    const snap = (v) => Math.round(v * dpr) / dpr;
 
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
-    ctx.lineWidth = 6;
-    ctx.strokeRect(18, 18, c.width - 36, c.height - 36);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-    const px = 56, py = 70, pw = c.width - 112, ph = 260;
+    function wrapText(text, x, y, maxWidth, lineHeight, maxLines = 3) {
+      if (!text) return;
+      const words = String(text).split(/\s+/);
+      let line = "";
+      let lines = [];
+      for (let i = 0; i < words.length; i++) {
+        const test = line ? `${line} ${words[i]}` : words[i];
+        if (ctx.measureText(test).width <= maxWidth) line = test;
+        else {
+          if (line) lines.push(line);
+          line = words[i];
+        }
+      }
+      if (line) lines.push(line);
 
+      if (lines.length > maxLines) {
+        lines = lines.slice(0, maxLines);
+        let last = lines[maxLines - 1];
+        while (ctx.measureText(last + "…").width > maxWidth && last.length > 0) last = last.slice(0, -1);
+        lines[maxLines - 1] = last + "…";
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], snap(x), snap(y + i * lineHeight));
+      }
+    }
+
+    const name = reward?.name ?? reward?.title ?? "Reward";
+    const type = reward?.type ?? reward?.category ?? "";
+    const rarity = String(reward?.rarity ?? reward?.tier ?? "common").toLowerCase();
+    const subtitle = reward?.subtitle ?? reward?.description ?? "";
+
+    const rarityColor =
+      rarity === "legendary" ? "#ffcc4d" :
+      rarity === "epic" ? "#b38cff" :
+      rarity === "rare" ? "#5bbcff" :
+      rarity === "uncommon" ? "#6dff9d" :
+      "#d7d7d7";
+
+    const rarityGlow =
+      rarity === "legendary" ? "rgba(255,204,77,0.35)" :
+      rarity === "epic" ? "rgba(179,140,255,0.32)" :
+      rarity === "rare" ? "rgba(91,188,255,0.30)" :
+      rarity === "uncommon" ? "rgba(109,255,157,0.28)" :
+      "rgba(215,215,215,0.20)";
+
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#17181c");
+    bg.addColorStop(1, "#0c0d10");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    if (!noStripes) {
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 5;
+      for (let i = -H; i <= W; i += 26) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + H, H);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 10;
+    ctx.strokeRect(14, 14, W - 28, H - 28);
+
+    ctx.strokeStyle = "rgba(255,255,255,0.07)";
+    ctx.lineWidth = 18;
+    ctx.strokeRect(30, 30, W - 60, H - 60);
+
+    const headerH = 108;
     ctx.save();
-    _drawRoundedRect(ctx, px, py, pw, ph, 26);
-    ctx.clip();
-    ctx.fillStyle = "rgba(0,0,0,0.22)";
-    ctx.fillRect(px, py, pw, ph);
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    ctx.font = "700 22px system-ui, -apple-system, Segoe UI, Roboto";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Loading…", c.width / 2, py + ph / 2);
+    ctx.fillStyle = rarityGlow;
+    ctx.fillRect(30, 30, W - 60, headerH);
+
+    ctx.fillStyle = rarityColor;
+    ctx.globalAlpha = 0.9;
+    ctx.fillRect(30, 30 + headerH - 8, W - 60, 6);
     ctx.restore();
 
-    const rarity = String(reward?.rarity || "common").toUpperCase();
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.strokeStyle = "rgba(255,255,255,0.14)";
-    ctx.lineWidth = 2;
-    _drawRoundedRect(ctx, 56, 360, 170, 46, 14);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = "800 28px system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    const rarityLabel = rarity.charAt(0).toUpperCase() + rarity.slice(1);
+    ctx.fillText(rarityLabel, snap(52), snap(30 + headerH / 2));
 
-    ctx.fillStyle = "rgba(255,255,255,0.82)";
-    ctx.font = "800 18px system-ui, -apple-system, Segoe UI, Roboto";
+    const artTop = 30 + headerH + 24;
+    const artH = 300;
+    const artPad = 56;
+
+    const frameX = artPad;
+    const frameY = artTop;
+    const frameW = W - artPad * 2;
+    const frameH = artH;
+
+    ctx.save();
+    const fg = ctx.createLinearGradient(frameX, frameY, frameX, frameY + frameH);
+    fg.addColorStop(0, "rgba(255,255,255,0.06)");
+    fg.addColorStop(1, "rgba(255,255,255,0.02)");
+    ctx.fillStyle = fg;
+
+    const r = 26;
+    ctx.beginPath();
+    ctx.moveTo(frameX + r, frameY);
+    ctx.arcTo(frameX + frameW, frameY, frameX + frameW, frameY + frameH, r);
+    ctx.arcTo(frameX + frameW, frameY + frameH, frameX, frameY + frameH, r);
+    ctx.arcTo(frameX, frameY + frameH, frameX, frameY, r);
+    ctx.arcTo(frameX, frameY, frameX + frameW, frameY, r);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    ctx.font = "900 120px system-ui, -apple-system, Segoe UI, Roboto";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(rarity, 56 + 85, 360 + 23);
+    ctx.fillText("GP", snap(W / 2), snap(frameY + frameH / 2));
+    ctx.restore();
 
-    const name = String(reward?.name || "Reward");
-    ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.font = "800 34px system-ui, -apple-system, Segoe UI, Roboto";
+    const textTop = frameY + frameH + 34;
+    const left = 56;
+    const right = 56;
+    const maxWidth = W - left - right;
+
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.font = "900 44px system-ui, -apple-system, Segoe UI, Roboto";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(name.slice(0, 18), 56, 430);
+    wrapText(name, left, textTop, maxWidth, 52, 2);
 
-    const type = String(reward?.type || "").toUpperCase();
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
-    ctx.font = "700 18px system-ui, -apple-system, Segoe UI, Roboto";
-    ctx.fillText(type, 56, 478);
+    if (type) {
+      const pillY = textTop + 118;
+      const pillText = String(type).toUpperCase();
+      ctx.font = "800 22px system-ui, -apple-system, Segoe UI, Roboto";
+      const tw = ctx.measureText(pillText).width;
+      const padX = 18;
+      const pillW = clamp(tw + padX * 2, 110, maxWidth);
+      const pillH = 40;
 
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 3;
 
-    const url = reward?.url;
-    if (url) {
+      const x = left;
+      const y = pillY;
+
+      const pr = 16;
+      ctx.beginPath();
+      ctx.moveTo(x + pr, y);
+      ctx.arcTo(x + pillW, y, x + pillW, y + pillH, pr);
+      ctx.arcTo(x + pillW, y + pillH, x, y + pillH, pr);
+      ctx.arcTo(x, y + pillH, x, y, pr);
+      ctx.arcTo(x, y, x + pillW, y, pr);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = rarityColor;
+      ctx.globalAlpha = 0.95;
+      ctx.textBaseline = "middle";
+      ctx.fillText(pillText, snap(x + padX), snap(y + pillH / 2));
+      ctx.restore();
+    }
+
+    if (subtitle) {
+      const descY = textTop + 178;
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "600 26px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.textBaseline = "top";
+      wrapText(subtitle, left, descY, maxWidth, 34, 4);
+    }
+
+    const tex = _configureTextTexture(new THREE.CanvasTexture(c), rendererRef, { mipmaps: true });
+
+    const imageUrl = reward?.url ?? reward?.iconUrl ?? reward?.img ?? null;
+    if (imageUrl) {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        try {
-          ctx.save();
-          _drawRoundedRect(ctx, px, py, pw, ph, 26);
-          ctx.clip();
-          ctx.clearRect(px, py, pw, ph);
+        const pad = 26;
+        const x = frameX + pad;
+        const y = frameY + pad;
+        const w = frameW - pad * 2;
+        const h = frameH - pad * 2;
 
-          const isBg = String(reward?.type || "").toLowerCase() === "background";
-          if (isBg) _drawCover(ctx, img, px, py, pw, ph);
-          else _drawContain(ctx, img, px, py, pw, ph);
+        const ir = img.width / img.height;
+        let dw = w, dh = h;
+        if (dw / dh > ir) dw = dh * ir;
+        else dh = dw / ir;
 
-          ctx.restore();
+        const dx = x + (w - dw) / 2;
+        const dy = y + (h - dh) / 2;
 
-          ctx.strokeStyle = "rgba(255,255,255,0.10)";
-          ctx.lineWidth = 4;
-          _drawRoundedRect(ctx, px, py, pw, ph, 26);
-          ctx.stroke();
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.clearRect(x, y, w, h);
+        ctx.drawImage(img, dx, dy, dw, dh);
+        ctx.restore();
 
-          tex.needsUpdate = true;
-        } catch {}
+        tex.needsUpdate = true;
       };
-      img.onerror = () => {};
-      img.src = url;
+      img.src = imageUrl;
     }
 
     return tex;
   }
 
-  function _getRewardFrontTexture(reward) {
-    const key = `front|${reward?.url || ""}|${reward?.name || ""}|${reward?.rarity || ""}|${reward?.type || ""}`;
+  function _getRewardFrontTexture(reward, { noStripes = false } = {}) {
+    const key =
+      `front|${reward?.url || ""}|${reward?.name || ""}|${reward?.rarity || ""}|${reward?.type || ""}` +
+      `|ns:${noStripes ? 1 : 0}`;
+
     if (frontCache.has(key)) return frontCache.get(key);
-    const p = Promise.resolve(_makeRewardFrontTexture(reward));
+
+    const p = Promise.resolve(_makeRewardFrontTexture(reward, renderer, { noStripes }));
     frontCache.set(key, p);
     return p;
   }
@@ -615,7 +789,8 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
 
     _applyNeutralRings();
 
-    const backTex = _makeCardBackTexture({ pickLabel, logoUrl: backLogoUrl });
+    backTexStriped = _makeCardBackTexture({ pickLabel, logoUrl: backLogoUrl, noStripes: false }, renderer);
+    backTexClean   = _makeCardBackTexture({ pickLabel, logoUrl: backLogoUrl, noStripes: true  }, renderer);
 
     for (let i = 0; i < cards.length; i++) {
       const m = cards[i];
@@ -625,7 +800,7 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
       m.userData.rarityProfile = _rarityProfile(r?.rarity);
 
       const backMat = m.material[5];
-      backMat.map = backTex;
+      backMat.map = backTexStriped;
       backMat.emissive?.setRGB?.(0, 0, 0);
       backMat.emissiveIntensity = 0.0;
       backMat.color?.setRGB?.(1, 1, 1);
@@ -642,6 +817,7 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
       m.userData.flip = null;
 
       if (m.userData.hatch) {
+        m.userData.hatch.visible = true;
         m.userData.hatch.material.opacity = 0.0;
       }
 
@@ -656,7 +832,6 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
         ped.userData.appear = null;
 
         if (ped.userData.base?.material) _setMatAlpha(ped.userData.base.material, 0.0);
-
         if (ped.userData.ring?.material) ped.userData.ring.material.opacity = 0.0;
 
         if (ped.userData.halo?.material) {
@@ -740,15 +915,11 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
   function isVisible() {
     return !!group.visible;
   }
-
   function isClosing() {
     return !!closeAnim;
   }
-
   function getCloseProgress(now = performance.now()) {
-    if (closeAnim) {
-      return _clamp01((now - closeAnim.start) / Math.max(1, closeAnim.dur));
-    }
+    if (closeAnim) return _clamp01((now - closeAnim.start) / Math.max(1, closeAnim.dur));
     return group.visible ? 0 : 1;
   }
 
@@ -807,7 +978,9 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
 
     const r = rewards[idx];
 
-    _getRewardFrontTexture(r).then((frontTex) => {
+    const noStripes = !!grant;
+
+    _getRewardFrontTexture(r, { noStripes }).then((frontTex) => {
       if (!frontTex) return;
 
       const frontMat = m.material[4];
@@ -866,6 +1039,17 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
 
     active = false;
     chosenIndex = idx;
+
+    if (backTexClean) {
+      const backMat = cards[idx].material[5];
+      backMat.map = backTexClean;
+      backMat.needsUpdate = true;
+    }
+
+    if (cards[idx].userData?.hatch) {
+      cards[idx].userData.hatch.material.opacity = 0.0;
+      cards[idx].userData.hatch.visible = false;
+    }
 
     _revealRarityRings();
 
@@ -1026,9 +1210,8 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
 
         const L = ped?.userData?.glowLight;
         if (L) {
-          if (!ringsRevealed) {
-            L.intensity = 0.0;
-          } else {
+          if (!ringsRevealed) L.intensity = 0.0;
+          else {
             const c = prof.color || ped.userData.rarityColor || _rarityToGlow(rewards[i]?.rarity);
             L.color.copy(c);
             const boost = i === chosenIndex ? 1.0 : 0.55;
@@ -1069,6 +1252,10 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
     try { scene.remove(group); } catch {}
   }
 
+  function isActiveForZoom() {
+    return !!group.visible && !closeAnim;
+  }
+
   return {
     group,
     setRewards,
@@ -1082,5 +1269,6 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
     dispose,
     setPickHandler,
     setBounds,
+    isActiveForZoom,
   };
 }

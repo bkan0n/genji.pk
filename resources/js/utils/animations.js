@@ -7,9 +7,9 @@ import { buildCards3D } from "./cards3d.js";
 
 const LOG = "[lootbox3d]";
 
-/**
- * Timings inspirés scene.py (Blender)
- */
+/* ============================================================
+   CONSTANTS / CONFIG
+   ============================================================ */
 const PY = {
   FPS: 30,
   F_START: 1,
@@ -54,25 +54,6 @@ const PY = {
   SMOKE_DENSITY_BASE: 0.085,
   ATMOS_DENSITY: 0.010,
 
-  FLOOR_CABLE_COUNT: 18,
-  FLOOR_CABLE_Z: 0.01,
-  FLOOR_CABLE_RADIUS: 0.025,
-  FLOOR_CABLE_BOUNDS_X: [-5.0, 5.0],
-  FLOOR_CABLE_BOUNDS_Y: [-5.0, 5.0],
-  FLOOR_CABLE_MIN_LEN: 1.8,
-  FLOOR_CABLE_MAX_LEN: 5.6,
-  FLOOR_CABLE_SEGMENTS: 64,
-  FLOOR_CABLE_EXCLUSION_R: 1.25,
-
-  FLOOR_CABLE_BREATH_PERIOD_FRAMES: 34.0,
-  FLOOR_CABLE_BREATH_GAMMA: 4.6,
-  FLOOR_CABLE_BREATH_STRENGTH: 0.78,
-
-  FLOOR_CABLE_RUN_PERIOD_S: 1.10,
-  FLOOR_CABLE_RUN_WIDTH: 0.12,
-  FLOOR_CABLE_RUN_STRENGTH: 1.35,
-  FLOOR_CABLE_SHARPNESS: 22.0,
-
   BOX_SHAKE_ENABLE: true,
   BOX_SHAKE_DURATION_S: 0.22,
   BOX_SHAKE_LOC: 0.028,
@@ -103,8 +84,8 @@ const CFG = {
   cardsFov: 28,
   cardsDistanceMul: 0.76,
 
-  bg: 0x2b2b2f,
-  exposure: 0.3,
+  bg: 0x020207,
+  exposure: 0.5,
   pixelRatioCap: 2,
   allowUserOrbit: false,
 
@@ -134,13 +115,40 @@ const CFG = {
   debrisCount: 40,
   streakCount: 18,
 
-  //reopen
+  // decorative ground rings
+  groundRingCount: 3,
+  groundRingRadiusMul: 1.15,
+  groundRingGapMul: 0.42,
+  groundRingWidthMul: 0.06,
+  groundRingBaseIntensity: 1.55,
+
+  groundRingBlinkStrength: 0.85,
+  groundRingBlinkSpeed: 0.85,
+  groundRingFlicker: 0.18,
+  groundRingFlickerSpeed: 9.5,
+
+  // galaxy/stars
+  starsEnabled: true,
+  starsCount: 2200,
+  starsRadiusMul: 90,
+  starsSizeMul: 0.010,
+  starsTwinkleStrength: 0.35,
+  starsTwinkleSpeed: 0.6,
+
+  starsIgnoreFog: true,
+  starsDepthTest: false,
+  starsRenderOrder: -999,
+
+  // reopen
   reopenCloseDurMs: 520,
   reopenDropHeightMul: 6.0,
   reopenDropDurMs: 920,
   reopenSettleHoldMs: 140,
 };
 
+/* ============================================================
+   SMALL HELPERS
+   ============================================================ */
 function _findByName(root, name) {
   let hit = null;
   root.traverse((o) => {
@@ -218,6 +226,24 @@ function _fixMaterialColorSpaces(obj3d) {
   });
 }
 
+function _tweakLogoEmissive(root) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+
+    for (const m of mats) {
+      if (!m) continue;
+      if (m.name !== "MAT_Logo_Decal") continue;
+
+      if (m.color) m.color.setRGB(1, 1, 1);
+      if (m.emissive) m.emissive.setRGB(1, 1, 1);
+      m.emissiveIntensity = 4.0;
+
+      m.needsUpdate = true;
+    }
+  });
+}
+
 function _ensureShadows(root) {
   root.traverse((o) => {
     if (!o.isMesh) return;
@@ -277,7 +303,8 @@ function _mountCanvas(mountEl) {
 
   const holder = document.createElement("div");
   holder.className =
-    "relative w-full max-w-[980px] mx-auto overflow-hidden rounded-2xl " + "border border-white/10 bg-zinc-900/30 shadow-2xl";
+    "relative w-full max-w-[980px] mx-auto overflow-hidden rounded-2xl " +
+    "border border-white/10 bg-zinc-900/30 shadow-2xl";
   holder.style.height = "320px";
 
   const canvas = document.createElement("canvas");
@@ -440,6 +467,69 @@ function _makeCrackTexture(size = 256) {
   return tex;
 }
 
+function _makeNebulaTexture(size = 512) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+
+  ctx.fillStyle = "rgba(0,0,0,1)";
+  ctx.fillRect(0, 0, size, size);
+
+  function blob(x, y, r, rgba) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+  }
+
+  blob(size * 0.25, size * 0.35, size * 0.45, "rgba(70,255,122,0.10)");
+  blob(size * 0.72, size * 0.42, size * 0.55, "rgba(140,180,255,0.08)");
+  blob(size * 0.55, size * 0.78, size * 0.60, "rgba(255,120,220,0.04)");
+
+  const img = ctx.getImageData(0, 0, size, size);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (Math.random() < 0.0025) {
+      const v = 30 + Math.random() * 60;
+      d[i + 0] = v;
+      d[i + 1] = v;
+      d[i + 2] = v;
+      d[i + 3] = 25 + Math.random() * 45;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function _easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+function _easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+function _easeInCubic(t) {
+  return t * t * t;
+}
+function _seededNoise(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (1664525 * s + 1013904223) >>> 0;
+    return (s & 0xfffffff) / 0xfffffff;
+  };
+}
+function _clamp01(x) {
+  return Math.max(0, Math.min(1, x));
+}
+
+/* ============================================================
+   SCENE BUILDERS
+   ============================================================ */
 function _applyLights(scene) {
   const hemi = new THREE.HemisphereLight(0xbad7ff, 0x0b0c0f, 0.55);
   scene.add(hemi);
@@ -476,7 +566,9 @@ function _makeGround(scene, chestBox) {
   const maxSize = Math.max(size.x, size.y, size.z, 1);
   const planeSize = Math.max(12, maxSize * 10);
 
-  const geo = new THREE.PlaneGeometry(planeSize, planeSize, 1, 1);
+  const radius = planeSize * 0.5;
+  const segments = 128;
+  const geo = new THREE.CircleGeometry(radius, segments);
   const mat = new THREE.MeshStandardMaterial({
     color: new THREE.Color(0.018, 0.018, 0.02),
     roughness: 0.9,
@@ -492,137 +584,257 @@ function _makeGround(scene, chestBox) {
 }
 
 function _buildAtmosphere(scene) {
-  scene.fog = new THREE.FogExp2(0x0b0c0f, THREE.MathUtils.clamp(PY.ATMOS_DENSITY * 0.9, 0.001, 0.06));
+  scene.fog = new THREE.FogExp2(0x020207, THREE.MathUtils.clamp(PY.ATMOS_DENSITY * 0.9, 0.001, 0.06));
 }
 
-function _buildFloorCables(scene, chestBox, groundY = 0) {
+function _buildGroundRings(scene, chestBox, groundY = 0) {
   const group = new THREE.Group();
-  group.name = "GP_FloorCables";
+  group.name = "GP_GroundRings";
   scene.add(group);
 
   const center = new THREE.Vector3();
+  const size = new THREE.Vector3();
   chestBox.getCenter(center);
+  chestBox.getSize(size);
 
-  const baseY = Number.isFinite(groundY) ? groundY : 0;
+  const state = {
+    u: Math.max(size.x, size.y, size.z, 1),
+    center: center.clone(),
+    groundY: Number.isFinite(groundY) ? groundY : 0,
+  };
 
-  const cableMat = new THREE.ShaderMaterial({
+  const emissive = new THREE.Color(0.1, 1.0, 0.45);
+  const baseColor = new THREE.Color(0.02, 0.03, 0.025);
+
+  const rings = [];
+  const mats = [];
+
+  function rebuild() {
+    for (const r of rings) {
+      try {
+        r.geometry?.dispose?.();
+      } catch {}
+      group.remove(r);
+    }
+    rings.length = 0;
+    mats.length = 0;
+
+    const u = state.u;
+    const y = state.groundY + Math.max(0.002, u * 0.004);
+
+    const count = Math.max(1, CFG.groundRingCount | 0);
+    const baseR = Math.max(u * (CFG.groundRingRadiusMul ?? 1.15), u * 0.75);
+    const gap = Math.max(u * (CFG.groundRingGapMul ?? 0.42), u * 0.22);
+    const w = Math.max(u * (CFG.groundRingWidthMul ?? 0.06), u * 0.03);
+
+    for (let i = 0; i < count; i++) {
+      const r0 = baseR + i * gap;
+      const r1 = r0 + w;
+
+      const geo = new THREE.RingGeometry(r0, r1, 128, 1);
+      const mat = new THREE.MeshStandardMaterial({
+        color: baseColor.clone(),
+        emissive: emissive.clone(),
+        emissiveIntensity: CFG.groundRingBaseIntensity ?? 1.55,
+        roughness: 0.65,
+        metalness: 0.12,
+        transparent: true,
+        opacity: 0.92,
+        side: THREE.DoubleSide,
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.name = `GP_GroundRing_${i}`;
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.rotation.z = 0;
+      mesh.position.set(state.center.x, y, state.center.z);
+      mesh.scale.set(1, 1, 1);
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 3;
+
+      group.add(mesh);
+      rings.push(mesh);
+      mats.push(mat);
+    }
+  }
+
+  function setBounds({ chestBox: cb, groundY: gy }) {
+    const c = new THREE.Vector3();
+    const s = new THREE.Vector3();
+    cb.getCenter(c);
+    cb.getSize(s);
+
+    state.center.copy(c);
+    state.u = Math.max(s.x, s.y, s.z, 1);
+    state.groundY = Number.isFinite(gy) ? gy : state.groundY;
+
+    rebuild();
+  }
+
+  rebuild();
+
+  function tick(nowMs) {
+    const t = (nowMs || 0) / 1000;
+
+    const baseI = CFG.groundRingBaseIntensity ?? 1.55;
+    const blink = CFG.groundRingBlinkStrength ?? 0.85;
+    const spd = CFG.groundRingBlinkSpeed ?? 0.85;
+    const flick = CFG.groundRingFlicker ?? 0.18;
+    const flickSpd = CFG.groundRingFlickerSpeed ?? 9.5;
+
+    for (let i = 0; i < mats.length; i++) {
+      const m = mats[i];
+      if (!m) continue;
+
+      const ph = i * 0.55;
+      const s = 0.5 + 0.5 * Math.sin(t * (Math.PI * 2) * spd + ph);
+      const f = 0.5 + 0.5 * Math.sin(t * (Math.PI * 2) * flickSpd + ph * 2.1);
+
+      const intensity = baseI * (0.55 + blink * s) * (1.0 - flick * 0.5 + flick * f);
+      m.emissiveIntensity = intensity;
+    }
+  }
+
+  return { group, rings, setBounds, tick };
+}
+
+function _buildStarfield(scene, camera, chestBox) {
+  if (!CFG.starsEnabled) return null;
+
+  const size = new THREE.Vector3();
+  chestBox.getSize(size);
+  const u = Math.max(size.x, size.y, size.z, 1);
+
+  const radius = Math.max(60, u * (CFG.starsRadiusMul ?? 90));
+  const group = new THREE.Group();
+  group.name = "GP_Starfield";
+  group.frustumCulled = false;
+  group.renderOrder = CFG.starsRenderOrder ?? -999;
+  scene.add(group);
+
+  // nebula sphere (backside)
+  const nebulaTex = _makeNebulaTexture(512);
+  const nebulaMat = new THREE.MeshBasicMaterial({
+    map: nebulaTex,
+    side: THREE.BackSide,
     transparent: true,
+    opacity: 0.85,
     depthWrite: false,
+    depthTest: !(CFG.starsDepthTest === false ? false : true) ? true : true,
+  });
+  const nebula = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 48), nebulaMat);
+  nebula.name = "GP_NebulaSphere";
+  nebula.frustumCulled = false;
+  nebula.renderOrder = group.renderOrder;
+  if (CFG.starsIgnoreFog) nebula.fog = false;
+  group.add(nebula);
+
+  const count = Math.max(200, CFG.starsCount | 0);
+  const positions = new Float32Array(count * 3);
+
+  for (let i = 0; i < count; i++) {
+    const u1 = Math.random();
+    const u2 = Math.random();
+    const theta = 2 * Math.PI * u1;
+    const phi = Math.acos(2 * u2 - 1);
+    const rr = radius * (0.92 + Math.random() * 0.07);
+
+    const x = rr * Math.sin(phi) * Math.cos(theta);
+    const y = rr * Math.cos(phi);
+    const z = rr * Math.sin(phi) * Math.sin(theta);
+
+    positions[i * 3 + 0] = x;
+    positions[i * 3 + 1] = y;
+    positions[i * 3 + 2] = z;
+  }
+
+  const starsGeo = new THREE.BufferGeometry();
+  starsGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+  const starsMat = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: Math.max(0.04, u * (CFG.starsSizeMul ?? 0.01)),
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false,
+    depthTest: CFG.starsDepthTest === false ? false : true,
     blending: THREE.AdditiveBlending,
-    uniforms: {
-      uTime: { value: 0 },
-      uPhase: { value: 0 },
-      uBreathPeriod: { value: PY.FLOOR_CABLE_BREATH_PERIOD_FRAMES / PY.FPS },
-      uBreathGamma: { value: PY.FLOOR_CABLE_BREATH_GAMMA },
-      uBreathStrength: { value: PY.FLOOR_CABLE_BREATH_STRENGTH },
-      uRunPeriod: { value: PY.FLOOR_CABLE_RUN_PERIOD_S },
-      uRunWidth: { value: PY.FLOOR_CABLE_RUN_WIDTH },
-      uRunStrength: { value: PY.FLOOR_CABLE_RUN_STRENGTH },
-      uSharpness: { value: PY.FLOOR_CABLE_SHARPNESS },
-      uBase: { value: 0.18 },
-      uColor: { value: new THREE.Color(0.1, 1.0, 0.45) },
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      void main(){
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      uniform float uTime;
-      uniform float uPhase;
-      uniform float uBreathPeriod;
-      uniform float uBreathGamma;
-      uniform float uBreathStrength;
-
-      uniform float uRunPeriod;
-      uniform float uRunWidth;
-      uniform float uRunStrength;
-      uniform float uSharpness;
-
-      uniform float uBase;
-      uniform vec3  uColor;
-
-      float sat(float x){ return clamp(x, 0.0, 1.0); }
-      float smoothPulse(float x, float w){
-        float d = abs(x - 0.5);
-        float t = sat(1.0 - d / max(w, 1e-3));
-        return pow(t, uSharpness);
-      }
-
-      void main(){
-        float t = uTime + uPhase;
-
-        float b = sin(6.2831853 * (t / max(uBreathPeriod, 1e-3)));
-        b = (b * 0.5 + 0.5);
-        b = pow(b, uBreathGamma) * uBreathStrength;
-
-        float run = fract(vUv.x - t / max(uRunPeriod, 1e-3));
-        float rp = smoothPulse(run, uRunWidth) * uRunStrength;
-
-        float glow = uBase + b + rp;
-        vec3 col = uColor * glow;
-
-        float alpha = sat(glow * 0.65);
-        gl_FragColor = vec4(col, alpha);
-      }
-    `,
+    sizeAttenuation: true,
   });
 
-  function randBetween(a, b) {
-    return a + Math.random() * (b - a);
+  const stars = new THREE.Points(starsGeo, starsMat);
+  stars.name = "GP_Stars";
+  stars.frustumCulled = false;
+  stars.renderOrder = group.renderOrder;
+  if (CFG.starsIgnoreFog) stars.fog = false;
+  group.add(stars);
+
+  function _refreshRadius(cb) {
+    const s = new THREE.Vector3();
+    cb.getSize(s);
+    const u2 = Math.max(s.x, s.y, s.z, 1);
+    const newR = Math.max(60, u2 * (CFG.starsRadiusMul ?? 90));
+
+    nebula.geometry.dispose();
+    nebula.geometry = new THREE.SphereGeometry(newR, 48, 48);
+
+    starsMat.size = Math.max(0.04, u2 * (CFG.starsSizeMul ?? 0.01));
+
+    const pos = stars.geometry.attributes.position;
+    for (let i = 0; i < count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const len = Math.max(1e-6, Math.sqrt(x * x + y * y + z * z));
+      const rr = newR * (0.92 + (i % 17) / 17 * 0.07);
+      pos.setXYZ(i, (x / len) * rr, (y / len) * rr, (z / len) * rr);
+    }
+    pos.needsUpdate = true;
+
+    return newR;
   }
 
-  const cables = [];
-  for (let i = 0; i < PY.FLOOR_CABLE_COUNT; i++) {
-    let mx = 0,
-      my = 0;
-    for (let tries = 0; tries < 40; tries++) {
-      mx = randBetween(PY.FLOOR_CABLE_BOUNDS_X[0], PY.FLOOR_CABLE_BOUNDS_X[1]);
-      my = randBetween(PY.FLOOR_CABLE_BOUNDS_Y[0], PY.FLOOR_CABLE_BOUNDS_Y[1]);
-      const dx = mx - center.x;
-      const dy = my - center.z;
-      if (Math.sqrt(dx * dx + dy * dy) > PY.FLOOR_CABLE_EXCLUSION_R) break;
+  let _radius = radius;
+
+  function setBounds({ chestBox: cb }) {
+    _radius = _refreshRadius(cb);
+  }
+
+  function tick(nowMs) {
+    const t = (nowMs || 0) / 1000;
+    const tw = CFG.starsTwinkleStrength ?? 0.35;
+    const sp = CFG.starsTwinkleSpeed ?? 0.6;
+
+    starsMat.opacity = 0.65 + tw * (0.5 + 0.5 * Math.sin(t * (Math.PI * 2) * sp));
+    group.rotation.y = t * 0.006;
+    group.rotation.x = t * 0.003;
+
+    if (camera) {
+      group.position.copy(camera.position);
+      group.scale.set(1, 1, 1);
     }
 
-    const len = randBetween(PY.FLOOR_CABLE_MIN_LEN, PY.FLOOR_CABLE_MAX_LEN);
-    const a = Math.random() * Math.PI * 2;
-    const dx = Math.cos(a) * len * 0.5;
-    const dz = Math.sin(a) * len * 0.5;
-
-    const y = baseY + PY.FLOOR_CABLE_Z;
-
-    const p0 = new THREE.Vector3(mx - dx, y, my - dz);
-    const p3 = new THREE.Vector3(mx + dx, y, my + dz);
-
-    const bend = len * randBetween(0.08, 0.16);
-    const n = new THREE.Vector3(-dz, 0, dx).normalize();
-    const p1 = p0.clone().lerp(p3, 0.33).addScaledVector(n, bend * (Math.random() < 0.5 ? -1 : 1));
-    const p2 = p0.clone().lerp(p3, 0.66).addScaledVector(n, bend * (Math.random() < 0.5 ? -1 : 1));
-
-    const curve = new THREE.CatmullRomCurve3([p0, p1, p2, p3], false, "catmullrom", 0.5);
-    const geo = new THREE.TubeGeometry(curve, PY.FLOOR_CABLE_SEGMENTS, PY.FLOOR_CABLE_RADIUS, 8, false);
-
-    const m = cableMat.clone();
-    m.uniforms = THREE.UniformsUtils.clone(cableMat.uniforms);
-    m.uniforms.uPhase.value = Math.random() * 10;
-
-    const mesh = new THREE.Mesh(geo, m);
-    group.add(mesh);
-    cables.push(mesh);
+    group.visible = true;
+    nebula.visible = true;
+    stars.visible = true;
   }
 
-  return {
-    group,
-    cables,
-    setTime: (t) => {
-      for (const c of cables) {
-        if (c.material?.uniforms?.uTime) c.material.uniforms.uTime.value = t;
-      }
-    },
-  };
+  function dispose() {
+    try {
+      nebula.geometry?.dispose?.();
+      nebula.material?.map?.dispose?.();
+      nebula.material?.dispose?.();
+    } catch {}
+    try {
+      stars.geometry?.dispose?.();
+      stars.material?.dispose?.();
+    } catch {}
+    try {
+      scene.remove(group);
+    } catch {}
+  }
+
+  return { group, setBounds, tick, dispose, getRadius: () => _radius };
 }
 
 function _buildGroundSmoke(scene, chestBox, groundY = 0) {
@@ -839,10 +1051,20 @@ function _buildExplosionFX(scene) {
   }
 
   const sparks = makeInstanced("GP_Sparks", new THREE.SphereGeometry(0.035, 10, 10), 0xaaffcc, CFG.sparksCount);
-  const debris = makeInstanced("GP_Debris", new THREE.BoxGeometry(0.06, 0.03, 0.03), 0x3a3f46, CFG.debrisCount, THREE.NormalBlending);
+  const debris = makeInstanced(
+    "GP_Debris",
+    new THREE.BoxGeometry(0.06, 0.03, 0.03),
+    0x3a3f46,
+    CFG.debrisCount,
+    THREE.NormalBlending
+  );
 
   return { fx, flash, glow, core, ring, sphere, dusts, crack, streaks, sparks, debris };
 }
+
+/* ============================================================
+   TIMELINE / HINGE HELPERS
+   ============================================================ */
 
 function _createTimeline() {
   const fps = PY.FPS;
@@ -870,31 +1092,16 @@ function _createTimeline() {
   };
 }
 
-function _easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-function _easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
-}
-function _easeInCubic(t) {
-  return t * t * t;
-}
-function _seededNoise(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = (1664525 * s + 1013904223) >>> 0;
-    return (s & 0xfffffff) / 0xfffffff;
-  };
-}
-function _clamp01(x) {
-  return Math.max(0, Math.min(1, x));
-}
+/* ============================================================
+   PUBLIC API
+   ============================================================ */
 
-// ============================
-// Public API
-// ============================
 export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_static.glb", debug = false } = {}) {
   if (!mountEl) throw new Error(`${LOG} mountEl missing`);
+
+  /* ----------------------------
+     Local math helpers
+     ---------------------------- */
 
   function _translateWorldY(obj, dyWorld) {
     if (!Number.isFinite(dyWorld) || Math.abs(dyWorld) < 1e-9) return;
@@ -978,11 +1185,11 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     }
   }
 
-  // ----------------------------
-  // camera tween system
-  // ----------------------------
-  let camTween = null;
+  /* ----------------------------
+     Canvas + renderer
+     ---------------------------- */
 
+  let camTween = null;
   const { holder, canvas } = _mountCanvas(mountEl);
 
   const renderer = new THREE.WebGLRenderer({
@@ -1019,6 +1226,10 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
 
   _resizeRendererToDisplaySize(renderer, camera, holder);
 
+  /* ----------------------------
+     Load GLB
+     ---------------------------- */
+
   let disposed = false;
   let raf = 0;
 
@@ -1047,10 +1258,14 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   _fixMaterialColorSpaces(boxRoot);
   _applyEnvMapIntensity(boxRoot, 0.35);
   _ensureShadows(boxRoot);
+  _tweakLogoEmissive(boxRoot);
 
   let chestBox = _robustBoundingBox(boxRoot).box;
 
-  // recenter
+  /* ----------------------------
+     Recenter / normalize / ground align
+     ---------------------------- */
+
   if (CFG.recenterToOrigin) {
     const c = new THREE.Vector3();
     chestBox.getCenter(c);
@@ -1059,7 +1274,6 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     chestBox = _robustBoundingBox(boxRoot).box;
   }
 
-  // normalize scale
   if (CFG.normalizeScale) {
     const s = new THREE.Vector3();
     chestBox.getSize(s);
@@ -1102,11 +1316,21 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   chestBox.getSize(chestSize);
   u = Math.max(chestSize.x, chestSize.y, chestSize.z, 1);
 
-  const floorCables = _buildFloorCables(scene, chestBox, groundY);
+  /* ----------------------------
+     Decor (rings / stars / smoke / fx)
+     ---------------------------- */
+
+  const groundRings = _buildGroundRings(scene, chestBox, groundY);
+
+  const starfield = _buildStarfield(scene, camera, chestBox);
+
   const groundSmoke = _buildGroundSmoke(scene, chestBox, groundY);
   const fx = _buildExplosionFX(scene);
 
-  // base
+  /* ----------------------------
+     Base transforms snapshots
+     ---------------------------- */
+
   const baseRootRot = boxRoot.rotation.clone();
   const baseRootPos = boxRoot.position.clone();
   const baseRootScale = boxRoot.scale.clone();
@@ -1115,11 +1339,46 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   const baseLidRot = lidPivot ? lidPivot.rotation.clone() : null;
   const baseLidPos = lidPivot ? lidPivot.position.clone() : null;
 
+  /* ----------------------------
+     Hinges discovery
+     ---------------------------- */
+
   let hingePivots = _findMany(boxRoot, (o) => o.name && o.name.startsWith(PY.hingePivotPrefix));
   if (!hingePivots.length) {
     const fallback = ["Cube147_BOX001_0_baked", "Cube148_BOX001_0_baked", "Cube149_BOX001_0_baked", "Cube150_BOX001_0_baked"];
     hingePivots = fallback.map((n) => _findByName(boxRoot, n)).filter(Boolean);
   }
+
+  function _countDescMeshes(o) {
+    let c = 0;
+    o.traverse((x) => {
+      if (x.isMesh) c++;
+    });
+    return c;
+  }
+
+  if (debug) {
+    console.table(
+      hingePivots.map((h) => ({
+        name: h.name,
+        type: h.type,
+        matrixAutoUpdate: h.matrixAutoUpdate,
+        children: h.children?.length ?? 0,
+        descMeshes: _countDescMeshes(h),
+      }))
+    );
+  }
+
+  function _forceMatrixAutoUpdate(obj) {
+    obj.traverse((o) => {
+      o.matrixAutoUpdate = true;
+      if ("matrixWorldAutoUpdate" in o) o.matrixWorldAutoUpdate = true;
+    });
+  }
+
+  _forceMatrixAutoUpdate(boxRoot);
+  if (lidPivot) _forceMatrixAutoUpdate(lidPivot);
+  for (const h of hingePivots) _forceMatrixAutoUpdate(h);
 
   const hingeBaseQuat = new Map();
   for (const h of hingePivots) hingeBaseQuat.set(h, h.quaternion.clone());
@@ -1170,15 +1429,24 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     const a = angleRad * (cfg?.sign ?? 1) * (cfg?.mul ?? 1) + THREE.MathUtils.degToRad(cfg?.offsetDeg ?? 0);
 
     const axisVec =
-      cfg?.axis === "z" ? new THREE.Vector3(0, 0, 1) : cfg?.axis === "y" ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+      cfg?.axis === "z"
+        ? new THREE.Vector3(0, 0, 1)
+        : cfg?.axis === "y"
+        ? new THREE.Vector3(0, 1, 0)
+        : new THREE.Vector3(1, 0, 0);
 
     const dq = new THREE.Quaternion().setFromAxisAngle(axisVec, a);
     h.quaternion.copy(baseQuat).multiply(dq);
+    h.updateMatrix();
+    h.updateMatrixWorld(true);
   }
 
   let hingeCfgs = _computeHingeCfgs(hingePivots, boxRoot, chestBox);
 
-  // lid blast
+  /* ----------------------------
+     Lid blast clone
+     ---------------------------- */
+
   let lidBlast = null;
   if (lidPivot) {
     lidBlast = lidPivot.clone(true);
@@ -1194,11 +1462,37 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   const chestFadeMats = _collectFadeMaterials(boxRoot);
   const lidFadeMats = lidBlast ? _collectFadeMaterials(lidBlast) : [];
 
-  // cards system
+  /* ----------------------------
+     Cards system
+     ---------------------------- */
+
   const cards3d = buildCards3D({ scene, camera, renderer, controls, chestBox, groundY });
+  let _zoomEnabled = false;
+
+  function _updateZoomGate() {
+    const cardsVisible = !!(cards3d?.isActiveForZoom?.() || cards3d?.isVisible?.() || cards3d?.group?.visible);
+    const cardsClosing = !!cards3d?.isClosing?.();
+
+    const wantZoom = currentView === "cards" && cardsVisible && !cardsClosing;
+
+    if (wantZoom === _zoomEnabled) return;
+    _zoomEnabled = wantZoom;
+
+    controls.enableZoom = wantZoom;
+    controls.enableRotate = false;
+    controls.enablePan = false;
+
+    const minD = Math.max(0.15, u * 0.55);
+    const maxD = Math.max(minD + 0.1, u * 7.0);
+    controls.minDistance = minD;
+    controls.maxDistance = maxD;
+  }
   cards3d?.setBounds?.({ chestBox, groundY });
 
-  // camera presets
+  /* ----------------------------
+     Camera presets / tween
+     ---------------------------- */
+
   let currentView = "standby";
   const presets = {
     standby: { pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: 36 },
@@ -1209,7 +1503,11 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   function _setCameraClipFromDistance(dist) {
     const d = Math.max(0.001, dist);
     camera.near = Math.max(CFG.minNear, d * CFG.nearFromDistanceMul);
-    camera.far = Math.max(CFG.farMin, d * CFG.farFromDistanceMul);
+
+    let far = Math.max(CFG.farMin, d * CFG.farFromDistanceMul);
+    if (starfield?.getRadius) far = Math.max(far, starfield.getRadius() * 2.2);
+    camera.far = far;
+
     camera.updateProjectionMatrix();
   }
 
@@ -1300,6 +1598,8 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     const p = presets[name] || presets.standby;
     currentView = name;
 
+    _updateZoomGate?.();
+
     const toPos = p.pos.clone();
     const toTarget = p.target.clone();
     const toFov = p.fov;
@@ -1318,6 +1618,10 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   }
 
   const TL = _createTimeline();
+
+  /* ----------------------------
+     FX reset helpers
+     ---------------------------- */
 
   function _resetFX() {
     fx.flash.intensity = 0;
@@ -1362,6 +1666,10 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     fx.sparks.position.set(0, 0, 0);
     fx.debris.position.set(0, 0, 0);
   }
+
+  /* ----------------------------
+     Poses reset
+     ---------------------------- */
 
   let seq = null;
 
@@ -1441,15 +1749,18 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     if (groundSmoke?.pts) groundSmoke.pts.visible = true;
   }
 
-  // ============================
-  // OPEN SEQUENCE (normal)
-  // ============================
+  /* ============================================================
+     OPEN SEQUENCE
+     ============================================================ */
+
   function _startOpenSequence({ mode = "first", onCards = null, appearDelaysMs = null, onOpenStart = null } = {}) {
     const timings = { revealAt: TL.tCards, total: TL.tEnd };
 
     resetPose();
 
-    try { onOpenStart?.(); } catch {}
+    try {
+      onOpenStart?.();
+    } catch {}
 
     _recomputePresets();
     _applyPreset("standby", { instant: false, dur: 240 });
@@ -1542,8 +1853,6 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
       tick: (now) => {
         const ms = now - start;
         const t = ms / 1000;
-
-        floorCables.setTime(t);
 
         if (groundSmoke?.material) {
           const base = THREE.MathUtils.clamp(PY.SMOKE_DENSITY_BASE * 1.35, 0.03, 0.18);
@@ -1832,9 +2141,10 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     return timings;
   }
 
-  // ============================
-  // REOPEN
-  // ============================
+  /* ============================================================
+     REOPEN
+     ============================================================ */
+
   function _startReopenPrelude({ mode = "first", onCards = null, appearDelaysMs = null, onOpenStart = null } = {}) {
     const closeDur = CFG.reopenCloseDurMs ?? 520;
     const dropDur = CFG.reopenDropDurMs ?? 920;
@@ -1873,8 +2183,6 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
       start,
       tick: (now) => {
         const ms = now - start;
-
-        floorCables.setTime(ms / 1000);
 
         if (groundSmoke?.material) {
           const t = ms / 1000;
@@ -1925,9 +2233,10 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     return timings;
   }
 
-  // ----------------------------
-  // playOpen public
-  // ----------------------------
+  /* ============================================================
+     PUBLIC METHODS
+     ============================================================ */
+
   function playOpen({ mode = "first", onCards = null, appearDelaysMs = null, onOpenStart = null } = {}) {
     const cardsUp = (() => {
       try {
@@ -1941,22 +2250,32 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     return _startOpenSequence({ mode, onCards, appearDelaysMs, onOpenStart });
   }
 
-  // loop
+  /* ============================================================
+     RENDER LOOP + RESIZE
+     ============================================================ */
+
   function renderLoop(now) {
     if (disposed) return;
 
     try {
+      groundRings?.tick?.(now);
+      starfield?.tick?.(now);
+
       seq?.tick?.(now);
+
       try {
         cards3d?.tick?.(now);
       } catch {}
+
       _tickCamTween(now);
     } catch (e) {
       console.warn(`${LOG} seq error:`, e);
       seq = null;
     }
 
+    _updateZoomGate();
     controls.update();
+    _setCameraClipFromDistance(camera.position.distanceTo(controls.target));
     renderer.render(scene, camera);
 
     raf = requestAnimationFrame(renderLoop);
@@ -1969,7 +2288,11 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
 
     chestBox = _robustBoundingBox(boxRoot).box;
     hingeCfgs = _computeHingeCfgs(hingePivots, boxRoot, chestBox);
+
     cards3d?.setBounds?.({ chestBox, groundY });
+    groundRings?.setBounds?.({ chestBox, groundY });
+    starfield?.setBounds?.({ chestBox });
+
     _recomputePresets();
     _applyPreset(currentView, { instant: true });
   });
@@ -1991,6 +2314,9 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
     } catch {}
     try {
       cards3d?.dispose?.();
+    } catch {}
+    try {
+      starfield?.dispose?.();
     } catch {}
     try {
       renderer.dispose();
