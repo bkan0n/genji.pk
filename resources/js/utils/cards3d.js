@@ -679,6 +679,51 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
   const _size = new THREE.Vector3();
   const _center = new THREE.Vector3();
 
+  //responsive scaling
+  function _getViewportWorldSizeAt(distance) {
+    const fovV = THREE.MathUtils.degToRad(camera.fov);
+    const h = 2 * Math.tan(fovV * 0.5) * distance;
+    const w = h * (camera.aspect || 1);
+    return { w, h };
+  }
+
+  function _isSmallViewport() {
+    const el = renderer?.domElement;
+    const rect = el?.getBoundingClientRect?.();
+    const w = rect?.width ?? window.innerWidth;
+    const h = rect?.height ?? window.innerHeight;
+
+    return w <= 820 || h <= 520;
+  }
+
+  function _applyResponsiveFit() {
+    if (!_isSmallViewport()) {
+      group.scale.set(1, 1, 1);
+      return;
+    }
+
+    const dist = camera.position.distanceTo(group.position);
+
+    const { w: vw, h: vh } = _getViewportWorldSizeAt(dist);
+
+    const spacing = cardW * 1.15;
+    const rowW = 2 * spacing + cardW;
+    const rowH = cardH;
+
+    const padW = vw * 0.10;
+    const padH = vh * 0.12;
+
+    const maxW = Math.max(0.001, vw - padW);
+    const maxH = Math.max(0.001, vh - padH);
+
+    const sW = maxW / rowW;
+    const sH = maxH / rowH;
+
+    const s = THREE.MathUtils.clamp(Math.min(sW, sH), 0.62, 0.95);
+
+    group.scale.set(s, s, s);
+  }
+
   function _computeLayout() {
     _chestBox.getSize(_size);
     _chestBox.getCenter(_center);
@@ -708,6 +753,8 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
       pedestals[i].position.set(offsets[i], 0, 0);
       pedestals[i].rotation.set(0, 0, 0);
     }
+
+    _applyResponsiveFit();
   }
 
   _computeLayout();
@@ -1061,6 +1108,7 @@ export function buildCards3D({ scene, camera, renderer, controls, chestBox, grou
 
   function tick(now) {
     if (!group.visible) return;
+    _applyResponsiveFit();
 
     const targetQ = new THREE.Quaternion().setFromRotationMatrix(
       new THREE.Matrix4().lookAt(

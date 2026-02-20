@@ -717,10 +717,12 @@ function _buildStarfield(scene, camera, chestBox) {
   const nebulaMat = new THREE.MeshBasicMaterial({
     map: nebulaTex,
     side: THREE.BackSide,
-    transparent: true,
-    opacity: 0.85,
+
+    transparent: false,
+    opacity: 1,
+
     depthWrite: false,
-    depthTest: !(CFG.starsDepthTest === false ? false : true) ? true : true,
+    depthTest: false,
   });
   const nebula = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 48), nebulaMat);
   nebula.name = "GP_NebulaSphere";
@@ -757,7 +759,7 @@ function _buildStarfield(scene, camera, chestBox) {
     transparent: true,
     opacity: 0.85,
     depthWrite: false,
-    depthTest: CFG.starsDepthTest === false ? false : true,
+    depthTest: true,
     blending: THREE.AdditiveBlending,
     sizeAttenuation: true,
   });
