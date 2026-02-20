@@ -325,23 +325,25 @@
               aria-expanded="false"
               aria-controls="avatarMenu"
             >
-              <div class="relative">
+              <div class="relative shrink-0">
                 @if ($avatarUrl && $provider === 'discord')
                   <img
                     src="{{ $avatarUrl }}"
                     alt="User Avatar"
-                    class="h-8 w-8 rounded-full object-cover"
+                    class="h-8 w-8 min-h-8 min-w-8 shrink-0 rounded-full object-cover"
                   />
                 @else
-                  <div class="flex h-8 w-8 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
-                      {{ $initials }}
+                  <div class="flex h-8 w-8 min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
+                    {{ $initials }}
                   </div>
                 @endif
+
                 <span class="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/80 text-[10px] font-extrabold text-zinc-800/90 dark:text-white/85 backdrop-blur">
                   {{ $providerMark }}
                 </span>
               </div>
-              <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
+
+              <svg class="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
                 <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
               </svg>
             </button>
