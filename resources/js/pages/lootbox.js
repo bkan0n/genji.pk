@@ -1,6 +1,7 @@
 // resources/js/pages/lootbox.js
 import { cdnAsset, cdnImage } from "../utils/cdn";
 import { createLootbox3D } from "../utils/animations";
+import { initStoreModal } from "../modals/store";
 
 // ====== état/appli ======
 let isRunning = false;
@@ -243,46 +244,76 @@ function rarityStyle(rarity) {
 }
 
 // ====== init ======
-async function initializeApp() {
-  await loadTranslations();
-  hideCrate();
+async function bootLootbox3D() {
+  const mountEl = document.getElementById("box");
+  if (!mountEl) return null;
 
-  // init
+  showBoxSkeleton();
+
   try {
-    const mountEl = document.getElementById("box");
-    if (mountEl) {
-      lootbox3dPromise = createLootbox3D({
-        mountEl,
-        modelUrl: "/assets/models/gp_static.glb",
-      }).then((ctrl) => {
-        lootbox3d = ctrl;
-        ctrl.setCardPickHandler?.((pickedIndex, reward) => {
-          if (!awaitingPick) return;
-          if (!reward || !window.user_id) return;
+    const ctrl = await createLootbox3D({
+      mountEl,
+      modelUrl: "/assets/models/gp_static.glb",
+    });
 
-          playSound(reward.rarity);
-          grantReward(user_id, reward);
+    lootbox3d = ctrl;
 
-          awaitingPick = false;
-          restoreCrate();
-        });
-        return ctrl;
-      }).catch((e) => {
-        console.warn("[lootbox3d] init failed:", e);
-        lootbox3dPromise = null;
-        lootbox3d = null;
-        // showCrate();
-        return null;
-      });
-    }
+    ctrl.setCardPickHandler?.((pickedIndex, reward) => {
+      if (!awaitingPick) return;
+      if (!reward || !window.user_id) return;
+
+      playSound(reward.rarity);
+      grantReward(user_id, reward);
+
+      awaitingPick = false;
+      restoreCrate();
+    });
+
+    hideBoxSkeleton();
+    return ctrl;
   } catch (e) {
     console.warn("[lootbox3d] init failed:", e);
     lootbox3dPromise = null;
     lootbox3d = null;
+
+    showBoxFallback();
+    return null;
   }
 }
+
+async function initializeApp() {
+  await loadTranslations();
+  hideCrate();
+
+  // Store modal
+  try {
+    initStoreModal({
+      getUserId: () => window.user_id,
+      showToast: (message, type) => showToast(message, type),
+    });
+  } catch (e) {
+    console.warn("[store] init failed:", e);
+  }
+
+  // init 3D
+  try {
+    lootbox3dPromise = bootLootbox3D();
+  } catch (e) {
+    console.warn("[lootbox3d] init failed:", e);
+    lootbox3dPromise = null;
+    lootbox3d = null;
+    showBoxFallback();
+  }
+}
+
 $(document).ready(() => {
   initializeApp();
+
+  const retryBtn = document.getElementById('box-retry');
+  retryBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    lootbox3dPromise = bootLootbox3D();
+  });
 });
 
 // ====== API ======
@@ -995,6 +1026,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// ====== helpers skeleton ======
+function showBoxSkeleton() {
+  const sk = document.getElementById('box-skeleton');
+  const fb = document.getElementById('box-fallback');
+  if (fb) fb.classList.add('hidden');
+  if (sk) {
+    sk.classList.remove('hidden');
+    sk.setAttribute('aria-busy', 'true');
+  }
+}
+
+function hideBoxSkeleton() {
+  const sk = document.getElementById('box-skeleton');
+  if (sk) {
+    sk.classList.add('hidden');
+    sk.setAttribute('aria-busy', 'false');
+  }
+}
+
+function showBoxFallback() {
+  const sk = document.getElementById('box-skeleton');
+  const fb = document.getElementById('box-fallback');
+  if (sk) sk.classList.add('hidden');
+  if (fb) fb.classList.remove('hidden');
+}
 
 // ====== session ======
 function normalizeReward(r) {
