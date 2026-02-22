@@ -1,236 +1,246 @@
-  <h1>Genji Parkour — Community &amp; Tools (Laravel 12)</h1>
+# Genji Parkour
 
-  <p align="center">
-    <a href="https://laravel.com" target="_blank">
-      <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="340" alt="Laravel Logo">
-    </a>
-  </p>
+Community platform for the Overwatch Genji parkour scene. Leaderboards, map search, submissions, playtests, newsfeed, statistics, rank cards, a lootbox system, and an OverPy-to-Workshop convertor — all powered by an external API with a Laravel 12 frontend.
 
-  <p align="center">
-    <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12-red">
-    <img alt="PHP" src="https://img.shields.io/badge/PHP-%E2%89%A5%208.2-777bb3">
-    <img alt="Node" src="https://img.shields.io/badge/Node-%E2%89%A5%2020-43853d">
-    <img alt="Build" src="https://img.shields.io/badge/Build-Vite-informational">
-    <img alt="CSS" src="https://img.shields.io/badge/TailwindCSS-Enabled-38B2AC">
-    <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
-  </p>
+Live at [genji.pk](https://genji.pk) | Dev at [dev.genji.pk](https://dev.genji.pk)
 
-  <p>
-    <strong>Genji Parkour</strong> is a community website for Overwatch Genji parkour maps:
-    <em>leaderboards</em>, <em>powerful search</em>, <em>submissions &amp; playtests</em>, <em>newsfeed</em>,
-    <em>statistics/graphs</em>, and a <strong>Convertor (OverPy → Workshop)</strong> with multilingual support.
-    This repository hosts the <strong>Laravel 12</strong> application that serves the UI
-    (dark theme, Tailwind, Blade + per-page JS).
-    The app is <strong>API-first</strong> by default and can optionally use a local database for specific modules.
-  </p>
+## Tech Stack
 
-  <hr>
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 12, PHP 8.3+ |
+| Frontend | Blade templates, per-page JS modules, Tailwind CSS v4 |
+| Build | Vite 7 |
+| Auth | Discord OAuth (Socialite) |
+| Data | API-first — all data from the external Genji API |
+| Error tracking | Sentry (PHP + browser) |
+| Security | Strict CSP with nonce-based scripts (spatie/laravel-csp) |
+| i18n | EN, FR, CN, RU |
+| Deployment | Docker (PHP 8.3 + Unit), GitHub Actions CI/CD |
 
-  <h2>✨ Features</h2>
-  <ul>
-    <li><strong>Leaderboard</strong> — XP, tiers, skill ranks, world records, maps made, playtest votes.</li>
-    <li><strong>Maps Search</strong> — rich filters (code, creator, name, difficulty, type, mechanics, restrictions, flags).</li>
-    <li><strong>Submit &amp; Playtest</strong> — submit maps/records, playtest queue, difficulty pills, custom dropdowns.</li>
-    <li><strong>Newsfeed</strong> — announcements, new maps/records, guides, community picks, changelogs.</li>
-    <li><strong>Statistics</strong> — charts &amp; insights (difficulty distribution, popularity, time played, rank distribution).</li>
-    <li><strong>Convertor (Beta)</strong> — OverPy → Workshop, translation helpers, map-data editor.</li>
-    <li><strong>Multi-language</strong> — EN/FR (extensible), language detection &amp; user selection.</li>
-    <li><strong>Discord OAuth</strong> — login, navbar avatar, profile/notifications modals.</li>
-    <li><strong>Strict CSP</strong> — <code>csp_nonce()</code> for scripts (including CDN), no inline styles.</li>
-    <li><strong>API-first</strong> — UI reads from an external API secured. Local DB mode is optional.</li>
-  </ul>
+## Prerequisites
 
-  <h2>🧱 Tech Stack</h2>
-  <ul>
-    <li><strong>Backend:</strong> Laravel 12 (PHP ≥ 8.2), custom middlewares (language, user context, Sentry).</li>
-    <li><strong>Frontend:</strong> Blade, modular page-scoped JS, Tailwind CSS, Vite.</li>
-    <li><strong>i18n:</strong> <code>resources/lang/{en,fr}</code> + Convertor dictionaries.</li>
-    <li><strong>Data:</strong> External API (default). Local DB is optional for persistence-heavy modules.</li>
-  </ul>
+- PHP >= 8.3.6
+- Composer 2
+- Node >= 20 and npm
 
-</code></pre>
+## Local Setup
 
-  <h2>🚀 Getting Started</h2>
-
-  <h3>1) Requirements</h3>
-  <ul>
-    <li><strong>PHP ≥ 8.2</strong></li>
-    <li><strong>Composer 2</strong></li>
-    <li><strong>Node ≥ 20</strong> and <strong>npm</strong></li>
-    <li><strong>SQLite / MySQL / PostgreSQL</strong> (only if you enable local DB mode)</li>
-  </ul>
-
-  <h3>2) Installation</h3>
-  <pre><code>git clone &lt;your-repo-url&gt; genji
-cd genji
+```bash
+git clone <repo-url> genji.pk && cd genji.pk
 cp .env.example .env
 composer install
 npm install
 php artisan key:generate
-</code></pre>
+```
 
-  <h3>3) Configure <code>.env</code></h3>
+Configure your `.env` with the required service credentials (see [Environment Variables](#environment-variables) below).
 
-  <h4>Default: API-first (recommended)</h4>
-  <pre><code>APP_NAME="Genji Parkour"
-APP_ENV=local
-APP_URL=http://genji.test
-APP_DEBUG=true
+Start everything in one command:
 
-# Sessions &amp; cache
-SESSION_DRIVER=file
-CACHE_STORE=file
+```bash
+composer dev
+```
 
-# External API (required)
-API_ROOT="https://your.own.api/"   # example base URL
-API_KEY="your-api-key"
+This runs concurrently:
+- `php artisan serve` — Laravel dev server (port 8000)
+- `npm run dev` — Vite HMR (port 5173)
+- `php artisan queue:listen` — Queue worker
+- `php artisan pail` — Log tailing
 
-# Discord OAuth
-DISCORD_CLIENT_ID="..."
-DISCORD_CLIENT_SECRET="..."
-DISCORD_REDIRECT="${APP_URL}/callback"
+Or run them individually if you prefer.
 
-# Sentry via proxy (optional)
-SENTRY_DSN=""
-SENTRY_ENV="${APP_ENV}"
+## Available Commands
 
-# Localization
-FALLBACK_LOCALE=en
-</code></pre>
+| Command | Description |
+|---------|-------------|
+| `composer dev` | Start all dev services concurrently |
+| `composer test` | Run Pest/PHPUnit test suite |
+| `composer lint` | Lint PHP (Duster) + JS/CSS/Blade (Prettier) |
+| `composer fix` | Auto-fix PHP + JS/CSS/Blade formatting |
+| `npm run build` | Production Vite build |
+| `npm run dev` | Vite dev server with HMR |
+| `npm run format` | Prettier format all files |
+| `npm run format:check` | Prettier check without writing |
 
-  <p>
-    In API-first mode, the UI fetches data from the external API (leaderboard, maps, newsfeed, etc.).
-    It’s ideal for quick deployments and avoids heavy SQL on the web server.
-  </p>
+## Environment Variables
 
-  <h4>Optional: Local Database (hybrid or DB-driven modules)</h4>
-  <pre><code>DB_CONNECTION=pgsql   # or mysql/sqlite
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=genji
-DB_USERNAME=genji
-DB_PASSWORD=secret
-SESSION_DRIVER=database
-CACHE_STORE=database
-</code></pre>
+The app is API-first. Most data comes from the external Genji API, so you need valid API credentials to develop locally.
 
-  <p>Then run migrations (if present):</p>
-  <pre><code>php artisan migrate --seed
-</code></pre>
+| Variable                      | Purpose                                              |
+|-------------------------------|------------------------------------------------------|
+| `X_API_ROOT`                  | Genji API base URL                                   |
+| `X_API_KEY`                   | Genji API key                                        |
+| `X_API_VERIFY`                | SSL verification for API calls                       |
+| `DISCORD_CLIENT_ID`           | Discord OAuth app client ID                          |
+| `DISCORD_CLIENT_SECRET`       | Discord OAuth app client secret                      |
+| `DISCORD_BOT_TOKEN`           | Bot token for moderator role checks and notifications |
+| `DISCORD_GUILD_ID`            | Discord server ID for guild membership verification  |
+| `DISCORD_MODERATOR_ROLE_IDS`  | Comma-separated role IDs for mod panel access        |
+| `TENOR_API_KEY`               | GIF search in newsfeed                               |
+| `TRANSLATION_API_ROOT`        | Server-side translation service URL                  |
+| `TRANSLATION_API_KEY`         | Translation service key                              |
+| `TRANSLATION_API_VERIFY`      | SSL verification for translation API                 |
+| `SENTRY_DSN`                  | Sentry error tracking DSN (server)                   |
+| `SENTRY_ENVIRONMENT`          | Sentry environment label                             |
+| `VITE_SENTRY_DSN`             | Sentry DSN for browser SDK                           |
+| `VITE_APP_ENV`                | App environment exposed to frontend                  |
+| `VITE_APP_RELEASE`            | Release version exposed to frontend                  |
+| `BATTLENET_CLIENT_ID`         | Battle.net OAuth client ID                           |
+| `BATTLENET_CLIENT_SECRET`     | Battle.net OAuth secret                              |
+| `GITHUB_TOKEN`                | GitHub API for fetching OverPy releases              |
+| `SESSION_SECURE_COOKIE`       | Enable secure cookies (set `true` in production)     |
+| `SESSION_DOMAIN`              | Cookie domain scope                                  |
 
-  <p>You can combine API usage and a local DB if some modules need persistence. API-first remains the default for public pages.</p>
+## Project Structure
 
-  <h3>4) Run the App</h3>
-  <pre><code># Dev (Vite + HMR)
-npm run dev
+```
+app/
+├── Console/              Kernel (no custom commands)
+├── Extensions/           Custom session handler
+├── Http/
+│   ├── Controllers/      ~100 controllers across 16 domains
+│   │   ├── Auth/         Discord & email authentication
+│   │   ├── Maps/         Search, submit, guides, playtests
+│   │   ├── Completions/  Records, leaderboard, voting
+│   │   ├── Community/    Leaderboard, statistics
+│   │   ├── Lootbox/      Keys, rewards, coins
+│   │   ├── Newsfeed/     News, changelogs, emojis, GIFs
+│   │   ├── Users/        Profiles, settings, rank card
+│   │   ├── Mods/         Moderator panel
+│   │   └── ...
+│   └── Middleware/       14 custom middleware (auth, locale, CSP, Sentry)
+├── Models/               User model (session auth)
+├── Services/
+│   ├── GenjiApiService   Central wrapper for the external Genji API
+│   └── GitHubReleases    Fetch OverPy release info
+├── Support/
+│   ├── helpers.php       csp_nonce(), cdn_asset()
+│   └── Translations.php  i18n management
+└── Providers/
 
-# Laravel server
-php artisan serve
-</code></pre>
+resources/
+├── views/                Blade templates (layouts, pages, partials, modals)
+├── js/
+│   ├── app.js            Bootstrap & global setup
+│   ├── pages/            Per-page JS (leaderboard, search, submit, etc.)
+│   ├── components/       Reusable UI components
+│   └── utils/            API client, translations, animations
+├── css/                  Tailwind + custom styles
+└── lang/                 EN, FR, CN, RU translation files
 
-  <p>Open: <code>http://127.0.0.1:8000</code> (or <code>APP_URL</code>).</p>
+routes/
+├── web.php               ~35 page routes
+└── api.php               ~100 API proxy routes
+```
 
-  <h3>5) Production Build</h3>
-  <pre><code>npm run build
-php artisan optimize
-</code></pre>
+## Architecture
 
-  <h2>🔐 Security &amp; Content Security Policy (CSP)</h2>
-  <ul>
-    <li>The project enforces a <strong>strict CSP</strong>. Always use the nonce from <code>csp_nonce()</code> on scripts (including CDN imports):</li>
-  </ul>
+### API-First
 
-  <pre><code>&#64;push('head')
-  &#64;php($nonce = csp_nonce())
-  &lt;script nonce="{{ $nonce }}" src="https://cdn.jsdelivr.net/gh/Zezombye/overpy@master/out/overpy_standalone.js" defer&gt;&lt;/script&gt;
-  &lt;script nonce="{{ $nonce }}" src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js" defer&gt;&lt;/script&gt;
-&#64;endpush
-</code></pre>
+The app is a frontend client for the Genji API. `GenjiApiService` wraps all external API calls with authentication headers (`X-API-KEY`). There is no local database — all data lives in the external API.
 
-  <ul>
-    <li>Avoid inline styles; prefer Tailwind utility classes.</li>
-    <li>Never commit secrets (API keys, Discord credentials, Sentry DSN, etc.).</li>
-  </ul>
+### Authentication
 
-  <h2>🌍 Internationalization (i18n)</h2>
-  <ul>
-    <li>Core translations live in <code>resources/lang/{en,fr}</code>.</li>
-    <li>Convertor &amp; domain dictionaries live in <code>resources/translations</code> and feature files (e.g., <code>resources/lang/en/convertor.php</code>).</li>
-    <li>Language is selected in the navbar; middleware aids detection and persistence via cookie.</li>
-  </ul>
+1. **Discord OAuth** (primary) — Users log in via Discord. The app stores session data including user ID, name, and coins. A `remember_token` cookie enables persistent login across sessions.
+2. **Moderator access** — Verified by checking Discord role IDs against `DISCORD_MODERATOR_ROLE_IDS`.
 
-  <h2>🧩 Pages &amp; Scripts Mapping</h2>
+### Content Security Policy
 
-  <table>
-    <thead>
-      <tr>
-        <th align="left">Page</th>
-        <th align="left">Blade View</th>
-        <th align="left">Page Script</th>
-        <th align="left">Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>Home</td><td><code>resources/views/index.blade.php</code></td><td>(landing logic / optional prism.js)</td><td>Hero + top maps</td></tr>
-      <tr><td>Leaderboard</td><td><code>resources/views/leaderboard.blade.php</code></td><td><code>resources/js/pages/leaderboard.js</code></td><td>filters, ranks, WR</td></tr>
-      <tr><td>Search / Maps</td><td><code>resources/views/search.blade.php</code></td><td><code>resources/js/pages/search.js</code></td><td>tabs: Search / Completions / Guides / PR</td></tr>
-      <tr><td>Submit &amp; Playtest</td><td><code>resources/views/submit.blade.php</code></td><td><code>resources/js/pages/submit.js</code></td><td>custom dropdowns, difficulty pills</td></tr>
-      <tr><td>Statistics</td><td><code>resources/views/statistics.blade.php</code></td><td><code>resources/js/pages/statistics.js</code></td><td>charts &amp; insights</td></tr>
-      <tr><td>Newsfeed</td><td><code>resources/views/newsfeed.blade.php</code></td><td><code>resources/js/pages/newsfeed.js</code></td><td>tags, community picks, changelogs</td></tr>
-      <tr><td>Dashboard</td><td><code>resources/views/dashboard.blade.php</code></td><td><code>resources/js/pages/dashboard.js</code></td><td>personal aggregation</td></tr>
-      <tr><td>Lootbox</td><td><code>resources/views/lootbox.blade.php</code></td><td><code>resources/js/pages/lootbox.js</code></td><td>effects, rarities, keys</td></tr>
-      <tr><td>Rank Card</td><td><code>resources/views/rank_card.blade.php</code></td><td><code>resources/js/pages/rank_card.js</code></td><td>skeleton + render</td></tr>
-      <tr><td>Convertor</td><td><code>resources/views/convertor.blade.php</code></td><td><code>resources/js/pages/convertor.js</code></td><td>OverPy → Workshop, translations</td></tr>
-    </tbody>
-  </table>
+The app enforces a strict CSP via `spatie/laravel-csp`. All scripts must include a nonce:
 
-  <h2>🔌 API Usage</h2>
-  <p>The UI is API-first. Requests include an <code>API-KEY</code> header and use same-origin credentials when relevant.</p>
+```blade
+@php($nonce = csp_nonce())
+<script nonce="{{ $nonce }}" src="https://cdn.example.com/lib.js" defer></script>
+```
 
-  <pre><code>async function api(path, opts = {}) {
-  const headers = {
-    Accept: 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-    'API-KEY': (import.meta.env &amp;&amp; import.meta.env.VITE_API_KEY) ?? window.API_KEY,
-    ...(opts.headers || {}),
-  };
+Avoid inline styles — use Tailwind utility classes instead.
 
-  return fetch(`${window.API_ROOT}${path}`, {
-    method: 'GET',
-    credentials: 'same-origin',
-    ...opts,
-    headers,
-  }).then((r) => (r.ok ? r.json() : Promise.reject(r)));
-}
-</code></pre>
+### Frontend
 
-  <p>For POST/PUT/DELETE from Blade pages, also include the CSRF header from the meta tag and the <code>XSRF-TOKEN</code> cookie (Laravel defaults).</p>
+Each page has its own JS module in `resources/js/pages/`. Shared logic lives in `resources/js/components/` and `resources/js/utils/`. Vite handles bundling with per-page entry points.
 
-  <h2>🧪 Testing</h2>
-  <p>Add PHPUnit/Pest for backend and Vitest/Playwright for UI as needed. For now, rely on <code>npm run build</code>, <code>php artisan optimize</code>, and visual verification of core pages.</p>
+The app supports dark and light themes via `[data-theme]` attribute toggling.
 
-  <h2>📜 License &amp; Trademarks</h2>
-  <ul>
-    <li>Code: <strong>MIT</strong> unless otherwise stated for specific assets.</li>
-    <li>This project is <strong>not affiliated</strong> with Blizzard Entertainment. Overwatch™ and related marks are the property of their respective owners.</li>
-  </ul>
+### Internationalization
 
-  <h2>🙏 Acknowledgements</h2>
-  <ul>
-    <li><strong>Laravel</strong> and its community.</li>
-    <li><strong>Tailwind CSS</strong>.</li>
-    <li><strong>OverPy</strong> by Zezombye (used by the Convertor).</li>
-    <li>All map creators, playtesters, and contributors of the <strong>Genji Parkour</strong> community.</li>
-  </ul>
+Translation files live in `resources/lang/{en,fr,cn,ru}/`. Language is detected from the `Accept-Language` header, persisted via cookie, and switchable from the navbar. The convertor has its own translation dictionaries in `resources/translations/`.
 
-  <h2>📬 Support</h2>
-  <p>Open an issue or discussion for bugs and feature requests. For sensitive matters (security, API keys), contact the maintainers privately.</p>
+## Features
 
-  <h2>TL;DR</h2>
-  <ul>
-    <li><strong>API-first</strong> by default: set <code>API_ROOT</code> + <code>API_KEY</code>. Local DB is optional.</li>
-    <li>Start: <code>composer install</code> → <code>npm install</code> → <code>php artisan key:generate</code> → <code>npm run dev</code> + <code>php artisan serve</code>.</li>
-    <li><strong>CSP:</strong> always use the nonce and avoid inline styles.</li>
-  </ul>
+- **Leaderboard** — Rankings by XP, skill tier, prestige, world records, maps created
+- **Map Search** — Filter by code, name, creator, difficulty, category, mechanics, restrictions, tags
+- **Submit & Playtest** — Map and completion submissions, playtest queue with community voting
+- **Newsfeed** — Announcements, new maps/records, guides, community picks, changelogs, emoji reactions, GIF support
+- **Statistics** — Charts for difficulty distribution, player skill tiers, top creators, most popular maps, time played
+- **Rank Card** — Customizable card with avatar, skin, background, badges, and map mastery
+- **Lootbox** — Gamification system with keys, rewards, rarities, coins, and XP multipliers
+- **Convertor** — OverPy to Overwatch Workshop code translation with diff view and translation helpers
+- **Dashboard** — Personal aggregation of completions, maps, and activity
+- **Moderator Panel** — User management, map editing, completion verification, playtest management, cache controls
+- **Notifications** — Web notifications with per-event preferences (web, Discord DM, Discord ping channels)
 
-</div>
+## Deployment
+
+### How It Works
+
+Both environments use Docker with a multi-stage build (Node for Vite assets, Composer for PHP deps, then a `serversideup/php:8.3-unit` runtime image). Containers join an external `genji-network` Docker network.
+
+### Production
+
+Automatically deploys on push to `main` via `.github/workflows/prod-deploy.yml`. Builds the Docker image on the server via SSH remote Docker context, then runs `docker compose -f docker-compose.prod.yml up -d --build`.
+
+### Development (Staging)
+
+Triggered by commenting `.deploy` on a PR or via manual workflow dispatch in `.github/workflows/dev-deploy.yml`. Uses `github/branch-deploy` to deploy the PR branch. Admins: `tylovejoy`, `Aiapaec64`.
+
+### Environment secrets
+
+All env vars are injected as GitHub Actions secrets into the Docker Compose environment. No `.env` file is used in production — values come directly from the CI/CD pipeline.
+
+## Contributing
+
+### Getting Started
+
+1. Fork the repo and clone locally
+2. Follow [Local Setup](#local-setup) above
+3. Create a feature branch from `main`
+4. Make your changes
+
+### Code Style
+
+- **PHP**: Run `composer fix` before committing. Uses [Duster](https://github.com/tightenco/duster) (PSR-12) and [Pint](https://laravel.com/docs/pint)
+- **JS/CSS/Blade**: Run `npm run format` or `composer fix`. Uses [Prettier](https://prettier.io/) with Blade and Tailwind plugins
+- Check everything passes with `composer lint`
+
+### Testing
+
+```bash
+composer test
+```
+
+Uses [Pest](https://pestphp.com/) with the Laravel plugin.
+
+### Pull Requests
+
+- Keep PRs focused — one feature or fix per PR
+- Run `composer lint` and `composer test` before opening
+- PRs can be deployed to staging by commenting `.deploy` (admins only)
+- Merging to `main` triggers automatic production deployment
+
+### CSP Reminder
+
+If you add external scripts or new JS files, always use `csp_nonce()`. Never add inline `<style>` blocks — use Tailwind classes.
+
+## License
+
+MIT
+
+This project is not affiliated with Blizzard Entertainment. Overwatch and related marks are the property of their respective owners.
+
+## Acknowledgements
+
+- [Laravel](https://laravel.com)
+- [Tailwind CSS](https://tailwindcss.com)
+- [OverPy](https://github.com/Zezombye/overpy) by Zezombye — powers the Convertor
+- The Genji Parkour community — map creators, playtesters, and players
