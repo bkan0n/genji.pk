@@ -435,11 +435,30 @@ $('.generate').on('click', function () {
 
 async function updateKeyDisplay() {
   await loadTranslations();
+
+  const icon = keyIconUrl(rewardKeyType);
+
   if (user_id) {
-    $('#key-count').html(`<i class="fas fa-key mr-1"></i> <span id="key-number">${keys}</span>`);
+    $('#key-count').html(`
+      <span class="inline-flex items-center gap-2">
+        <img
+          src="${icon}"
+          alt=""
+          class="h-5 w-5 shrink-0 object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+        <span id="key-number" class="font-extrabold">${keys}</span>
+      </span>
+    `);
   } else {
     $('#key-count').html(t('popup.login_required_btn') || 'Login');
   }
+}
+function keyIconUrl(keyType) {
+  const kt = String(keyType || "Classic").toLowerCase();
+  if (kt === "winter") return cdnAsset("assets/lootbox/keys/winter.png");
+  return cdnAsset("assets/lootbox/keys/classic.png");
 }
 function pauseCrate() {
   $('.generate').attr('disabled', 'disabled').addClass('opacity-60 cursor-not-allowed');

@@ -821,19 +821,51 @@
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
+
                     <label>
                       Amount
                       <input
                         name="amount"
                         type="number"
+                        min="1"
+                        step="1"
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="100"
                       />
                     </label>
-                    <div class="sm:col-span-3">
-                      <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+
+                    <label>
+                      Type
+                      <select
+                        name="type"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       >
+                        <option>Map Submission</option>
+                        <option>Playtest</option>
+                        <option>Guide</option>
+                        <option>Completion</option>
+                        <option>Record</option>
+                        <option>World Record</option>
+                        <option selected>Other</option>
+                      </select>
+                    </label>
+
+                    <label class="sm:col-span-3">
+                      Reason (optional)
+                      <input
+                        name="reason"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Manual grant from moderator panel"
+                      />
+                    </label>
+
+                    <label class="sm:col-span-3 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                      <input type="checkbox" name="apply_multiplier" class="h-4 w-4 accent-emerald-500" />
+                      Apply XP multiplier
+                    </label>
+
+                    <div class="sm:col-span-3">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Grant XP
                       </button>
                     </div>
