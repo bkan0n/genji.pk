@@ -16,6 +16,13 @@ let persistentFilters = {};
 let icons = [];
 let debounceTimeout;
 const pageSize = 25;
+
+function getEffectivePageSize(section = currentSection) {
+  // Map Search: cards layout fits 27 items (3 x 9)
+  if (section === 'map_search' && String(mapSearchView || '').toLowerCase() === 'cards') return 27;
+  return pageSize;
+}
+
 let totalPages = 1;
 let hideTimeout;
 const resultsContainer = document.getElementById('resultsContainer');
@@ -2046,7 +2053,19 @@ function mountMapViewSwitch() {
 (() => { const __obj = b; let __last; for (const __c of String('ring-zinc-300/60 dark:ring-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, on); return __last; })();
     });
 
-    if (Array.isArray(lastMapRows) && lastMapRows.length) {
+    const hasCache = Array.isArray(lastMapRows) && lastMapRows.length;
+
+    //page size depending on section and mode
+    const effPageSize = getEffectivePageSize('map_search');
+    const cacheMismatch =
+      hasCache &&
+      currentSection === 'map_search' &&
+      typeof currentPage !== 'undefined' &&
+      currentPage === 1 &&
+      (lastMapRows.length === 25 || lastMapRows.length === 27) &&
+      lastMapRows.length !== effPageSize;
+
+    if (hasCache && !cacheMismatch) {
       renderMapSearchResultsByMode(lastMapRows);
     } else {
       applyFilters(activeFilters, { syncUrl: false });
@@ -2836,6 +2855,10 @@ function clearFilters(silent = false) {
 
     activeFilters.playtest_filter = 'All';
     persistentFilters.playtest_filter = 'All';
+
+    activeFilters.sort = 'difficulty:asc';
+    persistentFilters.sort = 'difficulty:asc';
+    try { __syncMapSearchSortUI('difficulty:asc'); } catch {}
   }
 
   document.getElementById('filtersContainer').innerHTML = '';
@@ -2909,7 +2932,8 @@ async function applyFilters(filters, opts = {}) {
   }
 
   try {
-    const req = buildSectionRequest(currentSection, activeFilters, 1, pageSize);
+    const effPageSize = getEffectivePageSize(currentSection);
+    const req = buildSectionRequest(currentSection, activeFilters, 1, effPageSize);
 
     const response = await fetch(req.url, {
       method: req.method,
@@ -2923,7 +2947,7 @@ async function applyFilters(filters, opts = {}) {
     persistentFilters = { ...activeFilters };
     if (syncUrl) __urlSyncFiltersFromState({ push: !!pushUrl });
     cachedPages[currentSection] = { 1: data };
-    totalPages = computeTotalPagesFromData(data, pageSize);
+    totalPages = computeTotalPagesFromData(data, effPageSize);
 
     updateToolbarButtonStates();
     displayResults(data);
@@ -4006,7 +4030,7 @@ async function displayMapSearchResultsTable(rowsInput) {
       ? `
         <button type="button"
                 class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
-                       text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                       text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                        w-full min-w-0"
                 data-code="${escAttr(code)}"
                 aria-label="${escAttr(t('popup.copy_map_code'))}"
@@ -8470,7 +8494,7 @@ async function changePage(pageNumber) {
 
   const data = await fetchPageData(currentPage);
   if (data) {
-    const maybeNewTotalPages = computeTotalPagesFromData(data, pageSize);
+    const maybeNewTotalPages = computeTotalPagesFromData(data, effPageSize);
     if (maybeNewTotalPages !== totalPages) totalPages = maybeNewTotalPages;
 
     displayResults(data);
@@ -8489,7 +8513,8 @@ async function fetchPageData(pageNumber) {
     return cachedPages[currentSection][pageNumber];
   }
 
-  const req = buildSectionRequest(currentSection, activeFilters, pageNumber, pageSize);
+  const effPageSize = getEffectivePageSize(currentSection);
+  const req = buildSectionRequest(currentSection, activeFilters, pageNumber, effPageSize);
   const response = await fetch(req.url, { method: req.method });
   if (!response.ok) throw new Error(`Erreur réseau : ${response.statusText}`);
   const data = await response.json();
@@ -8497,7 +8522,7 @@ async function fetchPageData(pageNumber) {
   cachedPages[currentSection] ??= {};
   cachedPages[currentSection][pageNumber] = data;
 
-  const maybe = computeTotalPagesFromData(data, pageSize);
+  const maybe = computeTotalPagesFromData(data, effPageSize);
   if (maybe !== totalPages) totalPages = maybe;
   return data;
 }
