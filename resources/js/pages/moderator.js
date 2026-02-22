@@ -1121,18 +1121,47 @@ async function handleGrantKey(form) {
 }
 
 async function handleGrantXp(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  const amount = +form.amount.value;
-  if (!Number.isFinite(amount) || amount <= 0) {
-    toast('Amount must be a positive number', 'warn');
+  const user_id = String(getUserIdFrom(form.user_id)).trim();
+
+  if (!isDigits(user_id)) {
+    toast('Pick a user from suggestions (user id required)', 'warn');
     return;
   }
+
+  const amount = Number.parseInt(form.amount.value, 10);
+  if (!Number.isInteger(amount) || amount <= 0) {
+    toast('Amount must be a positive integer', 'warn');
+    return;
+  }
+
+  const type = String(form.type?.value || 'Other').trim() || 'Other';
+  const reason = String(form.reason?.value || '').trim();
+  const apply_multiplier = !!form.apply_multiplier?.checked;
+
+  const payload = {
+    amount,
+    type,
+    ...(reason ? { reason } : {}),
+    apply_multiplier,
+    source: 'mods',
+  };
+
   const { ok, status, url, data } = await http(
     'POST',
     `${API_MODS}/lootbox/users/${encodeURIComponent(user_id)}/xp`,
-    { body: { amount } }
+    {
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    }
   );
+
   logActivity({ title: 'Grant XP', method: 'POST', url, ok, status, data });
+
+  if (!ok && status === 422) {
+    toast(data?.error || 'Validation failed (check amount/type/user)', 'err');
+    return;
+  }
+
   toast(ok ? 'XP granted' : 'Failed', ok ? 'ok' : 'err');
 }
 
