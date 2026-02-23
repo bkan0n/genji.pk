@@ -363,6 +363,11 @@
 
               <li><div class="my-2 h-px bg-zinc-100/70 dark:bg-white/10"></div></li>
               <li>
+                <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10" href="{{ url('/dashboard') }}">
+                  {{ __('navbar.dashboard') }}
+                </a>
+              </li>
+              <li>
                 <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10" href="{{ url('/lootbox') }}">
                   {{ __('navbar.lootbox') }}
                 </a>

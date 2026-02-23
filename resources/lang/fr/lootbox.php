@@ -36,6 +36,11 @@ return [
         'info'            => 'Infos',
         'close_modal'     => 'Fermer la fenêtre',
 
+        'loading_3d'              => 'Chargement de la scène 3D…',
+        'loading_3d_failed_title' => 'Échec du chargement 3D',
+        'loading_3d_failed_desc'  => 'Essayez de rafraîchir la page ou désactivez les extensions de navigateur lourdes.',
+        'retry'                   => 'Réessayer',
+
         'pick_a_card' => 'Choisissez une carte',
         'rewards_types' => [
             'spray'      => 'Spray',
@@ -62,6 +67,56 @@ return [
             'Classic' => 'Classique',
             'Winter'  => 'Hiver',
         ],
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STORE
+    // ──────────────────────────────────────────────────────────────────────
+    'store' => [
+        'title'                     => 'Boutique',
+        'subtitle'                  => 'Rotation • Clés • Achats',
+
+        'coins_label'               => 'Crédits',
+
+        'rotation_title'            => 'Rotation actuelle',
+        'refresh'                   => 'Actualiser',
+
+        'buy_keys_title'            => 'Acheter des clés',
+        'buy_keys_subtitle'         => 'Réductions en lot incluses',
+
+        'price_label'               => 'Prix',
+        'purchase_keys'             => 'Acheter des clés',
+
+        'purchase_history_title'    => 'Historique d’achats',
+        'purchase_history_subtitle' => 'Dernières transactions',
+
+        'loading_rotation'          => 'Chargement de la rotation…',
+        'available_until'           => 'Disponible jusqu’au :date',
+        'rotation_number'           => 'Rotation #:id',
+
+        'login_required'            => 'Connexion requise.',
+        'login_required_store'      => 'Connexion requise pour utiliser la boutique.',
+        'login_required_purchases'  => 'Connectez-vous pour voir vos achats.',
+
+        'no_items_rotation'         => 'Aucun objet dans la rotation.',
+        'no_purchases'              => 'Aucun achat pour le moment.',
+
+        'price'                     => 'Prix',
+        'paid'                      => 'payé',
+        'owned'                     => 'POSSÉDÉ',
+        'buy'                       => 'Acheter',
+        'item'                      => 'Objet',
+
+        'item_purchased'            => 'Objet acheté !',
+        'keys_purchased'            => 'Clés achetées !',
+        'purchase_failed'           => 'Échec de l’achat.',
+        'store_refreshed'           => 'Boutique actualisée',
+
+        'discount'                  => 'Réduction : :percent%',
+        'no_discount'               => 'Aucune réduction',
+
+        'image_unavailable'         => 'Image indisponible',
+        'no_image'                  => 'Aucune image',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

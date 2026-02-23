@@ -1,0 +1,150 @@
+<?php
+
+return [
+  'meta' => [
+    'title'         => 'Панель управления',
+    'og' => [
+      'title'       => 'Панель управления',
+      'description' => 'Обзор игрока, магазин, лутбоксы и задания.',
+    ],
+    'og.title'       => 'Панель управления',
+    'og.description' => 'Обзор игрока, магазин, лутбоксы и задания.',
+    'description'    => 'Обзор игрока, магазин, лутбоксы и задания.',
+  ],
+
+  'loading' => [
+    'username' => 'Загрузка…',
+  ],
+
+  'header' => [
+    'xp_progress'    => 'Прогресс XP',
+    'xp_to_next'     => '{0} XP до следующего уровня',
+    'to_next_short'  => 'До следующего: {0}',
+    'prestige_short' => 'Престиж P{0}',
+    'level'          => 'Уровень',
+    'coins'          => 'Монеты',
+  ],
+
+  'actions' => [
+    'refresh'          => 'Обновить',
+    'refreshing'       => 'Обновление…',
+    'copy_id'          => 'Копировать ID',
+    'copied'           => 'Скопировано!',
+    'rank_card'        => 'Ранк-карта',
+    'open_lootbox'     => 'Открыть лутбокс',
+    'search_maps'      => 'Поиск карт',
+    'statistics'       => 'Статистика',
+    'settings'         => 'Настройки',
+    'claiming'         => 'Получение…',
+  ],
+
+  'tabs' => [
+    'overview'       => 'Обзор',
+    'lootboxes'      => 'Лутбоксы',
+    'key_shop'       => 'Магазин ключей',
+    'weekly_shop'    => 'Еженедельный магазин',
+    'quests'         => 'Задания',
+  ],
+
+  'stats' => [
+    'keys_classic'    => 'Классические ключи',
+    'keys_winter'     => 'Зимние ключи',
+    'rewards_owned'   => 'Награды',
+    'quests_done'     => 'Заданий выполнено',
+  ],
+
+  'overview' => [
+    'activity_title'      => 'Активность',
+    'recent_purchases'    => 'Недавние покупки',
+    'recent_rewards'      => 'Недавние награды',
+    'no_purchases'        => 'Пока нет покупок.',
+    'paid'                => 'оплачено',
+    'quick_actions'       => 'Быстрые действия',
+    'quick_actions_sub'   => 'Быстрый доступ к самым используемым страницам.',
+    'notifications'       => 'Уведомления',
+    'notifications_sub'   => 'Непрочитанные сообщения / оповещения.',
+  ],
+
+  'lootboxes' => [
+    'your_inventory'       => 'Ваш инвентарь',
+    'your_inventory_sub'   => 'Ключи и быстрый доступ к странице лутбоксов.',
+    'latest_rewards'       => 'Последние награды',
+    'no_rewards'           => 'Пока нет наград.',
+    'no_keys'              => 'Нет ключей.',
+    'classic'              => 'Классика',
+    'winter'               => 'Зима',
+    'keys_available'       => 'Доступно ключей',
+    'open'                 => 'Открыть',
+  ],
+
+  'keyshop' => [
+    'buy_keys'               => 'Купить ключи',
+    'buy_keys_sub'           => 'Покупайте ключи за монеты.',
+    'price'                  => 'Цена',
+    'price_coins'            => '{0} монет',
+    'purchase'               => 'Купить',
+    'discount'               => 'Скидка: {0}%',
+    'no_discount'            => 'Без скидки',
+    'active_key'             => 'Активный ключ',
+    'recent_purchases'       => 'Недавние покупки',
+    'recent_purchases_sub'   => 'Ваши последние транзакции в магазине.',
+  ],
+
+  'weekly' => [
+    'rotation_title'       => 'Ротация',
+    'rotation_id'          => 'Ротация #{0}',
+    'available_until'      => 'Доступно до {0}',
+    'search_placeholder'   => 'Поиск…',
+    'filter_all'           => 'Все редкости',
+    'rarity_common'        => 'Обычный',
+    'rarity_rare'          => 'Редкий',
+    'rarity_epic'          => 'Эпический',
+    'rarity_legendary'     => 'Легендарный',
+    'no_items'             => 'В ротации нет предметов.',
+    'price'                => 'Цена',
+    'buy'                  => 'Купить',
+    'owned'                => 'ЕСТЬ',
+    'no_image'             => 'Нет изображения',
+    'item_fallback'        => 'Предмет',
+  ],
+
+  'quests' => [
+    'weekly_title'        => 'Еженедельные задания',
+    'weekly_sub'          => 'Ваши текущие задания и прогресс.',
+    'history_title'       => 'История',
+    'none'                => 'Нет доступных заданий.',
+    'no_history'          => 'Истории пока нет.',
+    'done'                => 'ГОТОВО',
+    'in_progress'         => 'В ПРОЦЕССЕ',
+    'claimed'             => 'ПОЛУЧЕНО',
+    'rotation'            => 'Еженедельная ротация',
+    'available_until'     => 'Доступно до {0}',
+    'total'               => 'Всего',
+    'completed'           => 'Выполнено',
+    'potential_coins'     => 'Потенциальные монеты',
+    'potential_xp'        => 'Потенциальный XP',
+    'target'              => 'Цель',
+    'progress'            => 'Прогресс',
+    'coins'               => 'монет',
+    'claim'               => 'Получить',
+    'complete_to_claim'   => 'Завершите задание, чтобы получить награду',
+    'claim_failed'        => 'Не удалось получить награду.',
+  ],
+
+  'submissions' => [
+    'title'             => 'Недавние прохождения',
+    'subtitle'          => 'Ваши последние забеги со статусом проверки.',
+    'none'              => 'Пока нет прохождений.',
+    'load_failed'       => 'Не удалось загрузить прохождения.',
+    'open_screenshot'   => 'Открыть скриншот',
+    'time'              => 'Время',
+    'unknown_map'       => 'Неизвестная карта',
+    'unknown_status'    => 'Неизвестно',
+  ],
+
+  'errors' => [
+    'load_failed'       => 'Не удалось загрузить.',
+    'login_required'    => 'Требуется вход.',
+    'store_unavailable' => 'Магазин недоступен.',
+  ],
+];

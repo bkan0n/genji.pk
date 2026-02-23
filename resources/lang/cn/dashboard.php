@@ -1,0 +1,150 @@
+<?php
+
+return [
+  'meta' => [
+    'title'         => '仪表板',
+    'og' => [
+      'title'       => '仪表板',
+      'description' => '玩家概览、商店、补给箱和任务。',
+    ],
+    'og.title'       => '仪表板',
+    'og.description' => '玩家概览、商店、补给箱和任务。',
+    'description'    => '玩家概览、商店、补给箱和任务。',
+  ],
+
+  'loading' => [
+    'username' => '加载中…',
+  ],
+
+  'header' => [
+    'xp_progress'    => '经验进度',
+    'xp_to_next'     => '距离下一级还需 {0} XP',
+    'to_next_short'  => '还差 {0}',
+    'prestige_short' => '声望 P{0}',
+    'level'          => '等级',
+    'coins'          => '金币',
+  ],
+
+  'actions' => [
+    'refresh'          => '刷新',
+    'refreshing'       => '刷新中…',
+    'copy_id'          => '复制 ID',
+    'copied'           => '已复制！',
+    'rank_card'        => '段位卡',
+    'open_lootbox'     => '打开补给箱',
+    'search_maps'      => '搜索地图',
+    'statistics'       => '统计',
+    'settings'         => '设置',
+    'claiming'         => '领取中…',
+  ],
+
+  'tabs' => [
+    'overview'       => '概览',
+    'lootboxes'      => '补给箱',
+    'key_shop'       => '钥匙商店',
+    'weekly_shop'    => '每周商店',
+    'quests'         => '任务',
+  ],
+
+  'stats' => [
+    'keys_classic'    => '经典钥匙',
+    'keys_winter'     => '冬季钥匙',
+    'rewards_owned'   => '奖励',
+    'quests_done'     => '已完成任务',
+  ],
+
+  'overview' => [
+    'activity_title'      => '动态',
+    'recent_purchases'    => '最近购买',
+    'recent_rewards'      => '最近奖励',
+    'no_purchases'        => '暂无购买记录。',
+    'paid'                => '已支付',
+    'quick_actions'       => '快捷操作',
+    'quick_actions_sub'   => '快速前往最常用的页面。',
+    'notifications'       => '通知',
+    'notifications_sub'   => '未读消息 / 提醒。',
+  ],
+
+  'lootboxes' => [
+    'your_inventory'       => '你的库存',
+    'your_inventory_sub'   => '钥匙与补给箱页面快捷入口。',
+    'latest_rewards'       => '最新奖励',
+    'no_rewards'           => '暂无奖励。',
+    'no_keys'              => '暂无钥匙。',
+    'classic'              => '经典',
+    'winter'               => '冬季',
+    'keys_available'       => '可用钥匙',
+    'open'                 => '打开',
+  ],
+
+  'keyshop' => [
+    'buy_keys'               => '购买钥匙',
+    'buy_keys_sub'           => '使用金币购买钥匙。',
+    'price'                  => '价格',
+    'price_coins'            => '{0} 金币',
+    'purchase'               => '购买',
+    'discount'               => '折扣：{0}%',
+    'no_discount'            => '无折扣',
+    'active_key'             => '当前钥匙',
+    'recent_purchases'       => '最近购买',
+    'recent_purchases_sub'   => '你最新的商店交易记录。',
+  ],
+
+  'weekly' => [
+    'rotation_title'       => '轮换',
+    'rotation_id'          => '轮换 #{0}',
+    'available_until'      => '有效期至 {0}',
+    'search_placeholder'   => '搜索…',
+    'filter_all'           => '所有稀有度',
+    'rarity_common'        => '普通',
+    'rarity_rare'          => '稀有',
+    'rarity_epic'          => '史诗',
+    'rarity_legendary'     => '传说',
+    'no_items'             => '轮换中暂无物品。',
+    'price'                => '价格',
+    'buy'                  => '购买',
+    'owned'                => '已拥有',
+    'no_image'             => '无图片',
+    'item_fallback'        => '物品',
+  ],
+
+  'quests' => [
+    'weekly_title'        => '每周任务',
+    'weekly_sub'          => '当前任务与进度。',
+    'history_title'       => '历史',
+    'none'                => '暂无可用任务。',
+    'no_history'          => '暂无历史记录。',
+    'done'                => '已完成',
+    'in_progress'         => '进行中',
+    'claimed'             => '已领取',
+    'rotation'            => '每周轮换',
+    'available_until'     => '有效期至 {0}',
+    'total'               => '总计',
+    'completed'           => '已完成',
+    'potential_coins'     => '可获得金币',
+    'potential_xp'        => '可获得 XP',
+    'target'              => '目标',
+    'progress'            => '进度',
+    'coins'               => '金币',
+    'claim'               => '领取',
+    'complete_to_claim'   => '完成任务后可领取',
+    'claim_failed'        => '领取失败。',
+  ],
+
+  'submissions' => [
+    'title'             => '最近提交',
+    'subtitle'          => '你最近的跑图记录及验证状态。',
+    'none'              => '暂无提交。',
+    'load_failed'       => '加载提交失败。',
+    'open_screenshot'   => '打开截图',
+    'time'              => '时间',
+    'unknown_map'       => '未知地图',
+    'unknown_status'    => '未知',
+  ],
+
+  'errors' => [
+    'load_failed'       => '加载失败。',
+    'login_required'    => '需要登录。',
+    'store_unavailable' => '商店不可用。',
+  ],
+];

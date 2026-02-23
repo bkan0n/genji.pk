@@ -27,6 +27,7 @@ return [
     'submit_playtest' => 'Playtest',
     'submit_map'      => 'Carte',
     'infos'           => 'Infos',
+    'dashboard'       => 'Tableau de bord',
 
     // ──────────────────────────────────────────────────────────────────────
     // AUTH & PROFILE

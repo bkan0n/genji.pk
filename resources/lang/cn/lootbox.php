@@ -36,6 +36,11 @@ return [
         'info'               => '详情',
         'close_modal'        => '关闭',
 
+        'loading_3d'              => '正在加载 3D 场景…',
+        'loading_3d_failed_title' => '3D 加载失败',
+        'loading_3d_failed_desc'  => '请尝试刷新页面，或禁用较重的浏览器扩展。',
+        'retry'                   => '重试',
+
         'pick_a_card'     => '选择一张卡面',
         'rewards_types' => [
             'spray'       => '喷漆',
@@ -62,6 +67,56 @@ return [
             'Classic' => '经典',
             'Winter'  => '圣诞节',
         ],
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STORE
+    // ──────────────────────────────────────────────────────────────────────
+    'store' => [
+        'title'                     => '商店',
+        'subtitle'                  => '轮换 • 钥匙 • 购买',
+
+        'coins_label'               => '金币',
+
+        'rotation_title'            => '当前轮换',
+        'refresh'                   => '刷新',
+
+        'buy_keys_title'            => '购买钥匙',
+        'buy_keys_subtitle'         => '已包含批量折扣',
+
+        'price_label'               => '价格',
+        'purchase_keys'             => '购买钥匙',
+
+        'purchase_history_title'    => '购买记录',
+        'purchase_history_subtitle' => '最新交易',
+
+        'loading_rotation'          => '正在加载轮换…',
+        'available_until'           => '截止日期：:date',
+        'rotation_number'           => '轮换 #:id',
+
+        'login_required'            => '需要登录。',
+        'login_required_store'      => '使用商店需要登录。',
+        'login_required_purchases'  => '登录后查看购买记录。',
+
+        'no_items_rotation'         => '轮换中没有物品。',
+        'no_purchases'              => '暂无购买记录。',
+
+        'price'                     => '价格',
+        'paid'                      => '已支付',
+        'owned'                     => '已拥有',
+        'buy'                       => '购买',
+        'item'                      => '物品',
+
+        'item_purchased'            => '购买成功！',
+        'keys_purchased'            => '钥匙购买成功！',
+        'purchase_failed'           => '购买失败。',
+        'store_refreshed'           => '商店已刷新',
+
+        'discount'                  => '折扣：:percent%',
+        'no_discount'               => '无折扣',
+
+        'image_unavailable'         => '图片不可用',
+        'no_image'                  => '无图片',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
