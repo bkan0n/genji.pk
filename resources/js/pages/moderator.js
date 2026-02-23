@@ -1,4 +1,3 @@
-/* Moderator Panel JS – 2 niveaux d'onglets, transitions, toasts */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -562,7 +561,9 @@ $('#clearLog')?.addEventListener('click', () => {
   $('#activityLog').innerHTML = '';
 });
 
-// ===================== AUTOCOMPLETE ENGINE =====================
+//———————————————————————————————————————————————————————————————
+// AUTOCOMPLETE ENGINNE
+//———————————————————————————————————————————————————————————————
 const LOCALE = document.documentElement.lang?.split('-')[0] || 'en';
 const AC_PAGE_SIZE = 8;
 
@@ -895,6 +896,25 @@ $$('form[data-action]').forEach((form) => {
           return handleSetOverpyCommit(form);
         case 'set-framework-version':
           return handleSetFrameworkVersion(form);
+
+        case "store-get-config": 
+          return handleStoreGetConfig(form);
+        case "store-update-config": 
+          return handleStoreUpdateConfig(form);
+        case "store-generate-rotation": 
+          return handleStoreGenerateRotation(form);
+
+        case "quest-get-config": 
+          return handleQuestGetConfig(form);
+        case "quest-update-config": 
+          return handleQuestUpdateConfig(form);
+        case "quest-update-quest": 
+          return handleQuestUpdateQuest(form);
+        case "quest-generate-rotation": 
+          return handleQuestGenerateRotation(form);
+        case "quest-get-weekly": 
+          return handleQuestGetWeekly(form);
+
       }
     } catch (err) {
       toast('Unexpected error', 'err');
@@ -1011,7 +1031,9 @@ function setupArchiveMapsUI() {
   }, { passive: true });
 })();
 
-// ============== HANDLERS ==============
+//———————————————————————————————————————————————————————————————
+// HANDLERS
+//———————————————————————————————————————————————————————————————
 // USERS
 async function handleCreateFake(form) {
   const name = form.name.value?.trim();
@@ -4025,8 +4047,9 @@ async function handleGetPendingEditRequests() {
   toast('Edit queue loaded', 'ok');
 }
 
-// ———————————————————————————————————————————————————————————————
+//———————————————————————————————————————————————————————————————
 // LOOTBOX
+//———————————————————————————————————————————————————————————————
 function showConfirmActiveKeyType() {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -4075,8 +4098,9 @@ function showConfirmActiveKeyType() {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
-// Submit map
+//———————————————————————————————————————————————————————————————
+// SUBMIT MAP
+//———————————————————————————————————————————————————————————————
 
 function difficultyDotClass(label) {
   const L = String(label).toLowerCase();
@@ -4535,8 +4559,9 @@ function bindSubmitMapEditButtons(root = document) {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
-// Search map
+//———————————————————————————————————————————————————————————————
+// SEARCH MAP
+//———————————————————————————————————————————————————————————————
 function ddSelectByValue(root, value) {
   const list = root?.querySelector('[data-dd-list]');
   if (!list) return;
@@ -4696,8 +4721,9 @@ function populateSearchPanel(item) {
   form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
-// ———————————————————————————————————————————————————————————————
-// UPDATE MAP – init & helpers
+//———————————————————————————————————————————————————————————————
+// UPDATE MAP
+//———————————————————————————————————————————————————————————————
 
 function getSelectedRadio(rootSel) {
   const el = document.querySelector(`${rootSel} input[type="radio"]:checked`);
@@ -4873,8 +4899,9 @@ function populateUpdatePanel(item) {
   form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
-// ———————————————————————————————————————————————————————————————
-// Inline edit générique
+//———————————————————————————————————————————————————————————————
+// EDIT INLINE
+//———————————————————————————————————————————————————————————————
 
 function bindEditButtonsGeneric(root) {
   if (!root || root.__uEditBound) return;
@@ -5057,8 +5084,9 @@ function editInlineGeneric(fieldRef, triggerBtn) {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
-// Medals (update)
+//———————————————————————————————————————————————————————————————
+// MEDALS
+//———————————————————————————————————————————————————————————————
 function parseDecLocale(v) {
   const s = String(v ?? '')
     .trim()
@@ -5091,6 +5119,7 @@ function validateUpdateMedals(allowEmpty = true) {
 
 // ———————————————————————————————————————————————————————————————
 // QUALITY OVERRIDE
+// ———————————————————————————————————————————————————————————————
 const QUALITY_OPTIONS = [1, 2, 3, 4, 5, 6].map((n) => ({
   value: String(n),
   text: n === 1 ? '1 – Lowest' : n === 6 ? '6 – Highest' : String(n),
@@ -5106,6 +5135,7 @@ function initModQualityPanel() {
 
 // ———————————————————————————————————————————————————————————————
 // VERIFICATION QUEUE – init & helpers
+// ———————————————————————————————————————————————————————————————
 const MOD_USER_ID = (
   document.getElementById('modUserId')?.value ??
   document.querySelector('meta[name="mod-user-id"]')?.content ??
@@ -5236,9 +5266,9 @@ function parseSec(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-/* =========================
-   RENDER SUBMISSION CARD
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// RENDER SUBMISSION CARD
+//———————————————————————————————————————————————————————————————
 function renderSubmissionCard(item) {
   const rid    = String(item?.id ?? '');
   const verId  = item?.verification_id == null ? '' : String(item.verification_id);
@@ -5350,9 +5380,9 @@ function renderSubmissionCard(item) {
   return wrap;
 }
 
-/* =========================
-   REMOVE CARD
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// REMOVE CARD
+//———————————————————————————————————————————————————————————————
 function removeCardFromVerifList(card) {
   if (!card) return;
   const container = card.parentElement;
@@ -5383,9 +5413,9 @@ function removeCardFromVerifList(card) {
 }
 
 
-/* =========================
-   REMOVE EDIT CARD
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// REMOVE EDIT CARD
+//———————————————————————————————————————————————————————————————
 function removeCardFromEditList(card) {
   if (!card) return;
   const container = card.parentElement;
@@ -5416,9 +5446,9 @@ function removeCardFromEditList(card) {
   );
 }
 
-/* =========================
-   DENY DIALOG
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// DENY DIALOG
+//———————————————————————————————————————————————————————————————
 function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (optional)' } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -5475,9 +5505,9 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
 }
 
 
-/* =========================
-   CLICK HANDLER (edit requests)
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// CLICK HANDLER (edit requests)
+//———————————————————————————————————————————————————————————————
 document.addEventListener('click', async (e) => {
   const btnView = e.target.closest('.btn-edit-view');
   const btnAccept = e.target.closest('.btn-edit-accept');
@@ -5549,9 +5579,9 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-/* =========================
-   CLICK HANDLER (verify/deny/auto)
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// CLICK HANDLER (verify/deny/auto)
+//———————————————————————————————————————————————————————————————
 document.addEventListener('click', async (e) => {
   const btnAuto   = e.target.closest('.btn-auto-verify');
   const btnVerify = e.target.closest('.btn-verify');
@@ -5654,9 +5684,9 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-/* =========================
-   AUTO VERIFY FLOW
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// AUTO VERIFY FLOW
+//———————————————————————————————————————————————————————————————
 async function autoVerifyCard(card) {
   const record_id  = card?.dataset?.recordId;
   const code       = (card?.dataset?.code || "").toString();
@@ -5749,9 +5779,9 @@ async function autoVerifyCard(card) {
   else { toast("Auto verify: API failed", "err"); }
 }
 
-/* =========================
-   ROI STORAGE + EDITOR
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// ROI STORAGE + EDITOR
+//———————————————————————————————————————————————————————————————
 const ROI_LS_KEY = "gp_ocr_rois";
 
 const DEFAULT_ROIS = {
@@ -5928,8 +5958,9 @@ async function openRoiEditor(imageUrl) {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
+//———————————————————————————————————————————————————————————————
 // USERS
+//———————————————————————————————————————————————————————————————
 async function prefillReplaceOverwatchByUserId(form, user_id) {
   const { ok, status, url, data } = await http(
     'GET',
@@ -6018,8 +6049,9 @@ function syncDdLabel(ddOrChild) {
   if (labelEl && txt) labelEl.textContent = txt;
 }
 
-// ———————————————————————————————————————————————————————————————
-// Devs only
+//———————————————————————————————————————————————————————————————
+// DEVS ONLY
+//———————————————————————————————————————————————————————————————
 const TRANSLATION_FILES = [
   'gamemodes.json',
   'heroes.json',
@@ -6284,10 +6316,343 @@ async function handleSetFrameworkVersion(form) {
   }
 }
 
-// --- Mod UI ---
-// - URL sync: ?tab=...&sub=...
-// - Sidebar filter input
-// - Command palette (Ctrl+K)
+//———————————————————————————————————————————————————————————————
+// STORE
+//———————————————————————————————————————————————————————————————
+function stringifyOut(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  try { return JSON.stringify(v, null, 2); }
+  catch { return String(v); }
+}
+
+function setPanelOut(form, key, value) {
+  const txt = stringifyOut(value);
+
+  const scope =
+    form?.closest?.("[data-panel]") ||
+    form?.closest?.(".mod-panel") ||
+    form ||
+    document;
+
+  const el =
+    scope.querySelector?.(`[data-out="${CSS.escape(key)}"]`) ||
+    document.getElementById(key) ||
+    document.getElementById(`out-${key}`) ||
+    document.querySelector?.(`[data-out="${CSS.escape(key)}"]`);
+
+  if (!el) {
+    console.warn(`[moderator] setPanelOut: output not found for "${key}"`);
+    return;
+  }
+
+  if ("value" in el && (el.tagName === "TEXTAREA" || el.tagName === "INPUT")) {
+    el.value = txt;
+  } else {
+    el.textContent = txt;
+  }
+
+  if (el.closest?.("[hidden]")) el.closest("[hidden]").hidden = false;
+  if (el.hidden) el.hidden = false;
+}
+
+function readJsonField(raw) {
+  try {
+    const v = JSON.parse(raw);
+    if (v == null) return null;
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+async function handleStoreGetConfig(form) {
+  setPanelOut(form, "store-config", "Loading…");
+
+  const res = await http("GET", `${API_MODS}/store/config`);
+
+  logActivity({
+    title: "Store Config (GET)",
+    method: "GET",
+    url: res.url || `${API_MODS}/store/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "store-config", res.data ?? "Request failed");
+    toast("Failed to load store config", "err");
+    return;
+  }
+
+  setPanelOut(form, "store-config", res.data);
+  toast("Store config loaded", "ok");
+}
+
+async function handleStoreUpdateConfig(form) {
+  const fd = new FormData(form);
+  const rotation_period_days = fd.get("rotation_period_days");
+  const active_key_type = String(fd.get("active_key_type") || "").trim();
+
+  const payload = {};
+  if (rotation_period_days !== "" && rotation_period_days != null) payload.rotation_period_days = Number(rotation_period_days);
+  if (active_key_type) payload.active_key_type = active_key_type;
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "store-update-res", "Saving…");
+
+  const res = await http("PUT", `${API_MODS}/store/config`, { body: payload });
+
+  logActivity({
+    title: "Store Config (PUT)",
+    method: "PUT",
+    url: res.url || `${API_MODS}/store/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "store-update-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "store-update-res", res.data);
+  toast("Store config updated", "ok");
+
+  // Optionnel : refresh auto
+  handleStoreGetConfig(form);
+}
+
+async function handleStoreGenerateRotation(form) {
+  const fd = new FormData(form);
+  const item_count = Number(fd.get("item_count") || 0);
+
+  if (!Number.isFinite(item_count) || item_count < 1) {
+    toast("Invalid item_count", "warn");
+    return;
+  }
+
+  setPanelOut(form, "store-rotation-res", "Generating…");
+
+  const res = await http("POST", `${API_MODS}/store/rotation/generate`, { body: { item_count } });
+
+  logActivity({
+    title: "Generate Store Rotation (POST)",
+    method: "POST",
+    url: res.url || `${API_MODS}/store/rotation/generate`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "store-rotation-res", res.data ?? "Rotation failed");
+    toast("Rotation failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "store-rotation-res", res.data);
+  toast("Rotation generated", "ok");
+}
+
+
+//———————————————————————————————————————————————————————————————
+// QUESTS
+//———————————————————————————————————————————————————————————————
+async function handleQuestGetWeekly(form) {
+  const user_id = window.user_id;
+
+  if (!user_id) {
+    toast("window.user_id is missing", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-weekly-out", "Loading…");
+
+  const url = `/api/quests?user_id=${encodeURIComponent(user_id)}`;
+  const res = await http("GET", url);
+
+  logActivity({
+    title: "Weekly Quests (GET)",
+    method: "GET",
+    url: res.url || url,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-weekly-out", res.data ?? "Request failed");
+    toast("Failed to load weekly quests", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-weekly-out", res.data);
+  toast("Weekly quests loaded", "ok");
+}
+
+async function handleQuestGetConfig(form) {
+  setPanelOut(form, "quest-config", "Loading…");
+
+  const res = await http("GET", `${API_MODS}/quests/config`);
+
+  logActivity({
+    title: "Quest Config (GET)",
+    method: "GET",
+    url: res.url || `${API_MODS}/quests/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-config", res.data ?? "Request failed");
+    toast("Failed to load quest config", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-config", res.data);
+  toast("Quest config loaded", "ok");
+}
+
+async function handleQuestUpdateConfig(form) {
+  const fd = new FormData(form);
+
+  const payload = {};
+  ["rotation_day","rotation_hour","easy_quest_count","medium_quest_count","hard_quest_count"].forEach((k) => {
+    const v = fd.get(k);
+    if (v !== "" && v != null) payload[k] = Number(v);
+  });
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "quest-config-update-res", "Saving…");
+
+  const res = await http("PUT", `${API_MODS}/quests/config`, { body: payload });
+
+  logActivity({
+    title: "Quest Config (PUT)",
+    method: "PUT",
+    url: res.url || `${API_MODS}/quests/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-config-update-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-config-update-res", res.data);
+  toast("Quest config updated", "ok");
+
+  handleQuestGetConfig(form);
+}
+
+async function handleQuestUpdateQuest(form) {
+  const fd = new FormData(form);
+  const quest_id = Number(fd.get("quest_id") || 0);
+
+  if (!Number.isFinite(quest_id) || quest_id < 1) {
+    toast("Invalid quest_id", "warn");
+    return;
+  }
+
+  const payload = {};
+
+  const name = String(fd.get("name") || "").trim();
+  const description = String(fd.get("description") || "").trim();
+  const difficulty = String(fd.get("difficulty") || "").trim();
+  const coin_reward = fd.get("coin_reward");
+  const xp_reward = fd.get("xp_reward");
+  const is_active = fd.get("is_active");
+  const reqRaw = String(fd.get("requirements_json") || "").trim();
+
+  if (name) payload.name = name;
+  if (description) payload.description = description;
+  if (difficulty) payload.difficulty = difficulty;
+  if (coin_reward !== "" && coin_reward != null) payload.coin_reward = Number(coin_reward);
+  if (xp_reward !== "" && xp_reward != null) payload.xp_reward = Number(xp_reward);
+
+  if (is_active === "1") payload.is_active = true;
+  if (is_active === "0") payload.is_active = false;
+
+  if (reqRaw) {
+    const parsed = readJsonField(reqRaw);
+    if (!parsed) {
+      toast("Invalid requirements JSON", "err");
+      return;
+    }
+    payload.requirements = parsed;
+  }
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "quest-update-res", "Saving…");
+
+  const res = await http("PATCH", `${API_MODS}/quests/${quest_id}`, { body: payload });
+
+  logActivity({
+    title: `Update Quest #${quest_id} (PATCH)`,
+    method: "PATCH",
+    url: res.url || `${API_MODS}/quests/${quest_id}`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-update-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-update-res", res.data);
+  toast("Quest updated", "ok");
+}
+
+async function handleQuestGenerateRotation(form) {
+  setPanelOut(form, "quest-rotation-res", "Generating…");
+
+  const res = await http("POST", `${API_MODS}/quests/rotation/generate`, { body: {} });
+
+  logActivity({
+    title: "Generate Quest Rotation (POST)",
+    method: "POST",
+    url: res.url || `${API_MODS}/quests/rotation/generate`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-rotation-res", res.data ?? "Rotation failed");
+    toast("Rotation failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-rotation-res", res.data);
+  toast("Quest rotation generated", "ok");
+}
+
+//———————————————————————————————————————————————————————————————
+// MOD UI
+//———————————————————————————————————————————————————————————————
 function initializeApp() {
   // If already initialized, destroy previous instance
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
