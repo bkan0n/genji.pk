@@ -15,7 +15,7 @@ const EP = {
   buyKeys: () => `/api/store/purchase/keys`,
   buyItem: () => `/api/store/purchase/item`,
   weeklyQuests: (uid) => `/api/quests?user_id=${encodeURIComponent(uid)}`,
-  questHistory: (uid) => `/api/quests/users/${encodeURIComponent(uid)}/history`,
+  questHistory: (uid, limit = 20) => `/api/quests/users/${encodeURIComponent(uid)}/history?limit=${encodeURIComponent(limit)}`,
   unreadCount: () => `/api/notifications/unread-count`,
   xpSummary: (uid) => `/api/lootbox/users/${encodeURIComponent(uid)}/xp-summary`,
   dashboardCompletions: (uid, pageSize = 10, pageNumber = 1) => `/api/users/${encodeURIComponent(uid)}/completions/dashboard?page_size=${encodeURIComponent(pageSize)}&page_number=${encodeURIComponent(pageNumber)}`,
@@ -40,6 +40,14 @@ function show(el) {
 }
 function hide(el) {
   el?.classList.add("hidden");
+}
+function showAvatarImg(img) {
+  img?.classList.remove("opacity-0");
+  img?.classList.add("opacity-100");
+}
+function hideAvatarImg(img) {
+  img?.classList.add("opacity-0");
+  img?.classList.remove("opacity-100");
 }
 
 function clamp(n, a, b) {
@@ -409,7 +417,7 @@ async function claimQuestRewards(progressId, userId) {
       ...(csrf ? { "X-CSRF-TOKEN": csrf } : {}),
     },
     body: JSON.stringify({
-      user_id: Number(userId),
+      user_id: String(userId),
     }),
   });
 }
@@ -419,6 +427,23 @@ async function claimQuestRewards(progressId, userId) {
    ========================= */
 let __gpFxRoot = null;
 let __gpFxStylesInjected = false;
+
+const GP_REWARD_FX = {
+  DOT_COUNT: 16,
+  DOT_MIN_SIZE: 5,
+  DOT_MAX_SIZE: 9,
+  DOT_MIN_DIST: 28,
+  DOT_MAX_DIST: 92,
+  DOT_MIN_DUR: 900,
+  DOT_RAND_DUR: 520,
+
+  PILL_MIN_DIST: 110,
+  PILL_MAX_DIST: 170,
+  PILL_DUR: 3000,
+  PILL_FADE_END: 0.92,
+
+  RING_DUR: 720,
+};
 
 function __ensureGpFxRoot() {
   if (__gpFxRoot) return __gpFxRoot;
@@ -439,59 +464,105 @@ function __ensureGpFxStyles() {
       position:fixed; inset:0; pointer-events:none; z-index:9999;
       overflow:visible;
     }
+
+    /* Pills: plus visibles */
     .gp-reward-pill{
       position:absolute;
       transform:translate(-50%,-50%);
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      padding:6px 10px;
+      gap:10px;
+      padding:8px 12px;
       border-radius:9999px;
-      font-size:12px;
+      font-size:13px;
       font-weight:900;
       letter-spacing:.02em;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 18px 35px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 20px 42px rgba(0,0,0,.22),
+        0 6px 14px rgba(0,0,0,.18);
       white-space:nowrap;
       user-select:none;
+      text-shadow: 0 1px 0 rgba(0,0,0,.12);
+      will-change: transform, opacity;
     }
-    .gp-reward-icon{ width:14px; height:14px; display:inline-block; opacity:.95; }
+    .gp-reward-icon{ width:16px; height:16px; display:inline-block; opacity:.98; }
 
     .gp-reward-pill--coins{
-      background: rgba(245,158,11,.16);
-      border: 1px solid rgba(245,158,11,.35);
-      color: rgb(161,98,7);
+      background: rgba(245,158,11,.22);
+      border: 1px solid rgba(245,158,11,.45);
+      color: rgb(146, 90, 8);
+      box-shadow:
+        0 20px 42px rgba(0,0,0,.22),
+        0 0 0 1px rgba(245,158,11,.10) inset,
+        0 0 24px rgba(245,158,11,.14);
     }
     .dark .gp-reward-pill--coins{
-      background: rgba(245,158,11,.12);
-      border-color: rgba(245,158,11,.25);
+      background: rgba(245,158,11,.16);
+      border-color: rgba(245,158,11,.30);
       color: rgb(253,230,138);
+      box-shadow:
+        0 20px 42px rgba(0,0,0,.30),
+        0 0 0 1px rgba(245,158,11,.10) inset,
+        0 0 28px rgba(245,158,11,.18);
     }
 
     .gp-reward-pill--xp{
-      background: rgba(16,185,129,.16);
-      border: 1px solid rgba(16,185,129,.35);
-      color: rgb(6,95,70);
+      background: rgba(16,185,129,.22);
+      border: 1px solid rgba(16,185,129,.45);
+      color: rgb(5, 80, 60);
+      box-shadow:
+        0 20px 42px rgba(0,0,0,.22),
+        0 0 0 1px rgba(16,185,129,.10) inset,
+        0 0 24px rgba(16,185,129,.14);
     }
     .dark .gp-reward-pill--xp{
-      background: rgba(16,185,129,.12);
-      border-color: rgba(16,185,129,.25);
+      background: rgba(16,185,129,.16);
+      border-color: rgba(16,185,129,.30);
       color: rgb(167,243,208);
+      box-shadow:
+        0 20px 42px rgba(0,0,0,.30),
+        0 0 0 1px rgba(16,185,129,.10) inset,
+        0 0 28px rgba(16,185,129,.18);
     }
 
+    /* Dots: tailles variables + glow pour mieux voir */
     .gp-reward-dot{
       position:absolute;
-      width:5px; height:5px;
       border-radius:9999px;
       transform:translate(-50%,-50%);
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,.22));
-      opacity:.95;
+      filter:
+        drop-shadow(0 14px 22px rgba(0,0,0,.22))
+        drop-shadow(0 0 10px rgba(255,255,255,.08));
+      opacity:.98;
+      will-change: transform, opacity;
     }
-    .gp-reward-dot--coins{ background: rgba(245,158,11,.95); }
-    .gp-reward-dot--xp{ background: rgba(16,185,129,.95); }
+    .gp-reward-dot--coins{
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(245,158,11,.95) 55%, rgba(245,158,11,.45));
+      box-shadow: 0 0 18px rgba(245,158,11,.22);
+    }
+    .gp-reward-dot--xp{
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(16,185,129,.95) 55%, rgba(16,185,129,.45));
+      box-shadow: 0 0 18px rgba(16,185,129,.22);
+    }
+
+    /* Shockwave ring */
+    .gp-reward-ring{
+      position:absolute;
+      left:0; top:0;
+      width:10px; height:10px;
+      transform:translate(-50%,-50%);
+      border-radius:9999px;
+      border:1px solid rgba(255,255,255,.18);
+      opacity:.95;
+      will-change: transform, opacity;
+      filter: drop-shadow(0 14px 26px rgba(0,0,0,.22));
+    }
+    .gp-reward-ring--coins{ border-color: rgba(245,158,11,.35); box-shadow: 0 0 22px rgba(245,158,11,.18); }
+    .gp-reward-ring--xp{ border-color: rgba(16,185,129,.35); box-shadow: 0 0 22px rgba(16,185,129,.18); }
 
     @media (prefers-reduced-motion: reduce){
-      .gp-reward-pill, .gp-reward-dot { transition:none !important; animation:none !important; }
+      .gp-reward-pill, .gp-reward-dot, .gp-reward-ring { transition:none !important; animation:none !important; }
     }
   `;
   document.head.appendChild(style);
@@ -541,65 +612,110 @@ function explodeRewardsFromButton(btn, payload = {}) {
     });
   }
 
+  const makeRing = (kind) => {
+    const ring = document.createElement("div");
+    ring.className = `gp-reward-ring gp-reward-ring--${kind}`;
+    ring.style.left = `${originX}px`;
+    ring.style.top = `${originY}px`;
+    root.appendChild(ring);
+
+    if (prefersReduced) {
+      ring.style.opacity = "0";
+      setTimeout(() => ring.remove(), 180);
+      return;
+    }
+
+    const anim = ring.animate(
+      [
+        { width: "10px", height: "10px", transform: "translate(-50%,-50%) scale(0.6)", opacity: 0.0 },
+        { width: "10px", height: "10px", transform: "translate(-50%,-50%) scale(0.95)", opacity: 0.75, offset: 0.12 },
+        { width: "10px", height: "10px", transform: "translate(-50%,-50%) scale(3.0)", opacity: 0.0 },
+      ],
+      { duration: GP_REWARD_FX.RING_DUR, easing: "cubic-bezier(.16,1,.3,1)" }
+    );
+    anim.onfinish = () => ring.remove();
+  };
+
   const makeDots = (kind, count) => {
     for (let i = 0; i < count; i++) {
       const dot = document.createElement("div");
       dot.className = `gp-reward-dot gp-reward-dot--${kind}`;
       dot.style.left = `${originX}px`;
       dot.style.top = `${originY}px`;
+
+      const size = GP_REWARD_FX.DOT_MIN_SIZE + Math.random() * (GP_REWARD_FX.DOT_MAX_SIZE - GP_REWARD_FX.DOT_MIN_SIZE);
+      dot.style.width = `${size}px`;
+      dot.style.height = `${size}px`;
+
+      dot.style.opacity = String(0.95 + Math.random() * 0.05);
+
       root.appendChild(dot);
 
-      const a = (Math.random() * Math.PI * 2);
-      const dist = 18 + Math.random() * 48;
+      const a = Math.random() * Math.PI * 2;
+      const dist = GP_REWARD_FX.DOT_MIN_DIST + Math.random() * (GP_REWARD_FX.DOT_MAX_DIST - GP_REWARD_FX.DOT_MIN_DIST);
       const dx = Math.cos(a) * dist;
-      const dy = Math.sin(a) * dist - 10;
+      const dy = Math.sin(a) * dist - (18 + Math.random() * 18);
+      const drift = (Math.random() * 22 - 11);
 
       if (prefersReduced) {
         dot.style.opacity = "0";
-        setTimeout(() => dot.remove(), 120);
+        setTimeout(() => dot.remove(), 160);
         continue;
       }
 
+      const dur = GP_REWARD_FX.DOT_MIN_DUR + Math.random() * GP_REWARD_FX.DOT_RAND_DUR;
+
       const anim = dot.animate(
         [
-          { transform: "translate(-50%,-50%) scale(1)", opacity: 0.95 },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.8)`, opacity: 0 },
+          { transform: "translate(-50%,-50%) scale(0.85)", opacity: 0.0 },
+          { transform: "translate(-50%,-50%) scale(1.08)", opacity: 1.0, offset: 0.14 },
+          { transform: `translate(calc(-50% + ${dx * 0.75}px), calc(-50% + ${dy * 0.75}px)) scale(1.0)`, opacity: 0.95, offset: 0.58 },
+          { transform: `translate(calc(-50% + ${dx + drift}px), calc(-50% + ${dy + 38}px)) scale(0.75)`, opacity: 0.0 },
         ],
-        { duration: 520 + Math.random() * 180, easing: "cubic-bezier(.2,1,.2,1)" }
+        { duration: dur, easing: "cubic-bezier(.16,1,.3,1)" }
       );
       anim.onfinish = () => dot.remove();
     }
   };
 
-  if (hasCoins) makeDots("coins", 10);
-  if (hasXp) makeDots("xp", 10);
+  if (hasCoins) {
+    makeRing("coins");
+    makeDots("coins", GP_REWARD_FX.DOT_COUNT);
+  }
+  if (hasXp) {
+    makeRing("xp");
+    makeDots("xp", GP_REWARD_FX.DOT_COUNT);
+  }
 
   pills.forEach((p, idx) => {
     const el = document.createElement("div");
     el.className = `gp-reward-pill gp-reward-pill--${p.type}`;
     el.innerHTML = `${p.icon}<span>${p.text}</span>`;
     el.style.left = `${originX}px`;
-    el.style.top = `${originY - idx * 18}px`;
+    el.style.top = `${originY - idx * 22}px`;
     root.appendChild(el);
 
-    const angle = (-Math.PI / 2) + (Math.random() * 0.9 - 0.45);
-    const dist = 85 + Math.random() * 45;
+    const spread = 0.55;
+    const angle = (-Math.PI / 2) + (Math.random() * spread - spread / 2);
+    const dist = GP_REWARD_FX.PILL_MIN_DIST + Math.random() * (GP_REWARD_FX.PILL_MAX_DIST - GP_REWARD_FX.PILL_MIN_DIST);
     const dx = Math.cos(angle) * dist;
     const dy = Math.sin(angle) * dist;
 
     if (prefersReduced) {
       el.style.opacity = "1";
-      setTimeout(() => el.remove(), 650);
+      setTimeout(() => el.remove(), 900);
       return;
     }
 
     const anim = el.animate(
       [
-        { transform: "translate(-50%,-50%) scale(0.92)", opacity: 0 },
-        { transform: "translate(-50%,-50%) scale(1.02)", opacity: 1, offset: 0.18 },
-        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.06)`, opacity: 0 },
+        { transform: "translate(-50%,-50%) scale(0.92)", opacity: 0.0 },
+        { transform: "translate(-50%,-50%) scale(1.06)", opacity: 1.0, offset: 0.18 },
+        { transform: `translate(calc(-50% + ${dx * 0.55}px), calc(-50% + ${dy * 0.55}px)) scale(1.05)`, opacity: 1.0, offset: 0.55 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.08)`, opacity: 0.0, offset: GP_REWARD_FX.PILL_FADE_END },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.08)`, opacity: 0.0 },
       ],
-      { duration: 900, easing: "cubic-bezier(.16,1,.3,1)" }
+      { duration: GP_REWARD_FX.PILL_DUR, easing: "cubic-bezier(.16,1,.3,1)" }
     );
 
     anim.onfinish = () => el.remove();
@@ -710,7 +826,7 @@ function renderCards(container, count = 6) {
 }
 
 /* =========================
-   XP BAR ANIMATION (JS)
+   XP BAR ANIMATION
    ========================= */
 let __xpAnimRaf = 0;
 let __xpAnimFrom = 0;
@@ -774,6 +890,65 @@ function __animateXpBarTo(pct, duration = 900) {
 }
 
 /* =========================
+   QUEST BAR ANIMATION
+   ========================= */
+function __questBarColorsByDifficulty(diff) {
+  const d = String(diff || "").toLowerCase();
+  if (d === "easy") return "from-emerald-400 to-brand-500";
+  if (d === "medium") return "from-amber-400 to-orange-500";
+  if (d === "hard") return "from-rose-400 to-red-500";
+  if (d === "bounty") return "from-sky-400 to-cyan-500";
+  return "from-emerald-400 to-brand-500";
+}
+
+function __animateScaleBar(el, pct, duration = 700) {
+  if (!el) return;
+
+  const prefersReduced =
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const toPct = clamp(Number(pct) || 0, 0, 100);
+  const to = toPct / 100;
+
+  el.style.width = "100%";
+  el.style.transformOrigin = "left center";
+  el.style.willChange = "transform";
+
+  if (prefersReduced) {
+    el.style.transform = `scaleX(${to})`;
+    el.dataset.pct = String(toPct);
+    return;
+  }
+
+  const fromPct = Number(el.dataset.pct);
+  const from = Number.isFinite(fromPct) ? (fromPct / 100) : 0;
+
+  const start = performance.now();
+  const dur = Math.max(120, Number(duration) || 700);
+
+  const tick = (now) => {
+    const t = clamp((now - start) / dur, 0, 1);
+    const k = __easeOutCubic(t);
+    const v = from + (to - from) * k;
+
+    el.style.transform = `scaleX(${v})`;
+
+    if (t < 1) requestAnimationFrame(tick);
+    else el.dataset.pct = String(toPct);
+  };
+
+  requestAnimationFrame(tick);
+}
+
+function __animateQuestBarsIn(root) {
+  if (!root) return;
+  root.querySelectorAll('[data-quest-bar="1"]').forEach((bar) => {
+    const pct = Number(bar.dataset.targetPct);
+    __animateScaleBar(bar, Number.isFinite(pct) ? pct : 0, 720);
+  });
+}
+
+/* =========================
    NORMALIZERS + UI
    ========================= */
 function normalizeList(payload) {
@@ -781,6 +956,7 @@ function normalizeList(payload) {
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.items)) return payload.items;
   if (Array.isArray(payload?.purchases)) return payload.purchases;
+  if (Array.isArray(payload?.quests)) return payload.quests;
   return [];
 }
 
@@ -1029,10 +1205,10 @@ function finalizeAvatar(ok) {
   hide(sk);
 
   if (ok) {
-    show(img);
+    showAvatarImg(img);
     hide(fb);
   } else {
-    hide(img);
+    hideAvatarImg(img);
     show(fb);
   }
 }
@@ -1103,7 +1279,8 @@ function loadAvatarUrl(url) {
     clearTimeout(softTimeout);
     finish(false);
   };
-
+  
+  img.loading = "eager";
   img.src = nextUrl;
 
   if (typeof img.decode === "function") {
@@ -1320,10 +1497,29 @@ async function loadRewardsSummary() {
           "rounded-xl overflow-hidden border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
           "ring-1 ring-zinc-200/40 dark:ring-white/10";
         const img = r.url || r.image_url || r.image || "";
+
         el.innerHTML = `
-          <div class="aspect-[4/3] bg-black/10 dark:bg-black/30 flex items-center justify-center">
-            ${img ? `<img src="${img}" class="max-h-full max-w-full object-contain" loading="lazy" decoding="async">` : ""}
+          <div class="relative aspect-[4/3] overflow-hidden bg-black/10 dark:bg-black/30">
+            ${
+              img
+                ? `<img
+                    src="${img}"
+                    alt=""
+                    class="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  >`
+                : ""
+            }
+            ${
+              !img
+                ? `<div class="absolute inset-0 flex items-center justify-center text-[11px] text-zinc-500 dark:text-zinc-400">
+                    ${t("weekly.no_image", "No image")}
+                  </div>`
+                : ""
+            }
           </div>
+
           <div class="p-2">
             <div class="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 truncate">${r.name || "—"}</div>
             <div class="mt-1 inline-flex items-center rounded px-2 py-0.5 text-[10px] font-extrabold uppercase ${rarityBadge(r.rarity)}">
@@ -1842,6 +2038,8 @@ async function loadQuestsPanel() {
         const rewardXp = Number(q?.xp_reward ?? 0);
 
         const canClaim = done && !claimed && Number.isFinite(Number(q?.progress_id));
+
+        const barGradient = __questBarColorsByDifficulty(diff);
         const pid = q?.progress_id;
 
         const row = document.createElement("div");
@@ -1918,15 +2116,24 @@ async function loadQuestsPanel() {
           </div>
 
           <div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-zinc-900/10 dark:bg-white/10 ring-1 ring-zinc-200/60 dark:ring-white/10">
-            <div class="h-full bg-gradient-to-r from-emerald-400 to-brand-500 transition-[width] duration-700 ease-out will-change-[width]" style="width:${pct}%"></div>
+            <div
+              data-quest-bar="1"
+              data-target-pct="${pct}"
+              class="h-full bg-gradient-to-r ${barGradient}"
+              style="width:100%; transform-origin:left center; transform:scaleX(0);"
+            ></div>
           </div>
         `;
 
         weekly.appendChild(row);
+        __animateQuestBarsIn(weekly);
 
         const btn = row.querySelector('[data-claim-btn="1"]');
         if (btn && done && !claimed) {
           btn.addEventListener("click", async () => {
+            e.preventDefault();
+            e.stopPropagation();
+
             const progressId = Number(btn.dataset.progressId);
             if (!Number.isFinite(progressId) || progressId < 1) return;
 
@@ -1944,12 +2151,14 @@ async function loadQuestsPanel() {
               const res = await claimQuestRewards(progressId, state.userId);
               explodeRewardsFromButton(btn, res);
 
+              /*
               await Promise.allSettled([
                 loadHeader(),
                 loadQuestsPanel(),
                 loadRewardsSummary(),
                 loadPurchases(),
               ]);
+              */
             } catch (e) {
               if (errEl) {
                 errEl.textContent = t("quests.claim_failed", "Claim failed.");
@@ -1968,26 +2177,115 @@ async function loadQuestsPanel() {
   }
 
   try {
-    const payload = await httpJson(EP.questHistory(uid), { cache: "no-store" });
-    const list = normalizeList(payload);
+    const payload = await httpJson(EP.questHistory(uid, 20), { cache: "no-store" });
+
+    const total = Number(payload?.total);
+    const list = Array.isArray(payload?.quests) ? payload.quests : normalizeList(payload);
+
     state.questHistory = list;
 
     hist.innerHTML = "";
+
     if (!list.length) {
-      hist.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-300">${t("quests.no_history", "No history yet.")}</div>`;
+      const empty = document.createElement("div");
+      empty.className = "text-sm text-zinc-600 dark:text-zinc-300";
+      empty.textContent = t("quests.no_history", "No history yet.");
+      hist.appendChild(empty);
     } else {
-      list.slice(0, 8).forEach((h) => {
+      list.slice(0, 20).forEach((h) => {
+        const title = h?.name || h?.title || "Quest";
+        const desc = h?.description || "";
+        const diff = String(h?.difficulty || "").toLowerCase();
+
+        const completedAt = h?.completed_at || null;
+        const claimedAt = h?.claimed_at || null;
+
+        const coinsRewarded = Number(h?.coins_rewarded);
+        const xpRewarded = Number(h?.xp_rewarded);
+
+        const coinBase = Number(h?.coin_reward ?? 0);
+        const xpBase = Number(h?.xp_reward ?? 0);
+
+        const hasRewardedCoins = Number.isFinite(coinsRewarded) ? coinsRewarded : null;
+        const hasRewardedXp = Number.isFinite(xpRewarded) ? xpRewarded : null;
+
+        const claimed = !!claimedAt;
+
         const row = document.createElement("div");
         row.className =
-          "rounded-xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
-          "ring-1 ring-zinc-200/40 dark:ring-white/10 px-3 py-2 flex items-start justify-between gap-3";
+          "rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
+          "ring-1 ring-zinc-200/40 dark:ring-white/10 p-3";
+
         row.innerHTML = `
-          <div class="min-w-0">
-            <div class="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate">${h.title || h.name || "Quest"}</div>
-            <div class="text-[11px] text-zinc-600 dark:text-zinc-300 truncate">${fmtTime(h.completed_at || h.created_at)}</div>
-          </div>
-          <div class="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
-            +${fmtIntSpaces(h.reward_xp || h.xp || 0)} XP
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="min-w-0 truncate text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
+                  ${title}
+                </div>
+                ${
+                  diff
+                    ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${difficultyPill(diff)}">
+                        ${diff}
+                      </span>`
+                    : ""
+                }
+                ${
+                  h?.bounty_type
+                    ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold
+                            bg-sky-500/10 ring-1 ring-sky-400/20 text-sky-700 dark:text-sky-300">
+                        ${String(h.bounty_type)}
+                      </span>`
+                    : ""
+                }
+              </div>
+
+              ${
+                desc
+                  ? `<div class="mt-1 text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2">
+                      ${desc}
+                    </div>`
+                  : ""
+              }
+
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-600 dark:text-zinc-300">
+                ${
+                  completedAt
+                    ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 bg-zinc-900/5 dark:bg-white/5 ring-1 ring-zinc-200/60 dark:ring-white/10">
+                        ${t("quests.completed_at", "Completed")}: <span class="ml-1 font-extrabold text-zinc-900 dark:text-zinc-100">${fmtTime(completedAt)}</span>
+                      </span>`
+                    : ""
+                }
+              </div>
+            </div>
+
+            <div class="shrink-0 text-right">
+              <div class="text-[10px] font-extrabold ${claimed ? "text-emerald-700 dark:text-emerald-300" : "text-zinc-600 dark:text-zinc-300"}">
+                ${claimed ? t("quests.claimed", "CLAIMED") : t("quests.done", "DONE")}
+              </div>
+
+              <div class="mt-2 flex flex-col gap-1 items-end">
+                <div class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold
+                            bg-amber-500/10 ring-1 ring-amber-400/20 text-amber-700 dark:text-amber-300">
+                  +${fmtIntSpaces(hasRewardedCoins ?? coinBase)} ${t("quests.coins", "coins")}
+                  ${
+                    hasRewardedCoins != null && hasRewardedCoins !== coinBase
+                      ? ` <span class="ml-1 opacity-70">(base ${fmtIntSpaces(coinBase)})</span>`
+                      : ""
+                  }
+                </div>
+
+                <div class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold
+                            bg-emerald-500/10 ring-1 ring-emerald-400/20 text-emerald-700 dark:text-emerald-300">
+                  +${fmtIntSpaces(hasRewardedXp ?? xpBase)} XP
+                  ${
+                    hasRewardedXp != null && hasRewardedXp !== xpBase
+                      ? ` <span class="ml-1 opacity-70">(base ${fmtIntSpaces(xpBase)})</span>`
+                      : ""
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         `;
         hist.appendChild(row);

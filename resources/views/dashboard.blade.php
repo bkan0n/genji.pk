@@ -26,7 +26,7 @@
                     id="dash-avatar"
                     alt="avatar"
                     class="h-full w-full object-contain hidden"
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
                   />
                   <div id="dash-avatar-skel" class="h-full w-full animate-pulse bg-zinc-900/10 dark:bg-white/10"></div>
