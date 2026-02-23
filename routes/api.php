@@ -35,6 +35,7 @@ use App\Http\Controllers\Completions\UserCompletionsController;
 use App\Http\Controllers\Lootbox\CoinsController;
 use App\Http\Controllers\Lootbox\KeysController;
 use App\Http\Controllers\Lootbox\RewardsController;
+use App\Http\Controllers\Lootbox\GetUserXpSummaryController;
 
 use App\Http\Controllers\Maps\Guides\GuidesController;
 use App\Http\Controllers\Maps\MapSearchController;
@@ -101,6 +102,7 @@ use App\Http\Controllers\Newsfeed\ListNewsfeedController;
 use App\Http\Controllers\Newsfeed\TranslateController;
 
 use App\Http\Controllers\Users\ShowUserController;
+use App\Http\Controllers\Users\GetUserDashboardCompletionsController;
 use App\Http\Controllers\Users\Notifications\GetNotificationSettingsController;
 use App\Http\Controllers\Users\Notifications\ToggleSingleNotificationController;
 use App\Http\Controllers\Users\Overwatch\GetOverwatchUsernamesController;
@@ -253,6 +255,10 @@ Route::prefix('users')->group(function () {
     Route::get('{user_id}', ShowUserController::class)
         ->whereNumber('user_id')
         ->name('users.show');
+
+    Route::get('{user_id}/completions/dashboard', GetUserDashboardCompletionsController::class)
+        ->whereNumber('user_id')
+        ->name('users.completions.dashboard');
 });
 
 /* ================== LOOTBOX ================== */
@@ -262,6 +268,8 @@ Route::prefix('lootbox')->group(function () {
     Route::get('users/{user}/keys/{keyType}', [KeysController::class, 'drawForUser'])->whereNumber('user');
     Route::get('rewards', [RewardsController::class, 'index']);
     Route::get('users/{user}/rewards', [RewardsController::class, 'userRewards'])->whereNumber('user');
+
+    Route::get('users/{user}/xp-summary', GetUserXpSummaryController::class)->whereNumber('user');
 
     Route::middleware('web')->group(function () {
         Route::patch('keys/{keyType}', SetActiveKeyTypeController::class)

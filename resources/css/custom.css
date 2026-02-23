@@ -1330,3 +1330,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .rank-count{margin-top:.4rem;font-size:.82rem;color:var(--infos-text);}
 /* ------ Steps (Rank promotion · How to submit?) ------ */
 [data-infos-kind="rank_how_to_submit"] ol li,#helpModalBody .helpsec ol li{position:relative;padding-left:1.75rem;}
+/* ================= DASHBOARD ================= */
+.dash-xp-bar {width: 100%;transform: scaleX(0);transform-origin: left center;will-change: transform;}
+#dash-header-stack.is-loading #dash-header-content { opacity: 0; }
+#dash-header-stack.is-loading #dash-header-skel { opacity: 1; }

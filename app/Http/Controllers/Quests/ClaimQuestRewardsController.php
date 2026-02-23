@@ -12,8 +12,12 @@ class ClaimQuestRewardsController extends Controller
 {
     public function store(Request $request, int $progress_id)
     {
-        $validator = Validator::make(['progress_id' => $progress_id], [
+        $validator = Validator::make([
+            'progress_id' => $progress_id,
+            'user_id'     => $request->input('user_id'),
+        ], [
             'progress_id' => ['required', 'integer', 'min:1'],
+            'user_id'     => ['required', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -22,6 +26,8 @@ class ClaimQuestRewardsController extends Controller
                 'errors'  => $validator->errors(),
             ], 400);
         }
+
+        $userId = (int) $request->input('user_id');
 
         $apiRoot   = rtrim((string) config('services.genji_api.root', ''), '/');
         $apiKey    = (string) config('services.genji_api.key', '');
@@ -40,16 +46,22 @@ class ClaimQuestRewardsController extends Controller
                     'X-API-KEY'    => $apiKey,
                 ])
                 ->withOptions(['verify' => $sslVerify, 'timeout' => 12])
-                ->send('POST', $endpoint, ['json' => new \stdClass()]);
+                ->send('POST', $endpoint, [
+                    'json' => ['user_id' => $userId],
+                ]);
 
             return response()->json($resp->json() ?? [], $resp->status() ?: 502);
         } catch (\Throwable $e) {
             Log::error('Claim quest rewards upstream exception', [
-                'error' => $e->getMessage(),
+                'error'       => $e->getMessage(),
                 'progress_id' => $progress_id,
+                'user_id'     => $userId,
             ]);
 
-            return response()->json(['message' => 'Upstream exception', 'error' => $e->getMessage()], 502);
+            return response()->json([
+                'message' => 'Upstream exception',
+                'error'   => $e->getMessage(),
+            ], 502);
         }
     }
 }
