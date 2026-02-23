@@ -700,6 +700,298 @@ const showConfirmationMessage = (m) => showToast(m, 'ok');
 const showErrorMessage        = (m) => showToast(m, 'error');
 const showWarningMessage      = (m) => showToast(m, 'warn');
 
+// ============================================================
+// Overwatch usernames guard (Submit completion)
+// ============================================================
+
+let __gpUserProfileCache = { uid: null, at: 0, data: null };
+let __gpOwPromptShown = false;
+let __gpOwPromptDecision = null;
+let __gpOwCheckInFlight = null;
+
+async function gpFetchUserProfile(uid) {
+  const now = Date.now();
+  const TTL_MS = 60_000;
+
+  if (__gpUserProfileCache.uid === uid && __gpUserProfileCache.data && now - __gpUserProfileCache.at < TTL_MS) {
+    return __gpUserProfileCache.data;
+  }
+
+  try {
+    const res = await fetch(`/api/users/${encodeURIComponent(uid)}`, {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const raw = await res.text();
+    const data = JSON.parse(raw);
+
+    __gpUserProfileCache = { uid, at: now, data };
+    return data;
+  } catch (e) {
+    console.warn('[submit] failed to fetch user profile:', e);
+    return null;
+  }
+}
+
+function gpGetModalBox(overlay) {
+  return (
+    overlay?.querySelector?.(
+      '[data-modal-box], #gp-settings-card, .modal-card, .modal-panel, .modal-content, .card, [role="dialog"]'
+    ) ||
+    overlay?.firstElementChild ||
+    null
+  );
+}
+
+function gpEnsureInBody(el) {
+  if (el && el.parentElement !== document.body) document.body.appendChild(el);
+}
+
+function gpOpenGpSettingsModal() {
+  document.getElementById('user-settings')?.click?.();
+  document.getElementById('openSettings')?.click?.();
+
+  const overlay =
+    document.getElementById('gp-settings-modal') ||
+    document.getElementById('gp-settings-overlay') ||
+    document.getElementById('user-settings-modal') ||
+    null;
+
+  if (!overlay) return null;
+
+  gpEnsureInBody(overlay);
+
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+  overlay.style.removeProperty('display');
+
+  const box = gpGetModalBox(overlay);
+  if (box) {
+    box.classList.add('opacity-0', 'scale-95');
+    box.classList.remove('opacity-100', 'scale-100');
+    requestAnimationFrame(() => {
+      box.classList.remove('opacity-0', 'scale-95');
+      box.classList.add('opacity-100', 'scale-100');
+    });
+  }
+
+  return overlay;
+}
+
+function gpOpenSettingsToOverwatchUsernames() {
+  const overlay = gpOpenGpSettingsModal();
+  if (!overlay) {
+    console.warn('[submit] gp-settings modal not found in DOM.');
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const tabs = Array.from(overlay.querySelectorAll('.settings-tab,[data-settings-tab],[role="tab"]'));
+    const pick = tabs.find((t) => {
+      const target = String(t.getAttribute('data-target') || t.dataset?.target || '').toLowerCase();
+      const txt = String(t.textContent || '').toLowerCase();
+      return (
+        target.includes('overwatch') ||
+        target.includes('username') ||
+        txt.includes('overwatch') ||
+        txt.includes('username')
+      );
+    });
+
+    if (pick) {
+      pick.click();
+      return;
+    }
+
+    const panels = Array.from(overlay.querySelectorAll('.settings-section,[role="tabpanel"]'));
+    const panel = panels.find((p) => /overwatch|username/i.test(p.id || ''));
+    if (panel) {
+      panels.forEach((p) => p.classList.add('hidden'));
+      panel.classList.remove('hidden');
+    }
+  });
+}
+
+function gpShowYesNoPopup({
+  message,
+  yesLabel = 'Yes',
+  noLabel = 'No',
+  yesClass = 'bg-emerald-600 hover:bg-emerald-500 text-white',
+  noClass = 'bg-red-600 hover:bg-red-500 text-white',
+  onYes = null,
+  onNo = null,
+} = {}) {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('gp-yes-no-popup');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'gp-yes-no-popup';
+    overlay.className =
+      'fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4';
+
+    const box = document.createElement('div');
+    box.className =
+      'w-full max-w-lg rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl ring-1 ring-white/10 p-5 ' +
+      'transform-gpu transition duration-200 ease-out opacity-0 scale-95';
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'text-sm text-zinc-100 leading-relaxed';
+    msgEl.textContent = String(message || '');
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'mt-4 flex items-center justify-end gap-2';
+
+    const btnNo = document.createElement('button');
+    btnNo.type = 'button';
+    btnNo.className =
+      `inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-extrabold transition ${noClass}`;
+    btnNo.textContent = String(noLabel || 'No');
+
+    const btnYes = document.createElement('button');
+    btnYes.type = 'button';
+    btnYes.className =
+      `inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-extrabold transition ${yesClass}`;
+    btnYes.textContent = String(yesLabel || 'Yes');
+
+    const close = (choice) => {
+      try {
+        box.classList.add('opacity-0', 'scale-95');
+        box.classList.remove('opacity-100', 'scale-100');
+      } catch {}
+      setTimeout(() => {
+        overlay.remove();
+        resolve(choice);
+      }, 160);
+    };
+
+    btnNo.addEventListener('click', () => {
+      try { typeof onNo === 'function' && onNo(); } catch {}
+      close('no');
+    });
+
+    btnYes.addEventListener('click', () => {
+      try { typeof onYes === 'function' && onYes(); } catch {}
+      close('yes');
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        try { typeof onNo === 'function' && onNo(); } catch {}
+        close('no');
+      }
+    });
+
+    btnRow.append(btnYes, btnNo);
+    box.append(msgEl, btnRow);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+
+    requestAnimationFrame(() => {
+      box.classList.remove('opacity-0', 'scale-95');
+      box.classList.add('opacity-100', 'scale-100');
+    });
+
+    // focus
+    setTimeout(() => btnYes.focus?.(), 0);
+  });
+}
+
+async function gpMaybePromptOverwatchUsernames({ reason = 'view' } = {}) {
+  const uid = window.user_id || window.userId || window.user_id;
+  if (!uid) return true;
+
+  // avoid spamming
+  if (__gpOwPromptShown && reason === 'view') return true;
+
+  // dedupe concurrent checks
+  if (__gpOwCheckInFlight) {
+    if (reason === 'submit') await __gpOwCheckInFlight.catch(() => {});
+    return true;
+  }
+
+  __gpOwCheckInFlight = (async () => {
+    const prof = await gpFetchUserProfile(uid);
+    return Array.isArray(prof?.overwatch_usernames) ? prof.overwatch_usernames : null;
+  })();
+
+  let list = null;
+  try {
+    list = await __gpOwCheckInFlight;
+  } finally {
+    __gpOwCheckInFlight = null;
+  }
+
+  if (list === null) return true;
+
+  if (Array.isArray(list) && list.length > 0) {
+    __gpOwPromptShown = true;
+    __gpOwPromptDecision = null;
+    return true;
+  }
+
+  if (reason === 'submit' && __gpOwPromptDecision === 'no') {
+    return true;
+  }
+
+  const trMsg = t('popup.no_overwatch_usernames_prompt');
+  const message =
+    trMsg && trMsg !== 'popup.no_overwatch_usernames_prompt'
+      ? trMsg
+      : "You don't have any overwatch username set, would you like to set it now ?";
+
+  const trYes = t('popup.yes');
+  const yesLabel = trYes && trYes !== 'popup.yes' ? trYes : 'Yes';
+  const trNo = t('popup.no');
+  const noLabel = trNo && trNo !== 'popup.no' ? trNo : 'No';
+
+  __gpOwPromptShown = true;
+
+  if (reason === 'view') {
+    gpShowYesNoPopup({
+      message,
+      yesLabel,
+      noLabel,
+      onYes: () => {
+        __gpOwPromptDecision = 'yes';
+        gpOpenSettingsToOverwatchUsernames();
+      },
+      onNo: () => {
+        __gpOwPromptDecision = 'no';
+      },
+    });
+    return true;
+  }
+
+  const choice = await gpShowYesNoPopup({
+    message,
+    yesLabel,
+    noLabel,
+    onYes: () => {
+      __gpOwPromptDecision = 'yes';
+      gpOpenSettingsToOverwatchUsernames();
+    },
+    onNo: () => {
+      __gpOwPromptDecision = 'no';
+    },
+  });
+
+  __gpOwPromptDecision = choice;
+  if (choice === 'yes') {
+    return false;
+  }
+  return true;
+}
+
+
 function canCopy() {
   return !!(navigator.clipboard && navigator.clipboard.writeText);
 }
@@ -882,6 +1174,10 @@ function animateSubmitRecordSection() {
 
   const code = document.getElementById('mapCodeInput');
   if (code && !code.value) code.focus({ preventScroll: true });
+
+  // prompt for OW usernames
+  try { gpMaybePromptOverwatchUsernames({ reason: 'view' }); } catch {}
+
 }
 
 function waitForPlaytestCards(timeout = 1200) {
@@ -1897,6 +2193,9 @@ function setupForms() {
       if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.dataset.loading = '1'; }
 
       try {
+        const canSend = await gpMaybePromptOverwatchUsernames({ reason: 'submit' });
+        if (!canSend) return;
+
         const result = await sendCompletionToApi();
 
         const msg400 =

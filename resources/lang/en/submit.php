@@ -318,17 +318,20 @@ return [
     // POPUP / MISC
     // ──────────────────────────────────────────────────────────────────────
     'popup' => [
-        'no_results'              => 'No results found.',
-        'filter_applied'          => 'Filter applied: {filterId} = {value}',
-        'login_required_msg'      => 'Please log in to use submit & playtest tools',
-        'map_code_copied'         => 'Map code copied: {code}',
-        'click_to_copy_map_code'  => 'Click to copy',
-        'copied'                  => 'Copied!',
-        'copy'                    => 'Copy',
-        'copy_failed'             => 'Failed to copy.',
-        'login'                   => 'Login',
-        'user_id_copied'          => 'User ID {id} copied to clipboard!',
-        'none'                    => 'N/A',
+        'no_results'                      => 'No results found.',
+        'filter_applied'                  => 'Filter applied: {filterId} = {value}',
+        'login_required_msg'              => 'Please log in to use submit & playtest tools',
+        'map_code_copied'                 => 'Map code copied: {code}',
+        'click_to_copy_map_code'          => 'Click to copy',
+        'copied'                          => 'Copied!',
+        'copy'                            => 'Copy',
+        'copy_failed'                     => 'Failed to copy.',
+        'login'                           => 'Login',
+        'user_id_copied'                  => 'User ID {id} copied to clipboard!',
+        'none'                            => 'N/A',
+        'no_overwatch_usernames_prompt'   => 'You don\'t have any overwatch username set, would you like to set it now ?',
+        'yes'                             => 'Yes',
+        'no'                              => 'No',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
