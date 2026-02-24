@@ -354,7 +354,7 @@ Route::prefix('mods')
         // LOOTBOX
         Route::post('lootbox/users/{user_id}/keys/{key_type}', GrantKeyToUserController::class)
             ->whereNumber('user_id')
-            ->where('key_type', 'Classic|Winter')
+            ->where('key_type', 'Classic|Winter|Autumn|Spring|Summer')
             ->name('mods.lootbox.grant-key');
         Route::post('lootbox/users/{user_id}/xp', GrantXpToUserController::class)
             ->whereNumber('user_id')

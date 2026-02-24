@@ -828,6 +828,43 @@
                             />
                             <span>Winter</span>
                           </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
+                          </label>
+
                         </div>
                       </div>
                     </label>
@@ -1018,6 +1055,42 @@
                             />
                             <span>Winter</span>
                           </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
+                          </label>
                         </div>
                       </div>
                     </label>
@@ -1147,6 +1220,42 @@
                             />
                             <span>Winter</span>
                           </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
+                          </label>
                         </div>
                       </div>
                     </label>
@@ -1269,6 +1378,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
@@ -1395,6 +1540,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
@@ -1561,6 +1742,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
