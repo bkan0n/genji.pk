@@ -98,6 +98,9 @@ return [
                 'record_edited'             => '记录已编辑',
                 'map_edit_approved'         => '地图编辑已批准',
                 'map_edit_rejected'         => '地图编辑已拒绝',
+                'quest_complete'            => '任务已完成',
+                'quest_rotation'            => '任务轮换',
+                'quest_rival_mention'       => '任务对手提及',
             ],
 
         ],

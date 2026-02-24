@@ -129,6 +129,9 @@
                   'record_edited'         => $tr('modals.settings.notifications.events.record_edited', 'Record edited'),
                   'map_edit_approved'     => $tr('modals.settings.notifications.events.map_edit_approved', 'Map edit approved'),
                   'map_edit_rejected'     => $tr('modals.settings.notifications.events.map_edit_rejected', 'Map edit rejected'),
+                  'quest_complete'        => $tr('modals.settings.notifications.events.quest_complete', 'Quest completed'),
+                  'quest_rotation'        => $tr('modals.settings.notifications.events.quest_rotation', 'Quest rotation'),
+                  'quest_rival_mention'   => $tr('modals.settings.notifications.events.quest_rival_mention', 'Quest rival mention'),
                 ];
 
                 $channels = [
@@ -183,20 +186,21 @@
                             {{ $channelLabel }}
                           </span>
 
-                          <label class="inline-flex shrink-0 items-center {{ $disabled ? 'cursor-not-allowed' : 'cursor-pointer' }}" @if($disabled) aria-disabled="true" @endif>
+                          <label class="relative inline-flex shrink-0 items-center {{ $disabled ? 'cursor-not-allowed' : 'cursor-pointer' }}" @if($disabled) aria-disabled="true" @endif>
                             <input
                               id="{{ $inputId }}"
                               type="checkbox"
-                              class="peer sr-only"
+                              class="peer absolute inset-0 h-full w-full opacity-0"
                               data-channel="{{ $channel }}"
                               data-event-type="{{ $eventType }}"
                               @disabled($disabled)
                             />
                             <span
                               class="relative h-5 w-9 rounded-full bg-zinc-700 transition-colors duration-200 ease-in-out
-                                     peer-checked:bg-emerald-500 peer-disabled:bg-zinc-100 dark:bg-zinc-800 peer-disabled:opacity-60
-                                     after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:translate-x-0 after:rounded-full after:bg-white after:transition-transform after:duration-200 after:ease-in-out after:content-['']
-                                     peer-checked:after:translate-x-4 active:after:scale-95 peer-disabled:after:bg-zinc-200"
+                                    peer-checked:bg-emerald-500 peer-disabled:bg-zinc-100 dark:bg-zinc-800 peer-disabled:opacity-60
+                                    after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:translate-x-0 after:rounded-full after:bg-white
+                                    after:transition-transform after:duration-200 after:ease-in-out after:content-['']
+                                    peer-checked:after:translate-x-4 active:after:scale-95 peer-disabled:after:bg-zinc-200"
                             ></span>
                           </label>
                         </div>
