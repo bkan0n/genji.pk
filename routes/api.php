@@ -94,6 +94,7 @@ use App\Http\Controllers\Mods\Quests\GenerateQuestRotationController;
 use App\Http\Controllers\Mods\Quests\GetQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestController;
+use App\Http\Controllers\Mods\Quests\UpdateUserQuestProgressController;
 
 use App\Http\Controllers\Newsfeed\ChangelogsController;
 use App\Http\Controllers\Newsfeed\EmojiController;
@@ -363,19 +364,22 @@ Route::prefix('mods')
             ->where('key_type', 'Classic|Winter')
             ->name('mods.lootbox.debug-grant');
 
-        // ================== STORE (MODS) ==================
+        // STORE
         Route::prefix('store')->group(function () {
             Route::post('rotation/generate', GenerateNewRotationController::class);
             Route::get('config', GetStoreConfigController::class);
             Route::put('config', UpdateStoreConfigController::class);
         });
 
-        // ================== QUESTS (MODS) ==================
+        // QUESTS
         Route::prefix('quests')->group(function () {
             Route::post('rotation/generate', GenerateQuestRotationController::class);
             Route::get('config', GetQuestConfigController::class);
             Route::put('config', UpdateQuestConfigController::class);
             Route::patch('{quest_id}', UpdateQuestController::class)->whereNumber('quest_id');
+            Route::patch('admin/users/{user_id}/progress/{progress_id}', UpdateUserQuestProgressController::class)
+                ->whereNumber('user_id')
+                ->whereNumber('progress_id');
         });
 
         // GUIDES
