@@ -3311,7 +3311,8 @@ async function validateSubmitMapForm(event) {
     valid = false;
     return false;
   }
-
+  
+  /*
   const restrictionsBoxes = document.querySelectorAll(
     '#restrictionsDropdown input[type="checkbox"]'
   );
@@ -3321,7 +3322,7 @@ async function validateSubmitMapForm(event) {
     valid = false;
     return false;
   }
-
+  */
   const medalCheck = validateMedals(true);
   if (!medalCheck.ok) {
     return false;
