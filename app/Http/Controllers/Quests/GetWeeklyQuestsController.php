@@ -43,7 +43,26 @@ class GetWeeklyQuestsController extends Controller
                 ->withOptions(['verify' => $sslVerify, 'timeout' => 10])
                 ->get($endpoint, $data);
 
-            return response()->json($resp->json() ?? [], $resp->status() ?: 502);
+            $status = $resp->status() ?: 502;
+            $json = $resp->json();
+
+            if (!is_array($json)) {
+                return response()->json($json ?? [], $status);
+            }
+
+            if (isset($json['quests']) && is_array($json['quests'])) {
+                foreach ($json['quests'] as $i => $q) {
+                    if (!is_array($q)) continue;
+
+                    $rival = $q['progress']['rival_user_id'] ?? null;
+
+                    if ($rival !== null) {
+                        $json['quests'][$i]['progress']['rival_user_id'] = (string) $rival;
+                    }
+                }
+            }
+
+            return response()->json($json, $status);
         } catch (\Throwable $e) {
             Log::error('Weekly quests upstream exception', ['error' => $e->getMessage(), 'query' => $data]);
             return response()->json(['message' => 'Upstream exception', 'error' => $e->getMessage()], 502);

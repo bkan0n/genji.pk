@@ -20,6 +20,7 @@ const EP = {
   xpSummary: (uid) => `/api/lootbox/users/${encodeURIComponent(uid)}/xp-summary`,
   dashboardCompletions: (uid, pageSize = 10, pageNumber = 1) => `/api/users/${encodeURIComponent(uid)}/completions/dashboard?page_size=${encodeURIComponent(pageSize)}&page_number=${encodeURIComponent(pageNumber)}`,
   claimQuest: (progressId) => `/api/quests/${encodeURIComponent(progressId)}/claim`,
+  overwatchByUser: (uid) => `/api/users/${encodeURIComponent(uid)}/overwatch`,
 };
 
 /* =========================
@@ -56,6 +57,42 @@ function clamp(n, a, b) {
 
 function getCsrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || null;
+}
+
+/* =========================
+   GET OW NAME
+   ========================= */
+const __owPrimaryCache = new Map();
+
+function fetchOverwatchPrimaryName(userId) {
+  const uid = String(userId || "").trim();
+  if (!uid) return Promise.resolve(null);
+
+  if (__owPrimaryCache.has(uid)) return __owPrimaryCache.get(uid);
+
+  const p = httpJson(EP.overwatchByUser(uid), { cache: "no-store" })
+    .then((data) => {
+      const primary = data?.primary ?? data?.data?.primary ?? null;
+      return primary ? String(primary) : null;
+    })
+    .catch(() => null);
+
+  __owPrimaryCache.set(uid, p);
+  return p;
+}
+
+function rivalPillClass() {
+  return (
+    "bg-fuchsia-500/15 text-fuchsia-800 ring-1 ring-fuchsia-400/25 " +
+    "dark:bg-fuchsia-500/10 dark:text-fuchsia-300 dark:ring-fuchsia-400/25"
+  );
+}
+
+function rivalTimePillClass() {
+  return (
+    "bg-sky-500/15 text-sky-800 ring-1 ring-sky-400/25 " +
+    "dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/25"
+  );
 }
 
 /* =========================
@@ -1235,7 +1272,6 @@ function loadAvatarUrl(url) {
 
   const token = ++__avatarLoadToken;
 
-  // état loading uniquement si on doit vraiment charger une nouvelle image
   show(sk);
   hide(img);
   hide(fb);
@@ -1933,23 +1969,113 @@ async function loadQuestsPanel() {
     return "bg-zinc-900/5 dark:bg-white/5 text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-white/10";
   };
 
-  const fmtSeconds = (s) => {
-    const n = Number(s);
-    if (!Number.isFinite(n)) return "—";
-    const total = Math.max(0, Math.round(n));
-    const m = Math.floor(total / 60);
-    const sec = total % 60;
-    return `${m}:${String(sec).padStart(2, "0")}`;
+  const medalPill = (medalType) => {
+    const m = String(medalType || "").trim().toLowerCase();
+    const base =
+      "inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ring-1";
+
+    if (m === "bronze") {
+      return {
+        key: "bronze",
+        img: cdnAsset("assets/medals/bronze.png"),
+        cls:
+          base +
+          " bg-amber-500/15 text-amber-900 ring-amber-400/25 " +
+          "dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/25",
+      };
+    }
+
+    if (m === "silver") {
+      return {
+        key: "silver",
+        img: cdnAsset("assets/medals/silver.png"),
+        cls:
+          base +
+          " bg-zinc-500/15 text-zinc-800 ring-zinc-400/25 " +
+          "dark:bg-zinc-500/10 dark:text-zinc-200 dark:ring-zinc-400/25",
+      };
+    }
+
+    if (m === "gold") {
+      return {
+        key: "gold",
+        img: cdnAsset("assets/medals/gold.png"),
+        cls:
+          base +
+          " bg-yellow-500/15 text-yellow-900 ring-yellow-400/25 " +
+          "dark:bg-yellow-500/10 dark:text-yellow-200 dark:ring-yellow-400/25",
+      };
+    }
+
+    return null;
+  };
+
+  const targetTimePillClass = () => {
+    return (
+      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase " +
+      "bg-lime-500/15 text-lime-900 ring-1 ring-lime-400/25 " +
+      "dark:bg-lime-500/10 dark:text-lime-300 dark:ring-lime-400/25"
+    );
+  };
+
+  const findQuestByProgressId = (progressId) => {
+    const list = Array.isArray(state.quests) ? state.quests : [];
+    return list.find((q) => Number(q?.progress_id) === Number(progressId)) || null;
+  };
+
+  const setQuestClaimedInState = (progressId) => {
+    if (!Array.isArray(state.quests)) return null;
+
+    const idx = state.quests.findIndex((q) => Number(q?.progress_id) === Number(progressId));
+    if (idx < 0) return null;
+
+    const q = state.quests[idx] || {};
+    const updated = { ...q, claimed: true };
+
+    state.quests[idx] = updated;
+    return updated;
+  };
+
+  const updateQuestRowToClaimed = (rowEl) => {
+    if (!rowEl) return;
+
+    const statusEl = rowEl.querySelector('[data-quest-status="1"]');
+    if (statusEl) {
+      statusEl.className =
+        "mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold " +
+        "bg-purple-500/15 text-purple-700 dark:text-purple-300 ring-1 ring-purple-400/25";
+      statusEl.textContent = t("quests.claimed", "CLAIMED");
+    }
+
+    const btn = rowEl.querySelector('[data-claim-btn="1"]');
+    if (btn) btn.remove();
+
+    const errEl = rowEl.querySelector('[data-claim-err="1"]');
+    if (errEl) {
+      errEl.textContent = "";
+      errEl.classList.add("hidden");
+    }
   };
 
   const pickProgress = (q) => q?.progress || {};
+
   const calcPct = (q) => {
     const p = pickProgress(q);
     const pct = Number(p.percentage);
     if (Number.isFinite(pct)) return clamp(pct, 0, 100);
-    const cur = Number(p.current);
-    const max = Number(p.target);
-    if (Number.isFinite(cur) && Number.isFinite(max)) return clamp((cur / Math.max(1, max)) * 100, 0, 100);
+
+    const maxRaw = p.target;
+    const max = (maxRaw == null) ? 1 : Number(maxRaw);
+
+    const curRaw = p.current;
+    const cur = (curRaw == null)
+      ? (q?.completed ? max : 0)
+      : Number(curRaw);
+
+    if (Number.isFinite(cur) && Number.isFinite(max)) {
+      return clamp((cur / Math.max(1, max)) * 100, 0, 100);
+    }
+
     return q?.completed ? 100 : 0;
   };
 
@@ -2024,14 +2150,53 @@ async function loadQuestsPanel() {
         const done = q?.completed === true;
         const claimed = q?.claimed === true;
 
-        const p = pickProgress(q);
         const pct = calcPct(q);
-
         let progText = "—";
-        if (Number.isFinite(Number(p.current)) && Number.isFinite(Number(p.target))) {
-          progText = `${fmtIntSpaces(p.current)} / ${fmtIntSpaces(p.target)}`;
-        } else if (q?.bounty_type && p?.target_time != null) {
-          progText = `${t("quests.target", "Target")}: ${fmtSeconds(p.target_time)}`;
+
+        const p = pickProgress(q);
+
+        const bountyType = String(q?.bounty_type || "").trim().toLowerCase();
+        const targetType = String(p?.target_type ?? q?.target_type ?? "").trim().toLowerCase();
+
+        const isMedalThreshold = targetType === "medal_threshold";
+        const isPersonalBest = targetType === "personal_best";
+
+        const medalTypeRaw = isMedalThreshold ? (p?.medal_type ?? q?.medal_type ?? null) : null;
+        const medal = isMedalThreshold ? medalPill(medalTypeRaw) : null;
+
+        const isRivalChallenge = bountyType === "rival_challenge";
+
+        const rawRival = p?.rival_user_id;
+        const rivalUserId = isRivalChallenge && rawRival != null ? String(rawRival) : null;
+        const rivalTimeSec = isRivalChallenge && Number.isFinite(Number(p?.rival_time))
+          ? Math.max(0, Math.round(Number(p.rival_time)))
+          : null;
+
+        const hasTargetTime =
+          p?.target_time !== null &&
+          p?.target_time !== undefined &&
+          p?.target_time !== "" &&
+          Number.isFinite(Number(p.target_time));
+
+        const targetTimeSec = hasTargetTime ? Math.max(0, Math.round(Number(p.target_time))) : null;
+
+        const showGenericTargetPill = hasTargetTime && !isMedalThreshold;
+        const showMedalTargetPill = isMedalThreshold && hasTargetTime;
+
+        const maxRaw = p?.target;
+        const curRaw = p?.current;
+
+        const max = (maxRaw == null) ? 1 : Number(maxRaw);
+        const cur = (curRaw == null)
+          ? (q?.completed === true ? max : 0)
+          : Number(curRaw);
+
+        if (Number.isFinite(cur) && Number.isFinite(max)) {
+          progText = `${fmtIntSpaces(cur)} / ${fmtIntSpaces(max)}`;
+        } else if (q?.completed === true) {
+          progText = t("quests.done", "DONE");
+        } else {
+          progText = "—";
         }
 
         const rewardCoins = Number(q?.coin_reward ?? 0);
@@ -2042,19 +2207,92 @@ async function loadQuestsPanel() {
         const barGradient = __questBarColorsByDifficulty(diff);
         const pid = q?.progress_id;
 
+        const isBountyDifficulty = String(diff || "").trim().toLowerCase() === "bounty";
+
         const row = document.createElement("div");
         row.className =
-          "rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
+          "relative overflow-hidden rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
           "ring-1 ring-zinc-200/40 dark:ring-white/10 p-4";
 
         row.innerHTML = `
-          <div class="flex items-start justify-between gap-3">
+          ${
+            isBountyDifficulty
+              ? `
+                <div aria-hidden="true"
+                    class="pointer-events-none absolute left-[66%] top-6 -translate-x-1/2 rotate-[18deg] select-none">
+                  <div class="rounded-2xl px-6 py-2 text-4xl font-black tracking-[0.28em] uppercase
+                              text-sky-700/10 dark:text-sky-300/10
+                              ring-2 ring-sky-500/10 dark:ring-sky-400/10">
+                    BOUNTY
+                  </div>
+                </div>
+              `
+              : ""
+          }
+
+          <div class="flex items-start justify-between gap-3 relative">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <div class="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 truncate">${title}</div>
-                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${difficultyPill(diff)}">
-                  ${String(diff)}
-                </span>
+
+                ${
+                  isBountyDifficulty
+                    ? ""
+                    : `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${difficultyPill(diff)}">
+                        ${String(diff)}
+                      </span>`
+                }
+
+                ${
+                  showGenericTargetPill
+                    ? `<span class="${targetTimePillClass()}">
+                        ${t("quests.target_time", "Target")}: <span class="ml-1">${targetTimeSec}s</span>
+                      </span>`
+                    : ""
+                }
+
+                ${
+                  !isPersonalBest && isRivalChallenge && Number.isFinite(Number(rivalTimeSec))
+                    ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${targetTimePillClass()}">
+                        ${t("quests.target_time", "Target")}: <span class="ml-1">${rivalTimeSec}s</span>
+                      </span>`
+                    : ""
+                }
+
+                ${
+                  !isPersonalBest && isRivalChallenge && rivalUserId != null
+                    ? `<span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${rivalPillClass()}"
+                        data-rival-pill="1"
+                        data-rival-user-id="${String(rivalUserId)}"
+                      >
+                        ${t("quests.rival", "Rival")}: <span class="ml-1 opacity-80">…</span>
+                      </span>`
+                    : ""
+                }
+
+                ${
+                  isMedalThreshold && medal
+                    ? `<span class="${medal.cls}">
+                        <img
+                          src="${medal.img}"
+                          alt=""
+                          class="h-4 w-4 shrink-0 object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span class="leading-none">${medal.key}</span>
+                      </span>`
+                    : ""
+                }
+
+                ${
+                  showMedalTargetPill
+                    ? `<span class="${targetTimePillClass()}">
+                        ${t("quests.target_time", "Target")}: <span class="ml-1">${targetTimeSec}s</span>
+                      </span>`
+                    : ""
+                }
               </div>
 
               <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">${desc}</div>
@@ -2079,13 +2317,16 @@ async function loadQuestsPanel() {
                 ${Math.round(pct)}%
               </div>
 
-              <div class="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                claimed
-                  ? "bg-purple-500/15 text-purple-700 dark:text-purple-300 ring-1 ring-purple-400/25"
-                  : done
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-400/25"
-                    : "bg-zinc-900/5 dark:bg-white/5 text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-white/10"
-              }">
+              <div
+                data-quest-status="1"
+                class="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                  claimed
+                    ? "bg-purple-500/15 text-purple-700 dark:text-purple-300 ring-1 ring-purple-400/25"
+                    : done
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-400/25"
+                      : "bg-zinc-900/5 dark:bg-white/5 text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-white/10"
+                }"
+              >
                 ${claimed ? t("quests.claimed", "CLAIMED") : done ? t("quests.done", "DONE") : t("quests.in_progress", "IN PROGRESS")}
               </div>
 
@@ -2128,12 +2369,21 @@ async function loadQuestsPanel() {
         weekly.appendChild(row);
         __animateQuestBarsIn(weekly);
 
+        if (!isPersonalBest && bountyType === "rival_challenge" && rivalUserId != null) {
+          const pill = row.querySelector('[data-rival-pill="1"]');
+          if (pill) {
+            const rid = pill.getAttribute("data-rival-user-id");
+            fetchOverwatchPrimaryName(rid).then((primary) => {
+              if (!pill.isConnected) return;
+              const name = primary || t("quests.unknown_rival", "Unknown");
+              pill.innerHTML = `${t("quests.rival", "Rival")}: <span class="ml-1">${name}</span>`;
+            });
+          }
+        }
+
         const btn = row.querySelector('[data-claim-btn="1"]');
         if (btn && done && !claimed) {
           btn.addEventListener("click", async () => {
-            e.preventDefault();
-            e.stopPropagation();
-
             const progressId = Number(btn.dataset.progressId);
             if (!Number.isFinite(progressId) || progressId < 1) return;
 
@@ -2151,14 +2401,8 @@ async function loadQuestsPanel() {
               const res = await claimQuestRewards(progressId, state.userId);
               explodeRewardsFromButton(btn, res);
 
-              /*
-              await Promise.allSettled([
-                loadHeader(),
-                loadQuestsPanel(),
-                loadRewardsSummary(),
-                loadPurchases(),
-              ]);
-              */
+              setQuestClaimedInState(progressId);
+              updateQuestRowToClaimed(row);
             } catch (e) {
               if (errEl) {
                 errEl.textContent = t("quests.claim_failed", "Claim failed.");
@@ -2179,9 +2423,7 @@ async function loadQuestsPanel() {
   try {
     const payload = await httpJson(EP.questHistory(uid, 20), { cache: "no-store" });
 
-    const total = Number(payload?.total);
     const list = Array.isArray(payload?.quests) ? payload.quests : normalizeList(payload);
-
     state.questHistory = list;
 
     hist.innerHTML = "";
