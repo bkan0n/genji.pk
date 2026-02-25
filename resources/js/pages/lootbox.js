@@ -457,8 +457,16 @@ async function updateKeyDisplay() {
 }
 function keyIconUrl(keyType) {
   const kt = String(keyType || "Classic").toLowerCase();
-  if (kt === "winter") return cdnAsset("assets/lootbox/keys/winter.png");
-  return cdnAsset("assets/lootbox/keys/classic.png");
+
+  const map = {
+    classic: "assets/lootbox/keys/classic.png",
+    winter: "assets/lootbox/keys/winter.png",
+    spring: "assets/lootbox/keys/spring.png",
+    summer: "assets/lootbox/keys/summer.png",
+    autumn: "assets/lootbox/keys/autumn.png",
+  };
+
+  return cdnAsset(map[kt] || map.classic);
 }
 function pauseCrate() {
   $('.generate').attr('disabled', 'disabled').addClass('opacity-60 cursor-not-allowed');
@@ -468,32 +476,72 @@ function restoreCrate() {
   $('.generate').removeAttr('disabled').removeClass('opacity-60 cursor-not-allowed');
 }
 
-// ====== dropdown clés ======
+// ====== dropdown keys ======
 document.addEventListener('DOMContentLoaded', () => {
   const keyTypeButton = document.getElementById('key-type-button');
   const keyDropdown = document.getElementById('key-dropdown');
   const keyWrapper = document.getElementById('key-wrapper');
+  const keyTypeLabel = document.getElementById('key-type-label');
 
   if (keyTypeButton && keyDropdown && keyWrapper) {
+    const keyTypes = ['Classic', 'Winter', 'Spring', 'Summer', 'Autumn'];
+
+    function applySelectedUI(selected) {
+      const opts = keyDropdown.querySelectorAll('[data-value]');
+      opts.forEach((btn) => {
+        const isSel = btn.getAttribute('data-value') === selected;
+        btn.setAttribute('aria-checked', String(isSel));
+        btn.classList.toggle('bg-zinc-100', isSel);
+        btn.classList.toggle('dark:bg-white/10', isSel);
+        const dot = btn.querySelector('[data-radio-dot]');
+        if (dot) dot.classList.toggle('hidden', !isSel);
+      });
+    }
+
+    function setKeyType(kt) {
+      rewardKeyType = kt;
+      if (keyTypeLabel) keyTypeLabel.textContent = t(`ui.key_types.${kt}`) || kt;
+      else keyTypeButton.textContent = t(`ui.key_types.${kt}`) || kt;
+      applySelectedUI(kt);
+      keyDropdown.classList.add('hidden');
+      keyTypeButton.setAttribute('aria-expanded', 'false');
+      fetchKeys(user_id, kt);
+    }
+
     function renderDropdown() {
-      const keyTypes = ['Classic', 'Winter'];
       keyDropdown.innerHTML = '';
       keyTypes.forEach((kt) => {
         const item = document.createElement('button');
         item.type = 'button';
         item.role = 'option';
+        item.setAttribute('data-value', kt);
+        item.setAttribute('aria-checked', 'false');
         item.className =
-          'w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-zinc-900/3 dark:bg-white/5 border-b border-white/5 last:border-b-0';
-        item.textContent = t(`ui.key_types.${kt}`) || kt;
-        item.addEventListener('click', () => {
-          rewardKeyType = kt;
-          keyTypeButton.textContent = kt;
-          keyDropdown.classList.add('hidden');
-          keyTypeButton.setAttribute('aria-expanded', 'false');
-          fetchKeys(user_id, kt);
-        });
+          'dd-opt flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer';
+
+        const left = document.createElement('span');
+        left.className = 'flex items-center gap-2 min-w-0';
+
+        const radio = document.createElement('span');
+        radio.className = 'h-4 w-4 shrink-0 rounded-full border border-zinc-300 dark:border-white/20 flex items-center justify-center';
+        const dot = document.createElement('span');
+        dot.setAttribute('data-radio-dot', '1');
+        dot.className = 'h-2 w-2 rounded-full bg-brand-500 hidden';
+        radio.appendChild(dot);
+
+        const label = document.createElement('span');
+        label.className = 'truncate';
+        label.textContent = t(`ui.key_types.${kt}`) || kt;
+
+        left.appendChild(radio);
+        left.appendChild(label);
+        item.appendChild(left);
+
+        item.addEventListener('click', () => setKeyType(kt));
         keyDropdown.appendChild(item);
       });
+
+      applySelectedUI(rewardKeyType);
     }
 
     keyTypeButton.addEventListener('click', (e) => {
@@ -510,7 +558,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderDropdown();
-    keyTypeButton.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
+    if (keyTypeLabel) keyTypeLabel.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
+    else keyTypeButton.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
     fetchKeys(user_id, rewardKeyType);
   }
 });

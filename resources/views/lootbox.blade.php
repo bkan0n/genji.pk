@@ -96,16 +96,19 @@
           <div id="key-wrapper" class="relative inline-block">
             <button
               id="key-type-button"
-              class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/5"
+              class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/5 inline-flex items-center justify-between gap-2 min-w-[180px]"
               aria-haspopup="listbox"
               aria-expanded="false"
             >
-              {{ __('lootbox.ui.select_key_type') }}
+              <span id="key-type-label" class="truncate">{{ __('lootbox.ui.select_key_type') }}</span>
+              <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-300/70" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M7 10l5 5 5-5H7z" />
+              </svg>
             </button>
 
             <div
               id="key-dropdown"
-              class="absolute top-full left-1/2 z-20 mt-2 hidden w-40 -translate-x-1/2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-xl"
+              class="absolute top-full left-1/2 z-20 mt-2 hidden w-56 -translate-x-1/2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/98 shadow-xl p-1"
               role="listbox"
             ></div>
           </div>
@@ -306,7 +309,7 @@
         <!-- RIGHT: Keys + History -->
         <aside class="space-y-4">
           <!-- Keys pricing -->
-          <section class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-hidden">
+          <section class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-visible">
             <div class="px-4 py-3 border-b border-zinc-200/60 dark:border-white/10">
               <div class="text-sm font-bold text-zinc-900 dark:text-zinc-100">{{ __('lootbox.store.buy_keys_title') }}</div>
               <div class="text-xs text-zinc-600 dark:text-zinc-300">{{ __('lootbox.store.buy_keys_subtitle') }}</div>
@@ -314,8 +317,8 @@
 
             <div class="p-4 space-y-3">
               <div class="flex items-center gap-2">
-                <!-- Key Type (custom dropdown) -->
-                <div id="store-key-type-wrap" class="relative w-full">
+                <!-- Key Type -->
+                <div id="store-key-type-wrap" class="relative z-30 w-full">
                   <input id="store-key-type" type="hidden" value="Classic" />
 
                   <button
@@ -334,7 +337,7 @@
 
                   <div
                     id="store-key-type-list"
-                    class="custom-multiselect-list absolute left-0 right-0 mt-1 hidden max-h-64 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/98 p-1 shadow-xl dropdown-list dd-anim"
+                    class="custom-multiselect-list absolute left-0 right-0 z-[200] mt-1 hidden max-h-64 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/98 p-1 shadow-xl dropdown-list dd-anim"
                     role="listbox"
                     aria-hidden="true"
                   >
@@ -354,11 +357,36 @@
                     >
                       <span class="truncate">{{ __('lootbox.ui.key_types.Winter') }}</span>
                     </button>
-                  </div>
+                  
+                    <button
+                      type="button"
+                      class="dd-opt flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer"
+                      role="option"
+                      data-value="Spring"
+                    >
+                      <span class="truncate">{{ __('lootbox.ui.key_types.Spring') }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="dd-opt flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer"
+                      role="option"
+                      data-value="Summer"
+                    >
+                      <span class="truncate">{{ __('lootbox.ui.key_types.Summer') }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="dd-opt flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer"
+                      role="option"
+                      data-value="Autumn"
+                    >
+                      <span class="truncate">{{ __('lootbox.ui.key_types.Autumn') }}</span>
+                    </button>
+</div>
                 </div>
 
                 <!-- Qty (custom dropdown) -->
-                <div id="store-key-qty-wrap" class="relative w-28 shrink-0">
+                <div id="store-key-qty-wrap" class="relative z-30 w-28 shrink-0">
                   <input id="store-key-qty" type="hidden" value="1" />
 
                   <button
@@ -377,7 +405,7 @@
 
                   <div
                     id="store-key-qty-list"
-                    class="custom-multiselect-list absolute left-0 right-0 mt-1 hidden max-h-64 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl dropdown-list dd-anim"
+                    class="custom-multiselect-list absolute left-0 right-0 z-[200] mt-1 hidden max-h-64 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl dropdown-list dd-anim"
                     role="listbox"
                     aria-hidden="true"
                   >

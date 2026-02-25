@@ -166,31 +166,52 @@
 
           {{-- STATS --}}
           <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
-              <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.keys_classic') }}</div>
-              <div class="mt-1 flex items-center gap-2">
-                <img
-                  src="{{ cdn_asset('assets/lootbox/keys/classic.png') }}"
-                  alt=""
-                  class="h-7 w-7 shrink-0 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div id="dash-keys-classic" class="text-xl font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+            {{-- KEYS (ALL TYPES) --}}
+            <div class="col-span-2 rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
+              <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
+                {{ __('dashboard.lootboxes.your_inventory') }}
               </div>
-            </div>
 
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
-              <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.keys_winter') }}</div>
-              <div class="mt-1 flex items-center gap-2">
-                <img
-                  src="{{ cdn_asset('assets/lootbox/keys/winter.png') }}"
-                  alt=""
-                  class="h-7 w-7 shrink-0 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div id="dash-keys-winter" class="text-xl font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+              <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div class="flex items-center gap-2">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/classic.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div>
+                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Classic') }}</div>
+                    <div id="dash-keys-classic" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/winter.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div>
+                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Winter') }}</div>
+                    <div id="dash-keys-winter" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/spring.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div>
+                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Spring') }}</div>
+                    <div id="dash-keys-spring" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/summer.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div>
+                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Summer') }}</div>
+                    <div id="dash-keys-summer" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/autumn.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div>
+                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Autumn') }}</div>
+                    <div id="dash-keys-autumn" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -328,6 +349,9 @@
                                 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                         <option value="Classic">{{ __('lootbox.ui.key_types.Classic') }}</option>
                         <option value="Winter">{{ __('lootbox.ui.key_types.Winter') }}</option>
+                        <option value="Spring">{{ __('lootbox.ui.key_types.Spring') }}</option>
+                        <option value="Summer">{{ __('lootbox.ui.key_types.Summer') }}</option>
+                        <option value="Autumn">{{ __('lootbox.ui.key_types.Autumn') }}</option>
                     </select>
 
                     <select id="dash-key-qty" data-custom-dd

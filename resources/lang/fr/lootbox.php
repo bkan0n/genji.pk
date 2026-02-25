@@ -66,6 +66,9 @@ return [
         'key_types' => [
             'Classic' => 'Classique',
             'Winter'  => 'Hiver',
+            'Spring' => 'Printemps',
+            'Autumn' => 'Automne',
+            'Summer' => 'Été',
         ],
     ],
 

@@ -66,6 +66,9 @@ return [
         'key_types' => [
             'Classic' => '经典',
             'Winter'  => '圣诞节',
+            'Spring' => '春季',
+            'Autumn' => '秋季',
+            'Summer' => '夏季',
         ],
     ],
 

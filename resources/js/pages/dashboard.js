@@ -1488,9 +1488,21 @@ async function loadHeader() {
 
     $("dash-keys-classic").textContent = fmtIntSpaces(byType("Classic"));
     $("dash-keys-winter").textContent = fmtIntSpaces(byType("Winter"));
+    const elSpring = $("dash-keys-spring");
+    const elSummer = $("dash-keys-summer");
+    const elAutumn = $("dash-keys-autumn");
+    if (elSpring) elSpring.textContent = fmtIntSpaces(byType("Spring"));
+    if (elSummer) elSummer.textContent = fmtIntSpaces(byType("Summer"));
+    if (elAutumn) elAutumn.textContent = fmtIntSpaces(byType("Autumn"));
   } catch {
     $("dash-keys-classic").textContent = "—";
     $("dash-keys-winter").textContent = "—";
+    const elSpring = $("dash-keys-spring");
+    const elSummer = $("dash-keys-summer");
+    const elAutumn = $("dash-keys-autumn");
+    if (elSpring) elSpring.textContent = "—";
+    if (elSummer) elSummer.textContent = "—";
+    if (elAutumn) elAutumn.textContent = "—";
   }
 
   setHeaderLoading(false);
@@ -1899,6 +1911,9 @@ async function loadLootboxesPanel() {
   const types = [
     { type: "Classic", label: t("lootboxes.classic", "Classic"), accent: "from-brand-500 to-indigo-500" },
     { type: "Winter", label: t("lootboxes.winter", "Winter"), accent: "from-sky-500 to-cyan-500" },
+    { type: "Spring", label: t("lootboxes.spring", "Spring"), accent: "from-emerald-500 to-lime-500" },
+    { type: "Summer", label: t("lootboxes.summer", "Summer"), accent: "from-amber-500 to-orange-500" },
+    { type: "Autumn", label: t("lootboxes.autumn", "Autumn"), accent: "from-rose-500 to-fuchsia-500" },
   ];
 
   types.forEach((tt) => {
@@ -1906,10 +1921,15 @@ async function loadLootboxesPanel() {
       .filter((k) => String(k.key_type || "").toLowerCase() === tt.type.toLowerCase())
       .reduce((s, k) => s + (Number(k.amount) || 0), 0);
 
-    const icon =
-      tt.type === "Classic"
-        ? cdnAsset("assets/lootbox/keys/classic.png")
-        : cdnAsset("assets/lootbox/keys/winter.png");
+    const iconMap = {
+      classic: "assets/lootbox/keys/classic.png",
+      winter: "assets/lootbox/keys/winter.png",
+      spring: "assets/lootbox/keys/spring.png",
+      summer: "assets/lootbox/keys/summer.png",
+      autumn: "assets/lootbox/keys/autumn.png",
+    };
+
+    const icon = cdnAsset(iconMap[String(tt.type).toLowerCase()] || iconMap.classic);
 
     const card = document.createElement("div");
     card.className =
