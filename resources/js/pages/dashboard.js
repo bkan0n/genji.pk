@@ -1060,6 +1060,45 @@ function rarityBadge(rarity) {
 /* =========================
    TABS
    ========================= */
+const TAB_PARAM = "tab";
+
+function getValidTab(name) {
+  const wanted = String(name || "").trim().toLowerCase();
+  const tabs = Array.from(document.querySelectorAll(".dash-tab"))
+    .map((b) => String(b.dataset.tab || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  if (!tabs.length) return "overview";
+  if (tabs.includes(wanted)) return wanted;
+  return tabs.includes("overview") ? "overview" : tabs[0];
+}
+
+function readTabFromUrl() {
+  try {
+    const url = new URL(window.location.href);
+    return url.searchParams.get(TAB_PARAM);
+  } catch {
+    return null;
+  }
+}
+
+function writeTabToUrl(tab, mode = "push") {
+  const tname = getValidTab(tab);
+  const url = new URL(window.location.href);
+  url.searchParams.set(TAB_PARAM, tname);
+
+  const state = { tab: tname };
+  if (mode === "replace") history.replaceState(state, "", url);
+  else history.pushState(state, "", url);
+}
+
+function maybeLoadTabPanel(name) {
+  if (name === "lootboxes") loadLootboxesPanel();
+  if (name === "keyshop") loadKeyShop();
+  if (name === "weekly") loadWeeklyShop();
+  if (name === "quests") loadQuestsPanel();
+}
+
 function setTabActive(name) {
   document.querySelectorAll(".dash-panel").forEach((p) => p.classList.add("hidden"));
   document.querySelectorAll(".dash-tab").forEach((b) => {
@@ -2711,18 +2750,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderSubmissionRows($("dash-recent-submissions"), 6);
 
   const saved = localStorage.getItem("gp_dashboard_tab") || "overview";
-  setTabActive(saved);
+  const fromUrl = readTabFromUrl();
+  const initial = getValidTab(fromUrl || saved || "overview");
+
+  if (!fromUrl) writeTabToUrl(initial, "replace");
+
+  localStorage.setItem("gp_dashboard_tab", initial);
+  setTabActive(initial);
+  maybeLoadTabPanel(initial);
+
+  window.addEventListener("popstate", () => {
+    const tname = getValidTab(readTabFromUrl() || "overview");
+    localStorage.setItem("gp_dashboard_tab", tname);
+    setTabActive(tname);
+    maybeLoadTabPanel(tname);
+  });
 
   document.querySelectorAll(".dash-tab").forEach((b) => {
     b.addEventListener("click", () => {
       const name = b.dataset.tab || "overview";
       localStorage.setItem("gp_dashboard_tab", name);
       setTabActive(name);
-
-      if (name === "lootboxes") loadLootboxesPanel();
-      if (name === "keyshop") loadKeyShop();
-      if (name === "weekly") loadWeeklyShop();
-      if (name === "quests") loadQuestsPanel();
+      writeTabToUrl(name, "push");
+      maybeLoadTabPanel(name);
     });
   });
 
