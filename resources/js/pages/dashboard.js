@@ -1181,9 +1181,63 @@ let state = {
   quests: null,
   questHistory: null,
   keys: null,
+  keysLoaded: false,
   coins: null,
   xpSummary: null,
 };
+
+let __keysInFlight = null;
+
+async function ensureKeysLoaded(uid) {
+  const u = String(uid || "").trim();
+  if (!u) return [];
+
+  if (state.keysLoaded) return Array.isArray(state.keys) ? state.keys : [];
+  if (__keysInFlight) return __keysInFlight;
+
+  __keysInFlight = (async () => {
+    try {
+      const keysPayload = await httpJson(EP.keys(u), { cache: "no-store" });
+      const list = normalizeList(keysPayload);
+      state.keys = list;
+      state.keysLoaded = true;
+      return list;
+    } catch {
+      state.keys = [];
+      state.keysLoaded = true;
+      return [];
+    } finally {
+      __keysInFlight = null;
+    }
+  })();
+
+  return __keysInFlight;
+}
+
+function skKeyInvCard() {
+  const el = document.createElement("div");
+  el.className =
+    "rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
+    "ring-1 ring-zinc-200/40 dark:ring-white/10 p-4 flex items-center justify-between gap-3 animate-pulse";
+
+  el.innerHTML = `
+    <div class="min-w-0 flex-1">
+      <div class="h-3 w-20 rounded bg-zinc-900/10 dark:bg-white/10"></div>
+      <div class="mt-2 h-3 w-28 rounded bg-zinc-900/5 dark:bg-white/5"></div>
+    </div>
+    <div class="text-right flex flex-col items-end min-w-[8.5rem]">
+      <div class="h-7 w-24 rounded bg-zinc-900/10 dark:bg-white/10"></div>
+      <div class="mt-2 h-7 w-full rounded-xl bg-zinc-900/10 dark:bg-white/10"></div>
+    </div>
+  `;
+  return el;
+}
+
+function renderKeyInvSkeleton(container, count = 4) {
+  if (!container) return;
+  container.innerHTML = "";
+  for (let i = 0; i < count; i++) container.appendChild(skKeyInvCard());
+}
 
 /* =========================
    INIT HELPERS
@@ -1477,9 +1531,7 @@ async function loadHeader() {
   }
 
   try {
-    const keysPayload = await httpJson(EP.keys(uid), { cache: "no-store" });
-    const list = normalizeList(keysPayload);
-    state.keys = list;
+    const list = await ensureKeysLoaded(uid);
 
     const byType = (type) =>
       list
@@ -1900,10 +1952,12 @@ async function loadLootboxesPanel() {
   const grid = $("dash-keys-grid");
   if (!uid || !grid) return;
 
+  if (!state.keysLoaded) renderKeyInvSkeleton(grid, 4);
+
+  const list = await ensureKeysLoaded(uid);
   grid.innerHTML = "";
 
-  const list = Array.isArray(state.keys) ? state.keys : [];
-  if (!list.length) {
+  if (!Array.isArray(list) || !list.length) {
     grid.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-300">${t("lootboxes.no_keys", "No keys.")}</div>`;
     return;
   }
