@@ -31,7 +31,7 @@ Route::view('game', 'game')->name('game');
 Route::view('infos', 'infos')->name('infos');
 Route::view('moderator', 'moderator')->middleware('discord.moderator')->name('moderator.panel');
 Route::view('/ip', 'ip-temp');
-Route::view('dashboard', 'dashboard')->name('dashboard');
+Route::view('dashboard', 'dashboard')->middleware('auth.user')->name('dashboard');
 
 // Langues
 Route::get('lang/{code}', [LanguageController::class, 'switch'])->name('lang.switch');
