@@ -1,4 +1,3 @@
-{{-- Profile Modal (overlay + carte) --}}
 <div id="profileModal" class="fixed inset-0 z-[120] hidden">
   <button
     id="profileBackdrop"
@@ -12,7 +11,7 @@
       class="pointer-events-auto mx-auto w-full max-w-6xl min-w-0 flex-1 basis-full px-0 pt-24 lg:max-w-7xl 2xl:max-w-[90rem]"
       data-modal-box
     >
-      {{-- ====== Carte Profil ====== --}}
+      {{-- ====== Profile card ====== --}}
       @php
         use Illuminate\Support\Str;
 
@@ -35,7 +34,6 @@
           }
         }
 
-        // Pour les utilisateurs email, générer un avatar avec initiales
         $initials = strtoupper(substr($username, 0, 2));
         $avatarBgColor = 'bg-emerald-500';
         if ($provider === 'email') {
@@ -73,7 +71,13 @@
         <button
           type="button"
           id="profileClose"
-          class="absolute top-3 right-3 rounded-md bg-zinc-900/5 dark:bg-black/30 p-2 ring-1 ring-zinc-300/60 dark:ring-white/10 hover:bg-zinc-900/7 dark:bg-black/40"
+          class="absolute top-3 right-3 rounded-md p-2
+                 bg-zinc-900/5 dark:bg-white/5
+                 ring-1 ring-zinc-300/60 dark:ring-white/10
+                 hover:bg-zinc-900/10 dark:hover:bg-white/10
+                 transition duration-150
+                 active:translate-y-px
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
           aria-label="{{ __('modals.profile.close') }}"
         >
           <svg class="h-4 w-4 text-zinc-700 dark:text-zinc-300" viewBox="0 0 24 24" aria-hidden="true">
@@ -124,7 +128,13 @@
             <button
               type="button"
               id="copyUid"
-              class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-[11px] hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-md
+                     border border-zinc-200/80 dark:border-white/10
+                     px-2 py-1 text-[11px]
+                     bg-white/60 dark:bg-white/5
+                     hover:bg-white/85 dark:hover:bg-white/10
+                     transition duration-150
+                     active:translate-y-px"
             >
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -140,7 +150,7 @@
             <ul class="mt-3 flex flex-wrap items-center justify-center gap-2">
               @foreach ($badgeSrc as $src)
                 <li
-                  class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10"
+                  class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/85 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10"
                 >
                   <img src="{{ $src }}" alt="Badge" class="h-4 w-4" loading="lazy" />
                 </li>
@@ -148,19 +158,31 @@
             </ul>
           @endif
 
-          <div class="mt-5 h-px bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
+          <div class="mt-5 h-px bg-white/35 dark:bg-white/10"></div>
 
           <div class="mt-4 grid grid-cols-2 gap-2">
             <a
-              href="{{ url('/rank_card') }}"
-              class="inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"
+              href="{{ url('/dashboard') }}"
+              class="inline-flex items-center justify-center rounded-lg
+                     border border-zinc-200/80 dark:border-white/10
+                     px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200
+                     bg-white/60 dark:bg-white/5
+                     hover:bg-white/85 dark:hover:bg-white/10
+                     transition duration-150
+                     active:translate-y-px"
             >
               {{ __('modals.profile.dashboard') }}
             </a>
             <a
               href="#"
               id="openSettings"
-              class="inline-flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5"
+              class="inline-flex items-center justify-center rounded-lg
+                     border border-zinc-200/80 dark:border-white/10
+                     px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200
+                     bg-white/60 dark:bg-white/5
+                     hover:bg-white/85 dark:hover:bg-white/10
+                     transition duration-150
+                     active:translate-y-px"
             >
               {{ __('modals.profile.settings') }}
             </a>
