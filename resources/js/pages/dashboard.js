@@ -1636,6 +1636,8 @@ async function loadRewardsSummary() {
           "rounded-xl overflow-hidden border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/25 " +
           "ring-1 ring-zinc-200/40 dark:ring-white/10";
         const img = r.url || r.image_url || r.image || "";
+        const type = String(r.type || r.reward_type || "").toLowerCase();
+        const fitClass = type === "background" ? "object-cover" : "object-contain";
 
         el.innerHTML = `
           <div class="relative aspect-[4/3] overflow-hidden bg-black/10 dark:bg-black/30">
@@ -1644,7 +1646,7 @@ async function loadRewardsSummary() {
                 ? `<img
                     src="${img}"
                     alt=""
-                    class="absolute inset-0 w-full h-full object-cover"
+                    class="absolute inset-0 w-full h-full ${fitClass}"
                     loading="lazy"
                     decoding="async"
                   >`
