@@ -12,7 +12,7 @@
   <section class="relative mb-12 min-h-[100vh]">
     <div class="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
       <div
-        class="relative overflow-hidden rounded-3xl border border-zinc-200/70 dark:border-white/10
+        class="relative overflow-visible rounded-3xl border border-zinc-200/70 dark:border-white/10
                bg-white/80 dark:bg-zinc-950/30 ring-1 ring-zinc-200/40 dark:ring-white/10 shadow-2xl"
       >
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-zinc-50/70 via-white/40 to-brand-200/20 dark:from-white/5 dark:via-zinc-950/20 dark:to-brand-500/10"></div>
@@ -277,7 +277,7 @@
               </div>
             </div>
 
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-hidden">
+            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-visible">
               <div class="border-b border-zinc-200/60 dark:border-white/10 px-4 py-3">
                 <div class="flex items-center justify-between gap-3">
                   <div class="min-w-0">
@@ -336,14 +336,14 @@
 
         <div id="dash-panel-keyshop" class="dash-panel hidden">
           <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-hidden">
+            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-visible relative">
               <div class="border-b border-zinc-200/60 dark:border-white/10 px-4 py-3">
                 <div class="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{{ __('dashboard.keyshop.buy_keys') }}</div>
                 <div class="text-xs text-zinc-600 dark:text-zinc-300">{{ __('dashboard.keyshop.buy_keys_sub') }}</div>
               </div>
 
-              <div class="p-4 space-y-3">
-                <div class="grid grid-cols-2 gap-2">
+              <div class="p-4 space-y-3 overflow-visible">
+                <div class="grid grid-cols-2 gap-2 relative overflow-visible">
                     <select id="dash-key-type" data-custom-dd
                         class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/40
                                 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -389,7 +389,7 @@
         </div>
 
         <div id="dash-panel-weekly" class="dash-panel hidden">
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-hidden">
+            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-visible">
                 <div class="flex flex-col gap-3 border-b border-zinc-200/60 dark:border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <div class="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{{ __('dashboard.weekly.rotation_title') }}</div>
