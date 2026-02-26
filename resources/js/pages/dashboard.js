@@ -2295,7 +2295,7 @@ async function loadQuestsPanel() {
 
         const targetTimeSec = hasTargetTime ? Math.max(0, Math.round(Number(p.target_time))) : null;
 
-        const showGenericTargetPill = hasTargetTime && !isMedalThreshold;
+        const showGenericTargetPill = hasTargetTime && !isMedalThreshold && !isRivalChallenge;
         const showMedalTargetPill = isMedalThreshold && hasTargetTime;
 
         const maxRaw = p?.target;
@@ -2361,7 +2361,7 @@ async function loadQuestsPanel() {
                 ${
                   showGenericTargetPill
                     ? `<span class="${targetTimePillClass()}">
-                        ${t("quests.target_time", "Target")}: <span class="ml-1">${targetTimeSec}s</span>
+                        ${t("quests.target_time", "Target")}: <span class="ml-1">${targetTimeSec} Sec</span>
                       </span>`
                     : ""
                 }
@@ -2369,7 +2369,7 @@ async function loadQuestsPanel() {
                 ${
                   !isPersonalBest && isRivalChallenge && Number.isFinite(Number(rivalTimeSec))
                     ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${targetTimePillClass()}">
-                        ${t("quests.target_time", "Target")}: <span class="ml-1">${rivalTimeSec}s</span>
+                        ${t("quests.target_time", "Target")}: <span class="ml-1">${rivalTimeSec} Sec</span>
                       </span>`
                     : ""
                 }
