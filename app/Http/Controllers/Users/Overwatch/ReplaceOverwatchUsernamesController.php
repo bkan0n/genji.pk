@@ -15,33 +15,38 @@ final class ReplaceOverwatchUsernamesController extends Controller
     public function __invoke(int $user_id, Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'usernames' => ['required', 'array', 'min:1'],
+            'usernames' => ['present', 'array'],
             'usernames.*.username' => ['required', 'string', 'max:64'],
             'usernames.*.is_primary' => ['required', 'boolean'],
         ]);
 
+        $raw = $validated['usernames'] ?? [];
+
         $items = array_map(
             fn (array $u) => [
-                'username' => trim((string) $u['username']),
-                'is_primary' => (bool) $u['is_primary'],
+                'username' => trim((string) ($u['username'] ?? '')),
+                'is_primary' => (bool) ($u['is_primary'] ?? false),
             ],
-            $validated['usernames'],
+            $raw,
         );
 
-        $primaryCount = 0;
-        foreach ($items as $u) {
-            if ($u['is_primary'] === true) {
-                $primaryCount++;
+        if (count($items) > 0) {
+            $primaryCount = 0;
+            foreach ($items as $u) {
+                if ($u['is_primary'] === true) {
+                    $primaryCount++;
+                }
             }
-        }
-        if ($primaryCount !== 1) {
-            return response()->json(
-                [
-                    'error' => true,
-                    'message' => 'Exactly one entry must have is_primary=true.',
-                ],
-                422,
-            );
+
+            if ($primaryCount !== 1) {
+                return response()->json(
+                    [
+                        'error' => true,
+                        'message' => 'Exactly one entry must have is_primary=true.',
+                    ],
+                    422,
+                );
+            }
         }
 
         $root = rtrim((string) config('services.genji_api.root', ''), '/');
@@ -79,7 +84,6 @@ final class ReplaceOverwatchUsernamesController extends Controller
             }
 
             $data = $res->json();
-
             return response()->json(is_array($data) ? $data : (object) []);
         } catch (Throwable $e) {
             return response()->json(

@@ -16,7 +16,7 @@ class SetActiveKeyTypeController extends Controller
     {
         validator(
             ['keyType' => $keyType],
-            ['keyType' => ['required', Rule::in(['Classic', 'Winter'])]],
+            ['keyType' => ['required', Rule::in(['Classic', 'Winter', 'Autumn', 'Spring', 'Summer'])]],
         )->validate();
 
         $cfg = Config::get('services.genji_api', []);

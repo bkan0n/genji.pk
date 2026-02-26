@@ -16,7 +16,7 @@ class GrantKeyToUserController extends Controller
         $request->merge(compact('user_id', 'key_type'));
         $request->validate([
             'user_id' => ['required', 'integer'],
-            'key_type' => ['required', 'in:Classic,Winter'],
+            'key_type' => ['required', 'in:Classic,Winter,Spring,Summer,Autumn'],
         ]);
 
         $cfg = Config::get('services.genji_api', []);

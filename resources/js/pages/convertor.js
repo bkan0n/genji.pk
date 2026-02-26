@@ -1623,7 +1623,7 @@ async function loadTemplate(lang) {
     if (!overpy) throw new Error('OverPy UMD not found (fallback)');
     await overpy.readyPromise;
 
-    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4D/';
+    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4F/';
     const entryFile = 'framework.opy';
     const resp = await fetch(rawBase + entryFile);
     if (!resp.ok) throw new Error(`HTTP ${resp.status} on ${entryFile}`);

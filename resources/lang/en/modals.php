@@ -90,6 +90,9 @@ return [
                 'record_edited' => 'Record edited',
                 'map_edit_approved' => 'Map edit approved',
                 'map_edit_rejected' => 'Map edit rejected',
+                'quest_complete' => 'Quest completed',
+                'quest_rotation' => 'Quest rotation',
+                'quest_rival_mention' => 'Quest rival mention',
             ],
 
             'dm_on_verification' => 'Message me on verification',

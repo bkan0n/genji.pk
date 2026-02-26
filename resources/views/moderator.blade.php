@@ -74,7 +74,7 @@
               </div>
 
               <nav class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-2 backdrop-blur" aria-label="Moderator sections">
-                <div id="modTabs" class="space-y-1">
+            <div id="modTabs" class="space-y-1">
               <button
                 data-tab="users"
                 data-tab-label="Users"
@@ -174,17 +174,55 @@
               <button
                 data-tab="devs"
                 data-tab-label="Devs only"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
-              >
+               data-dev-only="1">
                 <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M22.7 19.3L19 15.6c-.2-.2-.5-.3-.7-.3h-.5l-1.4-1.4c.9-1.4.7-3.4-.5-4.6c-1.2-1.2-3.2-1.4-4.6-.5L9.4 7.4V6.9c0-.3-.1-.5-.3-.7L5.7 2.5C5.3 2.1 4.7 2.1 4.3 2.5L2.5 4.3c-.4.4-.4 1 0 1.4L6 9.2c.2.2.4.3.7.3h.5l1.4 1.4c-.9 1.4-.7 3.4.5 4.6c1.2 1.2 3.2 1.4 4.6.5l1.4 1.4v.5c0 .3.1.5.3.7l3.7 3.7c.4.4 1 .4 1.4 0l1.8-1.8c.4-.4.4-1 0-1.4Z"/>
                   </svg>
                 </span>
-                <span class="min-w-0 flex-1 truncate">Devs only</span>
+                <span class="min-w-0 flex-1 truncate">Web</span>
                 <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Danger</span>
               </button>
+
+              <button
+                data-tab="store"
+                data-tab-label="Store"
+                class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
+               data-dev-only="1">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M7 7V6a5 5 0 0 1 10 0v1h3v15H4V7Zm2 0h6V6a3 3 0 0 0-6 0Zm-3 2v11h12V9Z"/>
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Store</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Shop</span>
+              </button>
+
+              <button
+                data-tab="quests"
+                data-tab-label="Quests"
+                class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
+               data-dev-only="1">
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a3 3 0 0 1 0-6h10v2H7a1 1 0 0 0 0 2h10V5H7v10H5V5a2 2 0 0 1 2-2z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 8.2l.9 2.1 2.3.2-1.8 1.5.6 2.2-2-1.2-2 1.2.6-2.2-1.8-1.5 2.3-.2.9-2.1z"
+                    />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Quests</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Daily</span>
+              </button>
+
                 </div>
               </nav>
               
@@ -209,7 +247,7 @@
             <div class="mt-6 space-y-6">
             {{-- ============ USERS ============ --}}
             <div data-panel="users" class="mod-panel space-y-4">
-              {{-- Sous-nav --}}
+              {{-- Sub-nav --}}
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
                   class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
@@ -790,6 +828,43 @@
                             />
                             <span>Winter</span>
                           </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
+                          </label>
+
                         </div>
                       </div>
                     </label>
@@ -821,19 +896,88 @@
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>
+
                     <label>
                       Amount
                       <input
                         name="amount"
                         type="number"
+                        min="1"
+                        step="1"
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                         placeholder="100"
                       />
                     </label>
+
+                    
+                    <label class="text-sm">
+                      Type
+                      <div id="modXpTypeDropdown" class="fake-select relative mt-1" data-open="0">
+                        <button
+                          type="button"
+                          class="fake-select-btn flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          data-placeholder="Other"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                        >
+                          <span class="cm-label truncate">Other</span>
+                          <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
+                          </svg>
+                        </button>
+
+                        <div
+                          class="fake-select-list custom-multiselect-list absolute top-full left-0 right-0 mt-0 hidden max-h-[260px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"
+                          role="listbox"
+                        >
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="Map Submission" data-label="Map Submission" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">Map Submission</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="Playtest" data-label="Playtest" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">Playtest</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="Guide" data-label="Guide" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">Guide</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="Completion" data-label="Completion" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">Completion</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="Record" data-label="Record" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">Record</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="World Record" data-label="World Record" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">World Record</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="type" value="Other" data-label="Other" class="h-4 w-4 accent-emerald-500" checked>
+                            <span class="min-w-0 truncate">Other</span>
+                          </label>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="sm:col-span-3">
+                      Reason (optional)
+                      <input
+                        name="reason"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Manual grant from moderator panel"
+                      />
+                    </label>
+
+                    <label class="sm:col-span-3 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                      <input type="checkbox" name="apply_multiplier" class="h-4 w-4 accent-emerald-500" />
+                      Apply XP multiplier
+                    </label>
+
                     <div class="sm:col-span-3">
-                      <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
-                      >
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Grant XP
                       </button>
                     </div>
@@ -910,6 +1054,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
@@ -1040,6 +1220,42 @@
                             />
                             <span>Winter</span>
                           </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
+                          </label>
                         </div>
                       </div>
                     </label>
@@ -1162,6 +1378,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
@@ -1288,6 +1540,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
@@ -1454,6 +1742,42 @@
                               data-label="Winter"
                             />
                             <span>Winter</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Spring"
+                              class="accent-emerald-500"
+                              data-label="Spring"
+                            />
+                            <span>Spring</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Autumn"
+                              class="accent-emerald-500"
+                              data-label="Autumn"
+                            />
+                            <span>Autumn</span>
+                          </label>
+                          <label
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                          >
+                            <input
+                              type="radio"
+                              name="key_type"
+                              value="Summer"
+                              class="accent-emerald-500"
+                              data-label="Summer"
+                            />
+                            <span>Summer</span>
                           </label>
                         </div>
                       </div>
@@ -3633,12 +3957,12 @@
                 >
                   Verify playtests
                 </button>
-<button
-  class="mod-subtab cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
-  data-subtab="verif-edits"
->
-  Verify edits
-</button>
+                <button
+                  class="mod-subtab cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                  data-subtab="verif-edits"
+                >
+                  Verify edits
+                </button>
 
               </div>
               <div
@@ -3662,87 +3986,912 @@
                   </form>
                 </article>
               </div>
-<div data-subpanel="verif-edits" class="hidden space-y-6">
-  <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
-    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <h3 class="font-semibold">Verify map edit requests</h3>
-      <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/v3/maps/map-edits/pending</span>
-    </div>
+              <div data-subpanel="verif-edits" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                  <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h3 class="font-semibold">Verify map edit requests</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/v3/maps/map-edits/pending</span>
+                  </div>
 
-    <form data-action="get-pending-edit-requests" autocomplete="off" class="grid gap-4">
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="block text-sm text-zinc-600 dark:text-zinc-300">
-          Resolved by (user_id)
-          <input
-            id="editResolvedByInput"
-            type="text"
-            name="resolved_by_user_id"
-            placeholder="Auto"
-            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-          />
-        </label>
+                  <form data-action="get-pending-edit-requests" autocomplete="off" class="grid gap-4">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                      <label class="block text-sm text-zinc-600 dark:text-zinc-300">
+                        Resolved by (user_id)
+                        <input
+                          id="editResolvedByInput"
+                          type="text"
+                          name="resolved_by_user_id"
+                          placeholder="Auto"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                        />
+                      </label>
 
-        <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-3 text-xs text-zinc-500 dark:text-zinc-400">
-          Accept / Reject will call <span class="font-mono">PUT /resolve</span> with your user_id.
-        </div>
-      </div>
+                      <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        Accept / Reject will call <span class="font-mono">PUT /resolve</span> with your user_id.
+                      </div>
+                    </div>
 
-      <button
-        class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30"
-      >
-        Fetch pending edit requests
-      </button>
-    </form>
-  </article>
-</div>
-
-
+                    <button
+                      class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30"
+                    >
+                      Fetch pending edit requests
+                    </button>
+                  </form>
+                </article>
+              </div>
             </div>
 
-            {{-- ============ DEVS ONLY ============ --}}
-            <div data-panel="devs" class="mod-panel hidden space-y-4">
+            {{-- ============ STORE ============ --}}
+            <div data-panel="store" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="dev-cache-frameworks"
-                  data-clear-cache="framework"
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="store-config"
+                  type="button"
                 >
-                  Delete frameworks cache
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="dev-cache-avatars"
-                  data-clear-cache="avatars"
-                >
-                  Delete avatars cache
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="dev-cache-translations"
-                  data-clear-cache="translations"
-                >
-                  Delete translations cache
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="dev-overpy-commit"
-                >
-                  Set overpy commit
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="dev-framework-version"
-                >
-                  Set framework version
+                  Config
                 </button>
 
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="store-rotation"
+                  type="button"
+                >
+                  Rotation
+                </button>
               </div>
 
               <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
-                Choose a Dev action.
+                Choose a Store action.
               </div>
 
-              {{-- Subpanel: Delete frameworks cache --}}
+              {{-- Outputs (accessibles depuis n’importe quel form du panel) --}}
+              <div class="grid gap-4">
+                <pre id="out-store-config" data-out="store-config" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+                <pre id="out-store-update" data-out="store-update-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+                <pre id="out-store-rotation" data-out="store-rotation-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+              </div>
+
+              {{-- Subpanel: Config --}}
+              <div data-subpanel="store-config" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Get store config</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /mods/store/config</span>
+                  </div>
+
+                  <form data-action="store-get-config" autocomplete="off">
+                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Load config
+                    </button>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Update store config</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /mods/store/config</span>
+                  </div>
+
+                  <form data-action="store-update-config" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="sm:col-span-1 text-sm">
+                      Rotation period (days)
+                      <input
+                        name="rotation_period_days"
+                        type="number"
+                        min="1"
+                        step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="7"
+                      />
+                    </label>
+
+                    <label class="sm:col-span-1 text-sm">
+                      Active key type
+                      <input
+                        name="active_key_type"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Classic / Winter / ..."
+                      />
+                    </label>
+
+                    <div class="sm:col-span-2">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+
+              {{-- Subpanel: Rotation --}}
+              <div data-subpanel="store-rotation" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Generate store rotation</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /mods/store/rotation/generate</span>
+                  </div>
+
+                  <form data-action="store-generate-rotation" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="sm:col-span-1 text-sm">
+                      item_count
+                      <input
+                        name="item_count"
+                        type="number"
+                        min="1"
+                        step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="8"
+                        required
+                      />
+                    </label>
+
+                    <div class="sm:col-span-2">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Generate
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+            </div>
+
+            {{-- ============ QUESTS ============ --}}
+            <div data-panel="quests" class="mod-panel hidden space-y-4">
+              <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="quest-config"
+                  type="button"
+                >
+                  Config
+                </button>
+
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="quest-update"
+                  type="button"
+                >
+                  Update quest
+                </button>
+
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="quest-rotation"
+                  type="button"
+                >
+                  Rotation
+                </button>
+
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="quest-user-progress"
+                  type="button"
+                >
+                  User progress
+                </button>
+              </div>
+
+              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
+                Choose a Quests action.
+              </div>
+
+              {{-- Outputs --}}
+              <div class="grid gap-4">
+                <pre id="out-quest-config" data-out="quest-config" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+                <pre id="out-quest-config-update" data-out="quest-config-update-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+                <pre id="out-quest-update" data-out="quest-update-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+                <pre id="out-quest-rotation" data-out="quest-rotation-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+                <pre id="out-quest-user-progress" data-out="quest-user-progress-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
+              </div>
+
+              {{-- Subpanel: Config --}}
+              <div data-subpanel="quest-config" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Get quests config</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /mods/quests/config</span>
+                  </div>
+
+                  <form data-action="quest-get-config" autocomplete="off">
+                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Load config
+                    </button>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Update quests config</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /mods/quests/config</span>
+                  </div>
+
+                  <form data-action="quest-update-config" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">
+                      rotation_day
+                      <input name="rotation_day" type="number" min="0" step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="0-6" />
+                    </label>
+
+                    <label class="text-sm">
+                      rotation_hour
+                      <input name="rotation_hour" type="number" min="0" max="23" step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="0-23" />
+                    </label>
+
+                    <label class="text-sm">
+                      easy_quest_count
+                      <input name="easy_quest_count" type="number" min="0" step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="3" />
+                    </label>
+
+                    <label class="text-sm">
+                      medium_quest_count
+                      <input name="medium_quest_count" type="number" min="0" step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="2" />
+                    </label>
+
+                    <label class="text-sm sm:col-span-2">
+                      hard_quest_count
+                      <input name="hard_quest_count" type="number" min="0" step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1" />
+                    </label>
+
+                    <div class="sm:col-span-2">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+
+              {{-- Subpanel: Update quest --}}
+              <div data-subpanel="quest-update" class="hidden space-y-6">
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Get Weekly Quests</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=…</span>
+                  </div>
+
+                  <form data-action="quest-get-weekly" autocomplete="off">
+                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Load quests
+                    </button>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Update quest</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /mods/quests/{quest_id}</span>
+                  </div>
+
+                  <form data-action="quest-update-quest" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-1">
+                      quest_id
+                      <input
+                        name="quest_id"
+                        type="number"
+                        min="1"
+                        step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                        required
+                      />
+                    </label>
+
+                    <label class="text-sm sm:col-span-1">
+                      difficulty
+                      <input
+                        name="difficulty"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="easy / medium / hard"
+                      />
+                    </label>
+
+                    <label class="text-sm sm:col-span-1">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                      />
+                    </label>
+
+                    <label class="text-sm sm:col-span-1">
+                      description
+                      <input
+                        name="description"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                      />
+                    </label>
+
+                    <label class="text-sm sm:col-span-1">
+                      coin_reward
+                      <input
+                        name="coin_reward"
+                        type="number"
+                        min="0"
+                        step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="50"
+                      />
+                    </label>
+
+                    <label class="text-sm sm:col-span-1">
+                      xp_reward
+                      <input
+                        name="xp_reward"
+                        type="number"
+                        min="0"
+                        step="1"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="100"
+                      />
+                    </label>
+
+                    <label class="text-sm sm:col-span-2">
+                      is_active
+                      <div id="modQuestIsActiveDropdown" class="fake-select relative mt-1" data-open="0">
+                        <button
+                          type="button"
+                          class="fake-select-btn flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          data-placeholder="(no change)"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                        >
+                          <span class="cm-label truncate">(no change)</span>
+                          <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
+                          </svg>
+                        </button>
+
+                        <div
+                          class="fake-select-list custom-multiselect-list absolute left-0 right-0 mt-1 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"
+                          role="listbox"
+                        >
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="is_active" value="" data-label="(no change)" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">(no change)</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="is_active" value="1" data-label="true" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">true</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="is_active" value="0" data-label="false" class="h-4 w-4 accent-emerald-500">
+                            <span class="min-w-0 truncate">false</span>
+                          </label>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="text-sm sm:col-span-2">
+                      requirements_json
+                      <textarea
+                        name="requirements_json"
+                        rows="6"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder='{"type":"play_maps","count":3}'
+                      ></textarea>
+                    </label>
+
+                    <div class="sm:col-span-2">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+
+              {{-- Subpanel: Rotation --}}
+              <div data-subpanel="quest-rotation" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Generate quest rotation</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /mods/quests/rotation/generate</span>
+                  </div>
+
+                  <form data-action="quest-generate-rotation" autocomplete="off">
+                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Generate
+                    </button>
+                  </form>
+                </article>
+              </div>
+
+              {{-- Subpanel: User progress --}}
+              <div data-subpanel="quest-user-progress" class="hidden space-y-6">
+                {{-- Get user progress --}}
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 class="font-semibold">Get user progress</h3>
+                    </div>
+                  </div>
+
+                  <form data-action="quest-get-user-progress" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <label class="text-sm md:col-span-1">
+                        User name
+                        <input name="user_id" type="text" autocomplete="off" spellcheck="false"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="Type a username…" />
+                      </label>
+
+                      <label class="text-sm md:col-span-2">
+                        Progress entry
+                        <div id="modQuestUserProgressPick" class="relative mt-1" data-dd-select>
+                          <button type="button" data-dd-btn data-placeholder="Select a progress…" aria-haspopup="listbox" aria-expanded="false"
+                            class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                            <span class="dd-label truncate">Select a progress…</span>
+                            <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                            </svg>
+                          </button>
+
+                          <div data-dd-list role="listbox"
+                            class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[260px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                            <div class="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+                              Load a user first.
+                            </div>
+                          </div>
+
+                          {{-- mirror selected radio into a stable hidden input --}}
+                          <input type="hidden" name="pick_progress_id" value="" />
+                        </div>
+                      </label>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                      <button type="submit"
+                        class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 active:bg-emerald-800">
+                        Load
+                      </button>
+
+                      <button type="button" data-action="quest-fill-user-progress"
+                        class="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-black/90 active:bg-black dark:bg-white dark:text-zinc-900 dark:hover:bg-white/90">
+                        Fill form from selection
+                      </button>
+                    </div>
+
+                  </form>
+                </article>
+
+                {{-- PATCH: Update user quest progress --}}
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div>
+                    <h3 class="font-semibold">Update user quest progress (PATCH)</h3>
+                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                      Body fields match the API schema exactly.
+                    </p>
+                  </div>
+
+                  <form data-action="quest-update-user-progress" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <label class="text-sm">
+                        User name
+                        <input name="user_id" type="text" autocomplete="off" spellcheck="false"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="Type a username…" />
+                      </label>
+
+                      <label class="text-sm">
+                        progress_id
+                        <input name="progress_id" type="text" inputmode="numeric"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="1" />
+                      </label>
+
+                      <label class="text-sm">
+                        completed
+                        <div class="relative mt-1" data-dd-select>
+                          <button type="button" data-dd-btn data-placeholder="(no change)" aria-haspopup="listbox" aria-expanded="false"
+                            class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                            <span class="dd-label truncate">(no change)</span>
+                            <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                            </svg>
+                          </button>
+                          <div data-dd-list role="listbox"
+                            class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                              <input class="hidden" type="radio" name="completed" value="" checked data-label="(no change)" />
+                              <span class="text-zinc-700 dark:text-zinc-200">(no change)</span>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                              <input class="hidden" type="radio" name="completed" value="1" data-label="true" />
+                              <span class="text-zinc-700 dark:text-zinc-200">true</span>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                              <input class="hidden" type="radio" name="completed" value="0" data-label="false" />
+                              <span class="text-zinc-700 dark:text-zinc-200">false</span>
+                            </label>
+                          </div>
+                        </div>
+                      </label>
+
+                      <label class="text-sm">
+                        claimed
+                        <div class="relative mt-1" data-dd-select>
+                          <button type="button" data-dd-btn data-placeholder="(no change)" aria-haspopup="listbox" aria-expanded="false"
+                            class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                            <span class="dd-label truncate">(no change)</span>
+                            <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                            </svg>
+                          </button>
+                          <div data-dd-list role="listbox"
+                            class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                              <input class="hidden" type="radio" name="claimed" value="" checked data-label="(no change)" />
+                              <span class="text-zinc-700 dark:text-zinc-200">(no change)</span>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                              <input class="hidden" type="radio" name="claimed" value="1" data-label="true" />
+                              <span class="text-zinc-700 dark:text-zinc-200">true</span>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                              <input class="hidden" type="radio" name="claimed" value="0" data-label="false" />
+                              <span class="text-zinc-700 dark:text-zinc-200">false</span>
+                            </label>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-950/40 p-4 space-y-4">
+                      <h4 class="font-semibold">quest_data</h4>
+
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label class="text-sm md:col-span-1">
+                          name
+                          <input name="qd_name" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm md:col-span-2">
+                          description
+                          <input name="qd_description" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          difficulty
+                          <input name="qd_difficulty" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          coin_reward
+                          <input name="qd_coin_reward" type="text" inputmode="numeric"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" placeholder="0" />
+                        </label>
+
+                        <label class="text-sm">
+                          xp_reward
+                          <input name="qd_xp_reward" type="text" inputmode="numeric"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" placeholder="0" />
+                        </label>
+
+                        <label class="text-sm">
+                          bounty_type
+                          <div class="relative mt-1" data-dd-select>
+                            <button type="button" data-dd-btn data-placeholder="(null / no change)" aria-haspopup="listbox" aria-expanded="false"
+                              class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                              <span class="dd-label truncate">(null / no change)</span>
+                              <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                              </svg>
+                            </button>
+                            <div data-dd-list role="listbox"
+                              class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="qd_bounty_type" value="" checked data-label="(null / no change)" />
+                                <span class="text-zinc-700 dark:text-zinc-200">(null / no change)</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="qd_bounty_type" value="rival_challenge" data-label="rival_challenge" />
+                                <span class="text-zinc-700 dark:text-zinc-200">rival_challenge</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="qd_bounty_type" value="medal_threshold" data-label="medal_threshold" />
+                                <span class="text-zinc-700 dark:text-zinc-200">medal_threshold</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="qd_bounty_type" value="personal_best" data-label="personal_best" />
+                                <span class="text-zinc-700 dark:text-zinc-200">personal_best</span>
+                              </label>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50/70 dark:bg-white/5 p-4 space-y-4">
+                        <h5 class="font-semibold">requirements</h5>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <label class="text-sm">
+                            type
+                            <input name="req_type" type="text"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            count
+                            <input name="req_count" type="text" inputmode="numeric"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            difficulty
+                            <input name="req_difficulty" type="text"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            category
+                            <input name="req_category" type="text"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            medal_type
+                            <input name="req_medal_type" type="text"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            map_id
+                            <input name="req_map_id" type="text" inputmode="numeric"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            target_time
+                            <input name="req_target_time" type="text" inputmode="decimal"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            target_type
+                            <div class="relative mt-1" data-dd-select>
+                              <button type="button" data-dd-btn data-placeholder="(no change)" aria-haspopup="listbox" aria-expanded="false"
+                                class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                                <span class="dd-label truncate">(no change)</span>
+                                <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                                </svg>
+                              </button>
+                              <div data-dd-list role="listbox"
+                                class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                  <input class="hidden" type="radio" name="req_target_type" value="" checked data-label="(no change)" />
+                                  <span class="text-zinc-700 dark:text-zinc-200">(no change)</span>
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                  <input class="hidden" type="radio" name="req_target_type" value="rival_challenge" data-label="rival_challenge" />
+                                  <span class="text-zinc-700 dark:text-zinc-200">rival_challenge</span>
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                  <input class="hidden" type="radio" name="req_target_type" value="medal_threshold" data-label="medal_threshold" />
+                                  <span class="text-zinc-700 dark:text-zinc-200">medal_threshold</span>
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                  <input class="hidden" type="radio" name="req_target_type" value="personal_best" data-label="personal_best" />
+                                  <span class="text-zinc-700 dark:text-zinc-200">personal_best</span>
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                  <input class="hidden" type="radio" name="req_target_type" value="personal_improvement" data-label="personal_improvement" />
+                                  <span class="text-zinc-700 dark:text-zinc-200">personal_improvement</span>
+                                </label>
+                              </div>
+                            </div>
+                          </label>
+
+                          <label class="text-sm">
+                            rival_user_id
+                            <input name="req_rival_user_id" type="text" inputmode="numeric"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            rival_time
+                            <input name="req_rival_time" type="text" inputmode="decimal"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            target
+                            <input name="req_target" type="text"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+
+                          <label class="text-sm">
+                            min_count
+                            <input name="req_min_count" type="text" inputmode="numeric"
+                              class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-950/40 p-4 space-y-4">
+                      <h4 class="font-semibold">progress</h4>
+
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label class="text-sm">
+                          current
+                          <input name="pr_current" type="text" inputmode="numeric"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          target
+                          <input name="pr_target" type="text" inputmode="numeric"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          percentage
+                          <input name="pr_percentage" type="text" inputmode="decimal"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm md:col-span-3">
+                          details (JSON object)
+                          <textarea name="pr_details_json" rows="3" spellcheck="false"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            placeholder="{}"></textarea>
+                        </label>
+
+                        <label class="text-sm md:col-span-2">
+                          completed_map_ids (CSV)
+                          <input name="pr_completed_map_ids" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            placeholder="1,2,3" />
+                        </label>
+
+                        <label class="text-sm">
+                          counted_map_ids (CSV)
+                          <input name="pr_counted_map_ids" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            placeholder="1,2,3" />
+                        </label>
+
+                        <label class="text-sm">
+                          map_id
+                          <input name="pr_map_id" type="text" inputmode="numeric"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          target_time
+                          <input name="pr_target_time" type="text" inputmode="decimal"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          target_type
+                          <div class="relative mt-1" data-dd-select>
+                            <button type="button" data-dd-btn data-placeholder="(no change)" aria-haspopup="listbox" aria-expanded="false"
+                              class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                              <span class="dd-label truncate">(no change)</span>
+                              <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                              </svg>
+                            </button>
+                            <div data-dd-list role="listbox"
+                              class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_target_type" value="" checked data-label="(no change)" />
+                                <span class="text-zinc-700 dark:text-zinc-200">(no change)</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_target_type" value="rival_challenge" data-label="rival_challenge" />
+                                <span class="text-zinc-700 dark:text-zinc-200">rival_challenge</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_target_type" value="medal_threshold" data-label="medal_threshold" />
+                                <span class="text-zinc-700 dark:text-zinc-200">medal_threshold</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_target_type" value="personal_best" data-label="personal_best" />
+                                <span class="text-zinc-700 dark:text-zinc-200">personal_best</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_target_type" value="personal_improvement" data-label="personal_improvement" />
+                                <span class="text-zinc-700 dark:text-zinc-200">personal_improvement</span>
+                              </label>
+                            </div>
+                          </div>
+                        </label>
+
+                        <label class="text-sm">
+                          medal_type
+                          <input name="pr_medal_type" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          best_attempt
+                          <input name="pr_best_attempt" type="text" inputmode="decimal"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          last_attempt
+                          <input name="pr_last_attempt" type="text" inputmode="decimal"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          rival_user_id
+                          <input name="pr_rival_user_id" type="text" inputmode="numeric"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          rival_time
+                          <input name="pr_rival_time" type="text" inputmode="decimal"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+
+                        <label class="text-sm">
+                          completed
+                          <div class="relative mt-1" data-dd-select>
+                            <button type="button" data-dd-btn data-placeholder="(no change)" aria-haspopup="listbox" aria-expanded="false"
+                              class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                              <span class="dd-label truncate">(no change)</span>
+                              <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                              </svg>
+                            </button>
+                            <div data-dd-list role="listbox"
+                              class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl">
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_completed" value="" checked data-label="(no change)" />
+                                <span class="text-zinc-700 dark:text-zinc-200">(no change)</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_completed" value="1" data-label="true" />
+                                <span class="text-zinc-700 dark:text-zinc-200">true</span>
+                              </label>
+                              <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                                <input class="hidden" type="radio" name="pr_completed" value="0" data-label="false" />
+                                <span class="text-zinc-700 dark:text-zinc-200">false</span>
+                              </label>
+                            </div>
+                          </div>
+                        </label>
+
+                        <label class="text-sm">
+                          medal_earned
+                          <input name="pr_medal_earned" type="text"
+                            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                      <button type="submit"
+                        class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 active:bg-emerald-800">
+                        Patch
+                      </button>
+                      <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                        Only non-empty fields are sent.
+                      </span>
+                    </div>
+                  </form>
+                </article>
+              </div>
               <div data-subpanel="dev-cache-frameworks" class="hidden space-y-6">
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
                   <div class="mb-4 flex items-center justify-between">

@@ -1,4 +1,3 @@
-/* Moderator Panel JS – 2 niveaux d'onglets, transitions, toasts */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -12,6 +11,50 @@ const PLAYTESTING_OPTIONS = [
   { value: 'In Progress', text: 'In Progress' },
   { value: 'Rejected', text: 'Rejected' },
 ];
+
+//──────────────────────────────────────────────────────────────────────────────
+// DEV ACCESS
+//──────────────────────────────────────────────────────────────────────────────
+const DEV_ALLOWLIST = new Set([
+  "681391478605479948",
+  "273775694008549376",
+  "141372217677053952",
+  "313459248942153729",
+]);
+
+const DEV_TABS = new Set(["devs", "store", "quests"]);
+
+function getCurrentUserId() {
+  const fromGlobals =
+    window.user_id ?? window.userId ?? window.USER_ID ?? window.discord_user_id ?? "";
+  const fromState = (typeof state !== "undefined") ? (state?.userId ?? "") : "";
+  return String(fromState || fromGlobals || "").trim();
+}
+
+function isDevAllowed() {
+  const uid = getCurrentUserId();
+  return !!uid && DEV_ALLOWLIST.has(uid);
+}
+
+function gateDevSectionsUI() {
+  const allowed = isDevAllowed();
+
+  document.querySelectorAll('[data-dev-only="1"]').forEach((el) => {
+    el.classList.toggle("hidden", !allowed);
+  });
+
+  return allowed;
+}
+
+function guardDevOnly(fn, { onDeny } = {}) {
+  return async function guarded(...args) {
+    if (!isDevAllowed()) {
+      if (typeof onDeny === "function") onDeny();
+      return;
+    }
+    return fn(...args);
+  };
+}
 
 // --- UI helpers ---
 function toast(msg, type = 'ok') {
@@ -88,32 +131,117 @@ async function copyText(text = '') {
   }
 }
 
-(() => {
-  document.querySelectorAll('[data-dd-select]').forEach((dd) => {
+function wireDdSelect(root = document) {
+  root.querySelectorAll('[data-dd-select]:not([data-dd-wired])').forEach((dd) => {
+    dd.dataset.ddWired = "1";
+
     const btn = dd.querySelector('[data-dd-btn]');
     const list = dd.querySelector('[data-dd-list]');
-    const labelEl = btn.querySelector('.dd-label');
+    const labelEl = btn?.querySelector('.dd-label');
+
+    if (!btn || !list) return;
+
+    const addHidden = () => list.classList.add("hidden");
+    const toggleHidden = () => list.classList.toggle("hidden");
 
     const update = () => {
       const checked = dd.querySelector('input[type="radio"]:checked');
-      const text = checked?.dataset.label || checked?.value || '';
-      if (labelEl && text) labelEl.textContent = text;
+      const text =
+        checked?.dataset?.label ||
+        checked?.getAttribute?.("data-label") ||
+        checked?.value ||
+        "";
+      if (labelEl) labelEl.textContent = text || btn.getAttribute("data-placeholder") || "Select…";
     };
 
-    btn.addEventListener('click', () => {
-(() => { const __obj = list; let __last; for (const __c of String('hidden').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c); return __last; })();
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleHidden();
     });
-    list.addEventListener('change', () => {
+
+    list.addEventListener("click", (e) => e.stopPropagation());
+
+    list.addEventListener("change", () => {
       update();
-      list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+      addHidden();
     });
-    document.addEventListener('click', (e) => {
-      if (!dd.contains(e.target)) list.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
+
+    document.addEventListener("click", (e) => {
+      if (!dd.contains(e.target)) addHidden();
     });
 
     update();
   });
-})();
+}
+
+
+function bindDdDelegation() {
+  if (window.__ddDelegationBound) return;
+  window.__ddDelegationBound = true;
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target?.closest?.('[data-dd-btn]');
+    if (btn) {
+      const dd = btn.closest('[data-dd-select]');
+      const list = dd?.querySelector?.('[data-dd-list]');
+      if (!dd || !list) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      document.querySelectorAll('[data-dd-list]:not(.hidden)').forEach((l) => {
+        if (l !== list) {
+          l.classList.add('hidden');
+          l.closest('[data-dd-select]')?.querySelector?.('[data-dd-btn]')?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      const willOpen = list.classList.contains('hidden');
+      list.classList.toggle('hidden', !willOpen);
+      btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      return;
+    }
+
+    document.querySelectorAll('[data-dd-list]:not(.hidden)').forEach((l) => {
+      const dd = l.closest('[data-dd-select]');
+      if (dd && !dd.contains(e.target)) {
+        l.classList.add('hidden');
+        dd.querySelector?.('[data-dd-btn]')?.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }, true);
+
+  document.addEventListener('change', (e) => {
+    const target = e.target;
+    const dd = target?.closest?.('[data-dd-select]');
+    if (!dd) return;
+
+    if (target?.matches?.('input[type="radio"]')) {
+      const labelEl = dd.querySelector('.dd-label');
+      const btn = dd.querySelector('[data-dd-btn]');
+      const list = dd.querySelector('[data-dd-list]');
+
+      const text =
+        target.dataset?.label ||
+        target.getAttribute?.('data-label') ||
+        target.value ||
+        '';
+
+      if (labelEl) labelEl.textContent = text || btn?.getAttribute('data-placeholder') || 'Select…';
+
+      // Optional mirror into known hidden fields (used by Quests -> progress picker)
+      const hidden = dd.querySelector('input[type="hidden"][name="pick_progress_id"]');
+      if (hidden) hidden.value = target.value;
+
+      if (list) list.classList.add('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  }, true);
+}
+
+
+// wireDdSelect is invoked from initializeApp() to ensure DOM is ready.
 
 (function () {
   const id = 'rw-rewardTypeDropdown';
@@ -531,8 +659,11 @@ function scrollIntoViewWithOffset(el, offset) {
       if (active) {
         $('.empty-state', panel)?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
         active.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+        wireDdSelect(active);
         active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
+
+        active.querySelectorAll('input[name$="user_id"]').forEach((inp) => attachUsersAutocomplete(inp));
 
         if (name === 'maps-submit') initSubmitPanel();
         if (name === 'maps-archive') setupArchiveMapsUI();
@@ -550,6 +681,12 @@ function scrollIntoViewWithOffset(el, offset) {
           handleGetPendingEditRequests();
         }
         wireFormAutocompletes(active);
+        try {
+          active.querySelectorAll('.fake-select, .custom-multiselect').forEach((el) => {
+            if (typeof __merSetupFakeSelect === 'function') __merSetupFakeSelect(el);
+          });
+        } catch {}
+
       }
 
       setTimeout(() => target.focus?.({ preventScroll: true }), 0);
@@ -562,7 +699,9 @@ $('#clearLog')?.addEventListener('click', () => {
   $('#activityLog').innerHTML = '';
 });
 
-// ===================== AUTOCOMPLETE ENGINE =====================
+//———————————————————————————————————————————————————————————————
+// AUTOCOMPLETE ENGINNE
+//———————————————————————————————————————————————————————————————
 const LOCALE = document.documentElement.lang?.split('-')[0] || 'en';
 const AC_PAGE_SIZE = 8;
 
@@ -881,21 +1020,64 @@ $$('form[data-action]').forEach((form) => {
           return handleGetPendingEditRequests();
         case 'verify-completion':
           return handleVerifyCompletion(form);
-        default:
-          toast(`Unknown action: ${action}`, 'err');
-
+        
         // DEVS (API_MODS)
         case 'clear-frameworks-cache':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
           return handleClearFrameworksCache(form);
         case 'clear-avatars-cache':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
           return handleClearAvatarsCache(form);
         case 'clear-translations-cache':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
           return handleClearTranslationsCache(form);
         case 'set-overpy-commit':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
           return handleSetOverpyCommit(form);
         case 'set-framework-version':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
           return handleSetFrameworkVersion(form);
-      }
+
+        // STORE (API_MODS)
+        case 'store-get-config':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleStoreGetConfig(form);
+        case 'store-update-config':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleStoreUpdateConfig(form);
+        case 'store-generate-rotation':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleStoreGenerateRotation(form);
+
+        // QUESTS (API_MODS)
+        case 'quest-get-config':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestGetConfig(form);
+        case 'quest-update-config':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestUpdateConfig(form);
+        case 'quest-update-quest':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestUpdateQuest(form);
+        case 'quest-generate-rotation':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestGenerateRotation(form);
+        case 'quest-get-weekly':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestGetWeekly(form);
+
+        case 'quest-get-user-progress':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestGetUserProgress(form);
+
+        case 'quest-update-user-progress':
+          if (!isDevAllowed()) return toast('Dev access only', 'err');
+          return handleQuestUpdateUserProgress(form);
+
+        default:
+          toast(`Unknown action: ${action}`, 'err');
+          return;
+}
     } catch (err) {
       toast('Unexpected error', 'err');
       logActivity({
@@ -909,6 +1091,16 @@ $$('form[data-action]').forEach((form) => {
     }
   });
 });
+
+// --- Buttons / misc actions (non-form) ---
+document.addEventListener('click', (e) => {
+  const btn = e.target?.closest?.('[data-action="quest-fill-user-progress"]');
+  if (!btn) return;
+  e.preventDefault();
+  const subpanel = btn.closest('[data-subpanel="quest-user-progress"]') || btn.closest('[data-subpanel]') || document;
+  fillQuestUserProgressFromPicked(subpanel);
+});
+
 
 // --- Archive UI: Single/Bulk ---
 function setupArchiveMapsUI() {
@@ -1011,7 +1203,9 @@ function setupArchiveMapsUI() {
   }, { passive: true });
 })();
 
-// ============== HANDLERS ==============
+//———————————————————————————————————————————————————————————————
+// HANDLERS
+//———————————————————————————————————————————————————————————————
 // USERS
 async function handleCreateFake(form) {
   const name = form.name.value?.trim();
@@ -1121,18 +1315,47 @@ async function handleGrantKey(form) {
 }
 
 async function handleGrantXp(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  const amount = +form.amount.value;
-  if (!Number.isFinite(amount) || amount <= 0) {
-    toast('Amount must be a positive number', 'warn');
+  const user_id = String(getUserIdFrom(form.user_id)).trim();
+
+  if (!isDigits(user_id)) {
+    toast('Pick a user from suggestions (user id required)', 'warn');
     return;
   }
+
+  const amount = Number.parseInt(form.amount.value, 10);
+  if (!Number.isInteger(amount) || amount <= 0) {
+    toast('Amount must be a positive integer', 'warn');
+    return;
+  }
+
+  const type = String(form.type?.value || 'Other').trim() || 'Other';
+  const reason = String(form.reason?.value || '').trim();
+  const apply_multiplier = !!form.apply_multiplier?.checked;
+
+  const payload = {
+    amount,
+    type,
+    ...(reason ? { reason } : {}),
+    apply_multiplier,
+    source: 'mods',
+  };
+
   const { ok, status, url, data } = await http(
     'POST',
     `${API_MODS}/lootbox/users/${encodeURIComponent(user_id)}/xp`,
-    { body: { amount } }
+    {
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    }
   );
+
   logActivity({ title: 'Grant XP', method: 'POST', url, ok, status, data });
+
+  if (!ok && status === 422) {
+    toast(data?.error || 'Validation failed (check amount/type/user)', 'err');
+    return;
+  }
+
   toast(ok ? 'XP granted' : 'Failed', ok ? 'ok' : 'err');
 }
 
@@ -3996,8 +4219,9 @@ async function handleGetPendingEditRequests() {
   toast('Edit queue loaded', 'ok');
 }
 
-// ———————————————————————————————————————————————————————————————
+//———————————————————————————————————————————————————————————————
 // LOOTBOX
+//———————————————————————————————————————————————————————————————
 function showConfirmActiveKeyType() {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -4046,8 +4270,9 @@ function showConfirmActiveKeyType() {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
-// Submit map
+//———————————————————————————————————————————————————————————————
+// SUBMIT MAP
+//———————————————————————————————————————————————————————————————
 
 function difficultyDotClass(label) {
   const L = String(label).toLowerCase();
@@ -4100,6 +4325,42 @@ function ddShow(list) {
   list?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
+function wireQuestProgressPicker(root) {
+  if (!root || root.dataset.qpWired) return;
+  root.dataset.qpWired = "1";
+  const btn = ddBtn(root);
+  const list = ddList(root);
+  if (!btn || !list) return;
+
+  ddHide(list);
+
+  btn.addEventListener(
+    "click",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      list.classList.contains("hidden") ? ddShow(list) : ddHide(list);
+    },
+    true
+  );
+
+  list.addEventListener(
+    "click",
+    (e) => {
+      e.stopPropagation();
+    },
+    true
+  );
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!root.contains(e.target)) ddHide(list);
+    },
+    true
+  );
+}
 function buildRadioDropdown(id, options, placeholder) {
   const root = document.getElementById(id);
   if (!root) return;
@@ -4506,8 +4767,9 @@ function bindSubmitMapEditButtons(root = document) {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
-// Search map
+//———————————————————————————————————————————————————————————————
+// SEARCH MAP
+//———————————————————————————————————————————————————————————————
 function ddSelectByValue(root, value) {
   const list = root?.querySelector('[data-dd-list]');
   if (!list) return;
@@ -4667,8 +4929,9 @@ function populateSearchPanel(item) {
   form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
-// ———————————————————————————————————————————————————————————————
-// UPDATE MAP – init & helpers
+//———————————————————————————————————————————————————————————————
+// UPDATE MAP
+//———————————————————————————————————————————————————————————————
 
 function getSelectedRadio(rootSel) {
   const el = document.querySelector(`${rootSel} input[type="radio"]:checked`);
@@ -4844,8 +5107,9 @@ function populateUpdatePanel(item) {
   form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
-// ———————————————————————————————————————————————————————————————
-// Inline edit générique
+//———————————————————————————————————————————————————————————————
+// EDIT INLINE
+//———————————————————————————————————————————————————————————————
 
 function bindEditButtonsGeneric(root) {
   if (!root || root.__uEditBound) return;
@@ -5028,8 +5292,9 @@ function editInlineGeneric(fieldRef, triggerBtn) {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
-// Medals (update)
+//———————————————————————————————————————————————————————————————
+// MEDALS
+//———————————————————————————————————————————————————————————————
 function parseDecLocale(v) {
   const s = String(v ?? '')
     .trim()
@@ -5062,6 +5327,7 @@ function validateUpdateMedals(allowEmpty = true) {
 
 // ———————————————————————————————————————————————————————————————
 // QUALITY OVERRIDE
+// ———————————————————————————————————————————————————————————————
 const QUALITY_OPTIONS = [1, 2, 3, 4, 5, 6].map((n) => ({
   value: String(n),
   text: n === 1 ? '1 – Lowest' : n === 6 ? '6 – Highest' : String(n),
@@ -5077,6 +5343,7 @@ function initModQualityPanel() {
 
 // ———————————————————————————————————————————————————————————————
 // VERIFICATION QUEUE – init & helpers
+// ———————————————————————————————————————————————————————————————
 const MOD_USER_ID = (
   document.getElementById('modUserId')?.value ??
   document.querySelector('meta[name="mod-user-id"]')?.content ??
@@ -5207,9 +5474,9 @@ function parseSec(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-/* =========================
-   RENDER SUBMISSION CARD
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// RENDER SUBMISSION CARD
+//———————————————————————————————————————————————————————————————
 function renderSubmissionCard(item) {
   const rid    = String(item?.id ?? '');
   const verId  = item?.verification_id == null ? '' : String(item.verification_id);
@@ -5321,9 +5588,9 @@ function renderSubmissionCard(item) {
   return wrap;
 }
 
-/* =========================
-   REMOVE CARD
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// REMOVE CARD
+//———————————————————————————————————————————————————————————————
 function removeCardFromVerifList(card) {
   if (!card) return;
   const container = card.parentElement;
@@ -5354,9 +5621,9 @@ function removeCardFromVerifList(card) {
 }
 
 
-/* =========================
-   REMOVE EDIT CARD
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// REMOVE EDIT CARD
+//———————————————————————————————————————————————————————————————
 function removeCardFromEditList(card) {
   if (!card) return;
   const container = card.parentElement;
@@ -5387,9 +5654,9 @@ function removeCardFromEditList(card) {
   );
 }
 
-/* =========================
-   DENY DIALOG
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// DENY DIALOG
+//———————————————————————————————————————————————————————————————
 function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (optional)' } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -5446,9 +5713,9 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
 }
 
 
-/* =========================
-   CLICK HANDLER (edit requests)
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// CLICK HANDLER (edit requests)
+//———————————————————————————————————————————————————————————————
 document.addEventListener('click', async (e) => {
   const btnView = e.target.closest('.btn-edit-view');
   const btnAccept = e.target.closest('.btn-edit-accept');
@@ -5520,9 +5787,9 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-/* =========================
-   CLICK HANDLER (verify/deny/auto)
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// CLICK HANDLER (verify/deny/auto)
+//———————————————————————————————————————————————————————————————
 document.addEventListener('click', async (e) => {
   const btnAuto   = e.target.closest('.btn-auto-verify');
   const btnVerify = e.target.closest('.btn-verify');
@@ -5625,9 +5892,9 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-/* =========================
-   AUTO VERIFY FLOW
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// AUTO VERIFY FLOW
+//———————————————————————————————————————————————————————————————
 async function autoVerifyCard(card) {
   const record_id  = card?.dataset?.recordId;
   const code       = (card?.dataset?.code || "").toString();
@@ -5720,9 +5987,9 @@ async function autoVerifyCard(card) {
   else { toast("Auto verify: API failed", "err"); }
 }
 
-/* =========================
-   ROI STORAGE + EDITOR
-   ========================= */
+//———————————————————————————————————————————————————————————————
+// ROI STORAGE + EDITOR
+//———————————————————————————————————————————————————————————————
 const ROI_LS_KEY = "gp_ocr_rois";
 
 const DEFAULT_ROIS = {
@@ -5899,8 +6166,9 @@ async function openRoiEditor(imageUrl) {
   });
 }
 
-// ———————————————————————————————————————————————————————————————
+//———————————————————————————————————————————————————————————————
 // USERS
+//———————————————————————————————————————————————————————————————
 async function prefillReplaceOverwatchByUserId(form, user_id) {
   const { ok, status, url, data } = await http(
     'GET',
@@ -5989,8 +6257,9 @@ function syncDdLabel(ddOrChild) {
   if (labelEl && txt) labelEl.textContent = txt;
 }
 
-// ———————————————————————————————————————————————————————————————
-// Devs only
+//———————————————————————————————————————————————————————————————
+// DEVS ONLY
+//———————————————————————————————————————————————————————————————
 const TRANSLATION_FILES = [
   'gamemodes.json',
   'heroes.json',
@@ -6255,12 +6524,844 @@ async function handleSetFrameworkVersion(form) {
   }
 }
 
-// --- Mod UI ---
-// - URL sync: ?tab=...&sub=...
-// - Sidebar filter input
-// - Command palette (Ctrl+K)
+//———————————————————————————————————————————————————————————————
+// STORE
+//———————————————————————————————————————————————————————————————
+function stringifyOut(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  try { return JSON.stringify(v, null, 2); }
+  catch { return String(v); }
+}
+
+function setPanelOut(form, key, value) {
+  const txt = stringifyOut(value);
+
+  const scope =
+    form?.closest?.("[data-panel]") ||
+    form?.closest?.(".mod-panel") ||
+    form ||
+    document;
+
+  const el =
+    scope.querySelector?.(`[data-out="${CSS.escape(key)}"]`) ||
+    document.getElementById(key) ||
+    document.getElementById(`out-${key}`) ||
+    document.querySelector?.(`[data-out="${CSS.escape(key)}"]`);
+
+  if (!el) {
+    console.warn(`[moderator] setPanelOut: output not found for "${key}"`);
+    return;
+  }
+
+  if ("value" in el && (el.tagName === "TEXTAREA" || el.tagName === "INPUT")) {
+    el.value = txt;
+  } else {
+    el.textContent = txt;
+  }
+
+  if (el.closest?.("[hidden]")) el.closest("[hidden]").hidden = false;
+  if (el.hidden) el.hidden = false;
+}
+
+function readJsonField(raw) {
+  try {
+    const v = JSON.parse(raw);
+    if (v == null) return null;
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+async function handleStoreGetConfig(form) {
+  setPanelOut(form, "store-config", "Loading…");
+
+  const res = await http("GET", `${API_MODS}/store/config`);
+
+  logActivity({
+    title: "Store Config (GET)",
+    method: "GET",
+    url: res.url || `${API_MODS}/store/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "store-config", res.data ?? "Request failed");
+    toast("Failed to load store config", "err");
+    return;
+  }
+
+  setPanelOut(form, "store-config", res.data);
+  toast("Store config loaded", "ok");
+}
+
+async function handleStoreUpdateConfig(form) {
+  const fd = new FormData(form);
+  const rotation_period_days = fd.get("rotation_period_days");
+  const active_key_type = String(fd.get("active_key_type") || "").trim();
+
+  const payload = {};
+  if (rotation_period_days !== "" && rotation_period_days != null) payload.rotation_period_days = Number(rotation_period_days);
+  if (active_key_type) payload.active_key_type = active_key_type;
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "store-update-res", "Saving…");
+
+  const res = await http("PUT", `${API_MODS}/store/config`, { body: payload });
+
+  logActivity({
+    title: "Store Config (PUT)",
+    method: "PUT",
+    url: res.url || `${API_MODS}/store/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "store-update-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "store-update-res", res.data);
+  toast("Store config updated", "ok");
+
+  // Optionnel : refresh auto
+  handleStoreGetConfig(form);
+}
+
+async function handleStoreGenerateRotation(form) {
+  const fd = new FormData(form);
+  const item_count = Number(fd.get("item_count") || 0);
+
+  if (!Number.isFinite(item_count) || item_count < 1) {
+    toast("Invalid item_count", "warn");
+    return;
+  }
+
+  setPanelOut(form, "store-rotation-res", "Generating…");
+
+  const res = await http("POST", `${API_MODS}/store/rotation/generate`, { body: { item_count } });
+
+  logActivity({
+    title: "Generate Store Rotation (POST)",
+    method: "POST",
+    url: res.url || `${API_MODS}/store/rotation/generate`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "store-rotation-res", res.data ?? "Rotation failed");
+    toast("Rotation failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "store-rotation-res", res.data);
+  toast("Rotation generated", "ok");
+}
+
+
+//———————————————————————————————————————————————————————————————
+// QUESTS
+//———————————————————————————————————————————————————————————————
+async function handleQuestGetWeekly(form) {
+  const user_id = window.user_id;
+
+  if (!user_id) {
+    toast("window.user_id is missing", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-weekly-out", "Loading…");
+
+  const url = `/api/quests?user_id=${encodeURIComponent(user_id)}`;
+  const res = await http("GET", url);
+
+  logActivity({
+    title: "Weekly Quests (GET)",
+    method: "GET",
+    url: res.url || url,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-weekly-out", res.data ?? "Request failed");
+    toast("Failed to load weekly quests", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-weekly-out", res.data);
+  toast("Weekly quests loaded", "ok");
+}
+
+async function handleQuestGetConfig(form) {
+  setPanelOut(form, "quest-config", "Loading…");
+
+  const res = await http("GET", `${API_MODS}/quests/config`);
+
+  logActivity({
+    title: "Quest Config (GET)",
+    method: "GET",
+    url: res.url || `${API_MODS}/quests/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-config", res.data ?? "Request failed");
+    toast("Failed to load quest config", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-config", res.data);
+  toast("Quest config loaded", "ok");
+}
+
+async function handleQuestUpdateConfig(form) {
+  const fd = new FormData(form);
+
+  const payload = {};
+  ["rotation_day","rotation_hour","easy_quest_count","medium_quest_count","hard_quest_count"].forEach((k) => {
+    const v = fd.get(k);
+    if (v !== "" && v != null) payload[k] = Number(v);
+  });
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "quest-config-update-res", "Saving…");
+
+  const res = await http("PUT", `${API_MODS}/quests/config`, { body: payload });
+
+  logActivity({
+    title: "Quest Config (PUT)",
+    method: "PUT",
+    url: res.url || `${API_MODS}/quests/config`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-config-update-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-config-update-res", res.data);
+  toast("Quest config updated", "ok");
+
+  handleQuestGetConfig(form);
+}
+
+async function handleQuestUpdateQuest(form) {
+  const fd = new FormData(form);
+  const quest_id = Number(fd.get("quest_id") || 0);
+
+  if (!Number.isFinite(quest_id) || quest_id < 1) {
+    toast("Invalid quest_id", "warn");
+    return;
+  }
+
+  const payload = {};
+
+  const name = String(fd.get("name") || "").trim();
+  const description = String(fd.get("description") || "").trim();
+  const difficulty = String(fd.get("difficulty") || "").trim();
+  const coin_reward = fd.get("coin_reward");
+  const xp_reward = fd.get("xp_reward");
+  const is_active = fd.get("is_active");
+  const reqRaw = String(fd.get("requirements_json") || "").trim();
+
+  if (name) payload.name = name;
+  if (description) payload.description = description;
+  if (difficulty) payload.difficulty = difficulty;
+  if (coin_reward !== "" && coin_reward != null) payload.coin_reward = Number(coin_reward);
+  if (xp_reward !== "" && xp_reward != null) payload.xp_reward = Number(xp_reward);
+
+  if (is_active === "1") payload.is_active = true;
+  if (is_active === "0") payload.is_active = false;
+
+  if (reqRaw) {
+    const parsed = readJsonField(reqRaw);
+    if (!parsed) {
+      toast("Invalid requirements JSON", "err");
+      return;
+    }
+    payload.requirements = parsed;
+  }
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "quest-update-res", "Saving…");
+
+  const res = await http("PATCH", `${API_MODS}/quests/${quest_id}`, { body: payload });
+
+  logActivity({
+    title: `Update Quest #${quest_id} (PATCH)`,
+    method: "PATCH",
+    url: res.url || `${API_MODS}/quests/${quest_id}`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-update-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-update-res", res.data);
+  toast("Quest updated", "ok");
+}
+
+async function handleQuestGenerateRotation(form) {
+  setPanelOut(form, "quest-rotation-res", "Generating…");
+
+  const res = await http("POST", `${API_MODS}/quests/rotation/generate`, { body: {} });
+
+  logActivity({
+    title: "Generate Quest Rotation (POST)",
+    method: "POST",
+    url: res.url || `${API_MODS}/quests/rotation/generate`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-rotation-res", res.data ?? "Rotation failed");
+    toast("Rotation failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-rotation-res", res.data);
+  toast("Quest rotation generated", "ok");
+}
+
+async function handleQuestUpdateUserProgress(form) {
+  const fd = new FormData(form);
+
+  const userInput = form.querySelector('input[name="user_id"]');
+  const user_id = String(getUserIdFrom(userInput) || 0);
+  const progress_id = Number(fd.get("progress_id") || 0);
+
+  if (!user_id || !/^\d+$/.test(user_id) || user_id === "0") {
+    toast("Invalid user_id", "warn");
+    return;
+  }
+  if (!Number.isFinite(progress_id) || progress_id < 1) {
+    toast("Invalid progress_id", "warn");
+    return;
+  }
+
+  const payload = {};
+
+  const completed = fd.get("completed");
+  if (completed === "1") payload.completed = true;
+  if (completed === "0") payload.completed = false;
+
+  const claimed = fd.get("claimed");
+  if (claimed === "1") payload.claimed = true;
+  if (claimed === "0") payload.claimed = false;
+
+  // --- helpers
+  const readStr = (name) => {
+    const v = String(fd.get(name) ?? "").trim();
+    return v === "" ? null : v;
+  };
+
+  const readNum = (name, { allowFloat = false } = {}) => {
+    const raw = String(fd.get(name) ?? "").trim();
+    if (raw === "") return null;
+    const n = allowFloat ? Number(raw) : Number.parseInt(raw, 10);
+    if (!Number.isFinite(n)) return NaN;
+    return n;
+  };
+
+  const parseCsvInts = (raw) => {
+    const s = String(raw ?? "").trim();
+    if (!s) return null;
+    const arr = s
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .map((x) => Number.parseInt(x, 10))
+      .filter((n) => Number.isFinite(n));
+    return arr.length ? arr : [];
+  };
+
+  const readJsonOptional = (name) => {
+    const raw = String(fd.get(name) ?? "").trim();
+    if (!raw) return null;
+    const parsed = readJsonField(raw);
+    if (!parsed) return NaN;
+    return parsed;
+  };
+
+  // quest_data
+  const quest_data = {};
+
+  const qd_name = readStr("qd_name");
+  if (qd_name != null) quest_data.name = qd_name;
+
+  const qd_description = readStr("qd_description");
+  if (qd_description != null) quest_data.description = qd_description;
+
+  const qd_difficulty = readStr("qd_difficulty");
+  if (qd_difficulty != null) quest_data.difficulty = qd_difficulty;
+
+  const qd_coin_reward = readNum("qd_coin_reward");
+  if (qd_coin_reward === NaN) return toast("Invalid quest_data.coin_reward", "warn");
+  if (qd_coin_reward != null) quest_data.coin_reward = qd_coin_reward;
+
+  const qd_xp_reward = readNum("qd_xp_reward");
+  if (qd_xp_reward === NaN) return toast("Invalid quest_data.xp_reward", "warn");
+  if (qd_xp_reward != null) quest_data.xp_reward = qd_xp_reward;
+
+  const qd_bounty = readStr("qd_bounty_type");
+  if (qd_bounty != null) quest_data.bounty_type = qd_bounty;
+
+  // requirements
+  const requirements = {};
+
+  const req_type = readStr("req_type");
+  if (req_type != null) requirements.type = req_type;
+
+  const req_count = readNum("req_count");
+  if (req_count === NaN) return toast("Invalid requirements.count", "warn");
+  if (req_count != null) requirements.count = req_count;
+
+  const req_difficulty = readStr("req_difficulty");
+  if (req_difficulty != null) requirements.difficulty = req_difficulty;
+
+  const req_category = readStr("req_category");
+  if (req_category != null) requirements.category = req_category;
+
+  const req_medal_type = readStr("req_medal_type");
+  if (req_medal_type != null) requirements.medal_type = req_medal_type;
+
+  const req_map_id = readNum("req_map_id");
+  if (req_map_id === NaN) return toast("Invalid requirements.map_id", "warn");
+  if (req_map_id != null) requirements.map_id = req_map_id;
+
+  const req_target_time = readNum("req_target_time", { allowFloat: true });
+  if (req_target_time === NaN) return toast("Invalid requirements.target_time", "warn");
+  if (req_target_time != null) requirements.target_time = req_target_time;
+
+  const req_target_type = readStr("req_target_type");
+  if (req_target_type != null) requirements.target_type = req_target_type;
+
+  const reqRivalInput = form.querySelector('input[name="req_rival_user_id"]');
+  const req_rival_user_id = String(getUserIdFrom(reqRivalInput) || "").trim();
+
+  if (req_rival_user_id) {
+    if (!/^\d+$/.test(req_rival_user_id) || req_rival_user_id === "0") {
+      return toast("Invalid requirements.rival_user_id", "warn");
+    }
+    requirements.rival_user_id = req_rival_user_id;
+  }
+
+  const req_rival_time = readNum("req_rival_time", { allowFloat: true });
+  if (req_rival_time === NaN) return toast("Invalid requirements.rival_time", "warn");
+  if (req_rival_time != null) requirements.rival_time = req_rival_time;
+
+  const req_target = readStr("req_target");
+  if (req_target != null) requirements.target = req_target;
+
+  const req_min_count = readNum("req_min_count");
+  if (req_min_count === NaN) return toast("Invalid requirements.min_count", "warn");
+  if (req_min_count != null) requirements.min_count = req_min_count;
+
+  if (Object.keys(requirements).length) quest_data.requirements = requirements;
+
+  if (Object.keys(quest_data).length) payload.quest_data = quest_data;
+
+  // progress
+  const progress = {};
+
+  const pr_current = readNum("pr_current");
+  if (pr_current === NaN) return toast("Invalid progress.current", "warn");
+  if (pr_current != null) progress.current = pr_current;
+
+  const pr_target = readNum("pr_target");
+  if (pr_target === NaN) return toast("Invalid progress.target", "warn");
+  if (pr_target != null) progress.target = pr_target;
+
+  const pr_percentage = readNum("pr_percentage", { allowFloat: true });
+  if (pr_percentage === NaN) return toast("Invalid progress.percentage", "warn");
+  if (pr_percentage != null) progress.percentage = pr_percentage;
+
+  const pr_details = readJsonOptional("pr_details_json");
+  if (pr_details === NaN) return toast("Invalid progress.details JSON", "err");
+  if (pr_details !=null) progress.details = pr_details;
+
+  const pr_completed_map_ids = parseCsvInts(fd.get("pr_completed_map_ids"));
+  if (pr_completed_map_ids != null) progress.completed_map_ids = pr_completed_map_ids;
+
+  const pr_counted_map_ids = parseCsvInts(fd.get("pr_counted_map_ids"));
+  if (pr_counted_map_ids != null) progress.counted_map_ids = pr_counted_map_ids;
+
+  const pr_map_id = readNum("pr_map_id");
+  if (pr_map_id === NaN) return toast("Invalid progress.map_id", "warn");
+  if (pr_map_id != null) progress.map_id = pr_map_id;
+
+  const pr_target_time = readNum("pr_target_time", { allowFloat: true });
+  if (pr_target_time === NaN) return toast("Invalid progress.target_time", "warn");
+  if (pr_target_time != null) progress.target_time = pr_target_time;
+
+  const pr_target_type = readStr("pr_target_type");
+  if (pr_target_type != null) progress.target_type = pr_target_type;
+
+  const pr_medal_type = readStr("pr_medal_type");
+  if (pr_medal_type != null) progress.medal_type = pr_medal_type;
+
+  const pr_best_attempt = readNum("pr_best_attempt", { allowFloat: true });
+  if (pr_best_attempt === NaN) return toast("Invalid progress.best_attempt", "warn");
+  if (pr_best_attempt != null) progress.best_attempt = pr_best_attempt;
+
+  const pr_last_attempt = readNum("pr_last_attempt", { allowFloat: true });
+  if (pr_last_attempt === NaN) return toast("Invalid progress.last_attempt", "warn");
+  if (pr_last_attempt != null) progress.last_attempt = pr_last_attempt;
+
+  const prRivalInput = form.querySelector('input[name="pr_rival_user_id"]');
+  const pr_rival_user_id = String(getUserIdFrom(prRivalInput) || "").trim();
+
+  if (pr_rival_user_id) {
+    if (!/^\d+$/.test(pr_rival_user_id) || pr_rival_user_id === "0") {
+      return toast("Invalid progress.rival_user_id", "warn");
+    }
+    progress.rival_user_id = pr_rival_user_id;
+  }
+
+  const pr_rival_time = readNum("pr_rival_time", { allowFloat: true });
+  if (pr_rival_time === NaN) return toast("Invalid progress.rival_time", "warn");
+  if (pr_rival_time != null) progress.rival_time = pr_rival_time;
+
+  const pr_completed = fd.get("pr_completed");
+  if (pr_completed === "1") progress.completed = true;
+  if (pr_completed === "0") progress.completed = false;
+
+  const pr_medal_earned = readStr("pr_medal_earned");
+  if (pr_medal_earned != null) progress.medal_earned = pr_medal_earned;
+
+  if (Object.keys(progress).length) payload.progress = progress;
+
+  if (!Object.keys(payload).length) {
+    toast("Nothing to update", "warn");
+    return;
+  }
+
+  setPanelOut(form, "quest-user-progress-res", "Saving…");
+
+  const url = `${API_MODS}/quests/admin/users/${user_id}/progress/${progress_id}`;
+  const res = await http("PATCH", url, { body: payload });
+
+  logActivity({
+    title: `Update User Quest Progress (PATCH)`,
+    method: "PATCH",
+    url: res.url || url,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-user-progress-res", res.data ?? "Update failed");
+    toast("Update failed", "err");
+    return;
+  }
+
+  setPanelOut(form, "quest-user-progress-res", res.data);
+  toast("User quest progress updated", "ok");
+}
+
+let __modQuestUserProgressCache = {};
+
+async function handleQuestGetUserProgress(form) {
+  const userInput = form.querySelector('input[name="user_id"]');
+  const user_id = String(getUserIdFrom(userInput) || "").trim();
+
+  if (!user_id) {
+    toast("Invalid user_id", "warn");
+    return;
+  }
+
+  setPanelOut(form, "quest-user-progress-res", "Loading…");
+
+  const url = `/api/quests`;
+  const res = await http("GET", url, { query: { user_id } });
+
+  logActivity({
+    title: `Get User Quests (GET)`,
+    method: "GET",
+    url: res.url || `${url}?user_id=${encodeURIComponent(user_id)}`,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  if (!res.ok) {
+    setPanelOut(form, "quest-user-progress-res", res.data ?? "Load failed");
+    toast("Load failed", "err");
+    return;
+  }
+
+  __modQuestUserProgressCache[user_id] = res.data;
+
+  const items = normalizeQuestProgressItems(res.data);
+  const options = (items || []).map((it) => ({ value: String(it.progress_id), text: it.label }));
+
+  const root = document.getElementById("modQuestUserProgressPick");
+  const btn = root?.querySelector?.('[data-dd-btn]');
+  const list = root?.querySelector?.('[data-dd-list]');
+  const hidden = root?.querySelector?.('input[type="hidden"][name="pick_progress_id"]');
+
+  if (hidden) hidden.value = "";
+  if (btn) btn.querySelector?.('.dd-label') && (btn.querySelector('.dd-label').textContent = "Select a progress…");
+
+  if (!options.length) {
+    if (list) {
+      list.innerHTML = `
+        <div class="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+          No progress found for this user.
+        </div>`;
+    }
+    wireQuestProgressPicker(document.getElementById("modQuestUserProgressPick"));
+  } else {
+    try {
+      buildRadioDropdown("modQuestUserProgressPick", options, "Select a progress…");
+      wireQuestProgressPicker(document.getElementById("modQuestUserProgressPick"));
+    } catch (e) {
+      console.error("[mods][quests] build progress picker failed:", e);
+    }
+  }
+
+  if (root && !root.dataset.bindPickHidden) {
+    root.dataset.bindPickHidden = "1";
+    root.addEventListener("change", (e) => {
+      const r = e.target?.closest?.('input[type="radio"]');
+      if (!r) return;
+      const h = root.querySelector('input[type="hidden"][name="pick_progress_id"]');
+      if (h) h.value = r.value;
+    });
+  }
+  setPanelOut(form, "quest-user-progress-res", res.data);
+  toast("Loaded", "ok");
+}
+
+function normalizeQuestProgressItems(data) {
+  const pickArray = (obj) => {
+    if (!obj) return [];
+    if (Array.isArray(obj)) return obj;
+
+    const candidates = [
+      obj.data,
+      obj.items,
+      obj.results,
+      obj.quests,
+      obj.progress,
+      obj.user_quests,
+      obj.userQuests,
+      obj.rows,
+    ];
+    for (const c of candidates) if (Array.isArray(c)) return c;
+
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (Array.isArray(v)) return v;
+    }
+    return [];
+  };
+
+  const arr = pickArray(data);
+
+  return (arr || [])
+    .map((raw) => {
+      const progress_id =
+        raw?.progress_id ??
+        raw?.progressId ??
+        raw?.id ??
+        raw?.progress?.id ??
+        raw?.progress?.progress_id ??
+        null;
+
+      if (!progress_id) return null;
+
+      const qn =
+        raw?.quest_data?.name ??
+        raw?.quest?.name ??
+        raw?.quest_name ??
+        raw?.name ??
+        "";
+
+      const pid = String(progress_id);
+      const pct = (raw?.progress?.percentage != null) ? `${raw.progress.percentage}%` : "";
+      const diff = raw?.difficulty ?? raw?.quest_data?.difficulty ?? "";
+      const bits = [diff, pct].filter(Boolean).join(" · ");
+      const label = qn ? `#${pid} · ${qn}${bits ? ` (${bits})` : ""}` : `Progress #${pid}`;
+      return { progress_id: Number(progress_id), label, raw };
+    })
+    .filter(Boolean);
+}
+
+function fillQuestUserProgressFromPicked(subpanel) {
+  const getForm = subpanel.querySelector('form[data-action="quest-get-user-progress"]');
+  const patchForm = subpanel.querySelector('form[data-action="quest-update-user-progress"]');
+  if (!getForm || !patchForm) return;
+
+  const getUserInput = getForm.querySelector('input[name="user_id"]');
+  const user_id = String(getUserIdFrom(getUserInput) || "").trim();
+  const picker = subpanel.querySelector('#modQuestUserProgressPick');
+  const pickId = picker?.querySelector('input[type="hidden"][name="pick_progress_id"]')?.value;
+
+  if (!user_id || !pickId) {
+    toast("Pick a progress entry first", "warn");
+    return;
+  }
+
+  const items = normalizeQuestProgressItems(__modQuestUserProgressCache[user_id]);
+  const match = items.find((x) => String(x.progress_id) === String(pickId));
+  if (!match) {
+    toast("Progress entry not found in cache", "err");
+    return;
+  }
+
+  const raw = match.raw || {};
+
+  const patchUserInput = patchForm.querySelector('input[name="user_id"]');
+  if (patchUserInput && getUserInput) {
+    patchUserInput.value = getUserInput.value || patchUserInput.value;
+    if (getUserInput.dataset?.uid) patchUserInput.dataset.uid = getUserInput.dataset.uid;
+  }
+
+  const pidEl = patchForm.querySelector('input[name="progress_id"]');
+  if (pidEl) pidEl.value = String(match.progress_id);
+
+  setRadioValue(patchForm, 'completed', raw?.completed === true ? '1' : raw?.completed === false ? '0' : '');
+
+  const qd = raw?.quest_data || {
+    name: raw?.name,
+    description: raw?.description,
+    difficulty: raw?.difficulty,
+    coin_reward: raw?.coin_reward,
+    xp_reward: raw?.xp_reward,
+    bounty_type: raw?.bounty_type,
+    requirements: raw?.requirements,
+  };
+  setInputValue(patchForm, 'qd_name', qd?.name);
+  setInputValue(patchForm, 'qd_description', qd?.description);
+  setInputValue(patchForm, 'qd_difficulty', qd?.difficulty);
+  setInputValue(patchForm, 'qd_coin_reward', qd?.coin_reward);
+  setInputValue(patchForm, 'qd_xp_reward', qd?.xp_reward);
+  setRadioValue(patchForm, 'qd_bounty_type', qd?.bounty_type ?? '');
+
+  const req = qd?.requirements || raw?.requirements || {};
+  setInputValue(patchForm, 'req_type', req?.type);
+  setInputValue(patchForm, 'req_count', req?.count);
+  setInputValue(patchForm, 'req_difficulty', req?.difficulty);
+  setInputValue(patchForm, 'req_category', req?.category);
+  setInputValue(patchForm, 'req_medal_type', req?.medal_type);
+  setInputValue(patchForm, 'req_map_id', req?.map_id);
+  setInputValue(patchForm, 'req_target_time', req?.target_time);
+  setRadioValue(patchForm, 'req_target_type', req?.target_type ?? '');
+  setInputValue(patchForm, 'req_rival_user_id', req?.rival_user_id);
+  setInputValue(patchForm, 'req_rival_time', req?.rival_time);
+  setInputValue(patchForm, 'req_target', req?.target);
+  setInputValue(patchForm, 'req_min_count', req?.min_count);
+
+  // dump extra (unknown keys) into extra_json (excluding known keys)
+
+  // progress
+  const pr = raw?.progress || {};
+  setInputValue(patchForm, 'pr_current', pr?.current);
+  setInputValue(patchForm, 'pr_target', pr?.target);
+  setInputValue(patchForm, 'pr_percentage', pr?.percentage);
+  setInputValue(patchForm, 'pr_map_id', pr?.map_id);
+  setInputValue(patchForm, 'pr_target_time', pr?.target_time);
+  setRadioValue(patchForm, 'pr_target_type', pr?.target_type ?? '');
+  setInputValue(patchForm, 'pr_medal_type', pr?.medal_type);
+  setInputValue(patchForm, 'pr_best_attempt', pr?.best_attempt);
+  setInputValue(patchForm, 'pr_last_attempt', pr?.last_attempt);
+  setInputValue(patchForm, 'pr_rival_user_id', pr?.rival_user_id);
+  setInputValue(patchForm, 'pr_rival_time', pr?.rival_time);
+  setInputValue(patchForm, 'pr_medal_earned', pr?.medal_earned);
+
+  setInputValue(patchForm, 'pr_completed_map_ids', Array.isArray(pr?.completed_map_ids) ? pr.completed_map_ids.join(',') : '');
+  setInputValue(patchForm, 'pr_counted_map_ids', Array.isArray(pr?.counted_map_ids) ? pr.counted_map_ids.join(',') : '');
+
+  const _d = pr?.details;
+  setTextAreaJson(patchForm, 'pr_details_json', Array.isArray(_d) ? {} : (_d ?? {}));
+
+  setRadioValue(patchForm, 'pr_completed', pr?.completed === true ? '1' : pr?.completed === false ? '0' : '');
+
+  try {
+    subpanel.querySelectorAll('.fake-select, .custom-multiselect').forEach((el) => {
+      if (typeof __merSetupFakeSelect === 'function') __merSetupFakeSelect(el);
+    });
+  } catch {}
+
+  toast("Form filled from selection", "ok");
+}
+
+function setInputValue(form, name, value) {
+  const el = form.querySelector(`[name="${CSS.escape(name)}"]`);
+  if (!el) return;
+  el.value = value == null ? "" : String(value);
+}
+
+function setRadioValue(form, name, value) {
+  const els = [...form.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`)];
+  if (!els.length) return;
+  els.forEach((r) => (r.checked = String(r.value) === String(value)));
+}
+
+function setTextAreaJson(form, name, obj) {
+  const el = form.querySelector(`[name="${CSS.escape(name)}"]`);
+  if (!el) return;
+  try {
+    const isEmptyObj = obj && typeof obj === 'object' && !Array.isArray(obj) && !Object.keys(obj).length;
+    el.value = isEmptyObj ? "{}" : JSON.stringify(obj ?? {}, null, 2);
+  } catch {
+    el.value = "";
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action-btn="quest-fill-from-picked"]');
+  if (!btn) return;
+  const subpanel = btn.closest('[data-subpanel="quest-user-progress"]');
+  if (!subpanel) return;
+  e.preventDefault();
+  fillQuestUserProgressFromPicked(subpanel);
+});
+
+//———————————————————————————————————————————————————————————————
+// MOD UI
+//———————————————————————————————————————————————————————————————
 function initializeApp() {
-  // If already initialized, destroy previous instance
+  bindDdDelegation();
+  wireDdSelect(document);
+
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
   }
@@ -6273,6 +7374,12 @@ function initializeApp() {
     window.__modUiApp = null;
     return null;
   }
+
+  try {
+    document.querySelectorAll('.fake-select, .custom-multiselect').forEach((el) => {
+      if (typeof __merSetupFakeSelect === 'function') __merSetupFakeSelect(el);
+    });
+  } catch {}
 
   const state = {
     syncingFromUrl: false,
@@ -6334,7 +7441,9 @@ function initializeApp() {
   }
 
   function applyUrlState() {
-    const sp = new URLSearchParams(window.location.search);
+    
+    gateDevSectionsUI();
+const sp = new URLSearchParams(window.location.search);
     const tab = sp.get('tab');
     const sub = sp.get('sub');
 
@@ -6344,7 +7453,6 @@ function initializeApp() {
       setHeader(getActiveTabId());
       if (sub) activateSub(tab || getActiveTabId(), sub);
     } finally {
-      // allow event loop to flush click handlers
       setTimeout(() => {
         state.syncingFromUrl = false;
       }, 0);

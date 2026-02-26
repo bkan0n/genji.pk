@@ -1,0 +1,152 @@
+<?php
+
+return [
+  'meta' => [
+    'title'         => 'Dashboard',
+    'og' => [
+      'title'       => 'Dashboard',
+      'description' => 'Your player overview, shop, lootboxes and quests.',
+    ],
+    'og.title'       => 'Dashboard',
+    'og.description' => 'Your player overview, shop, lootboxes and quests.',
+    'description'    => 'Your player overview, shop, lootboxes and quests.',
+  ],
+
+  'loading' => [
+    'username' => 'Loading…',
+  ],
+
+  'header' => [
+    'xp_progress'    => 'XP Progress',
+    'xp_to_next'     => '{0} XP to next level',
+    'to_next_short'  => '{0} to next',
+    'prestige_short' => 'Prestige P{0}',
+    'level'          => 'Level',
+    'coins'          => 'Coins',
+  ],
+
+  'actions' => [
+    'refresh'          => 'Refresh',
+    'refreshing'       => 'Refreshing…',
+    'copy_id'          => 'Copy ID',
+    'copied'           => 'Copied!',
+    'rank_card'        => 'Rank Card',
+    'open_lootbox'     => 'Open Lootbox',
+    'search_maps'      => 'Search Maps',
+    'statistics'       => 'Statistics',
+    'settings'         => 'Settings',
+    'claiming'         => 'Claiming…',
+  ],
+
+  'tabs' => [
+    'overview'       => 'Overview',
+    'lootboxes'      => 'Lootboxes',
+    'key_shop'       => 'Key Shop',
+    'weekly_shop'    => 'Weekly Shop',
+    'quests'         => 'Quests',
+  ],
+
+  'stats' => [
+    'keys_classic'    => 'Classic Keys',
+    'keys_winter'     => 'Winter Keys',
+    'rewards_owned'   => 'Rewards',
+    'quests_done'     => 'Quests Done',
+  ],
+
+  'overview' => [
+    'activity_title'      => 'Activity',
+    'recent_purchases'    => 'Recent purchases',
+    'recent_rewards'      => 'Recent rewards',
+    'no_purchases'        => 'No purchases yet.',
+    'paid'                => 'paid',
+    'quick_actions'       => 'Quick actions',
+    'quick_actions_sub'   => 'Shortcuts to the most used pages.',
+    'notifications'       => 'Notifications',
+    'notifications_sub'   => 'Unread messages / alerts.',
+  ],
+
+  'lootboxes' => [
+    'your_inventory'       => 'Your inventory',
+    'your_inventory_sub'   => 'Keys and quick access to the lootbox page.',
+    'latest_rewards'       => 'Latest rewards',
+    'no_rewards'           => 'No rewards yet.',
+    'no_keys'              => 'No keys.',
+    'classic'              => 'Classic',
+    'winter'               => 'Winter',
+    'spring'               => 'Spring',
+    'autumn'               => 'Autumn',
+    'summer'               => 'Summer',
+    'keys_available'       => 'Keys available',
+    'open'                 => 'Open',
+  ],
+
+  'keyshop' => [
+    'buy_keys'               => 'Buy keys',
+    'buy_keys_sub'           => 'Purchase keys using your coins.',
+    'price'                  => 'Price',
+    'price_coins'            => '{0} coins',
+    'purchase'               => 'Purchase',
+    'discount'               => 'Discount: {0}%',
+    'no_discount'            => 'No discount',
+    'active_key'             => 'Active key',
+    'recent_purchases'       => 'Recent purchases',
+    'recent_purchases_sub'   => 'Your latest store transactions.',
+  ],
+
+  'weekly' => [
+    'rotation_title'       => 'Rotation',
+    'rotation_id'          => 'Rotation #{0}',
+    'available_until'      => 'Available until {0}',
+    'search_placeholder'   => 'Search…',
+    'filter_all'           => 'All rarities',
+    'rarity_common'        => 'Common',
+    'rarity_rare'          => 'Rare',
+    'rarity_epic'          => 'Epic',
+    'rarity_legendary'     => 'Legendary',
+    'no_items'             => 'No items in rotation.',
+    'price'                => 'Price',
+    'buy'                  => 'Buy',
+    'owned'                => 'OWNED',
+    'no_image'             => 'No image',
+    'item_fallback'        => 'Item',
+  ],
+
+  'quests' => [
+    'weekly_title'        => 'Weekly quests',
+    'weekly_sub'          => 'Your current quests and progression.',
+    'history_title'       => 'History',
+    'none'                => 'No quests available.',
+    'no_history'          => 'No history yet.',
+    'done'                => 'DONE',
+    'in_progress'         => 'IN PROGRESS',
+    'claimed'             => 'CLAIMED',
+    'rotation'            => 'Weekly Rotation',
+    'available_until'     => 'Available until {0}',
+    'total'               => 'Total',
+    'completed'           => 'Completed',
+    'potential_coins'     => 'Potential Coins',
+    'potential_xp'        => 'Potential XP',
+    'target'              => 'Target',
+    'progress'            => 'Progress',
+    'coins'               => 'coins',
+    'claim'               => 'Claim',
+    'complete_to_claim'   => 'Complete the quest to claim',
+    'claim_failed'        => 'Claim failed.',
+  ],
+  'submissions' => [
+    'title'             => 'Recent submissions',
+    'subtitle'          => 'Your latest runs with verification status.',
+    'none'              => 'No submissions yet.',
+    'load_failed'       => 'Failed to load submissions.',
+    'open_screenshot'   => 'Open screenshot',
+    'time'              => 'Time',
+    'unknown_map'       => 'Unknown map',
+    'unknown_status'    => 'Unknown',
+  ],
+
+  'errors' => [
+    'load_failed'       => 'Failed to load.',
+    'login_required'    => 'Login required.',
+    'store_unavailable' => 'Store unavailable.',
+  ],
+];

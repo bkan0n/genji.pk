@@ -318,17 +318,20 @@ return [
     // POPUP / MISC
     // ──────────────────────────────────────────────────────────────────────
     'popup' => [
-        'no_results'             => 'Aucun résultat trouvé.',
-        'filter_applied'         => 'Filtre appliqué : {filterId} = {value}',
-        'login_required_msg'     => 'Veuillez vous connecter pour utiliser les outils de soumission & playtest',
-        'map_code_copied'        => 'Code de map copié : {code}',
-        'click_to_copy_map_code' => 'Cliquer pour copier',
-        'copied'                 => 'Copié !',
-        'copy'                   => 'Copier',
-        'copy_failed'            => 'Échec de la copie.',
-        'login'                  => 'Connexion',
-        'user_id_copied'         => 'User ID {id} copié dans le presse-papiers !',
-        'none'                   => 'N/A',
+        'no_results'                     => 'Aucun résultat trouvé.',
+        'filter_applied'                 => 'Filtre appliqué : {filterId} = {value}',
+        'login_required_msg'             => 'Veuillez vous connecter pour utiliser les outils de soumission & playtest',
+        'map_code_copied'                => 'Code de map copié : {code}',
+        'click_to_copy_map_code'         => 'Cliquer pour copier',
+        'copied'                         => 'Copié !',
+        'copy'                           => 'Copier',
+        'copy_failed'                    => 'Échec de la copie.',
+        'login'                          => 'Connexion',
+        'user_id_copied'                 => 'User ID {id} copié dans le presse-papiers !',
+        'none'                           => 'N/A',
+        'no_overwatch_usernames_prompt'  => 'Vous n’avez aucun pseudo Overwatch défini, voulez-vous en ajouter un maintenant ?',
+        'yes'                            => 'Oui',
+        'no'                             => 'Non',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

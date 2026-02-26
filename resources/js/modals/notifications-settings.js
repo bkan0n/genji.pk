@@ -119,8 +119,7 @@ function notificationTypeToId(notificationType) {
 
 // ============================================================================
 // API (Settings modal)
-// - Overwatch usernames: /api/users/{user_id}/overwatch
-// - Notification preferences: /api/notifications/preferences (session-based)
+// - Overwatch usernames
 // ============================================================================
 const USERS_BASE = '/api/users';
 const NOTIF_PREFS_URL = '/api/notifications/preferences';
@@ -146,7 +145,7 @@ function normalizeKey(s) {
 }
 
 // ============================================================================
-// Notification preferences UI helpers (new system: event_type + channels)
+// Notification preferences UI helpers
 // ============================================================================
 const NOTIF_PREF_SELECTOR =
   '#gp-settings-modal input[type="checkbox"][data-channel][data-event-type]';
@@ -247,12 +246,6 @@ function gpEnsurePreferenceRow(eventType) {
   list.appendChild(row);
 }
 
-/**
- * Map an input id => { eventKey, channel }
- * UI ids:
- *  - setting-dm-on-verification         => channel discord_dm,    eventKey verification
- *  - setting-ping-on-xp-gain            => channel discord_ping,  eventKey xp-gain
- */
 function settingIdToSpec(checkboxId) {
   const id = String(checkboxId || '');
   let channel = '';
@@ -273,8 +266,6 @@ function settingIdToSpec(checkboxId) {
 }
 
 function guessEventTypeFromKey(eventKey) {
-  // Fallback if we can't match a server-provided event_type.
-  // Keep it deterministic and readable.
   return String(eventKey || '')
     .trim()
     .replace(/-/g, '_')
@@ -282,7 +273,6 @@ function guessEventTypeFromKey(eventKey) {
 }
 
 function extractPreferencesPayload(data) {
-  // Accept either {preferences: [...]}, or raw [...]
   const arr = Array.isArray(data)
     ? data
     : Array.isArray(data?.preferences)
@@ -292,7 +282,6 @@ function extractPreferencesPayload(data) {
 }
 
 function buildPreferenceIndex(preferences) {
-  // returns map normalized(event_type) => row
   const idx = new Map();
   preferences.forEach((row) => {
     const et = row?.event_type ?? row?.eventType ?? row?.type ?? '';
@@ -306,7 +295,6 @@ function findPreferenceRow(prefIndex, eventKey) {
   const nk = normalizeKey(eventKey);
   if (prefIndex.has(nk)) return prefIndex.get(nk);
 
-  // Fallback: some APIs may prefix/suffix event_type names; try substring match
   for (const [k, v] of prefIndex.entries()) {
     if (k.endsWith(`_${nk}`) || k.startsWith(`${nk}_`) || k.includes(`_${nk}_`)) return v;
   }
@@ -319,7 +307,6 @@ async function loadNotificationPreferences() {
   if (!modal) return;
 
   const list = document.getElementById(NOTIF_PREF_LIST_ID);
-  // If there's no list container and no existing checkbox, nothing to sync.
   const existing = modal.querySelectorAll(NOTIF_PREF_SELECTOR);
   if (!existing.length && !list) return;
 
@@ -341,7 +328,6 @@ async function loadNotificationPreferences() {
     const data = await res.json();
     const prefs = extractPreferencesPayload(data);
 
-    // Ensure UI rows exist for every server event_type (future-proof).
     if (list && Array.isArray(prefs)) {
       prefs.forEach((row) => {
         const et = row?.event_type ?? row?.eventType ?? row?.type ?? '';
@@ -350,7 +336,6 @@ async function loadNotificationPreferences() {
       });
     }
 
-    // Re-query after potential injections
     const checkboxes = modal.querySelectorAll(NOTIF_PREF_SELECTOR);
     checkboxes.forEach(lock);
 
@@ -369,7 +354,6 @@ async function loadNotificationPreferences() {
     });
   } catch (e) {
     console.error('Erreur loadNotificationPreferences :', e);
-    // Keep UI usable even if we couldn't sync.
   } finally {
     const checkboxes = modal.querySelectorAll(NOTIF_PREF_SELECTOR);
     checkboxes.forEach((cb) => {
@@ -390,7 +374,6 @@ async function updateNotificationPreference(eventType, channel, enabled) {
     body: JSON.stringify(payload),
   });
 
-  // Controller normalises upstream 204 => 200, but keep it safe.
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status} ${text}`);
@@ -404,7 +387,7 @@ async function updateNotificationPreference(eventType, channel, enabled) {
 }
 
 // ============================================================================
-// Init & bindings (Notifications uniquement)
+// Init & bindings
 // ============================================================================
 function bindNotificationEvents() {
 
@@ -423,7 +406,6 @@ function bindNotificationEvents() {
 
       const desired = Boolean(cb.checked);
 
-      // Optimistic UI; revert on failure.
       try {
         cb.disabled = true;
         await updateNotificationPreference(eventType, channel, desired);
@@ -440,7 +422,7 @@ function bindNotificationEvents() {
 
 
 // ============================================================================
-// Modal Settings (ouverture / fermeture animées)
+// Modal Settings
 // ============================================================================
 function ensureSettingsModalStructure() {
   const modal = document.getElementById('gp-settings-modal');
@@ -459,14 +441,12 @@ async function openSettingsModal() {
   ensureSettingsModalStructure();
   gpOpenModal('gp-settings-modal');
 
-  // Notifications (ensure UI is in sync before binding)
   try {
     await loadNotificationPreferences();
   } finally {
     bindNotificationEvents();
   }
 
-  // Signale aux autres modules (profile.js) que le modal est ouvert (pour charger Overwatch)
   document.dispatchEvent(new CustomEvent('genji:settings-opened'));
 }
 
@@ -516,7 +496,7 @@ function bindSettingsModalCloseHandlers() {
 }
 
 // ================================
-// Tabs (si tu as deux onglets)
+// Tabs
 // ================================
 function bindSettingsTabs(root = document.getElementById('gp-settings-modal')) {
   if (!root) return;
@@ -581,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================================
-// i18n (facultatif ici, utile si tu veux des toasts de notif)
+// i18n
 // ============================================================================
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.NOTIFICATIONS_I18N || {};
@@ -599,7 +579,7 @@ function t(path, params = {}) {
 
 // ———————————————————————————————————————————————————————————————
 // ======================= Overwatch Usernames =======================
-// Endpoints : GET /users/{uid}/overwatch  |  PUT /users/{uid}/overwatch
+// Endpoints
 // ———————————————————————————————————————————————————————————————
 function ow_extractUsernamesShape(data) {
   if (Array.isArray(data?.usernames)) return data.usernames;
@@ -689,34 +669,41 @@ function loadOverwatchUsername() {
     });
 }
 
-function updateUsernames(usernamesArray) {
+async function updateUsernames(usernamesArray) {
   const uid = (window.user_id ?? '').toString();
   if (!uid) return;
 
-  return fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, {
+  const res = await fetch(`${USERS_BASE}/${encodeURIComponent(uid)}/overwatch`, {
     method: 'PUT',
     headers: gpJsonHeaders({ 'Content-Type': 'application/json' }),
     credentials: 'same-origin',
     body: JSON.stringify({ usernames: usernamesArray }),
-  })
-    .then((res) => {
-      const ct = res.headers.get('content-type') || '';
-      if (res.ok && ct.includes('application/json')) return res.json();
-      return res.text().then((t) => {
-        throw new Error('Invalid JSON response: ' + t);
-      });
-    })
-    .then((data) => {
-      showConfirmationMessage(t('popup.username_updated'));
-      loadOverwatchUsername();
-      const input = document.getElementById('overwatch-username');
-      if (input) input.value = '';
-      return data;
-    })
-    .catch((err) => {
-      console.error('Erreur API update:', err);
-      showErrorMessage(t('popup.error_update_usernames_list'));
-    });
+  });
+
+  const ct = res.headers.get('content-type') || '';
+  let payload = null;
+
+  if (ct.includes('application/json')) {
+    payload = await res.json().catch(() => null);
+  } else {
+    payload = await res.text().catch(() => '');
+  }
+
+  if (!res.ok) {
+    const msg =
+      (payload && typeof payload === 'object' && (payload.message || payload.error)) ||
+      (typeof payload === 'string' ? payload : '') ||
+      `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  showConfirmationMessage(t('popup.username_updated'));
+  loadOverwatchUsername();
+
+  const input = document.getElementById('overwatch-username');
+  if (input) input.value = '';
+
+  return payload;
 }
 
 function deleteUsername(usernameToDelete) {
@@ -727,10 +714,13 @@ function deleteUsername(usernameToDelete) {
     .then((resp) => resp.json())
     .then((data) => {
       let usernames = ow_extractUsernamesShape(data);
+
       usernames = usernames.filter((u) => u.username !== usernameToDelete);
-      if (!usernames.some((u) => u.is_primary) && usernames.length > 0) {
+
+      if (usernames.length > 0 && !usernames.some((u) => u.is_primary)) {
         usernames[0].is_primary = true;
       }
+
       return updateUsernames(usernames);
     })
     .catch((err) => {

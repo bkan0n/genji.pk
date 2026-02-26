@@ -1,4 +1,7 @@
+// resources/js/pages/lootbox.js
 import { cdnAsset, cdnImage } from "../utils/cdn";
+import { createLootbox3D } from "../utils/animations";
+import { initStoreModal } from "../modals/store";
 
 // ====== état/appli ======
 let isRunning = false;
@@ -16,6 +19,11 @@ let awaitingPick = false;
 const API_BASE = '/api/lootbox';
 let openSession = null;
 let redeeming = false;
+let lootbox3dPromise = null;
+let lootbox3d = null;
+let openSoundTimer = null;
+let openSoundToken = 0;
+const CARD_BACK_LOGO_URL = cdnAsset("/assets/img/favicon-high.png");
 
 const CURRENT_LANG = document.documentElement.lang || 'en';
 const BASE_I18N = window.LOOTBOX_I18N || {};
@@ -236,11 +244,76 @@ function rarityStyle(rarity) {
 }
 
 // ====== init ======
+async function bootLootbox3D() {
+  const mountEl = document.getElementById("box");
+  if (!mountEl) return null;
+
+  showBoxSkeleton();
+
+  try {
+    const ctrl = await createLootbox3D({
+      mountEl,
+      modelUrl: "/assets/models/gp_static.glb",
+    });
+
+    lootbox3d = ctrl;
+
+    ctrl.setCardPickHandler?.((pickedIndex, reward) => {
+      if (!awaitingPick) return;
+      if (!reward || !window.user_id) return;
+
+      playSound(reward.rarity);
+      grantReward(user_id, reward);
+
+      awaitingPick = false;
+      restoreCrate();
+    });
+
+    hideBoxSkeleton();
+    return ctrl;
+  } catch (e) {
+    console.warn("[lootbox3d] init failed:", e);
+    lootbox3dPromise = null;
+    lootbox3d = null;
+
+    showBoxFallback();
+    return null;
+  }
+}
+
 async function initializeApp() {
   await loadTranslations();
+  hideCrate();
+
+  // Store modal
+  try {
+    initStoreModal({
+      getUserId: () => window.user_id,
+      showToast: (message, type) => showToast(message, type),
+    });
+  } catch (e) {
+    console.warn("[store] init failed:", e);
+  }
+
+  // init 3D
+  try {
+    lootbox3dPromise = bootLootbox3D();
+  } catch (e) {
+    console.warn("[lootbox3d] init failed:", e);
+    lootbox3dPromise = null;
+    lootbox3d = null;
+    showBoxFallback();
+  }
 }
+
 $(document).ready(() => {
   initializeApp();
+
+  const retryBtn = document.getElementById('box-retry');
+  retryBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    lootbox3dPromise = bootLootbox3D();
+  });
 });
 
 // ====== API ======
@@ -362,11 +435,38 @@ $('.generate').on('click', function () {
 
 async function updateKeyDisplay() {
   await loadTranslations();
+
+  const icon = keyIconUrl(rewardKeyType);
+
   if (user_id) {
-    $('#key-count').html(`<i class="fas fa-key mr-1"></i> <span id="key-number">${keys}</span>`);
+    $('#key-count').html(`
+      <span class="inline-flex items-center gap-2">
+        <img
+          src="${icon}"
+          alt=""
+          class="h-5 w-5 shrink-0 object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+        <span id="key-number" class="font-extrabold">${keys}</span>
+      </span>
+    `);
   } else {
     $('#key-count').html(t('popup.login_required_btn') || 'Login');
   }
+}
+function keyIconUrl(keyType) {
+  const kt = String(keyType || "Classic").toLowerCase();
+
+  const map = {
+    classic: "assets/lootbox/keys/classic.png",
+    winter: "assets/lootbox/keys/winter.png",
+    spring: "assets/lootbox/keys/spring.png",
+    summer: "assets/lootbox/keys/summer.png",
+    autumn: "assets/lootbox/keys/autumn.png",
+  };
+
+  return cdnAsset(map[kt] || map.classic);
 }
 function pauseCrate() {
   $('.generate').attr('disabled', 'disabled').addClass('opacity-60 cursor-not-allowed');
@@ -376,35 +476,74 @@ function restoreCrate() {
   $('.generate').removeAttr('disabled').removeClass('opacity-60 cursor-not-allowed');
 }
 
-// ====== dropdown clés ======
+// ====== dropdown keys ======
 document.addEventListener('DOMContentLoaded', () => {
   const keyTypeButton = document.getElementById('key-type-button');
   const keyDropdown = document.getElementById('key-dropdown');
   const keyWrapper = document.getElementById('key-wrapper');
+  const keyTypeLabel = document.getElementById('key-type-label');
 
   if (keyTypeButton && keyDropdown && keyWrapper) {
+    const keyTypes = ['Classic', 'Winter', 'Spring', 'Summer', 'Autumn'];
+
+    function applySelectedUI(selected) {
+      const opts = keyDropdown.querySelectorAll('[data-value]');
+      opts.forEach((btn) => {
+        const isSel = btn.getAttribute('data-value') === selected;
+        btn.setAttribute('aria-checked', String(isSel));
+        btn.classList.toggle('bg-zinc-100', isSel);
+        btn.classList.toggle('dark:bg-white/10', isSel);
+        const dot = btn.querySelector('[data-radio-dot]');
+        if (dot) dot.classList.toggle('hidden', !isSel);
+      });
+    }
+
+    function setKeyType(kt) {
+      rewardKeyType = kt;
+      if (keyTypeLabel) keyTypeLabel.textContent = t(`ui.key_types.${kt}`) || kt;
+      else keyTypeButton.textContent = t(`ui.key_types.${kt}`) || kt;
+      applySelectedUI(kt);
+      keyDropdown.classList.add('hidden');
+      keyTypeButton.setAttribute('aria-expanded', 'false');
+      fetchKeys(user_id, kt);
+    }
+
     function renderDropdown() {
-      const keyTypes = ['Classic', 'Winter'];
       keyDropdown.innerHTML = '';
       keyTypes.forEach((kt) => {
         const item = document.createElement('button');
         item.type = 'button';
         item.role = 'option';
+        item.setAttribute('data-value', kt);
+        item.setAttribute('aria-checked', 'false');
         item.className =
-          'w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-zinc-900/3 dark:bg-white/5 border-b border-white/5 last:border-b-0';
-        item.textContent = t(`ui.key_types.${kt}`) || kt;
-        item.addEventListener('click', () => {
-          rewardKeyType = kt;
-          keyTypeButton.textContent = kt;
-          keyDropdown.classList.add('hidden');
-          keyTypeButton.setAttribute('aria-expanded', 'false');
-          fetchKeys(user_id, kt);
-        });
+          'dd-opt flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer';
+
+        const left = document.createElement('span');
+        left.className = 'flex items-center gap-2 min-w-0';
+
+        const radio = document.createElement('span');
+        radio.className = 'h-4 w-4 shrink-0 rounded-full border border-zinc-300 dark:border-white/20 flex items-center justify-center';
+        const dot = document.createElement('span');
+        dot.setAttribute('data-radio-dot', '1');
+        dot.className = 'h-2 w-2 rounded-full bg-brand-500 hidden';
+        radio.appendChild(dot);
+
+        const label = document.createElement('span');
+        label.className = 'truncate';
+        label.textContent = t(`ui.key_types.${kt}`) || kt;
+
+        left.appendChild(radio);
+        left.appendChild(label);
+        item.appendChild(left);
+
+        item.addEventListener('click', () => setKeyType(kt));
         keyDropdown.appendChild(item);
       });
+
+      applySelectedUI(rewardKeyType);
     }
 
-    // Toggle
     keyTypeButton.addEventListener('click', (e) => {
       e.stopPropagation();
       const willHide = keyDropdown.classList.toggle('hidden');
@@ -419,15 +558,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderDropdown();
-    keyTypeButton.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
+    if (keyTypeLabel) keyTypeLabel.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
+    else keyTypeButton.textContent = t(`ui.key_types.${rewardKeyType}`) || rewardKeyType;
     fetchKeys(user_id, rewardKeyType);
   }
 });
 
 // ====== Open pack flow ======
-function proceedWithLootBoxOpening() {
+async function proceedWithLootBoxOpening() {
   if (keys <= 0) {
-    showWarningMessage(t('lootbox.no_keys_available'));
+    showWarningMessage(t("lootbox.no_keys_available"));
     return;
   }
   if (isRunning) return;
@@ -437,44 +577,148 @@ function proceedWithLootBoxOpening() {
   isRunning = true;
   pauseCrate();
   crate = [];
+  hideCrate();
+  deleteCards();
 
-  openSound.volume = volume;
-  openSound.play().catch(() => {});
+  // Audio
+  const AUDIO_OFFSET_FIRST_MS  = 0;
+  const AUDIO_OFFSET_REOPEN_MS = 50;
+  const AUDIO_OFFSET_MS = packOpened ? AUDIO_OFFSET_REOPEN_MS : AUDIO_OFFSET_FIRST_MS;
 
+  const myAudioToken = ++openSoundToken;
+  if (openSoundTimer) {
+    clearTimeout(openSoundTimer);
+    openSoundTimer = null;
+  }
+
+  const playOpenSoundNow = () => {
+    try { openSound.pause(); } catch {}
+    try { openSound.currentTime = 0; } catch {}
+    openSound.volume = volume;
+    openSound.play().catch(() => {});
+  };
+
+  let audioPlayed = false;
+  const onOpenStart = () => {
+    if (audioPlayed) return;
+    audioPlayed = true;
+
+    const play = () => {
+      if (openSoundToken !== myAudioToken) return;
+      playOpenSoundNow();
+    };
+
+    if (AUDIO_OFFSET_MS > 0) {
+      openSoundTimer = setTimeout(play, AUDIO_OFFSET_MS);
+    } else {
+      play();
+    }
+  };
+
+  //3D timings
+  let revealAt = null;
+  let totalAt = null;
+  let using3D = false;
+
+  try {
+    const ctrl = lootbox3d || (lootbox3dPromise ? await lootbox3dPromise : null);
+    if (ctrl) {
+      const mode = packOpened ? "repeat" : "first";
+
+      // offsetMs
+      const timings = ctrl.playOpen({
+        mode,
+        onOpenStart,
+        audioOffsetMs: AUDIO_OFFSET_MS,
+      });
+
+      revealAt = timings?.revealAt ?? null;
+      totalAt = timings?.total ?? null;
+      using3D = revealAt != null;
+    } else {
+      onOpenStart();
+    }
+  } catch (e) {
+    console.warn("[lootbox3d] playOpen failed:", e);
+    onOpenStart();
+  }
+
+  //DOM timings
   const firstTimeDelays = { separation: 600, cardOut: 700, cardIn: 500 };
   const subsequent = { flip: 500, disintegration: 400, cardIn: 400 };
   const D = packOpened ? subsequent : firstTimeDelays;
 
-  const appearDelays = [1700, 2000, 2200];
+  const appearDelays = using3D ? [0, 220, 440] : [1700, 2000, 2200];
 
-  const replaceWithRewards = () => {
+  const replaceWithRewards = async () => {
     deleteCards();
+    hideCrate();
+
+    const ctrl = lootbox3d || (lootbox3dPromise ? await lootbox3dPromise : null);
+
+    if (ctrl?.cards3d?.setRewards && ctrl?.cards3d?.open) {
+      ctrl.cards3d.setRewards(generatedRewards, {
+        pickLabel: t("ui.pick_a_card") || "Pick a card",
+        backLogoUrl: CARD_BACK_LOGO_URL,
+      });
+
+      ctrl.cards3d.open({ appearDelaysMs: appearDelays });
+      awaitingPick = true;
+      return;
+    }
+
+    showCrate();
     displayRewards(generatedRewards, { appearDelays });
     awaitingPick = true;
   };
 
-  if (!packOpened) {
-    $('#box .loot-card').each((i, el) => {
-      el.classList.add('lb-box-out');
-    });
-    setTimeout(replaceWithRewards, D.separation + D.cardOut);
+  if (revealAt != null) {
+    setTimeout(replaceWithRewards, revealAt);
   } else {
-    $('.card').each((i, el) => {
-      el.classList.add('lb-shrink-out');
-    });
-    setTimeout(replaceWithRewards, subsequent.flip + subsequent.disintegration + subsequent.cardIn);
+    if (!packOpened) {
+      $("#box .loot-card, #crate .loot-card").each((i, el) => el.classList.add("lb-box-out"));
+      setTimeout(replaceWithRewards, D.separation + D.cardOut);
+    } else {
+      $(".card").each((i, el) => el.classList.add("lb-shrink-out"));
+      setTimeout(replaceWithRewards, subsequent.flip + subsequent.disintegration + subsequent.cardIn);
+    }
   }
 
   const maxAppear = Math.max(...appearDelays) + 600;
+  const endAt = totalAt != null ? Math.max(totalAt, maxAppear) : maxAppear;
+
   setTimeout(() => {
     isRunning = false;
     packOpened = true;
-  }, maxAppear);
+  }, endAt);
 }
+
 function deleteCards() {
+  // remove reward cards
   $('#crate li').remove();
-  $('#box').remove();
+  // remove placeholders
+  $('#box .loot-card, #crate .loot-card').remove();
 }
+
+function hideCrate() {
+  const el = document.getElementById('crate');
+  if (!el) return;
+  el.classList.add('hidden', 'pointer-events-none');
+  el.classList.remove('opacity-100');
+  el.classList.add('opacity-0');
+}
+
+function showCrate() {
+  const el = document.getElementById('crate');
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.classList.remove('pointer-events-none');
+  requestAnimationFrame(() => {
+    el.classList.remove('opacity-0');
+    el.classList.add('opacity-100');
+  });
+}
+
 
 // ====== RENDER cartes ======
 const HATCH_CLASS =
@@ -503,7 +747,7 @@ function displayRewards(rewards, opts = {}) {
     );
 
     const $inner = $('<div/>').addClass(
-      `lb-inner relative h-full w-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 ring-1 ring-zinc-300/60 dark:ring-white/10 shadow-xl`
+      `lb-inner relative h-full w-full rounded-2xl border border-white/10 bg-zinc-900/80 ring-1 ring-white/10 shadow-xl`
     );
 
     const $front = $('<div/>')
@@ -512,7 +756,7 @@ function displayRewards(rewards, opts = {}) {
       )
       .append(
         $('<span/>')
-          .addClass('mt-40 text-xs font-semibold text-zinc-700 dark:text-zinc-300')
+          .addClass('mt-40 text-xs font-semibold text-zinc-200/80')
           .text(t('ui.pick_a_card') || 'Pick a card')
       );
 
@@ -520,20 +764,26 @@ function displayRewards(rewards, opts = {}) {
       'lb-back absolute inset-0 flex flex-col rounded-2xl overflow-hidden'
     );
 
-    const $imgWrap = $('<div/>').addClass('flex-1 bg-black/20 flex items-center justify-center');
+    const $imgWrap = $('<div/>').addClass('relative flex-1 bg-black/30 overflow-hidden flex items-center justify-center');
 
     const isBg = String(reward.type).toLowerCase() === 'background';
+
     const $img = $('<img/>')
       .attr('alt', reward.name)
       .addClass(
-        isBg ? 'max-h-32 w-[80%] rounded-2xl object-cover shadow' : 'max-h-48 object-contain'
+        isBg
+          ? 'h-full w-full object-cover'
+          : 'max-h-[85%] max-w-[85%] object-contain'
       );
 
     $imgWrap.append($img);
 
-    const $info = $('<div/>').addClass('p-3 space-y-1 border-t border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60');
-    const $name = $('<div/>').addClass('text-sm font-semibold truncate text-zinc-900 dark:text-zinc-100');
-    const $type = $('<div/>').addClass('text-xs text-zinc-600 dark:text-zinc-400');
+    const $info = $('<div/>').addClass(
+      'p-3 space-y-1 border-t border-white/10 bg-zinc-950/30'
+    );
+
+    const $name = $('<div/>').addClass('text-sm font-semibold truncate text-zinc-100');
+    const $type = $('<div/>').addClass('text-xs text-zinc-400');
     const $badge = $('<span/>').addClass(
       `inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${sty.badge}`
     );
@@ -597,12 +847,12 @@ function displayRewards(rewards, opts = {}) {
 
     $inner.find('img').attr('src', img);
     $inner.find('.text-sm.font-semibold.truncate').text(name);
-    $inner.find('.text-xs.text-zinc-600 dark:text-zinc-400').text(type);
+    $inner.find('.text-xs.text-zinc-400').text(type);
     $inner.find('span').text(String(reward.rarity).toUpperCase());
 
     const el = $inner.get(0);
     if (el) {
-      $inner.removeClass('ring-zinc-300/60 dark:ring-white/10');
+      $inner.removeClass('ring-white/10');
       const toRemove = [];
       el.classList.forEach((c) => {
         if (
@@ -621,7 +871,6 @@ function displayRewards(rewards, opts = {}) {
     const sty = rarityStyle(reward.rarity);
     $inner.addClass(`${sty.ring} ${sty.glow}`);
 
-    // flip via classe (plus d'inline style)
     $card.addClass('lb-flipped');
     $card.attr('data-turned', '1');
 
@@ -846,6 +1095,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ====== helpers skeleton ======
+function showBoxSkeleton() {
+  const sk = document.getElementById('box-skeleton');
+  const fb = document.getElementById('box-fallback');
+  if (fb) fb.classList.add('hidden');
+  if (sk) {
+    sk.classList.remove('hidden');
+    sk.setAttribute('aria-busy', 'true');
+  }
+}
+
+function hideBoxSkeleton() {
+  const sk = document.getElementById('box-skeleton');
+  if (sk) {
+    sk.classList.add('hidden');
+    sk.setAttribute('aria-busy', 'false');
+  }
+}
+
+function showBoxFallback() {
+  const sk = document.getElementById('box-skeleton');
+  const fb = document.getElementById('box-fallback');
+  if (sk) sk.classList.add('hidden');
+  if (fb) fb.classList.remove('hidden');
+}
+
 // ====== session ======
 function normalizeReward(r) {
   return {
@@ -882,7 +1157,7 @@ $(document).ready(function () {
   }
 });
 
-// (petit contrôleur modal additionnel, inchangé)
+// modal controller
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('infoModal');
   const panel = modal?.querySelector('[data-modal-box]');
