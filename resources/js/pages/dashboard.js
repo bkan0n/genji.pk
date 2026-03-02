@@ -2293,7 +2293,9 @@ async function loadQuestsPanel() {
           p?.target_time !== "" &&
           Number.isFinite(Number(p.target_time));
 
-        const targetTimeSec = hasTargetTime ? Math.max(0, Math.round(Number(p.target_time))) : null;
+        const targetTimeSec = hasTargetTime
+          ? Math.max(0, Number(p.target_time)).toFixed(2)
+          : null;
 
         const showGenericTargetPill = hasTargetTime && !isMedalThreshold && !isRivalChallenge;
         const showMedalTargetPill = isMedalThreshold && hasTargetTime;
