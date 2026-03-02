@@ -1107,28 +1107,25 @@ function debug(data) {
   }
 }
 
+let __convertorSwitchTab = null;
+
 function selectSection(id) {
-  document.querySelectorAll('#mainTabs button').forEach((btn) => btn.classList.remove('active'));
-  document.querySelectorAll('.convert-map-layout').forEach((sec) => {
-    if (sec) {
-      sec.style.display = 'none';
-      sec.classList.remove('active');
-    }
-  });
-  document.querySelectorAll('.content').forEach((c) => {
-    if (c) c.style.display = 'none';
-  });
-
-  const section = document.getElementById(id);
-  const button = document.getElementById(id + 'Btn');
-
-  if (!section || !button) {
-    console.warn('[selectSection] section/button introuvable:', { id, section, button });
+  const key = id === 'help' ? 'help' : id === 'mapSettings' ? 'settings' : 'convert';
+  if (typeof __convertorSwitchTab === 'function') {
+    __convertorSwitchTab(key);
     return;
   }
-  section.style.display = 'block';
-  section.classList.add('active');
-  button.classList.add('active');
+
+  const section = document.getElementById(id === 'mapSettings' ? 'mapSettings' : id === 'help' ? 'help' : 'convertMap');
+  if (!section) {
+    console.warn('[selectSection] section introuvable:', { id, section });
+    return;
+  }
+
+  document.querySelectorAll('.convert-map-layout, .content').forEach((el) => {
+    el.classList.add('hidden');
+  });
+  section.classList.remove('hidden');
 }
 
 window.selectSection = (id) => {
@@ -1139,20 +1136,14 @@ window.selectSection = (id) => {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  const bind = (btnId, sectionId) => {
-    const btn = document.getElementById(btnId);
-    if (btn) btn.addEventListener('click', () => selectSection(sectionId));
-  };
-  bind('convertMapBtn', 'convertMap');
-  bind('helpBtn', 'help');
-  bind('mapSettingsBtn', 'mapSettings');
-
-  const defaultSection = document.getElementById('convertMap') ? 'convertMap' : null;
-  if (defaultSection) selectSection(defaultSection);
-});
-
 function initMainTabs() {
+  const tabsContainer = document.getElementById('mainTabs');
+  if (!tabsContainer) return;
+
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
+  }
+
   const btns = {
     convert: document.getElementById('convertMapBtn'),
     help: document.getElementById('helpBtn'),
@@ -1165,25 +1156,98 @@ function initMainTabs() {
     settings: document.getElementById('mapSettings'),
   };
 
-  const ACTIVE = ['bg-white', 'text-zinc-900'];
-  const INACTIVE = ['text-zinc-900 dark:text-white', 'hover:bg-zinc-900/5 dark:bg-white/10'];
+  if (Object.values(btns).some((b) => !b) || Object.values(panels).some((p) => !p)) return;
+
+  let highlight = document.getElementById('convertorTabHighlight');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.id = 'convertorTabHighlight';
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      transform: 'translate3d(0,0,0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0',
+    });
+    tabsContainer.appendChild(highlight);
+  }
+
+  const isDarkTheme = () =>
+    document.documentElement.classList.contains('dark') ||
+    document.documentElement.getAttribute('data-theme') === 'dark' ||
+    document.body?.classList.contains('dark') ||
+    document.body?.getAttribute('data-theme') === 'dark';
+
+  const paintHighlight = () => {
+    if (isDarkTheme()) {
+      highlight.style.background = 'white';
+      highlight.style.boxShadow = '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)';
+    } else {
+      highlight.style.background = '#18181b';
+      highlight.style.boxShadow = '0 1px 0 0 rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.14)';
+    }
+  };
+  paintHighlight();
+
+  const themeObserver = new MutationObserver(paintHighlight);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class', 'data-theme'],
+  });
+  if (document.body) {
+    themeObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+  }
+
+  const ACTIVE = ['text-white', 'dark:text-zinc-900'];
+  const INACTIVE = ['text-zinc-700', 'dark:text-zinc-200', 'hover:bg-zinc-100', 'dark:hover:bg-white/10'];
+  let currentKey = 'convert';
 
   Object.values(btns).forEach((b) => {
-    b.classList.add('tab-btn', 'transition-colors', 'duration-300');
+    b.classList.add(
+      'tab-btn',
+      'relative',
+      'z-[1]',
+      'transition-colors',
+      'duration-300',
+      'focus:outline-none',
+      'focus-visible:ring-2',
+      'focus-visible:ring-emerald-500/50'
+    );
+    b.classList.remove('active');
     b.classList.remove(...ACTIVE);
-    if (!INACTIVE.every((c) => b.classList.contains(c))) b.classList.add(...INACTIVE);
+    b.classList.add(...INACTIVE);
   });
 
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
   function setActiveButton(key) {
+    currentKey = key;
     Object.entries(btns).forEach(([k, b]) => {
       if (k === key) {
         b.classList.add(...ACTIVE);
         b.classList.remove(...INACTIVE);
+        moveHighlightTo(b);
       } else {
         b.classList.remove(...ACTIVE);
-        INACTIVE.forEach((c) => {
-          if (!b.classList.contains(c)) b.classList.add(c);
-        });
+        b.classList.add(...INACTIVE);
       }
     });
   }
@@ -1213,12 +1277,22 @@ function initMainTabs() {
     setActiveButton(key);
     showPanel(key);
   }
+  __convertorSwitchTab = switchTab;
 
   btns.convert.addEventListener('click', () => switchTab('convert'));
   btns.help.addEventListener('click', () => switchTab('help'));
   btns.settings.addEventListener('click', () => switchTab('settings'));
 
   switchTab('convert');
+  requestAnimationFrame(() => moveHighlightTo(btns[currentKey]));
+
+  const recalc = () => moveHighlightTo(btns[currentKey]);
+  window.addEventListener('resize', recalc);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(recalc);
+  } else {
+    setTimeout(recalc, 60);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initMainTabs);
@@ -4129,7 +4203,7 @@ function renderGlobalBans(fullText) {
       'rounded-full',
       'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200',
       'border border-zinc-200/80 dark:border-white/10 shadow-sm',
-      'hover:bg-zinc-800/70 transition',
+      'hover:bg-zinc-100 dark:hover:bg-white/10 transition',
     ].join(' ');
     iconsContainer.appendChild(span);
   });
@@ -4623,8 +4697,8 @@ function createCheckpointCard(idx, coords, data) {
   moveControls.className = 'move-controls mt-3 flex items-center gap-2';
   const baseBtn =
     'inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-200/80 dark:border-white/10 ' +
-    'bg-zinc-800/70 px-2.5 py-1 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 ' +
-    'hover:bg-zinc-700/70 hover:border-emerald-500/30 hover:text-emerald-300 ' +
+    'bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 ' +
+    'hover:bg-zinc-100 dark:hover:bg-white/10 hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-300 ' +
     'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ' +
     'disabled:opacity-40 disabled:cursor-not-allowed transition';
   const upBtn = document.createElement('button');
@@ -4719,7 +4793,7 @@ function renderMapSettings(fullText) {
   globalSettingsBtn.textContent = t('map_data.global_settings');
   globalSettingsBtn.className = [
     'rounded-full cursor-pointer px-3 py-1.5 text-sm font-medium',
-    'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-800/70',
+    'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10',
     'border border-zinc-200/80 dark:border-white/10 shadow-sm transition',
   ].join(' ');
   settingsButtons.appendChild(globalSettingsBtn);
@@ -4919,7 +4993,7 @@ function buildGlobalSettingsFormFields() {
     <label for="mapNameInput" class="modal-label block text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t('map_data.map_name')}</label>
     <div class="map-name-input-wrapper grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
       <div class="map-name-text-wrapper relative">
-        <input type="text" id="mapNameInput" class="modal-input2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+        <input type="text" id="mapNameInput" class="modal-input2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
         <div class="map-name-suggestions-container absolute left-0 right-0 top-[110%] z-10 hidden rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-lg"></div>
       </div>
 
@@ -5014,7 +5088,7 @@ function buildGlobalSettingsFormFields() {
   rowButtons.className = 'modal-buttons2 mt-2 flex items-center justify-end gap-2';
   rowButtons.innerHTML = `
     <button type="button" id="saveGlobalChangesBtn" class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white hover:bg-emerald-500 shadow-sm">${t('map_data.save')}</button>
-    <button type="button" id="cancelGlobalChangesBtn" class="rounded-xl cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70">${t('map_data.cancel')}</button>
+    <button type="button" id="cancelGlobalChangesBtn" class="rounded-xl cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10">${t('map_data.cancel')}</button>
   `;
   form.appendChild(rowButtons);
     if (form && !form.dataset.gsDelegated) {
@@ -5043,7 +5117,7 @@ function addGlobalSettingsButton() {
   btn.id = 'globalSettingsBtn';
   btn.textContent = t('map_data.global_settings');
   btn.className =
-    'rounded-xl px-3 py-1.5 text-sm font-medium bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-700 border border-zinc-200/80 dark:border-white/10';
+    'rounded-xl px-3 py-1.5 text-sm font-medium bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200/80 dark:border-white/10';
   btn.addEventListener('click', openGlobalSettingsModal);
   globalInfos.appendChild(btn);
 }
@@ -5062,8 +5136,8 @@ async function openGlobalSettingsModal() {
       'relative',
       'max-h-[80vh] w-full max-w-2xl overflow-y-auto',
       'rounded-2xl shadow-2xl',
-      'bg-gradient-to-b from-zinc-900/95 to-zinc-950/95',
-      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5',
+      'bg-white dark:bg-zinc-900',
+      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-zinc-300/60 dark:ring-white/5',
       'backdrop-blur-lg p-5'
     ].join(' ');
 
@@ -5104,7 +5178,7 @@ async function openGlobalSettingsModal() {
   const selectCls = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
   const inputCls  = selectCls;
   const chipBase  = 'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors';
-  const chipIdle  = 'border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70';
+  const chipIdle  = 'border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10';
   const chipOn    = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20';
   const sectionCls= 'space-y-4';
   const titleCls  = 'text-sm font-semibold text-zinc-800 dark:text-zinc-200';
@@ -5261,7 +5335,7 @@ async function openGlobalSettingsModal() {
 
       function addSuggestionRow(mapKey, label) {
         const item = document.createElement('div');
-        item.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-800/70';
+        item.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
         item.textContent = label;
         item.addEventListener('mousedown', () => {
           mapNameInput.value = label;
@@ -5956,8 +6030,8 @@ function openEditModal(idx) {
     panel.className = [
       'max-h-[80vh] w-full max-w-3xl overflow-y-auto',
       'rounded-2xl shadow-2xl',
-      'bg-gradient-to-b from-zinc-900/95 to-zinc-950/95',
-      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5',
+      'bg-white dark:bg-zinc-900',
+      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-zinc-300/60 dark:ring-white/5',
       'backdrop-blur-lg p-5'
     ].join(' ');
   }
@@ -5976,7 +6050,7 @@ function openEditModal(idx) {
     'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
   const inputSm   = `${inputBase} w-16 md:w-20 shrink-0 px-2 py-1.5 text-xs`;
   const chipBtn   =
-    'rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70';
+    'rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10';
   const minusBtnCls =
     'group h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg ' +
     'bg-red-600/90 text-zinc-900 dark:text-white border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5 shadow-sm ' +
