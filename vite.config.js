@@ -3,6 +3,11 @@ import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      fs: '/resources/js/shims/fs-browser.js',
+    },
+  },
   plugins: [
     laravel({
       input: [

@@ -6,7 +6,6 @@
 
 @push('head')
   @php($nonce = csp_nonce())
-  <script nonce="{{ $nonce }}" src="https://cdn.jsdelivr.net/gh/Zezombye/overpy@master/out/overpy_standalone.js" defer></script>
   <script nonce="{{ $nonce }}" src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js" defer></script>
 @endpush
 

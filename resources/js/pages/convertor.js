@@ -196,12 +196,31 @@ const ALL_TRANSLATION_FILES = [
   { key: 'values', path: 'values.json' },
 ];
 
-const HERO_FILE_MAP = {
+const LEGACY_HERO_FILE_MAP = {
   GENJI: 'mechanics/Genji.opy',
   HANZO: 'mechanics/Hanzo.opy',
   KIRIKO: 'mechanics/Kiriko.opy',
   HAZARD: 'mechanics/Hazard.opy',
+  DOOMFIST: 'mechanics/Doomfist.opy',
 };
+
+const FW_HERO_FILE_MAP = {
+  GENJI: 'FwHero/Genji.opy',
+  HANZO: 'FwHero/Hanzo.opy',
+  KIRIKO: 'FwHero/Kiriko.opy',
+  HAZARD: 'FwHero/Hazard.opy',
+  DOOMFIST: 'FwHero/Doomfist.opy',
+};
+
+function buildFwHeroEnum(heroKey, heroName) {
+  return [
+    'enum FwHero:',
+    `    Hero = Hero.${heroKey}`,
+    `    String = "${heroName}"`,
+    `    StringLC = "${heroName.toLowerCase()}"`,
+    `    StringUC = "${heroKey}"`,
+  ].join('\n');
+}
 
 const OVERPY_COMMIT = 'dd8fc2d25459243053f8214478e13d85fda759af';
 const TS_BASE = `https://cdn.jsdelivr.net/gh/Zezombye/overpy@${OVERPY_COMMIT}/src/data/`;
@@ -327,9 +346,28 @@ const MARKERS = {
    WORKER
    ========================= */
 let __tplWorker, __tplReqId = 0;
+let __overpyPromise = null;
+
+function normalizeOverpyModule(mod){
+  if (mod && typeof mod.compile === 'function') return mod;
+  if (mod?.default && typeof mod.default.compile === 'function') return mod.default;
+  return null;
+}
+
+async function getOverpyFromNpm(){
+  if (!__overpyPromise) {
+    __overpyPromise = import('overpy').then((mod) => {
+      const overpy = normalizeOverpyModule(mod);
+      if (!overpy) throw new Error('OverPy npm export introuvable');
+      return overpy;
+    });
+  }
+  return __overpyPromise;
+}
+
 function __getTplWorker(){
   if (__tplWorker) return __tplWorker;
-  __tplWorker = new Worker(new URL('../components/convertor.worker.js', import.meta.url), { type: 'classic' });
+  __tplWorker = new Worker(new URL('../components/convertor.worker.js', import.meta.url), { type: 'module' });
   return __tplWorker;
 }
 function runTplWorker(type, payload){
@@ -1210,7 +1248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const resultTpl = await doConvert(fullText, lang);
       textarea.value = resultTpl;
-      renderMapSettings(fullText);
+      renderMapSettings(resultTpl);
       runIdle(() => checkForDiff?.());
     })
   );
@@ -1228,7 +1266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const tpl = await doTranslate(fullText, clientLang, targetLang);
       textarea.value = tpl;
-      renderMapSettings(fullText);
+      renderMapSettings(tpl);
       runIdle(() => checkForDiff?.());
     })
   );
@@ -1583,19 +1621,36 @@ function patchEditorDefaultOn(src) {
 
 function expandImportHeroToInclude(src) {
   src = normalizeNewlines(src);
-  src = src.replace(
-    /^[ \t]*#!define\s+importHero\s*\(\s*Hero\s*\)\s*__script__\([^)]+\)[^\n]*\n?/im,
-    ''
-  );
+  let importHeroScriptPath = '';
+  src = src.replace(/^[ \t]*#!define\s+importHero\s*\(\s*Hero\s*\)\s*__script__\(\s*['"]([^'"]+)['"]\s*\)[^\n]*\n?/im, (full, scriptPath) => {
+    importHeroScriptPath = String(scriptPath || '');
+    return '';
+  });
+
+  const hasFwIncludeMarker = /^[ \t]*Fw_Include_Hero[ \t]*$/m.test(src);
+  const useFwHeroMode =
+    /(^|\/)FwHero\/fwHero\.js$/i.test(importHeroScriptPath) || hasFwIncludeMarker;
+
+  let includeLine = '';
   src = src.replace(/^[ \t]*importHero\s*\(([\s\S]*?)\)\s*$/gim, (full, arg) => {
-    const m = /"(GENJI|HANZO|KIRIKO|HAZARD)"/i.exec(arg);
+    const m = /"(GENJI|HANZO|KIRIKO|HAZARD|DOOMFIST)"/i.exec(arg);
     if (!m) { debug(`[compile] importHero: héros introuvable dans: ${arg}`); return ''; }
     const heroKey = m[1].toUpperCase();
-    const file = HERO_FILE_MAP[heroKey];
+    const file = (useFwHeroMode ? FW_HERO_FILE_MAP : LEGACY_HERO_FILE_MAP)[heroKey];
     if (!file) { debug(`[compile] importHero: mapping manquant pour ${heroKey}`); return ''; }
-    debug(`[compile] importHero → #!include "${file}"`);
-    return `#!include "${file}"`;
+    const heroName = file.split('/').pop().replace(/\.opy$/i, '');
+    includeLine = `#!include "${file}"`;
+    debug(`[compile] importHero → ${includeLine} (${useFwHeroMode ? 'fw' : 'legacy'})`);
+    if (!useFwHeroMode) return hasFwIncludeMarker ? '' : includeLine;
+
+    const fwHeroEnum = buildFwHeroEnum(heroKey, heroName);
+    return hasFwIncludeMarker ? fwHeroEnum : `${fwHeroEnum}\n${includeLine}`;
   });
+
+  if (hasFwIncludeMarker) {
+    src = src.replace(/^[ \t]*Fw_Include_Hero[ \t]*$/m, includeLine || '');
+  }
+
   return src;
 }
 
@@ -1619,9 +1674,8 @@ async function loadTemplate(lang) {
     tpl = await runTplWorker('compile', { lang });
   } catch (e) {
     console.warn('[loadTemplate] Worker compile failed, fallback in main thread:', e);
-    const overpy = window.window || window.OverPy || window.Overpy;
-    if (!overpy) throw new Error('OverPy UMD not found (fallback)');
-    await overpy.readyPromise;
+    const overpy = await getOverpyFromNpm();
+    if (overpy.readyPromise) await overpy.readyPromise;
 
     const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4F/';
     const entryFile = 'framework.opy';
@@ -2593,16 +2647,14 @@ function ensureDifficultyHudInWorkshop(tpl, lang, difficultyIndex) {
   const HUD_LABEL = 'Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디스플레이';
   const HUD_KEY_RE = /difficulty\s*display\s*hud/i;
 
-  const headerRe = /(^|\n)(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?\s*\{/i;
+  const headerRe = /(^|\n)[ \t]*(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?[ \t]*\{/i;
   const m = headerRe.exec(tpl);
 
   if (!m) {
-    const header = (lang === 'zh-CN') ? '地图工坊' : (lang === 'ja-JP') ? 'ワークショップ' : 'workshop';
-    const block = `${header} {\n    ${HUD_LABEL}: [${idx}]\n}\n\n`;
-    return block + tpl;
+    return upsertWorkshopBlock(tpl, lang, `${HUD_LABEL}: [${idx}]`);
   }
 
-  const openIdx = tpl.indexOf('{', m.index);
+  const openIdx = tpl.indexOf('{', m.index + m[0].length - 1);
   if (openIdx < 0) return tpl;
 
   let depth = 1, i = openIdx + 1;
@@ -2776,15 +2828,16 @@ function applyDifficultyValue(fullText, lang, wanted) {
   logDiff('applyDifficultyValue: wanted =', wanted, '=> idx =', idx);
   if (idx == null) return fullText;
 
+  const HUD_LABEL = 'Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디스플레이';
   let text = fullText;
 
   (function updateWorkshopBlock() {
-    const key = /(workshop|地图工坊|ワークショップ)\s*\{/i.exec(text);
+    const key = /(^|\n)[ \t]*(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?[ \t]*\{/i.exec(text);
     if (!key) {
       log('applyDifficultyValue: workshop block introuvable (ok)');
       return;
     }
-    const openBrace = text.indexOf('{', key.index + key[0].length);
+    const openBrace = text.indexOf('{', key.index + key[0].length - 1);
     if (openBrace < 0) {
       log("applyDifficultyValue: '{' après workshop introuvable");
       return;
@@ -2828,7 +2881,7 @@ function applyDifficultyValue(fullText, lang, wanted) {
       text = head + lines.join('\n') + tail;
     } else {
       const indent = (body.match(/^\s+/m) || ['    '])[0];
-      lines.unshift(`${indent}Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디ス플레이: [${idx}]`);
+      lines.unshift(`${indent}${HUD_LABEL}: [${idx}]`);
       text = head + lines.join('\n') + tail;
       logDiff('applyDifficultyValue: HUD ajouté (absent)');
     }
@@ -3586,24 +3639,123 @@ function extractWorkshopSettings(fullText) {
   return match ? match[1].trim() : '';
 }
 
+function getExtensionsHeaderRegex(lang = getActiveOutputLang()) {
+  switch (lang) {
+    case 'es-MX': return /^(\s*)extensiones\s*\{/im;
+    case 'pt-BR': return /^(\s*)extensões\s*\{/im;
+    case 'de-DE': return /^(\s*)Erweiterungen\s*\{/im;
+    case 'ja-JP': return /^(\s*)拡張\s*\{/im;
+    case 'zh-CN': return /^(\s*)扩展\s*\{/im;
+    default:      return /^(\s*)extensions\s*\{/im;
+  }
+}
+
+function findSettingsBlockBounds(text) {
+  const names = [
+    'settings',
+    'einstellungen',
+    'configuración',
+    'configuracion',
+    'configurações',
+    'configuracoes',
+    '設定',
+    '设置',
+  ];
+  const esc = (s) => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const headerRe = new RegExp(
+    `(^|\\n)[ \\t]*(?:${names.map(esc).join('|')})\\s*(?:\\r?\\n)?[ \\t]*\\{`,
+    'i'
+  );
+
+  const m = headerRe.exec(text);
+  if (!m) return null;
+
+  const startHeaderIdx = m.index + (m[1] ? m[1].length : 0);
+  const openIdx = text.indexOf('{', startHeaderIdx);
+  if (openIdx < 0) return null;
+
+  let depth = 1;
+  let closeIdx = -1;
+  for (let i = openIdx + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        closeIdx = i;
+        break;
+      }
+    }
+  }
+  if (closeIdx < 0) return null;
+
+  return { startHeaderIdx, openIdx, closeIdx };
+}
+
+function resolveWorkshopInsertionPoint(tpl, lang = getActiveOutputLang()) {
+  const reExtensions = getExtensionsHeaderRegex(lang);
+  const mExt = tpl.match(reExtensions);
+  if (mExt) {
+    return {
+      index: mExt.index,
+      baseIndent: mExt[1] || '',
+    };
+  }
+
+  const settings = findSettingsBlockBounds(tpl);
+  if (settings) {
+    const body = tpl.slice(settings.openIdx + 1, settings.closeIdx);
+    const childIndent = (body.match(/\n([ \t]+)\S/) || [null, '    '])[1];
+    return {
+      index: settings.closeIdx,
+      baseIndent: childIndent || '    ',
+    };
+  }
+
+  return { index: 0, baseIndent: '' };
+}
+
+function removeDifficultyHudFromExtensions(tpl, lang = getActiveOutputLang()) {
+  const reExtensions = getExtensionsHeaderRegex(lang);
+  const mExt = reExtensions.exec(tpl);
+  if (!mExt) return tpl;
+
+  const openIdx = tpl.indexOf('{', mExt.index + mExt[0].length - 1);
+  if (openIdx < 0) return tpl;
+
+  let depth = 1;
+  let closeIdx = -1;
+  for (let i = openIdx + 1; i < tpl.length; i++) {
+    const ch = tpl[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        closeIdx = i;
+        break;
+      }
+    }
+  }
+  if (closeIdx < 0) return tpl;
+
+  const before = tpl.slice(0, openIdx + 1);
+  const body = tpl.slice(openIdx + 1, closeIdx);
+  const after = tpl.slice(closeIdx);
+
+  const cleanedBody = body
+    .split(/\r?\n/)
+    .filter((line) => !/difficulty\s*display\s*hud/i.test(line))
+    .join('\n');
+
+  return before + cleanedBody + after;
+}
+
 function insertWorkshopSettings(tpl, workshopSettingsBlock, lang = getActiveOutputLang()) {
   if (!workshopSettingsBlock || !workshopSettingsBlock.trim()) return tpl;
 
   tpl = removeWorkshopBlock(tpl);
 
-  let reExtensions;
-  switch (lang) {
-    case 'es-MX': reExtensions = /^(\s*)extensiones\s*\{/im; break;
-    case 'pt-BR': reExtensions = /^(\s*)extensões\s*\{/im; break;
-    case 'de-DE': reExtensions = /^(\s*)Erweiterungen\s*\{/im; break;
-    case 'ja-JP': reExtensions = /^(\s*)拡張\s*\{/im; break;
-    case 'zh-CN': reExtensions = /^(\s*)扩展\s*\{/im; break;
-    default:      reExtensions = /^(\s*)extensions\s*\{/im;
-  }
-
-  const mExt = tpl.match(reExtensions);
-
-  const baseIndent  = mExt ? (mExt[1] || '') : '';
+  const { index: insertPos, baseIndent } = resolveWorkshopInsertionPoint(tpl, lang);
   const innerIndent = baseIndent + '    ';
 
   let workshopKeyword;
@@ -3623,12 +3775,7 @@ function insertWorkshopSettings(tpl, workshopSettingsBlock, lang = getActiveOutp
     `${indentedLines}\n` +
     `${baseIndent}}\n\n`;
 
-  if (mExt) {
-    const insertPos = mExt.index;
-    return tpl.slice(0, insertPos) + workshopBlock + tpl.slice(insertPos);
-  } else {
-    return workshopBlock + tpl;
-  }
+  return tpl.slice(0, insertPos) + workshopBlock + tpl.slice(insertPos);
 }
 
 /* ————— WS SETTINGS HELPERS —————*/
@@ -3761,27 +3908,15 @@ function upsertWorkshopBlock(tpl, lang, content) {
               : 'workshop';
 
   tpl = removeWorkshopBlock(tpl);
-
-  let reExtensions;
-  switch (lang) {
-    case 'es-MX': reExtensions = /^(\s*)extensiones\s*\{/im; break;
-    case 'pt-BR': reExtensions = /^(\s*)extensões\s*\{/im; break;
-    case 'de-DE': reExtensions = /^(\s*)Erweiterungen\s*\{/im; break;
-    case 'ja-JP': reExtensions = /^(\s*)拡張\s*\{/im; break;
-    case 'zh-CN': reExtensions = /^(\s*)扩展\s*\{/im; break;
-    default:      reExtensions = /^(\s*)extensions\s*\{/im; break;
-  }
-  const mExt = tpl.match(reExtensions);
-  if (!mExt) {
-    const block = `${header}\n{\n${content.split('\n').map(l => '    '+l).join('\n')}\n}\n\n`;
-    return block + tpl;
-  }
-
-  const baseIndent = mExt[1] || '';
+  const { index: insertPos, baseIndent } = resolveWorkshopInsertionPoint(tpl, lang);
   const innerIndent = baseIndent + '    ';
-  const block = `${baseIndent}${header}\n${baseIndent}{\n${content.split('\n').map(l => innerIndent + l).join('\n')}\n${baseIndent}}\n\n`;
+  const body = String(content || '')
+    .split('\n')
+    .map(l => innerIndent + l)
+    .join('\n');
+  const block = `${baseIndent}${header}\n${baseIndent}{\n${body}\n${baseIndent}}\n\n`;
 
-  return tpl.slice(0, mExt.index) + block + tpl.slice(mExt.index);
+  return tpl.slice(0, insertPos) + block + tpl.slice(insertPos);
 }
 
 /* =========================
@@ -4630,7 +4765,7 @@ function temporaryReplace(text) {
 }
 
 /* =========================
-   DO CONVERT (utilise common API)
+   DO CONVERT
    ========================= */
 async function doConvert(fullText, lang) {
   __lastTranslateCtx = { used: false, sourceLang: null, targetLang: null };
@@ -5327,7 +5462,7 @@ function getLocalizedOnOff(lang) {
   }
 }
 
-function applyOnOffReplacements(text, localized, settings) {
+function applyOnOffReplacements(text, localized, settings, lang = getActiveOutputLang()) {
   const editorVal = settings.editorMode ? localized.on : localized.off;
   const playtestVal = settings.playtest === 'on' ? localized.on : localized.off;
   const portalsVal = settings.portals === 'on' ? localized.on : localized.off;
@@ -5397,9 +5532,8 @@ function applyOnOffReplacements(text, localized, settings) {
 
   const missingAtAll = RULES;
   if (missingAtAll.length > 0) {
-    const lines = missingAtAll.map(({ label, value }) => `    ${label} : ${value}`).join('\n');
-    const block = `workshop {\n${lines}\n}\n\n`;
-    return block + text;
+    const content = missingAtAll.map(({ label, value }) => `${label} : ${value}`).join('\n');
+    return upsertWorkshopBlock(text, lang, content);
   }
 
   return text;
@@ -5561,7 +5695,7 @@ async function saveGlobalSettings() {
   const localized = getLocalizedOnOff(outputLang);
 
   let text = originalText;
-  text = applyOnOffReplacements(text, localized, globalSettings);
+  text = applyOnOffReplacements(text, localized, globalSettings, outputLang);
   text = applyValidatorToggle(text, outputLang, globalSettings);
   text = applyMapEntryUpdate(text, resolution);
   text = writeGlobalSettingsIntoTemplate(text, newActiveBans);
@@ -5569,6 +5703,7 @@ async function saveGlobalSettings() {
   text = applyDifficultyValue(text, outputLang, wanted);
   const idxAfter = extractDifficultyValue(text);
   text = ensureDifficultyHudInWorkshop(text, outputLang, idxAfter);
+  text = removeDifficultyHudFromExtensions(text, outputLang);
 
   textarea.value = text;
   lastFullText = text;
