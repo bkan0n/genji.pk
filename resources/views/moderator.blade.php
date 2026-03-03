@@ -265,7 +265,7 @@
                   class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-link"
                 >
-                  Link fake → real
+                  Link fake â†’ real
                 </button>
                 <button
                   class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
@@ -287,7 +287,7 @@
                 </button>
               </div>
 
-              {{-- Empty state tant qu’aucune sous-action n’est choisie --}}
+              {{-- Empty state tant quâ€™aucune sous-action nâ€™est choisie --}}
               <div
                 class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
@@ -600,7 +600,7 @@
                     </div>
 
                     <p class="-mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      Tip: Define exactly one “is primary” to
+                      Tip: Define exactly one â€œis primaryâ€ to
                       <span class="font-semibold text-emerald-300">true</span>
                       .
                     </p>
@@ -870,7 +870,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Grant key
                       </button>
@@ -977,7 +977,7 @@
                     </label>
 
                     <div class="sm:col-span-3">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Grant XP
                       </button>
                     </div>
@@ -1130,7 +1130,7 @@
                     </label>
                     <div class="sm:col-span-4">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Grant reward
                       </button>
@@ -1261,7 +1261,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Fetch keys
                       </button>
@@ -1428,7 +1428,7 @@
                     </label>
                     <div class="sm:col-span-4">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Fetch rewards
                       </button>
@@ -1672,7 +1672,7 @@
 
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Fetch all rewards
                       </button>
@@ -1785,7 +1785,7 @@
 
                     <div class="sm:col-span-2">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Set active key type
                       </button>
@@ -1810,7 +1810,7 @@
 
                     <div class="sm:col-span-2">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Fetch XP Multiplier
                       </button>
@@ -1829,7 +1829,7 @@
 
                   <form data-action="set-xp-multiplier" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
                     <label class="sm:col-span-1">
-                      Value (1 → 10)
+                      Value (1 â†’ 10)
                       <input
                         name="value"
                         type="number"
@@ -1843,7 +1843,7 @@
 
                     <div class="sm:col-span-2">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Set XP Multiplier
                       </button>
@@ -1930,7 +1930,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Create
                       </button>
@@ -1977,7 +1977,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Update
                       </button>
@@ -2017,7 +2017,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Delete
                       </button>
@@ -2101,7 +2101,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Fetch
                       </button>
@@ -2255,7 +2255,7 @@
                       <label>
                         Mode
                         <div class="relative mt-1" data-dd-select>
-                          <!-- Select caché pour rester 100% compatible avec setupArchiveMapsUI (form.mode) -->
+                          <!-- Select cachÃ© pour rester 100% compatible avec setupArchiveMapsUI (form.mode) -->
                           <select name="mode" class="hidden">
                             <option value="single" selected>Single</option>
                             <option value="bulk">Bulk</option>
@@ -2332,7 +2332,7 @@
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/v3/maps/{code}</span>
                   </div>
 
-                  <!-- Charger une carte à éditer -->
+                  <!-- Charger une carte Ã  Ã©diter -->
                   <form
                     data-action="load-map-update"
                     autocomplete="off"
@@ -2348,14 +2348,14 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Load
                       </button>
                     </div>
                   </form>
 
-                  <!-- Formulaire d’édition (même structure que submit, IDs préfixés u-) -->
+                  <!-- Formulaire dâ€™Ã©dition (mÃªme structure que submit, IDs prÃ©fixÃ©s u-) -->
                   <form
                     id="u-updateMapForm"
                     data-action="update-map"
@@ -2389,7 +2389,7 @@
                               </button>
                             </span>
 
-                            <!-- Secondary (même affichage que le primary) -->
+                            <!-- Secondary (mÃªme affichage que le primary) -->
                             <span
                               class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
@@ -2750,7 +2750,7 @@
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‡ Gold</span>
                               </span>
                               <input
                                 id="u-medalGoldInput"
@@ -2764,7 +2764,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥ˆ Silver</span>
                               </span>
                               <input
                                 id="u-medalSilverInput"
@@ -2778,7 +2778,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‰ Bronze</span>
                               </span>
                               <input
                                 id="u-medalBronzeInput"
@@ -2791,7 +2791,7 @@
                             </label>
                           </div>
                           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
+                            Format: max 5 digits before the decimal and up to 2 after. Values â‰¥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
                         </div>
@@ -2858,7 +2858,7 @@
                               </button>
                             </span>
 
-                            <!-- Secondary (même système que primary) -->
+                            <!-- Secondary (mÃªme systÃ¨me que primary) -->
                             <span
                               class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
@@ -3167,7 +3167,7 @@
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‡ Gold</span>
                               </span>
                               <input
                                 id="medalGoldInput"
@@ -3181,7 +3181,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥ˆ Silver</span>
                               </span>
                               <input
                                 id="medalSilverInput"
@@ -3195,7 +3195,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‰ Bronze</span>
                               </span>
                               <input
                                 id="medalBronzeInput"
@@ -3208,7 +3208,7 @@
                             </label>
                           </div>
                           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
+                            Format: max 5 digits before the decimal and up to 2 after. Values â‰¥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
                         </div>
@@ -3275,7 +3275,7 @@
                     <div class="sm:col-span-3">
                       <button
                         type="submit"
-                        class="w-full cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Convert
                       </button>
@@ -3306,7 +3306,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Search
                       </button>
@@ -3660,7 +3660,7 @@
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‡ Gold</span>
                               </span>
                               <input
                                 id="s-medalGoldInput"
@@ -3675,7 +3675,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥ˆ Silver</span>
                               </span>
                               <input
                                 id="s-medalSilverInput"
@@ -3690,7 +3690,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‰ Bronze</span>
                               </span>
                               <input
                                 id="s-medalBronzeInput"
@@ -3704,7 +3704,7 @@
                             </label>
                           </div>
                           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
+                            Format: max 5 digits before the decimal and up to 2 after. Values â‰¥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
                         </div>
@@ -3765,14 +3765,14 @@
                     </label>
 
                     <label class="block">
-                      <span class="block text-xs text-zinc-500 dark:text-zinc-400">Quality (1–6)</span>
+                      <span class="block text-xs text-zinc-500 dark:text-zinc-400">Quality (1â€“6)</span>
                       <div id="q-qualityDropdown" class="relative mt-1">
                         <button
                           type="button"
                           data-dd-btn
                           class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select quality (1–6)</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select quality (1â€“6)</span>
                           <svg
                             class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
@@ -3792,7 +3792,7 @@
 
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Apply
                       </button>
@@ -3818,7 +3818,7 @@
                       <input
                         name="context"
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="tool-assisted, impossible, …"
+                        placeholder="tool-assisted, impossible, â€¦"
                       />
                     </label>
 
@@ -3902,7 +3902,7 @@
 
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Flag
                       </button>
@@ -3932,7 +3932,7 @@
                     </label>
                     <div class="sm:col-span-3">
                       <button
-                        class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Fetch
                       </button>
@@ -4045,12 +4045,6 @@
                 Choose a Store action.
               </div>
 
-              {{-- Outputs (accessibles depuis n’importe quel form du panel) --}}
-              <div class="grid gap-4">
-                <pre id="out-store-config" data-out="store-config" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-                <pre id="out-store-update" data-out="store-update-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-                <pre id="out-store-rotation" data-out="store-rotation-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-              </div>
 
               {{-- Subpanel: Config --}}
               <div data-subpanel="store-config" class="hidden space-y-6">
@@ -4061,7 +4055,7 @@
                   </div>
 
                   <form data-action="store-get-config" autocomplete="off">
-                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                       Load config
                     </button>
                   </form>
@@ -4096,7 +4090,7 @@
                     </label>
 
                     <div class="sm:col-span-2">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Save
                       </button>
                     </div>
@@ -4127,7 +4121,7 @@
                     </label>
 
                     <div class="sm:col-span-2">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Generate
                       </button>
                     </div>
@@ -4176,14 +4170,6 @@
                 Choose a Quests action.
               </div>
 
-              {{-- Outputs --}}
-              <div class="grid gap-4">
-                <pre id="out-quest-config" data-out="quest-config" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-                <pre id="out-quest-config-update" data-out="quest-config-update-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-                <pre id="out-quest-update" data-out="quest-update-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-                <pre id="out-quest-rotation" data-out="quest-rotation-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-                <pre id="out-quest-user-progress" data-out="quest-user-progress-res" class="hidden whitespace-pre-wrap rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/80 text-white p-4 text-xs overflow-auto"></pre>
-              </div>
 
               {{-- Subpanel: Config --}}
               <div data-subpanel="quest-config" class="hidden space-y-6">
@@ -4194,7 +4180,7 @@
                   </div>
 
                   <form data-action="quest-get-config" autocomplete="off">
-                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                       Load config
                     </button>
                   </form>
@@ -4243,7 +4229,7 @@
                     </label>
 
                     <div class="sm:col-span-2">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Save
                       </button>
                     </div>
@@ -4257,11 +4243,11 @@
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div class="flex items-center justify-between">
                     <h3 class="font-semibold">Get Weekly Quests</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=…</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=â€¦</span>
                   </div>
 
                   <form data-action="quest-get-weekly" autocomplete="off">
-                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                       Load quests
                     </button>
                   </form>
@@ -4383,7 +4369,7 @@
                     </label>
 
                     <div class="sm:col-span-2">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Save
                       </button>
                     </div>
@@ -4400,7 +4386,7 @@
                   </div>
 
                   <form data-action="quest-generate-rotation" autocomplete="off">
-                    <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                       Generate
                     </button>
                   </form>
@@ -4423,15 +4409,15 @@
                         User name
                         <input name="user_id" type="text" autocomplete="off" spellcheck="false"
                           class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                          placeholder="Type a username…" />
+                          placeholder="Type a usernameâ€¦" />
                       </label>
 
                       <label class="text-sm md:col-span-2">
                         Progress entry
                         <div id="modQuestUserProgressPick" class="relative mt-1" data-dd-select>
-                          <button type="button" data-dd-btn data-placeholder="Select a progress…" aria-haspopup="listbox" aria-expanded="false"
+                          <button type="button" data-dd-btn data-placeholder="Select a progressâ€¦" aria-haspopup="listbox" aria-expanded="false"
                             class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-                            <span class="dd-label truncate">Select a progress…</span>
+                            <span class="dd-label truncate">Select a progressâ€¦</span>
                             <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                               <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
                             </svg>
@@ -4469,25 +4455,22 @@
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div>
                     <h3 class="font-semibold">Update user quest progress (PATCH)</h3>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                      Body fields match the API schema exactly.
-                    </p>
                   </div>
 
                   <form data-action="quest-update-user-progress" class="space-y-5">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <label class="text-sm">
-                        User name
-                        <input name="user_id" type="text" autocomplete="off" spellcheck="false"
-                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                          placeholder="Type a username…" />
+                        user_id
+                        <input name="user_id" type="text" inputmode="numeric" readonly
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-200 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="Load a user first" />
                       </label>
 
                       <label class="text-sm">
                         progress_id
-                        <input name="progress_id" type="text" inputmode="numeric"
-                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                          placeholder="1" />
+                        <input name="progress_id" type="text" inputmode="numeric" readonly
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-200 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="Select a progress first" />
                       </label>
 
                       <label class="text-sm">
@@ -4885,9 +4868,6 @@
                         class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 active:bg-emerald-800">
                         Patch
                       </button>
-                      <span class="text-xs text-zinc-500 dark:text-zinc-400">
-                        Only non-empty fields are sent.
-                      </span>
                     </div>
                   </form>
                 </article>
@@ -4957,7 +4937,7 @@
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">I understand this may cause a short downtime.</span>
                     </label>
                     <button
-                      class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                     >
                       Delete frameworks cache
                     </button>
@@ -4981,7 +4961,7 @@
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">Confirm deletion of avatars cache.</span>
                     </label>
                     <button
-                      class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                     >
                       Delete avatars cache
                     </button>
@@ -5005,7 +4985,7 @@
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">Yes, clear the translations cache.</span>
                     </label>
                     <button
-                      class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                     >
                       Delete translations cache
                     </button>
@@ -5024,7 +5004,7 @@
                   <!-- Current value -->
                   <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm">
                     <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Current commit</div>
-                    <div id="overpyCommitCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">—</div>
+                    <div id="overpyCommitCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">â€”</div>
                   </div>
 
                   <form data-action="set-overpy-commit" autocomplete="off" class="space-y-3">
@@ -5033,7 +5013,7 @@
                     </p>
 
                     <label class="block text-sm text-zinc-600 dark:text-zinc-300">
-                      New commit SHA (7–40 hex)
+                      New commit SHA (7â€“40 hex)
                       <input
                         type="text"
                         name="commit"
@@ -5052,7 +5032,7 @@
                     </label>
 
                     <button
-                      class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                     >
                       Update commit
                     </button>
@@ -5071,7 +5051,7 @@
                   <!-- Current value -->
                   <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm">
                     <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Current version</div>
-                    <div id="frameworkVersionCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">—</div>
+                    <div id="frameworkVersionCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">â€”</div>
                   </div>
 
                   <form id="formSetFrameworkVersion" data-action="set-framework-version" autocomplete="off" novalidate class="space-y-3">
@@ -5108,7 +5088,7 @@
                     <button
                       id="btnSetFrameworkVersion"
                       type="button"
-                      class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
                     >
                       Update version
                     </button>
@@ -5136,6 +5116,25 @@
                   >
                     Clear
                   </button>
+                </div>
+                <div class="mt-3 space-y-2">
+                  <label class="block">
+                    <input
+                      id="activitySearch"
+                      type="text"
+                      class="w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                      placeholder="Filter by method, URL, status, payload..."
+                      autocomplete="off"
+                    />
+                  </label>
+                  <div class="flex items-center justify-between gap-2">
+                    <div id="activityFilters" class="flex flex-wrap items-center gap-1.5">
+                      <button type="button" data-activity-filter="all" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200">All</button>
+                      <button type="button" data-activity-filter="ok" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200">Success</button>
+                      <button type="button" data-activity-filter="err" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200">Errors</button>
+                    </div>
+                    <span id="activityCount" class="shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-700 dark:text-zinc-300">0</span>
+                  </div>
                 </div>
                 <div id="activityLog" class="mt-3 max-h-[70vh] space-y-2 overflow-y-auto overflow-x-hidden pr-1 text-sm min-w-0 break-words [overflow-wrap:anywhere]">
                   <p class="text-zinc-500 dark:text-zinc-400">Responses from endpoints will appear here</p>
@@ -5165,7 +5164,7 @@
           </span>
           <div class="flex-1">
             <div class="text-xs text-zinc-500 dark:text-zinc-400">Search tabs & tools</div>
-            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to search…" autocomplete="off" />
+            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to searchâ€¦" autocomplete="off" />
           </div>
           <button id="modCmdkClose" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Esc</button>
         </div>
@@ -5173,7 +5172,7 @@
           <div id="modCmdkList" class="space-y-1"></div>
         </div>
         <div class="border-t border-zinc-200/80 dark:border-white/10 px-4 py-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-          <span class="text-zinc-800 dark:text-zinc-200">Enter</span> to open · <span class="text-zinc-800 dark:text-zinc-200">↑↓</span> to navigate · <span class="text-zinc-800 dark:text-zinc-200">Esc</span> to close
+          <span class="text-zinc-800 dark:text-zinc-200">Enter</span> to open Â· <span class="text-zinc-800 dark:text-zinc-200">â†‘â†“</span> to navigate Â· <span class="text-zinc-800 dark:text-zinc-200">Esc</span> to close
         </div>
       </div>
     </div>

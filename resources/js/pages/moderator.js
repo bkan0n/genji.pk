@@ -406,28 +406,131 @@ function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
 }
 
 // --- Activity log ---
+const ACTIVITY_MAX_ITEMS = 120;
+const __activityState = { query: '', filter: 'all' };
+
+function ensureActivityPlaceholder(container = $('#activityLog')) {
+  if (!container) return;
+  const cards = container.querySelectorAll('[data-log-card]');
+  const empty = container.querySelector('[data-empty-activity="1"]');
+
+  if (!cards.length && !empty) {
+    const p = document.createElement('p');
+    p.dataset.emptyActivity = '1';
+    p.className = 'text-zinc-500 dark:text-zinc-400';
+    container.appendChild(p);
+    return;
+  }
+
+  if (cards.length && empty) empty.remove();
+}
+
+function updateActivityFilterButtons() {
+  const root = $('#activityFilters');
+  if (!root) return;
+  root.querySelectorAll('[data-activity-filter]').forEach((btn) => {
+    const active = btn.getAttribute('data-activity-filter') === __activityState.filter;
+    btn.classList.toggle('bg-emerald-500/15', active);
+    btn.classList.toggle('text-emerald-700', active);
+    btn.classList.toggle('dark:text-emerald-300', active);
+  });
+}
+
+function applyActivityFilters() {
+  const container = $('#activityLog');
+  if (!container) return;
+
+  const q = String(__activityState.query || '').trim().toLowerCase();
+  const mode = __activityState.filter || 'all';
+  let visible = 0;
+
+  container.querySelectorAll('[data-log-card]').forEach((card) => {
+    const cardOk = card.dataset.ok === '1';
+    const text = card.dataset.search || '';
+
+    const matchFilter =
+      mode === 'all' ||
+      (mode === 'ok' && cardOk) ||
+      (mode === 'err' && !cardOk);
+
+    const matchQuery = !q || text.includes(q);
+    const show = matchFilter && matchQuery;
+
+    card.classList.toggle('hidden', !show);
+    if (show) visible += 1;
+  });
+
+  const total = container.querySelectorAll('[data-log-card]').length;
+  const count = $('#activityCount');
+  if (count) count.textContent = `${visible}/${total}`;
+}
+
+function initActivityControls() {
+  const search = $('#activitySearch');
+  const filters = $('#activityFilters');
+
+  if (search && !search.dataset.wired) {
+    search.dataset.wired = '1';
+    search.addEventListener(
+      'input',
+      () => {
+        __activityState.query = search.value || '';
+        applyActivityFilters();
+      },
+      { passive: true }
+    );
+  }
+
+  if (filters && !filters.dataset.wired) {
+    filters.dataset.wired = '1';
+    filters.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-activity-filter]');
+      if (!btn) return;
+      __activityState.filter = btn.getAttribute('data-activity-filter') || 'all';
+      updateActivityFilterButtons();
+      applyActivityFilters();
+    });
+  }
+
+  updateActivityFilterButtons();
+  ensureActivityPlaceholder();
+  applyActivityFilters();
+}
+
 function logActivity({ title, method, url, ok, status, data }) {
+  const container = $('#activityLog');
+  if (!container) return;
+
   const wrap = document.createElement('div');
   wrap.className = 'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 fade-in min-w-0';
   wrap.dataset.logCard = '1';
+  wrap.dataset.ok = ok ? '1' : '0';
+  wrap.dataset.method = String(method || '');
+  wrap.dataset.status = String(status || '');
+  wrap.dataset.url = String(url || '');
 
   const pretty = typeof data === 'string' ? data : JSON.stringify(data ?? {}, null, 2);
   const lines = pretty.split('\n');
   const isLong = pretty.length > 600 || lines.length > 25;
+  const now = new Date();
+  const hhmmss = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   let preview = pretty;
   if (isLong) {
     const shown = 25;
     preview =
-      lines.slice(0, shown).join('\n') + `\n…\n(${Math.max(0, lines.length - shown)} more lines)`;
+      lines.slice(0, shown).join('\n') + `\n...\n(${Math.max(0, lines.length - shown)} more lines)`;
   }
 
   wrap.innerHTML = `
     <div class="flex items-center justify-between text-xs mb-2">
-      <span class="font-semibold">${title ?? 'Request'}</span>
-      <span class="${ok ? 'text-emerald-400' : 'text-red-400'}">${status}</span>
+      <span class="font-semibold truncate">${title ?? 'Request'}</span>
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-zinc-500 dark:text-zinc-400">${hhmmss}</span>
+        <span class="${ok ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}">${status}</span>
+      </div>
     </div>
-    <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-2">${method} ${url}</div>
+    <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-2 break-all">${method} ${url}</div>
     <pre class="resp text-xs whitespace-pre-wrap leading-tight max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
     <div class="mt-2 flex items-center gap-2">
       <button class="view-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">View full</button>
@@ -438,13 +541,24 @@ function logActivity({ title, method, url, ok, status, data }) {
 
   wrap._fullText = pretty;
   wrap._meta = { title: title ?? 'Response', method, url, isLong };
+  wrap.dataset.search = `${title ?? ''} ${method ?? ''} ${url ?? ''} ${status ?? ''} ${pretty}`.toLowerCase();
 
-  $('#activityLog')?.prepend(wrap);
+  container.prepend(wrap);
+
+  while (container.querySelectorAll('[data-log-card]').length > ACTIVITY_MAX_ITEMS) {
+    const cards = container.querySelectorAll('[data-log-card]');
+    cards[cards.length - 1]?.remove();
+  }
+
+  ensureActivityPlaceholder(container);
+  applyActivityFilters();
 }
 
 (function setupLogDelegation() {
   const container = $('#activityLog');
   if (!container) return;
+
+  initActivityControls();
 
   container.addEventListener('click', async (e) => {
     const card = e.target.closest('[data-log-card]');
@@ -681,6 +795,8 @@ function scrollIntoViewWithOffset(el, offset) {
           handleGetPendingEditRequests();
         }
         wireFormAutocompletes(active);
+        ensureFormUx(active);
+        ensureOutputUx(active);
         try {
           active.querySelectorAll('.fake-select, .custom-multiselect').forEach((el) => {
             if (typeof __merSetupFakeSelect === 'function') __merSetupFakeSelect(el);
@@ -696,7 +812,11 @@ function scrollIntoViewWithOffset(el, offset) {
 
 // --- Clear log ---
 $('#clearLog')?.addEventListener('click', () => {
-  $('#activityLog').innerHTML = '';
+  const container = $('#activityLog');
+  if (!container) return;
+  container.innerHTML = '';
+  ensureActivityPlaceholder(container);
+  applyActivityFilters();
 });
 
 //———————————————————————————————————————————————————————————————
@@ -924,6 +1044,7 @@ function wireFormAutocompletes(root = document) {
   });
 
   root.querySelectorAll('input[name$="user_id"]').forEach((input) => {
+    if (input.readOnly || input.disabled) return;
     if (!input.__acBound) attachUsersAutocomplete(input);
   });
 
@@ -938,12 +1059,43 @@ function wireFormAutocompletes(root = document) {
   }
 }
 
+function setFormPending(form, pending = true) {
+  const submitButtons = Array.from(
+    form.querySelectorAll('button[type="submit"], button:not([type])')
+  );
+
+  if (pending) {
+    form.setAttribute('aria-busy', 'true');
+    submitButtons.forEach((btn) => {
+      if (btn.dataset.pendingWired !== '1') {
+        btn.dataset.pendingWired = '1';
+        btn.dataset.pendingText = btn.textContent || 'Submit';
+      }
+      btn.disabled = true;
+      btn.classList.add('opacity-70');
+      btn.textContent = 'Working...';
+    });
+    return () => setFormPending(form, false);
+  }
+
+  form.removeAttribute('aria-busy');
+  submitButtons.forEach((btn) => {
+    btn.disabled = false;
+    btn.classList.remove('opacity-70');
+    if (btn.dataset.pendingText) btn.textContent = btn.dataset.pendingText;
+  });
+
+  return () => {};
+}
+
 // --- Forms dispatcher ---
 $$('form[data-action]').forEach((form) => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const action = form.dataset.action;
+    const releasePending = setFormPending(form, true);
     try {
+      const runAction = async () => {
       switch (action) {
         // USERS (API_MODS)
         case 'get-user':
@@ -1077,7 +1229,9 @@ $$('form[data-action]').forEach((form) => {
         default:
           toast(`Unknown action: ${action}`, 'err');
           return;
-}
+      }
+      };
+      await runAction();
     } catch (err) {
       toast('Unexpected error', 'err');
       logActivity({
@@ -1088,6 +1242,8 @@ $$('form[data-action]').forEach((form) => {
         status: 'ERR',
         data: { message: String(err) },
       });
+    } finally {
+      releasePending();
     }
   });
 });
@@ -1141,10 +1297,20 @@ function setupArchiveMapsUI() {
   }
 
   const submitBtn = form.querySelector('button[type="submit"], button:not([type])');
-  if (submitBtn) {
-    if (!bulkWrap.isConnected) form.insertBefore(bulkWrap, submitBtn);
-    else if (bulkWrap.nextElementSibling !== submitBtn) form.insertBefore(bulkWrap, submitBtn);
+  const submitAnchor =
+    (submitBtn?.closest?.('[data-form-actions="1"]') &&
+      submitBtn.closest('[data-form-actions="1"]').closest('form') === form &&
+      submitBtn.closest('[data-form-actions="1"]')) ||
+    submitBtn;
 
+  if (submitAnchor && submitAnchor.parentElement === form) {
+    if (!bulkWrap.isConnected) form.insertBefore(bulkWrap, submitAnchor);
+    else if (bulkWrap.nextElementSibling !== submitAnchor) form.insertBefore(bulkWrap, submitAnchor);
+  } else if (!bulkWrap.isConnected) {
+    form.appendChild(bulkWrap);
+  }
+
+  if (submitBtn) {
     submitBtn.classList.add(...String('w-full').trim().split(/\s+/).filter(Boolean));
     submitBtn.classList.add(...String('justify-self-stretch').trim().split(/\s+/).filter(Boolean));
   }
@@ -1165,7 +1331,10 @@ function setupArchiveMapsUI() {
     codesList.appendChild(row);
     attachMapCodeAutocomplete(row.querySelector('input[name="bulk_code[]"]'));
   }
-  addBtn.addEventListener('click', () => addCodeInput());
+  if (addBtn && addBtn.dataset.wired !== '1') {
+    addBtn.dataset.wired = '1';
+    addBtn.addEventListener('click', () => addCodeInput());
+  }
 
   function applyMode() {
     const bulk = form.mode.value === 'bulk';
@@ -1176,7 +1345,10 @@ function setupArchiveMapsUI() {
 
     if (bulk && codesList.children.length === 0) addCodeInput();
   }
-  form.mode.addEventListener('change', applyMode);
+  if (form.mode && form.mode.dataset.wired !== '1') {
+    form.mode.dataset.wired = '1';
+    form.mode.addEventListener('change', applyMode);
+  }
 
   singleWrap?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   bulkWrap.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
@@ -6534,6 +6706,195 @@ function stringifyOut(v) {
   catch { return String(v); }
 }
 
+function prettyOutTitle(key) {
+  return String(key || 'response')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\bres\b/gi, 'response')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function ensureOutputUx(root = document) {
+  root.querySelectorAll('pre[data-out]:not([data-out-ux="1"])').forEach((pre) => {
+    pre.dataset.outUx = '1';
+    const key = pre.getAttribute('data-out') || pre.id || 'response';
+
+    const wrap = document.createElement('div');
+    wrap.dataset.outWrap = '1';
+    wrap.className =
+      'hidden mt-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 ' +
+      'bg-zinc-100/70 dark:bg-zinc-950/40 p-2 space-y-2';
+
+    wrap.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="min-w-0">
+          <div class="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">${escapeHtml(prettyOutTitle(key))}</div>
+          <div class="text-[10px] text-zinc-500 dark:text-zinc-400" data-out-meta="1">No response yet</div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" data-out-action="copy" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Copy</button>
+          <button type="button" data-out-action="view" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">View</button>
+          <button type="button" data-out-action="clear" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Clear</button>
+        </div>
+      </div>
+    `;
+
+    pre.parentNode?.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    pre.classList.remove('hidden');
+    pre.classList.add(
+      'whitespace-pre-wrap',
+      'rounded-xl',
+      'border',
+      'border-zinc-200/80',
+      'dark:border-white/10',
+      'bg-black/85',
+      'text-white',
+      'p-3',
+      'text-xs',
+      'overflow-auto',
+      'max-h-[48vh]'
+    );
+  });
+}
+
+let __panelOutActionsWired = false;
+function wirePanelOutActions() {
+  if (__panelOutActionsWired) return;
+  __panelOutActionsWired = true;
+
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-out-action]');
+    if (!btn) return;
+
+    const wrap = btn.closest('[data-out-wrap="1"]');
+    const pre = wrap?.querySelector('pre[data-out]');
+    if (!wrap || !pre) return;
+
+    const action = btn.getAttribute('data-out-action');
+    const key = pre.getAttribute('data-out') || pre.id || 'response';
+    const text = pre.textContent || '';
+
+    if (action === 'copy') {
+      const ok = await copyText(text);
+      toast(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'ok' : 'err');
+      return;
+    }
+
+    if (action === 'view') {
+      showModal({
+        title: prettyOutTitle(key),
+        subtitle: key,
+        bodyText: text,
+      });
+      return;
+    }
+
+    if (action === 'clear') {
+      pre.textContent = '';
+      wrap.classList.add('hidden');
+      return;
+    }
+  });
+}
+
+function resetEnhancedForm(form) {
+  form.reset();
+
+  form.querySelectorAll('[data-dd-select]').forEach((dd) => {
+    const radio =
+      dd.querySelector('[data-dd-list] input[type="radio"][value=""]') ||
+      dd.querySelector('[data-dd-list] input[type="radio"]');
+    if (radio) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  form.querySelectorAll('input').forEach((input) => {
+    if (!input.readOnly && input.dataset?.uid) input.dataset.uid = '';
+  });
+}
+
+function placeResetButton(form, submitBtn, resetBtn) {
+  if (!form || !submitBtn || !resetBtn) return;
+
+  submitBtn.dataset.formPrimary = '1';
+  submitBtn.classList.add('shrink-0');
+  if (!submitBtn.classList.contains('sm:w-auto')) submitBtn.classList.add('sm:w-auto');
+
+  const existingActions = submitBtn.closest('[data-form-actions="1"]');
+  if (existingActions) {
+    existingActions.appendChild(resetBtn);
+    return;
+  }
+
+  const parent = submitBtn.parentElement;
+  const parentCanHostActions =
+    !!parent &&
+    parent !== form &&
+    parent.children.length === 1 &&
+    parent.firstElementChild === submitBtn;
+
+  if (parentCanHostActions) {
+    parent.dataset.formActions = '1';
+    parent.classList.add('flex', 'items-end', 'gap-2', 'flex-wrap');
+    parent.appendChild(resetBtn);
+    return;
+  }
+
+  const actions = document.createElement('div');
+  actions.dataset.formActions = '1';
+  actions.className = 'flex flex-wrap items-end gap-2';
+
+  const spanClasses = Array.from(submitBtn.classList).filter((cls) => /(^|:)col-span-\d+$/.test(cls));
+  spanClasses.forEach((cls) => {
+    actions.classList.add(cls);
+    submitBtn.classList.remove(cls);
+  });
+
+  const parentNode = submitBtn.parentNode;
+  if (!parentNode) return;
+  const nextSibling = submitBtn.nextSibling;
+  if (nextSibling && nextSibling.parentNode === parentNode) parentNode.insertBefore(actions, nextSibling);
+  else parentNode.appendChild(actions);
+  actions.appendChild(submitBtn);
+  actions.appendChild(resetBtn);
+}
+
+function ensureFormUx(root = document) {
+  root.querySelectorAll('form[data-action]:not([data-form-ux="1"])').forEach((form) => {
+    form.dataset.formUx = '1';
+
+    const submitBtn =
+      form.querySelector('button[type="submit"]') ||
+      form.querySelector('button:not([type])');
+
+    if (submitBtn && !form.querySelector('[data-form-reset="1"]')) {
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.dataset.formReset = '1';
+      resetBtn.className =
+        'shrink-0 rounded-xl border border-zinc-200/80 dark:border-white/10 ' +
+        'bg-zinc-100 dark:bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200 ' +
+        'hover:bg-zinc-100 dark:hover:bg-white/10';
+      resetBtn.textContent = 'Reset';
+      resetBtn.addEventListener('click', () => resetEnhancedForm(form));
+      placeResetButton(form, submitBtn, resetBtn);
+    }
+
+    form.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else submitBtn?.click();
+      }
+    });
+  });
+}
+
 function setPanelOut(form, key, value) {
   const txt = stringifyOut(value);
 
@@ -6550,7 +6911,6 @@ function setPanelOut(form, key, value) {
     document.querySelector?.(`[data-out="${CSS.escape(key)}"]`);
 
   if (!el) {
-    console.warn(`[moderator] setPanelOut: output not found for "${key}"`);
     return;
   }
 
@@ -6560,8 +6920,22 @@ function setPanelOut(form, key, value) {
     el.textContent = txt;
   }
 
+  const wrap = el.closest?.('[data-out-wrap="1"]');
+  if (wrap) {
+    wrap.classList.remove('hidden');
+    const meta = wrap.querySelector('[data-out-meta="1"]');
+    if (meta) {
+      const hhmmss = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      meta.textContent = `${hhmmss} • ${txt.length} chars`;
+    }
+    wrap.classList.add('ring-2', 'ring-emerald-500/20');
+    setTimeout(() => wrap.classList.remove('ring-2', 'ring-emerald-500/20'), 600);
+  }
+
   if (el.closest?.("[hidden]")) el.closest("[hidden]").hidden = false;
   if (el.hidden) el.hidden = false;
+  el.classList.remove('hidden');
+  if (el.tagName === 'PRE' || el.tagName === 'TEXTAREA') el.scrollTop = 0;
 }
 
 function readJsonField(raw) {
@@ -6931,11 +7305,11 @@ async function handleQuestUpdateUserProgress(form) {
   if (qd_difficulty != null) quest_data.difficulty = qd_difficulty;
 
   const qd_coin_reward = readNum("qd_coin_reward");
-  if (qd_coin_reward === NaN) return toast("Invalid quest_data.coin_reward", "warn");
+  if (Number.isNaN(qd_coin_reward)) return toast("Invalid quest_data.coin_reward", "warn");
   if (qd_coin_reward != null) quest_data.coin_reward = qd_coin_reward;
 
   const qd_xp_reward = readNum("qd_xp_reward");
-  if (qd_xp_reward === NaN) return toast("Invalid quest_data.xp_reward", "warn");
+  if (Number.isNaN(qd_xp_reward)) return toast("Invalid quest_data.xp_reward", "warn");
   if (qd_xp_reward != null) quest_data.xp_reward = qd_xp_reward;
 
   const qd_bounty = readStr("qd_bounty_type");
@@ -6948,7 +7322,7 @@ async function handleQuestUpdateUserProgress(form) {
   if (req_type != null) requirements.type = req_type;
 
   const req_count = readNum("req_count");
-  if (req_count === NaN) return toast("Invalid requirements.count", "warn");
+  if (Number.isNaN(req_count)) return toast("Invalid requirements.count", "warn");
   if (req_count != null) requirements.count = req_count;
 
   const req_difficulty = readStr("req_difficulty");
@@ -6961,11 +7335,11 @@ async function handleQuestUpdateUserProgress(form) {
   if (req_medal_type != null) requirements.medal_type = req_medal_type;
 
   const req_map_id = readNum("req_map_id");
-  if (req_map_id === NaN) return toast("Invalid requirements.map_id", "warn");
+  if (Number.isNaN(req_map_id)) return toast("Invalid requirements.map_id", "warn");
   if (req_map_id != null) requirements.map_id = req_map_id;
 
   const req_target_time = readNum("req_target_time", { allowFloat: true });
-  if (req_target_time === NaN) return toast("Invalid requirements.target_time", "warn");
+  if (Number.isNaN(req_target_time)) return toast("Invalid requirements.target_time", "warn");
   if (req_target_time != null) requirements.target_time = req_target_time;
 
   const req_target_type = readStr("req_target_type");
@@ -6982,14 +7356,14 @@ async function handleQuestUpdateUserProgress(form) {
   }
 
   const req_rival_time = readNum("req_rival_time", { allowFloat: true });
-  if (req_rival_time === NaN) return toast("Invalid requirements.rival_time", "warn");
+  if (Number.isNaN(req_rival_time)) return toast("Invalid requirements.rival_time", "warn");
   if (req_rival_time != null) requirements.rival_time = req_rival_time;
 
   const req_target = readStr("req_target");
   if (req_target != null) requirements.target = req_target;
 
   const req_min_count = readNum("req_min_count");
-  if (req_min_count === NaN) return toast("Invalid requirements.min_count", "warn");
+  if (Number.isNaN(req_min_count)) return toast("Invalid requirements.min_count", "warn");
   if (req_min_count != null) requirements.min_count = req_min_count;
 
   if (Object.keys(requirements).length) quest_data.requirements = requirements;
@@ -7000,19 +7374,19 @@ async function handleQuestUpdateUserProgress(form) {
   const progress = {};
 
   const pr_current = readNum("pr_current");
-  if (pr_current === NaN) return toast("Invalid progress.current", "warn");
+  if (Number.isNaN(pr_current)) return toast("Invalid progress.current", "warn");
   if (pr_current != null) progress.current = pr_current;
 
   const pr_target = readNum("pr_target");
-  if (pr_target === NaN) return toast("Invalid progress.target", "warn");
+  if (Number.isNaN(pr_target)) return toast("Invalid progress.target", "warn");
   if (pr_target != null) progress.target = pr_target;
 
   const pr_percentage = readNum("pr_percentage", { allowFloat: true });
-  if (pr_percentage === NaN) return toast("Invalid progress.percentage", "warn");
+  if (Number.isNaN(pr_percentage)) return toast("Invalid progress.percentage", "warn");
   if (pr_percentage != null) progress.percentage = pr_percentage;
 
   const pr_details = readJsonOptional("pr_details_json");
-  if (pr_details === NaN) return toast("Invalid progress.details JSON", "err");
+  if (Number.isNaN(pr_details)) return toast("Invalid progress.details JSON", "err");
   if (pr_details !=null) progress.details = pr_details;
 
   const pr_completed_map_ids = parseCsvInts(fd.get("pr_completed_map_ids"));
@@ -7022,11 +7396,11 @@ async function handleQuestUpdateUserProgress(form) {
   if (pr_counted_map_ids != null) progress.counted_map_ids = pr_counted_map_ids;
 
   const pr_map_id = readNum("pr_map_id");
-  if (pr_map_id === NaN) return toast("Invalid progress.map_id", "warn");
+  if (Number.isNaN(pr_map_id)) return toast("Invalid progress.map_id", "warn");
   if (pr_map_id != null) progress.map_id = pr_map_id;
 
   const pr_target_time = readNum("pr_target_time", { allowFloat: true });
-  if (pr_target_time === NaN) return toast("Invalid progress.target_time", "warn");
+  if (Number.isNaN(pr_target_time)) return toast("Invalid progress.target_time", "warn");
   if (pr_target_time != null) progress.target_time = pr_target_time;
 
   const pr_target_type = readStr("pr_target_type");
@@ -7036,11 +7410,11 @@ async function handleQuestUpdateUserProgress(form) {
   if (pr_medal_type != null) progress.medal_type = pr_medal_type;
 
   const pr_best_attempt = readNum("pr_best_attempt", { allowFloat: true });
-  if (pr_best_attempt === NaN) return toast("Invalid progress.best_attempt", "warn");
+  if (Number.isNaN(pr_best_attempt)) return toast("Invalid progress.best_attempt", "warn");
   if (pr_best_attempt != null) progress.best_attempt = pr_best_attempt;
 
   const pr_last_attempt = readNum("pr_last_attempt", { allowFloat: true });
-  if (pr_last_attempt === NaN) return toast("Invalid progress.last_attempt", "warn");
+  if (Number.isNaN(pr_last_attempt)) return toast("Invalid progress.last_attempt", "warn");
   if (pr_last_attempt != null) progress.last_attempt = pr_last_attempt;
 
   const prRivalInput = form.querySelector('input[name="pr_rival_user_id"]');
@@ -7054,7 +7428,7 @@ async function handleQuestUpdateUserProgress(form) {
   }
 
   const pr_rival_time = readNum("pr_rival_time", { allowFloat: true });
-  if (pr_rival_time === NaN) return toast("Invalid progress.rival_time", "warn");
+  if (Number.isNaN(pr_rival_time)) return toast("Invalid progress.rival_time", "warn");
   if (pr_rival_time != null) progress.rival_time = pr_rival_time;
 
   const pr_completed = fd.get("pr_completed");
@@ -7128,6 +7502,20 @@ async function handleQuestGetUserProgress(form) {
 
   __modQuestUserProgressCache[user_id] = res.data;
 
+  const subpanel =
+    form.closest?.('[data-subpanel="quest-user-progress"]') ||
+    form.closest?.('[data-subpanel]') ||
+    document;
+  const patchForm = subpanel?.querySelector?.('form[data-action="quest-update-user-progress"]');
+  const patchUserInput = patchForm?.querySelector?.('input[name="user_id"]');
+  const patchProgressInput = patchForm?.querySelector?.('input[name="progress_id"]');
+
+  if (patchUserInput) {
+    patchUserInput.value = user_id;
+    patchUserInput.dataset.uid = user_id;
+  }
+  if (patchProgressInput) patchProgressInput.value = "";
+
   const items = normalizeQuestProgressItems(res.data);
   const options = (items || []).map((it) => ({ value: String(it.progress_id), text: it.label }));
 
@@ -7163,6 +7551,12 @@ async function handleQuestGetUserProgress(form) {
       if (!r) return;
       const h = root.querySelector('input[type="hidden"][name="pick_progress_id"]');
       if (h) h.value = r.value;
+      if (patchProgressInput) patchProgressInput.value = String(r.value || "");
+      const liveUserId = String(getUserIdFrom(form.querySelector('input[name="user_id"]')) || "").trim();
+      if (patchUserInput && liveUserId) {
+        patchUserInput.value = liveUserId;
+        patchUserInput.dataset.uid = liveUserId;
+      }
     });
   }
   setPanelOut(form, "quest-user-progress-res", res.data);
@@ -7249,15 +7643,16 @@ function fillQuestUserProgressFromPicked(subpanel) {
   const raw = match.raw || {};
 
   const patchUserInput = patchForm.querySelector('input[name="user_id"]');
-  if (patchUserInput && getUserInput) {
-    patchUserInput.value = getUserInput.value || patchUserInput.value;
-    if (getUserInput.dataset?.uid) patchUserInput.dataset.uid = getUserInput.dataset.uid;
+  if (patchUserInput && user_id) {
+    patchUserInput.value = user_id;
+    patchUserInput.dataset.uid = user_id;
   }
 
   const pidEl = patchForm.querySelector('input[name="progress_id"]');
   if (pidEl) pidEl.value = String(match.progress_id);
 
   setRadioValue(patchForm, 'completed', raw?.completed === true ? '1' : raw?.completed === false ? '0' : '');
+  setRadioValue(patchForm, 'claimed', raw?.claimed === true ? '1' : raw?.claimed === false ? '0' : '');
 
   const qd = raw?.quest_data || {
     name: raw?.name,
@@ -7361,6 +7756,10 @@ document.addEventListener('click', (e) => {
 function initializeApp() {
   bindDdDelegation();
   wireDdSelect(document);
+  wirePanelOutActions();
+  ensureOutputUx(document);
+  ensureFormUx(document);
+  initActivityControls();
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
