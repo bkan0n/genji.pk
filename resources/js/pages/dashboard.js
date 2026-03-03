@@ -20,7 +20,7 @@ const EP = {
   xpSummary: (uid) => `/api/lootbox/users/${encodeURIComponent(uid)}/xp-summary`,
   dashboardCompletions: (uid, pageSize = 10, pageNumber = 1) => `/api/users/${encodeURIComponent(uid)}/completions/dashboard?page_size=${encodeURIComponent(pageSize)}&page_number=${encodeURIComponent(pageNumber)}`,
   claimQuest: (progressId) => `/api/quests/${encodeURIComponent(progressId)}/claim`,
-  overwatchByUser: (uid) => `/api/users/${encodeURIComponent(uid)}/overwatch`,
+  overwatchByUser: (uid) => `/api/users/${encodeURIComponent(uid)}`,
 };
 
 /* =========================
@@ -72,7 +72,20 @@ function fetchOverwatchPrimaryName(userId) {
 
   const p = httpJson(EP.overwatchByUser(uid), { cache: "no-store" })
     .then((data) => {
-      const primary = data?.primary ?? data?.data?.primary ?? null;
+      const coalesced = data?.coalesced_name ?? data?.data?.coalesced_name ?? null;
+      if (typeof coalesced === "string" && coalesced.trim() !== "") {
+        return coalesced.trim();
+      }
+
+      const primary =
+        data?.overwatch_usernames?.[0] ??
+        data?.data?.overwatch_usernames?.[0] ??
+        data?.nickname ??
+        data?.data?.nickname ??
+        data?.global_name ??
+        data?.data?.global_name ??
+        null;
+
       return primary ? String(primary) : null;
     })
     .catch(() => null);
@@ -2490,9 +2503,9 @@ async function loadQuestsPanel() {
           const pill = row.querySelector('[data-rival-pill="1"]');
           if (pill) {
             const rid = pill.getAttribute("data-rival-user-id");
-            fetchOverwatchPrimaryName(rid).then((primary) => {
+            fetchOverwatchPrimaryName(rid).then((displayName) => {
               if (!pill.isConnected) return;
-              const name = primary || t("quests.unknown_rival", "Unknown");
+              const name = displayName || t("quests.unknown_rival", "Unknown");
               pill.innerHTML = `${t("quests.rival", "Rival")}: <span class="ml-1">${name}</span>`;
             });
           }
