@@ -6,6 +6,8 @@ export default defineConfig({
   resolve: {
     alias: {
       fs: '/resources/js/shims/fs-browser.js',
+      path: '/resources/js/shims/path-browser.cjs',
+      vm: '/resources/js/shims/vm-browser.cjs',
     },
   },
   plugins: [
