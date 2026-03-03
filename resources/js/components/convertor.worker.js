@@ -1,32 +1,74 @@
-self.importScripts(
-  'https://cdn.jsdelivr.net/gh/Zezombye/overpy@master/out/overpy_standalone.js'
-);
+import * as overpyNs from 'overpy';
+
+function resolveOverpy(mod){
+  if (mod && typeof mod.compile === 'function') return mod;
+  if (mod?.default && typeof mod.default.compile === 'function') return mod.default;
+  return null;
+}
+
+const OVERPY = resolveOverpy(overpyNs);
 
 // ---------- utils ----------
 function normalizeNewlines(s){ return String(s||'').replace(/\r\n?/g,'\n'); }
 async function fetchText(url){ const r=await fetch(url,{cache:'no-cache'}); if(!r.ok) throw new Error(`HTTP ${r.status} on ${url}`); return r.text(); }
 
 // ---------- helpers compilation ----------
-const HERO_FILE_MAP = {
+const LEGACY_HERO_FILE_MAP = {
   GENJI: 'mechanics/Genji.opy',
   HANZO: 'mechanics/Hanzo.opy',
   KIRIKO: 'mechanics/Kiriko.opy',
   HAZARD: 'mechanics/Hazard.opy',
+  DOOMFIST: 'mechanics/Doomfist.opy',
 };
+
+const FW_HERO_FILE_MAP = {
+  GENJI: 'FwHero/Genji.opy',
+  HANZO: 'FwHero/Hanzo.opy',
+  KIRIKO: 'FwHero/Kiriko.opy',
+  HAZARD: 'FwHero/Hazard.opy',
+  DOOMFIST: 'FwHero/Doomfist.opy',
+};
+
+function buildFwHeroEnum(heroKey, heroName){
+  return [
+    'enum FwHero:',
+    `    Hero = Hero.${heroKey}`,
+    `    String = "${heroName}"`,
+    `    StringLC = "${heroName.toLowerCase()}"`,
+    `    StringUC = "${heroKey}"`,
+  ].join('\n');
+}
 
 function expandImportHeroToInclude(src){
   src = normalizeNewlines(src);
-  src = src.replace(
-    /^[ \t]*#!define\s+importHero\s*\(\s*Hero\s*\)\s*__script__\([^)]+\)[^\n]*\n?/im,
-    ''
-  );
+  let importHeroScriptPath = '';
+  src = src.replace(/^[ \t]*#!define\s+importHero\s*\(\s*Hero\s*\)\s*__script__\(\s*['"]([^'"]+)['"]\s*\)[^\n]*\n?/im, (full, scriptPath) => {
+    importHeroScriptPath = String(scriptPath || '');
+    return '';
+  });
+
+  const hasFwIncludeMarker = /^[ \t]*Fw_Include_Hero[ \t]*$/m.test(src);
+  const useFwHeroMode =
+    /(^|\/)FwHero\/fwHero\.js$/i.test(importHeroScriptPath) || hasFwIncludeMarker;
+
+  let includeLine = '';
   src = src.replace(/^[ \t]*importHero\s*\(([\s\S]*?)\)\s*$/gim, (full, arg) => {
-    const m = /"(GENJI|HANZO|KIRIKO|HAZARD)"/i.exec(arg);
+    const m = /"(GENJI|HANZO|KIRIKO|HAZARD|DOOMFIST)"/i.exec(arg);
     if (!m) return '';
     const heroKey = m[1].toUpperCase();
-    const file = HERO_FILE_MAP[heroKey];
-    return file ? `#!include "${file}"` : '';
+    const file = (useFwHeroMode ? FW_HERO_FILE_MAP : LEGACY_HERO_FILE_MAP)[heroKey];
+    const heroName = file ? file.split('/').pop().replace(/\.opy$/i, '') : heroKey;
+    includeLine = file ? `#!include "${file}"` : '';
+    if (!useFwHeroMode) return hasFwIncludeMarker ? '' : includeLine;
+
+    const fwHeroEnum = buildFwHeroEnum(heroKey, heroName);
+    return hasFwIncludeMarker ? fwHeroEnum : `${fwHeroEnum}\n${includeLine}`;
   });
+
+  if (hasFwIncludeMarker) {
+    src = src.replace(/^[ \t]*Fw_Include_Hero[ \t]*$/m, includeLine || '');
+  }
+
   return src;
 }
 
@@ -83,11 +125,11 @@ function addMapPolyfills(src){
 
 // ---------- compilation OverPy (worker) ----------
 async function compileFrameworkTemplate(lang){
-  const Over = self.Overpy || self.OverPy || self.window?.Overpy || self.window?.OverPy;
-  if (!Over) throw new Error('OverPy UMD introuvable dans le worker');
+  const Over = OVERPY;
+  if (!Over) throw new Error('OverPy npm introuvable dans le worker');
   if (Over.readyPromise) await Over.readyPromise;
 
-  const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4D/';
+  const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4F/';
   const entryFile = 'framework.opy';
 
   let src = await fetchText(rawBase + entryFile);

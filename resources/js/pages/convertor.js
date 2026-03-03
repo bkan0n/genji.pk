@@ -196,12 +196,31 @@ const ALL_TRANSLATION_FILES = [
   { key: 'values', path: 'values.json' },
 ];
 
-const HERO_FILE_MAP = {
+const LEGACY_HERO_FILE_MAP = {
   GENJI: 'mechanics/Genji.opy',
   HANZO: 'mechanics/Hanzo.opy',
   KIRIKO: 'mechanics/Kiriko.opy',
   HAZARD: 'mechanics/Hazard.opy',
+  DOOMFIST: 'mechanics/Doomfist.opy',
 };
+
+const FW_HERO_FILE_MAP = {
+  GENJI: 'FwHero/Genji.opy',
+  HANZO: 'FwHero/Hanzo.opy',
+  KIRIKO: 'FwHero/Kiriko.opy',
+  HAZARD: 'FwHero/Hazard.opy',
+  DOOMFIST: 'FwHero/Doomfist.opy',
+};
+
+function buildFwHeroEnum(heroKey, heroName) {
+  return [
+    'enum FwHero:',
+    `    Hero = Hero.${heroKey}`,
+    `    String = "${heroName}"`,
+    `    StringLC = "${heroName.toLowerCase()}"`,
+    `    StringUC = "${heroKey}"`,
+  ].join('\n');
+}
 
 const OVERPY_COMMIT = 'dd8fc2d25459243053f8214478e13d85fda759af';
 const TS_BASE = `https://cdn.jsdelivr.net/gh/Zezombye/overpy@${OVERPY_COMMIT}/src/data/`;
@@ -327,9 +346,28 @@ const MARKERS = {
    WORKER
    ========================= */
 let __tplWorker, __tplReqId = 0;
+let __overpyPromise = null;
+
+function normalizeOverpyModule(mod){
+  if (mod && typeof mod.compile === 'function') return mod;
+  if (mod?.default && typeof mod.default.compile === 'function') return mod.default;
+  return null;
+}
+
+async function getOverpyFromNpm(){
+  if (!__overpyPromise) {
+    __overpyPromise = import('overpy').then((mod) => {
+      const overpy = normalizeOverpyModule(mod);
+      if (!overpy) throw new Error('OverPy npm export introuvable');
+      return overpy;
+    });
+  }
+  return __overpyPromise;
+}
+
 function __getTplWorker(){
   if (__tplWorker) return __tplWorker;
-  __tplWorker = new Worker(new URL('../components/convertor.worker.js', import.meta.url), { type: 'classic' });
+  __tplWorker = new Worker(new URL('../components/convertor.worker.js', import.meta.url), { type: 'module' });
   return __tplWorker;
 }
 function runTplWorker(type, payload){
@@ -1069,28 +1107,25 @@ function debug(data) {
   }
 }
 
+let __convertorSwitchTab = null;
+
 function selectSection(id) {
-  document.querySelectorAll('#mainTabs button').forEach((btn) => btn.classList.remove('active'));
-  document.querySelectorAll('.convert-map-layout').forEach((sec) => {
-    if (sec) {
-      sec.style.display = 'none';
-      sec.classList.remove('active');
-    }
-  });
-  document.querySelectorAll('.content').forEach((c) => {
-    if (c) c.style.display = 'none';
-  });
-
-  const section = document.getElementById(id);
-  const button = document.getElementById(id + 'Btn');
-
-  if (!section || !button) {
-    console.warn('[selectSection] section/button introuvable:', { id, section, button });
+  const key = id === 'help' ? 'help' : id === 'mapSettings' ? 'settings' : 'convert';
+  if (typeof __convertorSwitchTab === 'function') {
+    __convertorSwitchTab(key);
     return;
   }
-  section.style.display = 'block';
-  section.classList.add('active');
-  button.classList.add('active');
+
+  const section = document.getElementById(id === 'mapSettings' ? 'mapSettings' : id === 'help' ? 'help' : 'convertMap');
+  if (!section) {
+    console.warn('[selectSection] section introuvable:', { id, section });
+    return;
+  }
+
+  document.querySelectorAll('.convert-map-layout, .content').forEach((el) => {
+    el.classList.add('hidden');
+  });
+  section.classList.remove('hidden');
 }
 
 window.selectSection = (id) => {
@@ -1101,20 +1136,14 @@ window.selectSection = (id) => {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  const bind = (btnId, sectionId) => {
-    const btn = document.getElementById(btnId);
-    if (btn) btn.addEventListener('click', () => selectSection(sectionId));
-  };
-  bind('convertMapBtn', 'convertMap');
-  bind('helpBtn', 'help');
-  bind('mapSettingsBtn', 'mapSettings');
-
-  const defaultSection = document.getElementById('convertMap') ? 'convertMap' : null;
-  if (defaultSection) selectSection(defaultSection);
-});
-
 function initMainTabs() {
+  const tabsContainer = document.getElementById('mainTabs');
+  if (!tabsContainer) return;
+
+  if (getComputedStyle(tabsContainer).position === 'static') {
+    tabsContainer.style.position = 'relative';
+  }
+
   const btns = {
     convert: document.getElementById('convertMapBtn'),
     help: document.getElementById('helpBtn'),
@@ -1127,25 +1156,98 @@ function initMainTabs() {
     settings: document.getElementById('mapSettings'),
   };
 
-  const ACTIVE = ['bg-white', 'text-zinc-900'];
-  const INACTIVE = ['text-zinc-900 dark:text-white', 'hover:bg-zinc-900/5 dark:bg-white/10'];
+  if (Object.values(btns).some((b) => !b) || Object.values(panels).some((p) => !p)) return;
+
+  let highlight = document.getElementById('convertorTabHighlight');
+  if (!highlight) {
+    highlight = document.createElement('span');
+    highlight.id = 'convertorTabHighlight';
+    Object.assign(highlight.style, {
+      position: 'absolute',
+      top: '2px',
+      bottom: '2px',
+      left: '0',
+      width: '0',
+      borderRadius: '0.625rem',
+      transform: 'translate3d(0,0,0)',
+      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
+      willChange: 'transform,width',
+      zIndex: '0',
+    });
+    tabsContainer.appendChild(highlight);
+  }
+
+  const isDarkTheme = () =>
+    document.documentElement.classList.contains('dark') ||
+    document.documentElement.getAttribute('data-theme') === 'dark' ||
+    document.body?.classList.contains('dark') ||
+    document.body?.getAttribute('data-theme') === 'dark';
+
+  const paintHighlight = () => {
+    if (isDarkTheme()) {
+      highlight.style.background = 'white';
+      highlight.style.boxShadow = '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)';
+    } else {
+      highlight.style.background = '#18181b';
+      highlight.style.boxShadow = '0 1px 0 0 rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.14)';
+    }
+  };
+  paintHighlight();
+
+  const themeObserver = new MutationObserver(paintHighlight);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class', 'data-theme'],
+  });
+  if (document.body) {
+    themeObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+  }
+
+  const ACTIVE = ['text-white', 'dark:text-zinc-900'];
+  const INACTIVE = ['text-zinc-700', 'dark:text-zinc-200', 'hover:bg-zinc-100', 'dark:hover:bg-white/10'];
+  let currentKey = 'convert';
 
   Object.values(btns).forEach((b) => {
-    b.classList.add('tab-btn', 'transition-colors', 'duration-300');
+    b.classList.add(
+      'tab-btn',
+      'relative',
+      'z-[1]',
+      'transition-colors',
+      'duration-300',
+      'focus:outline-none',
+      'focus-visible:ring-2',
+      'focus-visible:ring-emerald-500/50'
+    );
+    b.classList.remove('active');
     b.classList.remove(...ACTIVE);
-    if (!INACTIVE.every((c) => b.classList.contains(c))) b.classList.add(...INACTIVE);
+    b.classList.add(...INACTIVE);
   });
 
+  const moveHighlightTo = (btn) => {
+    if (!btn) return;
+    const br = btn.getBoundingClientRect();
+    const cr = tabsContainer.getBoundingClientRect();
+    const left = br.left - cr.left;
+    const width = br.width;
+    requestAnimationFrame(() => {
+      highlight.style.width = `${Math.max(0, width)}px`;
+      highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
+    });
+  };
+
   function setActiveButton(key) {
+    currentKey = key;
     Object.entries(btns).forEach(([k, b]) => {
       if (k === key) {
         b.classList.add(...ACTIVE);
         b.classList.remove(...INACTIVE);
+        moveHighlightTo(b);
       } else {
         b.classList.remove(...ACTIVE);
-        INACTIVE.forEach((c) => {
-          if (!b.classList.contains(c)) b.classList.add(c);
-        });
+        b.classList.add(...INACTIVE);
       }
     });
   }
@@ -1175,12 +1277,22 @@ function initMainTabs() {
     setActiveButton(key);
     showPanel(key);
   }
+  __convertorSwitchTab = switchTab;
 
   btns.convert.addEventListener('click', () => switchTab('convert'));
   btns.help.addEventListener('click', () => switchTab('help'));
   btns.settings.addEventListener('click', () => switchTab('settings'));
 
   switchTab('convert');
+  requestAnimationFrame(() => moveHighlightTo(btns[currentKey]));
+
+  const recalc = () => moveHighlightTo(btns[currentKey]);
+  window.addEventListener('resize', recalc);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(recalc);
+  } else {
+    setTimeout(recalc, 60);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initMainTabs);
@@ -1210,7 +1322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const resultTpl = await doConvert(fullText, lang);
       textarea.value = resultTpl;
-      renderMapSettings(fullText);
+      renderMapSettings(resultTpl);
       runIdle(() => checkForDiff?.());
     })
   );
@@ -1228,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const tpl = await doTranslate(fullText, clientLang, targetLang);
       textarea.value = tpl;
-      renderMapSettings(fullText);
+      renderMapSettings(tpl);
       runIdle(() => checkForDiff?.());
     })
   );
@@ -1583,19 +1695,36 @@ function patchEditorDefaultOn(src) {
 
 function expandImportHeroToInclude(src) {
   src = normalizeNewlines(src);
-  src = src.replace(
-    /^[ \t]*#!define\s+importHero\s*\(\s*Hero\s*\)\s*__script__\([^)]+\)[^\n]*\n?/im,
-    ''
-  );
+  let importHeroScriptPath = '';
+  src = src.replace(/^[ \t]*#!define\s+importHero\s*\(\s*Hero\s*\)\s*__script__\(\s*['"]([^'"]+)['"]\s*\)[^\n]*\n?/im, (full, scriptPath) => {
+    importHeroScriptPath = String(scriptPath || '');
+    return '';
+  });
+
+  const hasFwIncludeMarker = /^[ \t]*Fw_Include_Hero[ \t]*$/m.test(src);
+  const useFwHeroMode =
+    /(^|\/)FwHero\/fwHero\.js$/i.test(importHeroScriptPath) || hasFwIncludeMarker;
+
+  let includeLine = '';
   src = src.replace(/^[ \t]*importHero\s*\(([\s\S]*?)\)\s*$/gim, (full, arg) => {
-    const m = /"(GENJI|HANZO|KIRIKO|HAZARD)"/i.exec(arg);
+    const m = /"(GENJI|HANZO|KIRIKO|HAZARD|DOOMFIST)"/i.exec(arg);
     if (!m) { debug(`[compile] importHero: héros introuvable dans: ${arg}`); return ''; }
     const heroKey = m[1].toUpperCase();
-    const file = HERO_FILE_MAP[heroKey];
+    const file = (useFwHeroMode ? FW_HERO_FILE_MAP : LEGACY_HERO_FILE_MAP)[heroKey];
     if (!file) { debug(`[compile] importHero: mapping manquant pour ${heroKey}`); return ''; }
-    debug(`[compile] importHero → #!include "${file}"`);
-    return `#!include "${file}"`;
+    const heroName = file.split('/').pop().replace(/\.opy$/i, '');
+    includeLine = `#!include "${file}"`;
+    debug(`[compile] importHero → ${includeLine} (${useFwHeroMode ? 'fw' : 'legacy'})`);
+    if (!useFwHeroMode) return hasFwIncludeMarker ? '' : includeLine;
+
+    const fwHeroEnum = buildFwHeroEnum(heroKey, heroName);
+    return hasFwIncludeMarker ? fwHeroEnum : `${fwHeroEnum}\n${includeLine}`;
   });
+
+  if (hasFwIncludeMarker) {
+    src = src.replace(/^[ \t]*Fw_Include_Hero[ \t]*$/m, includeLine || '');
+  }
+
   return src;
 }
 
@@ -1619,9 +1748,8 @@ async function loadTemplate(lang) {
     tpl = await runTplWorker('compile', { lang });
   } catch (e) {
     console.warn('[loadTemplate] Worker compile failed, fallback in main thread:', e);
-    const overpy = window.window || window.OverPy || window.Overpy;
-    if (!overpy) throw new Error('OverPy UMD not found (fallback)');
-    await overpy.readyPromise;
+    const overpy = await getOverpyFromNpm();
+    if (overpy.readyPromise) await overpy.readyPromise;
 
     const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4F/';
     const entryFile = 'framework.opy';
@@ -2593,16 +2721,14 @@ function ensureDifficultyHudInWorkshop(tpl, lang, difficultyIndex) {
   const HUD_LABEL = 'Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디스플레이';
   const HUD_KEY_RE = /difficulty\s*display\s*hud/i;
 
-  const headerRe = /(^|\n)(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?\s*\{/i;
+  const headerRe = /(^|\n)[ \t]*(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?[ \t]*\{/i;
   const m = headerRe.exec(tpl);
 
   if (!m) {
-    const header = (lang === 'zh-CN') ? '地图工坊' : (lang === 'ja-JP') ? 'ワークショップ' : 'workshop';
-    const block = `${header} {\n    ${HUD_LABEL}: [${idx}]\n}\n\n`;
-    return block + tpl;
+    return upsertWorkshopBlock(tpl, lang, `${HUD_LABEL}: [${idx}]`);
   }
 
-  const openIdx = tpl.indexOf('{', m.index);
+  const openIdx = tpl.indexOf('{', m.index + m[0].length - 1);
   if (openIdx < 0) return tpl;
 
   let depth = 1, i = openIdx + 1;
@@ -2776,15 +2902,16 @@ function applyDifficultyValue(fullText, lang, wanted) {
   logDiff('applyDifficultyValue: wanted =', wanted, '=> idx =', idx);
   if (idx == null) return fullText;
 
+  const HUD_LABEL = 'Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디스플레이';
   let text = fullText;
 
   (function updateWorkshopBlock() {
-    const key = /(workshop|地图工坊|ワークショップ)\s*\{/i.exec(text);
+    const key = /(^|\n)[ \t]*(workshop|地图工坊|ワークショップ)\s*(?:\r?\n)?[ \t]*\{/i.exec(text);
     if (!key) {
       log('applyDifficultyValue: workshop block introuvable (ok)');
       return;
     }
-    const openBrace = text.indexOf('{', key.index + key[0].length);
+    const openBrace = text.indexOf('{', key.index + key[0].length - 1);
     if (openBrace < 0) {
       log("applyDifficultyValue: '{' après workshop introuvable");
       return;
@@ -2828,7 +2955,7 @@ function applyDifficultyValue(fullText, lang, wanted) {
       text = head + lines.join('\n') + tail;
     } else {
       const indent = (body.match(/^\s+/m) || ['    '])[0];
-      lines.unshift(`${indent}Difficulty Display Hud     ◆ 难度 顶部hud   ◆ 난이도 HUD 디ス플레이: [${idx}]`);
+      lines.unshift(`${indent}${HUD_LABEL}: [${idx}]`);
       text = head + lines.join('\n') + tail;
       logDiff('applyDifficultyValue: HUD ajouté (absent)');
     }
@@ -3586,24 +3713,123 @@ function extractWorkshopSettings(fullText) {
   return match ? match[1].trim() : '';
 }
 
+function getExtensionsHeaderRegex(lang = getActiveOutputLang()) {
+  switch (lang) {
+    case 'es-MX': return /^(\s*)extensiones\s*\{/im;
+    case 'pt-BR': return /^(\s*)extensões\s*\{/im;
+    case 'de-DE': return /^(\s*)Erweiterungen\s*\{/im;
+    case 'ja-JP': return /^(\s*)拡張\s*\{/im;
+    case 'zh-CN': return /^(\s*)扩展\s*\{/im;
+    default:      return /^(\s*)extensions\s*\{/im;
+  }
+}
+
+function findSettingsBlockBounds(text) {
+  const names = [
+    'settings',
+    'einstellungen',
+    'configuración',
+    'configuracion',
+    'configurações',
+    'configuracoes',
+    '設定',
+    '设置',
+  ];
+  const esc = (s) => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const headerRe = new RegExp(
+    `(^|\\n)[ \\t]*(?:${names.map(esc).join('|')})\\s*(?:\\r?\\n)?[ \\t]*\\{`,
+    'i'
+  );
+
+  const m = headerRe.exec(text);
+  if (!m) return null;
+
+  const startHeaderIdx = m.index + (m[1] ? m[1].length : 0);
+  const openIdx = text.indexOf('{', startHeaderIdx);
+  if (openIdx < 0) return null;
+
+  let depth = 1;
+  let closeIdx = -1;
+  for (let i = openIdx + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        closeIdx = i;
+        break;
+      }
+    }
+  }
+  if (closeIdx < 0) return null;
+
+  return { startHeaderIdx, openIdx, closeIdx };
+}
+
+function resolveWorkshopInsertionPoint(tpl, lang = getActiveOutputLang()) {
+  const reExtensions = getExtensionsHeaderRegex(lang);
+  const mExt = tpl.match(reExtensions);
+  if (mExt) {
+    return {
+      index: mExt.index,
+      baseIndent: mExt[1] || '',
+    };
+  }
+
+  const settings = findSettingsBlockBounds(tpl);
+  if (settings) {
+    const body = tpl.slice(settings.openIdx + 1, settings.closeIdx);
+    const childIndent = (body.match(/\n([ \t]+)\S/) || [null, '    '])[1];
+    return {
+      index: settings.closeIdx,
+      baseIndent: childIndent || '    ',
+    };
+  }
+
+  return { index: 0, baseIndent: '' };
+}
+
+function removeDifficultyHudFromExtensions(tpl, lang = getActiveOutputLang()) {
+  const reExtensions = getExtensionsHeaderRegex(lang);
+  const mExt = reExtensions.exec(tpl);
+  if (!mExt) return tpl;
+
+  const openIdx = tpl.indexOf('{', mExt.index + mExt[0].length - 1);
+  if (openIdx < 0) return tpl;
+
+  let depth = 1;
+  let closeIdx = -1;
+  for (let i = openIdx + 1; i < tpl.length; i++) {
+    const ch = tpl[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        closeIdx = i;
+        break;
+      }
+    }
+  }
+  if (closeIdx < 0) return tpl;
+
+  const before = tpl.slice(0, openIdx + 1);
+  const body = tpl.slice(openIdx + 1, closeIdx);
+  const after = tpl.slice(closeIdx);
+
+  const cleanedBody = body
+    .split(/\r?\n/)
+    .filter((line) => !/difficulty\s*display\s*hud/i.test(line))
+    .join('\n');
+
+  return before + cleanedBody + after;
+}
+
 function insertWorkshopSettings(tpl, workshopSettingsBlock, lang = getActiveOutputLang()) {
   if (!workshopSettingsBlock || !workshopSettingsBlock.trim()) return tpl;
 
   tpl = removeWorkshopBlock(tpl);
 
-  let reExtensions;
-  switch (lang) {
-    case 'es-MX': reExtensions = /^(\s*)extensiones\s*\{/im; break;
-    case 'pt-BR': reExtensions = /^(\s*)extensões\s*\{/im; break;
-    case 'de-DE': reExtensions = /^(\s*)Erweiterungen\s*\{/im; break;
-    case 'ja-JP': reExtensions = /^(\s*)拡張\s*\{/im; break;
-    case 'zh-CN': reExtensions = /^(\s*)扩展\s*\{/im; break;
-    default:      reExtensions = /^(\s*)extensions\s*\{/im;
-  }
-
-  const mExt = tpl.match(reExtensions);
-
-  const baseIndent  = mExt ? (mExt[1] || '') : '';
+  const { index: insertPos, baseIndent } = resolveWorkshopInsertionPoint(tpl, lang);
   const innerIndent = baseIndent + '    ';
 
   let workshopKeyword;
@@ -3623,12 +3849,7 @@ function insertWorkshopSettings(tpl, workshopSettingsBlock, lang = getActiveOutp
     `${indentedLines}\n` +
     `${baseIndent}}\n\n`;
 
-  if (mExt) {
-    const insertPos = mExt.index;
-    return tpl.slice(0, insertPos) + workshopBlock + tpl.slice(insertPos);
-  } else {
-    return workshopBlock + tpl;
-  }
+  return tpl.slice(0, insertPos) + workshopBlock + tpl.slice(insertPos);
 }
 
 /* ————— WS SETTINGS HELPERS —————*/
@@ -3761,27 +3982,15 @@ function upsertWorkshopBlock(tpl, lang, content) {
               : 'workshop';
 
   tpl = removeWorkshopBlock(tpl);
-
-  let reExtensions;
-  switch (lang) {
-    case 'es-MX': reExtensions = /^(\s*)extensiones\s*\{/im; break;
-    case 'pt-BR': reExtensions = /^(\s*)extensões\s*\{/im; break;
-    case 'de-DE': reExtensions = /^(\s*)Erweiterungen\s*\{/im; break;
-    case 'ja-JP': reExtensions = /^(\s*)拡張\s*\{/im; break;
-    case 'zh-CN': reExtensions = /^(\s*)扩展\s*\{/im; break;
-    default:      reExtensions = /^(\s*)extensions\s*\{/im; break;
-  }
-  const mExt = tpl.match(reExtensions);
-  if (!mExt) {
-    const block = `${header}\n{\n${content.split('\n').map(l => '    '+l).join('\n')}\n}\n\n`;
-    return block + tpl;
-  }
-
-  const baseIndent = mExt[1] || '';
+  const { index: insertPos, baseIndent } = resolveWorkshopInsertionPoint(tpl, lang);
   const innerIndent = baseIndent + '    ';
-  const block = `${baseIndent}${header}\n${baseIndent}{\n${content.split('\n').map(l => innerIndent + l).join('\n')}\n${baseIndent}}\n\n`;
+  const body = String(content || '')
+    .split('\n')
+    .map(l => innerIndent + l)
+    .join('\n');
+  const block = `${baseIndent}${header}\n${baseIndent}{\n${body}\n${baseIndent}}\n\n`;
 
-  return tpl.slice(0, mExt.index) + block + tpl.slice(mExt.index);
+  return tpl.slice(0, insertPos) + block + tpl.slice(insertPos);
 }
 
 /* =========================
@@ -3994,7 +4203,7 @@ function renderGlobalBans(fullText) {
       'rounded-full',
       'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200',
       'border border-zinc-200/80 dark:border-white/10 shadow-sm',
-      'hover:bg-zinc-800/70 transition',
+      'hover:bg-zinc-100 dark:hover:bg-white/10 transition',
     ].join(' ');
     iconsContainer.appendChild(span);
   });
@@ -4488,8 +4697,8 @@ function createCheckpointCard(idx, coords, data) {
   moveControls.className = 'move-controls mt-3 flex items-center gap-2';
   const baseBtn =
     'inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-200/80 dark:border-white/10 ' +
-    'bg-zinc-800/70 px-2.5 py-1 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 ' +
-    'hover:bg-zinc-700/70 hover:border-emerald-500/30 hover:text-emerald-300 ' +
+    'bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 ' +
+    'hover:bg-zinc-100 dark:hover:bg-white/10 hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-300 ' +
     'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ' +
     'disabled:opacity-40 disabled:cursor-not-allowed transition';
   const upBtn = document.createElement('button');
@@ -4584,7 +4793,7 @@ function renderMapSettings(fullText) {
   globalSettingsBtn.textContent = t('map_data.global_settings');
   globalSettingsBtn.className = [
     'rounded-full cursor-pointer px-3 py-1.5 text-sm font-medium',
-    'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-800/70',
+    'bg-white/80 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10',
     'border border-zinc-200/80 dark:border-white/10 shadow-sm transition',
   ].join(' ');
   settingsButtons.appendChild(globalSettingsBtn);
@@ -4630,7 +4839,7 @@ function temporaryReplace(text) {
 }
 
 /* =========================
-   DO CONVERT (utilise common API)
+   DO CONVERT
    ========================= */
 async function doConvert(fullText, lang) {
   __lastTranslateCtx = { used: false, sourceLang: null, targetLang: null };
@@ -4784,7 +4993,7 @@ function buildGlobalSettingsFormFields() {
     <label for="mapNameInput" class="modal-label block text-sm font-semibold text-zinc-800 dark:text-zinc-200">${t('map_data.map_name')}</label>
     <div class="map-name-input-wrapper grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
       <div class="map-name-text-wrapper relative">
-        <input type="text" id="mapNameInput" class="modal-input2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+        <input type="text" id="mapNameInput" class="modal-input2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
         <div class="map-name-suggestions-container absolute left-0 right-0 top-[110%] z-10 hidden rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-lg"></div>
       </div>
 
@@ -4879,7 +5088,7 @@ function buildGlobalSettingsFormFields() {
   rowButtons.className = 'modal-buttons2 mt-2 flex items-center justify-end gap-2';
   rowButtons.innerHTML = `
     <button type="button" id="saveGlobalChangesBtn" class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white hover:bg-emerald-500 shadow-sm">${t('map_data.save')}</button>
-    <button type="button" id="cancelGlobalChangesBtn" class="rounded-xl cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70">${t('map_data.cancel')}</button>
+    <button type="button" id="cancelGlobalChangesBtn" class="rounded-xl cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10">${t('map_data.cancel')}</button>
   `;
   form.appendChild(rowButtons);
     if (form && !form.dataset.gsDelegated) {
@@ -4908,7 +5117,7 @@ function addGlobalSettingsButton() {
   btn.id = 'globalSettingsBtn';
   btn.textContent = t('map_data.global_settings');
   btn.className =
-    'rounded-xl px-3 py-1.5 text-sm font-medium bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-700 border border-zinc-200/80 dark:border-white/10';
+    'rounded-xl px-3 py-1.5 text-sm font-medium bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200/80 dark:border-white/10';
   btn.addEventListener('click', openGlobalSettingsModal);
   globalInfos.appendChild(btn);
 }
@@ -4927,8 +5136,8 @@ async function openGlobalSettingsModal() {
       'relative',
       'max-h-[80vh] w-full max-w-2xl overflow-y-auto',
       'rounded-2xl shadow-2xl',
-      'bg-gradient-to-b from-zinc-900/95 to-zinc-950/95',
-      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5',
+      'bg-white dark:bg-zinc-900',
+      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-zinc-300/60 dark:ring-white/5',
       'backdrop-blur-lg p-5'
     ].join(' ');
 
@@ -4969,7 +5178,7 @@ async function openGlobalSettingsModal() {
   const selectCls = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
   const inputCls  = selectCls;
   const chipBase  = 'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors';
-  const chipIdle  = 'border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70';
+  const chipIdle  = 'border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10';
   const chipOn    = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20';
   const sectionCls= 'space-y-4';
   const titleCls  = 'text-sm font-semibold text-zinc-800 dark:text-zinc-200';
@@ -5126,7 +5335,7 @@ async function openGlobalSettingsModal() {
 
       function addSuggestionRow(mapKey, label) {
         const item = document.createElement('div');
-        item.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-800/70';
+        item.className = 'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
         item.textContent = label;
         item.addEventListener('mousedown', () => {
           mapNameInput.value = label;
@@ -5327,7 +5536,7 @@ function getLocalizedOnOff(lang) {
   }
 }
 
-function applyOnOffReplacements(text, localized, settings) {
+function applyOnOffReplacements(text, localized, settings, lang = getActiveOutputLang()) {
   const editorVal = settings.editorMode ? localized.on : localized.off;
   const playtestVal = settings.playtest === 'on' ? localized.on : localized.off;
   const portalsVal = settings.portals === 'on' ? localized.on : localized.off;
@@ -5397,9 +5606,8 @@ function applyOnOffReplacements(text, localized, settings) {
 
   const missingAtAll = RULES;
   if (missingAtAll.length > 0) {
-    const lines = missingAtAll.map(({ label, value }) => `    ${label} : ${value}`).join('\n');
-    const block = `workshop {\n${lines}\n}\n\n`;
-    return block + text;
+    const content = missingAtAll.map(({ label, value }) => `${label} : ${value}`).join('\n');
+    return upsertWorkshopBlock(text, lang, content);
   }
 
   return text;
@@ -5561,7 +5769,7 @@ async function saveGlobalSettings() {
   const localized = getLocalizedOnOff(outputLang);
 
   let text = originalText;
-  text = applyOnOffReplacements(text, localized, globalSettings);
+  text = applyOnOffReplacements(text, localized, globalSettings, outputLang);
   text = applyValidatorToggle(text, outputLang, globalSettings);
   text = applyMapEntryUpdate(text, resolution);
   text = writeGlobalSettingsIntoTemplate(text, newActiveBans);
@@ -5569,6 +5777,7 @@ async function saveGlobalSettings() {
   text = applyDifficultyValue(text, outputLang, wanted);
   const idxAfter = extractDifficultyValue(text);
   text = ensureDifficultyHudInWorkshop(text, outputLang, idxAfter);
+  text = removeDifficultyHudFromExtensions(text, outputLang);
 
   textarea.value = text;
   lastFullText = text;
@@ -5821,8 +6030,8 @@ function openEditModal(idx) {
     panel.className = [
       'max-h-[80vh] w-full max-w-3xl overflow-y-auto',
       'rounded-2xl shadow-2xl',
-      'bg-gradient-to-b from-zinc-900/95 to-zinc-950/95',
-      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5',
+      'bg-white dark:bg-zinc-900',
+      'border border-zinc-200/80 dark:border-white/10 ring-1 ring-zinc-300/60 dark:ring-white/5',
       'backdrop-blur-lg p-5'
     ].join(' ');
   }
@@ -5841,7 +6050,7 @@ function openEditModal(idx) {
     'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
   const inputSm   = `${inputBase} w-16 md:w-20 shrink-0 px-2 py-1.5 text-xs`;
   const chipBtn   =
-    'rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-800/70';
+    'rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-2.5 py-1 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/10';
   const minusBtnCls =
     'group h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg ' +
     'bg-red-600/90 text-zinc-900 dark:text-white border border-zinc-200/80 dark:border-white/10 ring-1 ring-white/5 shadow-sm ' +

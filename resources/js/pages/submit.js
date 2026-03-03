@@ -7699,6 +7699,7 @@ async function initializePlaytestToolbar() {
         input.className = [
           'pt-toolbar-input',
           'custom-toolbar-input',
+          'filter-input',
           'w-full rounded-lg border border-zinc-200/80 dark:border-white/10',
           'bg-white/95 dark:bg-zinc-900/95 px-3 py-2 text-sm',
           'text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500',
@@ -7715,6 +7716,10 @@ async function initializePlaytestToolbar() {
         input.setAttribute('autocapitalize', 'off');
         input.setAttribute('autocorrect', 'off');
         input.setAttribute('spellcheck', 'false');
+
+        ['pointerdown', 'mousedown', 'click', 'focus'].forEach((type) =>
+          input.addEventListener(type, (evt) => evt.stopPropagation())
+        );
 
         positionInputOrDropdown(input, null, button);
         if (hasAnimIn) __animateIn(input);
@@ -7750,19 +7755,6 @@ async function initializePlaytestToolbar() {
           }
         });
 
-        setTimeout(() => {
-          document.addEventListener('mousedown', function handler(ev) {
-            const scope = document.getElementById('playtestSection');
-            if (scope && scope.contains(ev.target)) return;
-            if (!input.contains(ev.target) && ev.target !== button) {
-              if (hasAnimOut) __animateOutAndRemove(input);
-              else { input.__cleanup?.(); input.remove(); }
-              if (button.isConnected) button.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
-              currentInput = null;
-              document.removeEventListener('mousedown', handler);
-            }
-          }, { once: true });
-        }, 0);
       }
 
       if (type === 'dropdown') {
@@ -7867,6 +7859,9 @@ function createButton(icon) {
 }
 
 function setupToolbarDeselectOnClickOutside() {
+  if (setupToolbarDeselectOnClickOutside.__bound) return;
+  setupToolbarDeselectOnClickOutside.__bound = true;
+
   document.addEventListener('mousedown', function (event) {
     const scope = document.getElementById('playtestSection');
     if (!scope) return;
@@ -8577,6 +8572,7 @@ function positionInputOrDropdown(input, _optionsContainer, button) {
     el.style.left = `${left}px`;
     el.style.width = `${width}px`;
     el.style.display = 'block';
+    el.style.zIndex = '50';
   };
 
   if (input) {

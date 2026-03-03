@@ -102,7 +102,7 @@ use App\Http\Controllers\Newsfeed\GifController;
 use App\Http\Controllers\Newsfeed\ListNewsfeedController;
 use App\Http\Controllers\Newsfeed\TranslateController;
 
-use App\Http\Controllers\Users\ShowUserController;
+use App\Http\Controllers\Users\GetUserController as PublicGetUserController;
 use App\Http\Controllers\Users\GetUserDashboardCompletionsController;
 use App\Http\Controllers\Users\Notifications\GetNotificationSettingsController;
 use App\Http\Controllers\Users\Notifications\ToggleSingleNotificationController;
@@ -253,7 +253,7 @@ Route::prefix('users')->group(function () {
             ->whereNumber('user_id')
             ->name('users.notifications.toggle');
     });
-    Route::get('{user_id}', ShowUserController::class)
+    Route::get('{user_id}', PublicGetUserController::class)
         ->whereNumber('user_id')
         ->name('users.show');
 
