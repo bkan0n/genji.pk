@@ -8494,6 +8494,7 @@ async function changePage(pageNumber) {
 
   const data = await fetchPageData(currentPage);
   if (data) {
+    const effPageSize = getEffectivePageSize(currentSection);
     const maybeNewTotalPages = computeTotalPagesFromData(data, effPageSize);
     if (maybeNewTotalPages !== totalPages) totalPages = maybeNewTotalPages;
 
