@@ -1936,12 +1936,12 @@ function insertLobbyIntoTemplate(tpl, lobbyContent, lang = getActiveOutputLang()
 function sanitizeMapDataAssignments(text) {
   if (!text) return text;
   const reSetGlobalVar = new RegExp(
-    String.raw`^[ \t]*Set\s+Global\s+Variable\s*\(\s*(?:DashExploitToggle|HudStoreEdit)\s*,[\s\S]*?\)\s*;?[ \t]*\r?\n?`,
+    String.raw`^[ \t]*Set\s+Global\s+Variable\s*\(\s*(?:DashExploitToggle|HudStoreEdit|MsDestructo)\s*,[\s\S]*?\)\s*;?[ \t]*\r?\n?`,
     'gmi'
   );
   text = text.replace(reSetGlobalVar, '');
   const reDotAssign = new RegExp(
-    String.raw`^[ \t]*(?:Global|全局|グローバル)\.(?:DashExploitToggle|HudStoreEdit)\s*=\s*[^\r\n;]+;?[ \t]*\r?\n?`,
+    String.raw`^[ \t]*(?:Global|全局|グローバル)\.(?:DashExploitToggle|HudStoreEdit|MsDestructo)\s*=\s*[^\r\n;]+;?[ \t]*\r?\n?`,
     'gmi'
   );
   text = text.replace(reDotAssign, '');
