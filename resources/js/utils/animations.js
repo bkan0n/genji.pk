@@ -1236,7 +1236,7 @@ export async function createLootbox3D({ mountEl, modelUrl = "/assets/models/gp_s
   let raf = 0;
 
   const loader = _makeLoader();
-  console.log(`${LOG} loading:`, modelUrl);
+  //console.log(`${LOG} loading:`, modelUrl);
 
   const gltf = await new Promise((resolve, reject) => {
     loader.load(modelUrl, (g) => resolve(g), undefined, (err) => reject(err));

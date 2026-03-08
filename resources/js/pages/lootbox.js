@@ -253,7 +253,7 @@ async function bootLootbox3D() {
   try {
     const ctrl = await createLootbox3D({
       mountEl,
-      modelUrl: "/assets/models/gp_static.glb",
+      modelUrl: cdnAsset('assets/lootbox/box_model.glb'),
     });
 
     lootbox3d = ctrl;
