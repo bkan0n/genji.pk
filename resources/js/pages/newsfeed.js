@@ -548,7 +548,73 @@ function updateTimestamps() {
 }
 
 /* ---------- Helper fetch strict JSON ---------- */
-async function fetchJsonStrict(input, init = {}) {
+function escapeRegexFragment(value) {
+  return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function parseJsonPreservingNumericKeys(text, preserveNumericStringKeys = []) {
+  if (!Array.isArray(preserveNumericStringKeys) || preserveNumericStringKeys.length === 0) {
+    return JSON.parse(text);
+  }
+
+  const alternation = preserveNumericStringKeys.map(escapeRegexFragment).join('|');
+  const normalizedText = String(text ?? '').replace(
+    new RegExp(`("(?:${alternation})"\\s*:\\s*)(-?\\d+)(?=\\s*[,}])`, 'g'),
+    '$1"$2"',
+  );
+
+  return JSON.parse(normalizedText);
+}
+
+function extractApiErrorMessage(payload, fallback = '') {
+  const normalize = (value) => {
+    const text = String(value ?? '').trim();
+    return text ? text : '';
+  };
+
+  if (typeof payload === 'string') {
+    return normalize(payload) || fallback;
+  }
+
+  const candidates = [
+    payload?.upstream?.error,
+    payload?.upstream?.message,
+    typeof payload?.upstream === 'string' ? payload.upstream : '',
+    payload?.message,
+    payload?.error_description,
+    payload?.detail,
+    payload?.error,
+  ];
+
+  for (const candidate of candidates) {
+    const text = normalize(candidate);
+    if (!text) continue;
+    if (text === 'upstream_failed') continue;
+    return text;
+  }
+
+  return fallback;
+}
+
+function extractErrorDisplayMessage(err, fallback = '') {
+  const payloadMessage = extractApiErrorMessage(err?.payload, '');
+  if (payloadMessage) return payloadMessage;
+
+  const userMessage = String(err?.userMessage ?? '').trim();
+  if (userMessage) return userMessage;
+
+  const rawMessage = String(err?.message ?? '')
+    .replace(/^Request failed:\s*/i, '')
+    .trim();
+
+  if (rawMessage && rawMessage !== 'upstream_failed' && !/^HTTP \d+$/i.test(rawMessage)) {
+    return rawMessage;
+  }
+
+  return fallback;
+}
+
+async function fetchJsonStrict(input, init = {}, { preserveNumericStringKeys = [] } = {}) {
   const res = await fetch(input, {
     ...init,
     headers: {
@@ -565,12 +631,20 @@ async function fetchJsonStrict(input, init = {}) {
   if (!res.ok) {
     let payload;
     try {
-      payload = isJson ? await res.json() : await res.text();
+      if (isJson) {
+        payload = parseJsonPreservingNumericKeys(await res.text(), preserveNumericStringKeys);
+      } else {
+        payload = await res.text();
+      }
     } catch {
       payload = null;
     }
-    const msg = payload && payload.error ? payload.error : `HTTP ${res.status}`;
-    throw new Error(`Request failed: ${msg}`);
+    const msg = extractApiErrorMessage(payload, `HTTP ${res.status}`);
+    const error = new Error(`Request failed: ${msg}`);
+    error.status = res.status;
+    error.payload = payload;
+    error.userMessage = msg;
+    throw error;
   }
 
   if (!isJson) {
@@ -578,7 +652,7 @@ async function fetchJsonStrict(input, init = {}) {
     throw new Error(`Réponse non-JSON (ct=${ct}) : ${text.slice(0, 200)}…`);
   }
 
-  return res.json();
+  return parseJsonPreservingNumericKeys(await res.text(), preserveNumericStringKeys);
 }
 
 /* ---------- Discord/Emoji helpers ---------- */
@@ -2834,12 +2908,16 @@ async function loadCompletions(append = false) {
       page_number: String(compPage),
     });
 
-    const payload = await fetchJsonStrict(`/api/completions/all?${params}`, {
-      method: 'GET',
-      headers: { Accept: 'application/json', 'X-CSRF-TOKEN': CSRF },
-      cache: 'no-store',
-      credentials: 'same-origin',
-    });
+    const payload = await fetchJsonStrict(
+      `/api/completions/all?${params}`,
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': CSRF },
+        cache: 'no-store',
+        credentials: 'same-origin',
+      },
+      { preserveNumericStringKeys: ['message_id', 'user_id'] },
+    );
 
     const items = extractCompletions(payload);
 
@@ -2860,6 +2938,8 @@ async function loadCompletions(append = false) {
 
     if (append) container.insertAdjacentHTML('beforeend', html);
     else container.innerHTML = html;
+
+    void hydrateCompletionUpvotes(container);
 
     const animateCompCards = (cards) => {
       cards.forEach((card, i) => {
@@ -3016,6 +3096,7 @@ async function fetchDiscordAvatar(user_id) {
 function voteKeyForItem(item) {
   return `comp:${item?.message_id ?? item?.code ?? crypto.randomUUID()}`;
 }
+
 function readSavedUpvote(key, fallback = 0) {
   try {
     const raw = localStorage.getItem(`upvote:${key}`);
@@ -3032,12 +3113,88 @@ function writeSavedUpvote(key, state) {
   } catch {}
 }
 
+const completionUpvoteCountCache = new Map();
+const completionUpvotePending = new Map();
+
+function parseUpvoteCount(payload, fallback = null) {
+  const count = Number(payload?.upvotes ?? payload?.count ?? payload);
+  return Number.isFinite(count) ? count : fallback;
+}
+
+function syncUpvoteButtonCount(btn, serverCount) {
+  if (!(btn instanceof Element) || !Number.isFinite(serverCount)) return;
+
+  const scoreEl = btn.querySelector('.vote-score');
+  const currentCount = Number(btn.getAttribute('data-score') || '0');
+  const voted = btn.getAttribute('data-voted') === '1';
+  const nextCount = voted ? Math.max(currentCount, serverCount) : serverCount;
+  const messageId = String(btn.getAttribute('data-message-id') || '').trim();
+  const voteKey = String(btn.getAttribute('data-upvotekey') || voteKeyForItem({ message_id: messageId }));
+
+  if (scoreEl) scoreEl.textContent = String(nextCount);
+  btn.setAttribute('data-score', String(nextCount));
+  writeSavedUpvote(voteKey, { score: nextCount, voted });
+}
+
+async function fetchCompletionUpvoteCount(messageId) {
+  const normalizedMessageId = String(messageId ?? '').trim();
+  if (!/^\d{1,20}$/.test(normalizedMessageId)) return null;
+
+  if (completionUpvoteCountCache.has(normalizedMessageId)) {
+    return completionUpvoteCountCache.get(normalizedMessageId);
+  }
+  if (completionUpvotePending.has(normalizedMessageId)) {
+    return completionUpvotePending.get(normalizedMessageId);
+  }
+
+  const pending = (async () => {
+    try {
+      const payload = await fetchJsonStrict(`/api/completions/upvoting/${encodeURIComponent(normalizedMessageId)}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': CSRF },
+        cache: 'no-store',
+        credentials: 'same-origin',
+      });
+
+      const count = parseUpvoteCount(payload, null);
+      if (Number.isFinite(count)) {
+        completionUpvoteCountCache.set(normalizedMessageId, count);
+        return count;
+      }
+
+      return null;
+    } catch {
+      return null;
+    } finally {
+      completionUpvotePending.delete(normalizedMessageId);
+    }
+  })();
+
+  completionUpvotePending.set(normalizedMessageId, pending);
+  return pending;
+}
+
+async function hydrateCompletionUpvotes(scope = document) {
+  const root = scope instanceof Element || scope instanceof Document ? scope : document;
+  const buttons = Array.from(root.querySelectorAll('.nf-upvote-btn[data-message-id]'));
+
+  await Promise.all(buttons.map(async (btn) => {
+    const messageId = String(btn.getAttribute('data-message-id') || '').trim();
+    if (!messageId) return;
+
+    const count = await fetchCompletionUpvoteCount(messageId);
+    if (Number.isFinite(count)) {
+      syncUpvoteButtonCount(btn, count);
+    }
+  }));
+}
+
 document.addEventListener('click', async (e) => {
   const btn = e.target.closest('.nf-upvote-btn');
   if (!btn) return;
   if (btn.getAttribute('data-voted') === '1') return;
 
-  const messageId = btn.getAttribute('data-message-id');
+  const messageId = String(btn.getAttribute('data-message-id') || '').trim();
   const userId = String(window.user_id || '');
   if (!messageId || !userId) {
     showErrorMessage(t('common.missing_ids'));
@@ -3067,8 +3224,9 @@ document.addEventListener('click', async (e) => {
       credentials: 'same-origin',
     });
 
-    const newCount = Number(res?.count ?? res);
+    const newCount = parseUpvoteCount(res, null);
     if (Number.isFinite(newCount)) {
+      completionUpvoteCountCache.set(messageId, newCount);
       scoreEl.textContent = String(newCount);
       btn.setAttribute('data-score', String(newCount));
     }
@@ -3083,7 +3241,7 @@ document.addEventListener('click', async (e) => {
     scoreEl.textContent = String(prevScore);
     btn.classList.remove(...UPVOTE_ACTIVE_CLASSES.split(' '));
     btn.classList.add(...UPVOTE_INACTIVE_CLASSES.split(' '));
-    showErrorMessage(t('completions.upvote_failed'))
+    showErrorMessage(extractErrorDisplayMessage(err, t('completions.upvote_failed')));
     console.error(err);
   }
 });
@@ -3116,6 +3274,7 @@ function upvotePillHtml(item) {
   const initial = Number(item?.upvotes ?? 0);
   const saved = readSavedUpvote(key, initial);
   const active = !!saved.voted;
+  const messageId = String(item?.message_id ?? '').trim();
 
   const base =
     'nf-upvote-btn group inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 ' +
@@ -3127,7 +3286,7 @@ function upvotePillHtml(item) {
             data-upvotekey="${key}"
             data-score="${saved.score}"
             data-voted="${active ? '1' : '0'}"
-            data-message-id="${item?.message_id ?? ''}"
+            data-message-id="${messageId}"
             aria-pressed="${active ? 'true' : 'false'}"
             aria-label="${t('common.upvote')}">
       <span class="inline-flex h-5 w-5 items-center justify-center">
