@@ -7017,7 +7017,7 @@ async function displayPersonalRecordsResults(results) {
       ? `
         <button type="button"
           class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
-                 text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                 text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                  w-[6.5rem]"
           data-code="${escAttr(r.code)}"
           title="${escAttr(t('popup.copy_map_code'))}">
@@ -7326,7 +7326,7 @@ async function displayCompletionsResults(results){
     const codeCell = mapCode !== 'N/A' ? `
       <button type="button"
         class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
-               text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+               text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                w-[6.5rem]"
         data-code="${escAttr(mapCode)}" title="${escAttr(t('popup.copy_map_code'))}">
         <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
