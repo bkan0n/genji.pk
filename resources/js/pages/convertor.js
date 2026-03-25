@@ -1945,6 +1945,16 @@ function sanitizeMapDataAssignments(text) {
     'gmi'
   );
   text = text.replace(reDotAssign, '');
+  const reSetGlobalVarExtra = new RegExp(
+    String.raw`^[ \t]*Set\s+Global\s+Variable\s*\(\s*(?:PortalOn|SavePauseTime|SavePauseEnabled|BanTriple)\s*,[\s\S]*?\)\s*;?[ \t]*\r?\n?`,
+    'gmi'
+  );
+  text = text.replace(reSetGlobalVarExtra, '');
+  const reDotAssignExtra = new RegExp(
+    String.raw`^[ \t]*(?:Global|全局|グローバル)\.(?:PortalOn|SavePauseTime|SavePauseEnabled|BanTriple)\s*=\s*[^\r\n;]+;?[ \t]*\r?\n?`,
+    'gmi'
+  );
+  text = text.replace(reDotAssignExtra, '');
   return text;
 }
 
