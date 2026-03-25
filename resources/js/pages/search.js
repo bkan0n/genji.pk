@@ -200,6 +200,29 @@ const difficultyColors = {
 
 const difficultyOptions = ['Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Hell'];
 
+function difficultyToolbarLabelKey(value) {
+  switch (String(value || '').trim()) {
+    case 'Easy': return 'easy';
+    case 'Medium': return 'medium';
+    case 'Hard': return 'hard';
+    case 'Very Hard': return 'very_hard';
+    case 'Extreme': return 'extreme';
+    case 'Hell': return 'hell';
+    default: return '';
+  }
+}
+
+function getExactDifficultyFilterOptions() {
+  return difficultyOptions.map((value) => {
+    const labelKey = difficultyToolbarLabelKey(value);
+    return {
+      text: t(`filters_toolbar.${labelKey}`) || value,
+      value,
+      raw: value,
+    };
+  });
+}
+
 // Toolbar
 const toolbar = document.querySelector('.toolbar');
 const iconName = document.getElementById('icon-name');
@@ -1030,6 +1053,11 @@ async function selectSection(sectionId, opts = {}) {
 
   }
 
+  if (sectionId === 'personal_records') {
+    persistentFilters = sanitizeFiltersForSection(sectionId, persistentFilters);
+    activeFilters = sanitizeFiltersForSection(sectionId, activeFilters);
+  }
+
   initializeToolbarButtons();
 
   // “Apply filters” url update
@@ -1124,6 +1152,28 @@ function __urlNormalizeOfficial(v) {
 function __urlReadSection() {
   const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
   return VALID_SECTIONS.has(s) ? s : 'map_search';
+}
+
+function normalizeUserCompletionsDifficultyFilter(value) {
+  const normalized = normalizeDifficulty(value);
+  return difficultyOptions.includes(normalized) ? normalized : '';
+}
+
+function sanitizeFiltersForSection(sectionId, source) {
+  const filters = source && typeof source === 'object' ? source : {};
+
+  if (sectionId !== 'personal_records') {
+    return { ...filters };
+  }
+
+  const sanitized = {};
+  const userIdValue = String(filters.user_id ?? '').trim();
+  const difficultyValue = normalizeUserCompletionsDifficultyFilter(filters.difficulty_exact);
+
+  if (userIdValue) sanitized.user_id = userIdValue;
+  if (difficultyValue) sanitized.difficulty_exact = difficultyValue;
+
+  return sanitized;
 }
 
 function __urlHasAnyFilterParams() {
@@ -2268,7 +2318,7 @@ function initializeToolbarButtons() {
     ),
     guide: icons.filter((icon) => ['code', 'apply_filters', 'clear_filters'].includes(icon.id)),
     personal_records: icons.filter((icon) =>
-      ['code', 'user', 'apply_filters', 'clear_filters'].includes(icon.id)
+      ['user', 'difficulty_exact', 'apply_filters', 'clear_filters'].includes(icon.id)
     ),
   };
   const filteredIcons = sectionIconsMap[currentSection] || icons;
@@ -2332,15 +2382,7 @@ function initializeToolbarButtons() {
         case 'difficulty_exact':
           optionsContainer = showOptionsContainer(
             'difficulty_exactOptions',
-            [
-              //{ text: t("filters_toolbar.beginner"), value: "Beginner", raw: "Beginner" },
-              { text: t('filters_toolbar.easy'), value: 'Easy', raw: 'Easy' },
-              { text: t('filters_toolbar.medium'), value: 'Medium', raw: 'Medium' },
-              { text: t('filters_toolbar.hard'), value: 'Hard', raw: 'Hard' },
-              { text: t('filters_toolbar.very_hard'), value: 'Very Hard', raw: 'Very Hard' },
-              { text: t('filters_toolbar.extreme'), value: 'Extreme', raw: 'Extreme' },
-              { text: t('filters_toolbar.hell'), value: 'Hell', raw: 'Hell' },
-            ],
+            getExactDifficultyFilterOptions(),
             button,
             false
           );
@@ -3041,9 +3083,13 @@ function buildSectionRequest(section, filters, pageNumber, pageSize) {
   }
 
   if (section === 'personal_records') {
+    const requestedUserId = String(
+      filters.user_id || (typeof user_id !== 'undefined' && user_id ? String(user_id) : '')
+    ).trim();
+    const requestedDifficulty = normalizeUserCompletionsDifficultyFilter(filters.difficulty_exact);
     const query = toQuery({
-      user_id: (typeof user_id !== 'undefined' && user_id ? String(user_id) : (filters.user_id || '')),
-      difficulty: filters.difficulty_exact || '',
+      user_id: requestedUserId,
+      difficulty: requestedDifficulty,
       page_number: pageNumber,
       page_size: pageSize
     });
