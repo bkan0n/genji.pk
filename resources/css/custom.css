@@ -743,7 +743,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 }
 
 /* ================= Results container & switches ================= */
-.results-container{scrollbar-gutter:stable both-edges;position:relative}
+.results-container{position:relative}
 .results-container[data-loading="1"]{overflow:hidden;-ms-overflow-style:none;scrollbar-width:none}
 .results-container[data-loading="1"]::-webkit-scrollbar{width:0;height:0}
 #mapViewSwitch{position:absolute;right:8px;bottom:8px;z-index:60}
@@ -839,7 +839,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 /* ================= Grilles TABLES ================= */
 .grid-map_search{
   display:grid;
-  grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;
+  grid-template-columns:108px minmax(192px,1.18fr) minmax(168px,0.95fr) minmax(212px,1.12fr) 116px 140px minmax(84px,auto);
   align-items:center;column-gap:20px;
 }
 .grid-completions{
@@ -859,7 +859,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 }
 
 /* Largeurs mini scrollables */
-.minw-map_search{min-width:1024px}
+.minw-map_search{min-width:1180px}
 .minw-completions{min-width:1024px}
 .minw-personal_records{min-width:920px}
 .minw-guide{min-width:640px}
@@ -1029,15 +1029,15 @@ img.avatar-loaded{animation:none!important;background:none!important}
 
 /* Map search table */
 .gp-wrap{ overflow:visible; }
-.results-xscroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable both-edges;
+.results-xscroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   touch-action:pan-x;overscroll-behavior-x:contain;padding-bottom:2px;}
 
-.minw-map_search{display:block;min-width:1024px;width:100%;max-width:none;}
+.minw-map_search{display:block;min-width:1180px;width:max(100%, 1180px);max-width:none;}
 .minw-map_search > .grid-map_search,
 .minw-map_search .row-gap-y > .grid-map_search{width:100%;}
 
 /* Name/Type/Creator*/
-.grid-map_search{grid-template-columns:110px minmax(200px,1.2fr) minmax(180px,1fr) minmax(220px,1.2fr) 120px 140px auto;}
+.grid-map_search{grid-template-columns:108px minmax(192px,1.18fr) minmax(168px,0.95fr) minmax(212px,1.12fr) 116px 140px minmax(84px,auto);}
 .grid-map_search > *{min-width:0;}
 
 .grid-map_search .qmb{min-width:0;max-width:100%;overflow:hidden;}

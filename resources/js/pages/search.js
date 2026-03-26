@@ -200,6 +200,29 @@ const difficultyColors = {
 
 const difficultyOptions = ['Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Hell'];
 
+function difficultyToolbarLabelKey(value) {
+  switch (String(value || '').trim()) {
+    case 'Easy': return 'easy';
+    case 'Medium': return 'medium';
+    case 'Hard': return 'hard';
+    case 'Very Hard': return 'very_hard';
+    case 'Extreme': return 'extreme';
+    case 'Hell': return 'hell';
+    default: return '';
+  }
+}
+
+function getExactDifficultyFilterOptions() {
+  return difficultyOptions.map((value) => {
+    const labelKey = difficultyToolbarLabelKey(value);
+    return {
+      text: t(`filters_toolbar.${labelKey}`) || value,
+      value,
+      raw: value,
+    };
+  });
+}
+
 // Toolbar
 const toolbar = document.querySelector('.toolbar');
 const iconName = document.getElementById('icon-name');
@@ -1030,6 +1053,11 @@ async function selectSection(sectionId, opts = {}) {
 
   }
 
+  if (sectionId === 'personal_records') {
+    persistentFilters = sanitizeFiltersForSection(sectionId, persistentFilters);
+    activeFilters = sanitizeFiltersForSection(sectionId, activeFilters);
+  }
+
   initializeToolbarButtons();
 
   // “Apply filters” url update
@@ -1124,6 +1152,28 @@ function __urlNormalizeOfficial(v) {
 function __urlReadSection() {
   const s = new URL(location.href).searchParams.get(SECTION_URL_PARAM);
   return VALID_SECTIONS.has(s) ? s : 'map_search';
+}
+
+function normalizeUserCompletionsDifficultyFilter(value) {
+  const normalized = normalizeDifficulty(value);
+  return difficultyOptions.includes(normalized) ? normalized : '';
+}
+
+function sanitizeFiltersForSection(sectionId, source) {
+  const filters = source && typeof source === 'object' ? source : {};
+
+  if (sectionId !== 'personal_records') {
+    return { ...filters };
+  }
+
+  const sanitized = {};
+  const userIdValue = String(filters.user_id ?? '').trim();
+  const difficultyValue = normalizeUserCompletionsDifficultyFilter(filters.difficulty_exact);
+
+  if (userIdValue) sanitized.user_id = userIdValue;
+  if (difficultyValue) sanitized.difficulty_exact = difficultyValue;
+
+  return sanitized;
 }
 
 function __urlHasAnyFilterParams() {
@@ -2268,7 +2318,7 @@ function initializeToolbarButtons() {
     ),
     guide: icons.filter((icon) => ['code', 'apply_filters', 'clear_filters'].includes(icon.id)),
     personal_records: icons.filter((icon) =>
-      ['code', 'user', 'apply_filters', 'clear_filters'].includes(icon.id)
+      ['user', 'difficulty_exact', 'apply_filters', 'clear_filters'].includes(icon.id)
     ),
   };
   const filteredIcons = sectionIconsMap[currentSection] || icons;
@@ -2332,15 +2382,7 @@ function initializeToolbarButtons() {
         case 'difficulty_exact':
           optionsContainer = showOptionsContainer(
             'difficulty_exactOptions',
-            [
-              //{ text: t("filters_toolbar.beginner"), value: "Beginner", raw: "Beginner" },
-              { text: t('filters_toolbar.easy'), value: 'Easy', raw: 'Easy' },
-              { text: t('filters_toolbar.medium'), value: 'Medium', raw: 'Medium' },
-              { text: t('filters_toolbar.hard'), value: 'Hard', raw: 'Hard' },
-              { text: t('filters_toolbar.very_hard'), value: 'Very Hard', raw: 'Very Hard' },
-              { text: t('filters_toolbar.extreme'), value: 'Extreme', raw: 'Extreme' },
-              { text: t('filters_toolbar.hell'), value: 'Hell', raw: 'Hell' },
-            ],
+            getExactDifficultyFilterOptions(),
             button,
             false
           );
@@ -3041,9 +3083,13 @@ function buildSectionRequest(section, filters, pageNumber, pageSize) {
   }
 
   if (section === 'personal_records') {
+    const requestedUserId = String(
+      filters.user_id || (typeof user_id !== 'undefined' && user_id ? String(user_id) : '')
+    ).trim();
+    const requestedDifficulty = normalizeUserCompletionsDifficultyFilter(filters.difficulty_exact);
     const query = toQuery({
-      user_id: (typeof user_id !== 'undefined' && user_id ? String(user_id) : (filters.user_id || '')),
-      difficulty: filters.difficulty_exact || '',
+      user_id: requestedUserId,
+      difficulty: requestedDifficulty,
       page_number: pageNumber,
       page_size: pageSize
     });
@@ -4007,17 +4053,17 @@ async function displayMapSearchResultsTable(rowsInput) {
       const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
       return `
         <a href="${escAttr(profileHref)}"
-          class="inline-flex items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
+          class="inline-flex min-w-0 max-w-full items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
           title="${escAttr(name)}">
           <img
             src="${escAttr(fallback)}"
             alt=""
-            class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
+            class="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
             loading="lazy" decoding="async" referrerpolicy="no-referrer"
             data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
             data-fallback-src="${escAttr(fallback)}"
           />
-          <span data-sf="${escAttr(name)}"></span>
+          <span class="min-w-0 truncate" data-sf="${escAttr(name)}"></span>
         </a>`;
     }).join('');
 
@@ -6553,6 +6599,10 @@ async function openSearchDetailsModal(r, opts = {}) {
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const fmt = (n)=> typeof n==="number" ? new Intl.NumberFormat().format(n) : String(n ?? "0");
+  const qualityStarsText = (val = 0, max = 6) => {
+    const on = Math.max(0, Math.min(max, Math.floor(Number(val) || 0)));
+    return '\u2605'.repeat(on) + '\u2606'.repeat(max - on);
+  };
   const star5 = (val=0)=> {
     const on = Math.max(0, Math.min(5, Math.round(Number(val)||0)));
     return "★★★★★".slice(0,on) + "☆☆☆☆☆".slice(0,5-on);
@@ -6651,7 +6701,7 @@ async function openSearchDetailsModal(r, opts = {}) {
   g('mapUpvotes', fmt(upvotes));
   g('mapTypeDetail', typeText || '—');
   g('mapDiffDetail', difficulty || '—');
-  g('mapQualityDetail', qualityStars);
+  g('mapQualityDetail', qualityRaw != null ? qualityStarsText(qualityRaw) : '\u2014');
     const statusText =
     isOfficial === null
       ? '—'
@@ -7017,7 +7067,7 @@ async function displayPersonalRecordsResults(results) {
       ? `
         <button type="button"
           class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
-                 text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+                 text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                  w-[6.5rem]"
           data-code="${escAttr(r.code)}"
           title="${escAttr(t('popup.copy_map_code'))}">
@@ -7326,7 +7376,7 @@ async function displayCompletionsResults(results){
     const codeCell = mapCode !== 'N/A' ? `
       <button type="button"
         class="copy-map-code group relative z-10 inline-flex items-center gap-1 rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 px-2 py-0.5
-               text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:bg-zinc-900/80 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
+               text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:bg-white/85 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer
                w-[6.5rem]"
         data-code="${escAttr(mapCode)}" title="${escAttr(t('popup.copy_map_code'))}">
         <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

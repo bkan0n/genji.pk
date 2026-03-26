@@ -26,7 +26,8 @@ use App\Http\Controllers\Quests\GetWeeklyQuestsController;
 use App\Http\Controllers\Quests\GetQuestHistoryController;
 use App\Http\Controllers\Quests\ClaimQuestRewardsController;
 
-use App\Http\Controllers\Completions\GetAllCompletionsController;
+use App\Http\Controllers\Completions\GetCompletionUpvotesController;
+use App\Http\Controllers\Completions\ListAllCompletionsController;
 use App\Http\Controllers\Completions\MapLeaderboardController;
 use App\Http\Controllers\Completions\SubmitCompletionController;
 use App\Http\Controllers\Completions\UpvoteCompletionController;
@@ -213,7 +214,10 @@ Route::prefix('completions')->group(function () {
 
     Route::middleware('web')->group(function () {
         Route::post('/', SubmitCompletionController::class)->name('api.completions.submit');
-        Route::get('all', GetAllCompletionsController::class)->name('api.completions.all');
+        Route::get('all', ListAllCompletionsController::class)->name('api.completions.all');
+        Route::get('upvoting/{message_id}', GetCompletionUpvotesController::class)
+            ->where('message_id', '\d{1,20}')
+            ->name('api.completions.upvotes.show');
         Route::post('upvoting', UpvoteCompletionController::class)->name('api.completions.upvote');
     });
 });

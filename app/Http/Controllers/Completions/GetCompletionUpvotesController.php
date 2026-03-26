@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Completions;
 
 use App\Http\Controllers\Controller;
@@ -8,14 +10,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
-class UpvoteCompletionController extends Controller
+final class GetCompletionUpvotesController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, string $message_id): JsonResponse
     {
-        $validated = $request->validate([
-            'message_id' => ['required', 'regex:/^\d{1,20}$/'],
-            'user_id' => ['required', 'regex:/^\d{1,20}$/'],
-        ]);
+        $messageId = trim($message_id);
+
+        if (! preg_match('/^\d{1,20}$/', $messageId)) {
+            return response()->json(
+                [
+                    'error' => 'invalid_message_id',
+                    'message' => 'message_id must contain 1 to 20 digits.',
+                ],
+                422,
+            );
+        }
 
         $base = rtrim((string) config('services.genji_api.root'), '/');
         $apiKey = (string) config('services.genji_api.key');
@@ -32,69 +41,47 @@ class UpvoteCompletionController extends Controller
         }
 
         try {
-            $res = Http::withHeaders([
+            $response = Http::withHeaders([
                 'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
                 'X-API-KEY' => $apiKey,
-                'X-Api-Key' => $apiKey,
             ])
                 ->withOptions([
                     'verify' => $verify,
                     'timeout' => 15,
                     'connect_timeout' => 5,
                 ])
-                ->post($base . '/api/v3/completions/upvoting', [
-                    'user_id' => (string) $validated['user_id'],
-                    'message_id' => (string) $validated['message_id'],
-                ]);
+                ->get($base . '/api/v3/completions/upvoting/' . $messageId);
 
-            $status = $res->status();
-            $json = $res->json();
+            $status = $response->status();
+            $json = $response->json();
 
-            if ($res->failed()) {
+            if ($response->failed()) {
                 return response()->json(
                     [
                         'error' => 'upstream_failed',
                         'status' => $status,
-                        'message' => $res->reason(),
-                        'upstream' => $json ?? $res->body(),
+                        'message' => $response->reason(),
+                        'upstream' => $json ?? $response->body(),
                     ],
                     $status ?: 502,
                 );
             }
 
-            if (is_numeric($json)) {
-                return response()->json(
-                    ['count' => (int) $json],
-                    $status ?: 201,
-                    [],
-                    JSON_UNESCAPED_SLASHES,
-                );
-            }
-            if (is_array($json) && array_key_exists('upvotes', $json)) {
-                $count = (int) $json['upvotes'];
-
+            $count = $this->extractCount($json);
+            if ($count !== null) {
                 return response()->json(
                     [
                         'count' => $count,
                         'upvotes' => $count,
-                        'job_status' => $json['job_status'] ?? null,
+                        'message_id' => $messageId,
                     ],
-                    $status ?: 201,
-                    [],
-                    JSON_UNESCAPED_SLASHES,
-                );
-            }
-            if (is_array($json) && isset($json['count'])) {
-                return response()->json(
-                    ['count' => (int) $json['count']],
-                    $status ?: 201,
+                    $status ?: 200,
                     [],
                     JSON_UNESCAPED_SLASHES,
                 );
             }
 
-            return response()->json($json, $status ?: 201, [], JSON_UNESCAPED_SLASHES);
+            return response()->json($json, $status ?: 200, [], JSON_UNESCAPED_SLASHES);
         } catch (Throwable $e) {
             return response()->json(
                 [
@@ -104,5 +91,22 @@ class UpvoteCompletionController extends Controller
                 502,
             );
         }
+    }
+
+    private function extractCount(mixed $payload): ?int
+    {
+        if (is_numeric($payload)) {
+            return (int) $payload;
+        }
+
+        if (is_array($payload)) {
+            foreach (['upvotes', 'count'] as $key) {
+                if (array_key_exists($key, $payload) && is_numeric($payload[$key])) {
+                    return (int) $payload[$key];
+                }
+            }
+        }
+
+        return null;
     }
 }
