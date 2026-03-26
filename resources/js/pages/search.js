@@ -6599,6 +6599,10 @@ async function openSearchDetailsModal(r, opts = {}) {
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const fmt = (n)=> typeof n==="number" ? new Intl.NumberFormat().format(n) : String(n ?? "0");
+  const qualityStarsText = (val = 0, max = 6) => {
+    const on = Math.max(0, Math.min(max, Math.floor(Number(val) || 0)));
+    return '\u2605'.repeat(on) + '\u2606'.repeat(max - on);
+  };
   const star5 = (val=0)=> {
     const on = Math.max(0, Math.min(5, Math.round(Number(val)||0)));
     return "★★★★★".slice(0,on) + "☆☆☆☆☆".slice(0,5-on);
@@ -6697,7 +6701,7 @@ async function openSearchDetailsModal(r, opts = {}) {
   g('mapUpvotes', fmt(upvotes));
   g('mapTypeDetail', typeText || '—');
   g('mapDiffDetail', difficulty || '—');
-  g('mapQualityDetail', qualityStars);
+  g('mapQualityDetail', qualityRaw != null ? qualityStarsText(qualityRaw) : '\u2014');
     const statusText =
     isOfficial === null
       ? '—'
