@@ -4053,17 +4053,17 @@ async function displayMapSearchResultsTable(rowsInput) {
       const profileHref = id ? `rank_card?user_id=${encodeURIComponent(id)}` : '#';
       return `
         <a href="${escAttr(profileHref)}"
-          class="inline-flex items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
+          class="inline-flex min-w-0 max-w-full items-center gap-2 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10 px-1.5 py-0.5"
           title="${escAttr(name)}">
           <img
             src="${escAttr(fallback)}"
             alt=""
-            class="h-6 w-6 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
+            class="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800"
             loading="lazy" decoding="async" referrerpolicy="no-referrer"
             data-avatar-id="${escAttr(id || '')}" data-avatar-size="64"
             data-fallback-src="${escAttr(fallback)}"
           />
-          <span data-sf="${escAttr(name)}"></span>
+          <span class="min-w-0 truncate" data-sf="${escAttr(name)}"></span>
         </a>`;
     }).join('');
 
