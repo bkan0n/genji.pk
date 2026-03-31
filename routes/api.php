@@ -14,6 +14,9 @@ use App\Http\Controllers\Community\Statistics\TopCreatorsByAverageQualityControl
 use App\Http\Controllers\Community\Statistics\TopMapsByDifficultyController;
 
 use App\Http\Controllers\CompileController;
+use App\Http\Controllers\Content\ListMovementTechCategoriesController;
+use App\Http\Controllers\Content\ListMovementTechDifficultiesController;
+use App\Http\Controllers\Content\ListMovementTechniquesController;
 
 use App\Http\Controllers\Store\GetCurrentRotationController;
 use App\Http\Controllers\Store\GetKeyPricingController;
@@ -79,6 +82,19 @@ use App\Http\Controllers\Mods\Verifications\VerifyCompletionController;
 use App\Http\Controllers\Mods\Devs\CacheController;
 use App\Http\Controllers\Mods\Devs\OverpyCommitController;
 use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
+use App\Http\Controllers\Mods\Content\CreateMovementTechCategoryController;
+use App\Http\Controllers\Mods\Content\CreateMovementTechDifficultyController;
+use App\Http\Controllers\Mods\Content\CreateMovementTechniqueController;
+use App\Http\Controllers\Mods\Content\DeleteMovementTechCategoryController;
+use App\Http\Controllers\Mods\Content\DeleteMovementTechDifficultyController;
+use App\Http\Controllers\Mods\Content\DeleteMovementTechniqueController;
+use App\Http\Controllers\Mods\Content\GetMovementTechniqueController;
+use App\Http\Controllers\Mods\Content\ReorderMovementTechCategoryController;
+use App\Http\Controllers\Mods\Content\ReorderMovementTechDifficultyController;
+use App\Http\Controllers\Mods\Content\ReorderMovementTechniqueController;
+use App\Http\Controllers\Mods\Content\UpdateMovementTechCategoryController;
+use App\Http\Controllers\Mods\Content\UpdateMovementTechDifficultyController;
+use App\Http\Controllers\Mods\Content\UpdateMovementTechniqueController;
 
 use App\Http\Controllers\Mods\Playtests\ApprovePlaytestController;
 use App\Http\Controllers\Mods\Playtests\ForceAcceptPlaytestController;
@@ -157,6 +173,14 @@ Route::prefix('community')->group(function () {
     Route::get('leaderboard', [LeaderboardController::class, 'index'])->name(
         'api.community.leaderboard',
     );
+});
+
+
+/* ================== CONTENT ================== */
+Route::prefix('content/movement-tech')->group(function () {
+    Route::get('/', ListMovementTechniquesController::class);
+    Route::get('categories', ListMovementTechCategoriesController::class);
+    Route::get('difficulties', ListMovementTechDifficultiesController::class);
 });
 
 /* ================== CONVERTOR ================== */
@@ -355,6 +379,25 @@ Route::prefix('mods')
             ->whereNumber('real_user_id')
             ->name('mods.users.link-fake-to-real');
 
+
+        // CONTENT
+        Route::prefix('content/movement-tech')->group(function () {
+            Route::post('categories', CreateMovementTechCategoryController::class);
+            Route::put('categories/{id}', UpdateMovementTechCategoryController::class)->whereNumber('id');
+            Route::delete('categories/{id}', DeleteMovementTechCategoryController::class)->whereNumber('id');
+            Route::post('categories/{id}/reorder', ReorderMovementTechCategoryController::class)->whereNumber('id');
+
+            Route::post('difficulties', CreateMovementTechDifficultyController::class);
+            Route::put('difficulties/{id}', UpdateMovementTechDifficultyController::class)->whereNumber('id');
+            Route::delete('difficulties/{id}', DeleteMovementTechDifficultyController::class)->whereNumber('id');
+            Route::post('difficulties/{id}/reorder', ReorderMovementTechDifficultyController::class)->whereNumber('id');
+
+            Route::post('techniques', CreateMovementTechniqueController::class);
+            Route::get('techniques/{id}', GetMovementTechniqueController::class)->whereNumber('id');
+            Route::put('techniques/{id}', UpdateMovementTechniqueController::class)->whereNumber('id');
+            Route::delete('techniques/{id}', DeleteMovementTechniqueController::class)->whereNumber('id');
+            Route::post('techniques/{id}/reorder', ReorderMovementTechniqueController::class)->whereNumber('id');
+        });
         // LOOTBOX
         Route::post('lootbox/users/{user_id}/keys/{key_type}', GrantKeyToUserController::class)
             ->whereNumber('user_id')
@@ -584,3 +627,4 @@ Route::prefix('users/{user_id}/rank-card')
         Route::get('/', GetRankCardController::class)->name('get');
     });
 Route::get('rankcard/mastery', GetMapMasteryController::class)->name('rankcard.mastery');
+

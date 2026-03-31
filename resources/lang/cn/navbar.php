@@ -15,6 +15,7 @@ return [
     'search'          => '搜索',
     'maps'            => '地图',
     'guides'          => '路线视频',
+    'movement_tech'   => 'Movement Tech',
     'completions'     => '通关记录',
     'community'       => '社区',
     'news'            => 'News',

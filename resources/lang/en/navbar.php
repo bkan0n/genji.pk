@@ -15,6 +15,7 @@ return [
     'search'                => 'Search',
     'maps'                  => 'Maps',
     'guides'                => 'Guides',
+    'movement_tech'         => 'Movement Tech',
     'completions'           => 'Completions',
     'community'             => 'Community',
     'news'                  => 'News',

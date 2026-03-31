@@ -123,7 +123,22 @@
                   </svg>
                 </span>
                 <span class="min-w-0 flex-1 truncate">Guides</span>
-                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Content</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Maps</span>
+              </button>
+
+              <button
+                data-tab="content"
+                data-tab-label="Content"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
+              >
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M4 5h7v6H4V5m9 0h7v4h-7V5M4 13h7v6H4v-6m9-2h7v8h-7v-8Z" />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Content</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Movement Tech</span>
               </button>
 
               <button
@@ -265,7 +280,7 @@
                   class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="users-link"
                 >
-                  Link fake â†’ real
+                  Link fake → real
                 </button>
                 <button
                   class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
@@ -287,7 +302,7 @@
                 </button>
               </div>
 
-              {{-- Empty state tant quâ€™aucune sous-action nâ€™est choisie --}}
+              {{-- Empty state tant qu’aucune sous-action n’est choisie --}}
               <div
                 class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
               >
@@ -600,7 +615,7 @@
                     </div>
 
                     <p class="-mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      Tip: Define exactly one â€œis primaryâ€ to
+                      Tip: Define exactly one “is primary” to
                       <span class="font-semibold text-emerald-300">true</span>
                       .
                     </p>
@@ -1829,7 +1844,7 @@
 
                   <form data-action="set-xp-multiplier" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
                     <label class="sm:col-span-1">
-                      Value (1 â†’ 10)
+                      Value (1 → 10)
                       <input
                         name="value"
                         type="number"
@@ -2111,6 +2126,617 @@
               </div>
             </div>
 
+            {{-- ============ CONTENT ============ --}}
+            <div data-panel="content" class="mod-panel hidden space-y-4">
+              <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="content-categories"
+                >
+                  Categories
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="content-difficulties"
+                >
+                  Difficulties
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="content-techniques"
+                >
+                  Techniques
+                </button>
+              </div>
+
+              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
+                Choose a Content action group.
+              </div>
+
+              <div data-subpanel="content-categories" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">List movement tech categories</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/content/movement-tech/categories</span>
+                  </div>
+                  <form data-action="content-category-list" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Refresh list
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Create movement tech category</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/categories</span>
+                  </div>
+                  <form data-action="content-category-create" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Wall Riding"
+                      />
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Create
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Update movement tech category</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /api/mods/content/movement-tech/categories/{id}</span>
+                  </div>
+                  <form data-action="content-category-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">
+                      category_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Advanced Wall Riding"
+                      />
+                    </label>
+                    <p class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      Enter <span class="font-mono">category_id</span> and leave the field to load the current name automatically.
+                    </p>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Update
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Delete movement tech category</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/content/movement-tech/categories/{id}</span>
+                  </div>
+                  <form data-action="content-category-delete" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      category_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                        Delete
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 class="font-semibold">Reorder movement tech category</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Moving the first item up or the last item down is a no-op.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/categories/{id}/reorder</span>
+                  </div>
+                  <form data-action="content-category-reorder" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">
+                      category_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      direction
+                      <select
+                        name="direction"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                      >
+                        <option value="up">up</option>
+                        <option value="down">down</option>
+                      </select>
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Reorder
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <pre data-out="content-categories-res" class="hidden"></pre>
+              </div>
+              <div data-subpanel="content-techniques" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">List movement techniques</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/content/movement-tech/</span>
+                  </div>
+                  <form data-action="content-technique-list" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Refresh list
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 class="font-semibold">Create movement technique</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Add tips and videos with the buttons below. Their order in the list becomes their sort order.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/techniques</span>
+                  </div>
+                  <form data-action="content-technique-create" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Wall Jump"
+                      />
+                    </label>
+                    <label class="text-sm sm:col-span-2">
+                      description
+                      <textarea
+                        name="description"
+                        rows="3"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Jump off a wall to gain height."
+                      ></textarea>
+                    </label>
+                    <label class="text-sm">
+                      category_id
+                      <input
+                        name="category_id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="2 or null"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      difficulty_id
+                      <input
+                        name="difficulty_id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1 or null"
+                      />
+                    </label>
+                    <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="tips">
+                      <div class="flex items-center justify-between gap-3">
+                        <div>
+                          <div>tips</div>
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add one tip per row. Empty rows are ignored.</p>
+                        </div>
+                        <button type="button" data-mt-add="tips" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
+                          Add tip
+                        </button>
+                      </div>
+                      <div data-mt-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        No tips added yet.
+                      </div>
+                      <div data-mt-items class="space-y-3"></div>
+                    </div>
+                    <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="videos">
+                      <div class="flex items-center justify-between gap-3">
+                        <div>
+                          <div>videos</div>
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Caption is optional. Add rows in the order you want them returned.</p>
+                        </div>
+                        <button type="button" data-mt-add="videos" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
+                          Add video
+                        </button>
+                      </div>
+                      <div data-mt-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        No videos added yet.
+                      </div>
+                      <div data-mt-items class="space-y-3"></div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Create
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Get movement technique</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/mods/content/movement-tech/techniques/{id}</span>
+                  </div>
+                  <form data-action="content-technique-get" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      technique_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Fetch
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 class="font-semibold">Update movement technique</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Fields are auto-loaded from technique_id. Remove every tip or video row if you want to clear that list.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /api/mods/content/movement-tech/techniques/{id}</span>
+                  </div>
+                  <form data-action="content-technique-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      technique_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <p class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      Enter <span class="font-mono">technique_id</span> and leave the field to load the current values automatically.
+                    </p>
+                    <label class="text-sm sm:col-span-2">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Wall Jump"
+                      />
+                    </label>
+                    <label class="text-sm sm:col-span-2">
+                      description
+                      <textarea
+                        name="description"
+                        rows="3"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Leave blank to keep current value, or type null to clear"
+                      ></textarea>
+                    </label>
+                    <label class="text-sm">
+                      category_id
+                      <input
+                        name="category_id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Leave blank, 2, or null"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      difficulty_id
+                      <input
+                        name="difficulty_id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Leave blank, 1, or null"
+                      />
+                    </label>
+                    <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="tips">
+                      <div>
+                        <div>current tips</div>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Loaded from the API for reference. They are not resent automatically on update.</p>
+                      </div>
+                      <div data-mt-current-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        No tips in this technique.
+                      </div>
+                      <div data-mt-current-items class="space-y-2"></div>
+                    </div>
+                    <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="tips">
+                      <div class="flex items-center justify-between gap-3">
+                        <div>
+                          <div>tips to send on update</div>
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add only the new rows you want to send with this update.</p>
+                        </div>
+                        <button type="button" data-mt-add="tips" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
+                          Add tip
+                        </button>
+                      </div>
+                      <div data-mt-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        No tips in this technique.
+                      </div>
+                      <div data-mt-items class="space-y-3"></div>
+                    </div>
+                    <label class="sm:col-span-2 inline-flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <input type="checkbox" name="clear_tips" class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
+                      Clear current tips by sending an empty tips array
+                    </label>
+                    <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="videos">
+                      <div>
+                        <div>current videos</div>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Loaded from the API for reference. They are not resent automatically on update.</p>
+                      </div>
+                      <div data-mt-current-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        No videos in this technique.
+                      </div>
+                      <div data-mt-current-items class="space-y-2"></div>
+                    </div>
+                    <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="videos">
+                      <div class="flex items-center justify-between gap-3">
+                        <div>
+                          <div>videos to send on update</div>
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add only the new rows you want to send with this update.</p>
+                        </div>
+                        <button type="button" data-mt-add="videos" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
+                          Add video
+                        </button>
+                      </div>
+                      <div data-mt-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        No videos in this technique.
+                      </div>
+                      <div data-mt-items class="space-y-3"></div>
+                    </div>
+                    <label class="sm:col-span-2 inline-flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <input type="checkbox" name="clear_videos" class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
+                      Clear current videos by sending an empty videos array
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Update
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Delete movement technique</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/content/movement-tech/techniques/{id}</span>
+                  </div>
+                  <form data-action="content-technique-delete" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      technique_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                        Delete
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 class="font-semibold">Reorder movement technique</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Moving the first item up or the last item down is a no-op.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/techniques/{id}/reorder</span>
+                  </div>
+                  <form data-action="content-technique-reorder" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">
+                      technique_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      direction
+                      <select
+                        name="direction"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                      >
+                        <option value="up">up</option>
+                        <option value="down">down</option>
+                      </select>
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Reorder
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <pre data-out="content-techniques-res" class="hidden"></pre>
+              </div>
+              <div data-subpanel="content-difficulties" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">List movement tech difficulties</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/content/movement-tech/difficulties</span>
+                  </div>
+                  <form data-action="content-difficulty-list" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Refresh list
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Create movement tech difficulty</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/difficulties</span>
+                  </div>
+                  <form data-action="content-difficulty-create" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Beginner"
+                      />
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Create
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Update movement tech difficulty</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /api/mods/content/movement-tech/difficulties/{id}</span>
+                  </div>
+                  <form data-action="content-difficulty-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">
+                      difficulty_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      name
+                      <input
+                        name="name"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Expert"
+                      />
+                    </label>
+                    <p class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      Enter <span class="font-mono">difficulty_id</span> and leave the field to load the current name automatically.
+                    </p>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Update
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <h3 class="font-semibold">Delete movement tech difficulty</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/content/movement-tech/difficulties/{id}</span>
+                  </div>
+                  <form data-action="content-difficulty-delete" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      difficulty_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                        Delete
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 class="font-semibold">Reorder movement tech difficulty</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Moving the first item up or the last item down is a no-op.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/difficulties/{id}/reorder</span>
+                  </div>
+                  <form data-action="content-difficulty-reorder" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">
+                      difficulty_id
+                      <input
+                        name="id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="1"
+                      />
+                    </label>
+                    <label class="text-sm">
+                      direction
+                      <select
+                        name="direction"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                      >
+                        <option value="up">up</option>
+                        <option value="down">down</option>
+                      </select>
+                    </label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Reorder
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <pre data-out="content-difficulties-res" class="hidden"></pre>
+              </div>
+            </div>
+
+
             {{-- ============ MAPS ============ --}}
             <div data-panel="maps" class="mod-panel hidden space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
@@ -2255,7 +2881,7 @@
                       <label>
                         Mode
                         <div class="relative mt-1" data-dd-select>
-                          <!-- Select cachÃ© pour rester 100% compatible avec setupArchiveMapsUI (form.mode) -->
+                          <!-- Select caché pour rester 100% compatible avec setupArchiveMapsUI (form.mode) -->
                           <select name="mode" class="hidden">
                             <option value="single" selected>Single</option>
                             <option value="bulk">Bulk</option>
@@ -2332,7 +2958,7 @@
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/v3/maps/{code}</span>
                   </div>
 
-                  <!-- Charger une carte Ã  Ã©diter -->
+                  <!-- Charger une carte à éditer -->
                   <form
                     data-action="load-map-update"
                     autocomplete="off"
@@ -2355,7 +2981,7 @@
                     </div>
                   </form>
 
-                  <!-- Formulaire dâ€™Ã©dition (mÃªme structure que submit, IDs prÃ©fixÃ©s u-) -->
+                  <!-- Formulaire d’édition (même structure que submit, IDs préfixés u-) -->
                   <form
                     id="u-updateMapForm"
                     data-action="update-map"
@@ -2389,7 +3015,7 @@
                               </button>
                             </span>
 
-                            <!-- Secondary (mÃªme affichage que le primary) -->
+                            <!-- Secondary (même affichage que le primary) -->
                             <span
                               class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
@@ -2750,7 +3376,7 @@
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‡ Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
                               </span>
                               <input
                                 id="u-medalGoldInput"
@@ -2764,7 +3390,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥ˆ Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
                               </span>
                               <input
                                 id="u-medalSilverInput"
@@ -2778,7 +3404,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‰ Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
                               </span>
                               <input
                                 id="u-medalBronzeInput"
@@ -2791,7 +3417,7 @@
                             </label>
                           </div>
                           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            Format: max 5 digits before the decimal and up to 2 after. Values â‰¥ 0.
+                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
                         </div>
@@ -2858,7 +3484,7 @@
                               </button>
                             </span>
 
-                            <!-- Secondary (mÃªme systÃ¨me que primary) -->
+                            <!-- Secondary (même système que primary) -->
                             <span
                               class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
@@ -3167,7 +3793,7 @@
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‡ Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
                               </span>
                               <input
                                 id="medalGoldInput"
@@ -3181,7 +3807,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥ˆ Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
                               </span>
                               <input
                                 id="medalSilverInput"
@@ -3195,7 +3821,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‰ Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
                               </span>
                               <input
                                 id="medalBronzeInput"
@@ -3208,7 +3834,7 @@
                             </label>
                           </div>
                           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            Format: max 5 digits before the decimal and up to 2 after. Values â‰¥ 0.
+                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
                         </div>
@@ -3660,7 +4286,7 @@
                           <div class="grid gap-3 sm:grid-cols-3">
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‡ Gold</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
                               </span>
                               <input
                                 id="s-medalGoldInput"
@@ -3675,7 +4301,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥ˆ Silver</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
                               </span>
                               <input
                                 id="s-medalSilverInput"
@@ -3690,7 +4316,7 @@
 
                             <label class="flex items-center gap-2">
                               <span class="inline-flex min-w-0 items-center gap-2">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-200">ðŸ¥‰ Bronze</span>
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
                               </span>
                               <input
                                 id="s-medalBronzeInput"
@@ -3704,7 +4330,7 @@
                             </label>
                           </div>
                           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            Format: max 5 digits before the decimal and up to 2 after. Values â‰¥ 0.
+                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
                             Required order: bronze &gt; silver &gt; gold.
                           </p>
                         </div>
@@ -3765,14 +4391,14 @@
                     </label>
 
                     <label class="block">
-                      <span class="block text-xs text-zinc-500 dark:text-zinc-400">Quality (1â€“6)</span>
+                      <span class="block text-xs text-zinc-500 dark:text-zinc-400">Quality (1–6)</span>
                       <div id="q-qualityDropdown" class="relative mt-1">
                         <button
                           type="button"
                           data-dd-btn
                           class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
                         >
-                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select quality (1â€“6)</span>
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select quality (1–6)</span>
                           <svg
                             class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
                             viewBox="0 0 20 20"
@@ -3818,7 +4444,7 @@
                       <input
                         name="context"
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="tool-assisted, impossible, â€¦"
+                        placeholder="tool-assisted, impossible, …"
                       />
                     </label>
 
@@ -4243,7 +4869,7 @@
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div class="flex items-center justify-between">
                     <h3 class="font-semibold">Get Weekly Quests</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=â€¦</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=…</span>
                   </div>
 
                   <form data-action="quest-get-weekly" autocomplete="off">
@@ -4409,15 +5035,15 @@
                         User name
                         <input name="user_id" type="text" autocomplete="off" spellcheck="false"
                           class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                          placeholder="Type a usernameâ€¦" />
+                          placeholder="Type a username…" />
                       </label>
 
                       <label class="text-sm md:col-span-2">
                         Progress entry
                         <div id="modQuestUserProgressPick" class="relative mt-1" data-dd-select>
-                          <button type="button" data-dd-btn data-placeholder="Select a progressâ€¦" aria-haspopup="listbox" aria-expanded="false"
+                          <button type="button" data-dd-btn data-placeholder="Select a progress…" aria-haspopup="listbox" aria-expanded="false"
                             class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-                            <span class="dd-label truncate">Select a progressâ€¦</span>
+                            <span class="dd-label truncate">Select a progress…</span>
                             <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                               <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
                             </svg>
@@ -5004,7 +5630,7 @@
                   <!-- Current value -->
                   <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm">
                     <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Current commit</div>
-                    <div id="overpyCommitCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">â€”</div>
+                    <div id="overpyCommitCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">—</div>
                   </div>
 
                   <form data-action="set-overpy-commit" autocomplete="off" class="space-y-3">
@@ -5013,7 +5639,7 @@
                     </p>
 
                     <label class="block text-sm text-zinc-600 dark:text-zinc-300">
-                      New commit SHA (7â€“40 hex)
+                      New commit SHA (7–40 hex)
                       <input
                         type="text"
                         name="commit"
@@ -5051,7 +5677,7 @@
                   <!-- Current value -->
                   <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm">
                     <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Current version</div>
-                    <div id="frameworkVersionCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">â€”</div>
+                    <div id="frameworkVersionCurrent" class="mt-0.5 font-mono text-zinc-900 dark:text-zinc-100">—</div>
                   </div>
 
                   <form id="formSetFrameworkVersion" data-action="set-framework-version" autocomplete="off" novalidate class="space-y-3">
@@ -5164,7 +5790,7 @@
           </span>
           <div class="flex-1">
             <div class="text-xs text-zinc-500 dark:text-zinc-400">Search tabs & tools</div>
-            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to searchâ€¦" autocomplete="off" />
+            <input id="modCmdkInput" type="text" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40" placeholder="Type to search…" autocomplete="off" />
           </div>
           <button id="modCmdkClose" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Esc</button>
         </div>
@@ -5172,7 +5798,7 @@
           <div id="modCmdkList" class="space-y-1"></div>
         </div>
         <div class="border-t border-zinc-200/80 dark:border-white/10 px-4 py-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-          <span class="text-zinc-800 dark:text-zinc-200">Enter</span> to open Â· <span class="text-zinc-800 dark:text-zinc-200">â†‘â†“</span> to navigate Â· <span class="text-zinc-800 dark:text-zinc-200">Esc</span> to close
+          <span class="text-zinc-800 dark:text-zinc-200">Enter</span> to open · <span class="text-zinc-800 dark:text-zinc-200">↑↓</span> to navigate · <span class="text-zinc-800 dark:text-zinc-200">Esc</span> to close
         </div>
       </div>
     </div>

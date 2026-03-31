@@ -15,6 +15,7 @@ return [
     'search'            => 'Поиск',
     'maps'              => 'Карты',
     'guides'            => 'Гайды',
+    'movement_tech'     => 'Movement Tech',
     'completions'       => 'Прохождения',
     'community'         => 'Сообщество',
     'news'              => 'Новости',

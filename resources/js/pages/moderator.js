@@ -2,6 +2,8 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 const API_MODS = '/api/mods';
+const API_CONTENT_PUBLIC = '/api/content/movement-tech';
+const API_CONTENT_MODS = `${API_MODS}/content/movement-tech`;
 const asId = (input) => String(input?.value ?? '').trim();
 const isDigits = (s) => /^\d+$/.test(String(s || ''));
 const getBool = (id) => !!document.getElementById(id)?.checked;
@@ -796,7 +798,6 @@ function scrollIntoViewWithOffset(el, offset) {
         }
         wireFormAutocompletes(active);
         ensureFormUx(active);
-        ensureOutputUx(active);
         try {
           active.querySelectorAll('.fake-select, .custom-multiselect').forEach((el) => {
             if (typeof __merSetupFakeSelect === 'function') __merSetupFakeSelect(el);
@@ -1092,6 +1093,10 @@ function setFormPending(form, pending = true) {
 $$('form[data-action]').forEach((form) => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (form.dataset.submitLocked === '1') {
+      return;
+    }
+    form.dataset.submitLocked = '1';
     const action = form.dataset.action;
     const releasePending = setFormPending(form, true);
     try {
@@ -1140,6 +1145,40 @@ $$('form[data-action]').forEach((form) => {
           return handleDeleteGuide(form);
         case 'get-guides':
           return handleGetGuides(form);
+
+        // CONTENT (API_MODS)
+        case 'content-category-list':
+          return handleContentListEntity(form, 'categories', 'Categories', 'content-categories-res');
+        case 'content-category-create':
+          return handleContentCreateNamedEntity(form, 'categories', 'Category', 'content-categories-res');
+        case 'content-category-update':
+          return handleContentUpdateNamedEntity(form, 'categories', 'Category', 'content-categories-res');
+        case 'content-category-delete':
+          return handleContentDeleteNamedEntity(form, 'categories', 'Category', 'content-categories-res');
+        case 'content-category-reorder':
+          return handleContentReorderNamedEntity(form, 'categories', 'Category', 'content-categories-res');
+        case 'content-difficulty-list':
+          return handleContentListEntity(form, 'difficulties', 'Difficulties', 'content-difficulties-res');
+        case 'content-difficulty-create':
+          return handleContentCreateNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
+        case 'content-difficulty-update':
+          return handleContentUpdateNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
+        case 'content-difficulty-delete':
+          return handleContentDeleteNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
+        case 'content-difficulty-reorder':
+          return handleContentReorderNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
+        case 'content-technique-list':
+          return handleContentListEntity(form, 'techniques', 'Techniques', 'content-techniques-res');
+        case 'content-technique-create':
+          return handleContentTechniqueCreate(form);
+        case 'content-technique-get':
+          return handleContentTechniqueGet(form);
+        case 'content-technique-update':
+          return handleContentTechniqueUpdate(form);
+        case 'content-technique-delete':
+          return handleContentTechniqueDelete(form);
+        case 'content-technique-reorder':
+          return handleContentTechniqueReorder(form);
 
         // MAPS (API_MODS)
         case 'archive-maps':
@@ -1243,6 +1282,7 @@ $$('form[data-action]').forEach((form) => {
         data: { message: String(err) },
       });
     } finally {
+      delete form.dataset.submitLocked;
       releasePending();
     }
   });
@@ -1740,6 +1780,942 @@ async function handleGetGuides(form) {
 
   toast(ok ? 'Guides loaded' : 'Failed', ok ? 'ok' : 'err');
 }
+
+// CONTENT
+function movementTechPositiveId(raw, label) {
+  const text = String(raw ?? '').trim();
+  if (!/^\d+$/.test(text)) {
+    return { error: `${label} must be a positive integer` };
+  }
+
+  const value = Number(text);
+  if (!Number.isFinite(value) || value < 1) {
+    return { error: `${label} must be a positive integer` };
+  }
+
+  return { value };
+}
+
+function movementTechDirection(raw) {
+  const value = String(raw ?? '').trim().toLowerCase();
+  if (value !== 'up' && value !== 'down') {
+    return { error: 'direction must be up or down' };
+  }
+
+  return { value };
+}
+
+function movementTechNullableId(raw, label) {
+  const text = String(raw ?? '').trim();
+  if (!text) {
+    return { omit: true };
+  }
+
+  if (/^null$/i.test(text)) {
+    return { value: null };
+  }
+
+  if (!/^\d+$/.test(text)) {
+    return { error: `${label} must be a positive integer or null` };
+  }
+
+  const value = Number(text);
+  if (!Number.isFinite(value) || value < 1) {
+    return { error: `${label} must be a positive integer or null` };
+  }
+
+  return { value };
+}
+
+function movementTechNullableString(raw) {
+  const text = String(raw ?? '');
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return { omit: true };
+  }
+
+  if (/^null$/i.test(trimmed)) {
+    return { value: null };
+  }
+
+  return { value: trimmed };
+}
+
+function movementTechErrorMessage(data, fallback = 'Request failed') {
+  if (typeof data === 'string' && data.trim()) {
+    return data.trim();
+  }
+
+  if (data && typeof data === 'object') {
+    return data.error || data.message || fallback;
+  }
+
+  return fallback;
+}
+
+function movementTechPanelValue(res) {
+  if (res.status === 204 && (res.data == null || res.data === '')) {
+    return '(no content)';
+  }
+
+  return res.data ?? '';
+}
+
+function movementTechPublicListPath(entity) {
+  if (entity === 'categories') {
+    return '/categories';
+  }
+
+  if (entity === 'difficulties') {
+    return '/difficulties';
+  }
+
+  return '/';
+}
+
+function movementTechListResponseItems(entity, data) {
+  const items = data?.[entity];
+  return Array.isArray(items) ? items : [];
+}
+
+function movementTechSetFieldValue(form, name, value) {
+  const field = form?.elements?.namedItem(name);
+  if (!field || Array.isArray(field)) {
+    return;
+  }
+
+  field.value = value ?? '';
+}
+
+function movementTechRepeaterLabel(kind) {
+  return kind === 'videos' ? 'Video' : 'Tip';
+}
+
+function movementTechGetRepeater(form, kind) {
+  return form?.querySelector?.(`[data-mt-repeater="${kind}"]`) || null;
+}
+
+function movementTechGetRepeaterItems(repeater) {
+  return Array.from(repeater?.querySelectorAll?.('[data-mt-item]') || []);
+}
+
+function movementTechRefreshRepeater(repeater) {
+  if (!repeater) {
+    return;
+  }
+
+  const kind = repeater.dataset.mtRepeater || 'tips';
+  const items = movementTechGetRepeaterItems(repeater);
+  const empty = repeater.querySelector('[data-mt-empty]');
+
+  if (empty) {
+    empty.classList.toggle('hidden', items.length > 0);
+  }
+
+  items.forEach((item, index) => {
+    const label = item.querySelector('[data-mt-item-label]');
+    if (label) {
+      label.textContent = `${movementTechRepeaterLabel(kind)} ${index + 1}`;
+    }
+
+    const upBtn = item.querySelector('[data-mt-move="up"]');
+    if (upBtn) {
+      upBtn.disabled = index === 0;
+      upBtn.classList.toggle('opacity-50', index === 0);
+    }
+
+    const downBtn = item.querySelector('[data-mt-move="down"]');
+    if (downBtn) {
+      downBtn.disabled = index === items.length - 1;
+      downBtn.classList.toggle('opacity-50', index === items.length - 1);
+    }
+  });
+}
+
+function movementTechBuildRepeaterItem(kind, value = {}) {
+  const item = document.createElement('div');
+  item.dataset.mtItem = '1';
+  item.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 space-y-3';
+
+  if (kind === 'videos') {
+    item.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100" data-mt-item-label>Video</div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" data-mt-move="up" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Up</button>
+          <button type="button" data-mt-move="down" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Down</button>
+          <button type="button" data-mt-remove="1" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Remove</button>
+        </div>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="text-sm sm:col-span-2">
+          url
+          <input data-field="url" type="url" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" placeholder="https://youtube.com/watch?v=..." />
+        </label>
+        <label class="text-sm sm:col-span-2">
+          caption
+          <input data-field="caption" type="text" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" placeholder="Example clip" />
+        </label>
+      </div>
+    `;
+
+    item.querySelector('[data-field="url"]').value = String(value?.url ?? '');
+    item.querySelector('[data-field="caption"]').value = value?.caption == null ? '' : String(value.caption);
+    return item;
+  }
+
+  item.innerHTML = `
+    <div class="flex items-center justify-between gap-2">
+      <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100" data-mt-item-label>Tip</div>
+      <div class="flex items-center gap-1.5">
+        <button type="button" data-mt-move="up" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Up</button>
+        <button type="button" data-mt-move="down" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Down</button>
+        <button type="button" data-mt-remove="1" class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Remove</button>
+      </div>
+    </div>
+    <label class="block text-sm">
+      text
+      <textarea data-field="text" rows="3" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" placeholder="Approach at a slight angle."></textarea>
+    </label>
+  `;
+
+  item.querySelector('[data-field="text"]').value = String(value?.text ?? '');
+  return item;
+}
+
+function movementTechAppendRepeaterItem(repeater, kind, value = {}, focusField = false) {
+  const itemsHost = repeater?.querySelector('[data-mt-items]');
+  if (!itemsHost) {
+    return null;
+  }
+
+  const item = movementTechBuildRepeaterItem(kind, value);
+  itemsHost.appendChild(item);
+  movementTechRefreshRepeater(repeater);
+
+  if (focusField) {
+    item.querySelector('[data-field]')?.focus();
+  }
+
+  return item;
+}
+
+function movementTechSetTechniqueRows(form, kind, rows) {
+  const repeater = movementTechGetRepeater(form, kind);
+  const itemsHost = repeater?.querySelector('[data-mt-items]');
+  if (!repeater || !itemsHost) {
+    return;
+  }
+
+  itemsHost.innerHTML = '';
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    movementTechAppendRepeaterItem(repeater, kind, row, false);
+  });
+  movementTechRefreshRepeater(repeater);
+}
+
+function movementTechReadTipRows(form) {
+  const rows = [];
+
+  movementTechGetRepeaterItems(movementTechGetRepeater(form, 'tips')).forEach((item) => {
+    const text = String(item.querySelector('[data-field="text"]')?.value ?? '').trim();
+    if (!text) {
+      return;
+    }
+
+    rows.push({
+      text,
+      sort_order: rows.length + 1,
+    });
+  });
+
+  return { value: rows };
+}
+
+function movementTechReadVideoRows(form) {
+  const rows = [];
+
+  for (const item of movementTechGetRepeaterItems(movementTechGetRepeater(form, 'videos'))) {
+    const url = String(item.querySelector('[data-field="url"]')?.value ?? '').trim();
+    const caption = String(item.querySelector('[data-field="caption"]')?.value ?? '').trim();
+
+    if (!url && !caption) {
+      continue;
+    }
+
+    if (!url) {
+      return { error: 'video url is required' };
+    }
+
+    rows.push({
+      url,
+      caption: caption || null,
+      sort_order: rows.length + 1,
+    });
+  }
+
+  return { value: rows };
+}
+
+function movementTechRenderCurrentTechniqueRows(form, kind, rows) {
+  const section = form?.querySelector?.(`[data-mt-current="${kind}"]`);
+  const itemsHost = section?.querySelector?.('[data-mt-current-items]');
+  const empty = section?.querySelector?.('[data-mt-current-empty]');
+
+  if (!section || !itemsHost) {
+    return;
+  }
+
+  const normalized = kind === 'videos'
+    ? movementTechComparableVideos(rows)
+    : movementTechComparableTips(rows);
+
+  itemsHost.innerHTML = '';
+
+  normalized.forEach((row, index) => {
+    const item = document.createElement('div');
+    item.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 space-y-1';
+
+    const label = document.createElement('div');
+    label.className = 'text-xs font-semibold text-zinc-900 dark:text-zinc-100';
+    label.textContent = `${movementTechRepeaterLabel(kind)} ${index + 1}`;
+    item.appendChild(label);
+
+    if (kind === 'videos') {
+      const url = document.createElement('div');
+      url.className = 'text-xs font-mono break-all text-zinc-700 dark:text-zinc-300';
+      url.textContent = row.url;
+      item.appendChild(url);
+
+      const caption = document.createElement('div');
+      caption.className = 'text-xs text-zinc-500 dark:text-zinc-400';
+      caption.textContent = row.caption || 'No caption';
+      item.appendChild(caption);
+    } else {
+      const text = document.createElement('div');
+      text.className = 'text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap';
+      text.textContent = row.text;
+      item.appendChild(text);
+    }
+
+    itemsHost.appendChild(item);
+  });
+
+  if (empty) {
+    empty.classList.toggle('hidden', normalized.length > 0);
+  }
+}
+
+function movementTechInitTechniqueEditor(form) {
+  if (!form || form.dataset.mtTechniqueEditorBound === '1') {
+    return;
+  }
+
+  form.dataset.mtTechniqueEditorBound = '1';
+
+  form.addEventListener('click', (event) => {
+    const addBtn = event.target.closest('[data-mt-add]');
+    if (addBtn) {
+      event.preventDefault();
+      const kind = addBtn.getAttribute('data-mt-add');
+      const repeater = movementTechGetRepeater(form, kind);
+      if (repeater) {
+        movementTechAppendRepeaterItem(repeater, kind, {}, true);
+      }
+      return;
+    }
+
+    const item = event.target.closest('[data-mt-item]');
+    if (!item) {
+      return;
+    }
+
+    const repeater = item.closest('[data-mt-repeater]');
+    if (!repeater) {
+      return;
+    }
+
+    const removeBtn = event.target.closest('[data-mt-remove]');
+    if (removeBtn) {
+      event.preventDefault();
+      item.remove();
+      movementTechRefreshRepeater(repeater);
+      return;
+    }
+
+    const moveBtn = event.target.closest('[data-mt-move]');
+    if (!moveBtn) {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = moveBtn.getAttribute('data-mt-move');
+    if (direction === 'up' && item.previousElementSibling) {
+      item.parentNode.insertBefore(item, item.previousElementSibling);
+    } else if (direction === 'down' && item.nextElementSibling) {
+      item.parentNode.insertBefore(item.nextElementSibling, item);
+    }
+
+    movementTechRefreshRepeater(repeater);
+  });
+
+  ['tips', 'videos'].forEach((kind) => {
+    movementTechRefreshRepeater(movementTechGetRepeater(form, kind));
+  });
+}
+
+function movementTechComparableTips(tips) {
+  if (!Array.isArray(tips)) {
+    return [];
+  }
+
+  return tips.map((tip, index) => ({
+    text: String(tip?.text ?? ''),
+    sort_order: Number(tip?.sort_order ?? (index + 1)),
+  }));
+}
+
+function movementTechComparableVideos(videos) {
+  if (!Array.isArray(videos)) {
+    return [];
+  }
+
+  return videos.map((video, index) => ({
+    url: String(video?.url ?? ''),
+    caption: video?.caption == null ? null : String(video.caption),
+    sort_order: Number(video?.sort_order ?? (index + 1)),
+  }));
+}
+
+function movementTechTechniqueSnapshotFromResponse(technique) {
+  return {
+    name: String(technique?.name ?? ''),
+    description: technique?.description == null ? null : String(technique.description),
+    category_id: technique?.category_id == null ? null : Number(technique.category_id),
+    difficulty_id: technique?.difficulty_id == null ? null : Number(technique.difficulty_id),
+    tips: movementTechComparableTips(technique?.tips),
+    videos: movementTechComparableVideos(technique?.videos),
+  };
+}
+
+function movementTechReadTechniqueSnapshot(form) {
+  const raw = form?.dataset?.movementTechTechniqueSnapshot;
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function movementTechStoreTechniqueSnapshot(form, technique) {
+  form.dataset.movementTechTechniqueSnapshot = JSON.stringify(
+    movementTechTechniqueSnapshotFromResponse(technique)
+  );
+}
+
+function movementTechClearTechniqueSnapshot(form) {
+  delete form.dataset.movementTechTechniqueSnapshot;
+}
+
+function movementTechFillTechniqueUpdateForm(form, technique) {
+  const snapshot = movementTechTechniqueSnapshotFromResponse(technique);
+
+  movementTechSetFieldValue(form, 'name', snapshot.name);
+  movementTechSetFieldValue(form, 'description', snapshot.description ?? '');
+  movementTechSetFieldValue(form, 'category_id', snapshot.category_id == null ? '' : String(snapshot.category_id));
+  movementTechSetFieldValue(form, 'difficulty_id', snapshot.difficulty_id == null ? '' : String(snapshot.difficulty_id));
+  movementTechRenderCurrentTechniqueRows(form, 'tips', snapshot.tips);
+  movementTechRenderCurrentTechniqueRows(form, 'videos', snapshot.videos);
+  movementTechSetTechniqueRows(form, 'tips', []);
+  movementTechSetTechniqueRows(form, 'videos', []);
+  const clearTips = form.querySelector('[name="clear_tips"]');
+  const clearVideos = form.querySelector('[name="clear_videos"]');
+  if (clearTips) {
+    clearTips.checked = false;
+  }
+  if (clearVideos) {
+    clearVideos.checked = false;
+  }
+}
+
+function movementTechClearNamedEntityUpdateForm(form) {
+  movementTechSetFieldValue(form, 'name', '');
+  delete form.dataset.movementTechLoadedId;
+}
+
+function movementTechClearTechniqueUpdateForm(form) {
+  movementTechSetFieldValue(form, 'name', '');
+  movementTechSetFieldValue(form, 'description', '');
+  movementTechSetFieldValue(form, 'category_id', '');
+  movementTechSetFieldValue(form, 'difficulty_id', '');
+  movementTechRenderCurrentTechniqueRows(form, 'tips', []);
+  movementTechRenderCurrentTechniqueRows(form, 'videos', []);
+  movementTechSetTechniqueRows(form, 'tips', []);
+  movementTechSetTechniqueRows(form, 'videos', []);
+  const clearTips = form.querySelector('[name="clear_tips"]');
+  const clearVideos = form.querySelector('[name="clear_videos"]');
+  if (clearTips) {
+    clearTips.checked = false;
+  }
+  if (clearVideos) {
+    clearVideos.checked = false;
+  }
+  delete form.dataset.movementTechLoadedId;
+  movementTechClearTechniqueSnapshot(form);
+}
+
+async function submitMovementTechRequest(
+  form,
+  {
+    method,
+    path,
+    title,
+    outKey,
+    body,
+    successMessage,
+    failureMessage,
+    baseUrl = API_CONTENT_MODS,
+    pendingMessage,
+    silentSuccess = false,
+    silentFailure = false,
+  }
+) {
+  const pending = pendingMessage || (method === 'GET' ? 'Loading...' : method === 'DELETE' ? 'Deleting...' : 'Saving...');
+  setPanelOut(form, outKey, pending);
+
+  const res = body === undefined
+    ? await http(method, `${baseUrl}${path}`)
+    : await http(method, `${baseUrl}${path}`, { body });
+
+  logActivity({ title, method, url: res.url, ok: res.ok, status: res.status, data: res.data });
+  setPanelOut(form, outKey, movementTechPanelValue(res));
+
+  if (res.ok) {
+    if (!silentSuccess && successMessage) {
+      toast(successMessage, 'ok');
+    }
+  } else if (!silentFailure) {
+    toast(movementTechErrorMessage(res.data, failureMessage), 'err');
+  }
+
+  return res;
+}
+
+async function handleContentListEntity(form, entity, label, outKey) {
+  return submitMovementTechRequest(form, {
+    method: 'GET',
+    baseUrl: API_CONTENT_PUBLIC,
+    path: movementTechPublicListPath(entity),
+    title: `List movement tech ${label.toLowerCase()}`,
+    outKey,
+    successMessage: `${label} loaded`,
+    failureMessage: `Failed to load ${label.toLowerCase()}`,
+  });
+}
+
+async function loadContentNamedEntityIntoUpdateForm(form, entity, label, outKey) {
+  const rawId = String(form.id?.value ?? '').trim();
+  if (!rawId) {
+    movementTechClearNamedEntityUpdateForm(form);
+    return null;
+  }
+
+  const id = movementTechPositiveId(rawId, `${label.toLowerCase()}_id`);
+  if (id.error) {
+    return null;
+  }
+
+  if (form.dataset.movementTechLoadedId === String(id.value)) {
+    return null;
+  }
+
+  const res = await submitMovementTechRequest(form, {
+    method: 'GET',
+    baseUrl: API_CONTENT_PUBLIC,
+    path: movementTechPublicListPath(entity),
+    title: `List movement tech ${label.toLowerCase()}`,
+    outKey,
+    failureMessage: `Failed to load ${label.toLowerCase()} list`,
+    pendingMessage: 'Loading current values...',
+    silentSuccess: true,
+    silentFailure: true,
+  });
+
+  if (!res.ok) {
+    toast(movementTechErrorMessage(res.data, `Failed to load ${label.toLowerCase()} list`), 'err');
+    return res;
+  }
+
+  const item = movementTechListResponseItems(entity, res.data).find((entry) => Number(entry?.id) === id.value);
+  if (!item) {
+    toast(`${label} #${id.value} not found`, 'warn');
+    movementTechClearNamedEntityUpdateForm(form);
+    return res;
+  }
+
+  movementTechSetFieldValue(form, 'name', item.name ?? '');
+  form.dataset.movementTechLoadedId = String(id.value);
+  return res;
+}
+
+async function loadContentTechniqueIntoUpdateForm(form, outKey) {
+  const rawId = String(form.id?.value ?? '').trim();
+  if (!rawId) {
+    movementTechClearTechniqueUpdateForm(form);
+    return null;
+  }
+
+  const id = movementTechPositiveId(rawId, 'technique_id');
+  if (id.error) {
+    return null;
+  }
+
+  if (form.dataset.movementTechLoadedId === String(id.value)) {
+    return null;
+  }
+
+  const res = await submitMovementTechRequest(form, {
+    method: 'GET',
+    path: `/techniques/${id.value}`,
+    title: `Get movement technique #${id.value}`,
+    outKey,
+    failureMessage: 'Failed to load technique',
+    pendingMessage: 'Loading current values...',
+    silentSuccess: true,
+    silentFailure: true,
+  });
+
+  if (!res.ok || !res.data || typeof res.data !== 'object') {
+    toast(movementTechErrorMessage(res.data, 'Failed to load technique'), 'err');
+    movementTechClearTechniqueUpdateForm(form);
+    return res;
+  }
+
+  movementTechFillTechniqueUpdateForm(form, res.data);
+  movementTechStoreTechniqueSnapshot(form, res.data);
+  form.dataset.movementTechLoadedId = String(id.value);
+  return res;
+}
+
+function bindMovementTechAutoLoad(formSelector, loader, clearForm) {
+  document.querySelectorAll(formSelector).forEach((form) => {
+    const idInput = form.querySelector('input[name="id"]');
+    if (!idInput || idInput.dataset.movementTechAutoloadBound === '1') {
+      return;
+    }
+
+    idInput.dataset.movementTechAutoloadBound = '1';
+    idInput.addEventListener('input', () => {
+      delete form.dataset.movementTechLoadedId;
+      if (!String(idInput.value ?? '').trim() && typeof clearForm === 'function') {
+        clearForm(form);
+      }
+    });
+
+    const trigger = () => loader(form);
+    idInput.addEventListener('change', trigger);
+    idInput.addEventListener('blur', trigger);
+  });
+}
+
+function initContentMovementTechForms() {
+  document
+    .querySelectorAll('form[data-action="content-technique-create"], form[data-action="content-technique-update"]')
+    .forEach((form) => movementTechInitTechniqueEditor(form));
+
+  bindMovementTechAutoLoad(
+    'form[data-action="content-category-update"]',
+    (form) => loadContentNamedEntityIntoUpdateForm(form, 'categories', 'Category', 'content-categories-res'),
+    movementTechClearNamedEntityUpdateForm
+  );
+
+  bindMovementTechAutoLoad(
+    'form[data-action="content-difficulty-update"]',
+    (form) => loadContentNamedEntityIntoUpdateForm(form, 'difficulties', 'Difficulty', 'content-difficulties-res'),
+    movementTechClearNamedEntityUpdateForm
+  );
+
+  bindMovementTechAutoLoad(
+    'form[data-action="content-technique-update"]',
+    (form) => loadContentTechniqueIntoUpdateForm(form, 'content-techniques-res'),
+    movementTechClearTechniqueUpdateForm
+  );
+}
+
+async function handleContentCreateNamedEntity(form, entity, label, outKey) {
+  const name = (form.name?.value || '').trim();
+  if (!name) {
+    toast('name is required', 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'POST',
+    path: `/${entity}`,
+    title: `Create movement tech ${label.toLowerCase()}`,
+    outKey,
+    body: { name },
+    successMessage: `${label} created`,
+    failureMessage: `Failed to create ${label.toLowerCase()}`,
+  });
+}
+
+async function handleContentUpdateNamedEntity(form, entity, label, outKey) {
+  const id = movementTechPositiveId(form.id?.value, `${label.toLowerCase()}_id`);
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  const name = (form.name?.value || '').trim();
+  if (!name) {
+    toast('name is required', 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'PUT',
+    path: `/${entity}/${id.value}`,
+    title: `Update movement tech ${label.toLowerCase()} #${id.value}`,
+    outKey,
+    body: { name },
+    successMessage: `${label} updated`,
+    failureMessage: `Failed to update ${label.toLowerCase()}`,
+  });
+}
+
+async function handleContentDeleteNamedEntity(form, entity, label, outKey) {
+  const id = movementTechPositiveId(form.id?.value, `${label.toLowerCase()}_id`);
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'DELETE',
+    path: `/${entity}/${id.value}`,
+    title: `Delete movement tech ${label.toLowerCase()} #${id.value}`,
+    outKey,
+    successMessage: `${label} deleted`,
+    failureMessage: `Failed to delete ${label.toLowerCase()}`,
+  });
+}
+
+async function handleContentReorderNamedEntity(form, entity, label, outKey) {
+  const id = movementTechPositiveId(form.id?.value, `${label.toLowerCase()}_id`);
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  const direction = movementTechDirection(form.direction?.value);
+  if (direction.error) {
+    toast(direction.error, 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'POST',
+    path: `/${entity}/${id.value}/reorder`,
+    title: `Reorder movement tech ${label.toLowerCase()} #${id.value}`,
+    outKey,
+    body: { direction: direction.value },
+    successMessage: `${label} reordered`,
+    failureMessage: `Failed to reorder ${label.toLowerCase()}`,
+  });
+}
+function buildMovementTechTechniquePayload(form, { requireName = false } = {}) {
+  const payload = {};
+  const name = (form.name?.value || '').trim();
+  if (requireName && !name) {
+    return { error: 'name is required' };
+  }
+  if (name) {
+    payload.name = name;
+  }
+
+  const description = movementTechNullableString(form.description?.value);
+  if (!description.omit) {
+    payload.description = description.value;
+  }
+
+  const categoryId = movementTechNullableId(form.category_id?.value, 'category_id');
+  if (categoryId.error) {
+    return categoryId;
+  }
+  if (!categoryId.omit) {
+    payload.category_id = categoryId.value;
+  }
+
+  const difficultyId = movementTechNullableId(form.difficulty_id?.value, 'difficulty_id');
+  if (difficultyId.error) {
+    return difficultyId;
+  }
+  if (!difficultyId.omit) {
+    payload.difficulty_id = difficultyId.value;
+  }
+
+  const snapshot = !requireName ? movementTechReadTechniqueSnapshot(form) : null;
+  const clearTips = !requireName && form.querySelector('[name="clear_tips"]')?.checked === true;
+  const clearVideos = !requireName && form.querySelector('[name="clear_videos"]')?.checked === true;
+
+  const tips = movementTechReadTipRows(form);
+  if (tips.error) {
+    return tips;
+  }
+  if (requireName ? tips.value.length > 0 : (clearTips || tips.value.length > 0)) {
+    payload.tips = clearTips ? [] : tips.value;
+  }
+
+  const videos = movementTechReadVideoRows(form);
+  if (videos.error) {
+    return videos;
+  }
+  if (requireName ? videos.value.length > 0 : (clearVideos || videos.value.length > 0)) {
+    payload.videos = clearVideos ? [] : videos.value;
+  }
+
+  if (!requireName) {
+    if (snapshot) {
+      if (payload.name === snapshot.name) {
+        delete payload.name;
+      }
+
+      if ('description' in payload && payload.description === snapshot.description) {
+        delete payload.description;
+      }
+
+      if ('category_id' in payload && payload.category_id === snapshot.category_id) {
+        delete payload.category_id;
+      }
+
+      if ('difficulty_id' in payload && payload.difficulty_id === snapshot.difficulty_id) {
+        delete payload.difficulty_id;
+      }
+    }
+  }
+
+  return { payload };
+}
+
+async function handleContentTechniqueCreate(form) {
+  const built = buildMovementTechTechniquePayload(form, { requireName: true });
+  if (built.error) {
+    toast(built.error, 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'POST',
+    path: '/techniques',
+    title: 'Create movement technique',
+    outKey: 'content-techniques-res',
+    body: built.payload,
+    successMessage: 'Technique created',
+    failureMessage: 'Failed to create technique',
+  });
+}
+
+async function handleContentTechniqueGet(form) {
+  const id = movementTechPositiveId(form.id?.value, 'technique_id');
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'GET',
+    path: `/techniques/${id.value}`,
+    title: `Get movement technique #${id.value}`,
+    outKey: 'content-techniques-res',
+    successMessage: 'Technique loaded',
+    failureMessage: 'Failed to load technique',
+  });
+}
+
+async function handleContentTechniqueUpdate(form) {
+  const id = movementTechPositiveId(form.id?.value, 'technique_id');
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  const built = buildMovementTechTechniquePayload(form);
+  if (built.error) {
+    toast(built.error, 'warn');
+    return;
+  }
+
+  if (Object.keys(built.payload).length === 0) {
+    toast('Nothing to update', 'warn');
+    return;
+  }
+
+  const res = await submitMovementTechRequest(form, {
+    method: 'PUT',
+    path: `/techniques/${id.value}`,
+    title: `Update movement technique #${id.value}`,
+    outKey: 'content-techniques-res',
+    body: built.payload,
+    successMessage: 'Technique updated',
+    failureMessage: 'Failed to update technique',
+  });
+
+  if (res?.ok && res.data && typeof res.data === 'object') {
+    movementTechFillTechniqueUpdateForm(form, res.data);
+    movementTechStoreTechniqueSnapshot(form, res.data);
+    form.dataset.movementTechLoadedId = String(res.data.id ?? id.value);
+  }
+
+  return res;
+}
+
+async function handleContentTechniqueDelete(form) {
+  const id = movementTechPositiveId(form.id?.value, 'technique_id');
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'DELETE',
+    path: `/techniques/${id.value}`,
+    title: `Delete movement technique #${id.value}`,
+    outKey: 'content-techniques-res',
+    successMessage: 'Technique deleted',
+    failureMessage: 'Failed to delete technique',
+  });
+}
+
+async function handleContentTechniqueReorder(form) {
+  const id = movementTechPositiveId(form.id?.value, 'technique_id');
+  if (id.error) {
+    toast(id.error, 'warn');
+    return;
+  }
+
+  const direction = movementTechDirection(form.direction?.value);
+  if (direction.error) {
+    toast(direction.error, 'warn');
+    return;
+  }
+
+  return submitMovementTechRequest(form, {
+    method: 'POST',
+    path: `/techniques/${id.value}/reorder`,
+    title: `Reorder movement technique #${id.value}`,
+    outKey: 'content-techniques-res',
+    body: { direction: direction.value },
+    successMessage: 'Technique reordered',
+    failureMessage: 'Failed to reorder technique',
+  });
+}
+
+initContentMovementTechForms();
 
 // MAPS
 async function handleArchiveMaps(form) {
@@ -6706,100 +7682,6 @@ function stringifyOut(v) {
   catch { return String(v); }
 }
 
-function prettyOutTitle(key) {
-  return String(key || 'response')
-    .replace(/[-_]+/g, ' ')
-    .replace(/\bres\b/gi, 'response')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function ensureOutputUx(root = document) {
-  root.querySelectorAll('pre[data-out]:not([data-out-ux="1"])').forEach((pre) => {
-    pre.dataset.outUx = '1';
-    const key = pre.getAttribute('data-out') || pre.id || 'response';
-
-    const wrap = document.createElement('div');
-    wrap.dataset.outWrap = '1';
-    wrap.className =
-      'hidden mt-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 ' +
-      'bg-zinc-100/70 dark:bg-zinc-950/40 p-2 space-y-2';
-
-    wrap.innerHTML = `
-      <div class="flex items-center justify-between gap-2">
-        <div class="min-w-0">
-          <div class="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">${escapeHtml(prettyOutTitle(key))}</div>
-          <div class="text-[10px] text-zinc-500 dark:text-zinc-400" data-out-meta="1">No response yet</div>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button type="button" data-out-action="copy" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Copy</button>
-          <button type="button" data-out-action="view" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">View</button>
-          <button type="button" data-out-action="clear" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1 text-[11px] text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">Clear</button>
-        </div>
-      </div>
-    `;
-
-    pre.parentNode?.insertBefore(wrap, pre);
-    wrap.appendChild(pre);
-
-    pre.classList.remove('hidden');
-    pre.classList.add(
-      'whitespace-pre-wrap',
-      'rounded-xl',
-      'border',
-      'border-zinc-200/80',
-      'dark:border-white/10',
-      'bg-black/85',
-      'text-white',
-      'p-3',
-      'text-xs',
-      'overflow-auto',
-      'max-h-[48vh]'
-    );
-  });
-}
-
-let __panelOutActionsWired = false;
-function wirePanelOutActions() {
-  if (__panelOutActionsWired) return;
-  __panelOutActionsWired = true;
-
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-out-action]');
-    if (!btn) return;
-
-    const wrap = btn.closest('[data-out-wrap="1"]');
-    const pre = wrap?.querySelector('pre[data-out]');
-    if (!wrap || !pre) return;
-
-    const action = btn.getAttribute('data-out-action');
-    const key = pre.getAttribute('data-out') || pre.id || 'response';
-    const text = pre.textContent || '';
-
-    if (action === 'copy') {
-      const ok = await copyText(text);
-      toast(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'ok' : 'err');
-      return;
-    }
-
-    if (action === 'view') {
-      showModal({
-        title: prettyOutTitle(key),
-        subtitle: key,
-        bodyText: text,
-      });
-      return;
-    }
-
-    if (action === 'clear') {
-      pre.textContent = '';
-      wrap.classList.add('hidden');
-      return;
-    }
-  });
-}
-
 function resetEnhancedForm(form) {
   form.reset();
 
@@ -6816,6 +7698,21 @@ function resetEnhancedForm(form) {
   form.querySelectorAll('input').forEach((input) => {
     if (!input.readOnly && input.dataset?.uid) input.dataset.uid = '';
   });
+
+  if (form.matches?.('form[data-action="content-category-update"], form[data-action="content-difficulty-update"]')) {
+    movementTechClearNamedEntityUpdateForm(form);
+  }
+
+  if (form.matches?.('form[data-action="content-technique-create"]')) {
+    movementTechSetTechniqueRows(form, 'tips', []);
+    movementTechSetTechniqueRows(form, 'videos', []);
+    movementTechClearTechniqueSnapshot(form);
+    delete form.dataset.movementTechLoadedId;
+  }
+
+  if (form.matches?.('form[data-action="content-technique-update"]')) {
+    movementTechClearTechniqueUpdateForm(form);
+  }
 }
 
 function placeResetButton(form, submitBtn, resetBtn) {
@@ -6918,6 +7815,10 @@ function setPanelOut(form, key, value) {
     el.value = txt;
   } else {
     el.textContent = txt;
+  }
+
+  if (el.matches?.('pre[data-out]')) {
+    return;
   }
 
   const wrap = el.closest?.('[data-out-wrap="1"]');
@@ -7756,8 +8657,6 @@ document.addEventListener('click', (e) => {
 function initializeApp() {
   bindDdDelegation();
   wireDdSelect(document);
-  wirePanelOutActions();
-  ensureOutputUx(document);
   ensureFormUx(document);
   initActivityControls();
 

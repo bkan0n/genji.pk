@@ -27,6 +27,7 @@ export default defineConfig({
         'resources/js/pages/submit.js',
         'resources/js/pages/game.js',
         'resources/js/pages/moderator.js',
+        'resources/js/pages/movement-tech.js',
         'resources/js/pages/dashboard.js',
         'resources/js/pages/infos.js',
         'resources/js/utils/prism.js',
