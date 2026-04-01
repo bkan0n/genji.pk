@@ -779,12 +779,14 @@ function scrollIntoViewWithOffset(el, offset) {
         active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
-        active.querySelectorAll('input[name$="user_id"]').forEach((inp) => attachUsersAutocomplete(inp));
-
         if (name === 'maps-submit') initSubmitPanel();
         if (name === 'maps-archive') setupArchiveMapsUI();
         if (name === 'maps-search') initSearchPanel();
         if (name === 'maps-update') initUpdatePanel();
+        if (name.startsWith('content-')) ensureContentMovementTechData(name);
+        if (name === 'store-config') initStoreConfigPanel();
+        if (name === 'quest-config') initQuestConfigPanel();
+        if (name === 'quest-update') initQuestUpdatePanel();
         if (name === 'mod-quality') initModQualityPanel();
         if (name === 'dev-overpy-commit') initOverpyCommitPanel();
         if (name === 'dev-framework-version') initFrameworkVersionPanel();
@@ -1060,7 +1062,7 @@ function wireFormAutocompletes(root = document) {
   }
 }
 
-function setFormPending(form, pending = true) {
+function setFormPending(form, pending = true, submitter = null) {
   const submitButtons = Array.from(
     form.querySelectorAll('button[type="submit"], button:not([type])')
   );
@@ -1074,7 +1076,9 @@ function setFormPending(form, pending = true) {
       }
       btn.disabled = true;
       btn.classList.add('opacity-70');
-      btn.textContent = 'Working...';
+      if (!submitter || btn === submitter) {
+        btn.textContent = 'Working...';
+      }
     });
     return () => setFormPending(form, false);
   }
@@ -1097,8 +1101,9 @@ $$('form[data-action]').forEach((form) => {
       return;
     }
     form.dataset.submitLocked = '1';
-    const action = form.dataset.action;
-    const releasePending = setFormPending(form, true);
+    const submitter = e.submitter || form.querySelector('button[type="submit"], button:not([type])');
+    const action = submitter?.dataset?.submitAction || form.dataset.action;
+    const releasePending = setFormPending(form, true, submitter);
     try {
       const runAction = async () => {
       switch (action) {
@@ -1290,6 +1295,14 @@ $$('form[data-action]').forEach((form) => {
 
 // --- Buttons / misc actions (non-form) ---
 document.addEventListener('click', (e) => {
+  const resetBtn = e.target?.closest?.('[data-reset-form]');
+  if (resetBtn) {
+    e.preventDefault();
+    const form = resetBtn.closest('form');
+    if (form) resetEnhancedForm(form);
+    return;
+  }
+
   const btn = e.target?.closest?.('[data-action="quest-fill-user-progress"]');
   if (!btn) return;
   e.preventDefault();
@@ -1873,9 +1886,275 @@ function movementTechPublicListPath(entity) {
   return '/';
 }
 
+const movementTechContentMeta = {
+  categories: {
+    singular: 'Category',
+    plural: 'Categories',
+    outKey: 'content-categories-res',
+    listAction: 'content-category-list',
+  },
+  difficulties: {
+    singular: 'Difficulty',
+    plural: 'Difficulties',
+    outKey: 'content-difficulties-res',
+    listAction: 'content-difficulty-list',
+  },
+  techniques: {
+    singular: 'Technique',
+    plural: 'Techniques',
+    outKey: 'content-techniques-res',
+    listAction: 'content-technique-list',
+  },
+};
+
+const movementTechContentCache = {
+  categories: [],
+  difficulties: [],
+  techniques: [],
+};
+
+function movementTechContentOptionLabel(entity, item) {
+  if (entity === 'techniques') {
+    const id = item?.id == null ? '' : `#${item.id}`;
+    const name = String(item?.name ?? 'Unnamed technique').trim();
+    const difficulty =
+      item?.difficulty?.name ??
+      item?.difficulty_name ??
+      item?.difficulty_label ??
+      '';
+    const category =
+      item?.category?.name ??
+      item?.category_name ??
+      item?.category_label ??
+      '';
+    const meta = [category, difficulty].filter(Boolean).join(' - ');
+    return [id, name].filter(Boolean).join(' - ') + (meta ? ` (${meta})` : '');
+  }
+
+  const id = item?.id == null ? '' : `#${item.id}`;
+  const name = String(item?.name ?? '').trim() || 'Unnamed';
+  return [id, name].filter(Boolean).join(' - ');
+}
+
+function movementTechBuildContentDropdownOption(selectName, value, labelText) {
+  const wrapper = document.createElement('label');
+  wrapper.className =
+    'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5';
+
+  const radio = document.createElement('input');
+  radio.type = 'radio';
+  radio.name = `${selectName}_ui`;
+  radio.value = value;
+  radio.dataset.label = labelText;
+  radio.className = 'accent-emerald-500';
+
+  const label = document.createElement('span');
+  label.textContent = labelText;
+
+  wrapper.appendChild(radio);
+  wrapper.appendChild(label);
+  return wrapper;
+}
+
+function movementTechPopulateContentDropdowns(entity) {
+  const items = Array.isArray(movementTechContentCache[entity]) ? movementTechContentCache[entity] : [];
+
+  document.querySelectorAll(`[data-content-options="${entity}"]`).forEach((dd) => {
+    const select = dd.querySelector('select[name]');
+    const list = dd.querySelector('[data-dd-list]');
+    const btn = dd.querySelector('[data-dd-btn]');
+    const placeholder = dd.dataset.placeholder || btn?.getAttribute('data-placeholder') || 'Select...';
+    const nullLabel = dd.dataset.nullOption || '';
+    if (!select || !list || !btn) {
+      return;
+    }
+
+    const currentValue = String(select.value ?? '');
+    const optionDefs = [{ value: '', label: placeholder }];
+    if (nullLabel) {
+      optionDefs.push({ value: 'null', label: nullLabel });
+    }
+    items.forEach((item) => {
+      optionDefs.push({
+        value: String(item?.id ?? ''),
+        label: movementTechContentOptionLabel(entity, item),
+      });
+    });
+
+    select.innerHTML = '';
+    optionDefs.forEach((opt) => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      select.appendChild(option);
+    });
+
+    list.innerHTML = '';
+    optionDefs.forEach((opt) => {
+      list.appendChild(
+        movementTechBuildContentDropdownOption(select.name, opt.value, opt.label)
+      );
+    });
+
+    const canKeepCurrent = optionDefs.some((opt) => opt.value === currentValue);
+    select.value = canKeepCurrent ? currentValue : '';
+    movementTechSyncDdField(select);
+  });
+
+  document.querySelectorAll(`[data-content-count="${entity}"]`).forEach((el) => {
+    el.textContent = items.length ? `${items.length} synced` : 'No items synced';
+  });
+}
+
+async function loadContentEntityCollection(
+  entity,
+  {
+    form = null,
+    successMessage,
+    failureMessage,
+    pendingMessage,
+    silentSuccess = false,
+    silentFailure = false,
+  } = {}
+) {
+  const meta = movementTechContentMeta[entity];
+  if (!meta) {
+    return null;
+  }
+
+  const res = await submitMovementTechRequest(form, {
+    method: 'GET',
+    baseUrl: API_CONTENT_PUBLIC,
+    path: movementTechPublicListPath(entity),
+    title: `List movement tech ${meta.plural.toLowerCase()}`,
+    outKey: meta.outKey,
+    successMessage,
+    failureMessage,
+    pendingMessage,
+    silentSuccess,
+    silentFailure,
+  });
+
+  if (res?.ok) {
+    movementTechContentCache[entity] = movementTechListResponseItems(entity, res.data);
+    movementTechPopulateContentDropdowns(entity);
+  }
+
+  return res;
+}
+
+function ensureContentMovementTechData(name) {
+  if (name === 'content-categories') {
+    if (!movementTechContentCache.categories.length) {
+      loadContentEntityCollection('categories', {
+        successMessage: 'Categories loaded',
+        failureMessage: 'Failed to load categories',
+        pendingMessage: 'Loading categories...',
+        silentSuccess: true,
+      });
+    }
+    return;
+  }
+
+  if (name === 'content-difficulties') {
+    if (!movementTechContentCache.difficulties.length) {
+      loadContentEntityCollection('difficulties', {
+        successMessage: 'Difficulties loaded',
+        failureMessage: 'Failed to load difficulties',
+        pendingMessage: 'Loading difficulties...',
+        silentSuccess: true,
+      });
+    }
+    return;
+  }
+
+  if (name === 'content-techniques') {
+    if (!movementTechContentCache.categories.length) {
+      loadContentEntityCollection('categories', {
+        successMessage: 'Categories loaded',
+        failureMessage: 'Failed to load categories',
+        pendingMessage: 'Loading categories...',
+        silentSuccess: true,
+      });
+    }
+    if (!movementTechContentCache.difficulties.length) {
+      loadContentEntityCollection('difficulties', {
+        successMessage: 'Difficulties loaded',
+        failureMessage: 'Failed to load difficulties',
+        pendingMessage: 'Loading difficulties...',
+        silentSuccess: true,
+      });
+    }
+    if (!movementTechContentCache.techniques.length) {
+      loadContentEntityCollection('techniques', {
+        successMessage: 'Techniques loaded',
+        failureMessage: 'Failed to load techniques',
+        pendingMessage: 'Loading techniques...',
+        silentSuccess: true,
+      });
+    }
+  }
+}
+
 function movementTechListResponseItems(entity, data) {
   const items = data?.[entity];
   return Array.isArray(items) ? items : [];
+}
+
+function movementTechSyncDdField(field) {
+  const name = field?.name;
+  if (!name) {
+    return;
+  }
+
+  const dd =
+    field.closest?.('[data-dd-select]') ||
+    document.querySelector(`[data-dd-select][data-dd-field="${CSS.escape(name)}"]`);
+
+  if (!dd) {
+    return;
+  }
+
+  const btn = dd.querySelector('[data-dd-btn]');
+  const label = btn?.querySelector('.dd-label');
+  const list = dd.querySelector('[data-dd-list]');
+  const placeholder =
+    btn?.getAttribute('data-placeholder') ||
+    label?.dataset?.placeholder ||
+    'Select...';
+
+  if (label && !label.dataset.placeholder) {
+    label.dataset.placeholder = placeholder;
+  }
+
+  const value = String(field.value ?? '');
+  const radios = Array.from(
+    list?.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}_ui"]`) || []
+  );
+
+  let matched = null;
+  radios.forEach((radio) => {
+    const isMatch = String(radio.value) === value;
+    radio.checked = isMatch;
+    if (isMatch) {
+      matched = radio;
+    }
+  });
+
+  if (!matched && value === '') {
+    matched = radios.find((radio) => String(radio.value) === '') || null;
+    if (matched) {
+      matched.checked = true;
+    }
+  }
+
+  if (label) {
+    const text =
+      matched?.dataset?.label ||
+      matched?.parentElement?.querySelector('span:last-child')?.textContent ||
+      placeholder;
+    label.textContent = text || placeholder;
+  }
 }
 
 function movementTechSetFieldValue(form, name, value) {
@@ -1885,6 +2164,7 @@ function movementTechSetFieldValue(form, name, value) {
   }
 
   field.value = value ?? '';
+  movementTechSyncDdField(field);
 }
 
 function movementTechRepeaterLabel(kind) {
@@ -2306,12 +2586,8 @@ async function submitMovementTechRequest(
 }
 
 async function handleContentListEntity(form, entity, label, outKey) {
-  return submitMovementTechRequest(form, {
-    method: 'GET',
-    baseUrl: API_CONTENT_PUBLIC,
-    path: movementTechPublicListPath(entity),
-    title: `List movement tech ${label.toLowerCase()}`,
-    outKey,
+  return loadContentEntityCollection(entity, {
+    form,
     successMessage: `${label} loaded`,
     failureMessage: `Failed to load ${label.toLowerCase()}`,
   });
@@ -2333,28 +2609,29 @@ async function loadContentNamedEntityIntoUpdateForm(form, entity, label, outKey)
     return null;
   }
 
-  const res = await submitMovementTechRequest(form, {
-    method: 'GET',
-    baseUrl: API_CONTENT_PUBLIC,
-    path: movementTechPublicListPath(entity),
-    title: `List movement tech ${label.toLowerCase()}`,
-    outKey,
-    failureMessage: `Failed to load ${label.toLowerCase()} list`,
-    pendingMessage: 'Loading current values...',
-    silentSuccess: true,
-    silentFailure: true,
-  });
+  let item = movementTechContentCache[entity].find((entry) => Number(entry?.id) === id.value);
+  let res = null;
 
-  if (!res.ok) {
-    toast(movementTechErrorMessage(res.data, `Failed to load ${label.toLowerCase()} list`), 'err');
-    return res;
-  }
-
-  const item = movementTechListResponseItems(entity, res.data).find((entry) => Number(entry?.id) === id.value);
   if (!item) {
-    toast(`${label} #${id.value} not found`, 'warn');
-    movementTechClearNamedEntityUpdateForm(form);
-    return res;
+    res = await loadContentEntityCollection(entity, {
+      form,
+      failureMessage: `Failed to load ${label.toLowerCase()} list`,
+      pendingMessage: 'Loading current values...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+
+    if (!res?.ok) {
+      toast(movementTechErrorMessage(res?.data, `Failed to load ${label.toLowerCase()} list`), 'err');
+      return res;
+    }
+
+    item = movementTechContentCache[entity].find((entry) => Number(entry?.id) === id.value);
+    if (!item) {
+      toast(`${label} #${id.value} not found`, 'warn');
+      movementTechClearNamedEntityUpdateForm(form);
+      return res;
+    }
   }
 
   movementTechSetFieldValue(form, 'name', item.name ?? '');
@@ -2403,7 +2680,7 @@ async function loadContentTechniqueIntoUpdateForm(form, outKey) {
 
 function bindMovementTechAutoLoad(formSelector, loader, clearForm) {
   document.querySelectorAll(formSelector).forEach((form) => {
-    const idInput = form.querySelector('input[name="id"]');
+    const idInput = form.querySelector('input[name="id"], select[name="id"]');
     if (!idInput || idInput.dataset.movementTechAutoloadBound === '1') {
       return;
     }
@@ -2453,7 +2730,7 @@ async function handleContentCreateNamedEntity(form, entity, label, outKey) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'POST',
     path: `/${entity}`,
     title: `Create movement tech ${label.toLowerCase()}`,
@@ -2462,6 +2739,18 @@ async function handleContentCreateNamedEntity(form, entity, label, outKey) {
     successMessage: `${label} created`,
     failureMessage: `Failed to create ${label.toLowerCase()}`,
   });
+
+  if (res?.ok) {
+    await loadContentEntityCollection(entity, {
+      form,
+      failureMessage: `Failed to load ${label.toLowerCase()} list`,
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 
 async function handleContentUpdateNamedEntity(form, entity, label, outKey) {
@@ -2477,7 +2766,7 @@ async function handleContentUpdateNamedEntity(form, entity, label, outKey) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'PUT',
     path: `/${entity}/${id.value}`,
     title: `Update movement tech ${label.toLowerCase()} #${id.value}`,
@@ -2486,6 +2775,18 @@ async function handleContentUpdateNamedEntity(form, entity, label, outKey) {
     successMessage: `${label} updated`,
     failureMessage: `Failed to update ${label.toLowerCase()}`,
   });
+
+  if (res?.ok) {
+    await loadContentEntityCollection(entity, {
+      form,
+      failureMessage: `Failed to load ${label.toLowerCase()} list`,
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 
 async function handleContentDeleteNamedEntity(form, entity, label, outKey) {
@@ -2495,7 +2796,7 @@ async function handleContentDeleteNamedEntity(form, entity, label, outKey) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'DELETE',
     path: `/${entity}/${id.value}`,
     title: `Delete movement tech ${label.toLowerCase()} #${id.value}`,
@@ -2503,6 +2804,20 @@ async function handleContentDeleteNamedEntity(form, entity, label, outKey) {
     successMessage: `${label} deleted`,
     failureMessage: `Failed to delete ${label.toLowerCase()}`,
   });
+
+  if (res?.ok) {
+    movementTechSetFieldValue(form, 'id', '');
+    movementTechClearNamedEntityUpdateForm(form);
+    await loadContentEntityCollection(entity, {
+      form,
+      failureMessage: `Failed to load ${label.toLowerCase()} list`,
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 
 async function handleContentReorderNamedEntity(form, entity, label, outKey) {
@@ -2518,7 +2833,7 @@ async function handleContentReorderNamedEntity(form, entity, label, outKey) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'POST',
     path: `/${entity}/${id.value}/reorder`,
     title: `Reorder movement tech ${label.toLowerCase()} #${id.value}`,
@@ -2527,6 +2842,18 @@ async function handleContentReorderNamedEntity(form, entity, label, outKey) {
     successMessage: `${label} reordered`,
     failureMessage: `Failed to reorder ${label.toLowerCase()}`,
   });
+
+  if (res?.ok) {
+    await loadContentEntityCollection(entity, {
+      form,
+      failureMessage: `Failed to load ${label.toLowerCase()} list`,
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 function buildMovementTechTechniquePayload(form, { requireName = false } = {}) {
   const payload = {};
@@ -2609,7 +2936,7 @@ async function handleContentTechniqueCreate(form) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'POST',
     path: '/techniques',
     title: 'Create movement technique',
@@ -2618,6 +2945,18 @@ async function handleContentTechniqueCreate(form) {
     successMessage: 'Technique created',
     failureMessage: 'Failed to create technique',
   });
+
+  if (res?.ok) {
+    await loadContentEntityCollection('techniques', {
+      form,
+      failureMessage: 'Failed to load technique list',
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 
 async function handleContentTechniqueGet(form) {
@@ -2669,6 +3008,13 @@ async function handleContentTechniqueUpdate(form) {
     movementTechFillTechniqueUpdateForm(form, res.data);
     movementTechStoreTechniqueSnapshot(form, res.data);
     form.dataset.movementTechLoadedId = String(res.data.id ?? id.value);
+    await loadContentEntityCollection('techniques', {
+      form,
+      failureMessage: 'Failed to load technique list',
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
   }
 
   return res;
@@ -2681,7 +3027,7 @@ async function handleContentTechniqueDelete(form) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'DELETE',
     path: `/techniques/${id.value}`,
     title: `Delete movement technique #${id.value}`,
@@ -2689,6 +3035,20 @@ async function handleContentTechniqueDelete(form) {
     successMessage: 'Technique deleted',
     failureMessage: 'Failed to delete technique',
   });
+
+  if (res?.ok) {
+    movementTechSetFieldValue(form, 'id', '');
+    movementTechClearTechniqueUpdateForm(form);
+    await loadContentEntityCollection('techniques', {
+      form,
+      failureMessage: 'Failed to load technique list',
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 
 async function handleContentTechniqueReorder(form) {
@@ -2704,7 +3064,7 @@ async function handleContentTechniqueReorder(form) {
     return;
   }
 
-  return submitMovementTechRequest(form, {
+  const res = await submitMovementTechRequest(form, {
     method: 'POST',
     path: `/techniques/${id.value}/reorder`,
     title: `Reorder movement technique #${id.value}`,
@@ -2713,6 +3073,18 @@ async function handleContentTechniqueReorder(form) {
     successMessage: 'Technique reordered',
     failureMessage: 'Failed to reorder technique',
   });
+
+  if (res?.ok) {
+    await loadContentEntityCollection('techniques', {
+      form,
+      failureMessage: 'Failed to load technique list',
+      pendingMessage: 'Refreshing list...',
+      silentSuccess: true,
+      silentFailure: true,
+    });
+  }
+
+  return res;
 }
 
 initContentMovementTechForms();
@@ -7317,6 +7689,85 @@ async function openRoiEditor(imageUrl) {
 //———————————————————————————————————————————————————————————————
 // USERS
 //———————————————————————————————————————————————————————————————
+function normalizeOverwatchUsernamesPayload(data) {
+  const normalizeEntry = (entry, index = 0) => {
+    if (typeof entry === 'string') {
+      const username = entry.trim();
+      return username ? { username, is_primary: index === 0 } : null;
+    }
+
+    if (!entry || typeof entry !== 'object') {
+      return null;
+    }
+
+    const username = String(
+      entry.username ??
+      entry.name ??
+      entry.value ??
+      entry.label ??
+      ''
+    ).trim();
+
+    if (!username) {
+      return null;
+    }
+
+    return {
+      username,
+      is_primary:
+        entry.is_primary === true ||
+        entry.isPrimary === true ||
+        entry.primary === true ||
+        false,
+    };
+  };
+
+  const directList =
+    (Array.isArray(data?.usernames) && data.usernames) ||
+    (Array.isArray(data?.overwatch_usernames) && data.overwatch_usernames) ||
+    (Array.isArray(data?.data?.usernames) && data.data.usernames) ||
+    (Array.isArray(data?.data?.overwatch_usernames) && data.data.overwatch_usernames) ||
+    (Array.isArray(data) && data) ||
+    null;
+
+  let entries = [];
+
+  if (directList) {
+    entries = directList
+      .map((entry, index) => normalizeEntry(entry, index))
+      .filter(Boolean)
+      .slice(0, 3);
+  } else if (data && typeof data === 'object') {
+    const primary = String(data.primary ?? data.primary_username ?? '').trim();
+    const secondary = String(data.secondary ?? data.secondary_username ?? '').trim();
+    const tertiary = String(data.tertiary ?? data.tertiary_username ?? '').trim();
+
+    entries = [
+      primary ? { username: primary, is_primary: true } : null,
+      secondary ? { username: secondary, is_primary: false } : null,
+      tertiary ? { username: tertiary, is_primary: false } : null,
+    ].filter(Boolean);
+  }
+
+  if (!entries.some((entry) => entry.is_primary) && entries.length) {
+    entries = entries.map((entry, index) => ({
+      ...entry,
+      is_primary: index === 0,
+    }));
+  } else {
+    let primarySeen = false;
+    entries = entries.map((entry) => {
+      if (!entry.is_primary || primarySeen) {
+        return { ...entry, is_primary: false };
+      }
+      primarySeen = true;
+      return { ...entry, is_primary: true };
+    });
+  }
+
+  return entries;
+}
+
 async function prefillReplaceOverwatchByUserId(form, user_id) {
   const { ok, status, url, data } = await http(
     'GET',
@@ -7329,46 +7780,21 @@ async function prefillReplaceOverwatchByUserId(form, user_id) {
     return;
   }
 
-  const primary = data?.primary ?? null;
-  const secondary = data?.secondary ?? null;
-  const tertiary = data?.tertiary ?? null;
+  const usernames = normalizeOverwatchUsernamesPayload(data);
 
   const setUsername = (i, val) => {
-    const inp = form[`username_${i}`];
+    const inp = form.querySelector(`[name="username_${i}"]`);
     if (inp) inp.value = val ?? '';
   };
 
   const setPrimaryFlag = (i, isTrue) => {
-    const wanted = isTrue ? 'true' : 'false';
-    const radio = form.querySelector(`[name="is_primary_${i}"][value="${wanted}"]`);
-    if (!radio) return;
-
-    radio.checked = true;
-    syncDdLabel(radio);
-    radio.dispatchEvent(
-      new Event('change', {
-        bubbles: true,
-      })
-    );
+    setRadioValue(form, `is_primary_${i}`, isTrue ? 'true' : 'false');
   };
 
-  setUsername(1, primary);
-  setUsername(2, secondary);
-  setUsername(3, tertiary);
-
-  const values = [
-    (form.username_1?.value || '').trim(),
-    (form.username_2?.value || '').trim(),
-    (form.username_3?.value || '').trim(),
-  ];
-
-  let primaryIndex = primary ? 0 : -1;
-  if (primaryIndex === -1) {
-    primaryIndex = values.findIndex((v) => v.length > 0);
-  }
-
   for (let i = 0; i < 3; i++) {
-    setPrimaryFlag(i + 1, i === primaryIndex && values[i].length > 0);
+    const entry = usernames[i] || null;
+    setUsername(i + 1, entry?.username ?? '');
+    setPrimaryFlag(i + 1, !!entry?.username && entry?.is_primary === true);
   }
 
   toast('Overwatch usernames prefilled', 'ok');
@@ -7849,6 +8275,248 @@ function readJsonField(raw) {
   }
 }
 
+function findRelatedActionForm(form, action) {
+  const scope =
+    form?.closest?.('[data-subpanel]') ||
+    form?.closest?.('[data-panel]') ||
+    form?.closest?.('.mod-panel') ||
+    document;
+
+  if (form?.matches?.(`form[data-action="${action}"]`)) {
+    return form;
+  }
+
+  return scope.querySelector(`form[data-action="${action}"]`);
+}
+
+function normalizeConfigPayload(data) {
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    if (data.config && typeof data.config === 'object' && !Array.isArray(data.config)) {
+      return data.config;
+    }
+    if (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+      return data.data;
+    }
+    return data;
+  }
+
+  return {};
+}
+
+function fillStoreConfigForm(form, data) {
+  const config = normalizeConfigPayload(data);
+  if (form?.rotation_period_days) {
+    form.rotation_period_days.value = config.rotation_period_days ?? '';
+  }
+  if (form?.active_key_type) {
+    form.active_key_type.value = config.active_key_type ?? '';
+  }
+}
+
+function fillQuestConfigForm(form, data) {
+  const config = normalizeConfigPayload(data);
+  ['rotation_day', 'rotation_hour', 'easy_quest_count', 'medium_quest_count', 'hard_quest_count'].forEach((key) => {
+    if (form?.[key]) {
+      form[key].value = config[key] ?? '';
+    }
+  });
+}
+
+function initStoreConfigPanel() {
+  const panel = document.querySelector('[data-subpanel="store-config"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  const form = panel.querySelector('form[data-action="store-get-config"]');
+  if (form) {
+    handleStoreGetConfig(form);
+  }
+}
+
+function initQuestConfigPanel() {
+  const panel = document.querySelector('[data-subpanel="quest-config"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  const form = panel.querySelector('form[data-action="quest-get-config"]');
+  if (form) {
+    handleQuestGetConfig(form);
+  }
+}
+
+let __modQuestWeeklyCache = [];
+
+function normalizeWeeklyQuestItems(data) {
+  const rawItems = Array.isArray(data?.quests)
+    ? data.quests
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
+
+  return rawItems
+    .map((raw) => {
+      const quest = raw?.quest_data && typeof raw.quest_data === 'object'
+        ? raw.quest_data
+        : raw?.quest && typeof raw.quest === 'object'
+          ? raw.quest
+          : raw;
+
+      const quest_id = quest?.id ?? raw?.quest_id ?? raw?.id ?? null;
+      if (!quest_id) {
+        return null;
+      }
+
+      const name = quest?.name ?? raw?.name ?? `Quest #${quest_id}`;
+      const difficulty = quest?.difficulty ?? raw?.difficulty ?? '';
+      const label = `#${quest_id} - ${name}${difficulty ? ` (${difficulty})` : ''}`;
+
+      return {
+        quest_id: Number(quest_id),
+        label,
+        raw,
+        quest,
+      };
+    })
+    .filter(Boolean);
+}
+
+function syncQuestWeeklyPicker(subpanel) {
+  const dd = subpanel?.querySelector?.('#modQuestWeeklyPicker');
+  const select = dd?.querySelector?.('select[name="quest_pick"]');
+  const list = dd?.querySelector?.('[data-dd-list]');
+  const btn = dd?.querySelector?.('[data-dd-btn]');
+  if (!dd || !select || !list || !btn) {
+    return;
+  }
+
+  const placeholder = btn.getAttribute('data-placeholder') || 'Select a quest';
+  const currentValue = String(select.value ?? '');
+  select.innerHTML = '';
+
+  const blank = document.createElement('option');
+  blank.value = '';
+  blank.textContent = placeholder;
+  select.appendChild(blank);
+
+  __modQuestWeeklyCache.forEach((item) => {
+    const option = document.createElement('option');
+    option.value = String(item.quest_id);
+    option.textContent = item.label;
+    select.appendChild(option);
+  });
+
+  list.innerHTML = '';
+  list.appendChild(
+    movementTechBuildContentDropdownOption(select.name, '', placeholder)
+  );
+  __modQuestWeeklyCache.forEach((item) => {
+    list.appendChild(
+      movementTechBuildContentDropdownOption(select.name, String(item.quest_id), item.label)
+    );
+  });
+
+  select.value = __modQuestWeeklyCache.some((item) => String(item.quest_id) === currentValue)
+    ? currentValue
+    : '';
+  movementTechSyncDdField(select);
+
+  const count = subpanel.querySelector('[data-quest-weekly-count]');
+  if (count) {
+    count.textContent = __modQuestWeeklyCache.length
+      ? `${__modQuestWeeklyCache.length} quests loaded`
+      : 'No quests loaded';
+  }
+}
+
+function fillQuestUpdateFormFromItem(form, item) {
+  if (!form || !item) {
+    return;
+  }
+
+  const quest = item.quest && typeof item.quest === 'object' ? item.quest : item.raw || {};
+  const requirements = quest?.requirements ?? item.raw?.requirements ?? null;
+
+  setInputValue(form, 'quest_id', item.quest_id);
+  setInputValue(form, 'name', quest?.name ?? item.raw?.name ?? '');
+  setInputValue(form, 'description', quest?.description ?? item.raw?.description ?? '');
+  setInputValue(form, 'difficulty', quest?.difficulty ?? item.raw?.difficulty ?? '');
+  setInputValue(form, 'coin_reward', quest?.coin_reward ?? item.raw?.coin_reward ?? '');
+  setInputValue(form, 'xp_reward', quest?.xp_reward ?? item.raw?.xp_reward ?? '');
+  setRadioValue(
+    form,
+    'is_active',
+    quest?.is_active === true ? '1' : quest?.is_active === false ? '0' : ''
+  );
+
+  const requirementsField = form.querySelector('[name="requirements_json"]');
+  if (requirementsField) {
+    requirementsField.value = requirements
+      ? JSON.stringify(requirements, null, 2)
+      : '';
+  }
+}
+
+function applyQuestPickerSelection(subpanel) {
+  const select = subpanel?.querySelector?.('#modQuestWeeklyPicker select[name="quest_pick"]');
+  const form = subpanel?.querySelector?.('form[data-action="quest-update-quest"]');
+  const questId = String(select?.value ?? '').trim();
+
+  if (!form) {
+    return;
+  }
+
+  if (!questId) {
+    const questIdInput = form.querySelector('input[name="quest_id"]');
+    if (questIdInput && !questIdInput.value) {
+      resetEnhancedForm(form);
+    }
+    return;
+  }
+
+  const item = __modQuestWeeklyCache.find((entry) => String(entry.quest_id) === questId);
+  if (item) {
+    fillQuestUpdateFormFromItem(form, item);
+  }
+}
+
+function initQuestUpdatePanel() {
+  const panel = document.querySelector('[data-subpanel="quest-update"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  panel.addEventListener('change', (event) => {
+    const select = event.target?.closest?.('select[name="quest_pick"]');
+    if (!select) return;
+    applyQuestPickerSelection(panel);
+  });
+
+  const questIdInput = panel.querySelector('form[data-action="quest-update-quest"] input[name="quest_id"]');
+  const syncFromInput = () => {
+    const value = String(questIdInput?.value ?? '').trim();
+    if (!value) {
+      return;
+    }
+
+    const item = __modQuestWeeklyCache.find((entry) => String(entry.quest_id) === value);
+    const picker = panel.querySelector('#modQuestWeeklyPicker select[name="quest_pick"]');
+    if (picker && picker.value !== value) {
+      picker.value = item ? value : '';
+      movementTechSyncDdField(picker);
+    }
+    if (item) {
+      fillQuestUpdateFormFromItem(
+        panel.querySelector('form[data-action="quest-update-quest"]'),
+        item
+      );
+    }
+  };
+
+  questIdInput?.addEventListener('change', syncFromInput);
+  questIdInput?.addEventListener('blur', syncFromInput);
+}
+
 async function handleStoreGetConfig(form) {
   setPanelOut(form, "store-config", "Loading…");
 
@@ -7870,6 +8538,7 @@ async function handleStoreGetConfig(form) {
   }
 
   setPanelOut(form, "store-config", res.data);
+  fillStoreConfigForm(findRelatedActionForm(form, 'store-update-config'), res.data);
   toast("Store config loaded", "ok");
 }
 
@@ -7977,6 +8646,13 @@ async function handleQuestGetWeekly(form) {
     return;
   }
 
+  __modQuestWeeklyCache = normalizeWeeklyQuestItems(res.data);
+  const subpanel =
+    form.closest?.('[data-subpanel="quest-update"]') ||
+    form.closest?.('[data-subpanel]') ||
+    document;
+  syncQuestWeeklyPicker(subpanel);
+  applyQuestPickerSelection(subpanel);
   setPanelOut(form, "quest-weekly-out", res.data);
   toast("Weekly quests loaded", "ok");
 }
@@ -8002,6 +8678,7 @@ async function handleQuestGetConfig(form) {
   }
 
   setPanelOut(form, "quest-config", res.data);
+  fillQuestConfigForm(findRelatedActionForm(form, 'quest-update-config'), res.data);
   toast("Quest config loaded", "ok");
 }
 
@@ -8107,6 +8784,11 @@ async function handleQuestUpdateQuest(form) {
 
   setPanelOut(form, "quest-update-res", res.data);
   toast("Quest updated", "ok");
+
+  const loadForm = findRelatedActionForm(form, 'quest-get-weekly');
+  if (loadForm) {
+    handleQuestGetWeekly(loadForm);
+  }
 }
 
 async function handleQuestGenerateRotation(form) {
@@ -8623,12 +9305,33 @@ function setInputValue(form, name, value) {
   const el = form.querySelector(`[name="${CSS.escape(name)}"]`);
   if (!el) return;
   el.value = value == null ? "" : String(value);
+  if (el.tagName === 'SELECT') {
+    movementTechSyncDdField(el);
+  }
 }
 
 function setRadioValue(form, name, value) {
   const els = [...form.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`)];
   if (!els.length) return;
   els.forEach((r) => (r.checked = String(r.value) === String(value)));
+
+  const checked = els.find((r) => r.checked);
+  const dd = checked?.closest?.('[data-dd-select]');
+  const btn = dd?.querySelector?.('[data-dd-btn]');
+  const labelEl = dd?.querySelector?.('.dd-label');
+  if (dd && btn && labelEl) {
+    const text =
+      checked?.dataset?.label ||
+      checked?.getAttribute?.('data-label') ||
+      checked?.value ||
+      '';
+    labelEl.textContent = text || btn.getAttribute('data-placeholder') || 'Select...';
+  }
+
+  const customSelect = checked?.closest?.('.fake-select, .custom-multiselect');
+  if (customSelect && typeof __merSetupFakeSelect === 'function') {
+    __merSetupFakeSelect(customSelect);
+  }
 }
 
 function setTextAreaJson(form, name, obj) {

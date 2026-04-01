@@ -138,7 +138,7 @@
                   </svg>
                 </span>
                 <span class="min-w-0 flex-1 truncate">Content</span>
-                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Movement Tech</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Tech</span>
               </button>
 
               <button
@@ -2154,164 +2154,139 @@
               </div>
 
               <div data-subpanel="content-categories" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">List movement tech categories</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/content/movement-tech/categories</span>
-                  </div>
-                  <form data-action="content-category-list" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Refresh list
-                      </button>
+                <div class="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                  <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                    <div class="flex items-center justify-between gap-4">
+                      <h3 class="font-semibold">Create movement tech category</h3>
+                      <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/categories</span>
                     </div>
-                  </form>
-                </article>
+                    <form data-action="content-category-create" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                      <label class="text-sm sm:col-span-2">
+                        name
+                        <input
+                          name="name"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="Wall Riding"
+                        />
+                      </label>
+                      <div class="sm:col-span-2">
+                        <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                          Create
+                        </button>
+                      </div>
+                    </form>
+                  </article>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Create movement tech category</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/categories</span>
-                  </div>
-                  <form data-action="content-category-create" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm sm:col-span-2">
-                      name
-                      <input
-                        name="name"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="Wall Riding"
-                      />
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Create
-                      </button>
+                  <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-5">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h3 class="font-semibold">Manage movement tech categories</h3>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Refresh the live list, pick a category, then update, reorder or delete it from the same panel.</p>
+                      </div>
+                      <span class="text-xs text-zinc-500 dark:text-zinc-400">GET + PUT + DELETE + POST /api/mods/content/movement-tech/categories</span>
                     </div>
-                  </form>
-                </article>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Update movement tech category</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /api/mods/content/movement-tech/categories/{id}</span>
-                  </div>
-                  <form data-action="content-category-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm">
-                      category_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <label class="text-sm">
-                      name
-                      <input
-                        name="name"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="Advanced Wall Riding"
-                      />
-                    </label>
-                    <p class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      Enter <span class="font-mono">category_id</span> and leave the field to load the current name automatically.
-                    </p>
-                    <div class="sm:col-span-2">
+                    <form data-action="content-category-list" data-form-ux="1" autocomplete="off" class="flex flex-wrap items-center gap-2">
                       <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Update
+                        Refresh categories
                       </button>
-                    </div>
-                  </form>
-                </article>
+                      <span data-content-count="categories" class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-300">
+                        No items synced
+                      </span>
+                    </form>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Delete movement tech category</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/content/movement-tech/categories/{id}</span>
-                  </div>
-                  <form data-action="content-category-delete" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm sm:col-span-2">
-                      category_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
-                        Delete
-                      </button>
-                    </div>
-                  </form>
-                </article>
+                    <form data-action="content-category-update" data-form-ux="1" autocomplete="off" class="grid gap-4 sm:grid-cols-2">
+                      <label class="text-sm sm:col-span-2">
+                        category
+                        <div class="relative mt-1" data-dd-select data-content-options="categories" data-placeholder="Select a category">
+                          <select name="id" class="hidden">
+                            <option value="">Select a category</option>
+                          </select>
+                          <button
+                            type="button"
+                            data-dd-btn
+                            data-placeholder="Select a category"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          >
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select a category</span>
+                            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                            </svg>
+                          </button>
+                          <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                        </div>
+                      </label>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 class="font-semibold">Reorder movement tech category</h3>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Moving the first item up or the last item down is a no-op.</p>
-                    </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/categories/{id}/reorder</span>
-                  </div>
-                  <form data-action="content-category-reorder" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm">
-                      category_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <label class="text-sm">
-                      direction
-                      <select
-                        name="direction"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      >
-                        <option value="up">up</option>
-                        <option value="down">down</option>
-                      </select>
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Reorder
-                      </button>
-                    </div>
-                  </form>
-                </article>
+                      <label class="text-sm">
+                        name
+                        <input
+                          name="name"
+                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                          placeholder="Advanced Wall Riding"
+                        />
+                      </label>
+
+                      <label class="text-sm">
+                        direction
+                        <div class="relative mt-1" data-dd-select>
+                          <select name="direction" class="hidden">
+                            <option value="up" selected>Move up</option>
+                            <option value="down">Move down</option>
+                          </select>
+                          <button
+                            type="button"
+                            data-dd-btn
+                            data-placeholder="Move up"
+                            class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                          >
+                            <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Move up</span>
+                            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                            </svg>
+                          </button>
+                          <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl">
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
+                              <input type="radio" name="direction_ui" value="up" class="accent-emerald-500" checked data-label="Move up" />
+                              <span>Move up</span>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
+                              <input type="radio" name="direction_ui" value="down" class="accent-emerald-500" data-label="Move down" />
+                              <span>Move down</span>
+                            </label>
+                          </div>
+                        </div>
+                      </label>
+
+                      <div class="sm:col-span-2 flex flex-wrap items-center gap-2" data-form-actions="1">
+                        <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                          Update
+                        </button>
+                        <button type="submit" data-submit-action="content-category-reorder" class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                          Reorder
+                        </button>
+                        <button type="submit" data-submit-action="content-category-delete" class="w-full sm:w-auto cursor-pointer rounded-xl border border-rose-500/40 px-4 py-2 font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-500/10">
+                          Delete
+                        </button>
+                        <button type="button" data-reset-form class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                          Reset
+                        </button>
+                      </div>
+                    </form>
+                  </article>
+                </div>
 
                 <pre data-out="content-categories-res" class="hidden"></pre>
               </div>
               <div data-subpanel="content-techniques" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">List movement techniques</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/content/movement-tech/</span>
-                  </div>
-                  <form data-action="content-technique-list" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Refresh list
-                      </button>
-                    </div>
-                  </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
                   <div class="flex items-center justify-between gap-4">
                     <div>
                       <h3 class="font-semibold">Create movement technique</h3>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Add tips and videos with the buttons below. Their order in the list becomes their sort order.</p>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Use the same custom pickers as the edit panel. Tips and videos keep their visual order as sort order.</p>
                     </div>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/techniques</span>
                   </div>
-                  <form data-action="content-technique-create" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                  <form data-action="content-technique-create" autocomplete="off" class="grid gap-4 sm:grid-cols-2">
                     <label class="text-sm sm:col-span-2">
                       name
                       <input
@@ -2330,24 +2305,44 @@
                       ></textarea>
                     </label>
                     <label class="text-sm">
-                      category_id
-                      <input
-                        name="category_id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="2 or null"
-                      />
+                      category
+                      <div class="relative mt-1" data-dd-select data-content-options="categories" data-placeholder="No category (optional)">
+                        <select name="category_id" class="hidden">
+                          <option value="">No category (optional)</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="No category (optional)"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">No category (optional)</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                      </div>
                     </label>
                     <label class="text-sm">
-                      difficulty_id
-                      <input
-                        name="difficulty_id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1 or null"
-                      />
+                      difficulty
+                      <div class="relative mt-1" data-dd-select data-content-options="difficulties" data-placeholder="No difficulty (optional)">
+                        <select name="difficulty_id" class="hidden">
+                          <option value="">No difficulty (optional)</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="No difficulty (optional)"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">No difficulty (optional)</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                      </div>
                     </label>
                     <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="tips">
                       <div class="flex items-center justify-between gap-3">
@@ -2387,52 +2382,45 @@
                   </form>
                 </article>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Get movement technique</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/mods/content/movement-tech/techniques/{id}</span>
-                  </div>
-                  <form data-action="content-technique-get" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm sm:col-span-2">
-                      technique_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Fetch
-                      </button>
-                    </div>
-                  </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-5">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <h3 class="font-semibold">Update movement technique</h3>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Fields are auto-loaded from technique_id. Remove every tip or video row if you want to clear that list.</p>
+                      <h3 class="font-semibold">Manage movement techniques</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Refresh the live list, pick a technique, then edit, reorder or delete it without leaving the panel.</p>
                     </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /api/mods/content/movement-tech/techniques/{id}</span>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET + PUT + DELETE + POST /api/mods/content/movement-tech/techniques</span>
                   </div>
-                  <form data-action="content-technique-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+
+                  <form data-action="content-technique-list" data-form-ux="1" autocomplete="off" class="flex flex-wrap items-center gap-2">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Refresh techniques
+                    </button>
+                    <span data-content-count="techniques" class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-300">
+                      No items synced
+                    </span>
+                  </form>
+
+                  <form data-action="content-technique-update" data-form-ux="1" autocomplete="off" class="grid gap-4 sm:grid-cols-2">
                     <label class="text-sm sm:col-span-2">
-                      technique_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
+                      technique
+                      <div class="relative mt-1" data-dd-select data-content-options="techniques" data-placeholder="Select a technique">
+                        <select name="id" class="hidden">
+                          <option value="">Select a technique</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Select a technique"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select a technique</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                      </div>
                     </label>
-                    <p class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      Enter <span class="font-mono">technique_id</span> and leave the field to load the current values automatically.
-                    </p>
                     <label class="text-sm sm:col-span-2">
                       name
                       <input
@@ -2451,24 +2439,46 @@
                       ></textarea>
                     </label>
                     <label class="text-sm">
-                      category_id
-                      <input
-                        name="category_id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="Leave blank, 2, or null"
-                      />
+                      category
+                      <div class="relative mt-1" data-dd-select data-content-options="categories" data-placeholder="Keep current category" data-null-option="Clear category">
+                        <select name="category_id" class="hidden">
+                          <option value="">Keep current category</option>
+                          <option value="null">Clear category</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Keep current category"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Keep current category</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                      </div>
                     </label>
                     <label class="text-sm">
-                      difficulty_id
-                      <input
-                        name="difficulty_id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="Leave blank, 1, or null"
-                      />
+                      difficulty
+                      <div class="relative mt-1" data-dd-select data-content-options="difficulties" data-placeholder="Keep current difficulty" data-null-option="Clear difficulty">
+                        <select name="difficulty_id" class="hidden">
+                          <option value="">Keep current difficulty</option>
+                          <option value="null">Clear difficulty</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Keep current difficulty"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Keep current difficulty</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                      </div>
                     </label>
                     <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="tips">
                       <div>
@@ -2528,70 +2538,50 @@
                       <input type="checkbox" name="clear_videos" class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
                       Clear current videos by sending an empty videos array
                     </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+
+                    <label class="text-sm sm:col-span-2">
+                      direction
+                      <div class="relative mt-1" data-dd-select>
+                        <select name="direction" class="hidden">
+                          <option value="up" selected>Move up</option>
+                          <option value="down">Move down</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Move up"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Move up</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl">
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
+                            <input type="radio" name="direction_ui" value="up" class="accent-emerald-500" checked data-label="Move up" />
+                            <span>Move up</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
+                            <input type="radio" name="direction_ui" value="down" class="accent-emerald-500" data-label="Move down" />
+                            <span>Move down</span>
+                          </label>
+                        </div>
+                      </div>
+                    </label>
+
+                    <div class="sm:col-span-2 flex flex-wrap items-center gap-2" data-form-actions="1">
+                      <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Update
                       </button>
-                    </div>
-                  </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Delete movement technique</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/content/movement-tech/techniques/{id}</span>
-                  </div>
-                  <form data-action="content-technique-delete" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm sm:col-span-2">
-                      technique_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                      <button type="submit" data-submit-action="content-technique-reorder" class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                        Reorder
+                      </button>
+                      <button type="submit" data-submit-action="content-technique-delete" class="w-full sm:w-auto cursor-pointer rounded-xl border border-rose-500/40 px-4 py-2 font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-500/10">
                         Delete
                       </button>
-                    </div>
-                  </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 class="font-semibold">Reorder movement technique</h3>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Moving the first item up or the last item down is a no-op.</p>
-                    </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/techniques/{id}/reorder</span>
-                  </div>
-                  <form data-action="content-technique-reorder" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm">
-                      technique_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <label class="text-sm">
-                      direction
-                      <select
-                        name="direction"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      >
-                        <option value="up">up</option>
-                        <option value="down">down</option>
-                      </select>
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Reorder
+                      <button type="button" data-reset-form class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                        Reset
                       </button>
                     </div>
                   </form>
@@ -2600,20 +2590,6 @@
                 <pre data-out="content-techniques-res" class="hidden"></pre>
               </div>
               <div data-subpanel="content-difficulties" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">List movement tech difficulties</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/content/movement-tech/difficulties</span>
-                  </div>
-                  <form data-action="content-difficulty-list" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Refresh list
-                      </button>
-                    </div>
-                  </form>
-                </article>
-
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div class="flex items-center justify-between gap-4">
                     <h3 class="font-semibold">Create movement tech difficulty</h3>
@@ -2636,22 +2612,46 @@
                   </form>
                 </article>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Update movement tech difficulty</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /api/mods/content/movement-tech/difficulties/{id}</span>
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-5">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 class="font-semibold">Manage movement tech difficulties</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Refresh the live list, pick a difficulty, then update, reorder or delete it from the same panel.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET + PUT + DELETE + POST /api/mods/content/movement-tech/difficulties</span>
                   </div>
-                  <form data-action="content-difficulty-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm">
-                      difficulty_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
+
+                  <form data-action="content-difficulty-list" data-form-ux="1" autocomplete="off" class="flex flex-wrap items-center gap-2">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Refresh difficulties
+                    </button>
+                    <span data-content-count="difficulties" class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-300">
+                      No items synced
+                    </span>
+                  </form>
+
+                  <form data-action="content-difficulty-update" data-form-ux="1" autocomplete="off" class="grid gap-4 sm:grid-cols-2">
+                    <label class="text-sm sm:col-span-2">
+                      difficulty
+                      <div class="relative mt-1" data-dd-select data-content-options="difficulties" data-placeholder="Select a difficulty">
+                        <select name="id" class="hidden">
+                          <option value="">Select a difficulty</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Select a difficulty"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select a difficulty</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"></div>
+                      </div>
                     </label>
+
                     <label class="text-sm">
                       name
                       <input
@@ -2660,73 +2660,50 @@
                         placeholder="Expert"
                       />
                     </label>
-                    <p class="sm:col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      Enter <span class="font-mono">difficulty_id</span> and leave the field to load the current name automatically.
-                    </p>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                        Update
-                      </button>
-                    </div>
-                  </form>
-                </article>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <h3 class="font-semibold">Delete movement tech difficulty</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/content/movement-tech/difficulties/{id}</span>
-                  </div>
-                  <form data-action="content-difficulty-delete" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm sm:col-span-2">
-                      difficulty_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
-                        Delete
-                      </button>
-                    </div>
-                  </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 class="font-semibold">Reorder movement tech difficulty</h3>
-                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Moving the first item up or the last item down is a no-op.</p>
-                    </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/content/movement-tech/difficulties/{id}/reorder</span>
-                  </div>
-                  <form data-action="content-difficulty-reorder" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm">
-                      difficulty_id
-                      <input
-                        name="id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="1"
-                      />
-                    </label>
                     <label class="text-sm">
                       direction
-                      <select
-                        name="direction"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      >
-                        <option value="up">up</option>
-                        <option value="down">down</option>
-                      </select>
+                      <div class="relative mt-1" data-dd-select>
+                        <select name="direction" class="hidden">
+                          <option value="up" selected>Move up</option>
+                          <option value="down">Move down</option>
+                        </select>
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Move up"
+                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Move up</span>
+                          <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+                          </svg>
+                        </button>
+                        <div data-dd-list class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl">
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
+                            <input type="radio" name="direction_ui" value="up" class="accent-emerald-500" checked data-label="Move up" />
+                            <span>Move up</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">
+                            <input type="radio" name="direction_ui" value="down" class="accent-emerald-500" data-label="Move down" />
+                            <span>Move down</span>
+                          </label>
+                        </div>
+                      </div>
                     </label>
-                    <div class="sm:col-span-2">
-                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+
+                    <div class="sm:col-span-2 flex flex-wrap items-center gap-2" data-form-actions="1">
+                      <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Update
+                      </button>
+                      <button type="submit" data-submit-action="content-difficulty-reorder" class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
                         Reorder
+                      </button>
+                      <button type="submit" data-submit-action="content-difficulty-delete" class="w-full sm:w-auto cursor-pointer rounded-xl border border-rose-500/40 px-4 py-2 font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-500/10">
+                        Delete
+                      </button>
+                      <button type="button" data-reset-form class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">
+                        Reset
                       </button>
                     </div>
                   </form>
@@ -4674,24 +4651,20 @@
 
               {{-- Subpanel: Config --}}
               <div data-subpanel="store-config" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Get store config</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /mods/store/config</span>
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 class="font-semibold">Store config</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Load the live config, edit in place, then save from the same panel.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET + PUT /mods/store/config</span>
                   </div>
 
-                  <form data-action="store-get-config" autocomplete="off">
+                  <form data-action="store-get-config" data-form-ux="1" autocomplete="off">
                     <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                      Load config
+                      Load current config
                     </button>
                   </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Update store config</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /mods/store/config</span>
-                  </div>
 
                   <form data-action="store-update-config" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
                     <label class="sm:col-span-1 text-sm">
@@ -4721,13 +4694,16 @@
                       </button>
                     </div>
                   </form>
+
+                  <pre data-out="store-config" class="hidden"></pre>
+                  <pre data-out="store-update-res" class="hidden"></pre>
                 </article>
               </div>
 
               {{-- Subpanel: Rotation --}}
               <div data-subpanel="store-rotation" class="hidden space-y-6">
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <h3 class="font-semibold">Generate store rotation</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /mods/store/rotation/generate</span>
                   </div>
@@ -4799,24 +4775,20 @@
 
               {{-- Subpanel: Config --}}
               <div data-subpanel="quest-config" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Get quests config</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /mods/quests/config</span>
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 class="font-semibold">Quests config</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Load the live config, edit the values below, then save from the same card.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET + PUT /mods/quests/config</span>
                   </div>
 
-                  <form data-action="quest-get-config" autocomplete="off">
+                  <form data-action="quest-get-config" data-form-ux="1" autocomplete="off">
                     <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                      Load config
+                      Load current config
                     </button>
                   </form>
-                </article>
-
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Update quests config</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PUT /mods/quests/config</span>
-                  </div>
 
                   <form data-action="quest-update-config" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
                     <label class="text-sm">
@@ -4860,6 +4832,9 @@
                       </button>
                     </div>
                   </form>
+
+                  <pre data-out="quest-config" class="hidden"></pre>
+                  <pre data-out="quest-config-update-res" class="hidden"></pre>
                 </article>
               </div>
 
@@ -4867,25 +4842,68 @@
               <div data-subpanel="quest-update" class="hidden space-y-6">
 
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Get Weekly Quests</h3>
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 class="font-semibold">Weekly quest manager</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Load the weekly quests, pick one from the dropdown, then edit and save from the same panel.</p>
+                    </div>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=…</span>
                   </div>
 
-                  <form data-action="quest-get-weekly" autocomplete="off">
-                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
-                      Load quests
-                    </button>
-                  </form>
-                </article>
+                  <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-950/40 p-4 space-y-4">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h4 class="font-semibold">Weekly source</h4>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Uses <code>window.user_id</code> to fetch the current weekly set.</p>
+                      </div>
+                      <span data-quest-weekly-count class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-300">
+                        No quests loaded
+                      </span>
+                    </div>
 
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Update quest</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /mods/quests/{quest_id}</span>
+                    <form data-action="quest-get-weekly" data-form-ux="1" autocomplete="off">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        Load weekly quests
+                      </button>
+                    </form>
+
+                    <label class="block text-sm">
+                      Loaded quest
+                      <div id="modQuestWeeklyPicker" class="relative mt-1" data-dd-select data-dd-field="quest_pick">
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="Select a loaded quest"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                          class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        >
+                          <span class="dd-label truncate">Select a loaded quest</span>
+                          <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                          </svg>
+                        </button>
+                        <div
+                          data-dd-list
+                          role="listbox"
+                          class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[260px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"
+                        >
+                          <div class="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            Load weekly quests first.
+                          </div>
+                        </div>
+                        <select name="quest_pick" class="hidden" aria-hidden="true">
+                          <option value="">Select a loaded quest</option>
+                        </select>
+                      </div>
+                    </label>
                   </div>
 
-                  <form data-action="quest-update-quest" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <h4 class="font-semibold">Patch quest</h4>
+                  </div>
+
+                  <form data-action="quest-update-quest" data-form-ux="1" autocomplete="off" class="grid gap-4 sm:grid-cols-2">
                     <label class="text-sm sm:col-span-1">
                       quest_id
                       <input
@@ -4901,11 +4919,49 @@
 
                     <label class="text-sm sm:col-span-1">
                       difficulty
-                      <input
-                        name="difficulty"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="easy / medium / hard"
-                      />
+                      <div class="relative mt-1" data-dd-select data-dd-field="difficulty">
+                        <button
+                          type="button"
+                          data-dd-btn
+                          data-placeholder="(no change)"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                          class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        >
+                          <span class="dd-label truncate">(no change)</span>
+                          <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                          </svg>
+                        </button>
+                        <div
+                          data-dd-list
+                          role="listbox"
+                          class="custom-multiselect-list absolute top-full left-0 right-0 z-50 mt-0 hidden max-h-[220px] overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 p-1 shadow-xl"
+                        >
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="difficulty_ui" value="" data-label="(no change)" class="accent-emerald-500" checked>
+                            <span>(no change)</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="difficulty_ui" value="easy" data-label="easy" class="accent-emerald-500">
+                            <span>easy</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="difficulty_ui" value="medium" data-label="medium" class="accent-emerald-500">
+                            <span>medium</span>
+                          </label>
+                          <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
+                            <input type="radio" name="difficulty_ui" value="hard" data-label="hard" class="accent-emerald-500">
+                            <span>hard</span>
+                          </label>
+                        </div>
+                        <select name="difficulty" class="hidden" aria-hidden="true">
+                          <option value="">(no change)</option>
+                          <option value="easy">easy</option>
+                          <option value="medium">medium</option>
+                          <option value="hard">hard</option>
+                        </select>
+                      </div>
                     </label>
 
                     <label class="text-sm sm:col-span-1">
@@ -4994,12 +5050,22 @@
                       ></textarea>
                     </label>
 
-                    <div class="sm:col-span-2">
+                    <div class="sm:col-span-2 flex flex-wrap items-center gap-2">
                       <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
                         Save
                       </button>
+                      <button
+                        type="button"
+                        data-reset-form
+                        class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+                      >
+                        Reset
+                      </button>
                     </div>
                   </form>
+
+                  <pre data-out="quest-weekly-out" class="hidden"></pre>
+                  <pre data-out="quest-update-res" class="hidden"></pre>
                 </article>
               </div>
 
@@ -5021,15 +5087,16 @@
 
               {{-- Subpanel: User progress --}}
               <div data-subpanel="quest-user-progress" class="hidden space-y-6">
-                {{-- Get user progress --}}
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-                  <div class="flex items-center justify-between gap-4">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <h3 class="font-semibold">Get user progress</h3>
+                      <h3 class="font-semibold">User quest progress</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Load a user's quest progress, pick an entry, then patch the selection without leaving the panel.</p>
                     </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/quests?user_id=... + PATCH /mods/quests/admin/users/{user_id}/progress/{progress_id}</span>
                   </div>
 
-                  <form data-action="quest-get-user-progress" class="space-y-4">
+                  <form data-action="quest-get-user-progress" data-form-ux="1" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <label class="text-sm md:col-span-1">
                         User name
@@ -5075,15 +5142,14 @@
                     </div>
 
                   </form>
-                </article>
 
-                {{-- PATCH: Update user quest progress --}}
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="h-px bg-zinc-200/80 dark:bg-white/10"></div>
+
                   <div>
-                    <h3 class="font-semibold">Update user quest progress (PATCH)</h3>
+                    <h4 class="font-semibold">Patch selected progress</h4>
                   </div>
 
-                  <form data-action="quest-update-user-progress" class="space-y-5">
+                  <form data-action="quest-update-user-progress" data-form-ux="1" class="space-y-5">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <label class="text-sm">
                         user_id
@@ -5494,8 +5560,17 @@
                         class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 active:bg-emerald-800">
                         Patch
                       </button>
+                      <button
+                        type="button"
+                        data-reset-form
+                        class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-white/5"
+                      >
+                        Reset
+                      </button>
                     </div>
                   </form>
+
+                  <pre data-out="quest-user-progress-res" class="hidden"></pre>
                 </article>
               </div>
             </div>
