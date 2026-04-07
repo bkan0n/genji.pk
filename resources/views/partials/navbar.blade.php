@@ -53,8 +53,8 @@
 <header
   class="sticky top-0 z-50 border-b border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 supports-[backdrop-filter]:dark:bg-zinc-900/70"
 >
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4">
+  <div class="w-full px-4 sm:px-6 lg:px-8">
+    <div class="grid h-16 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
       <!-- Brand -->
     <div class="flex min-w-0 items-center gap-2 md:gap-3">
       <a
