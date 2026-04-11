@@ -1084,7 +1084,7 @@
     article.appendChild(
       createElement(
         'p',
-        'mt-4 max-w-4xl leading-relaxed text-zinc-600 dark:text-zinc-300',
+        'mt-4 max-w-4xl whitespace-pre-wrap leading-relaxed text-zinc-600 dark:text-zinc-300',
         technique.description || t('ui.no_description', 'No description yet.')
       )
     );
@@ -1107,7 +1107,7 @@
       instructionsBlock.appendChild(
         createElement(
           'p',
-          'text-sm leading-relaxed whitespace-pre-wrap text-zinc-600 dark:text-zinc-300',
+          'text-sm whitespace-pre-wrap leading-relaxed text-zinc-600 dark:text-zinc-300',
           technique.instructions
         )
       );
@@ -1136,10 +1136,8 @@
       const tipsList = createElement('ul', 'space-y-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300');
 
       technique.tips.forEach((tip) => {
-        const item = createElement('li', 'flex items-start gap-2');
-        const bullet = createElement('span', 'mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500');
-        const value = createElement('span', '', tip.text);
-        item.appendChild(bullet);
+        const item = createElement('li', '');
+        const value = createElement('span', 'whitespace-pre-wrap', tip.text);
         item.appendChild(value);
         tipsList.appendChild(item);
       });

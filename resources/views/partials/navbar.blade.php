@@ -137,14 +137,6 @@
             <li>
               <a
                 class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
-                href="{{ url('/movement-tech') }}"
-              >
-                {{ __('navbar.movement_tech') }}
-              </a>
-            </li>
-            <li>
-              <a
-                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/search?section=completions') }}"
               >
                 {{ __('navbar.completions') }}
@@ -184,6 +176,14 @@
                 href="{{ url('/tutorials') }}"
               >
                 {{ __('navbar.tutorial') }}
+              </a>
+            </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/movement-tech') }}"
+              >
+                {{ __('navbar.movement_tech') }}
               </a>
             </li>
             <li>
@@ -466,12 +466,6 @@
               {{ __('navbar.guides') }}
             </a>
             <a
-              href="{{ url('/movement-tech') }}"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
-            >
-              {{ __('navbar.movement_tech') }}
-            </a>
-            <a
               href="{{ url('/search') }}?section=completions"
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
@@ -501,6 +495,12 @@
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.tutorial') }}
+            </a>
+            <a
+              href="{{ url('/movement-tech') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.movement_tech') }}
             </a>
             <a
               href="{{ url('/statistics') }}"
