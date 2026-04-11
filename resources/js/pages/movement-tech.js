@@ -303,6 +303,7 @@
           name,
           slug: slugify(`${id}-${name}`),
           description: text(entry?.description),
+          instructions: text(entry?.instructions),
           displayOrder: displayOrder == null ? index + 1 : displayOrder,
           categoryId,
           categoryName: text(entry?.category_name) || categoryFromLookup?.name || t('ui.uncategorized', 'Uncategorized'),
@@ -573,7 +574,7 @@
 
     const iframe = createElement('iframe', 'absolute inset-0 h-full w-full');
     iframe.src = descriptor.embedUrl;
-    iframe.title = titleText || 'Embedded video';
+    iframe.title = titleText || t('ui.embedded_video', 'Embedded video');
     iframe.loading = autoplay ? 'eager' : 'lazy';
     iframe.setAttribute(
       'allow',
@@ -599,7 +600,7 @@
     wrapper.dataset.techVideoShell = '1';
     wrapper.dataset.techVideoUrl = descriptor.safeUrl;
     wrapper.dataset.techVideoTitle = titleText || '';
-    wrapper.setAttribute('aria-label', titleText || 'Video');
+    wrapper.setAttribute('aria-label', titleText || t('ui.video', 'Video'));
 
     if (descriptor.thumbnailUrl) {
       const thumbnail = createElement('img', 'absolute inset-0 h-full w-full object-cover');
@@ -1021,18 +1022,22 @@
     return button;
   }
 
-  function createSectionCard(titleText) {
+  function createSectionCard(titleText = '') {
     const section = createElement(
       'div',
       'rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/60'
     );
-    const title = createElement(
-      'div',
-      'text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400',
-      titleText
-    );
 
-    section.appendChild(title);
+    if (titleText) {
+      const title = createElement(
+        'div',
+        'text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400',
+        titleText
+      );
+
+      section.appendChild(title);
+    }
+
     return section;
   }
 
@@ -1086,9 +1091,49 @@
 
     const infoGrid = createElement('div', 'mt-5 grid gap-4 lg:grid-cols-2');
 
-    const tipsSection = createSectionCard(t('ui.tips', 'Tips'));
+    const instructionsTipsSection = createSectionCard();
+    const instructionsTipsContent = createElement('div', 'space-y-4');
+
+    const instructionsBlock = createElement('div', 'space-y-2');
+    instructionsBlock.appendChild(
+      createElement(
+        'div',
+        'text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400',
+        t('ui.instructions', 'Instructions')
+      )
+    );
+
+    if (technique.instructions) {
+      instructionsBlock.appendChild(
+        createElement(
+          'p',
+          'text-sm leading-relaxed whitespace-pre-wrap text-zinc-600 dark:text-zinc-300',
+          technique.instructions
+        )
+      );
+    } else {
+      instructionsBlock.appendChild(
+        createElement(
+          'p',
+          'text-sm leading-relaxed text-zinc-500 dark:text-zinc-400',
+          t('ui.instructions_empty', 'No instructions yet.')
+        )
+      );
+    }
+
+    instructionsTipsContent.appendChild(instructionsBlock);
+
+    const tipsBlock = createElement('div', 'space-y-2 border-t border-zinc-200/80 pt-4 dark:border-white/10');
+    tipsBlock.appendChild(
+      createElement(
+        'div',
+        'text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400',
+        t('ui.tips', 'Tips')
+      )
+    );
+
     if (technique.tips.length > 0) {
-      const tipsList = createElement('ul', 'mt-3 space-y-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300');
+      const tipsList = createElement('ul', 'space-y-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300');
 
       technique.tips.forEach((tip) => {
         const item = createElement('li', 'flex items-start gap-2');
@@ -1099,17 +1144,20 @@
         tipsList.appendChild(item);
       });
 
-      tipsSection.appendChild(tipsList);
+      tipsBlock.appendChild(tipsList);
     } else {
-      tipsSection.appendChild(
+      tipsBlock.appendChild(
         createElement(
           'p',
-          'mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400',
+          'text-sm leading-relaxed text-zinc-500 dark:text-zinc-400',
           t('ui.tips_empty', 'No tips yet.')
         )
       );
     }
-    infoGrid.appendChild(tipsSection);
+
+    instructionsTipsContent.appendChild(tipsBlock);
+    instructionsTipsSection.appendChild(instructionsTipsContent);
+    infoGrid.appendChild(instructionsTipsSection);
 
     const videosSection = createSectionCard(t('ui.videos', 'Videos'));
     if (technique.videos.length > 0) {
@@ -1117,7 +1165,7 @@
 
       technique.videos.forEach((video, index) => {
         const safeUrl = safeHttpUrl(video.url);
-        const accessibleVideoTitle = video.caption || `Video ${index + 1}`;
+        const accessibleVideoTitle = video.caption || `${t('ui.video', 'Video')} ${index + 1}`;
         const deferredVideo = createDeferredVideo(video.url, `${technique.name} - ${accessibleVideoTitle}`);
         const row = createElement(
           'div',

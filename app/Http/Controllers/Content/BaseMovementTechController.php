@@ -173,6 +173,10 @@ abstract class BaseMovementTechController extends Controller
 
     private function looksLikeTechnique(array $payload): bool
     {
+        if (array_key_exists('instructions', $payload)) {
+            return true;
+        }
+
         return array_key_exists('tips', $payload)
             || array_key_exists('videos', $payload)
             || array_key_exists('display_order', $payload);

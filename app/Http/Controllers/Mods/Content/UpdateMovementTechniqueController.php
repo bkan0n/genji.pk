@@ -13,6 +13,7 @@ class UpdateMovementTechniqueController extends BaseMovementTechController
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
+            'instructions' => ['sometimes', 'nullable', 'string'],
             'category_id' => ['sometimes', 'nullable', 'integer'],
             'difficulty_id' => ['sometimes', 'nullable', 'integer'],
             'tips' => ['sometimes', 'array'],

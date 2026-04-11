@@ -13,6 +13,7 @@ class CreateMovementTechniqueController extends BaseMovementTechController
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'instructions' => ['nullable', 'string'],
             'category_id' => ['nullable', 'integer'],
             'difficulty_id' => ['nullable', 'integer'],
             'tips' => ['nullable', 'array'],

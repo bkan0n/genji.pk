@@ -2179,6 +2179,14 @@ function movementTechGetRepeaterItems(repeater) {
   return Array.from(repeater?.querySelectorAll?.('[data-mt-item]') || []);
 }
 
+function movementTechGetCurrentSection(form, kind) {
+  return form?.querySelector?.(`[data-mt-current="${kind}"]`) || null;
+}
+
+function movementTechGetCurrentTechniqueItems(section) {
+  return Array.from(section?.querySelectorAll?.('[data-mt-current-item]') || []);
+}
+
 function movementTechRefreshRepeater(repeater) {
   if (!repeater) {
     return;
@@ -2208,6 +2216,27 @@ function movementTechRefreshRepeater(repeater) {
     if (downBtn) {
       downBtn.disabled = index === items.length - 1;
       downBtn.classList.toggle('opacity-50', index === items.length - 1);
+    }
+  });
+}
+
+function movementTechRefreshCurrentTechniqueRows(section) {
+  if (!section) {
+    return;
+  }
+
+  const kind = section.dataset.mtCurrent || 'tips';
+  const items = movementTechGetCurrentTechniqueItems(section);
+  const empty = section.querySelector('[data-mt-current-empty]');
+
+  if (empty) {
+    empty.classList.toggle('hidden', items.length > 0);
+  }
+
+  items.forEach((item, index) => {
+    const label = item.querySelector('[data-mt-current-label]');
+    if (label) {
+      label.textContent = `${movementTechRepeaterLabel(kind)} ${index + 1}`;
     }
   });
 }
@@ -2337,10 +2366,21 @@ function movementTechReadVideoRows(form) {
   return { value: rows };
 }
 
+function movementTechReadCurrentTechniqueRows(form, kind) {
+  return movementTechGetCurrentTechniqueItems(movementTechGetCurrentSection(form, kind))
+    .map((item) => {
+      try {
+        return JSON.parse(item.dataset.mtCurrentRow || 'null');
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+}
+
 function movementTechRenderCurrentTechniqueRows(form, kind, rows) {
-  const section = form?.querySelector?.(`[data-mt-current="${kind}"]`);
+  const section = movementTechGetCurrentSection(form, kind);
   const itemsHost = section?.querySelector?.('[data-mt-current-items]');
-  const empty = section?.querySelector?.('[data-mt-current-empty]');
 
   if (!section || !itemsHost) {
     return;
@@ -2354,12 +2394,27 @@ function movementTechRenderCurrentTechniqueRows(form, kind, rows) {
 
   normalized.forEach((row, index) => {
     const item = document.createElement('div');
-    item.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 space-y-1';
+    item.dataset.mtCurrentItem = '1';
+    item.dataset.mtCurrentRow = JSON.stringify(row);
+    item.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 space-y-2';
+
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between gap-2';
 
     const label = document.createElement('div');
+    label.dataset.mtCurrentLabel = '1';
     label.className = 'text-xs font-semibold text-zinc-900 dark:text-zinc-100';
     label.textContent = `${movementTechRepeaterLabel(kind)} ${index + 1}`;
-    item.appendChild(label);
+    header.appendChild(label);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.dataset.mtCurrentRemove = '1';
+    removeBtn.className = 'rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
+    removeBtn.textContent = 'Remove';
+    header.appendChild(removeBtn);
+
+    item.appendChild(header);
 
     if (kind === 'videos') {
       const url = document.createElement('div');
@@ -2381,9 +2436,7 @@ function movementTechRenderCurrentTechniqueRows(form, kind, rows) {
     itemsHost.appendChild(item);
   });
 
-  if (empty) {
-    empty.classList.toggle('hidden', normalized.length > 0);
-  }
+  movementTechRefreshCurrentTechniqueRows(section);
 }
 
 function movementTechInitTechniqueEditor(form) {
@@ -2402,6 +2455,20 @@ function movementTechInitTechniqueEditor(form) {
       if (repeater) {
         movementTechAppendRepeaterItem(repeater, kind, {}, true);
       }
+      return;
+    }
+
+    const currentRemoveBtn = event.target.closest('[data-mt-current-remove]');
+    if (currentRemoveBtn) {
+      event.preventDefault();
+      const currentItem = currentRemoveBtn.closest('[data-mt-current-item]');
+      const currentSection = currentItem?.closest('[data-mt-current]');
+
+      if (currentItem) {
+        currentItem.remove();
+      }
+
+      movementTechRefreshCurrentTechniqueRows(currentSection);
       return;
     }
 
@@ -2451,7 +2518,7 @@ function movementTechComparableTips(tips) {
 
   return tips.map((tip, index) => ({
     text: String(tip?.text ?? ''),
-    sort_order: Number(tip?.sort_order ?? (index + 1)),
+    sort_order: index + 1,
   }));
 }
 
@@ -2463,7 +2530,7 @@ function movementTechComparableVideos(videos) {
   return videos.map((video, index) => ({
     url: String(video?.url ?? ''),
     caption: video?.caption == null ? null : String(video.caption),
-    sort_order: Number(video?.sort_order ?? (index + 1)),
+    sort_order: index + 1,
   }));
 }
 
@@ -2471,6 +2538,7 @@ function movementTechTechniqueSnapshotFromResponse(technique) {
   return {
     name: String(technique?.name ?? ''),
     description: technique?.description == null ? null : String(technique.description),
+    instructions: technique?.instructions == null ? null : String(technique.instructions),
     category_id: technique?.category_id == null ? null : Number(technique.category_id),
     difficulty_id: technique?.difficulty_id == null ? null : Number(technique.difficulty_id),
     tips: movementTechComparableTips(technique?.tips),
@@ -2506,6 +2574,7 @@ function movementTechFillTechniqueUpdateForm(form, technique) {
 
   movementTechSetFieldValue(form, 'name', snapshot.name);
   movementTechSetFieldValue(form, 'description', snapshot.description ?? '');
+  movementTechSetFieldValue(form, 'instructions', snapshot.instructions ?? '');
   movementTechSetFieldValue(form, 'category_id', snapshot.category_id == null ? '' : String(snapshot.category_id));
   movementTechSetFieldValue(form, 'difficulty_id', snapshot.difficulty_id == null ? '' : String(snapshot.difficulty_id));
   movementTechRenderCurrentTechniqueRows(form, 'tips', snapshot.tips);
@@ -2530,6 +2599,7 @@ function movementTechClearNamedEntityUpdateForm(form) {
 function movementTechClearTechniqueUpdateForm(form) {
   movementTechSetFieldValue(form, 'name', '');
   movementTechSetFieldValue(form, 'description', '');
+  movementTechSetFieldValue(form, 'instructions', '');
   movementTechSetFieldValue(form, 'category_id', '');
   movementTechSetFieldValue(form, 'difficulty_id', '');
   movementTechRenderCurrentTechniqueRows(form, 'tips', []);
@@ -2870,6 +2940,11 @@ function buildMovementTechTechniquePayload(form, { requireName = false } = {}) {
     payload.description = description.value;
   }
 
+  const instructions = movementTechNullableString(form.instructions?.value);
+  if (!instructions.omit) {
+    payload.instructions = instructions.value;
+  }
+
   const categoryId = movementTechNullableId(form.category_id?.value, 'category_id');
   if (categoryId.error) {
     return categoryId;
@@ -2889,21 +2964,35 @@ function buildMovementTechTechniquePayload(form, { requireName = false } = {}) {
   const snapshot = !requireName ? movementTechReadTechniqueSnapshot(form) : null;
   const clearTips = !requireName && form.querySelector('[name="clear_tips"]')?.checked === true;
   const clearVideos = !requireName && form.querySelector('[name="clear_videos"]')?.checked === true;
+  const currentTips = requireName ? [] : movementTechReadCurrentTechniqueRows(form, 'tips');
+  const currentVideos = requireName ? [] : movementTechReadCurrentTechniqueRows(form, 'videos');
 
   const tips = movementTechReadTipRows(form);
   if (tips.error) {
     return tips;
   }
-  if (requireName ? tips.value.length > 0 : (clearTips || tips.value.length > 0)) {
-    payload.tips = clearTips ? [] : tips.value;
+  const desiredTips = movementTechComparableTips([
+    ...(clearTips ? [] : currentTips),
+    ...tips.value,
+  ]);
+  const tipsChanged = !requireName
+    && JSON.stringify(desiredTips) !== JSON.stringify(movementTechComparableTips(snapshot?.tips));
+  if (requireName ? desiredTips.length > 0 : (clearTips || tips.value.length > 0 || tipsChanged)) {
+    payload.tips = desiredTips;
   }
 
   const videos = movementTechReadVideoRows(form);
   if (videos.error) {
     return videos;
   }
-  if (requireName ? videos.value.length > 0 : (clearVideos || videos.value.length > 0)) {
-    payload.videos = clearVideos ? [] : videos.value;
+  const desiredVideos = movementTechComparableVideos([
+    ...(clearVideos ? [] : currentVideos),
+    ...videos.value,
+  ]);
+  const videosChanged = !requireName
+    && JSON.stringify(desiredVideos) !== JSON.stringify(movementTechComparableVideos(snapshot?.videos));
+  if (requireName ? desiredVideos.length > 0 : (clearVideos || videos.value.length > 0 || videosChanged)) {
+    payload.videos = desiredVideos;
   }
 
   if (!requireName) {
@@ -2914,6 +3003,10 @@ function buildMovementTechTechniquePayload(form, { requireName = false } = {}) {
 
       if ('description' in payload && payload.description === snapshot.description) {
         delete payload.description;
+      }
+
+      if ('instructions' in payload && payload.instructions === snapshot.instructions) {
+        delete payload.instructions;
       }
 
       if ('category_id' in payload && payload.category_id === snapshot.category_id) {

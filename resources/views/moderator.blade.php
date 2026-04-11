@@ -2304,6 +2304,15 @@
                         placeholder="Jump off a wall to gain height."
                       ></textarea>
                     </label>
+                    <label class="text-sm sm:col-span-2">
+                      instructions
+                      <textarea
+                        name="instructions"
+                        rows="4"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Explain the setup, timing and execution."
+                      ></textarea>
+                    </label>
                     <label class="text-sm">
                       category
                       <div class="relative mt-1" data-dd-select data-content-options="categories" data-placeholder="No category (optional)">
@@ -2438,6 +2447,15 @@
                         placeholder="Leave blank to keep current value, or type null to clear"
                       ></textarea>
                     </label>
+                    <label class="text-sm sm:col-span-2">
+                      instructions
+                      <textarea
+                        name="instructions"
+                        rows="4"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        placeholder="Leave blank to keep current value, or type null to clear"
+                      ></textarea>
+                    </label>
                     <label class="text-sm">
                       category
                       <div class="relative mt-1" data-dd-select data-content-options="categories" data-placeholder="Keep current category" data-null-option="Clear category">
@@ -2483,7 +2501,7 @@
                     <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="tips">
                       <div>
                         <div>current tips</div>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Loaded from the API for reference. They are not resent automatically on update.</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Remove rows here to delete them on save. Kept rows stay in the final list.</p>
                       </div>
                       <div data-mt-current-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
                         No tips in this technique.
@@ -2494,7 +2512,7 @@
                       <div class="flex items-center justify-between gap-3">
                         <div>
                           <div>tips to send on update</div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add only the new rows you want to send with this update.</p>
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add extra rows here. They are saved after the current rows you keep.</p>
                         </div>
                         <button type="button" data-mt-add="tips" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
                           Add tip
@@ -2507,12 +2525,12 @@
                     </div>
                     <label class="sm:col-span-2 inline-flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                       <input type="checkbox" name="clear_tips" class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
-                      Clear current tips by sending an empty tips array
+                      Start from an empty tips list before saving
                     </label>
                     <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="videos">
                       <div>
                         <div>current videos</div>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Loaded from the API for reference. They are not resent automatically on update.</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Remove rows here to delete them on save. Kept rows stay in the final list.</p>
                       </div>
                       <div data-mt-current-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
                         No videos in this technique.
@@ -2523,7 +2541,7 @@
                       <div class="flex items-center justify-between gap-3">
                         <div>
                           <div>videos to send on update</div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add only the new rows you want to send with this update.</p>
+                          <p class="text-xs text-zinc-500 dark:text-zinc-400">Add extra rows here. They are saved after the current rows you keep.</p>
                         </div>
                         <button type="button" data-mt-add="videos" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
                           Add video
@@ -2536,7 +2554,7 @@
                     </div>
                     <label class="sm:col-span-2 inline-flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                       <input type="checkbox" name="clear_videos" class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
-                      Clear current videos by sending an empty videos array
+                      Start from an empty videos list before saving
                     </label>
 
                     <label class="text-sm sm:col-span-2">
