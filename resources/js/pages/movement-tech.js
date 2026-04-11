@@ -1123,16 +1123,16 @@
 
     instructionsTipsContent.appendChild(instructionsBlock);
 
-    const tipsBlock = createElement('div', 'space-y-2 border-t border-zinc-200/80 pt-4 dark:border-white/10');
-    tipsBlock.appendChild(
-      createElement(
-        'div',
-        'text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400',
-        t('ui.tips', 'Tips')
-      )
-    );
-
     if (technique.tips.length > 0) {
+      const tipsBlock = createElement('div', 'space-y-2 border-t border-zinc-200/80 pt-4 dark:border-white/10');
+      tipsBlock.appendChild(
+        createElement(
+          'div',
+          'text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400',
+          t('ui.tips', 'Tips')
+        )
+      );
+
       const tipsList = createElement('ul', 'space-y-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300');
 
       technique.tips.forEach((tip) => {
@@ -1143,17 +1143,8 @@
       });
 
       tipsBlock.appendChild(tipsList);
-    } else {
-      tipsBlock.appendChild(
-        createElement(
-          'p',
-          'text-sm leading-relaxed text-zinc-500 dark:text-zinc-400',
-          t('ui.tips_empty', 'No tips yet.')
-        )
-      );
+      instructionsTipsContent.appendChild(tipsBlock);
     }
-
-    instructionsTipsContent.appendChild(tipsBlock);
     instructionsTipsSection.appendChild(instructionsTipsContent);
     infoGrid.appendChild(instructionsTipsSection);
 
@@ -1282,10 +1273,10 @@
       return;
     }
 
-    card.classList.add('ring-2', 'ring-orange-400/30');
+    card.classList.add('ring-2', 'ring-emerald-400/30');
     window.clearTimeout(card.__movementTechFlashTimer);
     card.__movementTechFlashTimer = window.setTimeout(() => {
-      card.classList.remove('ring-2', 'ring-orange-400/30');
+      card.classList.remove('ring-2', 'ring-emerald-400/30');
     }, 1800);
   }
 
