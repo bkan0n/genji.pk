@@ -30,17 +30,17 @@
 
   <section class="relative pb-16 sm:pb-20 min-h-[100vh]">
     <div id="movementTechApp" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div id="movementTechTabsWrap" class="mt-3 hidden overflow-x-auto">
+      <div id="movementTechTabsWrap" class="mt-3 hidden w-full overflow-x-auto pb-1">
         <div
           id="movementTechTabs"
-          class="relative inline-flex w-fit max-w-full items-center rounded-xl border border-zinc-200/80 bg-zinc-100 p-1 dark:border-white/10 dark:bg-white/5"
+          class="relative inline-flex min-w-max items-center rounded-xl border border-zinc-200/80 bg-zinc-100 p-1 dark:border-white/10 dark:bg-white/5"
         >
           <div
             id="movementTechTabsHighlight"
             aria-hidden="true"
             class="pointer-events-none absolute top-1 bottom-1 left-0 z-0 rounded-lg bg-zinc-900 shadow-lg shadow-zinc-900/15 transition-[transform,width] duration-300 ease-[cubic-bezier(.22,.9,.24,1)] dark:bg-white dark:shadow-black/30"
           ></div>
-          <div id="movementTechTabsButtons" class="relative z-[1] flex items-center gap-1"></div>
+          <div id="movementTechTabsButtons" class="relative z-[1] flex min-w-max items-center gap-1"></div>
         </div>
       </div>
 

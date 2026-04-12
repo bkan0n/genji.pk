@@ -926,7 +926,7 @@
     filters.forEach((filter) => {
       const button = createElement(
         'button',
-        'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-200',
+        'inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-200',
         null
       );
       button.type = 'button';
@@ -963,12 +963,13 @@
 
   function moveActiveTabHighlight({ animate = true } = {}) {
     const tabs = tabsNode();
+    const tabsWrap = tabsWrapNode();
     const highlight = tabsHighlightNode();
     const activeButton = Array.from(document.querySelectorAll('[data-tech-filter]')).find(
       (button) => button.dataset.techFilter === state.activeFilter
     );
 
-    if (!tabs || !highlight || !activeButton) {
+    if (!tabs || !tabsWrap || !highlight || !activeButton) {
       return;
     }
 
@@ -980,11 +981,23 @@
       highlight.style.width = `${Math.max(0, width)}px`;
       highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
     };
+    const keepActiveButtonVisible = () => {
+      if (tabsWrap.scrollWidth <= tabsWrap.clientWidth) {
+        return;
+      }
+
+      activeButton.scrollIntoView({
+        behavior: animate ? 'smooth' : 'auto',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    };
 
     if (!animate) {
       const previousTransition = highlight.style.transition;
       highlight.style.transition = 'none';
       apply();
+      requestAnimationFrame(keepActiveButtonVisible);
 
       requestAnimationFrame(() => {
         highlight.style.transition = previousTransition && previousTransition !== 'none'
@@ -1000,6 +1013,7 @@
     }
 
     requestAnimationFrame(apply);
+    requestAnimationFrame(keepActiveButtonVisible);
   }
 
   function createCopyButton(slug) {
