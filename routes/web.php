@@ -25,6 +25,7 @@ Route::view('newsfeed', 'newsfeed')->name('newsfeed');
 Route::view('leaderboard', 'leaderboard')->name('leaderboard');
 Route::view('statistics', 'statistics')->name('statistics');
 Route::view('tutorials', 'tutorials')->name('tutorials');
+Route::view('similar-communities', 'similar-communities')->name('similar-communities');
 Route::view('search', 'search')->name('search');
 Route::view('movement-tech', 'movement-tech')->name('movement-tech');
 Route::view('convertor', 'convertor')->name('convertor');

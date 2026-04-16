@@ -1,6 +1,6 @@
 <!-- Footer (compact) -->
 <footer class="border-t py-10 border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 supports-[backdrop-filter]:dark:bg-zinc-900/70">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <div class="w-full px-4 sm:px-6 lg:px-8">
     <div class="grid items-start gap-4 sm:grid-cols-3 lg:grid-cols-4">
       <div>
         <div class="mb-2 text-sm font-extrabold tracking-tight">{{ __('footer.brand') }}</div>

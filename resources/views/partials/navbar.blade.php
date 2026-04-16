@@ -194,6 +194,14 @@
                 {{ __('navbar.statistics') }}
               </a>
             </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/similar-communities') }}"
+              >
+                {{ __('navbar.similar_communities') }}
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -507,6 +515,12 @@
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.statistics') }}
+            </a>
+            <a
+              href="{{ url('/similar-communities') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.similar_communities') }}
             </a>
           </div>
         </details>
