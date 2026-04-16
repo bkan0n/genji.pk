@@ -247,6 +247,7 @@ async function updateLeaderboard(extra = {}) {
   };
 
   const cached = readPageCache(activeFilters);
+  const usedSkeleton = !cached;
   if (!cached) {
     ensureLeaderboard();
     renderSkeletonRows(pageSize);
@@ -261,11 +262,14 @@ async function updateLeaderboard(extra = {}) {
   }
 
   ensureLeaderboard();
-  renderRows(rows, activeFilters.page_number, activeFilters.page_size);
+  renderRows(rows, activeFilters.page_number, activeFilters.page_size, {
+    animateRows: !usedSkeleton,
+    animateValues: true,
+  });
 
   const rowsEl = table?.querySelector('.lb-rows');
   if (rowsEl) applySplitFlap(rowsEl);
-  cascadeRows();
+  if (!usedSkeleton) cascadeRows(rowsEl);
   renderPagination(total, activeFilters.page_number, activeFilters.page_size);
 
   table?.removeAttribute('aria-busy');
@@ -564,11 +568,12 @@ async function resolveDiscordAvatars(ids) {
 /* =========================
    TABLE RENDER
    ========================= */
-function renderRows(data, pageNumber, pageSize) {
+function renderRows(data, pageNumber, pageSize, options = {}) {
   ensureLeaderboard();
   const rowsEl = table?.querySelector('.lb-rows');
   if (!rowsEl) return;
-  rowsEl.innerHTML = '';
+  const { animateRows = true, animateValues = true } = options;
+  const frag = document.createDocumentFragment();
 
   const startIndex = (pageNumber - 1) * pageSize;
   const avatarObserver = ensureAvatarObserver();
@@ -586,10 +591,21 @@ function renderRows(data, pageNumber, pageSize) {
     const skillRank = normalizeSkillRank(player.skill_rank);
 
     const row = document.createElement('div');
-    row.className = `lb-row lb-grid gp-reveal-show ${__clsAnimDelay(__clamp(idx * 30, 0, 250))} tr-sf-enter`;
+    row.className = `lb-row lb-grid gp-reveal-show ${animateRows ? `${__clsAnimDelay(__clamp(idx * 30, 0, 250))} tr-sf-enter` : ''}`.trim();
+
+    const rowNumText = String(rowNum);
+    const nicknameText = player.nickname || 'N/A';
+    const xpText = (Number(player.xp_amount) || 0).toLocaleString();
+    const wrText = (Number(player.wr_count) || 0).toLocaleString();
+    const mapsText = (Number(player.map_count) || 0).toLocaleString();
+    const playtestText = (Number(player.playtest_count) || 0).toLocaleString();
+    const discordText = discordTag;
+
+    const valueAttr = (value) => animateValues ? ` data-sf="${escAttr(value)}"` : '';
+    const valueHtml = (value) => esc(value);
 
     row.innerHTML = `
-      <div class="col-idx px-2 py-2 text-zinc-600 dark:text-zinc-400" data-sf="${escAttr(rowNum)}">${esc(rowNum)}</div>
+      <div class="col-idx px-2 py-2 text-zinc-600 dark:text-zinc-400"${valueAttr(rowNumText)}>${valueHtml(rowNumText)}</div>
 
       <div class="col-nickname px-2 py-2">
         <a href="rank_card?user_id=${encodeURIComponent(player.user_id)}"
@@ -605,13 +621,12 @@ function renderRows(data, pageNumber, pageSize) {
               data-fallback="${escAttr(fallback)}"
             />
           </span>
-          <span class="font-medium truncate block max-w-[28ch]"
-                data-sf="${escAttr(player.nickname || 'N/A')}">${esc(player.nickname || 'N/A')}</span>
+          <span class="font-medium truncate block max-w-[28ch]"${valueAttr(nicknameText)}>${valueHtml(nicknameText)}</span>
         </a>
       </div>
 
-      <div class="col-xp px-2 py-2 font-semibold" data-sf="${escAttr((Number(player.xp_amount)||0).toLocaleString())}">
-        ${(Number(player.xp_amount)||0).toLocaleString()}
+      <div class="col-xp px-2 py-2 font-semibold"${valueAttr(xpText)}>
+        ${valueHtml(xpText)}
       </div>
 
       <div class="col-tier px-2 py-2">
@@ -622,28 +637,30 @@ function renderRows(data, pageNumber, pageSize) {
         ${mkSkillPill(skillRank)}
       </div>
 
-      <div class="col-wr px-2 py-2" data-sf="${escAttr((Number(player.wr_count)||0).toLocaleString())}">
-        ${(Number(player.wr_count)||0).toLocaleString()}
+      <div class="col-wr px-2 py-2"${valueAttr(wrText)}>
+        ${valueHtml(wrText)}
       </div>
 
-      <div class="col-maps px-2 py-2" data-sf="${escAttr((Number(player.map_count)||0).toLocaleString())}">
-        ${(Number(player.map_count)||0).toLocaleString()}
+      <div class="col-maps px-2 py-2"${valueAttr(mapsText)}>
+        ${valueHtml(mapsText)}
       </div>
 
-      <div class="col-playtest px-2 py-2" data-sf="${escAttr((Number(player.playtest_count)||0).toLocaleString())}">
-        ${(Number(player.playtest_count)||0).toLocaleString()}
+      <div class="col-playtest px-2 py-2"${valueAttr(playtestText)}>
+        ${valueHtml(playtestText)}
       </div>
 
       <div class="col-discord px-2 py-2 text-zinc-700 dark:text-zinc-300">
-        <span class="truncate block max-w-[28ch]" data-sf="${escAttr(discordTag)}">${esc(discordTag)}</span>
+        <span class="truncate block max-w-[28ch]"${valueAttr(discordText)}>${valueHtml(discordText)}</span>
       </div>
     `;
 
-    rowsEl.appendChild(row);
+    frag.appendChild(row);
 
     const img = row.querySelector('img[data-discord-avatar]');
     if (img) avatarObserver.observe(img);
   });
+
+  rowsEl.replaceChildren(frag);
 }
 
 /* =========================
@@ -841,8 +858,8 @@ function applySplitFlap(root = document) {
   });
 }
 
-function cascadeRows() {
-  document.querySelectorAll('.lb-rows .lb-row').forEach((row, i) => {
+function cascadeRows(root = document) {
+  root.querySelectorAll('.lb-row').forEach((row, i) => {
     row.classList.add(__clsAnimDelay(__clamp(i * 30, 0, 250)), 'tr-sf-enter');
     row.addEventListener('animationend', () => row.classList.remove('tr-sf-enter'), { once: true });
   });
@@ -952,7 +969,7 @@ function renderSkeletonRows(count = pageSize) {
   ensureLeaderboard();
   const rowsEl = table?.querySelector('.lb-rows');
   if (!rowsEl) return;
-  rowsEl.innerHTML = '';
+  const frag = document.createDocumentFragment();
 
   for (let i = 0; i < count; i++) {
     const row = document.createElement('div');
@@ -1011,8 +1028,10 @@ function renderSkeletonRows(count = pageSize) {
       </div>
     `;
 
-    rowsEl.appendChild(row);
+    frag.appendChild(row);
   }
+
+  rowsEl.replaceChildren(frag);
 }
 
 /* =========================

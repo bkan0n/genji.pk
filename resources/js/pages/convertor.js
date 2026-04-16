@@ -1639,6 +1639,7 @@ function cleanSourceG(src) {
   return src
     .replace(/^[ \t]*#!define\s+editortoggle[^\n]*\n?/gm, '')
     .replace(/^[ \t]*editortoggle\([^\n]*\)\s*\n?/gm, '')
+    .replace(/^[ \t]*#!postCompileHook[^\n]*\n?/gm, '')
     .replace(/^[ \t]*__script__\([^)]+\)[ \t]*;?[ \t]*\n/gm, '')
     .replace(/\beditoron\b/g, 'false');
 }
@@ -1655,6 +1656,12 @@ function addMapPolyfills(src) {
       '#!define flashpointMap []',
     ].join('\n') + '\n';
   return polyfills + src.replace(/\r\n?/g, '\n');
+}
+
+function applyFrameworkCorrections(result) {
+  return String(result || '')
+    .replace(/\uFF34\uFF2C\uFF25\uFF52\uFF52\uEC48/g, '')
+    .replace(/rule \("Initialize player variables"\) {\n    event {\n        Ongoing - Each Player;\n        All;\n        All;\n    }\n    actions {\n        Set Player Variable\(Event Player, __languageIndex__, 1\.1\);\n    }\n}\n\n?/g, '');
 }
 
 function findFirstBraceUnderflow(src) {
@@ -1751,7 +1758,7 @@ async function loadTemplate(lang) {
     const overpy = await getOverpyFromNpm();
     if (overpy.readyPromise) await overpy.readyPromise;
 
-    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4F/';
+    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4G/';
     const entryFile = 'framework.opy';
     const resp = await fetch(rawBase + entryFile);
     if (!resp.ok) throw new Error(`HTTP ${resp.status} on ${entryFile}`);
@@ -1768,7 +1775,7 @@ async function loadTemplate(lang) {
       src = '#!define enableInvisCommand false\n' + src;
     }
     const { result } = await overpy.compile(src, lang, rawBase, entryFile);
-    tpl = result;
+    tpl = applyFrameworkCorrections(result);
   }
 
   const esc = tpl.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
