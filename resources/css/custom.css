@@ -455,8 +455,8 @@ i.flag-zm:before,i.flag-zambia:before{background-position:-108px -364px!importan
 i.flag-zw:before,i.flag-zimbabwe:before{background-position:-108px -390px!important}
 
 /* ================= LEADERBOARD ================= */
-.sf{display:inline-flex;gap:.06em;color:inherit}
-.sf-char{display:inline-block;perspective:600px;color:inherit}
+.sf{display:inline-block;color:inherit;white-space:pre-wrap}
+.sf-char{display:inline-block;perspective:600px;color:inherit;vertical-align:baseline}
 .sf-card{display:inline-block;transform-style:preserve-3d;color:inherit;transform-origin:50% 0%;animation:sf-flip 420ms cubic-bezier(.2,.7,.2,1) both;backface-visibility:hidden}
 @keyframes sf-flip{0%{transform:rotateX(-90deg);opacity:0}55%{transform:rotateX(8deg);opacity:1}70%{transform:rotateX(-3deg)}100%{transform:rotateX(0)}}
 /* .sf-char[data-delay] .sf-card{animation-delay:var(--d,0ms)} */
@@ -551,8 +551,8 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .qmb .qmb-text{font-variant-numeric:tabular-nums;font-size:.8rem;color:#a1a1aa}
 
 /* ================= Split-flap mini ================= */
-.sf{display:inline-flex;gap:.06em;color:inherit}
-.sf-char{display:inline-block;perspective:600px;color:inherit}
+.sf{display:inline-block;color:inherit;white-space:pre-wrap}
+.sf-char{display:inline-block;perspective:600px;color:inherit;vertical-align:baseline}
 .sf-card{
   display:inline-block;transform-style:preserve-3d;color:inherit;transform-origin:50% 0%;
   animation:sf-flip 420ms cubic-bezier(.2,.7,.2,1) both;backface-visibility:hidden;white-space:pre;

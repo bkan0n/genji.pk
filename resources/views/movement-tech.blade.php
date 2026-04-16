@@ -38,7 +38,7 @@
           <div
             id="movementTechTabsHighlight"
             aria-hidden="true"
-            class="pointer-events-none absolute top-1 bottom-1 left-0 z-0 rounded-lg bg-zinc-900 shadow-lg shadow-zinc-900/15 transition-[transform,width] duration-300 ease-[cubic-bezier(.22,.9,.24,1)] dark:bg-white dark:shadow-black/30"
+            class="pointer-events-none absolute top-1 bottom-1 left-0 z-0 rounded-lg bg-white shadow-sm ring-1 ring-zinc-200/70 transition-[transform,width] duration-300 ease-[cubic-bezier(.22,.9,.24,1)] dark:bg-white dark:ring-white/10 dark:shadow-black/30"
           ></div>
           <div id="movementTechTabsButtons" class="relative z-[1] flex min-w-max items-center gap-1"></div>
         </div>

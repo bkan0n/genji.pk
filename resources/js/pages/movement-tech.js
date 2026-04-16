@@ -950,7 +950,7 @@
       const isActive = button.dataset.techFilter === state.activeFilter;
 
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-      button.classList.toggle('text-white', isActive);
+      button.classList.toggle('text-zinc-900', isActive);
       button.classList.toggle('dark:text-zinc-900', isActive);
       button.classList.toggle('text-zinc-700', !isActive);
       button.classList.toggle('dark:text-zinc-300', !isActive);
@@ -1085,9 +1085,12 @@
     );
     const categoryLabel = createElement(
       'span',
-      'text-xs font-medium uppercase tracking-[0.22em] text-zinc-500 dark:text-zinc-400',
+      `text-xs font-medium uppercase tracking-[0.22em] text-zinc-500 dark:text-zinc-400${
+        state.activeFilter === 'all' ? '' : ' hidden'
+      }`,
       technique.categoryName
     );
+    categoryLabel.dataset.techCategoryLabel = '1';
 
     header.appendChild(title);
     header.appendChild(copyButton);
@@ -1276,6 +1279,10 @@
         card.dataset.techCategory === state.activeFilter;
 
       card.classList.toggle('hidden', !matches);
+    });
+
+    Array.from(grid.querySelectorAll('[data-tech-category-label]')).forEach((label) => {
+      label.classList.toggle('hidden', state.activeFilter !== 'all');
     });
 
     syncGridVisibility();
