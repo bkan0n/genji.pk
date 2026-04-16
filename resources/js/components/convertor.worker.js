@@ -1,12 +1,28 @@
-import * as overpyNs from 'overpy';
-
 function resolveOverpy(mod){
   if (mod && typeof mod.compile === 'function') return mod;
   if (mod?.default && typeof mod.default.compile === 'function') return mod.default;
   return null;
 }
 
-const OVERPY = resolveOverpy(overpyNs);
+function ensureBrowserGlobalsForOverpy(){
+  if (typeof globalThis.window === 'undefined') {
+    globalThis.window = globalThis;
+  }
+}
+
+let overpyPromise = null;
+
+async function loadOverpy(){
+  if (!overpyPromise) {
+    ensureBrowserGlobalsForOverpy();
+    overpyPromise = import('overpy').then((mod) => {
+      const resolved = resolveOverpy(mod);
+      if (!resolved) throw new Error('Module OverPy invalide');
+      return resolved;
+    });
+  }
+  return overpyPromise;
+}
 
 // ---------- utils ----------
 function normalizeNewlines(s){ return String(s||'').replace(/\r\n?/g,'\n'); }
@@ -92,6 +108,7 @@ function cleanSourceG(src){
   return src
     .replace(/^[ \t]*#!define\s+editortoggle[^\n]*\n?/gm, '')
     .replace(/^[ \t]*editortoggle\([^\n]*\)\s*\n?/gm, '')
+    .replace(/^[ \t]*#!postCompileHook[^\n]*\n?/gm, '')
     .replace(/^[ \t]*__script__\([^)]+\)[ \t]*;?[ \t]*\n/gm, '')
     .replace(/\beditoron\b/g, 'false');
 }
@@ -123,13 +140,18 @@ function addMapPolyfills(src){
     return poly + src.replace(/\r\n?/g, '\n');
 }
 
+function applyFrameworkCorrections(result){
+  return String(result || '')
+    .replace(/\uFF34\uFF2C\uFF25\uFF52\uFF52\uEC48/g, '')
+    .replace(/rule \("Initialize player variables"\) {\n    event {\n        Ongoing - Each Player;\n        All;\n        All;\n    }\n    actions {\n        Set Player Variable\(Event Player, __languageIndex__, 1\.1\);\n    }\n}\n\n?/g, '');
+}
+
 // ---------- compilation OverPy (worker) ----------
 async function compileFrameworkTemplate(lang){
-  const Over = OVERPY;
-  if (!Over) throw new Error('OverPy npm introuvable dans le worker');
+  const Over = await loadOverpy();
   if (Over.readyPromise) await Over.readyPromise;
 
-  const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4F/';
+  const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4G/';
   const entryFile = 'framework.opy';
 
   let src = await fetchText(rawBase + entryFile);
@@ -146,7 +168,7 @@ async function compileFrameworkTemplate(lang){
   }
 
   const { result } = await Over.compile(src, lang, rawBase, entryFile);
-  return result;
+  return applyFrameworkCorrections(result);
 }
 
 // ---------- messaging ----------
