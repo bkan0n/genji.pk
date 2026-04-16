@@ -94,12 +94,6 @@
         >
           {{ __('navbar.home') }}
         </a>
-        <a
-          href="{{ url('/leaderboard') }}"
-          class="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
-        >
-          {{ __('navbar.leaderboard') }}
-        </a>
 
         <!-- Search -->
         <div class="relative">
@@ -173,17 +167,9 @@
             <li>
               <a
                 class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
-                href="{{ url('/tutorials') }}"
+                href="{{ url('/leaderboard') }}"
               >
-                {{ __('navbar.tutorial') }}
-              </a>
-            </li>
-            <li>
-              <a
-                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
-                href="{{ url('/movement-tech') }}"
-              >
-                {{ __('navbar.movement_tech') }}
+                {{ __('navbar.leaderboard') }}
               </a>
             </li>
             <li>
@@ -192,14 +178,6 @@
                 href="{{ url('/statistics') }}"
               >
                 {{ __('navbar.statistics') }}
-              </a>
-            </li>
-            <li>
-              <a
-                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
-                href="{{ url('/similar-communities') }}"
-              >
-                {{ __('navbar.similar_communities') }}
               </a>
             </li>
           </ul>
@@ -240,10 +218,56 @@
                 {{ __('navbar.submit_map') }}
               </a>
             </li>
+          </ul>
+        </div>
+
+        <!-- Learn -->
+        <div class="relative">
+          <button
+            id="learnBtn"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            aria-expanded="false"
+            aria-controls="learnMenu"
+          >
+            {{ __('navbar.learn') }}
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
+              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            </svg>
+          </button>
+          <ul
+            id="learnMenu"
+            class="invisible absolute left-0 z-50 mt-2 min-w-52 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+          >
             <li>
-              <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
-                href="{{ url('/infos') }}">
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/infos') }}"
+              >
                 {{ __('navbar.infos') }}
+              </a>
+            </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/tutorials') }}"
+              >
+                {{ __('navbar.tutorial') }}
+              </a>
+            </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/similar-communities') }}"
+              >
+                {{ __('navbar.similar_communities') }}
+              </a>
+            </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/movement-tech') }}"
+              >
+                {{ __('navbar.movement_tech') }}
               </a>
             </li>
           </ul>
@@ -499,28 +523,16 @@
               {{ __('navbar.newsfeed') }}
             </a>
             <a
-              href="{{ url('/tutorials') }}"
+              href="{{ url('/leaderboard') }}"
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
-              {{ __('navbar.tutorial') }}
-            </a>
-            <a
-              href="{{ url('/movement-tech') }}"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
-            >
-              {{ __('navbar.movement_tech') }}
+              {{ __('navbar.leaderboard') }}
             </a>
             <a
               href="{{ url('/statistics') }}"
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.statistics') }}
-            </a>
-            <a
-              href="{{ url('/similar-communities') }}"
-              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
-            >
-              {{ __('navbar.similar_communities') }}
             </a>
           </div>
         </details>
@@ -546,6 +558,43 @@
             <a href="{{ url('/submit') }}?section=submit_map"
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
               {{ __('navbar.submit_map') }}
+            </a>
+          </div>
+        </details>
+
+        <details class="px-3 py-2">
+          <summary
+            class="flex cursor-pointer list-none items-center justify-between rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+          >
+            <span>{{ __('navbar.learn') }}</span>
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
+              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            </svg>
+          </summary>
+          <div class="mt-1 ml-2 grid">
+            <a
+              href="{{ url('/infos') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.infos') }}
+            </a>
+            <a
+              href="{{ url('/tutorials') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.tutorial') }}
+            </a>
+            <a
+              href="{{ url('/similar-communities') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.similar_communities') }}
+            </a>
+            <a
+              href="{{ url('/movement-tech') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.movement_tech') }}
             </a>
           </div>
         </details>

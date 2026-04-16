@@ -25,6 +25,7 @@ return [
     'statistics'           => '社区状态',
     'similar_communities'  => '相似社区',
     'submit'               => '提交',
+    'learn'                => 'Learn',
     'submit_record'        => '上传通关记录',
     'submit_playtest'      => '进行测试地图投票',
     'submit_map'           => '上传地图',

@@ -25,6 +25,7 @@ return [
     'statistics'           => 'Statistiques',
     'similar_communities'  => 'Communautés similaires',
     'submit'               => 'Soumettre',
+    'learn'                => 'Learn',
     'submit_record'        => 'Completion',
     'submit_playtest'      => 'Playtest',
     'submit_map'           => 'Carte',

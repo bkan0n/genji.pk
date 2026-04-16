@@ -15,7 +15,7 @@ return [
     'visit' => 'Ouvrir le site',
     'cards' => [
         'momentum' => [
-            'eyebrow' => 'Doomfist Parkour',
+            'eyebrow' => 'Parkour',
             'title' => 'Project Momentum',
             'subtitle' => 'Communauté Doomfist Parkour',
             'description' => 'Routes, records et outils communautaires autour du parkour Doomfist.',

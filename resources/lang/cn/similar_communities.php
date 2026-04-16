@@ -15,7 +15,7 @@ return [
     'visit' => '打开网站',
     'cards' => [
         'momentum' => [
-            'eyebrow' => 'Doomfist Parkour',
+            'eyebrow' => 'Parkour',
             'title' => 'Project Momentum',
             'subtitle' => 'Doomfist Parkour 社区',
             'description' => '围绕 Doomfist 跑酷的路线、记录与社区工具。',

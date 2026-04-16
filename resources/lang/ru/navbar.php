@@ -25,6 +25,7 @@ return [
     'statistics'           => 'Статистика',
     'similar_communities'  => 'Похожие сообщества',
     'submit'               => 'Отправить',
+    'learn'                => 'Learn',
     'submit_record'        => 'Прохождение',
     'submit_playtest'      => 'Плейтест',
     'submit_map'           => 'Карта',

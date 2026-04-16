@@ -25,6 +25,7 @@ return [
     'statistics'           => 'Statistics',
     'similar_communities'  => 'Similar Communities',
     'submit'               => 'Submit',
+    'learn'                => 'Learn',
     'submit_record'        => 'Completion',
     'submit_playtest'      => 'Playtest',
     'submit_map'           => 'Map',

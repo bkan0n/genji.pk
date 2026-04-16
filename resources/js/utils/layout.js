@@ -93,6 +93,7 @@ const dropdownConfigs = [
   { btnId: 'searchBtn', menuId: 'searchMenu' },
   { btnId: 'communityBtn', menuId: 'communityMenu' },
   { btnId: 'submitBtn', menuId: 'submitMenu' },
+  { btnId: 'learnBtn', menuId: 'learnMenu' },
   { btnId: 'langBtn', menuId: 'langMenu' },
   { btnId: 'avatarBtn', menuId: 'avatarMenu' },
 ];
