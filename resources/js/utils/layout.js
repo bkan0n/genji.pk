@@ -108,9 +108,8 @@ const dropdownInstances = dropdownConfigs
   .filter(Boolean);
 
 function closeAllDropdowns() {
-  dropdownInstances.forEach(({ btn, menu }) => {
+  dropdownInstances.forEach(({ btn }) => {
     btn.setAttribute('aria-expanded', 'false');
-    menu.classList.add('invisible', 'opacity-0', 'translate-y-1');
   });
 }
 
@@ -118,14 +117,13 @@ function toggleDropdown(targetBtn) {
   const instance = dropdownInstances.find(({ btn }) => btn === targetBtn);
   if (!instance) return;
 
-  const { btn, menu } = instance;
+  const { btn } = instance;
   const isExpanded = btn.getAttribute('aria-expanded') === 'true';
 
   closeAllDropdowns();
 
   if (!isExpanded) {
     btn.setAttribute('aria-expanded', 'true');
-    menu.classList.remove('invisible', 'opacity-0', 'translate-y-1');
   }
 }
 

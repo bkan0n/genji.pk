@@ -1085,6 +1085,37 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .dd-anim{opacity:0;transform:translateY(4px) scale(.98);transition:opacity .16s ease,transform .16s ease;will-change:opacity,transform}
 .dd-anim.dd-in{opacity:1;transform:translateY(0) scale(1)}
 .dd-anim.dd-out{opacity:0;transform:translateY(4px) scale(.98)}
+.nav-dd-trigger svg:last-child{transition:transform .22s cubic-bezier(.22,.61,.36,1)}
+.nav-dd-trigger[aria-expanded="true"] svg:last-child{transform:rotate(180deg)}
+.nav-dd-menu{
+  visibility:hidden;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(8px) scale(.985);
+  transform-origin:top center;
+  transition:
+    opacity .22s cubic-bezier(.22,.61,.36,1),
+    transform .22s cubic-bezier(.22,.61,.36,1),
+    visibility 0s linear .22s;
+  will-change:opacity,transform;
+  backface-visibility:hidden;
+}
+.nav-dd-trigger[aria-expanded="true"] + .nav-dd-menu{
+  visibility:visible;
+  pointer-events:auto;
+  opacity:1;
+  transform:translateY(0) scale(1);
+  transition:
+    opacity .26s cubic-bezier(.22,.61,.36,1),
+    transform .26s cubic-bezier(.22,.61,.36,1),
+    visibility 0s linear 0s;
+}
+@media (prefers-reduced-motion: reduce){
+  .nav-dd-trigger svg:last-child,
+  .nav-dd-menu{
+    transition:none!important;
+  }
+}
 /* ---------- Quality slider ---------- */
 .quality-wrap { display:flex; flex-direction:column; gap:.5rem; }
 .quality-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
