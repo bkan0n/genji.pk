@@ -13,6 +13,7 @@ return [
         'description' => '探索相似的社区、网站与工具。',
     ],
     'visit' => '打开网站',
+    'visit_discord' => '加入 Discord',
     'cards' => [
         'momentum' => [
             'eyebrow' => 'Parkour',
@@ -31,6 +32,12 @@ return [
             'title' => 'Lucio Surf League',
             'subtitle' => 'Lucio Surf 社区',
             'description' => '适合卢西奥玩家的冲浪路线、活动与竞赛工具。',
+        ],
+        'genjiball' => [
+            'eyebrow' => '自定义模式',
+            'title' => 'Genji Ball',
+            'subtitle' => 'Genji Ball 社区',
+            'description' => '围绕 Genji Ball 竞技场景整理的赛事、排名、活动与 Workshop 代码。',
         ],
         'gemster' => [
             'eyebrow' => 'Workshop',
