@@ -18,26 +18,6 @@
             {{ __('tutorials.genjiParkourTechsDescription') }}
           </p>
 
-          <div class="flex items-center gap-3 pt-2">
-            <a
-              href="#hero2"
-              class="group inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition ring-inset hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-2 focus:ring-emerald-400/40 focus:outline-none"
-            >
-              <svg
-                class="h-4 w-4 opacity-80 transition group-hover:translate-y-0.5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5A1 1 0 114.707 10.293L8 13.586V4a1 1 0 011-1z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              <span>{{ __('tutorials.scrollDown') }}</span>
-            </a>
-          </div>
         </div>
 
         <div
@@ -117,26 +97,6 @@
           </code>
         </div>
 
-        <div class="flex items-center gap-3 pt-2">
-          <a
-            href="#hero3"
-            class="group inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition ring-inset hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-2 focus:ring-sky-400/40 focus:outline-none"
-          >
-            <svg
-              class="h-4 w-4 opacity-80 transition group-hover:translate-y-0.5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5A1 1 0 114.707 10.293L8 13.586V4a1 1 0 011-1z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>{{ __('tutorials.scrollDown') }}</span>
-          </a>
-        </div>
       </div>
     </div>
   </section>
@@ -157,25 +117,32 @@
           {{ __('tutorials.mapCreationDescription') }}
         </p>
 
-        <div class="flex items-center gap-3 pt-2">
-          <a
-            href="#hero4"
-            class="group inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition ring-inset hover:bg-zinc-100 dark:hover:bg-white/10 focus:ring-2 focus:ring-purple-400/40 focus:outline-none"
+        <!-- Code -->
+        <div class="mt-4">
+          <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('tutorials.codeLabel') }}:</span>
+          <code
+            class="ml-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-400/30 transition ring-inset hover:bg-emerald-400/20"
+            data-map-code="54CRY"
+            title="{{ __('tutorials.copyTooltip') }}"
           >
+            <span class="tracking-wider tabular-nums select-none">
+              54CRY
+            </span>
             <svg
-              class="h-4 w-4 opacity-80 transition group-hover:translate-y-0.5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
+              class="h-4 w-4 opacity-70 group-hover:opacity-100"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5A1 1 0 114.707 10.293L8 13.586V4a1 1 0 011-1z"
-                clip-rule="evenodd"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 16h8m-8-4h8m-2-8H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2z"
               />
             </svg>
-            <span>{{ __('tutorials.scrollDown') }}</span>
-          </a>
+          </code>
         </div>
       </div>
 

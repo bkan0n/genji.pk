@@ -13,6 +13,7 @@ return [
         'description' => 'Изучайте похожие сообщества, сайты и инструменты.',
     ],
     'visit' => 'Открыть сайт',
+    'visit_discord' => 'Войти в Discord',
     'cards' => [
         'momentum' => [
             'eyebrow' => 'Parkour',
@@ -31,6 +32,12 @@ return [
             'title' => 'Lucio Surf League',
             'subtitle' => 'Сообщество Lucio Surf',
             'description' => 'Серф-маршруты, события и соревновательные инструменты для игроков Lucio.',
+        ],
+        'genjiball' => [
+            'eyebrow' => 'Турнирный режим',
+            'title' => 'Genji Ball',
+            'subtitle' => 'Сообщество Genji Ball',
+            'description' => 'Турниры, рейтинги, события и Workshop-коды для соревновательной сцены Genji Ball.',
         ],
         'gemster' => [
             'eyebrow' => 'Workshop',

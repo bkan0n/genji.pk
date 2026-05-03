@@ -99,18 +99,18 @@
         <div class="relative">
           <button
             id="searchBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            class="nav-dd-trigger inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="searchMenu"
           >
             {{ __('navbar.search') }}
-            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
-              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
           <ul
             id="searchMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-40 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+            class="nav-dd-menu absolute left-0 z-50 mt-2 min-w-40 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur"
           >
             <li>
               <a
@@ -143,18 +143,18 @@
         <div class="relative">
           <button
             id="communityBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            class="nav-dd-trigger inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="communityMenu"
           >
             {{ __('navbar.community') }}
-            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
-              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
           <ul
             id="communityMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-48 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+            class="nav-dd-menu absolute left-0 z-50 mt-2 min-w-48 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur"
           >
             <li>
               <a
@@ -187,18 +187,18 @@
         <div class="relative">
           <button
             id="submitBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            class="nav-dd-trigger inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="submitMenu"
           >
             {{ __('navbar.submit') }}
-            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
-              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
           <ul
             id="submitMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-44 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+            class="nav-dd-menu absolute left-0 z-50 mt-2 min-w-44 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur"
           >
             <li>
               <a class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
@@ -225,18 +225,18 @@
         <div class="relative">
           <button
             id="learnBtn"
-            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            class="nav-dd-trigger inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             aria-expanded="false"
             aria-controls="learnMenu"
           >
             {{ __('navbar.learn') }}
-            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
-              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
           <ul
             id="learnMenu"
-            class="invisible absolute left-0 z-50 mt-2 min-w-52 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+            class="nav-dd-menu absolute left-0 z-50 mt-2 min-w-52 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur"
           >
             <li>
               <a
@@ -281,19 +281,19 @@
         <div class="relative">
           <button
             id="langBtn"
-            class="hidden cursor-pointer items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:border-white/20 hover:bg-zinc-100 dark:hover:bg-white/5 sm:inline-flex"
+            class="nav-dd-trigger hidden cursor-pointer items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:border-white/20 hover:bg-zinc-100 dark:hover:bg-white/5 sm:inline-flex"
             aria-expanded="false"
             aria-controls="langMenu"
           >
             <i class="flag lang-flag {{ $selectedLangData['flag'] ?? 'flag-us' }}"></i>
             <span class="uppercase">{{ $selectedLangData['name'] ?? 'EN' }}</span>
-            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
-              <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+            <svg class="h-4 w-4 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
           <ul
             id="langMenu"
-            class="invisible absolute right-0 z-50 mt-2 max-h-44 w-48 translate-y-1 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+            class="nav-dd-menu absolute right-0 z-50 mt-2 max-h-44 w-48 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur"
           >
             @foreach ($languages as $code => $data)
               @if (empty($data['translated']))
@@ -361,7 +361,7 @@
           <div class="relative">
             <button
               id="avatarBtn"
-              class="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 p-1.5 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/5"
+              class="nav-dd-trigger inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 p-1.5 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/5"
               aria-expanded="false"
               aria-controls="avatarMenu"
             >
@@ -383,14 +383,14 @@
                 </span>
               </div>
 
-              <svg class="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" viewBox="0 0 20 20">
-                <path fill="currentColor" d="M5 8l5 5 5-5H5z" />
+              <svg class="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
 
             <ul
               id="avatarMenu"
-              class="invisible absolute right-0 z-50 mt-2 w-48 translate-y-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+              class="nav-dd-menu absolute right-0 z-50 mt-2 w-48 rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur"
             >
               <li class="px-4 pb-2">
                 <div class="text-xs font-extrabold text-zinc-800 dark:text-white/90">
