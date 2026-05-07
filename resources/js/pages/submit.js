@@ -6665,6 +6665,8 @@ function mountModeratorActions(modalEl, playtest) {
   }
 
   let activeOpt = DIFFICULTY_FINE_OPTIONS.find(o => o.value === 'Medium') || DIFFICULTY_FINE_OPTIONS[0];
+  const moderatorActionButtonClass = 'ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:hover:bg-white/15';
+  const moderatorActionDiffButtonClass = 'ptmod-diffbutton group flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer hover:bg-white/75 dark:hover:bg-zinc-900/60 select-none';
 
   const root = document.createElement('section');
   root.className = 'mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3 overflow-hidden';
@@ -6677,8 +6679,7 @@ function mountModeratorActions(modalEl, playtest) {
         <h4>Approve</h4>
         <p class="text-xs text-zinc-600 dark:text-zinc-400">Marks the playtest as approved and sets you as verifier.</p>
         <div class="ptmod-actions">
-          <button type="button" id="ptModApprove"
-            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
+          <button type="button" id="ptModApprove" class="${moderatorActionButtonClass}">
             Approve (verifier = me)
           </button>
         </div>
@@ -6690,9 +6691,7 @@ function mountModeratorActions(modalEl, playtest) {
         <p class="text-xs text-zinc-600 dark:text-zinc-400">Force a difficulty and accept the playtest.</p>
         <div class="ptmod-actions">
           <div class="relative min-w-[180px]">
-            <div id="ptmod-diffbutton"
-              class="ptmod-diffbutton group flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer hover:bg-white/75 dark:bg-zinc-900/60 select-none"
-              role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
+            <div id="ptmod-diffbutton" class="${moderatorActionDiffButtonClass}" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
               <div class="inline-flex items-center gap-2 min-w-0">
                 <span class="inline-block h-2.5 w-2.5 rounded-full ${dotClass(activeOpt.raw)} ring-1 ring-inset ring-zinc-400/60 dark:ring-white/20 shrink-0"></span>
                 <span id="ptmod-difflabel" class="truncate">${activeOpt.text()}</span>
@@ -6716,8 +6715,7 @@ function mountModeratorActions(modalEl, playtest) {
             </div>
           </div>
 
-          <button type="button" id="ptModForceAccept"
-            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
+          <button type="button" id="ptModForceAccept" class="${moderatorActionButtonClass}">
             Force Accept
           </button>
         </div>
@@ -6731,8 +6729,7 @@ function mountModeratorActions(modalEl, playtest) {
           <input id="ptModDenyReason" type="text" placeholder="Reason…" maxlength="200"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
             class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-          <button type="button" id="ptModForceDeny"
-            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
+          <button type="button" id="ptModForceDeny" class="${moderatorActionButtonClass}">
             Force Deny
           </button>
         </div>
@@ -6752,8 +6749,7 @@ function mountModeratorActions(modalEl, playtest) {
           <label class="text-sm text-zinc-700 dark:text-zinc-300 inline-flex items-center gap-1">
             <input id="ptModResetCompletions" type="checkbox" class="accent-emerald-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"> remove completions
           </label>
-          <button type="button" id="ptModReset"
-            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
+          <button type="button" id="ptModReset" class="${moderatorActionButtonClass}">
             Reset Playtest
           </button>
         </div>
@@ -6767,12 +6763,10 @@ function mountModeratorActions(modalEl, playtest) {
           <input id="ptModDeleteVoteUser" type="text" inputmode="numeric" placeholder="User ID to delete vote…"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
             class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-          <button type="button" id="ptModDeleteVote"
-            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
+          <button type="button" id="ptModDeleteVote" class="${moderatorActionButtonClass}">
             Delete user vote
           </button>
-          <button type="button" id="ptModDeleteAllVotes"
-            class="ptmod-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-2 text-sm hover:bg-white/85 dark:bg-zinc-900/7 dark:bg-white/15">
+          <button type="button" id="ptModDeleteAllVotes" class="${moderatorActionButtonClass}">
             Delete all votes
           </button>
         </div>
