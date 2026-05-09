@@ -3,8 +3,8 @@ export const frameworkTemplate = `设置
 {
 	主程序
 	{
-		模式名称: "Genji Parkour - 源氏跑酷 - v1.10.4G"
-		描述: "◀ Genji Parkour - 源氏跑酷 ▶\\nCode: XXXXX\\nMade By: \\n\\n◀ Official Genji Parkour Editor ▶\\nCode: 54CRY\\nDiscord: dsc.gg/genjiparkour\\nAdapted By: LulledLion, FishoFire, Nebula\\nv1.10.4G"
+		模式名称: "Genji Parkour ◆ 源氏跑酷 - v1.10.4I"
+		描述: "◀ Genji Parkour ◆ 源氏跑酷 ▶\\nCode: XXXXX\\nMade By: \\n\\n◀ Official Genji Parkour Editor ▶\\nCode: code here - 代码\\nDiscord: dsc.gg/genjiparkour\\nAdapted By: LulledLion, FishoFire, Nebula\\nv1.10.4I"
 	}
 	大厅
 	{
@@ -124,7 +124,9 @@ export const frameworkTemplate = `设置
         6: G
         7: H
         8: I
+        9: J
         10: K
+        11: L
         12: Dao
         13: SHIFT
         14: EditSelected
@@ -139,6 +141,7 @@ export const frameworkTemplate = `设置
         25: BounceToggleLock
         26: killballnumber
         27: pinballnumber
+        28: AC
         32: LeaderBoardFull
         33: LeaderBoardHuds
         34: LeaderBoardRemake
@@ -206,52 +209,57 @@ export const frameworkTemplate = `设置
         18: toggle_leaderboard
         19: toggle_invisible
         20: toggle_hints
-        21: skill_countBhops
-        22: skill_usedHop
-        23: skill_countCreates
-        24: skill_countMulti
-        25: skill_usedClimb
-        26: skill_usedBhop
-        27: skill_usedDouble
-        28: banString
-        29: ban_create
-        30: ban_autocreate
-        31: ban_standcreate
-        32: ban_multi
-        33: ban_dead
-        34: ban_emote
-        35: ban_savedouble
-        36: ban_climb
-        37: ban_bhop
-        38: ban_djump
-        39: cache_startUlt
-        40: cache_startAbility1
-        41: cache_collectedLocks
-        42: cache_bounceTouched
-        43: cache_portalStart
-        44: cache_portalEnd
-        45: cache_bounceMaxLocks
-        46: cache_killPosition
-        47: cache_killRadii
-        48: cache_bouncePosition
-        49: cache_inputs
-        50: cache_rainbow
-        51: cache_titleHud
-        52: editor_modeSelect
-        53: editor_fly
-        54: editor_saveCache
-        55: editor_undo
-        56: editor_lock
-        57: editor_hitboxEffect
-        58: editor_hitboxToggle
-        59: editor_bounceIndex
-        60: editor_killIndex
-        61: editor_temp
-        62: comp_countAttempts
-        63: comp_instructionHud
-        64: addon_toggle3rdPov
-        65: addon_ledgeDash
-        66: addon_enableDoubleChecks
+        21: cache_startAbility1
+        22: cache_startAbility2
+        23: cache_startPrimary
+        24: cache_startSecondary
+        25: cache_startUlt
+        26: cache_collectedLocks
+        27: cache_bounceTouched
+        28: cache_safeRing
+        29: cache_portalStart
+        30: cache_portalEnd
+        31: cache_bounceMaxLocks
+        32: cache_killPosition
+        33: cache_killRadii
+        34: cache_bouncePosition
+        35: cache_inputs
+        36: cache_rainbow
+        37: cache_titleHud
+        38: skill_safe
+        39: skill_countBhops
+        40: skill_usedHop
+        41: skill_countCreates
+        42: skill_countMulti
+        43: skill_usedClimb
+        44: skill_usedBhop
+        45: skill_usedDouble
+        46: banString
+        47: ban_create
+        48: ban_autocreate
+        49: ban_standcreate
+        50: ban_multi
+        51: ban_dead
+        52: ban_emote
+        53: ban_savedouble
+        54: ban_climb
+        55: ban_bhop
+        56: ban_djump
+        57: editor_modeSelect
+        58: editor_fly
+        59: editor_saveCache
+        60: editor_undo
+        61: editor_lock
+        62: editor_hitboxEffect
+        63: editor_hitboxToggle
+        64: editor_bounceIndex
+        65: editor_killIndex
+        66: editor_temp
+        67: comp_countAttempts
+        68: comp_instructionHud
+        69: addon_toggle3rdPov
+        70: addon_ledgeDash
+        71: addon_enableDoubleChecks
         127: __languageIndex__
 }
 子程序 {
@@ -320,7 +328,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4G ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4I ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
@@ -331,7 +339,7 @@ export const frameworkTemplate = `设置
         持续 - 全局;
     }
     动作 {
-        "◀ The Official Genji Parkour Editor ▶\\nDiscord: dsc.gg/genjiparkour\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula"
+        "◀ Official Genji Parkour Editor ▶\\nDiscord: dsc.gg/genjiparkour\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula"
         关闭游戏预设完成条件;
         关闭游戏预设计分模式;
         关闭游戏预设音乐模式;
@@ -353,7 +361,6 @@ export const frameworkTemplate = `设置
         设置全局变量(SaveElapsed, 空数组);
         设置全局变量(pinballnumber, If-Then-Else(数量(全局.pinballnumber), 全局.pinballnumber, 空数组));
         设置全局变量(A, If-Then-Else(数量(全局.A), 全局.A, 空数组));
-        设置全局变量(A, If-Then-Else(数量(全局.A), 全局.A, 空数组));
         设置全局变量(killballnumber, If-Then-Else(数量(全局.killballnumber), 全局.killballnumber, 空数组));
         设置全局变量(H, If-Then-Else(数量(全局.H), 全局.H, 空数组));
         设置全局变量(I, If-Then-Else(数量(全局.I), 全局.I, 空数组));
@@ -364,11 +371,12 @@ export const frameworkTemplate = `设置
         设置全局变量(TQ5, If-Then-Else(数量(全局.TQ5), 全局.TQ5, 空数组));
         设置全局变量(TQ6, If-Then-Else(数量(全局.TQ6), 全局.TQ6, 空数组));
         设置全局变量(BounceToggleLock, If-Then-Else(数量(全局.BounceToggleLock), 全局.BounceToggleLock, 空数组));
+        设置全局变量(AC, If-Then-Else(数量(全局.AC), 全局.AC, 空数组));
         设置全局变量(CustomPortalStart, If-Then-Else(数量(全局.CustomPortalStart), 全局.CustomPortalStart, 空数组));
         设置全局变量(CustomPortalEndpoint, If-Then-Else(数量(全局.CustomPortalEndpoint), 全局.CustomPortalEndpoint, 空数组));
         设置全局变量(CustomPortalCP, If-Then-Else(数量(全局.CustomPortalCP), 全局.CustomPortalCP, 空数组));
-        设置全局变量(Dao, If-Then-Else(数量(全局.Dao), 从数组中移除(全局.Dao, -1), 空数组));
         设置全局变量(SHIFT, If-Then-Else(数量(全局.SHIFT), 从数组中移除(全局.SHIFT, -1), 空数组));
+        设置全局变量(Dao, If-Then-Else(数量(全局.Dao), 从数组中移除(全局.Dao, -1), 空数组));
         设置全局变量(BanCreate, If-Then-Else(数量(全局.BanCreate), 从数组中移除(全局.BanCreate, -1), 空数组));
         设置全局变量(CM, If-Then-Else(数量(全局.CM), 全局.CM, 空数组));
         设置全局变量(BanStand, If-Then-Else(数量(全局.BanStand), 从数组中移除(全局.BanStand, -1), 空数组));
@@ -520,7 +528,8 @@ export const frameworkTemplate = `设置
     }
     动作 {
         If(非((事件玩家).checkpoint_notLast));
-            If(与(正在移动(事件玩家), 非(或(或(或((事件玩家).toggle_practice, (事件玩家).toggle_invisible), 全局.EditorOn), 全局.CompMode))));
+            If(或(或(或((事件玩家).toggle_practice, (事件玩家).toggle_invisible), 全局.EditorOn), 全局.CompMode));
+            Else If(正在移动(事件玩家));
                 "traces ----------------------------------------------------------------------------------------------------"
                 设置玩家变量(事件玩家, cache_rainbow, 数组中的值(数组(颜色(红色), 颜色(橙色), 颜色(黄色), 颜色(灰绿色), 颜色(绿色), 颜色(青绿色), 颜色(蓝色), 颜色(亮紫色), 颜色(紫色), 颜色(玫红)), 余数(取整(乘(总计消耗时间, 2), 下), 10)));
                 "eventPlayer.cache_rainbow =  rgb((cosDeg(getTotalTimeElapsed()/2 * 360 - 0) + 0.5) * 255, (cosDeg(getTotalTimeElapsed/2 * 360 - 120) + 0.5) * 255, (cosDeg(getTotalTimeElapsed/2 * 360 - 240) + 0.5) * 255)\\n1.6 - 0.2 in 0.2 steps"
@@ -537,18 +546,14 @@ export const frameworkTemplate = `设置
                 播放效果(首个(真), 环状爆炸, (事件玩家).cache_rainbow, 所选位置(事件玩家), 1.4);
                 等待(0.048, 无视条件);
             End;
-        "or eventPlayer.lockState:"
-        Else If(或((事件玩家).toggle_invincible, (事件玩家).toggle_spectate));
+        Else If((事件玩家).toggle_invincible);
+        Else If((事件玩家).toggle_spectate);
         Else If(比较(相距距离(事件玩家, 数组中的值(全局.A, 加((事件玩家).checkpoint_current, 真))), <=, 1.4));
             "arrived ----------------------------------------------------------------------------------------------------"
             If(比较(数量((事件玩家).cache_collectedLocks), <, (事件玩家).cache_bounceMaxLocks));
                 "\\"   ! 进点前需集齐所有收集球 !\\" checkCN \\"   ! collect ALL {} orbs to unlock !\\".format(ColorConfig[Customize.orb_lock])"
                 小字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("   ! Collect All Lock Orbs To Complete !   ! Collect All Lock Orbs To Complete !   ! Collect All Lock Orbs To Complete !"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
                 "kill player if not colleted the locks"
-                调用子程序(CheckpointFailReset);
-            Else If(与((事件玩家).ban_climb, (事件玩家).skill_usedClimb));
-                "\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\")"
-                小字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
                 调用子程序(CheckpointFailReset);
             Else If(与((事件玩家).ban_bhop, (事件玩家).skill_usedBhop));
                 "\\"   ≥ 留小跳进点!\\" checkCN \\"   ≥ Must Have A Bhop To Complete!!\\""
@@ -606,6 +611,7 @@ export const frameworkTemplate = `设置
                 播放效果(事件玩家, 环状爆炸声音, 空, 事件玩家, 100);
                 播放效果(If-Then-Else(或(全局.CompMode, (事件玩家).toggle_invisible), 事件玩家, 真), 环状爆炸, 颜色(天蓝色), 所选位置(事件玩家), 4);
             End;
+        Else If((事件玩家).skill_safe);
         Else If(比较(相距距离(事件玩家, 最后(数组中的值(全局.A, (事件玩家).checkpoint_current))), >, 1.4));
             调用子程序(CheckpointFailReset);
         End;
@@ -683,6 +689,24 @@ export const frameworkTemplate = `设置
     }
 }
 
+规则 ("Parkour | Safe Rings") {
+    事件 {
+        持续 - 每名玩家;
+        双方;
+        全部;
+    }
+    条件 {
+        (事件玩家).cache_safeRing != 空数组;
+        (事件玩家).checkpoint_notLast != 假;
+        对任意为“真”((事件玩家).cache_safeRing, 比较(相距距离(事件玩家, 最后(当前数组元素)), <, 1.4)) == 真;
+    }
+    动作 {
+        修改玩家变量(事件玩家, skill_safe, 加, 真);
+        等待直到 (与(非(数量((事件玩家).cache_safeRing)), 对任意为“真”((事件玩家).cache_safeRing, 比较(相距距离(事件玩家, 最后(当前数组元素)), >, 1.4))), 999999999999);
+        修改玩家变量(事件玩家, skill_safe, 减, 真);
+    }
+}
+
 规则 ("Parkour | Death Reset") {
     事件 {
         玩家阵亡;
@@ -735,6 +759,7 @@ export const frameworkTemplate = `设置
         设置玩家变量(事件玩家, cache_bounceMaxLocks, 数量(已过滤的数组(全局.BounceToggleLock, 与(比较(数组中的值(全局.pinballnumber, 当前数组索引), ==, (事件玩家).checkpoint_current), 当前数组元素))));
         设置玩家变量(事件玩家, cache_killPosition, 已过滤的数组(全局.H, 比较(数组中的值(全局.killballnumber, 当前数组索引), ==, (事件玩家).checkpoint_current)));
         设置玩家变量(事件玩家, cache_killRadii, 已过滤的数组(全局.I, 比较(数组中的值(全局.killballnumber, 当前数组索引), ==, (事件玩家).checkpoint_current)));
+        设置玩家变量(事件玩家, cache_safeRing, 已过滤的数组(全局.AC, 比较(首个(当前数组元素), ==, (事件玩家).checkpoint_current)));
         设置玩家变量(事件玩家, cache_portalStart, 已过滤的数组(全局.CustomPortalStart, 或(比较(数组中的值(全局.CustomPortalCP, 当前数组索引), ==, (事件玩家).checkpoint_current), 比较(数组中的值(全局.CustomPortalCP, 当前数组索引), <, 空))));
         设置玩家变量(事件玩家, cache_portalEnd, 已过滤的数组(全局.CustomPortalEndpoint, 或(比较(数组中的值(全局.CustomPortalCP, 当前数组索引), ==, (事件玩家).checkpoint_current), 比较(数组中的值(全局.CustomPortalCP, 当前数组索引), <, 空))));
         设置玩家变量(事件玩家, checkpoint_notLast, 与(比较((事件玩家).checkpoint_current, <, 减(数量(全局.A), 真)), 比较(数量(全局.A), >, 1)));
@@ -742,13 +767,13 @@ export const frameworkTemplate = `设置
         设置玩家变量(事件玩家, banString, 空数组);
         等待(假, 无视条件);
         If((事件玩家).checkpoint_notLast);
-            设置玩家变量(事件玩家, cache_startUlt, 数组包含(全局.Dao, (事件玩家).checkpoint_current));
-            If((事件玩家).cache_startUlt);
-                小字体信息(事件玩家, 自定义字符串("   {0} {1}", 技能图标字符串(英雄(源氏), 按钮(终极技能)), 数组中的值(字符串分割(自定义字符串("Ultimate Is ReadyUltimate Is ReadyUltimate Is Ready"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__)));
-            End;
             设置玩家变量(事件玩家, cache_startAbility1, 数组包含(全局.SHIFT, (事件玩家).checkpoint_current));
             If((事件玩家).cache_startAbility1);
                 小字体信息(事件玩家, 自定义字符串("   {0} {1}", 技能图标字符串(英雄(源氏), 按钮(技能1)), 数组中的值(字符串分割(自定义字符串("Dash Is ReadyDash Is ReadyDash Is Ready"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__)));
+            End;
+            设置玩家变量(事件玩家, cache_startUlt, 数组包含(全局.Dao, (事件玩家).checkpoint_current));
+            If((事件玩家).cache_startUlt);
+                小字体信息(事件玩家, 自定义字符串("   {0} {1}", 技能图标字符串(英雄(源氏), 按钮(终极技能)), 数组中的值(字符串分割(自定义字符串("Ultimate Is ReadyUltimate Is ReadyUltimate Is Ready"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__)));
             End;
             设置玩家变量(事件玩家, ban_create, 或(地图工坊设置开关(自定义字符串("Ban (All Levels)    ◆ 封禁(应用于所有关卡)    ◆ 금지 (모든 단계에 적용)"), 自定义字符串("Ban Create Bhop         ◆ 封禁卡小      ◆ 앉콩 금지"), 假, 1), 数组包含(全局.BanCreate, (事件玩家).checkpoint_current)));
             If((事件玩家).ban_create);
@@ -794,8 +819,8 @@ export const frameworkTemplate = `设置
                 设置玩家变量(事件玩家, banString, 自定义字符串("» {0}", (事件玩家).banString));
             End;
         Else;
-            设置玩家变量(事件玩家, cache_startUlt, 真);
             设置玩家变量(事件玩家, cache_startAbility1, 真);
+            设置玩家变量(事件玩家, cache_startUlt, 真);
             设置玩家变量(事件玩家, ban_create, 假);
             设置玩家变量(事件玩家, ban_autocreate, 假);
             设置玩家变量(事件玩家, ban_standcreate, 假);
@@ -1070,7 +1095,7 @@ export const frameworkTemplate = `设置
     动作 {
         设置玩家变量(事件玩家, skill_usedHop, 空);
         设置玩家变量(事件玩家, skill_countBhops, 空);
-        设置玩家变量(事件玩家, skill_usedClimb, 假);
+        设置玩家变量(事件玩家, skill_usedClimb, 空);
         设置玩家变量(事件玩家, skill_countMulti, 空);
         设置玩家变量(事件玩家, skill_countCreates, 空);
         设置玩家变量(事件玩家, skill_usedDouble, 空);
@@ -1088,6 +1113,12 @@ export const frameworkTemplate = `设置
     }
     动作 {
         "if eventPlayer.isHoldingButton(Button.JUMP): goto climb"
+        If((事件玩家).toggle_invincible);
+        Else If(与((事件玩家).ban_multi, (事件玩家).skill_countMulti));
+            调用子程序(CheckpointFailReset);
+            "\\"   蹭留 ∞ 已禁用!\\" checkCN \\"   Multiclimb ∞ is banned!\\""
+            小字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
+        End;
         等待(假, 无视条件);
         "and not eventPlayer.isHoldingButton(Button.JUMP): #Auto Climb"
         If(在墙上(事件玩家));
@@ -1095,12 +1126,9 @@ export const frameworkTemplate = `设置
             设置玩家变量(事件玩家, skill_usedClimb, 真);
             根据条件中止((事件玩家).toggle_invincible);
             根据条件中止(非((事件玩家).ban_climb));
-            "CheckpointFailReset()\\n\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\""
-            小字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
-        Else If(与((事件玩家).ban_multi, 非((事件玩家).toggle_invincible)));
             调用子程序(CheckpointFailReset);
-            "\\"   蹭留 ∞ 已禁用!\\" checkCN \\"   Multiclimb ∞ is banned!\\""
-            小字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
+            "\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\""
+            小字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
         Else;
             修改玩家变量(事件玩家, skill_countMulti, 加, 真);
     }
@@ -1190,11 +1218,11 @@ export const frameworkTemplate = `设置
     }
     动作 {
         If(或((事件玩家).toggle_invincible, 与(比较(事件玩家, ==, 主机玩家), 全局.EditorOn)));
-            设置启用终极技能(事件玩家, 真);
             设置启用技能 1(事件玩家, 真);
+            设置启用终极技能(事件玩家, 真);
         Else;
-            设置启用终极技能(事件玩家, (事件玩家).cache_startUlt);
             设置启用技能 1(事件玩家, (事件玩家).cache_startAbility1);
+            设置启用终极技能(事件玩家, (事件玩家).cache_startUlt);
         End;
         设置终极技能充能(事件玩家, 100);
     }
@@ -1275,7 +1303,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-规则 ("Mechanic | Genji | Ban Save Double - 封禁二段跳") {
+规则 ("Mechanic | Genji | Ban Save Double ◆ 封禁二段跳") {
     事件 {
         持续 - 每名玩家;
         双方;
@@ -2382,18 +2410,16 @@ export const frameworkTemplate = `设置
             调用子程序(TimerPause);
             停止追踪玩家变量(事件玩家, timer_practice);
             调用子程序(ResetAbilities);
-        Else;
-            If((事件玩家).toggle_practice);
-                "\\"练习模式\\" checkCN \\"Practice mode\\""
-                大字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("Practice ModePractice ModePractice Mode"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
-                追踪玩家变量频率(事件玩家, timer_practice, 999999999999, 真, 全部禁用);
-                调用子程序(CheckpointFailReset);
-            Else If((事件玩家).checkpoint_notLast);
-                "\\"跑图模式\\" checkCN \\"Normal mode\\""
-                大字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("Normal ModeNormal ModeNormal Mode"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
-                调用子程序(TimerResume);
-                调用子程序(CheckpointFailReset);
-            End;
+        Else If((事件玩家).toggle_practice);
+            "\\"练习模式\\" checkCN \\"Practice mode\\""
+            大字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("Practice ModePractice ModePractice Mode"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
+            追踪玩家变量频率(事件玩家, timer_practice, 999999999999, 真, 全部禁用);
+            调用子程序(CheckpointFailReset);
+        Else If((事件玩家).checkpoint_notLast);
+            "\\"跑图模式\\" checkCN \\"Normal mode\\""
+            大字体信息(事件玩家, 数组中的值(字符串分割(自定义字符串("Normal ModeNormal ModeNormal Mode"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__));
+            调用子程序(TimerResume);
+            调用子程序(CheckpointFailReset);
         End;
         设置玩家变量(事件玩家, lockState, 假);
         "Anti spam"
@@ -2438,7 +2464,8 @@ export const frameworkTemplate = `设置
             停止追踪玩家变量(事件玩家, timer_practice);
             设置玩家变量(事件玩家, checkpoint_current, (事件玩家).checkpoint_practice);
             调用子程序(UpdateCache);
-            If(与((事件玩家).checkpoint_notLast, 非((事件玩家).toggle_invincible)));
+            If((事件玩家).toggle_invincible);
+            Else If((事件玩家).checkpoint_notLast);
                 设置玩家变量(事件玩家, timer_split, (事件玩家).timer_normal);
                 调用子程序(TimerResume);
                 调用子程序(CheckpointFailReset);
@@ -2659,7 +2686,7 @@ export const frameworkTemplate = `设置
             End;
         End;
         "global huds"
-        创建HUD文本(首个(真), 空, 自定义字符串("{0}{1}{2}", 数组中的值(字符串分割(自定义字符串("Server Restart In Server Restart In Server Restart In "), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), 取整(减(全局.TimeRemaining, 除(总计消耗时间, 60)), 上), 自定义字符串("{0}v1.10.4G{1}", 数组中的值(字符串分割(自定义字符串(" Min -  Min -  Min - "), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), If-Then-Else(比较(文本数量, >=, 128), 数组中的值(字符串分割(自定义字符串("\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), 空数组))), 空, 右边, -162, 空, 数组中的值(全局.ColorConfig, 2), 空, 可见和字符串, 始终可见);
+        创建HUD文本(首个(真), 空, 自定义字符串("{0}{1}{2}", 数组中的值(字符串分割(自定义字符串("Server Restart In Server Restart In Server Restart In "), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), 取整(减(全局.TimeRemaining, 除(总计消耗时间, 60)), 上), 自定义字符串("{0}v1.10.4I{1}", 数组中的值(字符串分割(自定义字符串(" Min -  Min -  Min - "), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), If-Then-Else(比较(文本数量, >=, 128), 数组中的值(字符串分割(自定义字符串("\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), 空数组))), 空, 右边, -162, 空, 数组中的值(全局.ColorConfig, 2), 空, 可见和字符串, 始终可见);
         "padding for custom hud display"
         创建HUD文本(首个(真), 空, 空, 自定义字符串("­\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n"), 顶部, -164, 空, 空, 颜色(橙色), 可见, 默认可见度);
         创建HUD文本((本地玩家).toggle_guide, 空, 空, If-Then-Else((本地玩家).toggle_quickRestart, 自定义字符串("{0} | {1}", 输入绑定字符串(按钮(装填)), 数组中的值(字符串分割(自定义字符串("Quick ResetQuick ResetQuick Reset"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__)), 自定义字符串("{0} {1} | {2}", 数组中的值(字符串分割(自定义字符串("HoldHoldHold"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__), 输入绑定字符串(按钮(装填)), 数组中的值(字符串分割(自定义字符串("Enable Quick ResetEnable Quick ResetEnable Quick Reset"), 全局.__overpyTranslationHelper__), (本地玩家).__languageIndex__))), 右边, -157, 空, 空, 数组中的值(全局.ColorConfig, 5), 可见和字符串, 默认可见度);
@@ -2835,7 +2862,13 @@ export const frameworkTemplate = `设置
                     等待(假, 无视条件);
                 End;
             End;
-            "End portal preview"
+            If(数量(全局.AC));
+                For 全局变量(NANBA, 0, 数量(全局.AC), 真);
+                    创建效果(已过滤的数组(所有玩家(所有队伍), 比较((当前数组元素).checkpoint_current, ==, 单次赋值(首个(数组中的值(全局.AC, 全局.NANBA))))), 环, 数组中的值(全局.ColorConfig, 21), 最后(数组中的值(全局.AC, 全局.NANBA)), 真, 可见);
+                    等待(假, 无视条件);
+                End;
+                等待(0.512, 无视条件);
+            End;
             创建效果(If-Then-Else(与(与((本地玩家).preview_i, 比较((本地玩家).preview_i, >, 数量((本地玩家).cache_bouncePosition))), 最后(数组中的值((本地玩家).preview_array2, (本地玩家).preview_i))), 本地玩家, 空), 火花, 颜色(亮紫色), 数组中的值((本地玩家).preview_array1, (本地玩家).preview_i), 0.5, 可见，位置和半径);
     }
 }
@@ -2928,7 +2961,8 @@ export const frameworkTemplate = `设置
         等待直到 (或(按钮被按下(事件玩家, 按钮(跳跃)), 非(具有状态(事件玩家, 沉睡))), 999999999999);
         清除状态(事件玩家, 沉睡);
         停止镜头(事件玩家);
-        If(与((事件玩家).checkpoint_notLast, 非((事件玩家).toggle_invincible)));
+        If((事件玩家).toggle_invincible);
+        Else If((事件玩家).checkpoint_notLast);
             调用子程序(CheckpointFailReset);
         End;
         如条件为“真”则循环;
@@ -3003,7 +3037,7 @@ export const frameworkTemplate = `设置
         Else If(比较(当前地图, ==, 地图(南极半岛)));
             设置全局变量(PortalNames, 字符串分割(自定义字符串("Drilling Rig0Anomaly0Icebreaker0Anomaly0Icebreaker0Drilling Rig"), 首个(空)));
             设置全局变量(PortalLoc, 数组(矢量(280.66, -12, -223.5), 矢量(287.08, -12, -223.5), 矢量(273.27, 42.75, 198), 矢量(266.58, 42.75, 198), 矢量(-75, 真, 4), 矢量(-75, 真, -4)));
-            设置全局变量(PortalDest, 数组(矢量(270, 42.7, 190.44), 矢量(-70, 0.5, 假), 矢量(284.07, -12.75, -216.15), 矢量(-70, 0.5, 假), 矢量(284.07, -12.75, -216.15), 矢量(270, 42.7, 190.44)));
+            设置全局变量(PortalDest, 数组(矢量(270, 42.75, 190.44), 矢量(-70, 0.75, 假), 矢量(284.07, -12.5, -216.15), 矢量(-70, 0.75, 假), 矢量(284.07, -12.5, -216.15), 矢量(270, 42.75, 190.44)));
     }
 }
 
@@ -3020,7 +3054,7 @@ export const frameworkTemplate = `设置
         While(比较(数量(全局.C), >, 1));
             在索引处设置全局变量(C, 假, 空);
             While(比较(首个(全局.C), <, 256));
-                创建弹道(球弹道, 空, 加(加(减(最后(全局.C), 矢量(240, 假, 240)), 乘(余数(首个(全局.C), 16), 乘(30, 左))), 乘(取整(除(首个(全局.C), 16), 下), 乘(30, 前))), 下, 至地图, 治疗, 队伍1, 0, 0, 30, 有益爆炸, 爆炸声音, 1, 1, 0, 0, 0, 0);
+                创建弹道(球弹道, 空, 加(数组中的值(全局.C, 真), 乘(30, 矢量(减(余数(首个(全局.C), 16), 8), 假, 减(取整(除(首个(全局.C), 16), 下), 8)))), 下, 至地图, 治疗, 队伍1, 0, 0, 30, 有益爆炸, 爆炸声音, 1, 1, 0, 0, 0, 0);
                 在索引处修改全局变量(C, 假, 加, 真);
                 "use modulo to only wait every x orbs keep the 0 change the other number"
                 If(非(余数(首个(全局.C), 3)));
@@ -3068,85 +3102,85 @@ export const frameworkTemplate = `设置
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("Ø Map Data - 数据录入 <---- INSERT HERE / 在这输入") {
+规则 ("Ø Map Data ◆ 数据录入 <---- INSERT HERE / 在这输入") {
     事件 {
         持续 - 全局;
     }
 }
 
-规则 ("☞ Credits and Colors Here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入") {
+规则 ("☞ Credits and Colors Here ◆ 作者代码HUD颜色 <---- INSERT HERE / 在这输入") {
     事件 {
         持续 - 全局;
     }
@@ -3159,7 +3193,7 @@ export const frameworkTemplate = `设置
         在索引处设置全局变量(ColorConfig, 假, 颜色(紫色));
         "credit hud code   -   代码HUD"
         在索引处设置全局变量(ColorConfig, 真, 颜色(天蓝色));
-        "dsc.gg/genjiparkour"
+        "discord link"
         在索引处设置全局变量(ColorConfig, 18, 颜色(水绿色));
         "server time hud   -   房间倒计时"
         在索引处设置全局变量(ColorConfig, 2, 颜色(红色));
@@ -3185,6 +3219,8 @@ export const frameworkTemplate = `设置
         在索引处设置全局变量(ColorConfig, 12, 颜色(天蓝色));
         "\\"come here\\" text   -   到这里来\\" 文本"
         在索引处设置全局变量(ColorConfig, 13, 颜色(白色));
+        "safe ground rings   -"
+        在索引处设置全局变量(ColorConfig, 21, 颜色(绿色));
         "kill orbs   -   击杀球"
         在索引处设置全局变量(ColorConfig, 14, 颜色(蓝色));
         "normal orbs   -   弹球"
@@ -3200,7 +3236,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-规则 ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) - 旧版编辑器中已弃用规则指引 (单关封禁 / 传送门 / 给刀给S)") {
+规则 ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) ◆ 旧版编辑器中已弃用规则指引 (单关封禁 / 传送门 / 给刀给S)") {
     事件 {
         持续 - 全局;
     }
@@ -3220,23 +3256,13 @@ export const frameworkTemplate = `设置
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Settings & Data - 附加组件 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Settings & Data ◆ 附加组件 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-禁用 规则 ("Addon | Tournament Instruction Message - 竞赛模式指引消息 <---- INSERT HERE / 在这输入") {
-    事件 {
-        持续 - 全局;
-    }
-    动作 {
-        "Instructions that show when you start tournament mode.\\n竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
-        设置全局变量(instructiontext, 自定义字符串("Change Tournament Instruction Message Hud 1\\nChange Tournament Instruction Message Hud 2\\nChange Tournament Instruction Message{0}", 自定义字符串(" Hud 3")));
-    }
-}
-
-禁用 规则 ("Addon | Custom Difficulty Hud - 自定义难度hud <---- INSERT HERE / 在这输入") {
+禁用 规则 ("Addon | Custom Difficulty Hud ◆ 自定义难度hud <---- INSERT HERE / 在这输入") {
     事件 {
         持续 - 全局;
     }
@@ -3248,7 +3274,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-禁用 规则 ("Addon | Title Data - 标题数据 <---- EDIT ME / 在此处编辑") {
+禁用 规则 ("Addon | Title Data ◆ 标题数据 <---- EDIT ME / 在此处编辑") {
     事件 {
         持续 - 全局;
     }
@@ -3266,40 +3292,48 @@ export const frameworkTemplate = `设置
     }
 }
 
-禁用 规则 ("Addon | Friend Title - 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)") {
+禁用 规则 ("Addon | Friend Title ◆ 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)") {
     事件 {
         玩家加入比赛;
         双方;
         全部;
     }
     动作 {
-        "\\"your nickname\\" your friends ingame name\\n\\"display title\\" fill in the custom title\\n修改字符串 \\"your nickname <-------\\" 为好友名字 区分大小写\\n修改字符串 \\"display title\\" 为好友头顶 显示的称号"
+        "Replace \\"Your Nickname <-------\\" with your friend's ingame name\\nReplace \\"Display Title\\" with a custom title\\n修改字符串 \\"Your Nickname <-------\\" 为好友名字 区分大小写\\n修改字符串 \\"Display Title\\" 为好友头顶 显示的称号"
         等待直到 (已重生(事件玩家), 999999999999);
         If(比较(自定义字符串("Your Nickname <-------"), ==, 字符串分割(首个(事件玩家), 空数组)));
             大字体信息(首个(真), 自定义字符串("Message To The Whole Room"));
             创建地图文本(首个(非((事件玩家).toggle_invisible)), 自定义字符串("Display Title"), 事件玩家, 1.5, 根据表面截取, 可见，位置和字符串, 颜色(橙色), 默认可见度);
-        End;
-        If(比较(自定义字符串("Your Nickname <-------"), ==, 字符串分割(首个(事件玩家), 空数组)));
+        Else If(比较(自定义字符串("Your Nickname <-------"), ==, 字符串分割(首个(事件玩家), 空数组)));
             大字体信息(首个(真), 自定义字符串("Message To The Whole Room"));
             创建地图文本(首个(非((事件玩家).toggle_invisible)), 自定义字符串("Display Title"), 事件玩家, 1.5, 根据表面截取, 可见，位置和字符串, 颜色(橙色), 默认可见度);
-        End;
-        If(比较(自定义字符串("Your Nickname <-------"), ==, 字符串分割(首个(事件玩家), 空数组)));
+        Else If(比较(自定义字符串("Your Nickname <-------"), ==, 字符串分割(首个(事件玩家), 空数组)));
             大字体信息(首个(真), 自定义字符串("Message To The Whole Room"));
             创建地图文本(首个(非((事件玩家).toggle_invisible)), 自定义字符串("Display Title"), 事件玩家, 1.5, 根据表面截取, 可见，位置和字符串, 颜色(橙色), 默认可见度);
     }
 }
 
-禁用 规则 ("Addon | Display Author Time - 展示世界纪录 <---- EDIT ME / 在此处编辑") {
+禁用 规则 ("Addon | Display Author Time ◆ 展示世界纪录 <---- EDIT ME / 在此处编辑") {
     事件 {
         持续 - 全局;
     }
     动作 {
         "type your entry in the textfield that says \\"Name and Time here\\"\\n在文本框 中输入“名称和时间”"
-        创建HUD文本(首个(真), 空, 自定义字符串(" \\n{0} Author Time {0}", 图标字符串(火焰)), 自定义字符串("Name and Time here"), 右边, -142, 空, 颜色(玫红), 颜色(玫红), 可见, 默认可见度);
+        创建HUD文本(首个(真), 空, 自定义字符串(" \\n{0} Author Time {0}", 图标字符串(火焰)), 自定义字符串("Name and Time Here"), 右边, -142, 空, 颜色(玫红), 颜色(玫红), 可见, 默认可见度);
     }
 }
 
-禁用 规则 ("Addon | HUD Text For Certain Checkpoints - 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑") {
+禁用 规则 ("Addon | Tournament Instruction Message ◆ 竞赛模式指引消息 <---- INSERT HERE / 在这输入") {
+    事件 {
+        持续 - 全局;
+    }
+    动作 {
+        "Instructions that show when you start tournament mode.\\n竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
+        设置全局变量(instructiontext, 自定义字符串("Change Tournament Instruction Message Hud 1\\nChange Tournament Instruction Message Hud 2\\nChange Tournament Instruction Message{0}", 自定义字符串(" Hud 3")));
+    }
+}
+
+禁用 规则 ("Addon | HUD Text For Certain Checkpoints ◆ 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑") {
     事件 {
         持续 - 全局;
     }
@@ -3315,7 +3349,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-禁用 规则 ("Addon | In-World Text For Certain Checkpoints - 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑") {
+禁用 规则 ("Addon | In-World Text For Certain Checkpoints ◆ 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑") {
     事件 {
         持续 - 全局;
     }
@@ -3333,7 +3367,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-禁用 规则 ("Addon | Hint Text For Certain Checkpoints - 特定关卡的提示文本 <---- EDIT ME / 在此处编辑") {
+禁用 规则 ("Addon | Hint Text For Certain Checkpoints ◆ 特定关卡的提示文本 <---- EDIT ME / 在此处编辑") {
     事件 {
         持续 - 全局;
     }
@@ -3349,7 +3383,7 @@ export const frameworkTemplate = `设置
     }
 }
 
-禁用 规则 ("Addon | 3rd Person Camera Mode - 第三人称") {
+禁用 规则 ("Addon | 3rd Person Camera Mode ◆ 第三人称") {
     事件 {
         玩家加入比赛;
         双方;
@@ -3362,13 +3396,13 @@ export const frameworkTemplate = `设置
     }
 }
 
-规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Skills - 附加组件技能 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+规则 ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Skills ◆ 附加组件技能 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     事件 {
         持续 - 全局;
     }
 }
 
-禁用 规则 ("Addon | Stall Enhancer - 增强系統跳的判定") {
+禁用 规则 ("Addon | Stall Enhancer ◆ 增强系統跳的判定") {
     事件 {
         持续 - 每名玩家;
         双方;
@@ -3395,32 +3429,10 @@ export const frameworkTemplate = `设置
         "wait(3)"
         设置引力(事件玩家, 100);
         设置移动速度(事件玩家, 100);
-        If(与(存活(事件玩家), 非(或((事件玩家).editor_fly, 按钮被按下(事件玩家, 按钮(装填))))));
+        If(或((事件玩家).editor_fly, 按钮被按下(事件玩家, 按钮(装填))));
+        Else If(存活(事件玩家));
             施加推力(事件玩家, 上, 10, 至地图, 取消相反运动XYZ);
             如条件为“真”则循环;
-    }
-}
-
-禁用 规则 ("Addon | Fake Ledge Dash - 超级跳") {
-    事件 {
-        持续 - 每名玩家;
-        双方;
-        全部;
-    }
-    条件 {
-        "Version 2"
-        正在使用技能 1(事件玩家) == 真;
-        速度(事件玩家) < 45;
-        Z方向分量(阈值(事件玩家)) > 空;
-        绝对值(减(垂直速度(事件玩家), 7)) < 0.8;
-    }
-    动作 {
-        "Dash into a wall/edge\\nRelease wall/edge before dash ends"
-        设置玩家变量(事件玩家, addon_ledgeDash, 面朝方向(事件玩家));
-        "25 * 0.016"
-        等待直到 (非(正在使用技能 1(事件玩家)), 真);
-        If(正在空中(事件玩家));
-            施加推力(事件玩家, (事件玩家).addon_ledgeDash, 50, 至地图, 取消相反运动XYZ);
     }
 }
 
@@ -3479,6 +3491,16 @@ export const frameworkTemplate = `设置
     }
 }
 
+禁用 规则 ("Addon | Safe Rings - Map Data") {
+    事件 {
+        持续 - 全局;
+    }
+    动作 {
+        "Replace 777 & 888 with checkpoint number\\nReplace Vector(2, 2, 2) & Vector(3, 3, 3) for the position"
+        设置全局变量(AC, 数组(数组(777, 矢量(2, 2, 2)), 数组(888, 矢量(3, 3, 3))));
+    }
+}
+
 禁用 规则 ("Addon | Custom Checkpoint Loading or Resetting") {
     事件 {
         子程序;
@@ -3502,11 +3524,11 @@ export const frameworkTemplate = `设置
         (事件玩家).cache_bounceTouched >= 空;
     }
     动作 {
-        "Note that the ID can change if you place or delete orbs infront of that orb.\\nAdd the desired ID numbers for the orb in the array\\nAdd the script after it\\nyou can use the activateed sub above this rule to reset the effects"
+        "Note that the ID can change if you place or delete orbs infront of that orb.\\nAdd the desired ID numbers for the orb in the array\\nAdd the script after it\\nyou can use the activated sub above this rule to reset the effects"
         If(数组包含(数组(1, 2), (事件玩家).cache_bounceTouched));
             "example gravity (should be reset to 100 in AddonCustomLoadAndReset)"
             设置引力(事件玩家, 25);
-            小字体信息(事件玩家, 自定义字符串(" You Feel Light"));
+            小字体信息(事件玩家, 自定义字符串("   You Feel Light"));
             等待(2, 无视条件);
             设置引力(事件玩家, 100);
         End;
@@ -3514,18 +3536,41 @@ export const frameworkTemplate = `设置
             "example canceling primary makes double jump recover"
             取消主要动作(事件玩家);
             设置玩家变量(事件玩家, skill_usedDouble, 空);
-            小字体信息(事件玩家, 自定义字符串(" Double Jump Recovered"));
+            小字体信息(事件玩家, 自定义字符串("   Double Jump Recovered"));
         End;
         If(数组包含(数组(5, 6), (事件玩家).cache_bounceTouched));
             "example move speed"
             设置移动速度(事件玩家, 250);
-            小字体信息(事件玩家, 自定义字符串(" Zooom"));
+            小字体信息(事件玩家, 自定义字符串("   Zooom"));
             等待(2, 无视条件);
             设置移动速度(事件玩家, 100);
     }
 }
 
-禁用 规则 ("Addon | Fake Triple Jump - 假三段跳") {
+禁用 规则 ("Addon | Genji | Fake Ledge Dash ◆ 超级跳") {
+    事件 {
+        持续 - 每名玩家;
+        双方;
+        全部;
+    }
+    条件 {
+        "Version 2"
+        正在使用技能 1(事件玩家) == 真;
+        速度(事件玩家) < 45;
+        Z方向分量(阈值(事件玩家)) > 空;
+        绝对值(减(垂直速度(事件玩家), 7)) < 0.8;
+    }
+    动作 {
+        "Dash into a wall/edge\\nRelease wall/edge before dash ends"
+        设置玩家变量(事件玩家, addon_ledgeDash, 面朝方向(事件玩家));
+        "25 * 0.016"
+        等待直到 (非(正在使用技能 1(事件玩家)), 真);
+        If(正在空中(事件玩家));
+            施加推力(事件玩家, (事件玩家).addon_ledgeDash, 50, 至地图, 取消相反运动XYZ);
+    }
+}
+
+禁用 规则 ("Addon | Genji | Fake Triple Jump ◆ 假三段跳") {
     事件 {
         持续 - 每名玩家;
         双方;

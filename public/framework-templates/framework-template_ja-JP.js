@@ -3,8 +3,8 @@ export const frameworkTemplate = `設定
 {
 	メイン
 	{
-		モード名: "Genji Parkour - 源氏跑酷 - v1.10.4G"
-		説明: "◀ Genji Parkour - 源氏跑酷 ▶\\nCode: XXXXX\\nMade By: \\n\\n◀ Official Genji Parkour Editor ▶\\nCode: 54CRY\\nDiscord: dsc.gg/genjiparkour\\nAdapted By: LulledLion, FishoFire, Nebula\\nv1.10.4G"
+		モード名: "Genji Parkour ◆ 源氏跑酷 - v1.10.4I"
+		説明: "◀ Genji Parkour ◆ 源氏跑酷 ▶\\nCode: XXXXX\\nMade By: \\n\\n◀ Official Genji Parkour Editor ▶\\nCode: code here - 代码\\nDiscord: dsc.gg/genjiparkour\\nAdapted By: LulledLion, FishoFire, Nebula\\nv1.10.4I"
 	}
 	ロビー
 	{
@@ -124,7 +124,9 @@ export const frameworkTemplate = `設定
         6: G
         7: H
         8: I
+        9: J
         10: K
+        11: L
         12: Dao
         13: SHIFT
         14: EditSelected
@@ -139,6 +141,7 @@ export const frameworkTemplate = `設定
         25: BounceToggleLock
         26: killballnumber
         27: pinballnumber
+        28: AC
         32: LeaderBoardFull
         33: LeaderBoardHuds
         34: LeaderBoardRemake
@@ -206,52 +209,57 @@ export const frameworkTemplate = `設定
         18: toggle_leaderboard
         19: toggle_invisible
         20: toggle_hints
-        21: skill_countBhops
-        22: skill_usedHop
-        23: skill_countCreates
-        24: skill_countMulti
-        25: skill_usedClimb
-        26: skill_usedBhop
-        27: skill_usedDouble
-        28: banString
-        29: ban_create
-        30: ban_autocreate
-        31: ban_standcreate
-        32: ban_multi
-        33: ban_dead
-        34: ban_emote
-        35: ban_savedouble
-        36: ban_climb
-        37: ban_bhop
-        38: ban_djump
-        39: cache_startUlt
-        40: cache_startAbility1
-        41: cache_collectedLocks
-        42: cache_bounceTouched
-        43: cache_portalStart
-        44: cache_portalEnd
-        45: cache_bounceMaxLocks
-        46: cache_killPosition
-        47: cache_killRadii
-        48: cache_bouncePosition
-        49: cache_inputs
-        50: cache_rainbow
-        51: cache_titleHud
-        52: editor_modeSelect
-        53: editor_fly
-        54: editor_saveCache
-        55: editor_undo
-        56: editor_lock
-        57: editor_hitboxEffect
-        58: editor_hitboxToggle
-        59: editor_bounceIndex
-        60: editor_killIndex
-        61: editor_temp
-        62: comp_countAttempts
-        63: comp_instructionHud
-        64: addon_toggle3rdPov
-        65: addon_ledgeDash
-        66: addon_enableDoubleChecks
+        21: cache_startAbility1
+        22: cache_startAbility2
+        23: cache_startPrimary
+        24: cache_startSecondary
+        25: cache_startUlt
+        26: cache_collectedLocks
+        27: cache_bounceTouched
+        28: cache_safeRing
+        29: cache_portalStart
+        30: cache_portalEnd
+        31: cache_bounceMaxLocks
+        32: cache_killPosition
+        33: cache_killRadii
+        34: cache_bouncePosition
+        35: cache_inputs
+        36: cache_rainbow
+        37: cache_titleHud
+        38: skill_safe
+        39: skill_countBhops
+        40: skill_usedHop
+        41: skill_countCreates
+        42: skill_countMulti
+        43: skill_usedClimb
+        44: skill_usedBhop
+        45: skill_usedDouble
+        46: banString
+        47: ban_create
+        48: ban_autocreate
+        49: ban_standcreate
+        50: ban_multi
+        51: ban_dead
+        52: ban_emote
+        53: ban_savedouble
+        54: ban_climb
+        55: ban_bhop
+        56: ban_djump
+        57: editor_modeSelect
+        58: editor_fly
+        59: editor_saveCache
+        60: editor_undo
+        61: editor_lock
+        62: editor_hitboxEffect
+        63: editor_hitboxToggle
+        64: editor_bounceIndex
+        65: editor_killIndex
+        66: editor_temp
+        67: comp_countAttempts
+        68: comp_instructionHud
+        69: addon_toggle3rdPov
+        70: addon_ledgeDash
+        71: addon_enableDoubleChecks
         127: __languageIndex__
 }
 サブルーチン {
@@ -320,7 +328,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4G ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4I ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
@@ -331,7 +339,7 @@ export const frameworkTemplate = `設定
         進行中 - グローバル;
     }
     アクション {
-        "◀ The Official Genji Parkour Editor ▶\\nDiscord: dsc.gg/genjiparkour\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula"
+        "◀ Official Genji Parkour Editor ▶\\nDiscord: dsc.gg/genjiparkour\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula"
         ゲーム・モードの標準完了を無効化;
         ゲーム・モードの標準スコアリングを無効化;
         ゲーム・モードのBGMを無効化;
@@ -353,7 +361,6 @@ export const frameworkTemplate = `設定
         グローバル変数を設定(SaveElapsed, 空の配列);
         グローバル変数を設定(pinballnumber, IF-THEN-ELSE(カウント: (グローバル.pinballnumber), グローバル.pinballnumber, 空の配列));
         グローバル変数を設定(A, IF-THEN-ELSE(カウント: (グローバル.A), グローバル.A, 空の配列));
-        グローバル変数を設定(A, IF-THEN-ELSE(カウント: (グローバル.A), グローバル.A, 空の配列));
         グローバル変数を設定(killballnumber, IF-THEN-ELSE(カウント: (グローバル.killballnumber), グローバル.killballnumber, 空の配列));
         グローバル変数を設定(H, IF-THEN-ELSE(カウント: (グローバル.H), グローバル.H, 空の配列));
         グローバル変数を設定(I, IF-THEN-ELSE(カウント: (グローバル.I), グローバル.I, 空の配列));
@@ -364,11 +371,12 @@ export const frameworkTemplate = `設定
         グローバル変数を設定(TQ5, IF-THEN-ELSE(カウント: (グローバル.TQ5), グローバル.TQ5, 空の配列));
         グローバル変数を設定(TQ6, IF-THEN-ELSE(カウント: (グローバル.TQ6), グローバル.TQ6, 空の配列));
         グローバル変数を設定(BounceToggleLock, IF-THEN-ELSE(カウント: (グローバル.BounceToggleLock), グローバル.BounceToggleLock, 空の配列));
+        グローバル変数を設定(AC, IF-THEN-ELSE(カウント: (グローバル.AC), グローバル.AC, 空の配列));
         グローバル変数を設定(CustomPortalStart, IF-THEN-ELSE(カウント: (グローバル.CustomPortalStart), グローバル.CustomPortalStart, 空の配列));
         グローバル変数を設定(CustomPortalEndpoint, IF-THEN-ELSE(カウント: (グローバル.CustomPortalEndpoint), グローバル.CustomPortalEndpoint, 空の配列));
         グローバル変数を設定(CustomPortalCP, IF-THEN-ELSE(カウント: (グローバル.CustomPortalCP), グローバル.CustomPortalCP, 空の配列));
-        グローバル変数を設定(Dao, IF-THEN-ELSE(カウント: (グローバル.Dao), 配列から削除(グローバル.Dao, -1), 空の配列));
         グローバル変数を設定(SHIFT, IF-THEN-ELSE(カウント: (グローバル.SHIFT), 配列から削除(グローバル.SHIFT, -1), 空の配列));
+        グローバル変数を設定(Dao, IF-THEN-ELSE(カウント: (グローバル.Dao), 配列から削除(グローバル.Dao, -1), 空の配列));
         グローバル変数を設定(BanCreate, IF-THEN-ELSE(カウント: (グローバル.BanCreate), 配列から削除(グローバル.BanCreate, -1), 空の配列));
         グローバル変数を設定(CM, IF-THEN-ELSE(カウント: (グローバル.CM), グローバル.CM, 空の配列));
         グローバル変数を設定(BanStand, IF-THEN-ELSE(カウント: (グローバル.BanStand), 配列から削除(グローバル.BanStand, -1), 空の配列));
@@ -520,7 +528,8 @@ export const frameworkTemplate = `設定
     }
     アクション {
         IF(NOT((イベント・プレイヤー).checkpoint_notLast));
-            IF(AND(移動している(イベント・プレイヤー), NOT(OR(OR(OR((イベント・プレイヤー).toggle_practice, (イベント・プレイヤー).toggle_invisible), グローバル.EditorOn), グローバル.CompMode))));
+            IF(OR(OR(OR((イベント・プレイヤー).toggle_practice, (イベント・プレイヤー).toggle_invisible), グローバル.EditorOn), グローバル.CompMode));
+            ELSE IF(移動している(イベント・プレイヤー));
                 "traces ----------------------------------------------------------------------------------------------------"
                 プレイヤー変数を設定(イベント・プレイヤー, cache_rainbow, 配列内の値(配列(色(赤), 色(オレンジ), 色(黄色), 色(ライムグリーン), 色(緑), 色(ターコイズ), 色(青), 色(紫), 色(バイオレット), 色(ローズ)), 剰余(整数への四捨五入(乗算(合計経過時間, 2), 下), 10)));
                 "eventPlayer.cache_rainbow =  rgb((cosDeg(getTotalTimeElapsed()/2 * 360 - 0) + 0.5) * 255, (cosDeg(getTotalTimeElapsed/2 * 360 - 120) + 0.5) * 255, (cosDeg(getTotalTimeElapsed/2 * 360 - 240) + 0.5) * 255)\\n1.6 - 0.2 in 0.2 steps"
@@ -537,18 +546,14 @@ export const frameworkTemplate = `設定
                 エフェクトを再生(最初の値(True), リングの爆発, (イベント・プレイヤー).cache_rainbow, 位置: (イベント・プレイヤー), 1.4);
                 待機(0.048, 条件無視);
             END;
-        "or eventPlayer.lockState:"
-        ELSE IF(OR((イベント・プレイヤー).toggle_invincible, (イベント・プレイヤー).toggle_spectate));
+        ELSE IF((イベント・プレイヤー).toggle_invincible);
+        ELSE IF((イベント・プレイヤー).toggle_spectate);
         ELSE IF(COMPARE(二点間の距離(イベント・プレイヤー, 配列内の値(グローバル.A, 追加((イベント・プレイヤー).checkpoint_current, True))), <=, 1.4));
             "arrived ----------------------------------------------------------------------------------------------------"
             IF(COMPARE(カウント: ((イベント・プレイヤー).cache_collectedLocks), <, (イベント・プレイヤー).cache_bounceMaxLocks));
                 "\\"   ! 进点前需集齐所有收集球 !\\" checkCN \\"   ! collect ALL {} orbs to unlock !\\".format(ColorConfig[Customize.orb_lock])"
                 小さなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("   ! Collect All Lock Orbs To Complete !   ! Collect All Lock Orbs To Complete !   ! Collect All Lock Orbs To Complete !"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
                 "kill player if not colleted the locks"
-                サブルーチンの呼び出し(CheckpointFailReset);
-            ELSE IF(AND((イベント・プレイヤー).ban_climb, (イベント・プレイヤー).skill_usedClimb));
-                "\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\")"
-                小さなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
                 サブルーチンの呼び出し(CheckpointFailReset);
             ELSE IF(AND((イベント・プレイヤー).ban_bhop, (イベント・プレイヤー).skill_usedBhop));
                 "\\"   ≥ 留小跳进点!\\" checkCN \\"   ≥ Must Have A Bhop To Complete!!\\""
@@ -606,6 +611,7 @@ export const frameworkTemplate = `設定
                 エフェクトを再生(イベント・プレイヤー, 爆発音（リング）, NULL, イベント・プレイヤー, 100);
                 エフェクトを再生(IF-THEN-ELSE(OR(グローバル.CompMode, (イベント・プレイヤー).toggle_invisible), イベント・プレイヤー, True), リングの爆発, 色(スカイブルー), 位置: (イベント・プレイヤー), 4);
             END;
+        ELSE IF((イベント・プレイヤー).skill_safe);
         ELSE IF(COMPARE(二点間の距離(イベント・プレイヤー, 最後の値(配列内の値(グローバル.A, (イベント・プレイヤー).checkpoint_current))), >, 1.4));
             サブルーチンの呼び出し(CheckpointFailReset);
         END;
@@ -683,6 +689,24 @@ export const frameworkTemplate = `設定
     }
 }
 
+ルール ("Parkour | Safe Rings") {
+    イベント {
+        進行中 - 各プレイヤー;
+        すべて;
+        すべて;
+    }
+    条件 {
+        (イベント・プレイヤー).cache_safeRing != 空の配列;
+        (イベント・プレイヤー).checkpoint_notLast != False;
+        いずれに対しても「TRUE」((イベント・プレイヤー).cache_safeRing, COMPARE(二点間の距離(イベント・プレイヤー, 最後の値(現在の配列の要素)), <, 1.4)) == True;
+    }
+    アクション {
+        (イベント・プレイヤー).skill_safe += True;
+        条件待機(AND(NOT(カウント: ((イベント・プレイヤー).cache_safeRing)), いずれに対しても「TRUE」((イベント・プレイヤー).cache_safeRing, COMPARE(二点間の距離(イベント・プレイヤー, 最後の値(現在の配列の要素)), >, 1.4))), 999999999999);
+        プレイヤー変数を変更(イベント・プレイヤー, skill_safe, 引く, True);
+    }
+}
+
 ルール ("Parkour | Death Reset") {
     イベント {
         プレイヤーが倒れた;
@@ -735,6 +759,7 @@ export const frameworkTemplate = `設定
         プレイヤー変数を設定(イベント・プレイヤー, cache_bounceMaxLocks, カウント: (フィルタリングされた配列(グローバル.BounceToggleLock, AND(COMPARE(配列内の値(グローバル.pinballnumber, 現在の配列のインデックス), ==, (イベント・プレイヤー).checkpoint_current), 現在の配列の要素))));
         プレイヤー変数を設定(イベント・プレイヤー, cache_killPosition, フィルタリングされた配列(グローバル.H, COMPARE(配列内の値(グローバル.killballnumber, 現在の配列のインデックス), ==, (イベント・プレイヤー).checkpoint_current)));
         プレイヤー変数を設定(イベント・プレイヤー, cache_killRadii, フィルタリングされた配列(グローバル.I, COMPARE(配列内の値(グローバル.killballnumber, 現在の配列のインデックス), ==, (イベント・プレイヤー).checkpoint_current)));
+        プレイヤー変数を設定(イベント・プレイヤー, cache_safeRing, フィルタリングされた配列(グローバル.AC, COMPARE(最初の値(現在の配列の要素), ==, (イベント・プレイヤー).checkpoint_current)));
         プレイヤー変数を設定(イベント・プレイヤー, cache_portalStart, フィルタリングされた配列(グローバル.CustomPortalStart, OR(COMPARE(配列内の値(グローバル.CustomPortalCP, 現在の配列のインデックス), ==, (イベント・プレイヤー).checkpoint_current), COMPARE(配列内の値(グローバル.CustomPortalCP, 現在の配列のインデックス), <, NULL))));
         プレイヤー変数を設定(イベント・プレイヤー, cache_portalEnd, フィルタリングされた配列(グローバル.CustomPortalEndpoint, OR(COMPARE(配列内の値(グローバル.CustomPortalCP, 現在の配列のインデックス), ==, (イベント・プレイヤー).checkpoint_current), COMPARE(配列内の値(グローバル.CustomPortalCP, 現在の配列のインデックス), <, NULL))));
         プレイヤー変数を設定(イベント・プレイヤー, checkpoint_notLast, AND(COMPARE((イベント・プレイヤー).checkpoint_current, <, 減算(カウント: (グローバル.A), True)), COMPARE(カウント: (グローバル.A), >, 1)));
@@ -742,13 +767,13 @@ export const frameworkTemplate = `設定
         プレイヤー変数を設定(イベント・プレイヤー, banString, 空の配列);
         待機(False, 条件無視);
         IF((イベント・プレイヤー).checkpoint_notLast);
-            プレイヤー変数を設定(イベント・プレイヤー, cache_startUlt, 含む配列(グローバル.Dao, (イベント・プレイヤー).checkpoint_current));
-            IF((イベント・プレイヤー).cache_startUlt);
-                小さなメッセージ(イベント・プレイヤー, カスタムストリング("   {0} {1}", アビリティアイコンストリング(ヒーロー(ゲンジ), ボタン(アルティメット)), 配列内の値(文字列の分割(カスタムストリング("Ultimate Is ReadyUltimate Is ReadyUltimate Is Ready"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__)));
-            END;
             プレイヤー変数を設定(イベント・プレイヤー, cache_startAbility1, 含む配列(グローバル.SHIFT, (イベント・プレイヤー).checkpoint_current));
             IF((イベント・プレイヤー).cache_startAbility1);
                 小さなメッセージ(イベント・プレイヤー, カスタムストリング("   {0} {1}", アビリティアイコンストリング(ヒーロー(ゲンジ), ボタン(アビリティ1)), 配列内の値(文字列の分割(カスタムストリング("Dash Is ReadyDash Is ReadyDash Is Ready"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__)));
+            END;
+            プレイヤー変数を設定(イベント・プレイヤー, cache_startUlt, 含む配列(グローバル.Dao, (イベント・プレイヤー).checkpoint_current));
+            IF((イベント・プレイヤー).cache_startUlt);
+                小さなメッセージ(イベント・プレイヤー, カスタムストリング("   {0} {1}", アビリティアイコンストリング(ヒーロー(ゲンジ), ボタン(アルティメット)), 配列内の値(文字列の分割(カスタムストリング("Ultimate Is ReadyUltimate Is ReadyUltimate Is Ready"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__)));
             END;
             プレイヤー変数を設定(イベント・プレイヤー, ban_create, OR(ワークショップの設定の切り替え(カスタムストリング("Ban (All Levels)    ◆ 封禁(应用于所有关卡)    ◆ 금지 (모든 단계에 적용)"), カスタムストリング("Ban Create Bhop         ◆ 封禁卡小      ◆ 앉콩 금지"), False, 1), 含む配列(グローバル.BanCreate, (イベント・プレイヤー).checkpoint_current)));
             IF((イベント・プレイヤー).ban_create);
@@ -794,8 +819,8 @@ export const frameworkTemplate = `設定
                 プレイヤー変数を設定(イベント・プレイヤー, banString, カスタムストリング("» {0}", (イベント・プレイヤー).banString));
             END;
         ELSE;
-            プレイヤー変数を設定(イベント・プレイヤー, cache_startUlt, True);
             プレイヤー変数を設定(イベント・プレイヤー, cache_startAbility1, True);
+            プレイヤー変数を設定(イベント・プレイヤー, cache_startUlt, True);
             プレイヤー変数を設定(イベント・プレイヤー, ban_create, False);
             プレイヤー変数を設定(イベント・プレイヤー, ban_autocreate, False);
             プレイヤー変数を設定(イベント・プレイヤー, ban_standcreate, False);
@@ -1070,7 +1095,7 @@ export const frameworkTemplate = `設定
     アクション {
         プレイヤー変数を設定(イベント・プレイヤー, skill_usedHop, NULL);
         プレイヤー変数を設定(イベント・プレイヤー, skill_countBhops, NULL);
-        プレイヤー変数を設定(イベント・プレイヤー, skill_usedClimb, False);
+        プレイヤー変数を設定(イベント・プレイヤー, skill_usedClimb, NULL);
         プレイヤー変数を設定(イベント・プレイヤー, skill_countMulti, NULL);
         プレイヤー変数を設定(イベント・プレイヤー, skill_countCreates, NULL);
         プレイヤー変数を設定(イベント・プレイヤー, skill_usedDouble, NULL);
@@ -1088,6 +1113,12 @@ export const frameworkTemplate = `設定
     }
     アクション {
         "if eventPlayer.isHoldingButton(Button.JUMP): goto climb"
+        IF((イベント・プレイヤー).toggle_invincible);
+        ELSE IF(AND((イベント・プレイヤー).ban_multi, (イベント・プレイヤー).skill_countMulti));
+            サブルーチンの呼び出し(CheckpointFailReset);
+            "\\"   蹭留 ∞ 已禁用!\\" checkCN \\"   Multiclimb ∞ is banned!\\""
+            小さなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
+        END;
         待機(False, 条件無視);
         "and not eventPlayer.isHoldingButton(Button.JUMP): #Auto Climb"
         IF(壁の上にいる(イベント・プレイヤー));
@@ -1095,12 +1126,9 @@ export const frameworkTemplate = `設定
             プレイヤー変数を設定(イベント・プレイヤー, skill_usedClimb, True);
             中止する条件((イベント・プレイヤー).toggle_invincible);
             中止する条件(NOT((イベント・プレイヤー).ban_climb));
-            "CheckpointFailReset()\\n\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\""
-            小さなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
-        ELSE IF(AND((イベント・プレイヤー).ban_multi, NOT((イベント・プレイヤー).toggle_invincible)));
             サブルーチンの呼び出し(CheckpointFailReset);
-            "\\"   蹭留 ∞ 已禁用!\\" checkCN \\"   Multiclimb ∞ is banned!\\""
-            小さなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
+            "\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\""
+            小さなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
         ELSE;
             (イベント・プレイヤー).skill_countMulti += True;
     }
@@ -1190,11 +1218,11 @@ export const frameworkTemplate = `設定
     }
     アクション {
         IF(OR((イベント・プレイヤー).toggle_invincible, AND(COMPARE(イベント・プレイヤー, ==, ホスト・プレイヤー), グローバル.EditorOn)));
-            アルティメット・アビリティを有効化(イベント・プレイヤー, True);
             アビリティ1を有効化(イベント・プレイヤー, True);
+            アルティメット・アビリティを有効化(イベント・プレイヤー, True);
         ELSE;
-            アルティメット・アビリティを有効化(イベント・プレイヤー, (イベント・プレイヤー).cache_startUlt);
             アビリティ1を有効化(イベント・プレイヤー, (イベント・プレイヤー).cache_startAbility1);
+            アルティメット・アビリティを有効化(イベント・プレイヤー, (イベント・プレイヤー).cache_startUlt);
         END;
         アルティメット・チャージを設定(イベント・プレイヤー, 100);
     }
@@ -1275,7 +1303,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-ルール ("Mechanic | Genji | Ban Save Double - 封禁二段跳") {
+ルール ("Mechanic | Genji | Ban Save Double ◆ 封禁二段跳") {
     イベント {
         進行中 - 各プレイヤー;
         すべて;
@@ -2382,18 +2410,16 @@ export const frameworkTemplate = `設定
             サブルーチンの呼び出し(TimerPause);
             プレイヤー変数の追跡を中止(イベント・プレイヤー, timer_practice);
             サブルーチンの呼び出し(ResetAbilities);
-        ELSE;
-            IF((イベント・プレイヤー).toggle_practice);
-                "\\"练习模式\\" checkCN \\"Practice mode\\""
-                大きなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("Practice ModePractice ModePractice Mode"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
-                プレイヤー変数を特定のレートで追跡(イベント・プレイヤー, timer_practice, 999999999999, True, なし);
-                サブルーチンの呼び出し(CheckpointFailReset);
-            ELSE IF((イベント・プレイヤー).checkpoint_notLast);
-                "\\"跑图模式\\" checkCN \\"Normal mode\\""
-                大きなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("Normal ModeNormal ModeNormal Mode"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
-                サブルーチンの呼び出し(TimerResume);
-                サブルーチンの呼び出し(CheckpointFailReset);
-            END;
+        ELSE IF((イベント・プレイヤー).toggle_practice);
+            "\\"练习模式\\" checkCN \\"Practice mode\\""
+            大きなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("Practice ModePractice ModePractice Mode"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
+            プレイヤー変数を特定のレートで追跡(イベント・プレイヤー, timer_practice, 999999999999, True, なし);
+            サブルーチンの呼び出し(CheckpointFailReset);
+        ELSE IF((イベント・プレイヤー).checkpoint_notLast);
+            "\\"跑图模式\\" checkCN \\"Normal mode\\""
+            大きなメッセージ(イベント・プレイヤー, 配列内の値(文字列の分割(カスタムストリング("Normal ModeNormal ModeNormal Mode"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__));
+            サブルーチンの呼び出し(TimerResume);
+            サブルーチンの呼び出し(CheckpointFailReset);
         END;
         プレイヤー変数を設定(イベント・プレイヤー, lockState, False);
         "Anti spam"
@@ -2438,7 +2464,8 @@ export const frameworkTemplate = `設定
             プレイヤー変数の追跡を中止(イベント・プレイヤー, timer_practice);
             プレイヤー変数を設定(イベント・プレイヤー, checkpoint_current, (イベント・プレイヤー).checkpoint_practice);
             サブルーチンの呼び出し(UpdateCache);
-            IF(AND((イベント・プレイヤー).checkpoint_notLast, NOT((イベント・プレイヤー).toggle_invincible)));
+            IF((イベント・プレイヤー).toggle_invincible);
+            ELSE IF((イベント・プレイヤー).checkpoint_notLast);
                 プレイヤー変数を設定(イベント・プレイヤー, timer_split, (イベント・プレイヤー).timer_normal);
                 サブルーチンの呼び出し(TimerResume);
                 サブルーチンの呼び出し(CheckpointFailReset);
@@ -2659,7 +2686,7 @@ export const frameworkTemplate = `設定
             END;
         END;
         "global huds"
-        HUDテキストを作成(最初の値(True), NULL, カスタムストリング("{0}{1}{2}", 配列内の値(文字列の分割(カスタムストリング("Server Restart In Server Restart In Server Restart In "), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), 整数への四捨五入(減算(グローバル.TimeRemaining, 除算(合計経過時間, 60)), 上), カスタムストリング("{0}v1.10.4G{1}", 配列内の値(文字列の分割(カスタムストリング(" Min -  Min -  Min - "), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), IF-THEN-ELSE(COMPARE(テキスト数, >=, 128), 配列内の値(文字列の分割(カスタムストリング("\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), 空の配列))), NULL, 右, -162, NULL, 配列内の値(グローバル.ColorConfig, 2), NULL, 表示される相手、文字列, 常に表示);
+        HUDテキストを作成(最初の値(True), NULL, カスタムストリング("{0}{1}{2}", 配列内の値(文字列の分割(カスタムストリング("Server Restart In Server Restart In Server Restart In "), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), 整数への四捨五入(減算(グローバル.TimeRemaining, 除算(合計経過時間, 60)), 上), カスタムストリング("{0}v1.10.4I{1}", 配列内の値(文字列の分割(カスタムストリング(" Min -  Min -  Min - "), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), IF-THEN-ELSE(COMPARE(テキスト数, >=, 128), 配列内の値(文字列の分割(カスタムストリング("\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), 空の配列))), NULL, 右, -162, NULL, 配列内の値(グローバル.ColorConfig, 2), NULL, 表示される相手、文字列, 常に表示);
         "padding for custom hud display"
         HUDテキストを作成(最初の値(True), NULL, NULL, カスタムストリング("­\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n"), トップ, -164, NULL, NULL, 色(オレンジ), 目視可能: , デフォルト表示);
         HUDテキストを作成((ローカルプレイヤー).toggle_guide, NULL, NULL, IF-THEN-ELSE((ローカルプレイヤー).toggle_quickRestart, カスタムストリング("{0} | {1}", 入力割り当ての文字列(ボタン(リロード)), 配列内の値(文字列の分割(カスタムストリング("Quick ResetQuick ResetQuick Reset"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__)), カスタムストリング("{0} {1} | {2}", 配列内の値(文字列の分割(カスタムストリング("HoldHoldHold"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__), 入力割り当ての文字列(ボタン(リロード)), 配列内の値(文字列の分割(カスタムストリング("Enable Quick ResetEnable Quick ResetEnable Quick Reset"), グローバル.__overpyTranslationHelper__), (ローカルプレイヤー).__languageIndex__))), 右, -157, NULL, NULL, 配列内の値(グローバル.ColorConfig, 5), 表示される相手、文字列, デフォルト表示);
@@ -2835,7 +2862,13 @@ export const frameworkTemplate = `設定
                     待機(False, 条件無視);
                 END;
             END;
-            "End portal preview"
+            IF(カウント: (グローバル.AC));
+                グローバル変数用(NANBA, 0, カウント: (グローバル.AC), True);
+                    エフェクトを作成(フィルタリングされた配列(すべてのプレイヤー(すべてのチーム), COMPARE((現在の配列の要素).checkpoint_current, ==, 一度だけ評価(最初の値(配列内の値(グローバル.AC, グローバル.NANBA))))), リング, 配列内の値(グローバル.ColorConfig, 21), 最後の値(配列内の値(グローバル.AC, グローバル.NANBA)), True, 目視可能: );
+                    待機(False, 条件無視);
+                END;
+                待機(0.512, 条件無視);
+            END;
             エフェクトを作成(IF-THEN-ELSE(AND(AND((ローカルプレイヤー).preview_i, COMPARE((ローカルプレイヤー).preview_i, >, カウント: ((ローカルプレイヤー).cache_bouncePosition))), 最後の値(配列内の値((ローカルプレイヤー).preview_array2, (ローカルプレイヤー).preview_i))), ローカルプレイヤー, NULL), スパークル, 色(紫), 配列内の値((ローカルプレイヤー).preview_array1, (ローカルプレイヤー).preview_i), 0.5, 表示される相手、位置、範囲);
     }
 }
@@ -2928,7 +2961,8 @@ export const frameworkTemplate = `設定
         条件待機(OR(ボタンが長押しされている(イベント・プレイヤー, ボタン(ジャンプ)), NOT(ステータスがある(イベント・プレイヤー, 眠っている))), 999999999999);
         ステータスをクリア(イベント・プレイヤー, 眠っている);
         カメラの停止(イベント・プレイヤー);
-        IF(AND((イベント・プレイヤー).checkpoint_notLast, NOT((イベント・プレイヤー).toggle_invincible)));
+        IF((イベント・プレイヤー).toggle_invincible);
+        ELSE IF((イベント・プレイヤー).checkpoint_notLast);
             サブルーチンの呼び出し(CheckpointFailReset);
         END;
         条件が「TRUE」の場合ループ;
@@ -3003,7 +3037,7 @@ export const frameworkTemplate = `設定
         ELSE IF(COMPARE(現在のマップ, ==, マップ(ANTARCTIC PENINSULA)));
             グローバル変数を設定(PortalNames, 文字列の分割(カスタムストリング("Drilling Rig0Anomaly0Icebreaker0Anomaly0Icebreaker0Drilling Rig"), 最初の値(NULL)));
             グローバル変数を設定(PortalLoc, 配列(ベクトル(280.66, -12, -223.5), ベクトル(287.08, -12, -223.5), ベクトル(273.27, 42.75, 198), ベクトル(266.58, 42.75, 198), ベクトル(-75, True, 4), ベクトル(-75, True, -4)));
-            グローバル変数を設定(PortalDest, 配列(ベクトル(270, 42.7, 190.44), ベクトル(-70, 0.5, False), ベクトル(284.07, -12.75, -216.15), ベクトル(-70, 0.5, False), ベクトル(284.07, -12.75, -216.15), ベクトル(270, 42.7, 190.44)));
+            グローバル変数を設定(PortalDest, 配列(ベクトル(270, 42.75, 190.44), ベクトル(-70, 0.75, False), ベクトル(284.07, -12.5, -216.15), ベクトル(-70, 0.75, False), ベクトル(284.07, -12.5, -216.15), ベクトル(270, 42.75, 190.44)));
     }
 }
 
@@ -3020,7 +3054,7 @@ export const frameworkTemplate = `設定
         WHILE(COMPARE(カウント: (グローバル.C), >, 1));
             インデックスのグローバル変数を設定(C, False, NULL);
             WHILE(COMPARE(最初の値(グローバル.C), <, 256));
-                投射物を作成(オーブ投射物, NULL, 追加(追加(減算(最後の値(グローバル.C), ベクトル(240, False, 240)), 乗算(剰余(最初の値(グローバル.C), 16), 乗算(30, 左))), 乗算(整数への四捨五入(除算(最初の値(グローバル.C), 16), 下), 乗算(30, 前方向))), 下, 対ワールド: , 回復, チーム1, 0, 0, 30, いい爆発, 爆発音, 1, 1, 0, 0, 0, 0);
+                投射物を作成(オーブ投射物, NULL, 追加(配列内の値(グローバル.C, True), 乗算(30, ベクトル(減算(剰余(最初の値(グローバル.C), 16), 8), False, 減算(整数への四捨五入(除算(最初の値(グローバル.C), 16), 下), 8)))), 下, 対ワールド: , 回復, チーム1, 0, 0, 30, いい爆発, 爆発音, 1, 1, 0, 0, 0, 0);
                 配列内の値(グローバル.C, 0) += True;
                 "use modulo to only wait every x orbs keep the 0 change the other number"
                 IF(NOT(剰余(最初の値(グローバル.C), 3)));
@@ -3068,85 +3102,85 @@ export const frameworkTemplate = `設定
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("Ø Map Data - 数据录入 <---- INSERT HERE / 在这输入") {
+ルール ("Ø Map Data ◆ 数据录入 <---- INSERT HERE / 在这输入") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-ルール ("☞ Credits and Colors Here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入") {
+ルール ("☞ Credits and Colors Here ◆ 作者代码HUD颜色 <---- INSERT HERE / 在这输入") {
     イベント {
         進行中 - グローバル;
     }
@@ -3159,7 +3193,7 @@ export const frameworkTemplate = `設定
         インデックスのグローバル変数を設定(ColorConfig, False, 色(バイオレット));
         "credit hud code   -   代码HUD"
         インデックスのグローバル変数を設定(ColorConfig, True, 色(スカイブルー));
-        "dsc.gg/genjiparkour"
+        "discord link"
         インデックスのグローバル変数を設定(ColorConfig, 18, 色(アクア));
         "server time hud   -   房间倒计时"
         インデックスのグローバル変数を設定(ColorConfig, 2, 色(赤));
@@ -3185,6 +3219,8 @@ export const frameworkTemplate = `設定
         インデックスのグローバル変数を設定(ColorConfig, 12, 色(スカイブルー));
         "\\"come here\\" text   -   到这里来\\" 文本"
         インデックスのグローバル変数を設定(ColorConfig, 13, 色(ホワイト));
+        "safe ground rings   -"
+        インデックスのグローバル変数を設定(ColorConfig, 21, 色(緑));
         "kill orbs   -   击杀球"
         インデックスのグローバル変数を設定(ColorConfig, 14, 色(青));
         "normal orbs   -   弹球"
@@ -3200,7 +3236,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-ルール ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) - 旧版编辑器中已弃用规则指引 (单关封禁 / 传送门 / 给刀给S)") {
+ルール ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) ◆ 旧版编辑器中已弃用规则指引 (单关封禁 / 传送门 / 给刀给S)") {
     イベント {
         進行中 - グローバル;
     }
@@ -3220,23 +3256,13 @@ export const frameworkTemplate = `設定
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Settings & Data - 附加组件 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Settings & Data ◆ 附加组件 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-無効 ルール ("Addon | Tournament Instruction Message - 竞赛模式指引消息 <---- INSERT HERE / 在这输入") {
-    イベント {
-        進行中 - グローバル;
-    }
-    アクション {
-        "Instructions that show when you start tournament mode.\\n竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
-        グローバル変数を設定(instructiontext, カスタムストリング("Change Tournament Instruction Message Hud 1\\nChange Tournament Instruction Message Hud 2\\nChange Tournament Instruction Message{0}", カスタムストリング(" Hud 3")));
-    }
-}
-
-無効 ルール ("Addon | Custom Difficulty Hud - 自定义难度hud <---- INSERT HERE / 在这输入") {
+無効 ルール ("Addon | Custom Difficulty Hud ◆ 自定义难度hud <---- INSERT HERE / 在这输入") {
     イベント {
         進行中 - グローバル;
     }
@@ -3248,7 +3274,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-無効 ルール ("Addon | Title Data - 标题数据 <---- EDIT ME / 在此处编辑") {
+無効 ルール ("Addon | Title Data ◆ 标题数据 <---- EDIT ME / 在此处编辑") {
     イベント {
         進行中 - グローバル;
     }
@@ -3266,40 +3292,48 @@ export const frameworkTemplate = `設定
     }
 }
 
-無効 ルール ("Addon | Friend Title - 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)") {
+無効 ルール ("Addon | Friend Title ◆ 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)") {
     イベント {
         プレイヤーがマッチに参加;
         すべて;
         すべて;
     }
     アクション {
-        "\\"your nickname\\" your friends ingame name\\n\\"display title\\" fill in the custom title\\n修改字符串 \\"your nickname <-------\\" 为好友名字 区分大小写\\n修改字符串 \\"display title\\" 为好友头顶 显示的称号"
+        "Replace \\"Your Nickname <-------\\" with your friend's ingame name\\nReplace \\"Display Title\\" with a custom title\\n修改字符串 \\"Your Nickname <-------\\" 为好友名字 区分大小写\\n修改字符串 \\"Display Title\\" 为好友头顶 显示的称号"
         条件待機(スポーンした(イベント・プレイヤー), 999999999999);
         IF(COMPARE(カスタムストリング("Your Nickname <-------"), ==, 文字列の分割(最初の値(イベント・プレイヤー), 空の配列)));
             大きなメッセージ(最初の値(True), カスタムストリング("Message To The Whole Room"));
             ワールド内テキストを作成(最初の値(NOT((イベント・プレイヤー).toggle_invisible)), カスタムストリング("Display Title"), イベント・プレイヤー, 1.5, 表面に対してクリップ, 表示される相手、位置、文字列, 色(オレンジ), デフォルト表示);
-        END;
-        IF(COMPARE(カスタムストリング("Your Nickname <-------"), ==, 文字列の分割(最初の値(イベント・プレイヤー), 空の配列)));
+        ELSE IF(COMPARE(カスタムストリング("Your Nickname <-------"), ==, 文字列の分割(最初の値(イベント・プレイヤー), 空の配列)));
             大きなメッセージ(最初の値(True), カスタムストリング("Message To The Whole Room"));
             ワールド内テキストを作成(最初の値(NOT((イベント・プレイヤー).toggle_invisible)), カスタムストリング("Display Title"), イベント・プレイヤー, 1.5, 表面に対してクリップ, 表示される相手、位置、文字列, 色(オレンジ), デフォルト表示);
-        END;
-        IF(COMPARE(カスタムストリング("Your Nickname <-------"), ==, 文字列の分割(最初の値(イベント・プレイヤー), 空の配列)));
+        ELSE IF(COMPARE(カスタムストリング("Your Nickname <-------"), ==, 文字列の分割(最初の値(イベント・プレイヤー), 空の配列)));
             大きなメッセージ(最初の値(True), カスタムストリング("Message To The Whole Room"));
             ワールド内テキストを作成(最初の値(NOT((イベント・プレイヤー).toggle_invisible)), カスタムストリング("Display Title"), イベント・プレイヤー, 1.5, 表面に対してクリップ, 表示される相手、位置、文字列, 色(オレンジ), デフォルト表示);
     }
 }
 
-無効 ルール ("Addon | Display Author Time - 展示世界纪录 <---- EDIT ME / 在此处编辑") {
+無効 ルール ("Addon | Display Author Time ◆ 展示世界纪录 <---- EDIT ME / 在此处编辑") {
     イベント {
         進行中 - グローバル;
     }
     アクション {
         "type your entry in the textfield that says \\"Name and Time here\\"\\n在文本框 中输入“名称和时间”"
-        HUDテキストを作成(最初の値(True), NULL, カスタムストリング(" \\n{0} Author Time {0}", アイコンストリング(砲撃)), カスタムストリング("Name and Time here"), 右, -142, NULL, 色(ローズ), 色(ローズ), 目視可能: , デフォルト表示);
+        HUDテキストを作成(最初の値(True), NULL, カスタムストリング(" \\n{0} Author Time {0}", アイコンストリング(砲撃)), カスタムストリング("Name and Time Here"), 右, -142, NULL, 色(ローズ), 色(ローズ), 目視可能: , デフォルト表示);
     }
 }
 
-無効 ルール ("Addon | HUD Text For Certain Checkpoints - 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑") {
+無効 ルール ("Addon | Tournament Instruction Message ◆ 竞赛模式指引消息 <---- INSERT HERE / 在这输入") {
+    イベント {
+        進行中 - グローバル;
+    }
+    アクション {
+        "Instructions that show when you start tournament mode.\\n竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
+        グローバル変数を設定(instructiontext, カスタムストリング("Change Tournament Instruction Message Hud 1\\nChange Tournament Instruction Message Hud 2\\nChange Tournament Instruction Message{0}", カスタムストリング(" Hud 3")));
+    }
+}
+
+無効 ルール ("Addon | HUD Text For Certain Checkpoints ◆ 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑") {
     イベント {
         進行中 - グローバル;
     }
@@ -3315,7 +3349,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-無効 ルール ("Addon | In-World Text For Certain Checkpoints - 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑") {
+無効 ルール ("Addon | In-World Text For Certain Checkpoints ◆ 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑") {
     イベント {
         進行中 - グローバル;
     }
@@ -3333,7 +3367,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-無効 ルール ("Addon | Hint Text For Certain Checkpoints - 特定关卡的提示文本 <---- EDIT ME / 在此处编辑") {
+無効 ルール ("Addon | Hint Text For Certain Checkpoints ◆ 特定关卡的提示文本 <---- EDIT ME / 在此处编辑") {
     イベント {
         進行中 - グローバル;
     }
@@ -3349,7 +3383,7 @@ export const frameworkTemplate = `設定
     }
 }
 
-無効 ルール ("Addon | 3rd Person Camera Mode - 第三人称") {
+無効 ルール ("Addon | 3rd Person Camera Mode ◆ 第三人称") {
     イベント {
         プレイヤーがマッチに参加;
         すべて;
@@ -3362,13 +3396,13 @@ export const frameworkTemplate = `設定
     }
 }
 
-ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Skills - 附加组件技能 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+ルール ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Skills ◆ 附加组件技能 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     イベント {
         進行中 - グローバル;
     }
 }
 
-無効 ルール ("Addon | Stall Enhancer - 增强系統跳的判定") {
+無効 ルール ("Addon | Stall Enhancer ◆ 增强系統跳的判定") {
     イベント {
         進行中 - 各プレイヤー;
         すべて;
@@ -3395,32 +3429,10 @@ export const frameworkTemplate = `設定
         "wait(3)"
         重力を設定(イベント・プレイヤー, 100);
         移動速度を設定(イベント・プレイヤー, 100);
-        IF(AND(生存している(イベント・プレイヤー), NOT(OR((イベント・プレイヤー).editor_fly, ボタンが長押しされている(イベント・プレイヤー, ボタン(リロード))))));
+        IF(OR((イベント・プレイヤー).editor_fly, ボタンが長押しされている(イベント・プレイヤー, ボタン(リロード))));
+        ELSE IF(生存している(イベント・プレイヤー));
             推進力を適用(イベント・プレイヤー, 上, 10, 対ワールド: , 逆モーションXYZをキャンセル);
             条件が「TRUE」の場合ループ;
-    }
-}
-
-無効 ルール ("Addon | Fake Ledge Dash - 超级跳") {
-    イベント {
-        進行中 - 各プレイヤー;
-        すべて;
-        すべて;
-    }
-    条件 {
-        "Version 2"
-        アビリティ1を使用(イベント・プレイヤー) == True;
-        速さ: (イベント・プレイヤー) < 45;
-        Z成分: (スロットル: (イベント・プレイヤー)) > NULL;
-        絶対値(減算(垂直速度: (イベント・プレイヤー), 7)) < 0.8;
-    }
-    アクション {
-        "Dash into a wall/edge\\nRelease wall/edge before dash ends"
-        プレイヤー変数を設定(イベント・プレイヤー, addon_ledgeDash, プレイヤーが向いている方向: (イベント・プレイヤー));
-        "25 * 0.016"
-        条件待機(NOT(アビリティ1を使用(イベント・プレイヤー)), True);
-        IF(空中にいる(イベント・プレイヤー));
-            推進力を適用(イベント・プレイヤー, (イベント・プレイヤー).addon_ledgeDash, 50, 対ワールド: , 逆モーションXYZをキャンセル);
     }
 }
 
@@ -3479,6 +3491,16 @@ export const frameworkTemplate = `設定
     }
 }
 
+無効 ルール ("Addon | Safe Rings - Map Data") {
+    イベント {
+        進行中 - グローバル;
+    }
+    アクション {
+        "Replace 777 & 888 with checkpoint number\\nReplace Vector(2, 2, 2) & Vector(3, 3, 3) for the position"
+        グローバル変数を設定(AC, 配列(配列(777, ベクトル(2, 2, 2)), 配列(888, ベクトル(3, 3, 3))));
+    }
+}
+
 無効 ルール ("Addon | Custom Checkpoint Loading or Resetting") {
     イベント {
         サブルーチン;
@@ -3502,11 +3524,11 @@ export const frameworkTemplate = `設定
         (イベント・プレイヤー).cache_bounceTouched >= NULL;
     }
     アクション {
-        "Note that the ID can change if you place or delete orbs infront of that orb.\\nAdd the desired ID numbers for the orb in the array\\nAdd the script after it\\nyou can use the activateed sub above this rule to reset the effects"
+        "Note that the ID can change if you place or delete orbs infront of that orb.\\nAdd the desired ID numbers for the orb in the array\\nAdd the script after it\\nyou can use the activated sub above this rule to reset the effects"
         IF(含む配列(配列(1, 2), (イベント・プレイヤー).cache_bounceTouched));
             "example gravity (should be reset to 100 in AddonCustomLoadAndReset)"
             重力を設定(イベント・プレイヤー, 25);
-            小さなメッセージ(イベント・プレイヤー, カスタムストリング(" You Feel Light"));
+            小さなメッセージ(イベント・プレイヤー, カスタムストリング("   You Feel Light"));
             待機(2, 条件無視);
             重力を設定(イベント・プレイヤー, 100);
         END;
@@ -3514,18 +3536,41 @@ export const frameworkTemplate = `設定
             "example canceling primary makes double jump recover"
             メインアクションをキャンセル(イベント・プレイヤー);
             プレイヤー変数を設定(イベント・プレイヤー, skill_usedDouble, NULL);
-            小さなメッセージ(イベント・プレイヤー, カスタムストリング(" Double Jump Recovered"));
+            小さなメッセージ(イベント・プレイヤー, カスタムストリング("   Double Jump Recovered"));
         END;
         IF(含む配列(配列(5, 6), (イベント・プレイヤー).cache_bounceTouched));
             "example move speed"
             移動速度を設定(イベント・プレイヤー, 250);
-            小さなメッセージ(イベント・プレイヤー, カスタムストリング(" Zooom"));
+            小さなメッセージ(イベント・プレイヤー, カスタムストリング("   Zooom"));
             待機(2, 条件無視);
             移動速度を設定(イベント・プレイヤー, 100);
     }
 }
 
-無効 ルール ("Addon | Fake Triple Jump - 假三段跳") {
+無効 ルール ("Addon | Genji | Fake Ledge Dash ◆ 超级跳") {
+    イベント {
+        進行中 - 各プレイヤー;
+        すべて;
+        すべて;
+    }
+    条件 {
+        "Version 2"
+        アビリティ1を使用(イベント・プレイヤー) == True;
+        速さ: (イベント・プレイヤー) < 45;
+        Z成分: (スロットル: (イベント・プレイヤー)) > NULL;
+        絶対値(減算(垂直速度: (イベント・プレイヤー), 7)) < 0.8;
+    }
+    アクション {
+        "Dash into a wall/edge\\nRelease wall/edge before dash ends"
+        プレイヤー変数を設定(イベント・プレイヤー, addon_ledgeDash, プレイヤーが向いている方向: (イベント・プレイヤー));
+        "25 * 0.016"
+        条件待機(NOT(アビリティ1を使用(イベント・プレイヤー)), True);
+        IF(空中にいる(イベント・プレイヤー));
+            推進力を適用(イベント・プレイヤー, (イベント・プレイヤー).addon_ledgeDash, 50, 対ワールド: , 逆モーションXYZをキャンセル);
+    }
+}
+
+無効 ルール ("Addon | Genji | Fake Triple Jump ◆ 假三段跳") {
     イベント {
         進行中 - 各プレイヤー;
         すべて;

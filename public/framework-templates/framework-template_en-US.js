@@ -3,8 +3,8 @@ export const frameworkTemplate = `settings
 {
 	main
 	{
-		Mode Name: "Genji Parkour - 源氏跑酷 - v1.10.4G"
-		Description: "◀ Genji Parkour - 源氏跑酷 ▶\\nCode: XXXXX\\nMade By: \\n\\n◀ Official Genji Parkour Editor ▶\\nCode: 54CRY\\nDiscord: dsc.gg/genjiparkour\\nAdapted By: LulledLion, FishoFire, Nebula\\nv1.10.4G"
+		Mode Name: "Genji Parkour ◆ 源氏跑酷 - v1.10.4I"
+		Description: "◀ Genji Parkour ◆ 源氏跑酷 ▶\\nCode: XXXXX\\nMade By: \\n\\n◀ Official Genji Parkour Editor ▶\\nCode: code here - 代码\\nDiscord: dsc.gg/genjiparkour\\nAdapted By: LulledLion, FishoFire, Nebula\\nv1.10.4I"
 	}
 	lobby
 	{
@@ -124,7 +124,9 @@ variables {
         6: G
         7: H
         8: I
+        9: J
         10: K
+        11: L
         12: Dao
         13: SHIFT
         14: EditSelected
@@ -139,6 +141,7 @@ variables {
         25: BounceToggleLock
         26: killballnumber
         27: pinballnumber
+        28: AC
         32: LeaderBoardFull
         33: LeaderBoardHuds
         34: LeaderBoardRemake
@@ -206,52 +209,57 @@ variables {
         18: toggle_leaderboard
         19: toggle_invisible
         20: toggle_hints
-        21: skill_countBhops
-        22: skill_usedHop
-        23: skill_countCreates
-        24: skill_countMulti
-        25: skill_usedClimb
-        26: skill_usedBhop
-        27: skill_usedDouble
-        28: banString
-        29: ban_create
-        30: ban_autocreate
-        31: ban_standcreate
-        32: ban_multi
-        33: ban_dead
-        34: ban_emote
-        35: ban_savedouble
-        36: ban_climb
-        37: ban_bhop
-        38: ban_djump
-        39: cache_startUlt
-        40: cache_startAbility1
-        41: cache_collectedLocks
-        42: cache_bounceTouched
-        43: cache_portalStart
-        44: cache_portalEnd
-        45: cache_bounceMaxLocks
-        46: cache_killPosition
-        47: cache_killRadii
-        48: cache_bouncePosition
-        49: cache_inputs
-        50: cache_rainbow
-        51: cache_titleHud
-        52: editor_modeSelect
-        53: editor_fly
-        54: editor_saveCache
-        55: editor_undo
-        56: editor_lock
-        57: editor_hitboxEffect
-        58: editor_hitboxToggle
-        59: editor_bounceIndex
-        60: editor_killIndex
-        61: editor_temp
-        62: comp_countAttempts
-        63: comp_instructionHud
-        64: addon_toggle3rdPov
-        65: addon_ledgeDash
-        66: addon_enableDoubleChecks
+        21: cache_startAbility1
+        22: cache_startAbility2
+        23: cache_startPrimary
+        24: cache_startSecondary
+        25: cache_startUlt
+        26: cache_collectedLocks
+        27: cache_bounceTouched
+        28: cache_safeRing
+        29: cache_portalStart
+        30: cache_portalEnd
+        31: cache_bounceMaxLocks
+        32: cache_killPosition
+        33: cache_killRadii
+        34: cache_bouncePosition
+        35: cache_inputs
+        36: cache_rainbow
+        37: cache_titleHud
+        38: skill_safe
+        39: skill_countBhops
+        40: skill_usedHop
+        41: skill_countCreates
+        42: skill_countMulti
+        43: skill_usedClimb
+        44: skill_usedBhop
+        45: skill_usedDouble
+        46: banString
+        47: ban_create
+        48: ban_autocreate
+        49: ban_standcreate
+        50: ban_multi
+        51: ban_dead
+        52: ban_emote
+        53: ban_savedouble
+        54: ban_climb
+        55: ban_bhop
+        56: ban_djump
+        57: editor_modeSelect
+        58: editor_fly
+        59: editor_saveCache
+        60: editor_undo
+        61: editor_lock
+        62: editor_hitboxEffect
+        63: editor_hitboxToggle
+        64: editor_bounceIndex
+        65: editor_killIndex
+        66: editor_temp
+        67: comp_countAttempts
+        68: comp_instructionHud
+        69: addon_toggle3rdPov
+        70: addon_ledgeDash
+        71: addon_enableDoubleChecks
         127: __languageIndex__
 }
 subroutines {
@@ -309,7 +317,7 @@ rule ("OverPy | Player Translation Setup") {
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4G ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Parkour v1.10.4I ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
@@ -320,7 +328,7 @@ rule ("Parkour | Setup & Variables") {
         Ongoing - Global;
     }
     actions {
-        "◀ The Official Genji Parkour Editor ▶\\nDiscord: dsc.gg/genjiparkour\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula"
+        "◀ Official Genji Parkour Editor ▶\\nDiscord: dsc.gg/genjiparkour\\nCode: 54CRY\\nAdapted by: LulledLion, FishoFire, Nebula"
         Disable Built-In Game Mode Completion;
         Disable Built-In Game Mode Scoring;
         Disable Built-In Game Mode Music;
@@ -342,7 +350,6 @@ rule ("Parkour | Setup & Variables") {
         Set Global Variable(SaveElapsed, Empty Array);
         Set Global Variable(pinballnumber, If-Then-Else(Count Of(Global.pinballnumber), Global.pinballnumber, Empty Array));
         Set Global Variable(A, If-Then-Else(Count Of(Global.A), Global.A, Empty Array));
-        Set Global Variable(A, If-Then-Else(Count Of(Global.A), Global.A, Empty Array));
         Set Global Variable(killballnumber, If-Then-Else(Count Of(Global.killballnumber), Global.killballnumber, Empty Array));
         Set Global Variable(H, If-Then-Else(Count Of(Global.H), Global.H, Empty Array));
         Set Global Variable(I, If-Then-Else(Count Of(Global.I), Global.I, Empty Array));
@@ -353,11 +360,12 @@ rule ("Parkour | Setup & Variables") {
         Set Global Variable(TQ5, If-Then-Else(Count Of(Global.TQ5), Global.TQ5, Empty Array));
         Set Global Variable(TQ6, If-Then-Else(Count Of(Global.TQ6), Global.TQ6, Empty Array));
         Set Global Variable(BounceToggleLock, If-Then-Else(Count Of(Global.BounceToggleLock), Global.BounceToggleLock, Empty Array));
+        Set Global Variable(AC, If-Then-Else(Count Of(Global.AC), Global.AC, Empty Array));
         Set Global Variable(CustomPortalStart, If-Then-Else(Count Of(Global.CustomPortalStart), Global.CustomPortalStart, Empty Array));
         Set Global Variable(CustomPortalEndpoint, If-Then-Else(Count Of(Global.CustomPortalEndpoint), Global.CustomPortalEndpoint, Empty Array));
         Set Global Variable(CustomPortalCP, If-Then-Else(Count Of(Global.CustomPortalCP), Global.CustomPortalCP, Empty Array));
-        Set Global Variable(Dao, If-Then-Else(Count Of(Global.Dao), Remove From Array(Global.Dao, -1), Empty Array));
         Set Global Variable(SHIFT, If-Then-Else(Count Of(Global.SHIFT), Remove From Array(Global.SHIFT, -1), Empty Array));
+        Set Global Variable(Dao, If-Then-Else(Count Of(Global.Dao), Remove From Array(Global.Dao, -1), Empty Array));
         Set Global Variable(BanCreate, If-Then-Else(Count Of(Global.BanCreate), Remove From Array(Global.BanCreate, -1), Empty Array));
         Set Global Variable(CM, If-Then-Else(Count Of(Global.CM), Global.CM, Empty Array));
         Set Global Variable(BanStand, If-Then-Else(Count Of(Global.BanStand), Remove From Array(Global.BanStand, -1), Empty Array));
@@ -509,7 +517,8 @@ rule ("Parkour | Ground: Traces, Arrive, & Reset") {
     }
     actions {
         If(Not((Event Player).checkpoint_notLast));
-            If(And(Is Moving(Event Player), Not(Or(Or(Or((Event Player).toggle_practice, (Event Player).toggle_invisible), Global.EditorOn), Global.CompMode))));
+            If(Or(Or(Or((Event Player).toggle_practice, (Event Player).toggle_invisible), Global.EditorOn), Global.CompMode));
+            Else If(Is Moving(Event Player));
                 "traces ----------------------------------------------------------------------------------------------------"
                 Set Player Variable(Event Player, cache_rainbow, Value In Array(Array(Color(Red), Color(Orange), Color(Yellow), Color(Lime Green), Color(Green), Color(Turquoise), Color(Blue), Color(Purple), Color(Violet), Color(Rose)), Modulo(Round To Integer(Multiply(Total Time Elapsed, 2), Down), 10)));
                 "eventPlayer.cache_rainbow =  rgb((cosDeg(getTotalTimeElapsed()/2 * 360 - 0) + 0.5) * 255, (cosDeg(getTotalTimeElapsed/2 * 360 - 120) + 0.5) * 255, (cosDeg(getTotalTimeElapsed/2 * 360 - 240) + 0.5) * 255)\\n1.6 - 0.2 in 0.2 steps"
@@ -526,18 +535,14 @@ rule ("Parkour | Ground: Traces, Arrive, & Reset") {
                 Play Effect(First Of(True), Ring Explosion, (Event Player).cache_rainbow, Position Of(Event Player), 1.4);
                 Wait(0.048, Ignore Condition);
             End;
-        "or eventPlayer.lockState:"
-        Else If(Or((Event Player).toggle_invincible, (Event Player).toggle_spectate));
+        Else If((Event Player).toggle_invincible);
+        Else If((Event Player).toggle_spectate);
         Else If(Compare(Distance Between(Event Player, Value In Array(Global.A, Add((Event Player).checkpoint_current, True))), <=, 1.4));
             "arrived ----------------------------------------------------------------------------------------------------"
             If(Compare(Count Of((Event Player).cache_collectedLocks), <, (Event Player).cache_bounceMaxLocks));
                 "\\"   ! 进点前需集齐所有收集球 !\\" checkCN \\"   ! collect ALL {} orbs to unlock !\\".format(ColorConfig[Customize.orb_lock])"
                 Small Message(Event Player, Value In Array(String Split(Custom String("   ! Collect All Lock Orbs To Complete !   ! Collect All Lock Orbs To Complete !   ! Collect All Lock Orbs To Complete !"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
                 "kill player if not colleted the locks"
-                Call Subroutine(CheckpointFailReset);
-            Else If(And((Event Player).ban_climb, (Event Player).skill_usedClimb));
-                "\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\")"
-                Small Message(Event Player, Value In Array(String Split(Custom String("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
                 Call Subroutine(CheckpointFailReset);
             Else If(And((Event Player).ban_bhop, (Event Player).skill_usedBhop));
                 "\\"   ≥ 留小跳进点!\\" checkCN \\"   ≥ Must Have A Bhop To Complete!!\\""
@@ -595,6 +600,7 @@ rule ("Parkour | Ground: Traces, Arrive, & Reset") {
                 Play Effect(Event Player, Ring Explosion Sound, Null, Event Player, 100);
                 Play Effect(If-Then-Else(Or(Global.CompMode, (Event Player).toggle_invisible), Event Player, True), Ring Explosion, Color(Sky Blue), Position Of(Event Player), 4);
             End;
+        Else If((Event Player).skill_safe);
         Else If(Compare(Distance Between(Event Player, Last Of(Value In Array(Global.A, (Event Player).checkpoint_current))), >, 1.4));
             Call Subroutine(CheckpointFailReset);
         End;
@@ -672,6 +678,24 @@ rule ("Parkour | Bounce Ball / Orb") {
     }
 }
 
+rule ("Parkour | Safe Rings") {
+    event {
+        Ongoing - Each Player;
+        All;
+        All;
+    }
+    conditions {
+        (Event Player).cache_safeRing != Empty Array;
+        (Event Player).checkpoint_notLast != False;
+        Is True For Any((Event Player).cache_safeRing, Compare(Distance Between(Event Player, Last Of(Current Array Element)), <, 1.4)) == True;
+    }
+    actions {
+        Modify Player Variable(Event Player, skill_safe, Add, True);
+        Wait Until(And(Not(Count Of((Event Player).cache_safeRing)), Is True For Any((Event Player).cache_safeRing, Compare(Distance Between(Event Player, Last Of(Current Array Element)), >, 1.4))), 999999999999);
+        Modify Player Variable(Event Player, skill_safe, Subtract, True);
+    }
+}
+
 rule ("Parkour | Death Reset") {
     event {
         Player Died;
@@ -724,6 +748,7 @@ rule ("Parkour | SUB Update Effect Cache") {
         Set Player Variable(Event Player, cache_bounceMaxLocks, Count Of(Filtered Array(Global.BounceToggleLock, And(Compare(Value In Array(Global.pinballnumber, Current Array Index), ==, (Event Player).checkpoint_current), Current Array Element))));
         Set Player Variable(Event Player, cache_killPosition, Filtered Array(Global.H, Compare(Value In Array(Global.killballnumber, Current Array Index), ==, (Event Player).checkpoint_current)));
         Set Player Variable(Event Player, cache_killRadii, Filtered Array(Global.I, Compare(Value In Array(Global.killballnumber, Current Array Index), ==, (Event Player).checkpoint_current)));
+        Set Player Variable(Event Player, cache_safeRing, Filtered Array(Global.AC, Compare(First Of(Current Array Element), ==, (Event Player).checkpoint_current)));
         Set Player Variable(Event Player, cache_portalStart, Filtered Array(Global.CustomPortalStart, Or(Compare(Value In Array(Global.CustomPortalCP, Current Array Index), ==, (Event Player).checkpoint_current), Compare(Value In Array(Global.CustomPortalCP, Current Array Index), <, Null))));
         Set Player Variable(Event Player, cache_portalEnd, Filtered Array(Global.CustomPortalEndpoint, Or(Compare(Value In Array(Global.CustomPortalCP, Current Array Index), ==, (Event Player).checkpoint_current), Compare(Value In Array(Global.CustomPortalCP, Current Array Index), <, Null))));
         Set Player Variable(Event Player, checkpoint_notLast, And(Compare((Event Player).checkpoint_current, <, Subtract(Count Of(Global.A), True)), Compare(Count Of(Global.A), >, 1)));
@@ -731,13 +756,13 @@ rule ("Parkour | SUB Update Effect Cache") {
         Set Player Variable(Event Player, banString, Empty Array);
         Wait(False, Ignore Condition);
         If((Event Player).checkpoint_notLast);
-            Set Player Variable(Event Player, cache_startUlt, Array Contains(Global.Dao, (Event Player).checkpoint_current));
-            If((Event Player).cache_startUlt);
-                Small Message(Event Player, Custom String("   {0} {1}", Ability Icon String(Hero(Genji), Button(Ultimate)), Value In Array(String Split(Custom String("Ultimate Is ReadyUltimate Is ReadyUltimate Is Ready"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)));
-            End;
             Set Player Variable(Event Player, cache_startAbility1, Array Contains(Global.SHIFT, (Event Player).checkpoint_current));
             If((Event Player).cache_startAbility1);
                 Small Message(Event Player, Custom String("   {0} {1}", Ability Icon String(Hero(Genji), Button(Ability 1)), Value In Array(String Split(Custom String("Dash Is ReadyDash Is ReadyDash Is Ready"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)));
+            End;
+            Set Player Variable(Event Player, cache_startUlt, Array Contains(Global.Dao, (Event Player).checkpoint_current));
+            If((Event Player).cache_startUlt);
+                Small Message(Event Player, Custom String("   {0} {1}", Ability Icon String(Hero(Genji), Button(Ultimate)), Value In Array(String Split(Custom String("Ultimate Is ReadyUltimate Is ReadyUltimate Is Ready"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)));
             End;
             Set Player Variable(Event Player, ban_create, Or(Workshop Setting Toggle(Custom String("Ban (All Levels)    ◆ 封禁(应用于所有关卡)    ◆ 금지 (모든 단계에 적용)"), Custom String("Ban Create Bhop         ◆ 封禁卡小      ◆ 앉콩 금지"), False, 1), Array Contains(Global.BanCreate, (Event Player).checkpoint_current)));
             If((Event Player).ban_create);
@@ -783,8 +808,8 @@ rule ("Parkour | SUB Update Effect Cache") {
                 Set Player Variable(Event Player, banString, Custom String("» {0}", (Event Player).banString));
             End;
         Else;
-            Set Player Variable(Event Player, cache_startUlt, True);
             Set Player Variable(Event Player, cache_startAbility1, True);
+            Set Player Variable(Event Player, cache_startUlt, True);
             Set Player Variable(Event Player, ban_create, False);
             Set Player Variable(Event Player, ban_autocreate, False);
             Set Player Variable(Event Player, ban_standcreate, False);
@@ -1059,7 +1084,7 @@ rule ("Mechanic | All | Ground Reset") {
     actions {
         Set Player Variable(Event Player, skill_usedHop, Null);
         Set Player Variable(Event Player, skill_countBhops, Null);
-        Set Player Variable(Event Player, skill_usedClimb, False);
+        Set Player Variable(Event Player, skill_usedClimb, Null);
         Set Player Variable(Event Player, skill_countMulti, Null);
         Set Player Variable(Event Player, skill_countCreates, Null);
         Set Player Variable(Event Player, skill_usedDouble, Null);
@@ -1077,6 +1102,12 @@ rule ("Mechanic | Climbers | Climb") {
     }
     actions {
         "if eventPlayer.isHoldingButton(Button.JUMP): goto climb"
+        If((Event Player).toggle_invincible);
+        Else If(And((Event Player).ban_multi, (Event Player).skill_countMulti));
+            Call Subroutine(CheckpointFailReset);
+            "\\"   蹭留 ∞ 已禁用!\\" checkCN \\"   Multiclimb ∞ is banned!\\""
+            Small Message(Event Player, Value In Array(String Split(Custom String("   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
+        End;
         Wait(False, Ignore Condition);
         "and not eventPlayer.isHoldingButton(Button.JUMP): #Auto Climb"
         If(Is On Wall(Event Player));
@@ -1084,12 +1115,9 @@ rule ("Mechanic | Climbers | Climb") {
             Set Player Variable(Event Player, skill_usedClimb, True);
             Abort If((Event Player).toggle_invincible);
             Abort If(Not((Event Player).ban_climb));
-            "CheckpointFailReset()\\n\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\""
-            Small Message(Event Player, Value In Array(String Split(Custom String("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
-        Else If(And((Event Player).ban_multi, Not((Event Player).toggle_invincible)));
             Call Subroutine(CheckpointFailReset);
-            "\\"   蹭留 ∞ 已禁用!\\" checkCN \\"   Multiclimb ∞ is banned!\\""
-            Small Message(Event Player, Value In Array(String Split(Custom String("   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!   Multiclimb ∞ Is Banned!"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
+            "\\"   爬墙 ↑ 已禁用!\\" checkCN \\"   Climb ↑ is banned!\\""
+            Small Message(Event Player, Value In Array(String Split(Custom String("   Climb ↑ Is Banned!   Climb ↑ Is Banned!   Climb ↑ Is Banned!"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
         Else;
             Modify Player Variable(Event Player, skill_countMulti, Add, True);
     }
@@ -1179,11 +1207,11 @@ rule ("Mechanic | Genji | SUB Reset Abilities") {
     }
     actions {
         If(Or((Event Player).toggle_invincible, And(Compare(Event Player, ==, Host Player), Global.EditorOn)));
-            Set Ultimate Ability Enabled(Event Player, True);
             Set Ability 1 Enabled(Event Player, True);
+            Set Ultimate Ability Enabled(Event Player, True);
         Else;
-            Set Ultimate Ability Enabled(Event Player, (Event Player).cache_startUlt);
             Set Ability 1 Enabled(Event Player, (Event Player).cache_startAbility1);
+            Set Ultimate Ability Enabled(Event Player, (Event Player).cache_startUlt);
         End;
         Set Ultimate Charge(Event Player, 100);
     }
@@ -1264,7 +1292,7 @@ rule ("Mechanic | Genji | Double Jump") {
     }
 }
 
-rule ("Mechanic | Genji | Ban Save Double - 封禁二段跳") {
+rule ("Mechanic | Genji | Ban Save Double ◆ 封禁二段跳") {
     event {
         Ongoing - Each Player;
         All;
@@ -2371,18 +2399,16 @@ rule ("Command | Toggle Invincible Mode (Melee + Reload)") {
             Call Subroutine(TimerPause);
             Stop Chasing Player Variable(Event Player, timer_practice);
             Call Subroutine(ResetAbilities);
-        Else;
-            If((Event Player).toggle_practice);
-                "\\"练习模式\\" checkCN \\"Practice mode\\""
-                Big Message(Event Player, Value In Array(String Split(Custom String("Practice ModePractice ModePractice Mode"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
-                Chase Player Variable At Rate(Event Player, timer_practice, 999999999999, True, None);
-                Call Subroutine(CheckpointFailReset);
-            Else If((Event Player).checkpoint_notLast);
-                "\\"跑图模式\\" checkCN \\"Normal mode\\""
-                Big Message(Event Player, Value In Array(String Split(Custom String("Normal ModeNormal ModeNormal Mode"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
-                Call Subroutine(TimerResume);
-                Call Subroutine(CheckpointFailReset);
-            End;
+        Else If((Event Player).toggle_practice);
+            "\\"练习模式\\" checkCN \\"Practice mode\\""
+            Big Message(Event Player, Value In Array(String Split(Custom String("Practice ModePractice ModePractice Mode"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
+            Chase Player Variable At Rate(Event Player, timer_practice, 999999999999, True, None);
+            Call Subroutine(CheckpointFailReset);
+        Else If((Event Player).checkpoint_notLast);
+            "\\"跑图模式\\" checkCN \\"Normal mode\\""
+            Big Message(Event Player, Value In Array(String Split(Custom String("Normal ModeNormal ModeNormal Mode"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__));
+            Call Subroutine(TimerResume);
+            Call Subroutine(CheckpointFailReset);
         End;
         Set Player Variable(Event Player, lockState, False);
         "Anti spam"
@@ -2427,7 +2453,8 @@ rule ("Command | Toggle Practice Mode (Melee + Ultimate)") {
             Stop Chasing Player Variable(Event Player, timer_practice);
             Set Player Variable(Event Player, checkpoint_current, (Event Player).checkpoint_practice);
             Call Subroutine(UpdateCache);
-            If(And((Event Player).checkpoint_notLast, Not((Event Player).toggle_invincible)));
+            If((Event Player).toggle_invincible);
+            Else If((Event Player).checkpoint_notLast);
                 Set Player Variable(Event Player, timer_split, (Event Player).timer_normal);
                 Call Subroutine(TimerResume);
                 Call Subroutine(CheckpointFailReset);
@@ -2648,7 +2675,7 @@ rule ("Huds | Global Localplayer") {
             End;
         End;
         "global huds"
-        Create HUD Text(First Of(True), Null, Custom String("{0}{1}{2}", Value In Array(String Split(Custom String("Server Restart In Server Restart In Server Restart In "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Round To Integer(Subtract(Global.TimeRemaining, Divide(Total Time Elapsed, 60)), Up), Custom String("{0}v1.10.4G{1}", Value In Array(String Split(Custom String(" Min -  Min -  Min - "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), If-Then-Else(Compare(Text Count, >=, 128), Value In Array(String Split(Custom String("\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Empty Array))), Null, Right, -162, Null, Value In Array(Global.ColorConfig, 2), Null, Visible To and String, Visible Always);
+        Create HUD Text(First Of(True), Null, Custom String("{0}{1}{2}", Value In Array(String Split(Custom String("Server Restart In Server Restart In Server Restart In "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Round To Integer(Subtract(Global.TimeRemaining, Divide(Total Time Elapsed, 60)), Up), Custom String("{0}v1.10.4I{1}", Value In Array(String Split(Custom String(" Min -  Min -  Min - "), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), If-Then-Else(Compare(Text Count, >=, 128), Value In Array(String Split(Custom String("\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached\\nError: Max HUD Count Reached"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Empty Array))), Null, Right, -162, Null, Value In Array(Global.ColorConfig, 2), Null, Visible To and String, Visible Always);
         "padding for custom hud display"
         Create HUD Text(First Of(True), Null, Null, Custom String("­\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n"), Top, -164, Null, Null, Color(Orange), Visible To, Default Visibility);
         Create HUD Text((Local Player).toggle_guide, Null, Null, If-Then-Else((Local Player).toggle_quickRestart, Custom String("{0} | {1}", Input Binding String(Button(Reload)), Value In Array(String Split(Custom String("Quick ResetQuick ResetQuick Reset"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__)), Custom String("{0} {1} | {2}", Value In Array(String Split(Custom String("HoldHoldHold"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__), Input Binding String(Button(Reload)), Value In Array(String Split(Custom String("Enable Quick ResetEnable Quick ResetEnable Quick Reset"), Global.__overpyTranslationHelper__), (Local Player).__languageIndex__))), Right, -157, Null, Null, Value In Array(Global.ColorConfig, 5), Visible To and String, Default Visibility);
@@ -2824,7 +2851,13 @@ rule ("Effects | Setup Effects") {
                     Wait(False, Ignore Condition);
                 End;
             End;
-            "End portal preview"
+            If(Count Of(Global.AC));
+                For Global Variable(NANBA, 0, Count Of(Global.AC), True);
+                    Create Effect(Filtered Array(All Players(All Teams), Compare((Current Array Element).checkpoint_current, ==, Evaluate Once(First Of(Value In Array(Global.AC, Global.NANBA))))), Ring, Value In Array(Global.ColorConfig, 21), Last Of(Value In Array(Global.AC, Global.NANBA)), True, Visible To);
+                    Wait(False, Ignore Condition);
+                End;
+                Wait(0.512, Ignore Condition);
+            End;
             Create Effect(If-Then-Else(And(And((Local Player).preview_i, Compare((Local Player).preview_i, >, Count Of((Local Player).cache_bouncePosition))), Last Of(Value In Array((Local Player).preview_array2, (Local Player).preview_i))), Local Player, Null), Sparkles, Color(Purple), Value In Array((Local Player).preview_array1, (Local Player).preview_i), 0.5, Visible To Position and Radius);
     }
 }
@@ -2917,7 +2950,8 @@ rule ("Addon | AFK Timer") {
         Wait Until(Or(Is Button Held(Event Player, Button(Jump)), Not(Has Status(Event Player, Asleep))), 999999999999);
         Clear Status(Event Player, Asleep);
         Stop Camera(Event Player);
-        If(And((Event Player).checkpoint_notLast, Not((Event Player).toggle_invincible)));
+        If((Event Player).toggle_invincible);
+        Else If((Event Player).checkpoint_notLast);
             Call Subroutine(CheckpointFailReset);
         End;
         Loop If Condition Is True;
@@ -2992,7 +3026,7 @@ rule ("Addon | Preset Control Map Portal - Toggle Via Workshop Settings") {
         Else If(Compare(Current Map, ==, Map(Antarctic Peninsula)));
             Set Global Variable(PortalNames, String Split(Custom String("Drilling Rig0Anomaly0Icebreaker0Anomaly0Icebreaker0Drilling Rig"), First Of(Null)));
             Set Global Variable(PortalLoc, Array(Vector(280.66, -12, -223.5), Vector(287.08, -12, -223.5), Vector(273.27, 42.75, 198), Vector(266.58, 42.75, 198), Vector(-75, True, 4), Vector(-75, True, -4)));
-            Set Global Variable(PortalDest, Array(Vector(270, 42.7, 190.44), Vector(-70, 0.5, False), Vector(284.07, -12.75, -216.15), Vector(-70, 0.5, False), Vector(284.07, -12.75, -216.15), Vector(270, 42.7, 190.44)));
+            Set Global Variable(PortalDest, Array(Vector(270, 42.75, 190.44), Vector(-70, 0.75, False), Vector(284.07, -12.5, -216.15), Vector(-70, 0.75, False), Vector(284.07, -12.5, -216.15), Vector(270, 42.75, 190.44)));
     }
 }
 
@@ -3009,7 +3043,7 @@ rule ("Addon | Little Destructo - Fence Breaker") {
         While(Compare(Count Of(Global.C), >, 1));
             Set Global Variable At Index(C, False, Null);
             While(Compare(First Of(Global.C), <, 256));
-                Create Projectile(Orb Projectile, Null, Add(Add(Subtract(Last Of(Global.C), Vector(240, False, 240)), Multiply(Modulo(First Of(Global.C), 16), Multiply(30, Left))), Multiply(Round To Integer(Divide(First Of(Global.C), 16), Down), Multiply(30, Forward))), Down, To World, Heal, Team 1, 0, 0, 30, Good Explosion, Explosion Sound, 1, 1, 0, 0, 0, 0);
+                Create Projectile(Orb Projectile, Null, Add(Value In Array(Global.C, True), Multiply(30, Vector(Subtract(Modulo(First Of(Global.C), 16), 8), False, Subtract(Round To Integer(Divide(First Of(Global.C), 16), Down), 8)))), Down, To World, Heal, Team 1, 0, 0, 30, Good Explosion, Explosion Sound, 1, 1, 0, 0, 0, 0);
                 Modify Global Variable At Index(C, False, Add, True);
                 "use modulo to only wait every x orbs keep the 0 change the other number"
                 If(Not(Modulo(First Of(Global.C), 3)));
@@ -3057,85 +3091,85 @@ rule ("Addon | SUB 3rd Person Camera") {
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 - 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Map Data & Addon Settings Are On Page 2 ◆ 地图数据和附加组件的设置在第2页 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("Ø Map Data - 数据录入 <---- INSERT HERE / 在这输入") {
+rule ("Ø Map Data ◆ 数据录入 <---- INSERT HERE / 在这输入") {
     event {
         Ongoing - Global;
     }
 }
 
-rule ("☞ Credits and Colors Here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入") {
+rule ("☞ Credits and Colors Here ◆ 作者代码HUD颜色 <---- INSERT HERE / 在这输入") {
     event {
         Ongoing - Global;
     }
@@ -3148,7 +3182,7 @@ rule ("☞ Credits and Colors Here - 作者代码HUD颜色 <---- INSERT HERE / �
         Set Global Variable At Index(ColorConfig, False, Color(Violet));
         "credit hud code   -   代码HUD"
         Set Global Variable At Index(ColorConfig, True, Color(Sky Blue));
-        "dsc.gg/genjiparkour"
+        "discord link"
         Set Global Variable At Index(ColorConfig, 18, Color(Aqua));
         "server time hud   -   房间倒计时"
         Set Global Variable At Index(ColorConfig, 2, Color(Red));
@@ -3174,6 +3208,8 @@ rule ("☞ Credits and Colors Here - 作者代码HUD颜色 <---- INSERT HERE / �
         Set Global Variable At Index(ColorConfig, 12, Color(Sky Blue));
         "\\"come here\\" text   -   到这里来\\" 文本"
         Set Global Variable At Index(ColorConfig, 13, Color(White));
+        "safe ground rings   -"
+        Set Global Variable At Index(ColorConfig, 21, Color(Green));
         "kill orbs   -   击杀球"
         Set Global Variable At Index(ColorConfig, 14, Color(Blue));
         "normal orbs   -   弹球"
@@ -3189,7 +3225,7 @@ rule ("☞ Credits and Colors Here - 作者代码HUD颜色 <---- INSERT HERE / �
     }
 }
 
-rule ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) - 旧版编辑器中已弃用规则指引 (单关封禁 / 传送门 / 给刀给S)") {
+rule ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) ◆ 旧版编辑器中已弃用规则指引 (单关封禁 / 传送门 / 给刀给S)") {
     event {
         Ongoing - Global;
     }
@@ -3209,23 +3245,13 @@ rule ("Instructions For Depricated Rules (Ban / Portal / Dash /Ult) - 旧版编�
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Settings & Data - 附加组件 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Settings & Data ◆ 附加组件 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-disabled rule ("Addon | Tournament Instruction Message - 竞赛模式指引消息 <---- INSERT HERE / 在这输入") {
-    event {
-        Ongoing - Global;
-    }
-    actions {
-        "Instructions that show when you start tournament mode.\\n竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
-        Set Global Variable(instructiontext, Custom String("Change Tournament Instruction Message Hud 1\\nChange Tournament Instruction Message Hud 2\\nChange Tournament Instruction Message{0}", Custom String(" Hud 3")));
-    }
-}
-
-disabled rule ("Addon | Custom Difficulty Hud - 自定义难度hud <---- INSERT HERE / 在这输入") {
+disabled rule ("Addon | Custom Difficulty Hud ◆ 自定义难度hud <---- INSERT HERE / 在这输入") {
     event {
         Ongoing - Global;
     }
@@ -3237,7 +3263,7 @@ disabled rule ("Addon | Custom Difficulty Hud - 自定义难度hud <---- INSERT 
     }
 }
 
-disabled rule ("Addon | Title Data - 标题数据 <---- EDIT ME / 在此处编辑") {
+disabled rule ("Addon | Title Data ◆ 标题数据 <---- EDIT ME / 在此处编辑") {
     event {
         Ongoing - Global;
     }
@@ -3255,40 +3281,48 @@ disabled rule ("Addon | Title Data - 标题数据 <---- EDIT ME / 在此处编�
     }
 }
 
-disabled rule ("Addon | Friend Title - 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)") {
+disabled rule ("Addon | Friend Title ◆ 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)") {
     event {
         Player Joined Match;
         All;
         All;
     }
     actions {
-        "\\"your nickname\\" your friends ingame name\\n\\"display title\\" fill in the custom title\\n修改字符串 \\"your nickname <-------\\" 为好友名字 区分大小写\\n修改字符串 \\"display title\\" 为好友头顶 显示的称号"
+        "Replace \\"Your Nickname <-------\\" with your friend's ingame name\\nReplace \\"Display Title\\" with a custom title\\n修改字符串 \\"Your Nickname <-------\\" 为好友名字 区分大小写\\n修改字符串 \\"Display Title\\" 为好友头顶 显示的称号"
         Wait Until(Has Spawned(Event Player), 999999999999);
         If(Compare(Custom String("Your Nickname <-------"), ==, String Split(First Of(Event Player), Empty Array)));
             Big Message(First Of(True), Custom String("Message To The Whole Room"));
             Create In-World Text(First Of(Not((Event Player).toggle_invisible)), Custom String("Display Title"), Event Player, 1.5, Clip Against Surfaces, Visible To Position and String, Color(Orange), Default Visibility);
-        End;
-        If(Compare(Custom String("Your Nickname <-------"), ==, String Split(First Of(Event Player), Empty Array)));
+        Else If(Compare(Custom String("Your Nickname <-------"), ==, String Split(First Of(Event Player), Empty Array)));
             Big Message(First Of(True), Custom String("Message To The Whole Room"));
             Create In-World Text(First Of(Not((Event Player).toggle_invisible)), Custom String("Display Title"), Event Player, 1.5, Clip Against Surfaces, Visible To Position and String, Color(Orange), Default Visibility);
-        End;
-        If(Compare(Custom String("Your Nickname <-------"), ==, String Split(First Of(Event Player), Empty Array)));
+        Else If(Compare(Custom String("Your Nickname <-------"), ==, String Split(First Of(Event Player), Empty Array)));
             Big Message(First Of(True), Custom String("Message To The Whole Room"));
             Create In-World Text(First Of(Not((Event Player).toggle_invisible)), Custom String("Display Title"), Event Player, 1.5, Clip Against Surfaces, Visible To Position and String, Color(Orange), Default Visibility);
     }
 }
 
-disabled rule ("Addon | Display Author Time - 展示世界纪录 <---- EDIT ME / 在此处编辑") {
+disabled rule ("Addon | Display Author Time ◆ 展示世界纪录 <---- EDIT ME / 在此处编辑") {
     event {
         Ongoing - Global;
     }
     actions {
         "type your entry in the textfield that says \\"Name and Time here\\"\\n在文本框 中输入“名称和时间”"
-        Create HUD Text(First Of(True), Null, Custom String(" \\n{0} Author Time {0}", Icon String(Fire)), Custom String("Name and Time here"), Right, -142, Null, Color(Rose), Color(Rose), Visible To, Default Visibility);
+        Create HUD Text(First Of(True), Null, Custom String(" \\n{0} Author Time {0}", Icon String(Fire)), Custom String("Name and Time Here"), Right, -142, Null, Color(Rose), Color(Rose), Visible To, Default Visibility);
     }
 }
 
-disabled rule ("Addon | HUD Text For Certain Checkpoints - 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑") {
+disabled rule ("Addon | Tournament Instruction Message ◆ 竞赛模式指引消息 <---- INSERT HERE / 在这输入") {
+    event {
+        Ongoing - Global;
+    }
+    actions {
+        "Instructions that show when you start tournament mode.\\n竞赛模式 指引消息\\n指引消息将 会在竞赛模 式开始时 显示\\n由于 hud 文本限制，你有 4 个hud可用\\n如果你不需 要一个字段 只是空文 本字段"
+        Set Global Variable(instructiontext, Custom String("Change Tournament Instruction Message Hud 1\\nChange Tournament Instruction Message Hud 2\\nChange Tournament Instruction Message{0}", Custom String(" Hud 3")));
+    }
+}
+
+disabled rule ("Addon | HUD Text For Certain Checkpoints ◆ 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑") {
     event {
         Ongoing - Global;
     }
@@ -3304,7 +3338,7 @@ disabled rule ("Addon | HUD Text For Certain Checkpoints - 特定关卡显示的
     }
 }
 
-disabled rule ("Addon | In-World Text For Certain Checkpoints - 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑") {
+disabled rule ("Addon | In-World Text For Certain Checkpoints ◆ 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑") {
     event {
         Ongoing - Global;
     }
@@ -3322,7 +3356,7 @@ disabled rule ("Addon | In-World Text For Certain Checkpoints - 特定关卡显�
     }
 }
 
-disabled rule ("Addon | Hint Text For Certain Checkpoints - 特定关卡的提示文本 <---- EDIT ME / 在此处编辑") {
+disabled rule ("Addon | Hint Text For Certain Checkpoints ◆ 特定关卡的提示文本 <---- EDIT ME / 在此处编辑") {
     event {
         Ongoing - Global;
     }
@@ -3338,7 +3372,7 @@ disabled rule ("Addon | Hint Text For Certain Checkpoints - 特定关卡的提�
     }
 }
 
-disabled rule ("Addon | 3rd Person Camera Mode - 第三人称") {
+disabled rule ("Addon | 3rd Person Camera Mode ◆ 第三人称") {
     event {
         Player Joined Match;
         All;
@@ -3351,13 +3385,13 @@ disabled rule ("Addon | 3rd Person Camera Mode - 第三人称") {
     }
 }
 
-rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Skills - 附加组件技能 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
+rule ("▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ Addons Skills ◆ 附加组件技能 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒") {
     event {
         Ongoing - Global;
     }
 }
 
-disabled rule ("Addon | Stall Enhancer - 增强系統跳的判定") {
+disabled rule ("Addon | Stall Enhancer ◆ 增强系統跳的判定") {
     event {
         Ongoing - Each Player;
         All;
@@ -3384,32 +3418,10 @@ disabled rule ("Addon | Stall Enhancer - 增强系統跳的判定") {
         "wait(3)"
         Set Gravity(Event Player, 100);
         Set Move Speed(Event Player, 100);
-        If(And(Is Alive(Event Player), Not(Or((Event Player).editor_fly, Is Button Held(Event Player, Button(Reload))))));
+        If(Or((Event Player).editor_fly, Is Button Held(Event Player, Button(Reload))));
+        Else If(Is Alive(Event Player));
             Apply Impulse(Event Player, Up, 10, To World, Cancel Contrary Motion XYZ);
             Loop If Condition Is True;
-    }
-}
-
-disabled rule ("Addon | Fake Ledge Dash - 超级跳") {
-    event {
-        Ongoing - Each Player;
-        All;
-        All;
-    }
-    conditions {
-        "Version 2"
-        Is Using Ability 1(Event Player) == True;
-        Speed Of(Event Player) < 45;
-        Z Component Of(Throttle Of(Event Player)) > Null;
-        Absolute Value(Subtract(Vertical Speed Of(Event Player), 7)) < 0.8;
-    }
-    actions {
-        "Dash into a wall/edge\\nRelease wall/edge before dash ends"
-        Set Player Variable(Event Player, addon_ledgeDash, Facing Direction Of(Event Player));
-        "25 * 0.016"
-        Wait Until(Not(Is Using Ability 1(Event Player)), True);
-        If(Is In Air(Event Player));
-            Apply Impulse(Event Player, (Event Player).addon_ledgeDash, 50, To World, Cancel Contrary Motion XYZ);
     }
 }
 
@@ -3468,6 +3480,16 @@ disabled rule ("Addon | Group Up") {
     }
 }
 
+disabled rule ("Addon | Safe Rings - Map Data") {
+    event {
+        Ongoing - Global;
+    }
+    actions {
+        "Replace 777 & 888 with checkpoint number\\nReplace Vector(2, 2, 2) & Vector(3, 3, 3) for the position"
+        Set Global Variable(AC, Array(Array(777, Vector(2, 2, 2)), Array(888, Vector(3, 3, 3))));
+    }
+}
+
 disabled rule ("Addon | Custom Checkpoint Loading or Resetting") {
     event {
         Subroutine;
@@ -3491,11 +3513,11 @@ disabled rule ("Addon | Custom Orb Script") {
         (Event Player).cache_bounceTouched >= Null;
     }
     actions {
-        "Note that the ID can change if you place or delete orbs infront of that orb.\\nAdd the desired ID numbers for the orb in the array\\nAdd the script after it\\nyou can use the activateed sub above this rule to reset the effects"
+        "Note that the ID can change if you place or delete orbs infront of that orb.\\nAdd the desired ID numbers for the orb in the array\\nAdd the script after it\\nyou can use the activated sub above this rule to reset the effects"
         If(Array Contains(Array(1, 2), (Event Player).cache_bounceTouched));
             "example gravity (should be reset to 100 in AddonCustomLoadAndReset)"
             Set Gravity(Event Player, 25);
-            Small Message(Event Player, Custom String(" You Feel Light"));
+            Small Message(Event Player, Custom String("   You Feel Light"));
             Wait(2, Ignore Condition);
             Set Gravity(Event Player, 100);
         End;
@@ -3503,18 +3525,41 @@ disabled rule ("Addon | Custom Orb Script") {
             "example canceling primary makes double jump recover"
             Cancel Primary Action(Event Player);
             Set Player Variable(Event Player, skill_usedDouble, Null);
-            Small Message(Event Player, Custom String(" Double Jump Recovered"));
+            Small Message(Event Player, Custom String("   Double Jump Recovered"));
         End;
         If(Array Contains(Array(5, 6), (Event Player).cache_bounceTouched));
             "example move speed"
             Set Move Speed(Event Player, 250);
-            Small Message(Event Player, Custom String(" Zooom"));
+            Small Message(Event Player, Custom String("   Zooom"));
             Wait(2, Ignore Condition);
             Set Move Speed(Event Player, 100);
     }
 }
 
-disabled rule ("Addon | Fake Triple Jump - 假三段跳") {
+disabled rule ("Addon | Genji | Fake Ledge Dash ◆ 超级跳") {
+    event {
+        Ongoing - Each Player;
+        All;
+        All;
+    }
+    conditions {
+        "Version 2"
+        Is Using Ability 1(Event Player) == True;
+        Speed Of(Event Player) < 45;
+        Z Component Of(Throttle Of(Event Player)) > Null;
+        Absolute Value(Subtract(Vertical Speed Of(Event Player), 7)) < 0.8;
+    }
+    actions {
+        "Dash into a wall/edge\\nRelease wall/edge before dash ends"
+        Set Player Variable(Event Player, addon_ledgeDash, Facing Direction Of(Event Player));
+        "25 * 0.016"
+        Wait Until(Not(Is Using Ability 1(Event Player)), True);
+        If(Is In Air(Event Player));
+            Apply Impulse(Event Player, (Event Player).addon_ledgeDash, 50, To World, Cancel Contrary Motion XYZ);
+    }
+}
+
+disabled rule ("Addon | Genji | Fake Triple Jump ◆ 假三段跳") {
     event {
         Ongoing - Each Player;
         All;
