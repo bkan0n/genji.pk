@@ -154,6 +154,7 @@ let currentOptionsContainer = null;
 let currentInput = null;
 let icons = [];
 let currentSection = 'playtest';
+let playtestSectionInitialized = false;
 let toolbarDebounce;
 let secondaryCreators = [];
 let mapOfficial = true;
@@ -512,13 +513,14 @@ function setupTabs() {
 function selectSection(section) {
   if (!sectionIds.includes(section)) section = currentSection;
   hideAllSuggestions();
+  const isSameSection = currentSection === section;
 
   const params = new URLSearchParams(window.location.search);
   if (params.get('section') !== section) {
     history.replaceState(null, '', `?section=${section}`);
   }
 
-  if (currentSection !== section) {
+  if (!isSameSection) {
     document.getElementById('playtestCardContainer')?.replaceChildren();
     document.getElementById('paginationContainer')?.replaceChildren();
     if (section === 'playtest') resetPlaytestAnimationMarks();
@@ -529,8 +531,10 @@ function selectSection(section) {
   currentSection = section;
 
   if (section === 'playtest') {
-    showPlaytestSectionWithToolbar();
-    requestAnimationFrame(() => renderPlaytestSkeletonCards(window.itemsPerPage || 12));
+    if (!isSameSection || !playtestSectionInitialized) {
+      playtestSectionInitialized = true;
+      showPlaytestSectionWithToolbar();
+    }
   } else if (section === 'submit_map') {
     initializeSubmitMap();
   } else if (section === 'submit_record') {
@@ -1180,31 +1184,6 @@ function animateSubmitRecordSection() {
 
 }
 
-function waitForPlaytestCards(timeout = 1200) {
-  const container = document.getElementById('playtestCardContainer');
-  if (!container) return Promise.resolve();
-  if (container.querySelector('.playtest-embed')) return Promise.resolve();
-
-  return new Promise((resolve) => {
-    let done = false;
-    const obs = new MutationObserver(() => {
-      if (container.querySelector('.playtest-embed')) {
-        done = true;
-        obs.disconnect();
-        resolve();
-      }
-    });
-    obs.observe(container, { childList: true });
-
-    setTimeout(() => {
-      if (!done) {
-        obs.disconnect();
-        resolve();
-      }
-    }, timeout);
-  });
-}
-
 function renderPlaytestSkeletonCards(count = window.itemsPerPage || 12) {
   const container = document.getElementById('playtestCardContainer');
   if (!container) return;
@@ -1255,7 +1234,7 @@ function bindPlaytestPaginationSkeleton() {
     'click',
     (e) => {
       const target = e.target.closest(
-        '#paginationContainer a, #paginationContainer button, #paginationContainer [data-page]'
+        '#paginationContainer a, #paginationContainer [data-page]'
       );
       if (!target || currentSection !== 'playtest') return;
 
@@ -1263,8 +1242,8 @@ function bindPlaytestPaginationSkeleton() {
 
       const page = parseTargetPage(target);
 
-      if (typeof window.applyFilters === 'function') {
-        window.applyFilters(page);
+      if (typeof applyFiltersWithAnimation === 'function') {
+        applyFiltersWithAnimation(page);
       } else {
         requestAnimationFrame(() => renderPlaytestSkeletonCards(window.itemsPerPage || 12));
       }
@@ -1282,46 +1261,13 @@ function resetPlaytestAnimationMarks() {
     .forEach((el) => el.removeAttribute('data-animated'));
 }
 
-(function hookPlaytestLoading() {
-  const tryPatch = () => {
-    if (typeof window.applyFilters === 'function' && !window.applyFilters.__skeletonPatched) {
-      const _orig = window.applyFilters;
-
-      window.applyFilters = function (page) {
-        const p = _orig(page);
-
-        requestAnimationFrame(() => {
-          renderPlaytestSkeletonCards(window.itemsPerPage || 12);
-        });
-
-        return p
-          .then(async (out) => {
-            try {
-              await waitForPlaytestCards(1500);
-            } catch {}
-            clearPlaytestSkeletonCards();
-            animatePlaytestCardsAndSplitflap();
-            return out;
-          })
-          .catch((e) => {
-            clearPlaytestSkeletonCards();
-            throw e;
-          });
-      };
-
-      window.applyFilters.__skeletonPatched = true;
-    } else {
-      setTimeout(tryPatch, 60);
-    }
-  };
-  tryPatch();
-})();
-
 function animatePlaytestCardsAndSplitflap() {
   const container = document.getElementById('playtestCardContainer');
   if (!container) return;
   const cards = container.querySelectorAll('.playtest-embed');
   cards.forEach((card, i) => {
+    if (card.dataset.animated === '1') return;
+    card.dataset.animated = '1';
     card.classList.add(...String('pt-card-anim').trim().split(/\s+/).filter(Boolean));
     setTimeout(() => card.classList.add(...String('pt-in').trim().split(/\s+/).filter(Boolean)), 80 * i);
   });
@@ -1333,10 +1279,10 @@ function animatePlaytestCardsAndSplitflap() {
   }
 }
 
-const _origApplyFilters = typeof applyFilters === 'function' ? applyFilters : null;
 async function applyFiltersWithAnimation(page = 1) {
   closeOpenToolbarOverlays({ animate: true });
-  setTimeout(() => applyFilters(page), 140);
+  await new Promise((resolve) => setTimeout(resolve, 140));
+  return applyFilters(page);
 }
 
 const loadingEl = document.getElementById('loadingContainer');
@@ -8178,6 +8124,7 @@ async function applyFilters(page = 1) {
     window.currentPlaytestData = data;
     if (container) {
       container.innerHTML = data.map((pt, i) => renderPlaytestCard(pt, i)).join('');
+      animatePlaytestCardsAndSplitflap();
     }
   } catch (err) {
     console.error('Erreur getPlaytests:', err);
