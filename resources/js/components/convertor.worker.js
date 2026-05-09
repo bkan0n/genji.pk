@@ -52,6 +52,8 @@ function buildFwHeroEnum(heroKey, heroName){
     `    String = "${heroName}"`,
     `    StringLC = "${heroName.toLowerCase()}"`,
     `    StringUC = "${heroKey}"`,
+    '    Discord = "dsc.gg/genjiparkour"',
+    '    ShareCode = "code here - 代码"',
   ].join('\n');
 }
 
@@ -151,7 +153,7 @@ async function compileFrameworkTemplate(lang){
   const Over = await loadOverpy();
   if (Over.readyPromise) await Over.readyPromise;
 
-  const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4G/';
+  const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4I/';
   const entryFile = 'framework.opy';
 
   let src = await fetchText(rawBase + entryFile);

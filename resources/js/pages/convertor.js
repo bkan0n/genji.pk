@@ -72,6 +72,15 @@ const BAN_MARKERS = {
       '封禁卡小', '앉콩 금지'
     ]
   },
+  autocreate: {
+    canonical: 'Ban Auto Create         ◆ 封禁自动卡小    ◆ 자동앉콩 금지',
+    markers: [
+      'Ban Auto Create         ◆ 封禁自动卡小    ◆ 자동앉콩 금지',
+      'Ban Auto Create',
+      'Auto Create',
+      '封禁自动卡小', '자동앉콩 금지'
+    ]
+  },
   deathhop: {
     canonical: 'Ban Death Hop        ◆ 封禁死小      ◆ 죽음콩 금지',
     markers: [
@@ -182,6 +191,9 @@ const SETTINGS_MARKERS = {
 };
 
 const GLOBAL_BANS = Object.values(BAN_MARKERS).map(e => e.canonical);
+const BAN_ARRAY_NAMES = {
+  AutoCreate: 'CM',
+};
 
 const ALL_TRANSLATION_FILES = [
   { key: 'actions', path: 'actions.json' },
@@ -219,6 +231,8 @@ function buildFwHeroEnum(heroKey, heroName) {
     `    String = "${heroName}"`,
     `    StringLC = "${heroName.toLowerCase()}"`,
     `    StringUC = "${heroKey}"`,
+    '    Discord = "dsc.gg/genjiparkour"',
+    '    ShareCode = "code here - 代码"',
   ].join('\n');
 }
 
@@ -243,6 +257,7 @@ const TRANSLATION_FILES = [
 const MARKERS = {
   titles: {
     mapData: [
+      'Ø Map Data ◆ 数据录入 <---- INSERT HERE / 在这输入',
       'Ø Map Data - 数据录入 <---- INSERT HERE / 在这输入',
       '<tx0C0000000000D297><fg00FFFFFF> Map Data - 数据录入 <---- INSERT HERE / 在这输入',
       '<tx0C0000000000D297><fg00FFFFFF> Map Data - 数据录入 <---- INSERT HERE / 在这入力',
@@ -254,6 +269,7 @@ const MARKERS = {
       'Map Data     <---- INSERT YOUR MAP DATA HERE',
     ],
     credits: [
+      '☞ Credits and Colors Here ◆ 作者代码HUD颜色 <---- INSERT HERE / 在这输入',
       '☞ Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入',
       '<tx0C00000000044B55><fg0FFFFFFF> Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE / 在这输入',
       '<tx0C00000000044B55><fg0FFFFFFF> Credits and Colors here - 作者代码HUD颜色 <---- INSERT HERE',
@@ -262,6 +278,15 @@ const MARKERS = {
       'Credits here <---- INSERT YOUR NAME HERE',
     ],
     addons: [
+      'Addon | 3rd Person Camera Mode ◆ 第三人称',
+      'Addon | Hint Text For Certain Checkpoints ◆ 特定关卡的提示文本 <---- EDIT ME / 在此处编辑',
+      'Addon | In-World Text For Certain Checkpoints ◆ 特定关卡显示的地图文本 <---- EDIT ME / 在此处编辑',
+      'Addon | HUD Text For Certain Checkpoints ◆ 特定关卡显示的HUD文本 <---- EDIT ME / 在此处编辑',
+      'Addon | Tournament Instruction Message ◆ 竞赛模式指引消息 <---- INSERT HERE / 在这输入',
+      'Addon | Display Author Time ◆ 展示世界纪录 <---- EDIT ME / 在此处编辑',
+      'Addon | Friend Title ◆ 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)',
+      'Addon | Title Data ◆ 标题数据 <---- EDIT ME / 在此处编辑',
+      'Addon | Custom Difficulty Hud ◆ 自定义难度hud <---- INSERT HERE / 在这输入',
       'Addon | Custom difficulty hud  - 自定义难度hud <---- INSERT HERE / 在这输入',
       'Addon | Title Data - 标题数据 <---- EDIT ME / 在此处编辑',
       'Addon | Friend Title - 朋友称号 <---- DISPLAY MESSAGE HERE (ON PLAYER)',
@@ -1758,7 +1783,7 @@ async function loadTemplate(lang) {
     const overpy = await getOverpyFromNpm();
     if (overpy.readyPromise) await overpy.readyPromise;
 
-    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4G/';
+    const rawBase = 'https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@1.10.4I/';
     const entryFile = 'framework.opy';
     const resp = await fetch(rawBase + entryFile);
     if (!resp.ok) throw new Error(`HTTP ${resp.status} on ${entryFile}`);
@@ -3679,6 +3704,7 @@ function _normBanText(s) {
 
   x = x.replace(/\bdeathbhop\b/g, 'death hop')
        .replace(/\bemote\s*savehop\b/g, 'emote save hop')
+       .replace(/\bauto\s*create\b/g, 'autocreate')
        .replace(/\bstand\s*create\b/g, 'standcreate')
        .replace(/\bwall\s*climb\b/g, 'wallclimb')
        .replace(/\bmulti\s*climb\b/g, 'multiclimb');
@@ -4247,6 +4273,7 @@ function extractAllData(fullText) {
 
   const BanMulti = parseGlobalArrayNumbers(fullText, 'BanMulti');
   const BanCreate = parseGlobalArrayNumbers(fullText, 'BanCreate');
+  const BanAutoCreate = parseGlobalArrayNumbers(fullText, 'CM');
   const BanDead = parseGlobalArrayNumbers(fullText, 'BanDead');
   const BanEmote = parseGlobalArrayNumbers(fullText, 'BanEmote');
   const BanClimb = parseGlobalArrayNumbers(fullText, 'BanClimb');
@@ -4293,6 +4320,7 @@ function extractAllData(fullText) {
   const banMap = {
     Multi: BanMulti,
     Create: BanCreate,
+    AutoCreate: BanAutoCreate,
     Dead: BanDead,
     Emote: BanEmote,
     Climb: BanClimb,
@@ -4408,6 +4436,7 @@ function createCheckpointCard(idx, coords, data) {
   const banList = [
     { arr: banMap.Multi,      icon: '∞' },
     { arr: banMap.Create,     icon: '♂' },
+    { arr: banMap.AutoCreate, icon: '∀' },
     { arr: banMap.Stand,      icon: '♠' },
     { arr: banMap.Dead,       icon: 'X' },
     { arr: banMap.Emote,      icon: '♥' },
@@ -6086,6 +6115,7 @@ function openEditModal(idx) {
   const BAN_ICONS = {
     Multi: '∞',
     Create: '♂',
+    AutoCreate: '∀',
     Stand: '♠',
     Dead: 'X',
     Emote: '♥',
@@ -6907,7 +6937,8 @@ function updateMapDataRule(dataModel, lang) {
   lines.push(`${G}.Cachedcredits = ${A}(0, 0);`);
 
   for (const [banKey, arr] of Object.entries(dataModel.banMap)) {
-    lines.push(`${G}.Ban${banKey} = ${A}(${arr.join(', ')});`);
+    const arrayName = BAN_ARRAY_NAMES[banKey] || `Ban${banKey}`;
+    lines.push(`${G}.${arrayName} = ${A}(${arr.join(', ')});`);
   }
 
   return lines.join('\n');
