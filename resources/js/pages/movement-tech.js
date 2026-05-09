@@ -52,6 +52,29 @@
     return normalized || 'technique';
   }
 
+  function techniqueSlugSource(entry, name) {
+    return (
+      text(entry?.slug) ||
+      text(entry?.url_slug) ||
+      text(entry?.key) ||
+      name
+    );
+  }
+
+  function uniqueSlug(value, usedSlugs) {
+    const baseSlug = slugify(value);
+    let slug = baseSlug;
+    let suffix = 2;
+
+    while (usedSlugs.has(slug)) {
+      slug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    usedSlugs.add(slug);
+    return slug;
+  }
+
   function createElement(tagName, className, content) {
     const element = document.createElement(tagName);
 
@@ -277,6 +300,7 @@
   function normalizeTechniques(payload, categoriesById, difficultiesById) {
     const techniques = Array.isArray(payload?.techniques) ? payload.techniques : [];
     const seenIds = new Set();
+    const usedSlugs = new Set();
 
     return techniques
       .map((entry, index) => {
@@ -301,7 +325,7 @@
         return {
           id,
           name,
-          slug: slugify(`${id}-${name}`),
+          slug: uniqueSlug(techniqueSlugSource(entry, name), usedSlugs),
           description: text(entry?.description),
           instructions: text(entry?.instructions),
           displayOrder: displayOrder == null ? index + 1 : displayOrder,
@@ -1019,7 +1043,7 @@
   function createCopyButton(slug) {
     const button = createElement(
       'button',
-      'inline-flex items-center justify-center rounded-md text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white'
+      'inline-flex cursor-pointer items-center justify-center rounded-md text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white'
     );
     button.type = 'button';
     button.dataset.copyTechLink = slug;
