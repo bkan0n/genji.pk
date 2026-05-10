@@ -18,7 +18,7 @@ class OverpyCommitController extends Controller
 
     public function show()
     {
-        $bundlePath = $this->locateConvertorBundle();
+        $bundlePath = $this->locateConverterBundle();
         [$code, $commit] = $this->readAndExtract($bundlePath);
 
         if (!$commit) {
@@ -43,7 +43,7 @@ class OverpyCommitController extends Controller
 
         $new = $request->string('commit');
 
-        $bundlePath = $this->locateConvertorBundle();
+        $bundlePath = $this->locateConverterBundle();
         [$code, $current] = $this->readAndExtract($bundlePath);
 
         if (!$current) {
@@ -75,7 +75,7 @@ class OverpyCommitController extends Controller
         ]);
     }
 
-    private function locateConvertorBundle(): string
+    private function locateConverterBundle(): string
     {
         $manifest = public_path('build/manifest.json');
         if (!File::exists($manifest)) {
@@ -90,7 +90,7 @@ class OverpyCommitController extends Controller
         $candidate = null;
 
         foreach ($json as $entry => $meta) {
-            if (stripos($entry, 'convertor') !== false && isset($meta['file'])) {
+            if (stripos($entry, 'converter') !== false && isset($meta['file'])) {
                 $candidate = public_path('build/' . ltrim($meta['file'], '/'));
                 break;
             }
@@ -102,7 +102,7 @@ class OverpyCommitController extends Controller
                 abort(500, 'Assets directory not found (public/build/assets).');
             }
             foreach (File::files($assetsDir) as $f) {
-                if (preg_match('/^convertor-.*\.js$/', $f->getFilename())) {
+                if (preg_match('/^converter-.*\.js$/', $f->getFilename())) {
                     $candidate = $f->getPathname();
                     break;
                 }
@@ -110,7 +110,7 @@ class OverpyCommitController extends Controller
         }
 
         if (!$candidate || !File::exists($candidate)) {
-            abort(500, 'convertor bundle not found (looked into manifest and assets).');
+            abort(500, 'converter bundle not found (looked into manifest and assets).');
         }
 
         return $candidate;
@@ -192,7 +192,7 @@ class OverpyCommitController extends Controller
             abort(500, 'Regex error while replacing OVERPY_COMMIT.');
         }
         if ($count === 0) {
-            abort(500, 'OVERPY_COMMIT anchor not found in convertor.js.');
+            abort(500, 'OVERPY_COMMIT anchor not found in converter.js.');
         }
 
         return $replaced;

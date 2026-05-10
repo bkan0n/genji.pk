@@ -24,7 +24,7 @@
         </div>
         <ul class="space-y-1 text-xs leading-5">
           <li><a class="text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white" href="{{ url('/submit') }}">{{ __('footer.contribute.submit') }}</a></li>
-          <li><a class="text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white" href="{{ url('/convertor') }}">{{ __('footer.contribute.convertor') }}</a></li>
+          <li><a class="text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white" href="{{ url('/converter') }}">{{ __('footer.contribute.converter') }}</a></li>
           <li><a href="#" data-open="credits" class="text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white">{{ __('footer.contribute.credits') }}</a></li>
           <li><a href="#" data-open="rules" class="text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white">{{ __('footer.community.rules') }}</a></li>
         </ul>

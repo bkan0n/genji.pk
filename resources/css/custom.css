@@ -1239,7 +1239,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 @media (prefers-reduced-motion:reduce){.rank-card-container .badges-grid .badge{opacity:1;transform:none;animation:none}}
 @keyframes loading{0%{transform:translateX(-100%)}50%{transform:translateX(50%)}100%{transform:translateX(200%)}}
 
-/* ================= CONVERTOR ================= */
+/* ================= CONVERTER ================= */
 .modal-select,.modal-select2,select.modal-select,select.modal-select2{appearance:none;-webkit-appearance:none;-moz-appearance:none;border-radius:.75rem;border:1px solid rgba(255,255,255,.1);background-color:rgba(24,24,27,.7);color:#e4e4e7;padding:.5rem 2.25rem .5rem .75rem;outline:none}
 .modal-select:focus,.modal-select2:focus,select.modal-select:focus,select.modal-select2:focus{box-shadow:0 0 0 2px rgba(16,185,129,.6)}
 .modal-select option,.modal-select2 option{background-color:#0a0a0a;color:#e4e4e7}

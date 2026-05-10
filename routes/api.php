@@ -183,7 +183,7 @@ Route::prefix('content/movement-tech')->group(function () {
     Route::get('difficulties', ListMovementTechDifficultiesController::class);
 });
 
-/* ================== CONVERTOR ================== */
+/* ================== CONVERTER ================== */
 Route::post('compile', [CompileController::class, 'store'])
     ->middleware(['web'])
     ->name('compile.store');

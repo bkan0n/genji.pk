@@ -12,7 +12,7 @@ class FrameworkVersionController extends Controller
 
     public function show(Request $request)
     {
-        [$path, $js] = $this->readConvertorBundleOrAbort();
+        [$path, $js] = $this->readConverterBundleOrAbort();
 
         [$version, $fullUrl] = $this->extractVersionOrAbort($js);
 
@@ -33,7 +33,7 @@ class FrameworkVersionController extends Controller
 
         $newVersion = (string) $data['version'];
 
-        [$path, $js] = $this->readConvertorBundleOrAbort();
+        [$path, $js] = $this->readConverterBundleOrAbort();
 
         $replaced = $this->replaceFrameworkVersion($js, $newVersion, $count);
 
@@ -41,7 +41,7 @@ class FrameworkVersionController extends Controller
             abort(500, 'Regex error while replacing framework version.');
         }
         if ($count === 0) {
-            abort(500, 'Framework CDN anchor not found in convertor.js.');
+            abort(500, 'Framework CDN anchor not found in converter.js.');
         }
 
         $this->writeFileAtomic($path, $replaced);
@@ -54,7 +54,7 @@ class FrameworkVersionController extends Controller
         ]);
     }
 
-    private function readConvertorBundleOrAbort(): array
+    private function readConverterBundleOrAbort(): array
     {
         $dir = public_path('build/assets');
 
@@ -62,9 +62,9 @@ class FrameworkVersionController extends Controller
             abort(500, 'assets directory not found: ' . $dir);
         }
 
-        $candidates = glob($dir . DIRECTORY_SEPARATOR . 'convertor-*.js');
+        $candidates = glob($dir . DIRECTORY_SEPARATOR . 'converter-*.js');
         if (!$candidates || count($candidates) === 0) {
-            abort(500, 'convertor-*.js not found in bundle.');
+            abort(500, 'converter-*.js not found in bundle.');
         }
 
         usort($candidates, fn ($a, $b) => filemtime($b) <=> filemtime($a));
@@ -83,7 +83,7 @@ class FrameworkVersionController extends Controller
         $rx = '#(https://cdn\.jsdelivr\.net/gh/tylovejoy/genji-framework@)([A-Za-z0-9._-]+)(/)#';
 
         if (!preg_match($rx, $js, $m)) {
-            abort(500, 'Framework CDN anchor not found in convertor.js.');
+            abort(500, 'Framework CDN anchor not found in converter.js.');
         }
 
         $prefix  = $m[1];

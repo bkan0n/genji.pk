@@ -3,7 +3,7 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Convertor (EN)
+    | Converter (EN)
     |--------------------------------------------------------------------------
     */
 
@@ -12,7 +12,7 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'badge_tools' => 'Editor & tools',
     'hero_title_top' => 'OverPy → Workshop',
-    'hero_title_bottom' => 'Convertor',
+    'hero_title_bottom' => 'Converter',
     'hero_sub' => 'Paste your OverPy pasta, convert to Workshop code, translate labels, and edit map data before export.',
     'tips_title' => 'Tips',
     'tips_1' => 'Use Convert for pasta → Workshop.',
@@ -89,7 +89,7 @@ return [
     'step4_text'                => 'Edit map data if needed.',
     'step5'                     => 'Step 5',
     'step5_text'                => 'Paste back into Workshop.',
-    'please_use_converter'      => 'Please use the convertor first',
+    'please_use_converter'      => 'Please use the converter first',
 
     // ──────────────────────────────────────────────────────────────────────
     // MAP DATA EDITOR

@@ -14,7 +14,7 @@ let keywordTranslations = null;
 let iconTranslations = null;
 let lastFullText = '';
 const CURRENT_LANG = document.documentElement.lang || 'en';
-let translations = window.CONVERTOR_I18N || {};
+let translations = window.CONVERTER_I18N || {};
 let draggedCard = null;
 let draggedIndex = null;
 window.selectSection = selectSection;
@@ -392,7 +392,7 @@ async function getOverpyFromNpm(){
 
 function __getTplWorker(){
   if (__tplWorker) return __tplWorker;
-  __tplWorker = new Worker(new URL('../components/convertor.worker.js', import.meta.url), { type: 'module' });
+  __tplWorker = new Worker(new URL('../components/converter.worker.js', import.meta.url), { type: 'module' });
   return __tplWorker;
 }
 function runTplWorker(type, payload){
@@ -1132,12 +1132,12 @@ function debug(data) {
   }
 }
 
-let __convertorSwitchTab = null;
+let __converterSwitchTab = null;
 
 function selectSection(id) {
   const key = id === 'help' ? 'help' : id === 'mapSettings' ? 'settings' : 'convert';
-  if (typeof __convertorSwitchTab === 'function') {
-    __convertorSwitchTab(key);
+  if (typeof __converterSwitchTab === 'function') {
+    __converterSwitchTab(key);
     return;
   }
 
@@ -1183,10 +1183,10 @@ function initMainTabs() {
 
   if (Object.values(btns).some((b) => !b) || Object.values(panels).some((p) => !p)) return;
 
-  let highlight = document.getElementById('convertorTabHighlight');
+  let highlight = document.getElementById('converterTabHighlight');
   if (!highlight) {
     highlight = document.createElement('span');
-    highlight.id = 'convertorTabHighlight';
+    highlight.id = 'converterTabHighlight';
     Object.assign(highlight.style, {
       position: 'absolute',
       top: '2px',
@@ -1302,7 +1302,7 @@ function initMainTabs() {
     setActiveButton(key);
     showPanel(key);
   }
-  __convertorSwitchTab = switchTab;
+  __converterSwitchTab = switchTab;
 
   btns.convert.addEventListener('click', () => switchTab('convert'));
   btns.help.addEventListener('click', () => switchTab('help'));

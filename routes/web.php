@@ -28,7 +28,7 @@ Route::view('tutorials', 'tutorials')->name('tutorials');
 Route::view('similar-communities', 'similar-communities')->name('similar-communities');
 Route::view('search', 'search')->name('search');
 Route::view('movement-tech', 'movement-tech')->name('movement-tech');
-Route::view('convertor', 'convertor')->name('convertor');
+Route::view('converter', 'converter')->name('converter');
 Route::view('game', 'game')->name('game');
 Route::view('infos', 'infos')->name('infos');
 Route::view('moderator', 'moderator')->middleware('discord.moderator')->name('moderator.panel');

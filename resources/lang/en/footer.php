@@ -29,7 +29,7 @@ return [
     'contribute_title' => 'Contribute',
     'contribute' => [
         'submit' => 'Submit a map',
-        'convertor' => 'Convertor',
+        'converter' => 'Converter',
         'credits' => 'Credits',
     ],
 

@@ -8051,7 +8051,7 @@ async function handleSetOverpyCommit(form) {
     title: 'Set Overpy commit',
     message:
       `Current: ${current}\nNew:     ${commit}\n\n` +
-      `This will update OVERPY_COMMIT in convertor.js.\nContinue?`,
+      `This will update OVERPY_COMMIT in converter.js.\nContinue?`,
     confirm: 'Yes, update',
     cancel: 'Cancel',
   });
@@ -8170,7 +8170,7 @@ async function handleSetFrameworkVersion(form) {
     title: 'Set framework version',
     message:
       `Current: ${current}\nNew:     ${version}\n\n` +
-      `This will update the CDN URL used by convertor.js.\nContinue?`,
+      `This will update the CDN URL used by converter.js.\nContinue?`,
     confirm: 'Yes, update',
     cancel: 'Cancel',
   });

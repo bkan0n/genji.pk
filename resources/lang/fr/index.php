@@ -109,7 +109,7 @@ return [
                 'pill'        => 'Beta',
                 'description' => 'Convertisseur OverPy → Workshop, modèles multilingues.',
                 'links' => [
-                    'convertor' => 'Convertisseur',
+                    'converter' => 'Convertisseur',
                     'api'       => 'API',
                 ],
             ],

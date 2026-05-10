@@ -29,7 +29,7 @@ return [
     'contribute_title' => 'Внести вклад',
     'contribute' => [
         'submit' => 'Отправить карту',
-        'convertor' => 'Конвертер',
+        'converter' => 'Конвертер',
         'credits' => 'Авторы',
     ],
 

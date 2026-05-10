@@ -29,7 +29,7 @@ return [
     'contribute_title' => '贡献',
     'contribute' => [
         'submit'       => '上传地图',
-        'convertor'    => '地图转换器',
+        'converter'    => '地图转换器',
         'credits'      => '鸣谢',
     ],
 

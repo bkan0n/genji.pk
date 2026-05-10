@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Genji Parkour - Convertor')
-@section('og:title', 'Convertor – Genji Parkour')
+@section('title', 'Genji Parkour - Converter')
+@section('og:title', 'Converter – Genji Parkour')
 @section('og:description', 'OverPy → Workshop converter, translation tools, and map data editor.')
 
 @push('head')
@@ -17,16 +17,16 @@
         <div class="space-y-4 lg:col-span-8">
           <span class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-white/5 px-3 py-1 text-xs text-zinc-700 dark:text-zinc-300">
             <span class="bg-brand-400 inline-block h-2 w-2 rounded-full"></span>
-            {{ __('convertor.badge_tools') }}
+            {{ __('converter.badge_tools') }}
           </span>
           <h1 class="text-4xl leading-[1.15] font-black tracking-tight sm:text-5xl sm:leading-[1.12]">
-            {{ __('convertor.hero_title_top') }}
+            {{ __('converter.hero_title_top') }}
             <span class="from-brand-300 block bg-gradient-to-r via-emerald-200 to-white bg-clip-text pb-1 text-transparent sm:pb-1.5">
-              {{ __('convertor.hero_title_bottom') }}
+              {{ __('converter.hero_title_bottom') }}
             </span>
           </h1>
           <p class="max-w-2xl text-zinc-700 dark:text-zinc-300">
-            {{ __('convertor.hero_sub') }}
+            {{ __('converter.hero_sub') }}
           </p>
         </div>
 
@@ -34,12 +34,12 @@
           <div class="relative rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-white/5 p-2">
             <div class="rounded-xl bg-white dark:bg-zinc-900 p-5">
               <div class="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
-                {{ __('convertor.tips_title') }}
+                {{ __('converter.tips_title') }}
               </div>
               <ul class="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-                <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 p-3">{{ __('convertor.tips_1') }}</li>
-                <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 p-3">{{ __('convertor.tips_2') }}</li>
-                <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 p-3">{{ __('convertor.tips_3') }}</li>
+                <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 p-3">{{ __('converter.tips_1') }}</li>
+                <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 p-3">{{ __('converter.tips_2') }}</li>
+                <li class="rounded-lg border border-zinc-200/80 dark:border-white/10 p-3">{{ __('converter.tips_3') }}</li>
               </ul>
             </div>
           </div>
@@ -50,65 +50,65 @@
       <div class="mt-10">
         <div id="mainTabs" class="relative isolate inline-flex rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-white/5 p-1">
           <button id="convertMapBtn" class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-            {{ __('convertor.convert_map') }}
+            {{ __('converter.convert_map') }}
           </button>
           <button id="helpBtn" class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">
-            {{ __('convertor.help') }}
+            {{ __('converter.help') }}
           </button>
           <button id="mapSettingsBtn" class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10">
-            {{ __('convertor.edit_map_data') }}
+            {{ __('converter.edit_map_data') }}
           </button>
         </div>
       </div>
 
-      <!-- Convertor card -->
+      <!-- Converter card -->
       <div id="convertMap" class="convert-map-layout mt-6 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-white/5 p-4 sm:p-6">
         <div class="flex items-center justify-between gap-3">
           <p class="text-sm text-zinc-700 dark:text-zinc-300">
-            {{ __('convertor.description_line_1') }}<br />
-            {{ __('convertor.description_line_2') }}<br />
-            {{ __('convertor.description_line_3') }}<br />
-            {{ __('convertor.description_line_4') }}
+            {{ __('converter.description_line_1') }}<br />
+            {{ __('converter.description_line_2') }}<br />
+            {{ __('converter.description_line_3') }}<br />
+            {{ __('converter.description_line_4') }}
           </p>
           <button class="copy-btn inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">
-            {{ __('convertor.copy_to_clipboard') }}
+            {{ __('converter.copy_to_clipboard') }}
           </button>
         </div>
 
         <!-- Import info -->
         <div class="mt-6 grid gap-4 sm:grid-cols-3">
           <div class="column yes rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h3 class="mb-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">{{ __('convertor.yes') }}</h3>
+            <h3 class="mb-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">{{ __('converter.yes') }}</h3>
             <ul class="list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-300">
-              <li>{{ __('convertor.yes_1') }}</li>
-              <li>{{ __('convertor.yes_2') }}</li>
-              <li>{{ __('convertor.yes_3') }}</li>
-              <li>{{ __('convertor.yes_4') }}</li>
-              <li>{{ __('convertor.yes_5') }}</li>
-              <li>{{ __('convertor.yes_6') }}</li>
+              <li>{{ __('converter.yes_1') }}</li>
+              <li>{{ __('converter.yes_2') }}</li>
+              <li>{{ __('converter.yes_3') }}</li>
+              <li>{{ __('converter.yes_4') }}</li>
+              <li>{{ __('converter.yes_5') }}</li>
+              <li>{{ __('converter.yes_6') }}</li>
             </ul>
           </div>
           <div class="column maybe rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
-            <h3 class="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-300">{{ __('convertor.maybe') }}</h3>
+            <h3 class="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-300">{{ __('converter.maybe') }}</h3>
             <ul class="list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-300">
-              <li>{{ __('convertor.maybe_1') }}</li>
-              <li>{{ __('convertor.maybe_2') }}</li>
+              <li>{{ __('converter.maybe_1') }}</li>
+              <li>{{ __('converter.maybe_2') }}</li>
             </ul>
           </div>
           <div class="column no rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
-            <h3 class="mb-2 text-sm font-semibold text-rose-700 dark:text-rose-300">{{ __('convertor.no') }}</h3>
+            <h3 class="mb-2 text-sm font-semibold text-rose-700 dark:text-rose-300">{{ __('converter.no') }}</h3>
             <ul class="list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-300">
-              <li>{{ __('convertor.no_1') }}</li>
-              <li>{{ __('convertor.no_2') }}</li>
-              <li>{{ __('convertor.no_3') }}</li>
-              <li>{{ __('convertor.no_4') }}</li>
+              <li>{{ __('converter.no_1') }}</li>
+              <li>{{ __('converter.no_2') }}</li>
+              <li>{{ __('converter.no_3') }}</li>
+              <li>{{ __('converter.no_4') }}</li>
             </ul>
           </div>
         </div>
 
         <!-- Controls -->
         <div class="convert-controls mt-6 flex flex-wrap items-center gap-3 text-sm">
-          <label for="lang" class="text-zinc-700 dark:text-zinc-300">{{ __('convertor.pasta_language') }}:</label>
+          <label for="lang" class="text-zinc-700 dark:text-zinc-300">{{ __('converter.pasta_language') }}:</label>
 
           <!-- Dropdown LANG (HTML pur avec classes de drapeaux en dur) -->
           <div class="relative" id="langDd">
@@ -156,10 +156,10 @@
           </select>
 
           <button id="convert-btn" class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-white/10">
-            {{ __('convertor.convert_data') }}
+            {{ __('converter.convert_data') }}
           </button>
 
-          <label for="targetLang" class="ml-2 text-zinc-700 dark:text-zinc-300">{{ __('convertor.target_language') }}:</label>
+          <label for="targetLang" class="ml-2 text-zinc-700 dark:text-zinc-300">{{ __('converter.target_language') }}:</label>
 
           <!-- Dropdown TARGET LANG (HTML pur) -->
           <div class="relative" id="targetLangDd">
@@ -207,22 +207,22 @@
           </select>
 
           <button id="translate-btn" class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-white/10">
-            {{ __('convertor.translate_data') }}
+            {{ __('converter.translate_data') }}
           </button>
 
           <button id="diff-btn" class="diff-btn hidden cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-white/10">
-            {{ __('convertor.diffchecker') }}
+            {{ __('converter.diffchecker') }}
           </button>
         </div>
 
         <!-- Textarea -->
         <textarea class="mapdata mt-4 h-80 w-full resize-y rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-900/80 p-4 font-mono text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-          placeholder="{{ __('convertor.map_placeholder') }}"></textarea>
+          placeholder="{{ __('converter.map_placeholder') }}"></textarea>
 
         <!-- Footer info -->
         <div class="footer mt-3 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-          <span class="footer-left">{{ __('convertor.footer_made_by') }}</span>
-          <span class="footer-right">{{ __('convertor.footer_version') }}</span>
+          <span class="footer-left">{{ __('converter.footer_made_by') }}</span>
+          <span class="footer-right">{{ __('converter.footer_version') }}</span>
         </div>
       </div>
 
@@ -231,32 +231,32 @@
         <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-white/5 p-4 sm:p-6">
           <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div class="help-step space-y-2">
-              <strong class="block">{{ __('convertor.step1') }}</strong>
-              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('convertor.step1_text') }}</p>
+              <strong class="block">{{ __('converter.step1') }}</strong>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('converter.step1_text') }}</p>
               <img class="rounded-lg ring-1 ring-zinc-300/60 dark:ring-white/10" src="{{ cdn_asset('assets/abilities/copy-settings.webp') }}" alt="Copy settings" />
             </div>
             <div class="help-step space-y-2">
-              <strong class="block">{{ __('convertor.step2') }}</strong>
-              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('convertor.step2_text') }}</p>
+              <strong class="block">{{ __('converter.step2') }}</strong>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('converter.step2_text') }}</p>
               <img class="rounded-lg ring-1 ring-zinc-300/60 dark:ring-white/10" src="{{ cdn_asset('assets/abilities/text-area.webp') }}" alt="Text area" />
             </div>
             <div class="help-step space-y-2">
-              <strong class="block">{{ __('convertor.step3') }}</strong>
-              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('convertor.step3_text') }}</p>
+              <strong class="block">{{ __('converter.step3') }}</strong>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('converter.step3_text') }}</p>
               <div class="text-xs text-zinc-700 dark:text-zinc-300">
-                <code class="rounded bg-zinc-100 dark:bg-white/10 px-1.5 py-0.5">{{ __('convertor.step3_convert') }}</code>,
-                <code class="rounded bg-zinc-100 dark:bg-white/10 px-1.5 py-0.5">{{ __('convertor.step3_translate') }}</code>
+                <code class="rounded bg-zinc-100 dark:bg-white/10 px-1.5 py-0.5">{{ __('converter.step3_convert') }}</code>,
+                <code class="rounded bg-zinc-100 dark:bg-white/10 px-1.5 py-0.5">{{ __('converter.step3_translate') }}</code>
               </div>
               <img class="rounded-lg ring-1 ring-zinc-300/60 dark:ring-white/10" src="{{ cdn_asset('assets/abilities/pasta-language.webp') }}" alt="Language settings" />
             </div>
             <div class="help-step space-y-2">
-              <strong class="block">{{ __('convertor.step4') }}</strong>
-              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('convertor.step4_text') }}</p>
+              <strong class="block">{{ __('converter.step4') }}</strong>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('converter.step4_text') }}</p>
               <img class="rounded-lg ring-1 ring-zinc-300/60 dark:ring-white/10" src="{{ cdn_asset('assets/abilities/edit-map-data.webp') }}" alt="Edit map data" />
             </div>
             <div class="help-step space-y-2">
-              <strong class="block">{{ __('convertor.step5') }}</strong>
-              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('convertor.step5_text') }}</p>
+              <strong class="block">{{ __('converter.step5') }}</strong>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('converter.step5_text') }}</p>
               <img class="rounded-lg ring-1 ring-zinc-300/60 dark:ring-white/10" src="{{ cdn_asset('assets/abilities/pasta-settings.webp') }}" alt="Paste settings" />
             </div>
           </div>
@@ -269,16 +269,16 @@
           <div class="global-bans text-sm text-zinc-700 dark:text-zinc-300"></div>
           <div class="settings-buttons flex items-center gap-2">
             <button id="globalSettingsBtn" class="global-edit-mode-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
-              {{ __('convertor.global_settings') }}
+              {{ __('converter.global_settings') }}
             </button>
             <button id="editModeBtn" class="edit-mode-btn cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
-              {{ __('convertor.edit_mode') }}
+              {{ __('converter.edit_mode') }}
             </button>
           </div>
         </div>
 
         <div class="empty-message rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/85 dark:bg-white/5 p-4 text-sm text-zinc-700 dark:text-zinc-300">
-          {{ __('convertor.please_use_converter') }}
+          {{ __('converter.please_use_converter') }}
         </div>
       </div>
     </div>
@@ -295,7 +295,7 @@
       data-modal-box
     >
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">{{ __('convertor.map_data.edit_checkpoint') }}</h3>
+        <h3 class="text-lg font-semibold">{{ __('converter.map_data.edit_checkpoint') }}</h3>
         <button
           id="closeModal2"
           class="modal-close2 rounded-full px-2 py-0.5 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-800 dark:hover:text-zinc-200"
@@ -311,14 +311,14 @@
             id="saveEditorChangesBtn"
             class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm hover:bg-emerald-500"
           >
-            {{ __('convertor.map_data.save') }}
+            {{ __('converter.map_data.save') }}
           </button>
           <button
             type="button"
             id="cancelEditorChangesBtn"
             class="rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
           >
-            {{ __('convertor.map_data.cancel') }}
+            {{ __('converter.map_data.cancel') }}
           </button>
         </div>
       </form>
@@ -335,7 +335,7 @@
       data-modal-box
     >
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">{{ __('convertor.map_data.global_settings') }}</h3>
+        <h3 class="text-lg font-semibold">{{ __('converter.map_data.global_settings') }}</h3>
         <button
           id="closeGlobalModal"
           class="modal-close2 rounded-full px-2 py-0.5 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-800 dark:hover:text-zinc-200"
@@ -351,14 +351,14 @@
             id="saveGlobalChangesBtn"
             class="rounded-xl cursor-pointer bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm hover:bg-emerald-500"
           >
-            {{ __('convertor.map_data.save') }}
+            {{ __('converter.map_data.save') }}
           </button>
           <button
             type="button"
             id="cancelGlobalChangesBtn"
             class="rounded-lg cursor-pointer border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
           >
-            {{ __('convertor.map_data.cancel') }}
+            {{ __('converter.map_data.cancel') }}
           </button>
         </div>
       </form>
@@ -387,9 +387,9 @@
 @push('scripts')
   <script nonce="{{ $nonce }}">
     document.documentElement.lang = @json(app()->getLocale());
-    window.CONVERTOR_I18N = @json(\Illuminate\Support\Facades\Lang::get('convertor'));
+    window.CONVERTER_I18N = @json(\Illuminate\Support\Facades\Lang::get('converter'));
   </script>
-  @vite('resources/js/pages/convertor.js', null, ['nonce' => csp_nonce()])
+  @vite('resources/js/pages/converter.js', null, ['nonce' => csp_nonce()])
 @endpush
 
 
