@@ -391,7 +391,7 @@
       "select_mechanics": "Select mechanics",
       "select_restrictions": "Select restrictions"
     },
-    "convertor": {
+    "converter": {
       "convert_map": "Convert map",
       "help": "Help ?",
       "edit_map_data": "Edit map data",
@@ -995,7 +995,7 @@
       "select_mechanics": "Sélectionnez les mécaniques",
       "select_restrictions": "Sélectionnez les restrictions"
     },
-    "convertor": {
+    "converter": {
       "convert_map": "Convertir la carte",
       "help": "Aide ?",
       "edit_map_data": "Modifier les données de la carte",
@@ -1498,7 +1498,7 @@
       "select_mechanics": "Выберите механики",
       "select_restrictions": "Выберите ограничения"
     },
-    "convertor": {
+    "converter": {
       "convert_map": "Конвертировать карту",
       "help": "Помощь ?",
       "edit_map_data": "Редактировать данные карты",
@@ -2001,7 +2001,7 @@
       "select_mechanics": "选择源跑技巧",
       "select_restrictions": "选择禁用的技巧"
     },
-    "convertor": {
+    "converter": {
       "convert_map": "导入地图",
       "help": "帮助",
       "edit_map_data": "编辑地图数据",
@@ -2606,7 +2606,7 @@
       "select_mechanics": "メカニクスを選択",
       "select_restrictions": "制限を選択"
     },
-    "convertor": {
+    "converter": {
       "convert_map": "マップを変換",
       "help": "ヘルプ？",
       "edit_map_data": "マップデータを編集",
@@ -3192,7 +3192,7 @@
       "select_mechanics": "Mechaniken auswählen",
       "select_restrictions": "Einschränkungen auswählen"
     },
-    "convertor": {
+    "converter": {
       "convert_map": "Karte konvertieren",
       "help": "Hilfe?",
       "edit_map_data": "Kartendaten bearbeiten",

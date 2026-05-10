@@ -29,7 +29,7 @@ return [
     'contribute_title' => 'Contribuer',
     'contribute' => [
         'submit'    => 'Proposer une carte',
-        'convertor' => 'Convertisseur',
+        'converter' => 'Convertisseur',
         'credits'   => 'Crédits',
     ],
 

@@ -5649,7 +5649,7 @@
                   </div>
                   <form data-action="clear-frameworks-cache" autocomplete="off" class="space-y-3">
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
-                      This will clear convertor/framework caches.
+                      This will clear converter/framework caches.
                     </p>
                     <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
@@ -5728,7 +5728,7 @@
 
                   <form data-action="set-overpy-commit" autocomplete="off" class="space-y-3">
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
-                      Change the <code class="font-mono">OVERPY_COMMIT</code> constant used by <code>convertor.js</code>.
+                      Change the <code class="font-mono">OVERPY_COMMIT</code> constant used by <code>converter.js</code>.
                     </p>
 
                     <label class="block text-sm text-zinc-600 dark:text-zinc-300">
@@ -5746,7 +5746,7 @@
                     <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" id="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">
-                        I understand this will update <code>OVERPY_COMMIT</code> in <code>convertor.js</code>.
+                        I understand this will update <code>OVERPY_COMMIT</code> in <code>converter.js</code>.
                       </span>
                     </label>
 
@@ -5776,7 +5776,7 @@
                   <form id="formSetFrameworkVersion" data-action="set-framework-version" autocomplete="off" novalidate class="space-y-3">
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Change the <code class="font-mono">genji-framework</code> CDN version used by
-                      <code>convertor.js</code>:<br>
+                      <code>converter.js</code>:<br>
                       <code class="font-mono">https://cdn.jsdelivr.net/gh/tylovejoy/genji-framework@VERSION/</code>
                     </p>
 
@@ -5800,7 +5800,7 @@
                     <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">
-                        I understand this will update the framework CDN URL in <code>convertor.js</code>.
+                        I understand this will update the framework CDN URL in <code>converter.js</code>.
                       </span>
                     </label>
 

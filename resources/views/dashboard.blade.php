@@ -369,7 +369,7 @@
                 </div>
 
                 <button id="dash-buy-keys" type="button"
-                  class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-sm font-extrabold text-zinc-900 shadow transition
+                  class="w-full cursor-pointer rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-sm font-extrabold text-zinc-900 shadow transition
                          disabled:opacity-60 disabled:cursor-not-allowed">
                   {{ __('dashboard.keyshop.purchase') }}
                 </button>

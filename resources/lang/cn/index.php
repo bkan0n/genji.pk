@@ -108,7 +108,7 @@ return [
                 'pill'           => 'Beta',
                 'description'    => '在多种语言转换代码, 随时更新你所使用的编辑器版本',
                 'links' => [
-                    'convertor'  => '转换器',
+                    'converter'  => '转换器',
                     'api'        => 'API',
                 ],
             ],

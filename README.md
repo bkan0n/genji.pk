@@ -18,7 +18,7 @@
   <p>
     <strong>Genji Parkour</strong> is a community website for Overwatch Genji parkour maps:
     <em>leaderboards</em>, <em>powerful search</em>, <em>submissions &amp; playtests</em>, <em>newsfeed</em>,
-    <em>statistics/graphs</em>, and a <strong>Convertor (OverPy → Workshop)</strong> with multilingual support.
+    <em>statistics/graphs</em>, and a <strong>Converter (OverPy → Workshop)</strong> with multilingual support.
     This repository hosts the <strong>Laravel 12</strong> application that serves the UI
     (dark theme, Tailwind, Blade + per-page JS).
     The app is <strong>API-first</strong> by default and can optionally use a local database for specific modules.
@@ -33,7 +33,7 @@
     <li><strong>Submit &amp; Playtest</strong> — submit maps/records, playtest queue, difficulty pills, custom dropdowns.</li>
     <li><strong>Newsfeed</strong> — announcements, new maps/records, guides, community picks, changelogs.</li>
     <li><strong>Statistics</strong> — charts &amp; insights (difficulty distribution, popularity, time played, rank distribution).</li>
-    <li><strong>Convertor (Beta)</strong> — OverPy → Workshop, translation helpers, map-data editor.</li>
+    <li><strong>Converter (Beta)</strong> — OverPy → Workshop, translation helpers, map-data editor.</li>
     <li><strong>Multi-language</strong> — EN/FR (extensible), language detection &amp; user selection.</li>
     <li><strong>Discord OAuth</strong> — login, navbar avatar, profile/notifications modals.</li>
     <li><strong>Strict CSP</strong> — <code>csp_nonce()</code> for scripts (including CDN), no inline styles.</li>
@@ -44,7 +44,7 @@
   <ul>
     <li><strong>Backend:</strong> Laravel 12 (PHP ≥ 8.2), custom middlewares (language, user context, Sentry).</li>
     <li><strong>Frontend:</strong> Blade, modular page-scoped JS, Tailwind CSS, Vite.</li>
-    <li><strong>i18n:</strong> <code>resources/lang/{en,fr}</code> + Convertor dictionaries.</li>
+    <li><strong>i18n:</strong> <code>resources/lang/{en,fr}</code> + Converter dictionaries.</li>
     <li><strong>Data:</strong> External API (default). Local DB is optional for persistence-heavy modules.</li>
   </ul>
 
@@ -155,7 +155,7 @@ php artisan optimize
   <h2>🌍 Internationalization (i18n)</h2>
   <ul>
     <li>Core translations live in <code>resources/lang/{en,fr}</code>.</li>
-    <li>Convertor &amp; domain dictionaries live in <code>resources/translations</code> and feature files (e.g., <code>resources/lang/en/convertor.php</code>).</li>
+    <li>Converter &amp; domain dictionaries live in <code>resources/translations</code> and feature files (e.g., <code>resources/lang/en/converter.php</code>).</li>
     <li>Language is selected in the navbar; middleware aids detection and persistence via cookie.</li>
   </ul>
 
@@ -180,7 +180,7 @@ php artisan optimize
       <tr><td>Dashboard</td><td><code>resources/views/dashboard.blade.php</code></td><td><code>resources/js/pages/dashboard.js</code></td><td>personal aggregation</td></tr>
       <tr><td>Lootbox</td><td><code>resources/views/lootbox.blade.php</code></td><td><code>resources/js/pages/lootbox.js</code></td><td>effects, rarities, keys</td></tr>
       <tr><td>Rank Card</td><td><code>resources/views/rank_card.blade.php</code></td><td><code>resources/js/pages/rank_card.js</code></td><td>skeleton + render</td></tr>
-      <tr><td>Convertor</td><td><code>resources/views/convertor.blade.php</code></td><td><code>resources/js/pages/convertor.js</code></td><td>OverPy → Workshop, translations</td></tr>
+      <tr><td>Converter</td><td><code>resources/views/converter.blade.php</code></td><td><code>resources/js/pages/converter.js</code></td><td>OverPy → Workshop, translations</td></tr>
     </tbody>
   </table>
 
@@ -219,7 +219,7 @@ php artisan optimize
   <ul>
     <li><strong>Laravel</strong> and its community.</li>
     <li><strong>Tailwind CSS</strong>.</li>
-    <li><strong>OverPy</strong> by Zezombye (used by the Convertor).</li>
+    <li><strong>OverPy</strong> by Zezombye (used by the Converter).</li>
     <li>All map creators, playtesters, and contributors of the <strong>Genji Parkour</strong> community.</li>
   </ul>
 

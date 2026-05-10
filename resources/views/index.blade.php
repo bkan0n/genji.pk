@@ -362,10 +362,10 @@
           <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('index.features.cards.tools.description') }}</p>
           <div class="mt-5 flex gap-2">
             <a
-              href="{{ url('convertor') }}"
+              href="{{ url('converter') }}"
               class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
             >
-              {{ __('index.features.cards.tools.links.convertor') }}
+              {{ __('index.features.cards.tools.links.converter') }}
             </a>
             <!--
             <a href="#api" class="text-sm rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-white/5">

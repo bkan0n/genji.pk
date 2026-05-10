@@ -107,9 +107,9 @@ return [
             'tools' => [
                 'title' => 'Editor & tools',
                 'pill' => 'Beta',
-                'description' => 'Convertor OverPy → Workshop, multilingual templates.',
+                'description' => 'Converter OverPy → Workshop, multilingual templates.',
                 'links' => [
-                    'convertor' => 'Convertor',
+                    'converter' => 'Converter',
                     'api' => 'API',
                 ],
             ],

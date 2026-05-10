@@ -25,7 +25,7 @@ export default defineConfig({
         'resources/js/pages/tutorials.js',
         'resources/js/pages/search.js',
         'resources/js/pages/rank_card.js',
-        'resources/js/pages/convertor.js',
+        'resources/js/pages/converter.js',
         'resources/js/pages/lootbox.js',
         'resources/js/pages/submit.js',
         'resources/js/pages/game.js',
