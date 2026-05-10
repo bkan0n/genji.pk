@@ -3,6 +3,8 @@
    ========================= */
 
 const STORE_API = '/api/store';
+let storeModalInitialized = false;
+let storePurchaseInFlight = false;
 
 function $(id) {
   return document.getElementById(id);
@@ -709,6 +711,8 @@ function setupCustomDropdown({ rootId, hiddenId, btnId, listId, labelId, onChang
    ========================= */
 
 export function initStoreModal({ getUserId, showToast } = {}) {
+  if (storeModalInitialized) return;
+
   if (typeof showToast === 'function') window.showToast = showToast;
 
   const modal = $('storeModal');
@@ -731,6 +735,7 @@ export function initStoreModal({ getUserId, showToast } = {}) {
   const coinsPillEl = $('store-coins-pill');
 
   if (!modal || !openBtn) return;
+  storeModalInitialized = true;
 
   let pricingCache = null;
   let rotationCache = null;
@@ -998,10 +1003,12 @@ export function initStoreModal({ getUserId, showToast } = {}) {
     const uid = userId();
     if (!uid) return toastErr(I18N.login_required());
     if (loading) return;
+    if (storePurchaseInFlight) return;
 
     const key_type = String(keyTypeEl?.value || 'Classic');
     const quantity = Number(keyQtyEl?.value || 1);
 
+    storePurchaseInFlight = true;
     setLoading(true);
     try {
       await httpJson(`${STORE_API}/purchase/keys`, {
@@ -1028,6 +1035,7 @@ export function initStoreModal({ getUserId, showToast } = {}) {
     } catch (e) {
       toastErr(e.message || I18N.purchase_failed());
     } finally {
+      storePurchaseInFlight = false;
       setLoading(false);
     }
   }

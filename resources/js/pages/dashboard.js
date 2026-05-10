@@ -1236,6 +1236,7 @@ let state = {
   keysLoaded: false,
   coins: null,
   xpSummary: null,
+  keyShopPurchaseInFlight: false,
 };
 
 let __keysInFlight = null;
@@ -1973,11 +1974,22 @@ async function loadKeyShop() {
     }
   }
 
-  typeSel.addEventListener("change", updateUi);
-  qtySel.addEventListener("change", updateUi);
+  if (typeSel.dataset.keyshopUiBound !== "1") {
+    typeSel.addEventListener("change", updateUi);
+    typeSel.dataset.keyshopUiBound = "1";
+  }
+  if (qtySel.dataset.keyshopUiBound !== "1") {
+    qtySel.addEventListener("change", updateUi);
+    qtySel.dataset.keyshopUiBound = "1";
+  }
   updateUi();
 
+  if (buyBtn.dataset.keyshopBound === "1") return;
+  buyBtn.dataset.keyshopBound = "1";
+
   buyBtn.addEventListener("click", async () => {
+    if (state.keyShopPurchaseInFlight) return;
+    state.keyShopPurchaseInFlight = true;
     setBusy(buyBtn, true);
     try {
       await httpJson(EP.buyKeys(), {
@@ -1993,6 +2005,7 @@ async function loadKeyShop() {
       await Promise.allSettled([loadHeader(), loadPurchases()]);
     } catch {
     } finally {
+      state.keyShopPurchaseInFlight = false;
       setBusy(buyBtn, false);
     }
   });
