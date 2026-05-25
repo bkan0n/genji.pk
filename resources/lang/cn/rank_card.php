@@ -25,6 +25,12 @@ return [
     'search_placeholder'  => '输入用户名',
     'search_button'       => '搜索',
     'reset_filter_button' => '重置',
+    'filters' => [
+        'official_playable' => '官方可玩',
+        'official_all' => '官方全部',
+        'unofficial_playable' => '非官方可玩',
+        'unofficial_all' => '非官方全部',
+    ],
 
     // ───────────────────────────────────────────────────────────────────────
     // ACTIONS (buttons)

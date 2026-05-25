@@ -7,6 +7,19 @@ const API_CONTENT_MODS = `${API_MODS}/content/movement-tech`;
 const asId = (input) => String(input?.value ?? '').trim();
 const isDigits = (s) => /^\d+$/.test(String(s || ''));
 const getBool = (id) => !!document.getElementById(id)?.checked;
+const toBooleanValue = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['true', '1', 'yes', 'y', 'on', 'archive', 'archived'].includes(normalized)) return true;
+    if (['false', '0', 'no', 'n', 'off', 'unarchive', 'unarchived', 'active', ''].includes(normalized)) return false;
+  }
+  return false;
+};
+
+const mapArchivedValue = (item) =>
+  toBooleanValue(item?.archived ?? item?.is_archived ?? item?.status ?? item?.archive_status);
 
 const PLAYTESTING_OPTIONS = [
   { value: 'Approved', text: 'Approved' },
@@ -354,12 +367,8 @@ function bindDdDelegation() {
 
 function appendOverlay(overlay) {
   const mount = document.getElementById('mapEditRequestInlineMount');
-  let canMount = false;
-  if (mount && mount.isConnected) {
-    const style = window.getComputedStyle(mount);
-    canMount = style && style.display !== 'none' && style.visibility !== 'hidden';
-  }
-  (canMount ? mount : document.body).appendChild(overlay);
+  const shouldMountInline = overlay?.id === 'mapEditRequestInline';
+  (shouldMountInline && mount && mount.isConnected ? mount : document.body).appendChild(overlay);
 }
 
 // --- Modal ---
@@ -1548,8 +1557,8 @@ async function handleGrantXp(form) {
   }
 
   const amount = Number.parseInt(form.amount.value, 10);
-  if (!Number.isInteger(amount) || amount <= 0) {
-    toast('Amount must be a positive integer', 'warn');
+  if (!Number.isInteger(amount) || amount === 0) {
+    toast('Amount must be a non-zero integer', 'warn');
     return;
   }
 
@@ -3248,9 +3257,9 @@ async function handleUpdateMap(form) {
   const guideRaw = (document.getElementById('u-optGuide')?.textContent || '').trim();
   const guide_url = !guideRaw || /^n\/?a$/i.test(guideRaw) ? null : firstHttpUrlOrNull(guideRaw);
 
-  const hidden = !!document.getElementById('u-flagHidden')?.checked;
-  const archived = !!document.getElementById('u-flagArchived')?.checked;
-  const official = !!document.getElementById('u-flagOfficial')?.checked;
+  const hidden = form.querySelector('#u-flagHidden')?.checked === true;
+  const archived = form.querySelector('#u-flagArchived')?.checked === true;
+  const official = form.querySelector('#u-flagOfficial')?.checked === true;
   const playtesting = getSelectedRadio('#u-playtestingDropdown');
 
   const medalsCheck = validateUpdateMedals(true);
@@ -3288,7 +3297,7 @@ async function handleUpdateMap(form) {
   if (medalsCheck.values) put('medals', medalsCheck.values);
   put('hidden', hidden);
   put('archived', archived);
-  put('official', official);
+  payload.official = official;
   if (playtesting) put('playtesting', playtesting);
 
   const creators = [];
@@ -3303,6 +3312,74 @@ async function handleUpdateMap(form) {
   );
   logActivity({ title: 'Update map (UI)', method: 'PATCH', url, ok, status, data });
   toast(ok ? 'Updated' : 'Failed', ok ? 'ok' : 'err');
+  if (ok) {
+    form.dataset.loadedMapArchived = String(archived);
+    updateReleaseCodeButtonVisibility(form);
+  }
+}
+
+function updateReleaseCodeButtonVisibility(form) {
+  const target = form || document.querySelector('[data-subpanel="maps-update"] #u-updateMapForm');
+  const btn = target?.querySelector('#u-releaseCodeBtn');
+  const code = (target?.querySelector('#u-metaCode')?.textContent || '').trim();
+  const archived = target?.dataset?.loadedMapArchived === 'true';
+  btn?.classList.toggle('hidden', !archived || !code || /^n\/?a$/i.test(code));
+}
+
+function formatApiErrorMessage(data, fallback = 'Failed') {
+  if (typeof data === 'string') return data.trim() || fallback;
+  if (typeof data?.error === 'string' && data.error.trim()) return data.error.trim();
+  if (typeof data?.message === 'string' && data.message.trim()) return data.message.trim();
+  if (typeof data?.error?.message === 'string' && data.error.message.trim()) {
+    return data.error.message.trim();
+  }
+  return fallback;
+}
+
+async function handleReleaseMapCode(form) {
+  const code = (form?.querySelector('#u-metaCode')?.textContent || '').trim();
+  if (!code || /^n\/?a$/i.test(code)) {
+    toast('Missing map code.', 'warn');
+    return;
+  }
+
+  if (form?.dataset?.loadedMapArchived !== 'true') {
+    toast('Release code is only available for archived maps.', 'warn');
+    return;
+  }
+
+  const confirmed = await showConfirmDanger({
+    title: `Release code ${code}?`,
+    message:
+      'This is irreversible. The map will no longer be findable by this code, and the code can be reused by a new map.',
+    confirm: 'Release code',
+    cancel: 'Cancel',
+  });
+  if (!confirmed) return;
+
+  const btn = form.querySelector('#u-releaseCodeBtn');
+  btn && (btn.disabled = true);
+
+  const { ok, status, url, data } = await http(
+    'PATCH',
+    `${API_MODS}/maps/${encodeURIComponent(code)}/release-code`
+  );
+
+  logActivity({ title: 'Release map code', method: 'PATCH', url, ok, status, data });
+
+  if (ok || status === 204) {
+    toast('Code released', 'ok');
+    form.dataset.loadedMapArchived = 'false';
+    const codeEl = form.querySelector('#u-metaCode');
+    if (codeEl) {
+      codeEl.dataset.originalCode = code;
+      codeEl.textContent = 'N/A';
+    }
+    updateReleaseCodeButtonVisibility(form);
+  } else {
+    toast(formatApiErrorMessage(data, 'Release failed'), 'err');
+    btn && (btn.disabled = false);
+  }
 }
 
 async function handleLoadMapForUpdate(form) {
@@ -3312,17 +3389,42 @@ async function handleLoadMapForUpdate(form) {
     return;
   }
 
-  const { ok, status, url, data } = await http('GET', `/api/maps`, { query: { code } });
-  logActivity({ title: 'Load map (update)', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
-  if (!ok) return;
+  const pickItem = (data) => {
+    if (Array.isArray(data)) return data[0] || null;
+    if (data && typeof data === 'object') return (data.items?.[0] ?? data.data?.items?.[0] ?? data) || null;
+    return null;
+  };
 
-  let item = null;
-  if (Array.isArray(data)) item = data[0] || null;
-  else if (data && typeof data === 'object') item = (data.items?.[0] ?? data) || null;
+  let res = await http('GET', `/api/maps`, { query: { code } });
+  logActivity({ title: 'Load map (update)', method: 'GET', url: res.url, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) {
+    toast('Failed', 'err');
+    return;
+  }
+
+  let item = pickItem(res.data);
 
   if (!item) {
-    toast('No results', 'warn');
+    const archivedRes = await http('GET', `/api/maps`, { query: { code, archived: true } });
+    logActivity({
+      title: 'Load archived map (update)',
+      method: 'GET',
+      url: archivedRes.url,
+      ok: archivedRes.ok,
+      status: archivedRes.status,
+      data: archivedRes.data,
+    });
+    if (!archivedRes.ok) {
+      toast('Failed', 'err');
+      return;
+    }
+    res = archivedRes;
+    item = pickItem(archivedRes.data);
+  }
+
+  toast(item ? 'Loaded' : 'No results', item ? 'ok' : 'warn');
+
+  if (!item) {
     return;
   }
 
@@ -4428,7 +4530,7 @@ function __merPopulateRadioDropdown(dropdownId, options, inputName) {
     );
 
     const label = document.createElement('label');
-    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10';
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:hover:bg-white/10';
 
     if (isDifficulty) {
       const dotCls = __merDifficultyDotClass(labelText);
@@ -4463,7 +4565,7 @@ function __merPopulateCheckboxDropdown(dropdownId, options, inputName) {
     );
 
     const label = document.createElement('label');
-    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:bg-white/10';
+    label.className = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-900/5 dark:hover:bg-white/10';
 
     label.innerHTML = `
       <input type="checkbox" name="${inputName}" value="${__merEsc(value)}" data-label="${__merEsc(labelText)}" class="h-4 w-4 accent-emerald-500">
@@ -4624,7 +4726,10 @@ function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) 
 // Form creator
 function ensureMapEditRequestModal() {
   let overlay = document.getElementById('mapEditRequestInline');
-  if (overlay) return overlay;
+  if (overlay) {
+    appendOverlay(overlay);
+    return overlay;
+  }
 
   if (!document.getElementById('merModalStyles')) {
     const st = document.createElement('style');
@@ -4642,8 +4747,8 @@ function ensureMapEditRequestModal() {
   overlay.className = 'hidden';
 
   overlay.innerHTML = `
-    <div class="w-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/80 shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10">
-      <div class="flex items-start justify-between gap-4 border-b border-zinc-200/80 dark:border-white/10 px-6 py-4">
+    <div class="w-full space-y-6">
+      <div class="hidden">
         <div class="min-w-0">
           <div class="text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">MODERATOR</div>
           <h2 class="mt-0.5 text-lg font-semibold text-zinc-900 dark:text-white">Map Edit Request</h2>
@@ -4652,7 +4757,7 @@ function ensureMapEditRequestModal() {
 
       </div>
 
-      <div class="max-h-[78vh] overflow-y-auto px-6 py-5">
+      <div class="space-y-4">
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-3">
             <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Code</div>
@@ -4818,7 +4923,7 @@ function ensureMapEditRequestModal() {
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-3 border-t border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950/80 px-6 py-4">
+      <div class="flex flex-wrap items-center justify-end gap-3">
         <button type="button" data-mer-close class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10">Cancel</button>
         <button type="button" id="merSendBtn" class="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400">
           ${(typeof t === 'function' ? (t('map_edit_request.send') || 'Send request') : 'Send request')}
@@ -4864,7 +4969,7 @@ function ensureMapEditRequestModal() {
       el.querySelectorAll('button[data-switch]').forEach((b) => {
         const isActive = (b.getAttribute('data-value') || '0') === value;
 (() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-zinc-950').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
 (() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
 (() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
       });
@@ -5136,7 +5241,7 @@ function openMapEditRequestModal(map, opts = {}) {
     el.querySelectorAll('button[data-switch]').forEach((b) => {
       const isActive = (b.getAttribute('data-value') || '0') === value;
 (() => { const __obj = b; let __last; for (const __c of String('bg-white').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
-(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
+(() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-zinc-950').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, isActive); return __last; })();
 (() => { const __obj = b; let __last; for (const __c of String('text-zinc-900 dark:text-white/80').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
 (() => { const __obj = b; let __last; for (const __c of String('hover:bg-zinc-900/5 dark:bg-white/10').trim().split(/\s+/).filter(Boolean)) __last = __obj.classList.toggle(__c, !isActive); return __last; })();
     });
@@ -6624,6 +6729,16 @@ async function initUpdatePanel() {
 
   bindEditButtonsGeneric(panel);
   wireFormAutocompletes(panel);
+
+  const updateForm = panel.querySelector('#u-updateMapForm');
+  const releaseBtn = updateForm?.querySelector('#u-releaseCodeBtn');
+  if (updateForm && releaseBtn && releaseBtn.dataset.bound !== '1') {
+    releaseBtn.dataset.bound = '1';
+    releaseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleReleaseMapCode(updateForm);
+    });
+  }
 }
 
 function firstGuideUrlFromItem(item) {
@@ -6685,13 +6800,20 @@ function populateUpdatePanel(item) {
   ddCheckByValues(form.querySelector('#u-tagsDropdown'), item?.tags || item?.map_tags || []);
 
   // Flags
-  form.querySelector('#u-flagHidden')?.setAttribute('checked', item?.hidden ? 'checked' : '');
-  form.querySelector('#u-flagHidden') &&
-    (form.querySelector('#u-flagHidden').checked = !!item?.hidden);
-  form.querySelector('#u-flagArchived') &&
-    (form.querySelector('#u-flagArchived').checked = !!item?.archived);
-  form.querySelector('#u-flagOfficial') &&
-    (form.querySelector('#u-flagOfficial').checked = !!item?.official);
+  const setCheckboxBool = (selector, value) => {
+    const checkbox = form.querySelector(selector);
+    if (!checkbox) return;
+    const checked = toBooleanValue(value);
+    checkbox.checked = checked;
+    checkbox.defaultChecked = checked;
+    checkbox.toggleAttribute('checked', checked);
+  };
+  const isArchived = mapArchivedValue(item);
+  setCheckboxBool('#u-flagHidden', item?.hidden);
+  setCheckboxBool('#u-flagArchived', isArchived);
+  setCheckboxBool('#u-flagOfficial', item?.official);
+  form.dataset.loadedMapArchived = String(isArchived);
+  updateReleaseCodeButtonVisibility(form);
   ddSelectByValue(form.querySelector('#u-playtestingDropdown'), item?.playtesting);
 
   // Optional

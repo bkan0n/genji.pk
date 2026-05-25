@@ -25,8 +25,8 @@ class GrantXpToUserController extends Controller
     public function __invoke(Request $request, int $user_id)
     {
         $data = $request->validate([
-            'amount' => ['nullable', 'integer', 'min:1'],
-            'xp'     => ['nullable', 'integer', 'min:1'],
+            'amount' => ['nullable', 'integer', 'not_in:0'],
+            'xp'     => ['nullable', 'integer', 'not_in:0'],
 
             'type'   => ['nullable', 'string', 'max:32', Rule::in(self::TYPES)],
 

@@ -236,14 +236,91 @@ async function gpCloseModal(overlayId) {
    TOAST + HTTP
    ========================= */
 
+function localShowToast(message, type = 'ok', opts = {}) {
+  const {
+    duration = 1200,
+    enter = 220,
+    exit = 220,
+    easing = 'cubic-bezier(0.4,0,0.2,1)',
+  } = opts;
+
+  const text = String(message || '').trim();
+  if (!text) return;
+
+  let root = document.getElementById('toast-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'toast-root';
+    root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[200] flex justify-center px-3';
+    document.body.appendChild(root);
+  }
+
+  while (root.firstElementChild) {
+    const prev = root.firstElementChild;
+    try { prev.getAnimations?.().forEach((animation) => animation.cancel()); } catch {}
+    prev.remove();
+  }
+
+  const palette =
+    type === 'ok'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
+      : type === 'warn'
+        ? 'bg-amber-500/90 text-zinc-900'
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
+
+  const el = document.createElement('div');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.className = [
+    'pointer-events-auto select-none rounded-xl px-4 py-2',
+    'text-sm shadow-lg text-center transform-gpu',
+    'w-auto max-w-[92vw] sm:max-w-[42rem]',
+    palette,
+  ].join(' ');
+  el.textContent = text;
+  root.appendChild(el);
+
+  const inAnim = el.animate(
+    [{ opacity: 0, transform: 'translateY(8px)' },
+     { opacity: 1, transform: 'translateY(0)' }],
+    { duration: enter, easing, fill: 'forwards' }
+  );
+
+  const close = () => {
+    Promise.resolve(inAnim.finished).catch(() => {}).finally(() => {
+      const outAnim = el.animate(
+        [{ opacity: 1, transform: 'translateY(0)' },
+         { opacity: 0, transform: 'translateY(8px)' }],
+        { duration: exit, easing, fill: 'forwards' }
+      );
+      outAnim.finished.then(() => el.remove()).catch(() => el.remove());
+      setTimeout(() => el.remove(), exit + 120);
+    });
+  };
+
+  const timer = setTimeout(close, Math.max(duration, enter + 50));
+  el.addEventListener('click', () => { clearTimeout(timer); close(); });
+}
+
+function showStoreToast(message, type = 'ok') {
+  if (typeof window.showToast === 'function') return window.showToast(message, type);
+  return localShowToast(message, type);
+}
+
 function toastOk(msg) {
-  if (typeof window.showToast === 'function') return window.showToast(msg, 'ok');
-  console.log('[store]', msg);
+  showStoreToast(msg, 'ok');
 }
 
 function toastErr(msg) {
-  if (typeof window.showToast === 'function') return window.showToast(msg, 'error');
-  console.warn('[store]', msg);
+  showStoreToast(msg, 'error');
+}
+
+function apiErrorMessage(payload, status) {
+  if (typeof payload === 'string') return payload || `HTTP ${status}`;
+  if (typeof payload?.error === 'string' && payload.error.trim()) return payload.error.trim();
+  if (typeof payload?.message === 'string' && payload.message.trim()) return payload.message.trim();
+  if (typeof payload?.error?.message === 'string' && payload.error.message.trim()) return payload.error.message.trim();
+  return `HTTP ${status}`;
 }
 
 async function httpJson(url, opts = {}) {
@@ -258,8 +335,7 @@ async function httpJson(url, opts = {}) {
 
   if (!res.ok) {
     const payload = json || text;
-    const msg = payload?.message || payload?.error || `HTTP ${res.status}`;
-    throw new Error(msg);
+    throw new Error(apiErrorMessage(payload, res.status));
   }
 
   return json ?? text ?? {};

@@ -25,6 +25,12 @@ return [
     'search_placeholder'   => 'Entrez un nom d’utilisateur',
     'search_button'        => 'Rechercher',
     'reset_filter_button'  => 'Réinitialiser',
+    'filters' => [
+        'official_playable' => 'Officielles jouables',
+        'official_all' => 'Officielles toutes',
+        'unofficial_playable' => 'Non officielles jouables',
+        'unofficial_all' => 'Non officielles toutes',
+    ],
 
     // ──────────────────────────────────────────────────────────────────────
     // ACTIONS (buttons)
