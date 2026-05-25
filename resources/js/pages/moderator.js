@@ -12,11 +12,14 @@ const toBooleanValue = (value) => {
   if (typeof value === 'number') return value !== 0;
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
-    if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) return true;
-    if (['false', '0', 'no', 'n', 'off', ''].includes(normalized)) return false;
+    if (['true', '1', 'yes', 'y', 'on', 'archive', 'archived'].includes(normalized)) return true;
+    if (['false', '0', 'no', 'n', 'off', 'unarchive', 'unarchived', 'active', ''].includes(normalized)) return false;
   }
   return false;
 };
+
+const mapArchivedValue = (item) =>
+  toBooleanValue(item?.archived ?? item?.is_archived ?? item?.status ?? item?.archive_status);
 
 const PLAYTESTING_OPTIONS = [
   { value: 'Approved', text: 'Approved' },
@@ -364,7 +367,8 @@ function bindDdDelegation() {
 
 function appendOverlay(overlay) {
   const mount = document.getElementById('mapEditRequestInlineMount');
-  (mount && mount.isConnected ? mount : document.body).appendChild(overlay);
+  const shouldMountInline = overlay?.id === 'mapEditRequestInline';
+  (shouldMountInline && mount && mount.isConnected ? mount : document.body).appendChild(overlay);
 }
 
 // --- Modal ---
@@ -3308,6 +3312,74 @@ async function handleUpdateMap(form) {
   );
   logActivity({ title: 'Update map (UI)', method: 'PATCH', url, ok, status, data });
   toast(ok ? 'Updated' : 'Failed', ok ? 'ok' : 'err');
+  if (ok) {
+    form.dataset.loadedMapArchived = String(archived);
+    updateReleaseCodeButtonVisibility(form);
+  }
+}
+
+function updateReleaseCodeButtonVisibility(form) {
+  const target = form || document.querySelector('[data-subpanel="maps-update"] #u-updateMapForm');
+  const btn = target?.querySelector('#u-releaseCodeBtn');
+  const code = (target?.querySelector('#u-metaCode')?.textContent || '').trim();
+  const archived = target?.dataset?.loadedMapArchived === 'true';
+  btn?.classList.toggle('hidden', !archived || !code || /^n\/?a$/i.test(code));
+}
+
+function formatApiErrorMessage(data, fallback = 'Failed') {
+  if (typeof data === 'string') return data.trim() || fallback;
+  if (typeof data?.error === 'string' && data.error.trim()) return data.error.trim();
+  if (typeof data?.message === 'string' && data.message.trim()) return data.message.trim();
+  if (typeof data?.error?.message === 'string' && data.error.message.trim()) {
+    return data.error.message.trim();
+  }
+  return fallback;
+}
+
+async function handleReleaseMapCode(form) {
+  const code = (form?.querySelector('#u-metaCode')?.textContent || '').trim();
+  if (!code || /^n\/?a$/i.test(code)) {
+    toast('Missing map code.', 'warn');
+    return;
+  }
+
+  if (form?.dataset?.loadedMapArchived !== 'true') {
+    toast('Release code is only available for archived maps.', 'warn');
+    return;
+  }
+
+  const confirmed = await showConfirmDanger({
+    title: `Release code ${code}?`,
+    message:
+      'This is irreversible. The map will no longer be findable by this code, and the code can be reused by a new map.',
+    confirm: 'Release code',
+    cancel: 'Cancel',
+  });
+  if (!confirmed) return;
+
+  const btn = form.querySelector('#u-releaseCodeBtn');
+  btn && (btn.disabled = true);
+
+  const { ok, status, url, data } = await http(
+    'PATCH',
+    `${API_MODS}/maps/${encodeURIComponent(code)}/release-code`
+  );
+
+  logActivity({ title: 'Release map code', method: 'PATCH', url, ok, status, data });
+
+  if (ok || status === 204) {
+    toast('Code released', 'ok');
+    form.dataset.loadedMapArchived = 'false';
+    const codeEl = form.querySelector('#u-metaCode');
+    if (codeEl) {
+      codeEl.dataset.originalCode = code;
+      codeEl.textContent = 'N/A';
+    }
+    updateReleaseCodeButtonVisibility(form);
+  } else {
+    toast(formatApiErrorMessage(data, 'Release failed'), 'err');
+    btn && (btn.disabled = false);
+  }
 }
 
 async function handleLoadMapForUpdate(form) {
@@ -3317,17 +3389,42 @@ async function handleLoadMapForUpdate(form) {
     return;
   }
 
-  const { ok, status, url, data } = await http('GET', `/api/maps`, { query: { code } });
-  logActivity({ title: 'Load map (update)', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
-  if (!ok) return;
+  const pickItem = (data) => {
+    if (Array.isArray(data)) return data[0] || null;
+    if (data && typeof data === 'object') return (data.items?.[0] ?? data.data?.items?.[0] ?? data) || null;
+    return null;
+  };
 
-  let item = null;
-  if (Array.isArray(data)) item = data[0] || null;
-  else if (data && typeof data === 'object') item = (data.items?.[0] ?? data) || null;
+  let res = await http('GET', `/api/maps`, { query: { code } });
+  logActivity({ title: 'Load map (update)', method: 'GET', url: res.url, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) {
+    toast('Failed', 'err');
+    return;
+  }
+
+  let item = pickItem(res.data);
 
   if (!item) {
-    toast('No results', 'warn');
+    const archivedRes = await http('GET', `/api/maps`, { query: { code, archived: true } });
+    logActivity({
+      title: 'Load archived map (update)',
+      method: 'GET',
+      url: archivedRes.url,
+      ok: archivedRes.ok,
+      status: archivedRes.status,
+      data: archivedRes.data,
+    });
+    if (!archivedRes.ok) {
+      toast('Failed', 'err');
+      return;
+    }
+    res = archivedRes;
+    item = pickItem(archivedRes.data);
+  }
+
+  toast(item ? 'Loaded' : 'No results', item ? 'ok' : 'warn');
+
+  if (!item) {
     return;
   }
 
@@ -6632,6 +6729,16 @@ async function initUpdatePanel() {
 
   bindEditButtonsGeneric(panel);
   wireFormAutocompletes(panel);
+
+  const updateForm = panel.querySelector('#u-updateMapForm');
+  const releaseBtn = updateForm?.querySelector('#u-releaseCodeBtn');
+  if (updateForm && releaseBtn && releaseBtn.dataset.bound !== '1') {
+    releaseBtn.dataset.bound = '1';
+    releaseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleReleaseMapCode(updateForm);
+    });
+  }
 }
 
 function firstGuideUrlFromItem(item) {
@@ -6701,9 +6808,12 @@ function populateUpdatePanel(item) {
     checkbox.defaultChecked = checked;
     checkbox.toggleAttribute('checked', checked);
   };
+  const isArchived = mapArchivedValue(item);
   setCheckboxBool('#u-flagHidden', item?.hidden);
-  setCheckboxBool('#u-flagArchived', item?.archived);
+  setCheckboxBool('#u-flagArchived', isArchived);
   setCheckboxBool('#u-flagOfficial', item?.official);
+  form.dataset.loadedMapArchived = String(isArchived);
+  updateReleaseCodeButtonVisibility(form);
   ddSelectByValue(form.querySelector('#u-playtestingDropdown'), item?.playtesting);
 
   // Optional

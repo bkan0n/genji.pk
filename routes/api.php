@@ -63,6 +63,7 @@ use App\Http\Controllers\Mods\Lootbox\XP\ChangeXpMultiplierController;
 
 use App\Http\Controllers\Mods\Maps\ArchiveMapsController;
 use App\Http\Controllers\Mods\Maps\ConvertToLegacyController;
+use App\Http\Controllers\Mods\Maps\ReleaseMapCodeController;
 use App\Http\Controllers\Mods\Maps\UpdateMapController;
 
 use App\Http\Controllers\Mods\Moderation\OverrideQualityController;
@@ -439,6 +440,7 @@ Route::prefix('mods')
         // MAPS
         Route::patch('maps/archive', ArchiveMapsController::class);
         Route::post('maps/{code}/legacy', ConvertToLegacyController::class);
+        Route::patch('maps/{code}/release-code', ReleaseMapCodeController::class);
         Route::patch('maps/{code}', UpdateMapController::class);
 
         // MODERATION
@@ -627,4 +629,3 @@ Route::prefix('users/{user_id}/rank-card')
         Route::get('/', GetRankCardController::class)->name('get');
     });
 Route::get('rankcard/mastery', GetMapMasteryController::class)->name('rankcard.mastery');
-

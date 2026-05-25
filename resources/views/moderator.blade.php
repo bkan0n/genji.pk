@@ -188,7 +188,7 @@
 
               <button
                 data-tab="devs"
-                data-tab-label="Devs only"
+                data-tab-label="Web"
                 class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
                data-dev-only="1">
@@ -3419,12 +3419,19 @@
                     </div>
 
                     <!-- ACTION BAR -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                       <button
                         type="submit"
                         class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
                       >
                         Update map
+                      </button>
+                      <button
+                        id="u-releaseCodeBtn"
+                        type="button"
+                        class="hidden inline-flex cursor-pointer items-center justify-center rounded-xl border border-rose-500/50 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-500/20 dark:text-rose-300"
+                      >
+                        Release code
                       </button>
                       <button
                         type="button"
