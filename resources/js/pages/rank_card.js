@@ -108,13 +108,18 @@ function cdnifyAssetUrl(url) {
 let selectedUserId = null;
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.RANK_CARD_I18N || {};
-const RANK_CARD_DEFAULT_FILTER = 'official_playable';
-const RANK_CARD_FILTER_OPTIONS = [
+const RANK_CARD_OFFICIAL_FILTER_OPTIONS = [
   { value: 'official_playable', labelKey: 'filters.official_playable', fallback: 'Official playable' },
   { value: 'official_all', labelKey: 'filters.official_all', fallback: 'Official all' },
+];
+const RANK_CARD_UNOFFICIAL_FILTER_OPTIONS = [
   { value: 'unofficial_playable', labelKey: 'filters.unofficial_playable', fallback: 'Unofficial playable' },
   { value: 'unofficial_all', labelKey: 'filters.unofficial_all', fallback: 'Unofficial all' },
 ];
+const RANK_CARD_VISIBLE_FILTER_OPTIONS = isChineseRankCardLang()
+  ? RANK_CARD_UNOFFICIAL_FILTER_OPTIONS
+  : RANK_CARD_OFFICIAL_FILTER_OPTIONS;
+const RANK_CARD_DEFAULT_FILTER = RANK_CARD_VISIBLE_FILTER_OPTIONS[0].value;
 let currentRankCardFilter = normalizeRankCardFilter(getQueryParam('filter') || RANK_CARD_DEFAULT_FILTER);
 let currentBackground = null;
 let preloadedBackgrounds = [];
@@ -368,9 +373,14 @@ function getQueryParam(param) {
   return new URLSearchParams(window.location.search).get(param);
 }
 
+function isChineseRankCardLang() {
+  const lang = String(CURRENT_LANG || '').toLowerCase();
+  return lang === 'cn' || lang === 'zh' || lang.startsWith('zh-');
+}
+
 function normalizeRankCardFilter(value) {
   const raw = String(value || '').trim();
-  return RANK_CARD_FILTER_OPTIONS.some((option) => option.value === raw)
+  return RANK_CARD_VISIBLE_FILTER_OPTIONS.some((option) => option.value === raw)
     ? raw
     : RANK_CARD_DEFAULT_FILTER;
 }
@@ -382,7 +392,7 @@ function rankCardLoadKey(userId) {
 function rankCardFilterControlsHtml() {
   return `
     <div class="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-1 rounded-xl border border-white/10 bg-black/35 p-1 shadow-lg backdrop-blur">
-      ${RANK_CARD_FILTER_OPTIONS.map((option) => {
+      ${RANK_CARD_VISIBLE_FILTER_OPTIONS.map((option) => {
         const active = option.value === currentRankCardFilter;
         return `
           <button
@@ -2487,7 +2497,7 @@ function rankCardSkeletonHTML() {
           <div class="h-full w-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
         </div>
         <div class="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-1 rounded-xl border border-white/10 bg-black/35 p-1 shadow-lg backdrop-blur">
-          ${Array.from({ length: 4 }).map((_, index) => `
+          ${RANK_CARD_VISIBLE_FILTER_OPTIONS.map((_, index) => `
             <div class="h-[26px] rounded-lg ${index === 0 ? 'w-28 bg-white/70' : 'w-24 bg-white/20'} animate-pulse"></div>
           `).join('')}
         </div>
