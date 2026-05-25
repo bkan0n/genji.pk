@@ -25,6 +25,12 @@ return [
     'search_placeholder' => 'Enter user name',
     'search_button' => 'Search',
     'reset_filter_button' => 'Reset',
+    'filters' => [
+        'official_playable' => 'Official playable',
+        'official_all' => 'Official all',
+        'unofficial_playable' => 'Unofficial playable',
+        'unofficial_all' => 'Unofficial all',
+    ],
 
     // ──────────────────────────────────────────────────────────────────────
     // ACTIONS (buttons)

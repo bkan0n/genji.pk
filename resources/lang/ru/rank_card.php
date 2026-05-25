@@ -25,6 +25,12 @@ return [
     'search_placeholder' => 'Введите имя пользователя',
     'search_button' => 'Поиск',
     'reset_filter_button' => 'Сбросить',
+    'filters' => [
+        'official_playable' => 'Официальные игровые',
+        'official_all' => 'Все официальные',
+        'unofficial_playable' => 'Неофициальные игровые',
+        'unofficial_all' => 'Все неофициальные',
+    ],
 
     // ──────────────────────────────────────────────────────────────────────
     // ACTIONS (buttons)

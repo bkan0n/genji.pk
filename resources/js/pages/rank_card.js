@@ -5,7 +5,8 @@ import { cdnAsset, cdnImage } from "../utils/cdn";
    ========================= */
 const endpoints = {
   rankcard: {
-    data: (userId) => `/api/users/${encodeURIComponent(userId)}/rank-card`,
+    data: (userId, filter = RANK_CARD_DEFAULT_FILTER) =>
+      `/api/users/${encodeURIComponent(userId)}/rank-card?filter=${encodeURIComponent(filter)}`,
 
     mastery: (userId) => `/api/rankcard/mastery?user_id=${encodeURIComponent(userId)}`,
 
@@ -107,6 +108,14 @@ function cdnifyAssetUrl(url) {
 let selectedUserId = null;
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.RANK_CARD_I18N || {};
+const RANK_CARD_DEFAULT_FILTER = 'official_playable';
+const RANK_CARD_FILTER_OPTIONS = [
+  { value: 'official_playable', labelKey: 'filters.official_playable', fallback: 'Official playable' },
+  { value: 'official_all', labelKey: 'filters.official_all', fallback: 'Official all' },
+  { value: 'unofficial_playable', labelKey: 'filters.unofficial_playable', fallback: 'Unofficial playable' },
+  { value: 'unofficial_all', labelKey: 'filters.unofficial_all', fallback: 'Unofficial all' },
+];
+let currentRankCardFilter = normalizeRankCardFilter(getQueryParam('filter') || RANK_CARD_DEFAULT_FILTER);
 let currentBackground = null;
 let preloadedBackgrounds = [];
 let rewardsReady = false;
@@ -173,13 +182,14 @@ async function initRankCard() {
         showContent.dataset.loadedFor = String(targetId || '');
       }
     } else if (showContent.id === 'rankCardContent') {
-      if (!showContent.dataset.loadedFor || showContent.dataset.loadedFor !== String(targetId)) {
+      const loadKey = rankCardLoadKey(targetId);
+      if (!showContent.dataset.loadedFor || showContent.dataset.loadedFor !== loadKey) {
         if (targetId) {
           fetchUserRankCard(targetId);
         } else {
           loadRankCardContent();
         }
-        showContent.dataset.loadedFor = String(targetId || '');
+        showContent.dataset.loadedFor = loadKey;
       }
     }
 
@@ -191,6 +201,22 @@ async function initRankCard() {
   });
   btnBadges.addEventListener('click', () => {
     toggleTabs(badgeMasteryContent, rankCardContent, btnBadges, btnRankCard);
+  });
+
+  document.addEventListener('click', async (event) => {
+    const btn = event.target?.closest?.('[data-rank-card-filter]');
+    if (!btn) return;
+
+    const next = normalizeRankCardFilter(btn.getAttribute('data-rank-card-filter'));
+    if (next === currentRankCardFilter) return;
+
+    currentRankCardFilter = next;
+    const url = new URL(window.location.href);
+    if (next === RANK_CARD_DEFAULT_FILTER) url.searchParams.delete('filter');
+    else url.searchParams.set('filter', next);
+    history.replaceState({}, '', url);
+
+    await reloadRankCardForCurrentFilter();
   });
 
   searchButton.addEventListener('click', async () => {
@@ -237,7 +263,7 @@ async function initRankCard() {
         fetchUserMastery(selectedUserId);
       }
 
-      rankCardContent.dataset.loadedFor = String(selectedUserId);
+      rankCardContent.dataset.loadedFor = rankCardLoadKey(selectedUserId);
       badgeMasteryContent.dataset.loadedFor = String(selectedUserId);
     } finally {
       updateButtonContainerVisibility();
@@ -340,6 +366,60 @@ function byId(id) {
 
 function getQueryParam(param) {
   return new URLSearchParams(window.location.search).get(param);
+}
+
+function normalizeRankCardFilter(value) {
+  const raw = String(value || '').trim();
+  return RANK_CARD_FILTER_OPTIONS.some((option) => option.value === raw)
+    ? raw
+    : RANK_CARD_DEFAULT_FILTER;
+}
+
+function rankCardLoadKey(userId) {
+  return `${String(userId || '')}:${currentRankCardFilter}`;
+}
+
+function rankCardFilterControlsHtml() {
+  return `
+    <div class="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-1 rounded-xl border border-white/10 bg-black/35 p-1 shadow-lg backdrop-blur">
+      ${RANK_CARD_FILTER_OPTIONS.map((option) => {
+        const active = option.value === currentRankCardFilter;
+        return `
+          <button
+            type="button"
+            data-rank-card-filter="${option.value}"
+            class="cursor-pointer rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition ${
+              active
+                ? 'bg-white text-zinc-950'
+                : 'text-white/80 hover:bg-white/10 hover:text-white'
+            }"
+            aria-pressed="${active ? 'true' : 'false'}"
+          >
+            ${t(option.labelKey, option.fallback)}
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+async function reloadRankCardForCurrentFilter() {
+  const targetId = getTargetUserId();
+  if (!targetId) return;
+
+  const rankCardContent = byId('rankCardContent');
+  rankCardContent.dataset.loadedFor = '';
+  renderRankCardSkeleton();
+  showLoadingBar();
+
+  if (String(targetId) === String(getCurrentUserId()) && !selectedUserId && !getQueryParam('user_id')) {
+    await loadRankCardContent();
+  } else {
+    await fetchUserRankCard(targetId, { noSpinner: true });
+  }
+
+  rankCardContent.dataset.loadedFor = rankCardLoadKey(targetId);
+  hideLoadingBar();
 }
 
 function getCurrentUserId() {
@@ -490,6 +570,7 @@ function revealRankCardContainer() {
 function hideRankCardContainer() {
   const el = byId('rankCardContent');
   if (!el || el.classList.contains('hidden')) return;
+  releaseRankCardContentHeight(el);
 
   el.classList.remove(...String('gp-panel-enter').trim().split(/\s+/).filter(Boolean), ...String('gp-panel-enter-to').trim().split(/\s+/).filter(Boolean));
 
@@ -504,6 +585,17 @@ function hideRankCardContainer() {
     el.removeEventListener('transitionend', onEnd);
   };
   el.addEventListener('transitionend', onEnd);
+}
+
+function lockRankCardContentHeight(el = byId('rankCardContent')) {
+  if (!el || el.classList.contains('hidden')) return;
+  const height = Math.ceil(el.getBoundingClientRect().height);
+  if (height > 0) el.style.minHeight = `${height}px`;
+}
+
+function releaseRankCardContentHeight(el = byId('rankCardContent')) {
+  if (!el) return;
+  el.style.minHeight = '';
 }
 
 async function updateHeaderDiscordProfile(userId, { fallbackNickname } = {}) {
@@ -547,13 +639,18 @@ function toastError(msg) {
    I18N
    ========================= */
 function t(path, params = {}) {
+  let fallback = null;
+  if (typeof params === 'string') {
+    fallback = params;
+    params = {};
+  }
   const parts = path.split('.');
   let result = translations;
   for (const part of parts) {
     result = result?.[part];
     if (!result) break;
   }
-  if (typeof result !== 'string') return path;
+  if (typeof result !== 'string') return fallback ?? path;
   for (const k in params) result = result.replace(`{${k}}`, params[k]);
   return result;
 }
@@ -572,7 +669,7 @@ async function loadRankCardContent() {
       return;
     }
 
-    const response = await fetch(endpoints.rankcard.data(me), { credentials: 'same-origin' });
+    const response = await fetch(endpoints.rankcard.data(me, currentRankCardFilter), { credentials: 'same-origin' });
     const data = await response.json();
     if (!data || data.error) {
       rankCardContent.innerHTML = '';
@@ -588,19 +685,20 @@ async function loadRankCardContent() {
           <div class="background absolute inset-0">
             <img src="${cdnifyAssetUrl(data.background_url) || 'default-background.webp'}" alt="${t('alts.background')}" class="h-full w-full object-cover">
           </div>
+          ${rankCardFilterControlsHtml()}
 
-          <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
+          <div class="relative content-rankcard p-4 pt-24 sm:p-6 sm:pt-16 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
             <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight text-white/90">
               ${data.nickname}
             </div>
 
             <!-- items-stretch -> items-start -->
-            <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[1fr,320px] items-start">
+            <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[1fr_320px] items-start">
               <!-- Colonne gauche -->
               <!-- suppression h-full -->
               <div class="rank-details-container md:col-start-1 md:row-start-1 space-y-4">
                 <!-- suppression h-full -->
-                <div class="rank-section-container rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col">
+                <div class="rank-section-container min-h-[410px] rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col">
                   
                   <div class="rank-section space-y-3">
                     <div class="medals-header grid items-center text-sm text-white/80 gap-0.5 sm:gap-2
@@ -701,7 +799,7 @@ async function loadRankCardContent() {
 
               <!-- Colonne droite -->
               <!-- suppression h-full -->
-              <div class="player-info md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
+              <div class="player-info min-h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
                 <div class="inline-flex items-center gap-2">
                   <span class="player-rank-name text-sm text-white/90 leading-none">
                     ${data.rank_name}
@@ -721,7 +819,10 @@ async function loadRankCardContent() {
     requestAnimationFrame(() => {
       const left = rankCardContent.querySelector('.rank-section-container');
       const right = rankCardContent.querySelector('.player-info');
-      if (!left || !right) return;
+      if (!left || !right) {
+        releaseRankCardContentHeight(rankCardContent);
+        return;
+      }
 
       const applyHeights = () => {
         const H = left.getBoundingClientRect().height;
@@ -739,6 +840,7 @@ async function loadRankCardContent() {
       };
 
       applyHeights();
+      releaseRankCardContentHeight(rankCardContent);
       const ro = new ResizeObserver(() => applyHeights());
       ro.observe(left);
       window.addEventListener('resize', applyHeights, { passive: true });
@@ -758,7 +860,7 @@ async function loadRankCardContent() {
       animateValue(stat, 0, end, 1600);
     });
 
-    rankCardContent.dataset.loadedFor = String(me);
+    rankCardContent.dataset.loadedFor = rankCardLoadKey(me);
     const masteryEl = byId('badgeMasteryContent');
     if (masteryEl && masteryEl.dataset.loadedFor !== String(me)) {
       fetchUserMastery(me);
@@ -787,7 +889,7 @@ async function fetchUserRankCard(userId, opts = {}) {
 
   if (!noSpinner) showLoadingBar();
   try {
-    const response = await fetch(endpoints.rankcard.data(userId), { credentials: 'same-origin' });
+    const response = await fetch(endpoints.rankcard.data(userId, currentRankCardFilter), { credentials: 'same-origin' });
     if (!response.ok) throw new Error(t('errors.api_connection'));
     const data = await response.json();
     if (!data || data.error) {
@@ -804,15 +906,16 @@ async function fetchUserRankCard(userId, opts = {}) {
           <div class="background absolute inset-0">
             <img src="${cdnifyAssetUrl(data.background_url) || 'default-background.webp'}" alt="Background" class="h-full w-full object-cover">
           </div>
+          ${rankCardFilterControlsHtml()}
 
-          <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
+          <div class="relative content-rankcard p-4 pt-24 sm:p-6 sm:pt-16 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
             <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight text-white/90">
               ${data.nickname}
             </div>
 
-            <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[1fr,320px] items-start">
+            <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[1fr_320px] items-start">
               <div class="rank-details-container md:col-start-1 md:row-start-1 space-y-4">
-                <div class="rank-section-container rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col">
+                <div class="rank-section-container min-h-[410px] rounded-xl bg-black/30 ring-1 ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col">
                   
                   <div class="rank-section space-y-3">
                     <div class="medals-header grid items-center text-sm text-white/80 gap-0.5 sm:gap-2
@@ -906,7 +1009,7 @@ async function fetchUserRankCard(userId, opts = {}) {
               </div>
 
               <!-- Colonne droite -->
-              <div class="player-info md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
+              <div class="player-info min-h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur overflow-hidden">
                 <div class="inline-flex items-center gap-2">
                   <span class="player-rank-name text-sm text-white/90 leading-none">${data.rank_name}</span>
                   <img src="${cdnifyAssetUrl(data.rank_url) || cdnAsset('assets/default_rank.png')}" alt="Player Rank Badge" class="player-rank-badge h-5 sm:h-6 object-contain">
@@ -925,7 +1028,10 @@ async function fetchUserRankCard(userId, opts = {}) {
     requestAnimationFrame(() => {
       const left = rankCardContent.querySelector('.rank-section-container');
       const right = rankCardContent.querySelector('.player-info');
-      if (!left || !right) return;
+      if (!left || !right) {
+        releaseRankCardContentHeight(rankCardContent);
+        return;
+      }
 
       const applyHeights = () => {
         const H = left.getBoundingClientRect().height;
@@ -943,6 +1049,7 @@ async function fetchUserRankCard(userId, opts = {}) {
       };
 
       applyHeights();
+      releaseRankCardContentHeight(rankCardContent);
       const ro = new ResizeObserver(() => applyHeights());
       ro.observe(left);
       window.addEventListener('resize', applyHeights, { passive: true });
@@ -962,7 +1069,7 @@ async function fetchUserRankCard(userId, opts = {}) {
       animateValue(stat, 0, end, 1600);
     });
 
-    rankCardContent.dataset.loadedFor = String(userId);
+    rankCardContent.dataset.loadedFor = rankCardLoadKey(userId);
 
     if (!noSpinner) hideLoadingBar();
   } catch (e) {
@@ -2379,8 +2486,13 @@ function rankCardSkeletonHTML() {
         <div class="background absolute inset-0">
           <div class="h-full w-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
         </div>
+        <div class="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-1 rounded-xl border border-white/10 bg-black/35 p-1 shadow-lg backdrop-blur">
+          ${Array.from({ length: 4 }).map((_, index) => `
+            <div class="h-[26px] rounded-lg ${index === 0 ? 'w-28 bg-white/70' : 'w-24 bg-white/20'} animate-pulse"></div>
+          `).join('')}
+        </div>
 
-        <div class="relative content-rankcard p-4 sm:p-6 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
+        <div class="relative content-rankcard p-4 pt-24 sm:p-6 sm:pt-16 bg-gradient-to-b from-black/30 via-black/20 to-black/30">
 
           <!-- Titre joueur -->
           <div class="player-name font-banksans text-center text-2xl sm:text-5xl font-extrabold tracking-tight">
@@ -2388,11 +2500,11 @@ function rankCardSkeletonHTML() {
           </div>
 
           <!-- Grille identique -->
-          <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[minmax(0,1fr)_180px] items-start">
+          <div class="main-container mt-4 grid gap-4 grid-cols-1 md:grid-cols-[1fr_320px] items-start">
 
             <!-- Colonne gauche -->
             <div class="rank-details-container md:col-start-1 md:row-start-1 space-y-4">
-              <div class="rank-section-container h-[410px] rounded-xl bg-zinc-900/5 dark:bg-black/30 ring-1 ring-zinc-300/60 dark:ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col overflow-hidden">
+              <div class="rank-section-container min-h-[410px] rounded-xl bg-zinc-900/5 dark:bg-black/30 ring-1 ring-zinc-300/60 dark:ring-white/10 p-3 sm:p-4 backdrop-blur flex flex-col overflow-hidden">
 
                 <!-- Médailles -->
                 <div class="rank-section space-y-3">
@@ -2457,13 +2569,13 @@ function rankCardSkeletonHTML() {
             </div>
 
             <!-- Colonne droite -->
-            <div class="player-info h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-zinc-900/5 dark:bg-black/30 p-4 ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur overflow-hidden">
+            <div class="player-info min-h-[410px] md:col-start-2 md:row-start-1 flex flex-col items-center justify-start gap-3 rounded-xl bg-zinc-900/5 dark:bg-black/30 p-4 ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur overflow-hidden">
               <div class="inline-flex items-center gap-2">
                 <div class="h-4 w-28 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                 <div class="h-5 w-5 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
               </div>
 
-              <div class="player-avatar mt-4 w-full max-w-[220px]">
+              <div class="player-avatar mt-4 w-full max-w-[240px]">
                 <div class="w-full rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse aspect-[3/4] sm:aspect-[2/3]"></div>
               </div>
             </div>
@@ -2478,6 +2590,7 @@ function rankCardSkeletonHTML() {
 function renderRankCardSkeleton() {
   const el = byId('rankCardContent');
   if (!el) return;
+  lockRankCardContentHeight(el);
   el.innerHTML = rankCardSkeletonHTML();
   if (el.classList.contains('hidden')) {
     revealRankCardContainer();
