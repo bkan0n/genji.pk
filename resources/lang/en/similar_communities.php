@@ -45,5 +45,11 @@ return [
             'subtitle' => 'Lava Parkour Community',
             'description' => 'Custom maps, achievements, and community-made workshop experiences.',
         ],
+        'jetpack' => [
+            'eyebrow' => 'Racing',
+            'title' => 'Jetpack Cat Racing',
+            'subtitle' => 'Jetpack Cat Racing Community',
+            'description' => 'Racing maps, events, and community resources for Jetpack Cat players.',
+        ],
     ],
 ];
