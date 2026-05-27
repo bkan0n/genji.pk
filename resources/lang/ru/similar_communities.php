@@ -45,5 +45,11 @@ return [
             'subtitle' => 'Сообщество Lava Parkour',
             'description' => 'Пользовательские карты, достижения и community Workshop-режимы.',
         ],
+        'jetpack' => [
+            'eyebrow' => 'Racing',
+            'title' => 'Jetpack Cat Racing',
+            'subtitle' => 'Сообщество Jetpack Cat Racing',
+            'description' => 'Гоночные карты, события и ресурсы сообщества для игроков Jetpack Cat.',
+        ],
     ],
 ];

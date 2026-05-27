@@ -16,9 +16,16 @@
           ],
           [
               'key' => 'gemster',
-              'href' => 'https://discord.me/lavaparkour',
+              'href' => 'https://gemstersworkshop.com/home',
               'discord' => 'https://discord.gg/lavaparkour',
               'image' => 'https://cdn.doom.pk/content/54293283-8373-4bd7-a89d-7885f78eeca9.png',
+              'external' => true,
+          ],
+          [
+              'key' => 'jetpack',
+              'href' => 'https://jetpackcat.racing/',
+              'discord' => 'https://dsc.gg/jetpack',
+              'image' => 'https://cdn.doom.pk/content/eabcc3fd-dc55-46ea-a146-2537ae55ea4d.png',
               'external' => true,
           ],
           [

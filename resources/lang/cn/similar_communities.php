@@ -45,5 +45,11 @@ return [
             'subtitle' => 'Lava Parkour 社区',
             'description' => '自定义地图、成就内容与社区制作的 Workshop 体验。',
         ],
+        'jetpack' => [
+            'eyebrow' => 'Racing',
+            'title' => 'Jetpack Cat Racing',
+            'subtitle' => 'Jetpack Cat Racing 社区',
+            'description' => '面向 Jetpack Cat 玩家整理的竞速地图、活动与社区资源。',
+        ],
     ],
 ];
