@@ -4,6 +4,8 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const API_MODS = '/api/mods';
 const API_CONTENT_PUBLIC = '/api/content/movement-tech';
 const API_CONTENT_MODS = `${API_MODS}/content/movement-tech`;
+const API_TOURNAMENTS = '/api/tournaments';
+const API_TOURNAMENTS_MODS = `${API_MODS}/tournaments`;
 const asId = (input) => String(input?.value ?? '').trim();
 const isDigits = (s) => /^\d+$/.test(String(s || ''));
 const getBool = (id) => !!document.getElementById(id)?.checked;
@@ -1037,6 +1039,7 @@ function getUserIdFrom(input) {
 
 function wireFormAutocompletes(root = document) {
   root.querySelectorAll('input[name="code"]').forEach(attachMapCodeAutocomplete);
+  root.querySelectorAll('input[name="map_code"]').forEach(attachMapCodeAutocomplete);
   root.querySelectorAll('form[data-action="replace-overwatch"]').forEach((form) => {
     const inp = form?.querySelector('input[name$="user_id"]');
     if (!inp || inp.__acBound) return;
@@ -1225,6 +1228,50 @@ $$('form[data-action]').forEach((form) => {
           return handleGetPendingEditRequests();
         case 'verify-completion':
           return handleVerifyCompletion(form);
+
+        // TOURNAMENTS
+        case 'tournament-load-overview':
+          return handleTournamentOverview(form);
+        case 'tournament-config-get':
+          return handleTournamentConfigGet(form);
+        case 'tournament-config-update':
+          return handleTournamentConfigUpdate(form);
+        case 'tournament-category-list':
+          return handleTournamentCategoryList(form);
+        case 'tournament-category-get':
+          return handleTournamentCategoryGet(form);
+        case 'tournament-category-create':
+          return handleTournamentCategoryCreate(form);
+        case 'tournament-category-update':
+          return handleTournamentCategoryUpdate(form);
+        case 'tournament-category-delete':
+          return handleTournamentCategoryDelete(form);
+        case 'tournament-next-cycle':
+          return handleTournamentNextCycle(form);
+        case 'tournament-select-map':
+          return handleTournamentSelectMap(form);
+        case 'tournament-choose-map':
+          return handleTournamentChooseMap(form);
+        case 'tournament-reroll-map':
+          return handleTournamentRerollMap(form);
+        case 'tournament-reroll-active':
+          return handleTournamentRerollActive(form);
+        case 'tournament-cycle-list':
+          return handleTournamentCycleList(form);
+        case 'tournament-leaderboard':
+          return handleTournamentLeaderboard(form);
+        case 'tournament-streak':
+          return handleTournamentStreak(form);
+        case 'tournament-active-edition':
+          return handleTournamentActiveEdition(form);
+        case 'tournament-bootstrap':
+          return handleTournamentBootstrap(form);
+        case 'tournament-publish-results':
+          return handleTournamentPublishResults(form);
+        case 'tournament-pause':
+          return handleTournamentPause(form);
+        case 'tournament-debug-cycle-length':
+          return handleTournamentDebugCycleLength(form);
         
         // DEVS (API_MODS)
         case 'clear-frameworks-cache':
@@ -8730,6 +8777,355 @@ function initQuestUpdatePanel() {
 
   questIdInput?.addEventListener('change', syncFromInput);
   questIdInput?.addEventListener('blur', syncFromInput);
+}
+
+//———————————————————————————————————————————————————————————————
+// TOURNAMENTS
+//———————————————————————————————————————————————————————————————
+function tournamentIdFrom(form, name = 'category_id') {
+  const value = String(new FormData(form).get(name) || '').trim();
+  if (!isDigits(value) || Number(value) < 1) {
+    toast(`Invalid ${name}`, 'warn');
+    return null;
+  }
+  return value;
+}
+
+function tournamentOptionalNumber(fd, key, payload, { allowZero = true } = {}) {
+  const raw = fd.get(key);
+  if (raw === '' || raw == null) return true;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || (!allowZero && value <= 0) || (allowZero && value < 0)) {
+    toast(`Invalid ${key}`, 'warn');
+    return false;
+  }
+  payload[key] = value;
+  return true;
+}
+
+function tournamentReadJsonArray(raw, label) {
+  const text = String(raw || '').trim();
+  if (!text) return undefined;
+  const parsed = readJsonField(text);
+  if (!Array.isArray(parsed)) {
+    toast(`${label} must be a JSON array`, 'err');
+    return null;
+  }
+  return parsed;
+}
+
+function tournamentLogAndOut(form, outKey, title, method, res, fallbackUrl = '') {
+  logActivity({
+    title,
+    method,
+    url: res.url || fallbackUrl,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  setPanelOut(form, outKey, res.data === '' ? { status: res.status } : res.data);
+  toast(res.ok ? 'Tournament request done' : 'Tournament request failed', res.ok ? 'ok' : 'err');
+  return res;
+}
+
+function buildTournamentCategoryPayload(form, { creating = false } = {}) {
+  const fd = new FormData(form);
+  const payload = {};
+
+  const name = String(fd.get('name') || '').trim();
+  if (name) payload.name = name;
+  else if (creating) {
+    toast('name is required', 'warn');
+    return null;
+  }
+
+  const difficulties = fd.getAll('difficulties[]').map((value) => String(value || '').trim()).filter(Boolean);
+  if (difficulties.length) payload.difficulties = difficulties;
+  else if (creating) {
+    toast('Pick at least one difficulty', 'warn');
+    return null;
+  }
+
+  if (!tournamentOptionalNumber(fd, 'participation_xp', payload)) return null;
+
+  const championRoleId = String(fd.get('champion_role_id') || '').trim();
+  if (championRoleId === 'null') payload.champion_role_id = null;
+  else if (championRoleId) {
+    if (!isDigits(championRoleId)) {
+      toast('Invalid champion_role_id', 'warn');
+      return null;
+    }
+    payload.champion_role_id = championRoleId;
+  }
+
+  const isActive = String(fd.get('is_active') || '');
+  if (isActive === '1') payload.is_active = true;
+  if (isActive === '0') payload.is_active = false;
+
+  const placement = tournamentReadJsonArray(fd.get('placement_xp_json'), 'placement_xp');
+  if (placement === null) return null;
+  if (placement !== undefined) payload.placement_xp = placement;
+
+  const streak = tournamentReadJsonArray(fd.get('streak_xp_json'), 'streak_xp');
+  if (streak === null) return null;
+  if (streak !== undefined) payload.streak_xp = streak;
+
+  if (!Object.keys(payload).length) {
+    toast('Nothing to submit', 'warn');
+    return null;
+  }
+
+  return payload;
+}
+
+function buildTournamentConfigPayload(form) {
+  const fd = new FormData(form);
+  const payload = {};
+
+  for (const key of ['blacklist_weeks', 'anchor_weekday']) {
+    if (!tournamentOptionalNumber(fd, key, payload)) return null;
+  }
+
+  for (const key of ['cadence', 'anchor_time', 'anchor_tz']) {
+    const value = String(fd.get(key) || '').trim();
+    if (value) payload[key] = value;
+  }
+
+  if (!Object.keys(payload).length) {
+    toast('Nothing to update', 'warn');
+    return null;
+  }
+
+  return payload;
+}
+
+function fillTournamentConfigForm(form, data) {
+  if (!form || !data || typeof data !== 'object') return;
+  ['blacklist_weeks', 'cadence', 'anchor_weekday', 'anchor_time', 'anchor_tz'].forEach((key) => {
+    const el = form.querySelector(`[name="${CSS.escape(key)}"]`);
+    if (el && data[key] != null) el.value = String(data[key]);
+  });
+}
+
+async function handleTournamentOverview(form) {
+  setPanelOut(form, 'tournament-overview', 'Loading...');
+
+  const [config, categories, edition] = await Promise.all([
+    http('GET', `${API_TOURNAMENTS}/config`),
+    http('GET', `${API_TOURNAMENTS}/categories`),
+    http('GET', `${API_TOURNAMENTS}/editions/active`),
+  ]);
+
+  const categoryRows = Array.isArray(categories.data) ? categories.data : [];
+  const activeCycles = await Promise.all(
+    categoryRows.map(async (category) => {
+      const res = await http('GET', `${API_TOURNAMENTS}/cycles`, {
+        query: { status: 'active', category_id: category.id, limit: 1 },
+      });
+      return {
+        category_id: category.id,
+        category_name: category.name,
+        response_status: res.status,
+        cycle: Array.isArray(res.data?.cycles) ? res.data.cycles[0] ?? null : null,
+      };
+    })
+  );
+
+  const payload = {
+    config: config.data,
+    categories: categories.data,
+    active_edition: edition.ok ? edition.data : { status: edition.status, data: edition.data },
+    active_cycles: activeCycles,
+  };
+
+  logActivity({
+    title: 'Tournament Overview',
+    method: 'GET',
+    url: `${API_TOURNAMENTS}/*`,
+    ok: config.ok && categories.ok,
+    status: config.ok && categories.ok ? 200 : 'ERR',
+    data: payload,
+  });
+  setPanelOut(form, 'tournament-overview', payload);
+  toast('Tournament overview loaded', config.ok && categories.ok ? 'ok' : 'err');
+}
+
+async function handleTournamentConfigGet(form) {
+  setPanelOut(form, 'tournament-config-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/config`);
+  tournamentLogAndOut(form, 'tournament-config-res', 'Tournament Config (GET)', 'GET', res, `${API_TOURNAMENTS}/config`);
+  if (res.ok) fillTournamentConfigForm(findRelatedActionForm(form, 'tournament-config-update'), res.data);
+}
+
+async function handleTournamentConfigUpdate(form) {
+  const payload = buildTournamentConfigPayload(form);
+  if (!payload) return;
+  setPanelOut(form, 'tournament-config-res', 'Saving...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/config`, { body: payload });
+  tournamentLogAndOut(form, 'tournament-config-res', 'Tournament Config (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/config`);
+}
+
+async function handleTournamentCategoryList(form) {
+  setPanelOut(form, 'tournament-categories-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/categories`);
+  tournamentLogAndOut(form, 'tournament-categories-res', 'Tournament Categories (GET)', 'GET', res, `${API_TOURNAMENTS}/categories`);
+}
+
+async function handleTournamentCategoryGet(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-categories-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/categories/${encodeURIComponent(id)}`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-categories-res', `Tournament Category #${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentCategoryCreate(form) {
+  const payload = buildTournamentCategoryPayload(form, { creating: true });
+  if (!payload) return;
+  setPanelOut(form, 'tournament-category-create-res', 'Creating...');
+  const res = await http('POST', `${API_TOURNAMENTS_MODS}/categories`, { body: payload });
+  tournamentLogAndOut(form, 'tournament-category-create-res', 'Create Tournament Category (POST)', 'POST', res, `${API_TOURNAMENTS_MODS}/categories`);
+}
+
+async function handleTournamentCategoryUpdate(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  const payload = buildTournamentCategoryPayload(form);
+  if (!payload) return;
+  setPanelOut(form, 'tournament-category-update-res', 'Saving...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}`;
+  const res = await http('PATCH', url, { body: payload });
+  tournamentLogAndOut(form, 'tournament-category-update-res', `Update Tournament Category #${id} (PATCH)`, 'PATCH', res, url);
+}
+
+async function handleTournamentCategoryDelete(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-category-delete-res', 'Deleting...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}`;
+  const res = await http('DELETE', url);
+  tournamentLogAndOut(form, 'tournament-category-delete-res', `Delete Tournament Category #${id} (DELETE)`, 'DELETE', res, url);
+}
+
+async function handleTournamentNextCycle(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-maps-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/categories/${encodeURIComponent(id)}/next-cycle`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Next Cycle #${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentSelectMap(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-maps-res', 'Selecting...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/select-map`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Select Map #${id} (POST)`, 'POST', res, url);
+}
+
+async function handleTournamentChooseMap(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  const mapCode = String(new FormData(form).get('map_code') || '').trim().toUpperCase();
+  if (!mapCode) return toast('map_code is required', 'warn');
+  setPanelOut(form, 'tournament-maps-res', 'Choosing...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/next-cycle`;
+  const res = await http('PATCH', url, { body: { map_code: mapCode } });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Choose Map #${id} (PATCH)`, 'PATCH', res, url);
+}
+
+async function handleTournamentRerollMap(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-maps-res', 'Rerolling...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/reroll`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Reroll Pending #${id} (POST)`, 'POST', res, url);
+}
+
+async function handleTournamentRerollActive(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  if (!form.querySelector('input[name="confirm"]')?.checked) {
+    toast('Confirm live reroll first', 'warn');
+    return;
+  }
+  setPanelOut(form, 'tournament-maps-res', 'Rerolling active cycle...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/reroll-active`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Reroll Active #${id} (POST)`, 'POST', res, url);
+}
+
+async function handleTournamentCycleList(form) {
+  const fd = new FormData(form);
+  const query = {};
+  ['status', 'category_id', 'limit', 'offset'].forEach((key) => {
+    const value = String(fd.get(key) || '').trim();
+    if (value) query[key] = value;
+  });
+  setPanelOut(form, 'tournament-cycles-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/cycles`, { query });
+  tournamentLogAndOut(form, 'tournament-cycles-res', 'Tournament Cycles (GET)', 'GET', res, `${API_TOURNAMENTS}/cycles`);
+}
+
+async function handleTournamentLeaderboard(form) {
+  const id = tournamentIdFrom(form, 'cycle_id');
+  if (!id) return;
+  setPanelOut(form, 'tournament-cycles-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/cycles/${encodeURIComponent(id)}/leaderboard`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-cycles-res', `Tournament Leaderboard #${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentStreak(form) {
+  const id = tournamentIdFrom(form, 'user_id');
+  if (!id) return;
+  setPanelOut(form, 'tournament-cycles-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/streaks/${encodeURIComponent(id)}`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-cycles-res', `Tournament Streak ${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentActiveEdition(form) {
+  setPanelOut(form, 'tournament-lifecycle-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/editions/active`);
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Active Edition (GET)', 'GET', res, `${API_TOURNAMENTS}/editions/active`);
+}
+
+async function handleTournamentBootstrap(form) {
+  setPanelOut(form, 'tournament-lifecycle-res', 'Bootstrapping...');
+  const res = await http('POST', `${API_TOURNAMENTS_MODS}/bootstrap`, { body: {} });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Bootstrap (POST)', 'POST', res, `${API_TOURNAMENTS_MODS}/bootstrap`);
+}
+
+async function handleTournamentPublishResults(form) {
+  setPanelOut(form, 'tournament-lifecycle-res', 'Publishing...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/publish-results`, { body: {} });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Publish Results (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/publish-results`);
+}
+
+async function handleTournamentPause(form) {
+  const paused = String(new FormData(form).get('paused') || '');
+  const body = { paused: paused === '1' };
+  setPanelOut(form, 'tournament-lifecycle-res', 'Saving...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/pause`, { body });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Pause (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/pause`);
+}
+
+async function handleTournamentDebugCycleLength(form) {
+  const raw = String(new FormData(form).get('seconds') || '').trim();
+  const body = { seconds: raw ? Number(raw) : null };
+  if (raw && (!Number.isInteger(body.seconds) || body.seconds < 1)) {
+    toast('Invalid seconds', 'warn');
+    return;
+  }
+  setPanelOut(form, 'tournament-lifecycle-res', 'Saving...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/debug-cycle-length`, { body });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Debug Cycle Length (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/debug-cycle-length`);
 }
 
 async function handleStoreGetConfig(form) {

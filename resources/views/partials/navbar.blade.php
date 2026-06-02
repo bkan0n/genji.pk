@@ -175,6 +175,14 @@
             <li>
               <a
                 class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/tournaments') }}"
+              >
+                {{ __('navbar.tournaments') }}
+              </a>
+            </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/statistics') }}"
               >
                 {{ __('navbar.statistics') }}
@@ -527,6 +535,12 @@
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.leaderboard') }}
+            </a>
+            <a
+              href="{{ url('/tournaments') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.tournaments') }}
             </a>
             <a
               href="{{ url('/statistics') }}"

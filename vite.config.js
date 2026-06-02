@@ -22,6 +22,7 @@ export default defineConfig({
         'resources/js/pages/leaderboard.js',
         'resources/js/pages/newsfeed.js',
         'resources/js/pages/statistics.js',
+        'resources/js/pages/tournaments.js',
         'resources/js/pages/tutorials.js',
         'resources/js/pages/search.js',
         'resources/js/pages/rank_card.js',

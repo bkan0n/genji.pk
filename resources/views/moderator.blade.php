@@ -187,6 +187,21 @@
               </button>
 
               <button
+                data-tab="tournament"
+                data-tab-label="Tournament"
+                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                type="button"
+              >
+                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M7 3h10v4h3v5a8 8 0 0 1-7 7.94V22h-2v-2.06A8 8 0 0 1 4 12V7h3V3m2 2v2h6V5H9m-3 4v3a6 6 0 0 0 12 0V9H6m3 1h6v2H9v-2Z" />
+                  </svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate">Tournament</span>
+                <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Events</span>
+              </button>
+
+              <button
                 data-tab="devs"
                 data-tab-label="Web"
                 class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
@@ -4644,6 +4659,326 @@
                       Fetch pending edit requests
                     </button>
                   </form>
+                </article>
+              </div>
+            </div>
+
+            {{-- ============ TOURNAMENT ============ --}}
+            <div data-panel="tournament" class="mod-panel hidden space-y-4">
+              <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="tournament-overview"
+                  type="button"
+                >
+                  Overview
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="tournament-categories"
+                  type="button"
+                >
+                  Categories
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="tournament-maps"
+                  type="button"
+                >
+                  Maps
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="tournament-cycles"
+                  type="button"
+                >
+                  Cycles
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="tournament-lifecycle"
+                  type="button"
+                >
+                  Lifecycle
+                </button>
+              </div>
+
+              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
+                Choose a Tournament action.
+              </div>
+
+              <div data-subpanel="tournament-overview" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 class="font-semibold">Tournament overview</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Loads config, categories, active edition, and active cycles.</p>
+                    </div>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/tournaments/*</span>
+                  </div>
+                  <form data-action="tournament-load-overview" autocomplete="off">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                      Load overview
+                    </button>
+                  </form>
+                  <pre data-out="tournament-overview" class="hidden"></pre>
+                </article>
+              </div>
+
+              <div data-subpanel="tournament-categories" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Category read</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/tournaments/categories</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <form data-action="tournament-category-list" autocomplete="off">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+                        List categories
+                      </button>
+                    </form>
+                    <form data-action="tournament-category-get" autocomplete="off" class="flex gap-2">
+                      <input name="category_id" type="number" min="1" placeholder="category_id" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get</button>
+                    </form>
+                  </div>
+                  <pre data-out="tournament-categories-res" class="hidden"></pre>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Create category</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/tournaments/categories</span>
+                  </div>
+                  <form data-action="tournament-category-create" autocomplete="off" class="grid gap-3">
+                    <label class="text-sm">
+                      name
+                      <input name="name" required class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                    </label>
+                    <div class="grid gap-2 sm:grid-cols-3">
+                      @foreach (['Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Hell'] as $difficulty)
+                        <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-zinc-950/40 px-3 py-2 text-sm">
+                          <input type="checkbox" name="difficulties[]" value="{{ $difficulty }}" class="accent-emerald-500" />
+                          <span>{{ $difficulty }}</span>
+                        </label>
+                      @endforeach
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                      <label class="text-sm">
+                        participation_xp
+                        <input name="participation_xp" type="number" min="0" step="1" placeholder="0" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      </label>
+                      <label class="text-sm">
+                        champion_role_id
+                        <input name="champion_role_id" inputmode="numeric" placeholder="optional" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      </label>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                      <label class="text-sm">
+                        placement_xp JSON
+                        <textarea name="placement_xp_json" rows="4" placeholder='[{"place":1,"xp":200}]' class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"></textarea>
+                      </label>
+                      <label class="text-sm">
+                        streak_xp JSON
+                        <textarea name="streak_xp_json" rows="4" placeholder='[{"threshold":5,"xp":300}]' class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"></textarea>
+                      </label>
+                    </div>
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Create</button>
+                  </form>
+                  <pre data-out="tournament-category-create-res" class="hidden"></pre>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Update / delete category</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH + DELETE /api/mods/tournaments/categories/{id}</span>
+                  </div>
+                  <form data-action="tournament-category-update" autocomplete="off" class="grid gap-3">
+                    <div class="grid gap-3 sm:grid-cols-3">
+                      <label class="text-sm">
+                        category_id
+                        <input name="category_id" type="number" min="1" required class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      </label>
+                      <label class="text-sm">
+                        name
+                        <input name="name" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      </label>
+                      <label class="text-sm">
+                        is_active
+                        <select name="is_active" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                          <option value="">unchanged</option>
+                          <option value="1">true</option>
+                          <option value="0">false</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid gap-2 sm:grid-cols-3">
+                      @foreach (['Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Hell'] as $difficulty)
+                        <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-zinc-950/40 px-3 py-2 text-sm">
+                          <input type="checkbox" name="difficulties[]" value="{{ $difficulty }}" class="accent-emerald-500" />
+                          <span>{{ $difficulty }}</span>
+                        </label>
+                      @endforeach
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-3">
+                      <label class="text-sm">
+                        participation_xp
+                        <input name="participation_xp" type="number" min="0" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      </label>
+                      <label class="text-sm sm:col-span-2">
+                        champion_role_id
+                        <input name="champion_role_id" inputmode="numeric" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      </label>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                      <textarea name="placement_xp_json" rows="4" placeholder="placement_xp JSON" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"></textarea>
+                      <textarea name="streak_xp_json" rows="4" placeholder="streak_xp JSON" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"></textarea>
+                    </div>
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Update</button>
+                  </form>
+                  <form data-action="tournament-category-delete" autocomplete="off" class="grid gap-3 rounded-xl border border-red-500/20 bg-red-500/5 p-3 sm:grid-cols-[1fr_auto]">
+                    <input name="category_id" type="number" min="1" required placeholder="category_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500/60 focus:outline-none" />
+                    <button class="cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500">Delete</button>
+                  </form>
+                  <pre data-out="tournament-category-update-res" class="hidden"></pre>
+                  <pre data-out="tournament-category-delete-res" class="hidden"></pre>
+                </article>
+              </div>
+
+              <div data-subpanel="tournament-maps" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Next cycle map</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET / next-cycle + POST/PATCH map actions</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <form data-action="tournament-next-cycle" autocomplete="off" class="grid gap-3">
+                      <input name="category_id" type="number" min="1" required placeholder="category_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Preview next</button>
+                    </form>
+                    <form data-action="tournament-select-map" autocomplete="off" class="grid gap-3">
+                      <input name="category_id" type="number" min="1" required placeholder="category_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Random select</button>
+                    </form>
+                    <form data-action="tournament-choose-map" autocomplete="off" class="grid gap-3">
+                      <input name="category_id" type="number" min="1" required placeholder="category_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <input name="map_code" required placeholder="map_code" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm uppercase focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Choose explicit map</button>
+                    </form>
+                    <form data-action="tournament-reroll-map" autocomplete="off" class="grid gap-3">
+                      <input name="category_id" type="number" min="1" required placeholder="category_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Reroll pending</button>
+                    </form>
+                  </div>
+                  <form data-action="tournament-reroll-active" autocomplete="off" class="grid gap-3 rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+                    <input name="category_id" type="number" min="1" required placeholder="category_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500/60 focus:outline-none" />
+                    <label class="flex items-center gap-2 text-sm">
+                      <input type="checkbox" name="confirm" class="accent-red-500" />
+                      <span>Confirm live reroll; this wipes submissions for the active cycle.</span>
+                    </label>
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500">Reroll active</button>
+                  </form>
+                  <pre data-out="tournament-maps-res" class="hidden"></pre>
+                </article>
+              </div>
+
+              <div data-subpanel="tournament-cycles" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Cycles, leaderboard, streaks</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/tournaments/cycles</span>
+                  </div>
+                  <form data-action="tournament-cycle-list" autocomplete="off" class="grid gap-3 sm:grid-cols-4">
+                    <label class="text-sm">
+                      status
+                      <select name="status" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                        <option value="">any</option>
+                        <option value="pending">pending</option>
+                        <option value="active">active</option>
+                        <option value="finalizing">finalizing</option>
+                        <option value="completed">completed</option>
+                      </select>
+                    </label>
+                    <label class="text-sm">
+                      category_id
+                      <input name="category_id" type="number" min="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                    </label>
+                    <label class="text-sm">
+                      limit
+                      <input name="limit" type="number" min="1" max="100" value="20" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                    </label>
+                    <label class="text-sm">
+                      offset
+                      <input name="offset" type="number" min="0" value="0" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                    </label>
+                    <div class="sm:col-span-4">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">List cycles</button>
+                    </div>
+                  </form>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <form data-action="tournament-leaderboard" autocomplete="off" class="grid gap-3">
+                      <input name="cycle_id" type="number" min="1" required placeholder="cycle_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get leaderboard</button>
+                    </form>
+                    <form data-action="tournament-streak" autocomplete="off" class="grid gap-3">
+                      <input name="user_id" inputmode="numeric" required placeholder="user_id" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get streak</button>
+                    </form>
+                  </div>
+                  <pre data-out="tournament-cycles-res" class="hidden"></pre>
+                </article>
+              </div>
+
+              <div data-subpanel="tournament-lifecycle" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Global config</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/tournaments/config + PATCH /api/mods/tournaments/config</span>
+                  </div>
+                  <form data-action="tournament-config-get" autocomplete="off">
+                    <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Load config</button>
+                  </form>
+                  <form data-action="tournament-config-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+                    <label class="text-sm">blacklist_weeks<input name="blacklist_weeks" type="number" min="0" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+                    <label class="text-sm">cadence<select name="cadence" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"><option value="">unchanged</option><option value="weekly">weekly</option><option value="biweekly">biweekly</option></select></label>
+                    <label class="text-sm">anchor_weekday<input name="anchor_weekday" type="number" min="0" max="6" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+                    <label class="text-sm">anchor_time<input name="anchor_time" placeholder="12:00:00" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+                    <label class="text-sm sm:col-span-2">anchor_tz<input name="anchor_tz" placeholder="America/New_York" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+                    <div class="sm:col-span-2">
+                      <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save config</button>
+                    </div>
+                  </form>
+                  <pre data-out="tournament-config-res" class="hidden"></pre>
+                </article>
+
+                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 class="font-semibold">Edition lifecycle</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">bootstrap / publish-results / pause / debug-cycle-length</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <form data-action="tournament-active-edition" autocomplete="off">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get active edition</button>
+                    </form>
+                    <form data-action="tournament-bootstrap" autocomplete="off">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Bootstrap first edition</button>
+                    </form>
+                    <form data-action="tournament-publish-results" autocomplete="off">
+                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Force publish results</button>
+                    </form>
+                    <form data-action="tournament-pause" autocomplete="off" class="flex gap-2">
+                      <select name="paused" required class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                        <option value="1">pause</option>
+                        <option value="0">resume</option>
+                      </select>
+                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Apply</button>
+                    </form>
+                  </div>
+                  <form data-action="tournament-debug-cycle-length" autocomplete="off" class="grid gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 sm:grid-cols-[1fr_auto]">
+                    <input name="seconds" type="number" min="1" step="1" placeholder="seconds; empty clears override" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
+                    <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Set debug length</button>
+                  </form>
+                  <pre data-out="tournament-lifecycle-res" class="hidden"></pre>
                 </article>
               </div>
             </div>

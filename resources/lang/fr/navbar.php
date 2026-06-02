@@ -12,6 +12,7 @@ return [
     // ──────────────────────────────────────────────────────────────────────────
     'home'                 => 'Accueil',
     'leaderboard'          => 'Classement',
+    'tournaments'          => 'Tournois',
     'search'               => 'Recherche',
     'maps'                 => 'Cartes',
     'guides'               => 'Guides',

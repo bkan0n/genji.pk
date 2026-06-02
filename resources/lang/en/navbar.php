@@ -12,6 +12,7 @@ return [
     // ──────────────────────────────────────────────────────────────────────────
     'home'                 => 'Home',
     'leaderboard'          => 'Leaderboard',
+    'tournaments'          => 'Tournaments',
     'search'               => 'Search',
     'maps'                 => 'Maps',
     'guides'               => 'Guides',

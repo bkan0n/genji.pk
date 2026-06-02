@@ -23,6 +23,7 @@ Route::view('submit', 'submit')->middleware('auth.user')->name('submit');
 Route::view('dashboard', 'dashboard')->middleware('auth.user')->name('dashboard');
 Route::view('newsfeed', 'newsfeed')->name('newsfeed');
 Route::view('leaderboard', 'leaderboard')->name('leaderboard');
+Route::view('tournaments', 'tournaments')->name('tournaments');
 Route::view('statistics', 'statistics')->name('statistics');
 Route::view('tutorials', 'tutorials')->name('tutorials');
 Route::view('similar-communities', 'similar-communities')->name('similar-communities');
