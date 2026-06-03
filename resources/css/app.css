@@ -42,6 +42,23 @@ html[data-theme="light"] #prism { background: #ffffff; }
     'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+@layer components {
+  :where(
+    [data-discord-avatar],
+    [data-discord-avatar-frame],
+    img[data-avatar-id],
+    img[data-tournament-avatar],
+    img.mx-avatar,
+    img.pr-avatar,
+    img.open-rank-card,
+    img.voter-avatar,
+    img.creator-avatar,
+    .skel-avatar
+  ) {
+    border-radius: 0.5rem !important;
+  }
+}
+
 @layer utilities {
   @keyframes diagDrift {
     0% {

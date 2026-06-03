@@ -21,10 +21,11 @@
           <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:gap-6">
             <div class="flex items-center gap-4 lg:flex-1 lg:min-w-0">
               <button id="dash-open-rankcard" type="button" class="relative group shrink-0">
-                <div class="h-16 w-16 overflow-hidden rounded-full ring-2 ring-brand-500/60 shadow-[0_0_20px_rgba(99,102,241,.25)] bg-zinc-900/5 dark:bg-white/5 transition group-hover:shadow-[0_0_28px_rgba(99,102,241,.35)]">
+                <div data-discord-avatar-frame class="h-16 w-16 overflow-hidden rounded-full ring-2 ring-brand-500/60 shadow-[0_0_20px_rgba(99,102,241,.25)] bg-zinc-900/5 dark:bg-white/5 transition group-hover:shadow-[0_0_28px_rgba(99,102,241,.35)]">
                   <img
                     id="dash-avatar"
                     alt="avatar"
+                    data-discord-avatar
                     class="h-full w-full object-contain hidden"
                     loading="eager"
                     decoding="async"

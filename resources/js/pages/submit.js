@@ -5902,7 +5902,7 @@ async function appendVoterToModal(userId) {
   row.setAttribute('data-user-id', String(userId));
   row.innerHTML = `
     <img src="${avatar || cdnAsset('assets/profile/default-avatar.png')}" alt="${name || '—'}"
-         class="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
+         class="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" data-discord-avatar loading="lazy">
     <span class="mt-1 text-sm text-zinc-800 dark:text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
     <span class="text-[11px] text-zinc-600 dark:text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
   `;
@@ -6015,6 +6015,7 @@ function buildVotersGridHTML(preloaded, voterIds) {
                 src="${esc(avatar)}"
                 alt="${esc(name)}"
                 class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                data-discord-avatar
                 data-user-id="${esc(key)}"
                 loading="lazy"
               >
@@ -6500,7 +6501,7 @@ function renderPlaytestCard(data, index) {
              data-ptidx="${index}" role="button" tabindex="0" aria-label="${esc(safe.name)}">
       <header class="flex items-center justify-between gap-3 p-3">
         <div class="flex items-center gap-2 min-w-0">
-          <img src="${esc(safe.avatar)}" alt="Avatar" class="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
+          <img src="${esc(safe.avatar)}" alt="Avatar" class="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" data-discord-avatar loading="lazy">
           <div class="truncate">
             <span class="block text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">${esc(safe.creators)}</span>
             <span class="block text-xs text-zinc-600 dark:text-zinc-400 truncate">${esc(safe.code)}</span>
@@ -7100,6 +7101,7 @@ const mapNameUi =
                 data-user-id="${esc(data.primary_creator_id || '')}"
                 alt="Creator avatar"
                 class="open-rank-card h-10 w-10 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10"
+                data-discord-avatar
                 loading="lazy"
                 role="link" tabindex="0">
             <div class="min-w-0">

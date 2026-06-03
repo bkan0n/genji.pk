@@ -104,14 +104,16 @@
                 <img
                   src="{{ $avatarUrl }}"
                   alt="User avatar"
+                  data-discord-avatar
                   class="h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24"
                 />
               @else
-                <div class="flex h-20 w-20 items-center justify-center rounded-full {{ $avatarBgColor }} shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24">
+                <div data-discord-avatar class="flex h-20 w-20 items-center justify-center rounded-full {{ $avatarBgColor }} shadow-lg ring-4 ring-zinc-900 sm:h-24 sm:w-24">
                   <span class="text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl">{{ $initials }}</span>
                 </div>
               @endif
               <span
+                data-discord-avatar-frame
                 class="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-emerald-400/70"
               ></span>
             </div>

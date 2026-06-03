@@ -378,10 +378,11 @@
                   <img
                     src="{{ $avatarUrl }}"
                     alt="User Avatar"
+                    data-discord-avatar
                     class="h-8 w-8 min-h-8 min-w-8 shrink-0 rounded-full object-cover"
                   />
                 @else
-                  <div class="flex h-8 w-8 min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
+                  <div data-discord-avatar class="flex h-8 w-8 min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
                     {{ $initials }}
                   </div>
                 @endif
