@@ -1199,7 +1199,7 @@ function renderPlaytestSkeletonCards(count = window.itemsPerPage || 12) {
     card.innerHTML = `
       <header class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 min-w-0">
-          <div class="h-8 w-8 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
+          <div class="h-8 w-8 rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
           <div class="space-y-1">
             <div class="h-3 w-36 max-w-[60vw] rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
             <div class="h-2.5 w-20 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
@@ -7071,7 +7071,7 @@ const mapNameUi =
               .map(
                 () => `
               <div class="flex flex-col items-center text-center">
-                <div class="h-10 w-10 shrink-0 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                <div class="h-10 w-10 shrink-0 rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                 <div class="mt-1 h-2.5 w-20 max-w-full rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                 <div class="mt-1 h-2.5 w-24 max-w-full rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
               </div>

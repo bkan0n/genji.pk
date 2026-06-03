@@ -492,7 +492,7 @@ i.flag-zw:before,i.flag-zimbabwe:before{background-position:-108px -390px!import
 .skel-w-36{width:9rem}
 img.avatar-lazy{display:block;background-image:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.12),rgba(255,255,255,.06));background-size:200% 100%;background-position:0 0;animation:skelShimmer 1.1s linear infinite;background-color:transparent!important}
 img.avatar-loaded{animation:none!important;background:none!important}
-.avatar-shell{position:relative;height:2rem;width:2rem;border-radius:9999px;overflow:hidden;flex:0 0 auto}
+.avatar-shell{position:relative;height:2rem;width:2rem;border-radius:.5rem;overflow:hidden;flex:0 0 auto}
 .avatar-shell::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.12),rgba(255,255,255,.06));background-size:200% 100%;animation:skelShimmer 1.1s linear infinite;opacity:1;transition:opacity .28s ease}
 .avatar-shell.loaded::before{opacity:0}
 .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;opacity:0;transition:opacity .28s ease}
@@ -830,7 +830,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 
 /* Placeholder avatars dans la barre du bas */
 .mx-card.is-skeleton .mx-avatar[data-skel="img"]{
-  width:18px;height:18px;border-radius:9999px;border:1px solid rgba(255,255,255,.16);
+  width:18px;height:18px;border-radius:.5rem;border:1px solid rgba(255,255,255,.16);
 }
 
 /* Barre qualité en mode skeleton (si utilisée dans cartes/table) */
@@ -944,7 +944,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 
 .skel-row{display:flex;align-items:center;gap:10px}
 .skel-col{display:flex;flex-direction:column;gap:6px}
-.skel-avatar{width:36px;height:36px;border-radius:9999px}
+.skel-avatar{width:36px;height:36px;border-radius:.5rem}
 .skel-line{height:12px;border-radius:9999px}
 .skel-line.sm{height:10px}
 .skel-pill{height:18px;border-radius:9999px}
@@ -988,7 +988,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
 
 /* Avatar + pseudo */
 .mx-hero.is-loading .mx-b-left a{
-  position:relative;display:inline-flex;width:36px;height:36px;border-radius:9999px;overflow:hidden;flex:0 0 36px
+  position:relative;display:inline-flex;width:36px;height:36px;border-radius:.5rem;overflow:hidden;flex:0 0 36px
 }
 .mx-hero.is-loading .mx-avatar{opacity:0!important}
 .mx-hero.is-loading .mx-b-left a::after{

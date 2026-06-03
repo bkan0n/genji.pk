@@ -4336,15 +4336,28 @@ function ensureSearchDetailsModal() {
             <div class="md:col-span-5 min-w-0 space-y-6">
               <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
                 <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${t('thead.mapDetails')}</div>
-                <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="min-w-0 break-words text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapCheckpoints')}</dt><dd id="mapCheckpoints" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapStatus', 'Status')}</dt>
-                  <dd id="mapStatus" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapQuality')}</dt><dd id="mapQualityDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                <dl class="mt-3">
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapCreator')}</dt><dd id="mapCreator" class="min-w-0 break-words text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapCheckpoints')}</dt><dd id="mapCheckpoints" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapUpvotes')}</dt><dd id="mapUpvotes" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapType')}</dt><dd id="mapTypeDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapStatus', 'Status')}</dt><dd id="mapStatus" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapQuality')}</dt><dd id="mapQualityDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
                 </dl>
               </div>
 
@@ -7585,12 +7598,22 @@ function ensureCompletionsDetailsModal(){
             <div class="md:col-span-5 space-y-6">
               <div class="rounded-2xl bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 p-4">
                 <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${TT('thead.mapDetails','Details')}</div>
-                <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('filters.player_name','Player')}</dt><dd id="completionPlayer" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapTime','Time')}</dt><dd id="completionTime" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapMedal','Medal')}</dt><dd id="completionMedal" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapDifficulty','Difficulty')}</dt><dd id="completionDifficulty" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
-                  <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapType','Type')}</dt><dd id="completionCategory" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                <dl class="mt-3">
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('filters.player_name','Player')}</dt><dd id="completionPlayer" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapTime','Time')}</dt><dd id="completionTime" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapMedal','Medal')}</dt><dd id="completionMedal" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapDifficulty','Difficulty')}</dt><dd id="completionDifficulty" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${TT('thead.mapType','Type')}</dt><dd id="completionCategory" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
                 </dl>
               </div>
             </div>
@@ -7962,7 +7985,7 @@ function ensureSkeletonCSS() {
 
   __addRule('.skel-table', '');
   __addRule('.skel-chip', 'height:1.25rem; width:6.5rem; border-radius:9999px');
-  __addRule('.skel-avatar', 'height:24px; width:24px; border-radius:9999px');
+  __addRule('.skel-avatar', 'height:24px; width:24px; border-radius:0.5rem');
   __addRule('.skel-btn', 'height:24px; width:72px; border-radius:8px');
   __addRule('.skel-bar-sm', 'height:10px; display:inline-block');
   __addRule('.skel-bar-md', 'height:14px; display:inline-block');
@@ -8014,7 +8037,7 @@ function sAvatar() { return `<div class="skel skel-avatar"></div>`; }
 function sNick(width = '12ch') {
   return `
     <div class="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5">
-      <div class="h-6 w-6 rounded-full ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+      <div class="h-6 w-6 rounded-lg ring-1 ring-zinc-300/60 dark:ring-white/10 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         ${sAvatar()}
       </div>
       ${sBar(width,'sm')}
@@ -8074,7 +8097,7 @@ function renderMapSearchCardsSkeleton(count = Math.min(pageSize || 12, 12)) {
 
             <div class="mx-b-left flex min-w-0 items-center gap-2">
               <div class="flex -space-x-2">
-                <span class="h-6 w-6 rounded-full bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
+                <span class="h-6 w-6 rounded-lg bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
               </div>
               <span class="ml-1 h-4 w-24 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </div>
@@ -8200,7 +8223,7 @@ function renderCompletionsSkeletonCards(count = Math.min(pageSize || 12, 12)) {
           <div class="flex items-center justify-between gap-3">
             <!-- Left: avatar + nickname -->
             <div class="mx-b-left flex min-w-0 items-center gap-2">
-              <span class="h-6 w-6 rounded-full bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
+              <span class="h-6 w-6 rounded-lg bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 ring-1 ring-zinc-300/60 dark:ring-white/10 animate-pulse"></span>
               <span class="ml-1 h-4 w-24 rounded bg-white/45 dark:bg-zinc-900/10 dark:bg-white/20 animate-pulse"></span>
             </div>
 

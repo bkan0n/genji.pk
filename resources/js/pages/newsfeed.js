@@ -3473,7 +3473,7 @@ function compSkeletonCard() {
     <article class="comp-card comp-skel h-full rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-3 sm:p-4 animate-pulse" aria-hidden="true">
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-start gap-3 min-w-0">
-          <div class="h-10 w-10 rounded-full bg-zinc-900/5 dark:bg-white/10 ring-2 ring-zinc-300/60 dark:ring-white/10"></div>
+          <div class="h-10 w-10 rounded-lg bg-zinc-900/5 dark:bg-white/10 ring-2 ring-zinc-300/60 dark:ring-white/10"></div>
           <div class="min-w-0 flex-1">
             <div class="h-4 w-48 rounded bg-zinc-900/5 dark:bg-white/10"></div>
             <div class="mt-2 flex flex-wrap gap-1.5">
