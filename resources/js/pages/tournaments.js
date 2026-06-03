@@ -1,3 +1,5 @@
+import { cdnImage } from "../utils/cdn";
+
 const API = '/api/tournaments';
 const POLL_MS = 60_000;
 const ARCHIVE_LIMIT = 10;
@@ -31,6 +33,7 @@ const state = {
   leaderboardRequestSeq: 0,
   archiveRequestSeq: 0,
   historyRequestSeq: 0,
+  mapModalRequestSeq: 0,
 };
 
 const i18n = window.TOURNAMENTS_I18N || {};
@@ -120,53 +123,85 @@ function selectedCycle() {
   return state.activeCycles.get(String(state.selectedCategoryId)) || null;
 }
 
-function statusPill(status) {
-  const normalized = String(status || 'unknown').toLowerCase();
-  const color =
-    normalized === 'active'
-      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-      : normalized === 'pending'
-        ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300'
-        : normalized === 'completed'
-          ? 'bg-zinc-500/15 text-zinc-700 dark:text-zinc-300'
-          : 'bg-amber-500/15 text-amber-700 dark:text-amber-300';
-
-  return `<span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${color}">${esc(status || 'unknown')}</span>`;
-}
-
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
 }
 
-function showToast(message, type = 'ok') {
+function showToast(message, type = 'ok', opts = {}) {
+  const {
+    duration = 2000,
+    enter = 220,
+    exit = 220,
+    easing = 'cubic-bezier(0.4,0,0.2,1)',
+  } = opts;
+
   let root = document.getElementById('toast-root');
   if (!root) {
     root = document.createElement('div');
     root.id = 'toast-root';
-    root.className = 'fixed right-4 top-4 z-[9999] flex w-[min(92vw,26rem)] flex-col gap-2';
     document.body.appendChild(root);
   }
 
-  const tone =
-    type === 'error'
-      ? 'border-rose-500/30 bg-rose-600 text-white'
+  root.className = 'pointer-events-none fixed inset-x-0 bottom-6 z-[200] flex justify-center px-3';
+
+  while (root.firstElementChild) {
+    const prev = root.firstElementChild;
+    try {
+      prev.getAnimations?.().forEach((animation) => animation.cancel());
+    } catch {}
+    prev.remove();
+  }
+
+  const palette =
+    type === 'ok'
+      ? 'bg-emerald-500/90 text-zinc-900 dark:text-white'
       : type === 'warn'
-        ? 'border-amber-400/30 bg-amber-500 text-zinc-950'
-        : 'border-emerald-400/30 bg-emerald-600 text-white';
+        ? 'bg-amber-500/90 text-zinc-900'
+        : 'bg-red-600/90 text-zinc-900 dark:text-white';
 
-  const toast = document.createElement('div');
-  toast.className = `rounded-xl border px-4 py-3 text-sm font-semibold shadow-2xl ring-1 ring-black/10 transition duration-200 ${tone}`;
-  toast.setAttribute('role', 'status');
-  toast.setAttribute('aria-live', 'polite');
-  toast.textContent = message;
-  root.appendChild(toast);
+  const el = document.createElement('div');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.className = [
+    'pointer-events-auto select-none rounded-xl px-4 py-2',
+    'text-sm shadow-lg text-center transform-gpu',
+    'w-auto max-w-[92vw] sm:max-w-[42rem]',
+    palette,
+  ].join(' ');
+  el.textContent = message;
 
-  setTimeout(() => {
-    toast.classList.add('translate-y-1', 'opacity-0');
-    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-    setTimeout(() => toast.remove(), 260);
-  }, 2400);
+  root.appendChild(el);
+
+  const inAnim = el.animate(
+    [
+      { opacity: 0, transform: 'translateY(8px)' },
+      { opacity: 1, transform: 'translateY(0)' },
+    ],
+    { duration: enter, easing, fill: 'forwards' }
+  );
+
+  const close = () => {
+    Promise.resolve(inAnim.finished)
+      .catch(() => {})
+      .finally(() => {
+        const outAnim = el.animate(
+          [
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 0, transform: 'translateY(8px)' },
+          ],
+          { duration: exit, easing, fill: 'forwards' }
+        );
+        outAnim.finished.then(() => el.remove()).catch(() => el.remove());
+        setTimeout(() => el.remove(), exit + 120);
+      });
+  };
+
+  const timer = setTimeout(close, Math.max(duration, enter + 50));
+  el.addEventListener('click', () => {
+    clearTimeout(timer);
+    close();
+  });
 }
 
 async function copyTextToClipboard(value) {
@@ -205,6 +240,508 @@ async function copyMapCode(code) {
   } else {
     showToast(t('messages.copy_failed', 'Failed to copy map code.'), 'error');
   }
+}
+
+function mapBannerSrc(name) {
+  const key = String(name || 'default')
+    .toLowerCase()
+    .replace(/[()\s':]/g, '') || 'default';
+
+  return cdnImage(`assets/map_banners/${key}.png`, {
+    width: 1200,
+    quality: 82,
+    format: 'auto',
+    fit: 'cover',
+  });
+}
+
+function normalizeMapRows(data) {
+  if (Array.isArray(data?.results)) return data.results;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.maps)) return data.maps;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && (data.code || data.map_code || data.map_name || data.id)) return [data];
+  return [];
+}
+
+async function fetchMapRowByCode(code) {
+  const value = String(code || '').trim();
+  if (!value || value === '...') return null;
+
+  try {
+    const url = new URL('/api/maps', window.location.origin);
+    url.searchParams.set('page_size', '10');
+    url.searchParams.set('page_number', '1');
+    url.searchParams.set('code', value);
+    const uid = String(window.user_id ?? '').trim();
+    if (uid) url.searchParams.set('user_id', uid);
+
+    const response = await fetch(url.toString(), {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+    const data = response.ok ? await response.json().catch(() => null) : null;
+    const rows = normalizeMapRows(data);
+    const exact = rows.find((row) => String(row?.code || row?.map_code || '').toLowerCase() === value.toLowerCase());
+    return exact || rows[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeStringList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => normalizeStringList(item))
+      .map(String)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (value && typeof value === 'object') {
+    const label = value.name ?? value.label ?? value.text ?? value.value ?? value.title ?? '';
+    return label ? [String(label).trim()].filter(Boolean) : [];
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return value == null || value === '' ? [] : [String(value)];
+}
+
+function pickCreatorNames(row = {}) {
+  if (Array.isArray(row.creators) && row.creators.length) {
+    return row.creators
+      .map((creator) => creator?.name ?? creator?.nickname ?? creator?.username ?? creator?.label ?? '')
+      .filter(Boolean)
+      .map(String);
+  }
+  return normalizeStringList(row.creator_names ?? row.creator_name ?? row.creator ?? row.authors ?? row.author);
+}
+
+function pickMapTypes(row = {}) {
+  return normalizeStringList(row.category ?? row.map_type ?? row.type);
+}
+
+function mapBool(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'boolean') return value;
+  const text = String(value).trim().toLowerCase();
+  if (['1', 'true', 'yes', 'official', 'global'].includes(text)) return true;
+  if (['0', 'false', 'no', 'unofficial', 'china', 'cn'].includes(text)) return false;
+  return Boolean(value);
+}
+
+function formatNumber(value) {
+  if (value == null || value === '' || String(value).trim() === 'N/A') return '-';
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value);
+  return new Intl.NumberFormat().format(number);
+}
+
+function qualityStars(value, max = 6) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '-';
+  const filled = Math.max(0, Math.min(max, Math.floor(number)));
+  return `${'★'.repeat(filled)}${'☆'.repeat(max - filled)}`;
+}
+
+function guideLinks(row = {}) {
+  const guides = normalizeStringList(row.guides ?? row.guide ?? row.guide_url ?? row.video);
+  return guides.filter((url) => /^https?:\/\//i.test(url));
+}
+
+function mapModalFallback(cycle, category) {
+  return {
+    code: cycle?.map_code || '',
+    map_code: cycle?.map_code || '',
+    map_name: cycle?.map_name || 'Unknown map',
+    difficulty: cycle?.map_difficulty || '',
+    category: category?.name || categoryName(cycle?.category_id || state.selectedCategoryId),
+  };
+}
+
+function mergeMapRows(fallback, detail) {
+  if (!detail) return fallback;
+  const merged = { ...fallback, ...detail };
+  Object.entries(fallback).forEach(([key, value]) => {
+    const current = merged[key];
+    if ((current == null || current === '' || (Array.isArray(current) && !current.length)) && value) {
+      merged[key] = value;
+    }
+  });
+  return merged;
+}
+
+function pillListHtml(items) {
+  const list = normalizeStringList(items);
+  if (!list.length) {
+    return `<span class="text-sm text-zinc-500 dark:text-zinc-400">${esc(t('empty.none', 'None'))}</span>`;
+  }
+
+  return list
+    .map(
+      (item) => `
+        <span class="inline-flex items-center rounded-full border border-zinc-200/80 bg-white/70 px-2.5 py-1 text-xs font-semibold text-zinc-800 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100">
+          ${esc(item)}
+        </span>
+      `
+    )
+    .join('');
+}
+
+function detailRow(label, value) {
+  return `
+    <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${esc(label)}</dt>
+      <dd class="min-w-0 break-words text-sm font-black text-zinc-900 dark:text-zinc-100">${esc(value || '-')}</dd>
+    </div>
+  `;
+}
+
+function setMapModalText(root, selector, value) {
+  const el = $(selector, root);
+  if (el) el.textContent = value;
+}
+
+function renderTournamentMapModal(row, cycle, category, { loading = false, failed = false } = {}) {
+  const overlay = ensureTournamentMapModal();
+  const mapName = row.original_map_name || row.map_name || cycle?.map_name || 'Unknown map';
+  const mapCode = row.code || row.map_code || cycle?.map_code || '';
+  const typeText = pickMapTypes(row).join(', ') || category?.name || categoryName(cycle?.category_id || state.selectedCategoryId);
+  const difficulty = row.difficulty || cycle?.map_difficulty || '-';
+  const creators = pickCreatorNames(row);
+  const qualityRaw = row.ratings ?? row.quality;
+  const medals = {
+    gold: row.medals?.gold ?? row.gold ?? '-',
+    silver: row.medals?.silver ?? row.silver ?? '-',
+    bronze: row.medals?.bronze ?? row.bronze ?? '-',
+  };
+  const isOfficial = mapBool(row.official ?? row.is_official);
+  const statusText =
+    isOfficial === null
+      ? '-'
+      : isOfficial
+        ? t('labels.official', 'Official')
+        : t('labels.unofficial', 'Unofficial');
+  const links = guideLinks(row);
+  const description = row.description || row.desc || t('empty.no_description', 'No description available.');
+  const linkedCode = row.linked_code || row.linkedCode || '';
+  const linkedLabel = isOfficial
+    ? t('labels.unofficial_code', 'Unofficial code')
+    : t('labels.official_code', 'Official code');
+  const hasNonNullTime = row.time != null && String(row.time).trim().toLowerCase() !== 'null';
+  const completed = Boolean(window.user_id) && (row.user_has_completion || row.user_has_record || row.user_completed || hasNonNullTime);
+  const cover = $('#tournamentMapModalCover', overlay);
+  const guide = $('#tournamentMapModalGuide', overlay);
+  const linked = $('#tournamentMapModalLinked', overlay);
+  const status = $('#tournamentMapModalStatus', overlay);
+
+  overlay.dataset.mapCode = mapCode;
+  overlay.dataset.linkedCode = linkedCode || '';
+
+  setMapModalText(overlay, '#tournamentMapModalTitle', mapName);
+  setMapModalText(overlay, '#tournamentMapModalCode', mapCode || '-');
+  setMapModalText(overlay, '#tournamentMapModalMedalGold', medals.gold);
+  setMapModalText(overlay, '#tournamentMapModalMedalSilver', medals.silver);
+  setMapModalText(overlay, '#tournamentMapModalMedalBronze', medals.bronze);
+  setMapModalText(overlay, '#tournamentMapModalDescription', description);
+
+  const completedChip = $('#tournamentMapModalCompleted', overlay);
+  if (completedChip) {
+    completedChip.className = completed
+      ? 'inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-500/30 dark:text-emerald-200'
+      : 'inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:text-zinc-200 dark:ring-white/15';
+    completedChip.innerHTML = `<span class="h-2 w-2 rounded-full ${completed ? 'bg-emerald-500' : 'bg-zinc-400'}"></span>${esc(completed ? t('labels.completed', 'Completed') : t('labels.not_completed', 'Not completed'))}`;
+  }
+
+  if (cover) {
+    cover.classList.remove('bg-zinc-900');
+    cover.src = mapBannerSrc(mapName);
+    cover.addEventListener('error', () => {
+      cover.removeAttribute('src');
+      cover.classList.add('bg-zinc-900');
+    }, { once: true });
+  }
+
+  if (guide) {
+    if (links.length) {
+      guide.classList.remove('hidden');
+      guide.classList.add('inline-flex');
+      guide.dataset.href = links[0];
+      guide.setAttribute('aria-disabled', 'false');
+    } else {
+      guide.classList.add('hidden');
+      guide.classList.remove('inline-flex');
+      guide.removeAttribute('data-href');
+      guide.setAttribute('aria-disabled', 'true');
+    }
+  }
+
+  if (linked) {
+    linked.classList.toggle('hidden', !linkedCode || isOfficial === null);
+    setMapModalText(overlay, '#tournamentMapModalLinkedLabel', linkedLabel);
+    setMapModalText(overlay, '#tournamentMapModalLinkedCode', linkedCode || '-');
+  }
+
+  const mechanics = $('#tournamentMapModalMechanics', overlay);
+  const restrictions = $('#tournamentMapModalRestrictions', overlay);
+  const tags = $('#tournamentMapModalTags', overlay);
+  if (mechanics) mechanics.innerHTML = pillListHtml(row.mechanics ?? row.map_mechanics);
+  if (restrictions) restrictions.innerHTML = pillListHtml(row.restrictions ?? row.map_restrictions);
+  if (tags) tags.innerHTML = pillListHtml(row.tags ?? row.map_tags ?? row.tag_list);
+
+  const details = $('#tournamentMapModalDetails', overlay);
+  if (details) {
+    details.innerHTML = [
+      detailRow(t('labels.map_creator', 'Creator'), creators.join(', ') || 'N/A'),
+      detailRow(t('labels.checkpoints', 'Checkpoints'), formatNumber(row.checkpoints ?? row.checkpoint_count ?? row.cp_count)),
+      detailRow(t('labels.upvotes', 'Upvotes'), formatNumber(row.upvotes)),
+      detailRow(t('labels.map_type', 'Type'), typeText || '-'),
+      detailRow(t('labels.map_difficulty', 'Difficulty'), difficulty),
+      detailRow(t('labels.map_status', 'Status'), statusText),
+      detailRow(t('labels.quality', 'Quality'), qualityRaw != null ? qualityStars(qualityRaw) : '-'),
+    ].join('');
+  }
+
+  if (status) {
+    status.className = failed
+      ? 'mt-3 text-xs font-semibold text-amber-700 dark:text-amber-300'
+      : 'mt-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400';
+    status.textContent = failed
+      ? t('messages.map_load_failed', 'Full map details could not be loaded.')
+      : loading
+        ? t('messages.loading_map_details', 'Loading full map details...')
+        : '';
+  }
+}
+
+function ensureTournamentMapModal() {
+  let overlay = $('#tournamentMapModalOverlay');
+  if (overlay) return overlay;
+
+  const tpl = document.createElement('div');
+  tpl.innerHTML = `
+    <div
+      id="tournamentMapModalOverlay"
+      class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 p-4 opacity-0 backdrop-blur-sm transition-opacity duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tournamentMapModalTitle"
+    >
+      <div
+        id="tournamentMapModalShell"
+        class="mx-4 w-[min(96vw,1080px)] max-h-[calc(100dvh-2rem)] rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/25 to-emerald-400/20 p-px opacity-0 shadow-2xl ring-1 ring-zinc-300/60 transition-all duration-200 dark:ring-white/10 translate-y-3"
+      >
+        <div
+          id="tournamentMapModalBox"
+          class="relative max-h-[calc(100dvh-2rem)] overflow-y-auto overflow-x-hidden rounded-3xl bg-white/95 text-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:bg-zinc-800/95 dark:text-zinc-100 dark:ring-white/10"
+        >
+          <div class="relative h-56 overflow-hidden rounded-t-3xl">
+            <img id="tournamentMapModalCover" alt="" class="absolute inset-0 h-full w-full object-cover opacity-85" />
+            <div class="absolute inset-0 bg-gradient-to-b from-black/35 via-black/20 to-zinc-950/85"></div>
+            <div class="absolute left-0 right-0 top-0 flex items-start justify-between gap-3 p-4">
+              <span id="tournamentMapModalCompleted"></span>
+              <button
+                id="tournamentMapModalClose"
+                type="button"
+                class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-black/35 text-white transition hover:bg-black/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                aria-label="${esc(t('buttons.close', 'Close'))}"
+              >
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M4.28 4.28a.75.75 0 0 1 1.06 0L10 8.94l4.66-4.66a.75.75 0 1 1 1.06 1.06L11.06 10l4.66 4.66a.75.75 0 0 1-1.06 1.06L10 11.06l-4.66 4.66a.75.75 0 0 1-1.06-1.06L8.94 10 4.28 5.34a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 p-5">
+              <p class="text-xs font-black uppercase tracking-wide text-emerald-200">${esc(t('labels.map_details', 'Map details'))}</p>
+              <h2 id="tournamentMapModalTitle" class="mt-1 truncate text-3xl font-black text-white"></h2>
+              <p id="tournamentMapModalStatus"></p>
+            </div>
+          </div>
+
+          <div class="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-12">
+            <div class="min-w-0 space-y-5 md:col-span-7">
+              <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.map_code', 'Map code'))}</div>
+                    <div id="tournamentMapModalCode" class="mt-1 font-mono text-lg font-black">-</div>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      id="tournamentMapModalGuide"
+                      type="button"
+                      class="hidden cursor-pointer items-center rounded-xl bg-indigo-100 px-3 py-2 text-sm font-black text-indigo-900 ring-1 ring-indigo-300 transition hover:bg-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-400/40 dark:hover:bg-indigo-500/25"
+                      aria-disabled="true"
+                    >
+                      ${esc(t('buttons.guide', 'Guide'))}
+                    </button>
+                    <button
+                      id="tournamentMapModalCopy"
+                      type="button"
+                      class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-900 ring-1 ring-emerald-300 transition hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/40 dark:hover:bg-emerald-500/25"
+                    >
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      ${esc(t('buttons.copy_code', 'Copy code'))}
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section id="tournamentMapModalLinked" class="hidden rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div>
+                    <div id="tournamentMapModalLinkedLabel" class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400"></div>
+                    <div id="tournamentMapModalLinkedCode" class="mt-1 font-mono text-sm font-black">-</div>
+                  </div>
+                  <button
+                    id="tournamentMapModalLinkedCopy"
+                    type="button"
+                    class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-900 ring-1 ring-emerald-300 transition hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/40 dark:hover:bg-emerald-500/25"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    ${esc(t('buttons.copy_code', 'Copy code'))}
+                  </button>
+                </div>
+              </section>
+
+              <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.medals', 'Medals'))}</div>
+                <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div class="rounded-xl bg-yellow-400/15 p-3 ring-1 ring-yellow-500/30">
+                    <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">${esc(t('labels.gold', 'Gold'))}</div>
+                    <div id="tournamentMapModalMedalGold" class="mt-1 text-lg font-black">-</div>
+                  </div>
+                  <div class="rounded-xl bg-slate-300/20 p-3 ring-1 ring-slate-400/35">
+                    <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">${esc(t('labels.silver', 'Silver'))}</div>
+                    <div id="tournamentMapModalMedalSilver" class="mt-1 text-lg font-black">-</div>
+                  </div>
+                  <div class="rounded-xl bg-orange-400/15 p-3 ring-1 ring-orange-500/30">
+                    <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">${esc(t('labels.bronze', 'Bronze'))}</div>
+                    <div id="tournamentMapModalMedalBronze" class="mt-1 text-lg font-black">-</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.description', 'Description'))}</div>
+                <p id="tournamentMapModalDescription" class="mt-2 leading-relaxed text-zinc-800 dark:text-zinc-100"></p>
+              </section>
+
+              <div class="grid gap-4 sm:grid-cols-2">
+                <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                  <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.mechanics', 'Mechanics'))}</div>
+                  <div id="tournamentMapModalMechanics" class="mt-2 flex flex-wrap gap-2"></div>
+                </section>
+                <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                  <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.restrictions', 'Restrictions'))}</div>
+                  <div id="tournamentMapModalRestrictions" class="mt-2 flex flex-wrap gap-2"></div>
+                </section>
+                <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10 sm:col-span-2">
+                  <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.tags', 'Tags'))}</div>
+                  <div id="tournamentMapModalTags" class="mt-2 flex flex-wrap gap-2"></div>
+                </section>
+              </div>
+            </div>
+
+            <aside class="min-w-0 md:col-span-5">
+              <section class="sticky top-4 rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+                <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.map_details', 'Map details'))}</div>
+                <dl id="tournamentMapModalDetails" class="mt-3"></dl>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(tpl.firstElementChild);
+  overlay = $('#tournamentMapModalOverlay');
+
+  $('#tournamentMapModalClose', overlay)?.addEventListener('click', closeTournamentMapModal);
+  overlay.addEventListener('click', (event) => {
+    const guide = event.target.closest('#tournamentMapModalGuide');
+    if (guide) {
+      const href = guide.dataset.href || '';
+      if (href) window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (event.target.closest('#tournamentMapModalCopy')) {
+      void copyMapCode(overlay.dataset.mapCode || '');
+      return;
+    }
+
+    if (event.target.closest('#tournamentMapModalLinkedCopy')) {
+      void copyMapCode(overlay.dataset.linkedCode || '');
+    }
+  });
+  overlay.addEventListener('pointerdown', (event) => {
+    const box = $('#tournamentMapModalBox', overlay);
+    if (box && !box.contains(event.target)) closeTournamentMapModal();
+  });
+
+  return overlay;
+}
+
+function showTournamentMapModal(overlay) {
+  const shell = $('#tournamentMapModalShell', overlay);
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+  requestAnimationFrame(() => {
+    overlay.classList.remove('opacity-0');
+    overlay.classList.add('opacity-100');
+    shell?.classList.remove('translate-y-3', 'opacity-0');
+    shell?.classList.add('translate-y-0', 'opacity-100');
+  });
+}
+
+async function openTournamentMapModal(cycle, category) {
+  if (!cycle) return;
+
+  const overlay = ensureTournamentMapModal();
+  const requestSeq = ++state.mapModalRequestSeq;
+  const fallback = mapModalFallback(cycle, category);
+  renderTournamentMapModal(fallback, cycle, category, { loading: true });
+  showTournamentMapModal(overlay);
+
+  const detail = await fetchMapRowByCode(fallback.code || fallback.map_code);
+  if (requestSeq !== state.mapModalRequestSeq) return;
+
+  renderTournamentMapModal(mergeMapRows(fallback, detail), cycle, category, {
+    failed: !detail,
+  });
+}
+
+function closeTournamentMapModal() {
+  const overlay = $('#tournamentMapModalOverlay');
+  const shell = $('#tournamentMapModalShell');
+  if (!overlay) return;
+  state.mapModalRequestSeq += 1;
+
+  overlay.classList.add('opacity-0');
+  overlay.classList.remove('opacity-100');
+  shell?.classList.add('translate-y-3', 'opacity-0');
+  shell?.classList.remove('translate-y-0', 'opacity-100');
+
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+  }, 180);
 }
 
 function debounce(fn, ms = 160) {
@@ -510,7 +1047,6 @@ function switchSection(section, { updateUrl = true } = {}) {
 function renderEdition() {
   if (!state.edition) {
     setText('tournamentEditionWindow', t('empty.no_active_edition', 'No active edition.'));
-    setText('tournamentEditionStatus', '');
     setText('tournamentCountdown', '00:00:00');
     return;
   }
@@ -518,7 +1054,6 @@ function renderEdition() {
   const start = formatDate(state.edition.started_at);
   const end = formatDate(state.edition.ends_at);
   setText('tournamentEditionWindow', `${start} - ${end}`);
-  setText('tournamentEditionStatus', `${t('labels.status', 'Status')}: ${state.edition.status || '...'}`);
   tickCountdown();
 }
 
@@ -601,14 +1136,17 @@ function renderCategories() {
         <button
           type="button"
           data-category-id="${esc(category.id)}"
-          class="rounded-lg border px-2.5 py-1.5 text-left text-xs transition ${
+          class="group w-full rounded-lg border px-3 py-2 text-left text-xs transition ${
             selected
-              ? 'border-emerald-500/40 bg-emerald-500/10'
-              : 'border-zinc-200/80 bg-white/60 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:bg-white/10'
+              ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.12)]'
+              : 'border-zinc-200/80 bg-white/70 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-white/10'
           }"
         >
-          <span class="block font-semibold">${esc(category.name)}</span>
-          <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">${esc(difficulties || '...')}</span>
+          <span class="flex items-center justify-between gap-2">
+            <span class="truncate font-black">${esc(category.name)}</span>
+            ${selected ? '<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>' : ''}
+          </span>
+          <span class="mt-0.5 block truncate text-[11px] text-zinc-500 dark:text-zinc-400">${esc(difficulties || '...')}</span>
         </button>
       `;
     })
@@ -620,7 +1158,7 @@ function renderActiveCycles() {
   if (!root) return;
 
   if (!state.categories.length) {
-    root.innerHTML = `<div class="rounded-xl border border-zinc-200/80 bg-zinc-100 p-3 text-sm text-zinc-500 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400">${esc(t('empty.loading', 'Loading tournaments...'))}</div>`;
+    root.innerHTML = `<div class="rounded-lg border border-zinc-200/80 bg-white/70 p-3 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-400">${esc(t('empty.loading', 'Loading tournaments...'))}</div>`;
     return;
   }
 
@@ -628,47 +1166,67 @@ function renderActiveCycles() {
     .map((category) => {
       const cycle = state.activeCycles.get(String(category.id));
       const isSelected = String(category.id) === String(state.selectedCategoryId);
+      const categoryDifficulties = Array.isArray(category.difficulties) ? category.difficulties.join(', ') : '';
+      const cardTone = isSelected
+        ? 'border-emerald-500/40 bg-emerald-500/10 ring-1 ring-emerald-400/20'
+        : 'border-zinc-200/80 bg-white/70 dark:border-white/10 dark:bg-zinc-900/50';
 
       if (!cycle) {
         return `
-          <article class="rounded-xl border ${isSelected ? 'border-emerald-500/40' : 'border-zinc-200/80 dark:border-white/10'} bg-zinc-100 p-3 dark:bg-white/5">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="text-sm font-semibold">${esc(category.name)}</h3>
-              ${statusPill(category.is_active ? 'active' : 'inactive')}
+          <article class="min-h-[112px] rounded-lg border ${cardTone} p-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <h3 class="truncate text-sm font-black">${esc(category.name)}</h3>
+                <p class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">${esc(categoryDifficulties || '...')}</p>
+              </div>
             </div>
-            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_active_cycle', 'No active cycle for this category.'))}</p>
+            <div class="mt-3 rounded-lg border border-dashed border-zinc-300/80 px-3 py-2 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+              ${esc(t('empty.no_active_cycle', 'No active cycle for this category.'))}
+            </div>
           </article>
         `;
       }
 
       return `
-        <article class="rounded-xl border ${isSelected ? 'border-emerald-500/40 ring-1 ring-emerald-400/20' : 'border-zinc-200/80 dark:border-white/10'} bg-zinc-100 p-3 dark:bg-white/5">
+        <article class="min-h-[112px] rounded-lg border ${cardTone} p-3">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
-              <h3 class="truncate text-sm font-semibold">${esc(category.name)}</h3>
-              <p class="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">${esc(cycle.map_difficulty || '')}</p>
+              <h3 class="truncate text-sm font-black">${esc(category.name)}</h3>
+              <p class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">${esc(cycle.map_difficulty || categoryDifficulties || '...')}</p>
             </div>
-            ${statusPill(cycle.status)}
           </div>
-          <div class="mt-2 flex items-end justify-between gap-2">
-            <div class="min-w-0">
-              <div class="truncate text-base font-black">${esc(cycle.map_name || 'Unknown map')}</div>
+          <div class="mt-3 flex items-end justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="truncate text-lg font-black leading-tight">${esc(cycle.map_name || 'Unknown map')}</div>
               <button
                 type="button"
                 data-copy-map-code="${esc(cycle.map_code || '')}"
-                class="mt-1 inline-flex cursor-pointer rounded-md border border-zinc-200/80 bg-white/70 px-1.5 py-0.5 font-mono text-xs transition hover:bg-white dark:border-white/10 dark:bg-zinc-950/50 dark:hover:bg-white/10"
+                class="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-200/80 bg-zinc-950 px-2 py-1 font-mono text-xs font-black text-white transition hover:bg-zinc-800 dark:border-white/10 dark:bg-black/50 dark:hover:bg-black/70"
                 title="Copy map code"
               >
-                ${esc(cycle.map_code || '...')}
+                <span>${esc(cycle.map_code || '...')}</span>
+                <svg class="h-3.5 w-3.5 opacity-75" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
               </button>
             </div>
-            <button
-              type="button"
-              data-view-leaderboard="${esc(category.id)}"
-              class="shrink-0 cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-zinc-100"
-            >
-              ${esc(t('buttons.view_leaderboard', 'View leaderboard'))}
-            </button>
+            <div class="grid shrink-0 gap-1.5">
+              <button
+                type="button"
+                data-view-map="${esc(category.id)}"
+                class="cursor-pointer rounded-lg border border-zinc-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-zinc-900 transition hover:bg-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+              >
+                ${esc(t('buttons.view_map', 'View map'))}
+              </button>
+              <button
+                type="button"
+                data-view-leaderboard="${esc(category.id)}"
+                class="cursor-pointer rounded-lg border border-zinc-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-zinc-900 transition hover:bg-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+              >
+                ${esc(t('buttons.view_leaderboard', 'View leaderboard'))}
+              </button>
+            </div>
           </div>
         </article>
       `;
@@ -763,28 +1321,28 @@ async function hydrateTopAvatars(root = document) {
 function podiumSkin(rank) {
   if (Number(rank) === 1) {
     return {
-      card: 'border-amber-400/50 bg-amber-500/10 shadow-[0_0_40px_rgba(245,158,11,0.22)]',
-      badge: 'border-amber-300/60 bg-amber-300/20 text-amber-900 dark:text-amber-100',
-      avatar: 'ring-amber-300/60',
-      time: 'text-amber-700 dark:text-amber-200',
+      card: 'border-amber-500/80 bg-amber-300/25 shadow-[0_0_42px_rgba(217,119,6,0.26)] dark:border-amber-400/50 dark:bg-amber-500/10 dark:shadow-[0_0_40px_rgba(245,158,11,0.22)]',
+      badge: 'border-amber-500/70 bg-amber-300/50 text-amber-950 dark:border-amber-300/60 dark:bg-amber-300/20 dark:text-amber-100',
+      avatar: 'ring-amber-500/70 dark:ring-amber-300/60',
+      time: 'text-amber-800 dark:text-amber-200',
       size: 'top',
     };
   }
   if (Number(rank) === 2) {
     return {
-      card: 'border-slate-300/60 bg-slate-400/10 shadow-[0_0_30px_rgba(148,163,184,0.18)]',
-      badge: 'border-slate-300/70 bg-slate-300/20 text-slate-800 dark:text-slate-100',
-      avatar: 'ring-slate-300/60',
-      time: 'text-slate-700 dark:text-slate-200',
+      card: 'border-slate-400/80 bg-slate-300/35 shadow-[0_0_32px_rgba(71,85,105,0.20)] dark:border-slate-300/60 dark:bg-slate-400/10 dark:shadow-[0_0_30px_rgba(148,163,184,0.18)]',
+      badge: 'border-slate-400/80 bg-slate-200/80 text-slate-950 dark:border-slate-300/70 dark:bg-slate-300/20 dark:text-slate-100',
+      avatar: 'ring-slate-400/80 dark:ring-slate-300/60',
+      time: 'text-slate-800 dark:text-slate-200',
       size: 'mid',
     };
   }
   if (Number(rank) === 3) {
     return {
-      card: 'border-orange-400/50 bg-orange-500/10 shadow-[0_0_30px_rgba(249,115,22,0.18)]',
-      badge: 'border-orange-300/60 bg-orange-300/20 text-orange-900 dark:text-orange-100',
-      avatar: 'ring-orange-300/60',
-      time: 'text-orange-700 dark:text-orange-200',
+      card: 'border-orange-500/75 bg-orange-300/25 shadow-[0_0_32px_rgba(194,65,12,0.22)] dark:border-orange-400/50 dark:bg-orange-500/10 dark:shadow-[0_0_30px_rgba(249,115,22,0.18)]',
+      badge: 'border-orange-500/70 bg-orange-300/45 text-orange-950 dark:border-orange-300/60 dark:bg-orange-300/20 dark:text-orange-100',
+      avatar: 'ring-orange-500/70 dark:ring-orange-300/60',
+      time: 'text-orange-800 dark:text-orange-200',
       size: 'mid',
     };
   }
@@ -795,6 +1353,87 @@ function podiumSkin(rank) {
     time: 'text-cyan-700 dark:text-cyan-200',
     size: 'small',
   };
+}
+
+function rankMedal(rank, size = 'h-5 w-5') {
+  const medalUrl = MEDAL_URLS[Number(rank)] || '';
+  if (!medalUrl) return '';
+
+  return `
+    <img
+      src="${esc(medalUrl)}"
+      alt=""
+      class="${size} shrink-0 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.25)]"
+      loading="lazy"
+      decoding="async"
+    />
+  `;
+}
+
+function rankWithMedal(rank) {
+  const value = rank ?? '-';
+  return `
+    <span class="inline-flex items-center gap-2 font-mono font-black tabular-nums">
+      <span>${esc(value)}</span>
+      ${rankMedal(value)}
+    </span>
+  `;
+}
+
+function playerLeaderboardCell(entry, { showUserId = false } = {}) {
+  const userId = String(entry.user_id || '');
+  const name = entry.name || userId || 'Unknown';
+
+  return `
+    <a
+      class="group inline-flex max-w-[18rem] items-center gap-3 font-semibold transition hover:text-emerald-600 dark:hover:text-emerald-300"
+      href="/rank_card?user_id=${encodeURIComponent(userId)}"
+    >
+      <span class="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-100 ring-1 ring-black/5 dark:border-white/10 dark:bg-zinc-900 dark:ring-white/10">
+        <img
+          src="${esc(defaultAvatarForId(userId))}"
+          alt="${esc(name)}"
+          width="32"
+          height="32"
+          class="h-full w-full object-cover"
+          decoding="async"
+          data-tournament-avatar
+          data-user-id="${esc(userId)}"
+        />
+      </span>
+      <span class="min-w-0">
+        <span class="block truncate">${esc(name)}</span>
+        ${showUserId ? `<span class="mt-0.5 block truncate font-mono text-[11px] font-normal text-zinc-500 dark:text-zinc-400">${esc(userId)}</span>` : ''}
+      </span>
+    </a>
+  `;
+}
+
+function archiveWinnerCell(cycle) {
+  const userId = String(cycle.winner_user_id || '');
+  if (!userId) return '-';
+
+  const name = cycle.winner_name || userId;
+  return `
+    <a
+      class="group inline-flex max-w-[18rem] items-center gap-3 font-semibold transition hover:text-emerald-600 dark:hover:text-emerald-300"
+      href="/rank_card?user_id=${encodeURIComponent(userId)}"
+    >
+      <span class="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-100 ring-1 ring-black/5 dark:border-white/10 dark:bg-zinc-900 dark:ring-white/10">
+        <img
+          src="${esc(defaultAvatarForId(userId))}"
+          alt="${esc(name)}"
+          width="32"
+          height="32"
+          class="h-full w-full object-cover"
+          decoding="async"
+          data-tournament-avatar
+          data-user-id="${esc(userId)}"
+        />
+      </span>
+      <span class="min-w-0 truncate">${esc(name)}</span>
+    </a>
+  `;
 }
 
 function topCard(entry, index) {
@@ -846,7 +1485,7 @@ function topCard(entry, index) {
             ${esc(name)}
           </a>
           <div class="mt-4 flex items-end justify-between gap-4 border-t border-zinc-200/70 pt-3 dark:border-white/10">
-            <span class="text-xs font-black uppercase ${skin.time}">${esc(t('table.time', 'Time'))} :</span>
+            <span class="${timeSize} font-black uppercase leading-none tracking-normal ${skin.time}">${esc(t('table.time', 'Time'))} :</span>
             <span class="${timeSize} text-right font-black leading-none tabular-nums ${skin.time}">${esc(formatTime(entry.time, { unit: false }))}</span>
           </div>
         </div>
@@ -909,7 +1548,7 @@ async function renderLeaderboard({ silent = false } = {}) {
   if (!cycle) {
     state.leaderboardEntries = [];
     state.leaderboardCycleId = null;
-    rows.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('messages.select_category', 'Select a category to view its leaderboard.'))}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('messages.select_category', 'Select a category to view its leaderboard.'))}</td></tr>`;
     if (meta) meta.textContent = '';
     renderTopFive();
     return;
@@ -924,7 +1563,7 @@ async function renderLeaderboard({ silent = false } = {}) {
   state.leaderboardLoading = !canKeepExisting;
   if (meta) meta.textContent = `${cycle.map_code || ''} / ${cycle.map_name || ''}`;
   if (!canKeepExisting) {
-    rows.innerHTML = tableSkeletonRows(5, 7);
+    rows.innerHTML = tableSkeletonRows(4, 7);
   }
   renderTopFive();
 
@@ -943,7 +1582,7 @@ async function renderLeaderboard({ silent = false } = {}) {
     }
     state.leaderboardEntries = [];
     state.leaderboardHash = '[]';
-    rows.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_leaderboard', 'No leaderboard entries yet.'))}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_leaderboard', 'No leaderboard entries yet.'))}</td></tr>`;
     renderTopFive();
     return;
   }
@@ -958,19 +1597,17 @@ async function renderLeaderboard({ silent = false } = {}) {
   rows.innerHTML = response.data
     .map(
       (entry) => `
-        <tr class="border-t border-zinc-200/80 dark:border-white/10">
-          <td class="px-4 py-3 font-mono">${esc(entry.rank)}</td>
-          <td class="px-4 py-3">
-            <a class="font-semibold hover:text-emerald-500" href="/rank_card?user_id=${encodeURIComponent(entry.user_id)}">${esc(entry.name || entry.user_id)}</a>
-          </td>
+        <tr class="border-t border-zinc-200/80 transition hover:bg-zinc-50/80 dark:border-white/10 dark:hover:bg-white/[0.03]">
+          <td class="px-4 py-3">${rankWithMedal(entry.rank)}</td>
+          <td class="px-4 py-3">${playerLeaderboardCell(entry)}</td>
           <td class="px-4 py-3 font-mono">${esc(formatTime(entry.time))}</td>
           <td class="px-4 py-3">${entry.verified ? 'Yes' : 'No'}</td>
-          <td class="px-4 py-3">${entry.completion ? 'Yes' : 'No'}</td>
         </tr>
       `
     )
     .join('');
 
+  void hydrateTopAvatars(rows);
   renderTopFive();
 }
 
@@ -1029,13 +1666,13 @@ async function renderArchives({ silent = false } = {}) {
     rows.innerHTML = cycles
       .map(
         (cycle) => `
-          <tr class="border-t border-zinc-200/80 dark:border-white/10">
+          <tr class="border-t border-zinc-200/80 transition hover:bg-zinc-50/80 dark:border-white/10 dark:hover:bg-white/[0.03]">
             <td class="px-4 py-3">
               <div class="font-semibold">${esc(cycle.map_name || 'Unknown map')}</div>
               <div class="font-mono text-xs text-zinc-500 dark:text-zinc-400">${esc(cycle.map_code || '')}</div>
             </td>
             <td class="px-4 py-3">${esc(categoryName(cycle.category_id))}</td>
-            <td class="px-4 py-3">${cycle.winner_user_id ? `<a class="font-semibold hover:text-emerald-500" href="/rank_card?user_id=${encodeURIComponent(cycle.winner_user_id)}">${esc(cycle.winner_name || cycle.winner_user_id)}</a>` : '-'}</td>
+            <td class="px-4 py-3">${archiveWinnerCell(cycle)}</td>
             <td class="px-4 py-3">${esc(formatDate(cycle.ended_at))}</td>
             <td class="px-4 py-3 text-right">
               <button
@@ -1062,6 +1699,7 @@ async function renderArchives({ silent = false } = {}) {
   const next = $('#tournamentArchiveNext');
   if (prev) prev.disabled = state.archiveOffset <= 0;
   if (next) next.disabled = state.archiveOffset + ARCHIVE_LIMIT >= total;
+  void hydrateTopAvatars(rows);
 }
 
 function findArchiveCycle(cycleId) {
@@ -1091,7 +1729,7 @@ async function openHistoryModal(cycleId) {
   }
 
   modal.classList.remove('hidden');
-  rows.innerHTML = tableSkeletonRows(5, 7);
+  rows.innerHTML = tableSkeletonRows(4, 7);
 
   const requestSeq = ++state.historyRequestSeq;
   const response = await api(`/cycles/${encodeURIComponent(cycleId)}/leaderboard`);
@@ -1099,26 +1737,24 @@ async function openHistoryModal(cycleId) {
 
   const entries = response.ok && Array.isArray(response.data) ? response.data : [];
   if (!entries.length) {
-    rows.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_participants', 'No participant details for this tournament.'))}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_participants', 'No participant details for this tournament.'))}</td></tr>`;
     return;
   }
 
   rows.innerHTML = entries
     .map(
       (entry) => `
-        <tr class="border-t border-zinc-200/80 dark:border-white/10">
-          <td class="px-4 py-3 font-mono">${esc(entry.rank)}</td>
-          <td class="px-4 py-3">
-            <a class="font-semibold hover:text-emerald-500" href="/rank_card?user_id=${encodeURIComponent(entry.user_id)}">${esc(entry.name || entry.user_id)}</a>
-            <div class="mt-0.5 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">${esc(entry.user_id || '')}</div>
-          </td>
+        <tr class="border-t border-zinc-200/80 transition hover:bg-zinc-50/80 dark:border-white/10 dark:hover:bg-white/[0.03]">
+          <td class="px-4 py-3">${rankWithMedal(entry.rank)}</td>
+          <td class="px-4 py-3">${playerLeaderboardCell(entry)}</td>
           <td class="px-4 py-3 font-mono">${esc(formatTime(entry.time))}</td>
           <td class="px-4 py-3">${entry.verified ? 'Yes' : 'No'}</td>
-          <td class="px-4 py-3">${entry.completion ? 'Yes' : 'No'}</td>
         </tr>
       `
     )
     .join('');
+
+  void hydrateTopAvatars(rows);
 }
 
 async function loadStreak(userId) {
@@ -1265,6 +1901,15 @@ function bindEvents() {
       return;
     }
 
+    const mapButton = event.target.closest('[data-view-map]');
+    if (mapButton) {
+      const categoryId = mapButton.dataset.viewMap || '';
+      const cycle = state.activeCycles.get(String(categoryId));
+      const category = state.categories.find((item) => String(item.id) === String(categoryId)) || null;
+      void openTournamentMapModal(cycle, category);
+      return;
+    }
+
     const button = event.target.closest('[data-view-leaderboard]');
     if (!button) return;
     state.selectedCategoryId = button.dataset.viewLeaderboard || '';
@@ -1302,6 +1947,9 @@ function bindEvents() {
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeTournamentSelects();
+    if (event.key === 'Escape' && !$('#tournamentMapModalOverlay')?.classList.contains('hidden')) {
+      closeTournamentMapModal();
+    }
     if (event.key === 'Escape' && !$('#tournamentHistoryModal')?.classList.contains('hidden')) {
       closeHistoryModal();
     }
