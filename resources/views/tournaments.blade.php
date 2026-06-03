@@ -119,6 +119,7 @@
                 </div>
               </div>
             </div>
+            <div id="tournamentLeaderboardMapBanner" class="mb-3 hidden"></div>
             <div class="overflow-auto rounded-xl border border-zinc-200/80 bg-white/70 dark:border-white/10 dark:bg-zinc-950/40">
               <table class="min-w-full text-sm">
                 <thead class="text-left text-xs uppercase text-zinc-500 dark:text-zinc-400">
@@ -224,23 +225,29 @@
             <button
               id="tournamentHistoryModalClose"
               type="button"
-              class="cursor-pointer rounded-lg border border-zinc-200/80 bg-zinc-100 px-3 py-1.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-200 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+              class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-black/35 text-white transition hover:bg-black/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              aria-label="{{ __('tournaments.buttons.close') }}"
             >
-              {{ __('tournaments.buttons.close') }}
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 0 1 1.414 0L10 8.586l4.293-4.293a1 1 0 1 1 1.414 1.414L11.414 10l4.293 4.293a1 1 0 0 1-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L8.586 10 4.293 5.707a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" />
+              </svg>
             </button>
           </header>
           <div class="max-h-[70vh] overflow-auto p-4 sm:p-5">
-            <table class="min-w-full text-sm">
-              <thead class="text-left text-xs uppercase text-zinc-500 dark:text-zinc-400">
-                <tr>
-                  <th class="px-4 py-3">{{ __('tournaments.table.rank') }}</th>
-                  <th class="px-4 py-3">{{ __('tournaments.table.player') }}</th>
-                  <th class="px-4 py-3">{{ __('tournaments.table.time') }}</th>
-                  <th class="px-4 py-3">{{ __('tournaments.table.verified') }}</th>
-                </tr>
-              </thead>
-              <tbody id="tournamentHistoryModalRows"></tbody>
-            </table>
+            <div id="tournamentHistoryModalBanner" class="mb-4 hidden"></div>
+            <div class="overflow-auto rounded-xl border border-zinc-200/80 bg-white/70 dark:border-white/10 dark:bg-zinc-950/40">
+              <table class="min-w-full text-sm">
+                <thead class="text-left text-xs uppercase text-zinc-500 dark:text-zinc-400">
+                  <tr>
+                    <th class="px-4 py-3">{{ __('tournaments.table.rank') }}</th>
+                    <th class="px-4 py-3">{{ __('tournaments.table.player') }}</th>
+                    <th class="px-4 py-3">{{ __('tournaments.table.time') }}</th>
+                    <th class="px-4 py-3">{{ __('tournaments.table.verified') }}</th>
+                  </tr>
+                </thead>
+                <tbody id="tournamentHistoryModalRows"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

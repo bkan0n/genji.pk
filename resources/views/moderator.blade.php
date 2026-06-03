@@ -4721,6 +4721,17 @@
                       Load overview
                     </button>
                   </form>
+                  <div
+                    data-tournament-overview-view
+                    class="hidden rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-950/40"
+                  >
+                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                      <div class="h-24 animate-pulse rounded-xl bg-zinc-900/5 dark:bg-white/5"></div>
+                      <div class="h-24 animate-pulse rounded-xl bg-zinc-900/5 dark:bg-white/5"></div>
+                      <div class="h-24 animate-pulse rounded-xl bg-zinc-900/5 dark:bg-white/5"></div>
+                      <div class="h-24 animate-pulse rounded-xl bg-zinc-900/5 dark:bg-white/5"></div>
+                    </div>
+                  </div>
                   <pre data-out="tournament-overview" class="hidden"></pre>
                 </article>
               </div>
@@ -4730,6 +4741,22 @@
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <h3 class="font-semibold">Category read</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/tournaments/categories</span>
+                  </div>
+                  <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-950/40">
+                    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h4 class="font-semibold">Loaded categories</h4>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Click a category to fill the update form and reuse its category_id in map/cycle actions.</p>
+                      </div>
+                      <span data-tournament-category-count class="inline-flex items-center rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1 text-xs text-zinc-500 dark:border-white/10 dark:bg-zinc-900/70 dark:text-zinc-300">
+                        No categories loaded
+                      </span>
+                    </div>
+                    <div data-tournament-category-cards class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      <div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+                        Categories will load automatically when this panel opens.
+                      </div>
+                    </div>
                   </div>
                   <div class="grid gap-3 sm:grid-cols-2">
                     <form data-action="tournament-category-list" autocomplete="off">
@@ -4793,6 +4820,42 @@
                     <h3 class="font-semibold">Update / delete category</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH + DELETE /api/mods/tournaments/categories/{id}</span>
                   </div>
+                  <label class="block text-sm">
+                    Loaded category
+                    <div
+                      id="modTournamentCategoryUpdatePicker"
+                      class="relative mt-1"
+                      data-dd-select
+                      data-dd-field="category_pick_update"
+                      data-tournament-category-picker="update"
+                    >
+                      <button
+                        type="button"
+                        data-dd-btn
+                        data-placeholder="Select a loaded category"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-left text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+                      >
+                        <span class="dd-label truncate">Select a loaded category</span>
+                        <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+                        </svg>
+                      </button>
+                      <div
+                        data-dd-list
+                        role="listbox"
+                        class="custom-multiselect-list absolute left-0 right-0 top-full z-50 mt-1 hidden max-h-[260px] overflow-auto rounded-lg border border-zinc-200/80 bg-white/95 p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900/95"
+                      >
+                        <div class="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          Loading categories...
+                        </div>
+                      </div>
+                      <select name="category_pick_update" class="hidden" aria-hidden="true">
+                        <option value="">Select a loaded category</option>
+                      </select>
+                    </div>
+                  </label>
                   <form data-action="tournament-category-update" autocomplete="off" class="grid gap-3">
                     <div class="grid gap-3 sm:grid-cols-3">
                       <label class="text-sm">

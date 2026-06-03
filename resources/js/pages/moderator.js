@@ -798,6 +798,11 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'store-config') initStoreConfigPanel();
         if (name === 'quest-config') initQuestConfigPanel();
         if (name === 'quest-update') initQuestUpdatePanel();
+        if (name === 'tournament-overview') initTournamentOverviewPanel();
+        if (name === 'tournament-categories') initTournamentCategoryPanel();
+        if (name === 'tournament-maps' || name === 'tournament-cycles' || name === 'tournament-lifecycle') {
+          initTournamentHelperPanel(name);
+        }
         if (name === 'mod-quality') initModQualityPanel();
         if (name === 'dev-overpy-commit') initOverpyCommitPanel();
         if (name === 'dev-framework-version') initFrameworkVersionPanel();
@@ -1475,7 +1480,7 @@ function setupArchiveMapsUI() {
     const dd = radio.closest('[data-dd-select]');
     if (!dd) return;
 
-    const baseName = radio.name.replace(/_ui$/, '');
+    const baseName = radio.dataset.ddTargetName || radio.name.replace(/_ui$/, '');
     const sel = dd.querySelector(`select[name="${CSS.escape(baseName)}"]`);
     if (!sel) return;
 
@@ -1992,16 +1997,17 @@ function movementTechContentOptionLabel(entity, item) {
   return [id, name].filter(Boolean).join(' - ');
 }
 
-function movementTechBuildContentDropdownOption(selectName, value, labelText) {
+function movementTechBuildContentDropdownOption(selectName, value, labelText, radioName = `${selectName}_ui`) {
   const wrapper = document.createElement('label');
   wrapper.className =
     'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5';
 
   const radio = document.createElement('input');
   radio.type = 'radio';
-  radio.name = `${selectName}_ui`;
+  radio.name = radioName;
   radio.value = value;
   radio.dataset.label = labelText;
+  radio.dataset.ddTargetName = selectName;
   radio.className = 'accent-emerald-500';
 
   const label = document.createElement('span');
@@ -2185,7 +2191,12 @@ function movementTechSyncDdField(field) {
 
   const value = String(field.value ?? '');
   const radios = Array.from(
-    list?.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}_ui"]`) || []
+    list?.querySelectorAll(
+      [
+        `input[type="radio"][name="${CSS.escape(name)}_ui"]`,
+        `input[type="radio"][data-dd-target-name="${CSS.escape(name)}"]`,
+      ].join(',')
+    ) || []
   );
 
   let matched = null;
@@ -8401,6 +8412,16 @@ function resetEnhancedForm(form) {
   if (form.matches?.('form[data-action="content-technique-update"]')) {
     movementTechClearTechniqueUpdateForm(form);
   }
+
+  if (form.matches?.('form[data-action="tournament-category-create"]')) {
+    setTournamentXpGroupRows(form, 'placement_xp_json', tournamentDefaultXpRows('placement'));
+    setTournamentXpGroupRows(form, 'streak_xp_json', tournamentDefaultXpRows('streak'));
+  }
+
+  if (form.matches?.('form[data-action="tournament-category-update"]')) {
+    setTournamentXpGroupRows(form, 'placement_xp_json', []);
+    setTournamentXpGroupRows(form, 'streak_xp_json', []);
+  }
 }
 
 function placeResetButton(form, submitBtn, resetBtn) {
@@ -8830,6 +8851,7 @@ function tournamentLogAndOut(form, outKey, title, method, res, fallbackUrl = '')
 }
 
 function buildTournamentCategoryPayload(form, { creating = false } = {}) {
+  syncTournamentXpRepeaters(form);
   const fd = new FormData(form);
   const payload = {};
 
@@ -8904,11 +8926,744 @@ function fillTournamentConfigForm(form, data) {
   if (!form || !data || typeof data !== 'object') return;
   ['blacklist_weeks', 'cadence', 'anchor_weekday', 'anchor_time', 'anchor_tz'].forEach((key) => {
     const el = form.querySelector(`[name="${CSS.escape(key)}"]`);
-    if (el && data[key] != null) el.value = String(data[key]);
+    if (el && data[key] != null) {
+      el.value = String(data[key]);
+      if (el.tagName === 'SELECT') movementTechSyncDdField(el);
+    }
   });
 }
 
-async function handleTournamentOverview(form) {
+let __modTournamentCategoryCache = [];
+
+function tournamentEscape(value) {
+  return escapeHtml(String(value ?? ''));
+}
+
+function tournamentFormatDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function normalizeTournamentCategories(data) {
+  const rows = Array.isArray(data?.categories)
+    ? data.categories
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
+
+  return rows
+    .filter((category) => category && category.id != null)
+    .map((category) => ({
+      ...category,
+      id: Number(category.id),
+      difficulties: Array.isArray(category.difficulties) ? category.difficulties : [],
+      placement_xp: Array.isArray(category.placement_xp) ? category.placement_xp : [],
+      streak_xp: Array.isArray(category.streak_xp) ? category.streak_xp : [],
+    }));
+}
+
+function tournamentCategoryLabel(category) {
+  const id = category?.id == null ? '' : `#${category.id}`;
+  const name = String(category?.name ?? 'Unnamed category').trim();
+  const difficulties = Array.isArray(category?.difficulties)
+    ? category.difficulties.filter(Boolean).join(', ')
+    : '';
+  return `${id} - ${name}${difficulties ? ` (${difficulties})` : ''}`;
+}
+
+function tournamentDropdownRadioName(select, prefix = 'tournament_dd') {
+  if (!select.dataset.tournamentRadioName) {
+    const index = document.querySelectorAll('[data-tournament-radio-seed]').length + 1;
+    select.dataset.tournamentRadioSeed = '1';
+    select.dataset.tournamentRadioName = `${prefix}_${select.name || 'field'}_${index}_ui`;
+  }
+  return select.dataset.tournamentRadioName;
+}
+
+function tournamentDropdownOption(select, value, labelText) {
+  return movementTechBuildContentDropdownOption(
+    select.name,
+    value,
+    labelText,
+    tournamentDropdownRadioName(select)
+  );
+}
+
+function tournamentStatusPill(status) {
+  const text = String(status ?? '-');
+  const normalized = text.toLowerCase();
+  const cls = normalized === 'active' || normalized === 'true'
+    ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : normalized === 'pending'
+      ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+      : normalized === 'completed'
+        ? 'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+        : 'border-zinc-200/80 bg-white/70 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300';
+
+  return `<span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${cls}">${tournamentEscape(text)}</span>`;
+}
+
+function tournamentXpSummary(rows, keyA, keyB) {
+  if (!Array.isArray(rows) || !rows.length) return '-';
+  return rows
+    .map((row) => `${row?.[keyA] ?? '?'}:${row?.[keyB] ?? '?'}`)
+    .join(' / ');
+}
+
+function renderTournamentCategoryCards() {
+  const containers = document.querySelectorAll('[data-tournament-category-cards]');
+  const cards = __modTournamentCategoryCache;
+
+  containers.forEach((container) => {
+    if (!cards.length) {
+      container.innerHTML = `
+        <div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+          No tournament categories loaded.
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = cards
+      .map((category) => {
+        const difficulties = category.difficulties.length ? category.difficulties.join(', ') : '-';
+        return `
+          <button
+            type="button"
+            data-tournament-category-card
+            data-tournament-category-id="${tournamentEscape(category.id)}"
+            class="group rounded-xl border border-zinc-200/80 bg-white/80 p-3 text-left transition hover:border-emerald-500/45 hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:border-white/10 dark:bg-zinc-900/60 dark:hover:border-emerald-400/35 dark:hover:bg-zinc-900"
+          >
+            <span class="flex items-start justify-between gap-3">
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-black text-zinc-900 dark:text-zinc-100">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</span>
+                <span class="mt-1 block truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(difficulties)}</span>
+              </span>
+              ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+            </span>
+            <span class="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
+                <span class="block text-zinc-500 dark:text-zinc-400">Participation</span>
+                <span class="font-semibold">${tournamentEscape(category.participation_xp ?? '-')} XP</span>
+              </span>
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
+                <span class="block text-zinc-500 dark:text-zinc-400">Placement</span>
+                <span class="font-semibold">${tournamentEscape(tournamentXpSummary(category.placement_xp, 'place', 'xp'))}</span>
+              </span>
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
+                <span class="block text-zinc-500 dark:text-zinc-400">Streak</span>
+                <span class="font-semibold">${tournamentEscape(tournamentXpSummary(category.streak_xp, 'threshold', 'xp'))}</span>
+              </span>
+            </span>
+          </button>`;
+      })
+      .join('');
+  });
+}
+
+function syncTournamentCategoryDatalist() {
+  let datalist = document.getElementById('tournamentCategoryOptions');
+  if (!datalist) {
+    datalist = document.createElement('datalist');
+    datalist.id = 'tournamentCategoryOptions';
+    document.body.appendChild(datalist);
+  }
+
+  datalist.innerHTML = '';
+  __modTournamentCategoryCache.forEach((category) => {
+    const option = document.createElement('option');
+    option.value = String(category.id);
+    option.label = tournamentCategoryLabel(category);
+    datalist.appendChild(option);
+  });
+
+  document
+    .querySelectorAll('[data-panel="tournament"] input[name="category_id"]')
+    .forEach((input) => {
+      input.setAttribute('list', 'tournamentCategoryOptions');
+      input.placeholder = input.placeholder || 'category_id';
+    });
+}
+
+function syncTournamentCategoryPickers() {
+  document.querySelectorAll('[data-tournament-category-picker]').forEach((dd) => {
+    const select = dd.querySelector('select[name]');
+    const list = dd.querySelector('[data-dd-list]');
+    const btn = dd.querySelector('[data-dd-btn]');
+    if (!select || !list || !btn) return;
+
+    const placeholder = btn.getAttribute('data-placeholder') || 'Select a category';
+    const currentValue = String(select.value ?? '');
+
+    select.innerHTML = '';
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = placeholder;
+    select.appendChild(blank);
+
+    __modTournamentCategoryCache.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = String(category.id);
+      option.textContent = tournamentCategoryLabel(category);
+      select.appendChild(option);
+    });
+
+    list.innerHTML = '';
+    list.appendChild(tournamentDropdownOption(select, '', placeholder));
+    __modTournamentCategoryCache.forEach((category) => {
+      list.appendChild(
+        tournamentDropdownOption(select, String(category.id), tournamentCategoryLabel(category))
+      );
+    });
+
+    select.value = __modTournamentCategoryCache.some((category) => String(category.id) === currentValue)
+      ? currentValue
+      : '';
+    movementTechSyncDdField(select);
+  });
+}
+
+function updateTournamentCategoryCount() {
+  document.querySelectorAll('[data-tournament-category-count]').forEach((el) => {
+    el.textContent = __modTournamentCategoryCache.length
+      ? `${__modTournamentCategoryCache.length} categories loaded`
+      : 'No categories loaded';
+  });
+}
+
+function buildTournamentDropdownShell({ placeholder = 'Select...', fieldName = '', picker = '' } = {}) {
+  const dd = document.createElement('div');
+  dd.className = 'relative';
+  dd.dataset.ddSelect = '';
+  if (fieldName) dd.dataset.ddField = fieldName;
+  if (picker) dd.dataset.tournamentCategoryPicker = picker;
+  dd.innerHTML = `
+    <button
+      type="button"
+      data-dd-btn
+      data-placeholder="${tournamentEscape(placeholder)}"
+      aria-haspopup="listbox"
+      aria-expanded="false"
+      class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-left text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+    >
+      <span class="dd-label truncate">${tournamentEscape(placeholder)}</span>
+      <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+    <div
+      data-dd-list
+      role="listbox"
+      class="custom-multiselect-list absolute left-0 right-0 top-full z-50 mt-1 hidden max-h-[260px] overflow-auto rounded-lg border border-zinc-200/80 bg-white/95 p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900/95"
+    ></div>
+  `;
+  return dd;
+}
+
+function enhanceTournamentCategoryInputs(root = document) {
+  const panel = root.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]');
+  const scope = root.matches?.('[data-panel="tournament"]') ? root : panel || root;
+  if (!scope) return;
+
+  scope.querySelectorAll('input[name="category_id"]:not([data-tournament-category-enhanced])').forEach((input) => {
+    input.dataset.tournamentCategoryEnhanced = '1';
+    const currentValue = String(input.value || '');
+    const placeholder = input.placeholder || 'Select category';
+    const select = document.createElement('select');
+    select.name = input.name;
+    select.className = 'hidden';
+    select.setAttribute('aria-hidden', 'true');
+    select.dataset.tournamentCategoryHidden = '1';
+    select.value = currentValue;
+
+    const dd = buildTournamentDropdownShell({
+      fieldName: select.name,
+      placeholder,
+      picker: input.closest('form')?.dataset?.action || 'category-id',
+    });
+    dd.appendChild(select);
+    input.replaceWith(dd);
+  });
+}
+
+function enhanceTournamentNativeSelects(root = document) {
+  const panel = root.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]');
+  const scope = root.matches?.('[data-panel="tournament"]') ? root : panel || root;
+  if (!scope) return;
+
+  scope
+    .querySelectorAll('select[name]:not(.hidden):not([data-tournament-native-enhanced])')
+    .forEach((select) => {
+      if (select.closest('[data-dd-select]')) return;
+      select.dataset.tournamentNativeEnhanced = '1';
+      const currentValue = String(select.value ?? '');
+      const placeholder =
+        select.querySelector('option[value=""]')?.textContent?.trim() ||
+        select.closest('label')?.childNodes?.[0]?.textContent?.trim() ||
+        'Select...';
+
+      const dd = buildTournamentDropdownShell({
+        fieldName: select.name,
+        placeholder,
+      });
+      const list = dd.querySelector('[data-dd-list]');
+
+      Array.from(select.options).forEach((option) => {
+        list.appendChild(tournamentDropdownOption(select, option.value, option.textContent || option.value || placeholder));
+      });
+
+      select.classList.add('hidden');
+      select.setAttribute('aria-hidden', 'true');
+      select.parentNode.insertBefore(dd, select);
+      dd.appendChild(select);
+      select.value = currentValue;
+      movementTechSyncDdField(select);
+    });
+}
+
+function tournamentXpConfig(kind) {
+  return kind === 'streak'
+    ? { key: 'threshold', keyLabel: 'Threshold', valueLabel: 'XP', addLabel: 'Add threshold / XP' }
+    : { key: 'place', keyLabel: 'Place', valueLabel: 'XP', addLabel: 'Add place / XP' };
+}
+
+function tournamentDefaultXpRows(kind) {
+  return kind === 'streak'
+    ? [
+        { threshold: 3, xp: 150 },
+        { threshold: 5, xp: 300 },
+      ]
+    : [
+        { place: 1, xp: 200 },
+        { place: 2, xp: 100 },
+        { place: 3, xp: 50 },
+      ];
+}
+
+function normalizeTournamentXpRows(rows, kind) {
+  const config = tournamentXpConfig(kind);
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => {
+      const left = Number(row?.[config.key]);
+      const xp = Number(row?.xp);
+      if (!Number.isFinite(left) || !Number.isFinite(xp)) return null;
+      return { [config.key]: left, xp };
+    })
+    .filter(Boolean);
+}
+
+function parseTournamentXpTextarea(textarea, kind) {
+  const raw = String(textarea?.value || '').trim();
+  if (!raw) return [];
+  const parsed = readJsonField(raw);
+  return normalizeTournamentXpRows(parsed, kind);
+}
+
+function tournamentXpRowHtml(kind, row = {}) {
+  const config = tournamentXpConfig(kind);
+  return `
+    <div data-tournament-xp-row class="grid gap-2 rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-950/40 sm:grid-cols-[1fr_1fr_auto]">
+      <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        ${tournamentEscape(config.keyLabel)}
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value="${tournamentEscape(row?.[config.key] ?? '')}"
+          data-tournament-xp-field="${tournamentEscape(config.key)}"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
+      <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        ${tournamentEscape(config.valueLabel)}
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value="${tournamentEscape(row?.xp ?? '')}"
+          data-tournament-xp-field="xp"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
+      <button
+        type="button"
+        data-tournament-xp-remove
+        class="self-end rounded-lg border border-zinc-200/80 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10"
+      >
+        Remove
+      </button>
+    </div>`;
+}
+
+function syncTournamentXpGroup(group) {
+  const form = group?.closest?.('form');
+  const textarea = form?.querySelector?.(`textarea[name="${CSS.escape(group.dataset.tournamentXpTarget || '')}"]`);
+  if (!textarea) return;
+
+  const config = tournamentXpConfig(group.dataset.tournamentXpKind || 'placement');
+  const rows = Array.from(group.querySelectorAll('[data-tournament-xp-row]'))
+    .map((row) => {
+      const left = row.querySelector(`[data-tournament-xp-field="${CSS.escape(config.key)}"]`)?.value;
+      const xp = row.querySelector('[data-tournament-xp-field="xp"]')?.value;
+      if (left === '' && xp === '') return null;
+      const leftNumber = Number(left);
+      const xpNumber = Number(xp);
+      if (!Number.isFinite(leftNumber) || !Number.isFinite(xpNumber)) return null;
+      return { [config.key]: leftNumber, xp: xpNumber };
+    })
+    .filter(Boolean);
+
+  textarea.value = rows.length ? JSON.stringify(rows, null, 2) : '';
+}
+
+function setTournamentXpGroupRows(formOrGroup, targetName, rows) {
+  const form = formOrGroup?.matches?.('form') ? formOrGroup : formOrGroup?.closest?.('form');
+  const group =
+    formOrGroup?.matches?.('[data-tournament-xp-group]') && formOrGroup.dataset.tournamentXpTarget === targetName
+      ? formOrGroup
+      : form?.querySelector?.(`[data-tournament-xp-group][data-tournament-xp-target="${CSS.escape(targetName)}"]`);
+  const textarea = form?.querySelector?.(`textarea[name="${CSS.escape(targetName)}"]`);
+  const kind = targetName === 'streak_xp_json' ? 'streak' : 'placement';
+  const normalized = normalizeTournamentXpRows(rows, kind);
+
+  if (group) {
+    const rowMount = group.querySelector('[data-tournament-xp-rows]');
+    if (rowMount) {
+      rowMount.innerHTML = normalized
+        .map((row) => tournamentXpRowHtml(kind, row))
+        .join('');
+    }
+    syncTournamentXpGroup(group);
+  } else if (textarea) {
+    textarea.value = normalized.length ? JSON.stringify(normalized, null, 2) : '';
+  }
+}
+
+function initTournamentXpRepeaters(root = document) {
+  root.querySelectorAll('textarea[name="placement_xp_json"], textarea[name="streak_xp_json"]').forEach((textarea) => {
+    if (textarea.dataset.tournamentXpEnhanced === '1') return;
+    textarea.dataset.tournamentXpEnhanced = '1';
+
+    const kind = textarea.name === 'streak_xp_json' ? 'streak' : 'placement';
+    const config = tournamentXpConfig(kind);
+    const group = document.createElement('div');
+    group.dataset.tournamentXpGroup = '1';
+    group.dataset.tournamentXpTarget = textarea.name;
+    group.dataset.tournamentXpKind = kind;
+    group.className = 'space-y-2';
+    group.innerHTML = `
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${tournamentEscape(config.keyLabel)} / XP</div>
+          <div class="text-xs text-zinc-500 dark:text-zinc-400">Rows are converted to ${tournamentEscape(textarea.name)} automatically.</div>
+        </div>
+        <button
+          type="button"
+          data-tournament-xp-add
+          class="rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10"
+        >
+          ${tournamentEscape(config.addLabel)}
+        </button>
+      </div>
+      <div data-tournament-xp-rows class="space-y-2"></div>
+    `;
+
+    textarea.classList.add('hidden');
+    textarea.setAttribute('aria-hidden', 'true');
+    const label = textarea.closest('label');
+    const anchor = label || textarea;
+    anchor.parentNode.insertBefore(group, anchor);
+    if (label) label.classList.add('hidden');
+
+    const initialRows = parseTournamentXpTextarea(textarea, kind);
+    const defaults = textarea.closest('form')?.dataset?.action === 'tournament-category-create'
+      ? tournamentDefaultXpRows(kind)
+      : [];
+    setTournamentXpGroupRows(group, textarea.name, initialRows.length ? initialRows : defaults);
+  });
+
+  if (root.dataset?.tournamentXpBound === '1') return;
+  if (root.dataset) root.dataset.tournamentXpBound = '1';
+
+  root.addEventListener('click', (event) => {
+    const add = event.target?.closest?.('[data-tournament-xp-add]');
+    if (add) {
+      event.preventDefault();
+      const group = add.closest('[data-tournament-xp-group]');
+      const rows = group?.querySelector('[data-tournament-xp-rows]');
+      if (!group || !rows) return;
+      rows.insertAdjacentHTML('beforeend', tournamentXpRowHtml(group.dataset.tournamentXpKind || 'placement', {}));
+      syncTournamentXpGroup(group);
+      return;
+    }
+
+    const remove = event.target?.closest?.('[data-tournament-xp-remove]');
+    if (remove) {
+      event.preventDefault();
+      const group = remove.closest('[data-tournament-xp-group]');
+      remove.closest('[data-tournament-xp-row]')?.remove();
+      syncTournamentXpGroup(group);
+    }
+  });
+
+  root.addEventListener('input', (event) => {
+    const field = event.target?.closest?.('[data-tournament-xp-field]');
+    if (!field) return;
+    syncTournamentXpGroup(field.closest('[data-tournament-xp-group]'));
+  });
+}
+
+function syncTournamentXpRepeaters(form) {
+  form?.querySelectorAll?.('[data-tournament-xp-group]').forEach(syncTournamentXpGroup);
+}
+
+function setTournamentCategoryCache(categories) {
+  __modTournamentCategoryCache = normalizeTournamentCategories(categories);
+  enhanceTournamentCategoryInputs(document);
+  enhanceTournamentNativeSelects(document);
+  syncTournamentCategoryPickers();
+  syncTournamentCategoryDatalist();
+  renderTournamentCategoryCards();
+  updateTournamentCategoryCount();
+}
+
+function upsertTournamentCategory(category) {
+  if (!category || category.id == null) return;
+  const normalized = normalizeTournamentCategories([category])[0];
+  if (!normalized) return;
+  const idx = __modTournamentCategoryCache.findIndex((item) => String(item.id) === String(normalized.id));
+  if (idx >= 0) __modTournamentCategoryCache[idx] = normalized;
+  else __modTournamentCategoryCache.push(normalized);
+  setTournamentCategoryCache(__modTournamentCategoryCache);
+}
+
+function removeTournamentCategoryFromCache(categoryId) {
+  __modTournamentCategoryCache = __modTournamentCategoryCache.filter(
+    (item) => String(item.id) !== String(categoryId)
+  );
+  setTournamentCategoryCache(__modTournamentCategoryCache);
+}
+
+function fillTournamentCategoryFormFromItem(form, category) {
+  if (!form || !category) return;
+
+  setInputValue(form, 'category_id', category.id);
+  setInputValue(form, 'name', category.name ?? '');
+  setInputValue(form, 'participation_xp', category.participation_xp ?? '');
+  setInputValue(form, 'champion_role_id', category.champion_role_id ?? '');
+  setInputValue(form, 'is_active', category.is_active === true ? '1' : category.is_active === false ? '0' : '');
+  setTournamentXpGroupRows(form, 'placement_xp_json', category.placement_xp ?? []);
+  setTournamentXpGroupRows(form, 'streak_xp_json', category.streak_xp ?? []);
+
+  const selectedDifficulties = new Set((category.difficulties || []).map((value) => String(value)));
+  form.querySelectorAll('input[type="checkbox"][name="difficulties[]"]').forEach((input) => {
+    input.checked = selectedDifficulties.has(String(input.value));
+  });
+}
+
+function fillTournamentCategoryCreateDefaults(form) {
+  if (!form) return;
+  if (!form.querySelector('[name="participation_xp"]')?.value) {
+    setInputValue(form, 'participation_xp', 50);
+  }
+  const placement = form.querySelector('[name="placement_xp_json"]');
+  if (placement && !placement.value.trim()) {
+    setTournamentXpGroupRows(form, 'placement_xp_json', tournamentDefaultXpRows('placement'));
+  }
+  const streak = form.querySelector('[name="streak_xp_json"]');
+  if (streak && !streak.value.trim()) {
+    setTournamentXpGroupRows(form, 'streak_xp_json', tournamentDefaultXpRows('streak'));
+  }
+}
+
+function applyTournamentCategorySelection(scope, category, { showToast = true } = {}) {
+  if (!category) return;
+  const panel = scope?.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]') || document;
+  const id = String(category.id);
+
+  panel.querySelectorAll('input[name="category_id"], select[name="category_id"]').forEach((field) => {
+    field.value = id;
+    if (field.tagName === 'SELECT') movementTechSyncDdField(field);
+  });
+
+  panel.querySelectorAll('[data-tournament-category-picker] select[name]').forEach((select) => {
+    select.value = id;
+    movementTechSyncDdField(select);
+  });
+
+  fillTournamentCategoryFormFromItem(
+    panel.querySelector('form[data-action="tournament-category-update"]'),
+    category
+  );
+
+  const deleteInput = panel.querySelector('form[data-action="tournament-category-delete"] [name="category_id"]');
+  if (deleteInput) deleteInput.value = id;
+
+  if (showToast) toast(`Category ${category.name || `#${id}`} loaded`, 'ok');
+}
+
+async function loadTournamentCategories({ form = null, silent = false, force = false } = {}) {
+  if (__modTournamentCategoryCache.length && !force) {
+    setTournamentCategoryCache(__modTournamentCategoryCache);
+    return { ok: true, status: 200, data: __modTournamentCategoryCache, fromCache: true };
+  }
+
+  if (form && !silent) setPanelOut(form, 'tournament-categories-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/categories`);
+
+  if (!silent) {
+    logActivity({
+      title: 'Tournament Categories (GET)',
+      method: 'GET',
+      url: res.url || `${API_TOURNAMENTS}/categories`,
+      ok: res.ok,
+      status: res.status,
+      data: res.data,
+    });
+  }
+
+  if (res.ok) {
+    setTournamentCategoryCache(res.data);
+    if (form && !silent) setPanelOut(form, 'tournament-categories-res', res.data);
+    if (!silent) toast('Tournament categories loaded', 'ok');
+  } else {
+    if (form && !silent) setPanelOut(form, 'tournament-categories-res', res.data ?? 'Request failed');
+    toast('Failed to load tournament categories', 'err');
+  }
+
+  return res;
+}
+
+function renderTournamentOverview(form, payload) {
+  const root =
+    form?.closest?.('[data-subpanel="tournament-overview"]')?.querySelector?.('[data-tournament-overview-view]') ||
+    document.querySelector('[data-tournament-overview-view]');
+  if (!root) return;
+
+  const config = payload?.config && typeof payload.config === 'object' ? payload.config : {};
+  const categories = normalizeTournamentCategories(payload?.categories);
+  const edition = payload?.active_edition && typeof payload.active_edition === 'object' ? payload.active_edition : {};
+  const activeCycles = Array.isArray(payload?.active_cycles) ? payload.active_cycles : [];
+  const paused = config.transitions_paused === true;
+  const anchor = [config.anchor_weekday != null ? `weekday ${config.anchor_weekday}` : '', config.anchor_time, config.anchor_tz]
+    .filter(Boolean)
+    .join(' - ') || '-';
+
+  const categoryCards = categories.length
+    ? categories
+        .map((category) => `
+          <article class="rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-900/55">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="truncate font-black">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</div>
+                <div class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(category.difficulties.join(', ') || '-')}</div>
+              </div>
+              ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+            </div>
+            <div class="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+              <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Participation <strong>${tournamentEscape(category.participation_xp ?? '-')}</strong></div>
+              <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Placement <strong>${tournamentEscape(tournamentXpSummary(category.placement_xp, 'place', 'xp'))}</strong></div>
+              <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Streak <strong>${tournamentEscape(tournamentXpSummary(category.streak_xp, 'threshold', 'xp'))}</strong></div>
+            </div>
+          </article>`)
+        .join('')
+    : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No categories returned.</div>';
+
+  const cycleCards = activeCycles.length
+    ? activeCycles
+        .map((entry) => {
+          const cycle = entry?.cycle || {};
+          return `
+            <article class="rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-900/55">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="truncate text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">${tournamentEscape(entry?.category_name || `Category #${entry?.category_id ?? '-'}`)}</div>
+                  <div class="mt-1 truncate text-base font-black">${tournamentEscape(cycle.map_name || 'No active map')}</div>
+                </div>
+                ${tournamentStatusPill(cycle.status || entry?.response_status || '-')}
+              </div>
+              <dl class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Code</dt><dd class="font-mono font-semibold">${tournamentEscape(cycle.map_code || '-')}</dd></div>
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Difficulty</dt><dd class="font-semibold">${tournamentEscape(cycle.map_difficulty || '-')}</dd></div>
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Started</dt><dd class="font-semibold">${tournamentEscape(tournamentFormatDate(cycle.started_at))}</dd></div>
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Winner</dt><dd class="truncate font-semibold">${tournamentEscape(cycle.winner_name || cycle.winner_user_id || '-')}</dd></div>
+              </dl>
+            </article>`;
+        })
+        .join('')
+    : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No active cycles returned.</div>';
+
+  root.innerHTML = `
+    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Edition</div>
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <div class="font-black">${tournamentEscape(edition.status || '-')}</div>
+          ${tournamentStatusPill(edition.status || '-')}
+        </div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(tournamentFormatDate(edition.started_at))} -> ${tournamentEscape(tournamentFormatDate(edition.ends_at))}</div>
+      </section>
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Cadence</div>
+        <div class="mt-2 font-black">${tournamentEscape(config.cadence || '-')}</div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(anchor)}</div>
+      </section>
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Transitions</div>
+        <div class="mt-2">${tournamentStatusPill(paused ? 'paused' : 'running')}</div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Debug: ${tournamentEscape(config.debug_cycle_seconds ?? '-')}</div>
+      </section>
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Categories</div>
+        <div class="mt-2 font-black">${tournamentEscape(categories.length)}</div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Blacklist: ${tournamentEscape(config.blacklist_weeks ?? '-')} weeks</div>
+      </section>
+    </div>
+
+    <section class="mt-4">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h4 class="font-semibold">Active cycles</h4>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(activeCycles.length)} live rows</span>
+      </div>
+      <div class="grid gap-3 xl:grid-cols-2">${cycleCards}</div>
+    </section>
+
+    <section class="mt-4">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h4 class="font-semibold">Categories</h4>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(categories.length)} configured</span>
+      </div>
+      <div class="grid gap-3 xl:grid-cols-2">${categoryCards}</div>
+    </section>
+  `;
+  root.classList.remove('hidden');
+}
+
+function fillTournamentLifecycleFormsFromOverview(form, payload) {
+  const panel = form?.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]') || document;
+  const config = payload?.config && typeof payload.config === 'object' ? payload.config : null;
+  if (!config) return;
+
+  fillTournamentConfigForm(panel.querySelector('form[data-action="tournament-config-update"]'), config);
+  const pauseSelect = panel.querySelector('form[data-action="tournament-pause"] select[name="paused"]');
+  if (pauseSelect) {
+    pauseSelect.value = config.transitions_paused === true ? '1' : '0';
+    movementTechSyncDdField(pauseSelect);
+  }
+  const debugSeconds = panel.querySelector('form[data-action="tournament-debug-cycle-length"] input[name="seconds"]');
+  if (debugSeconds) debugSeconds.value = config.debug_cycle_seconds ?? '';
+}
+
+async function handleTournamentOverview(form, { silent = false } = {}) {
   setPanelOut(form, 'tournament-overview', 'Loading...');
 
   const [config, categories, edition] = await Promise.all([
@@ -8939,6 +9694,10 @@ async function handleTournamentOverview(form) {
     active_cycles: activeCycles,
   };
 
+  if (categories.ok) setTournamentCategoryCache(categories.data);
+  renderTournamentOverview(form, payload);
+  fillTournamentLifecycleFormsFromOverview(form, payload);
+
   logActivity({
     title: 'Tournament Overview',
     method: 'GET',
@@ -8948,7 +9707,7 @@ async function handleTournamentOverview(form) {
     data: payload,
   });
   setPanelOut(form, 'tournament-overview', payload);
-  toast('Tournament overview loaded', config.ok && categories.ok ? 'ok' : 'err');
+  if (!silent) toast('Tournament overview loaded', config.ok && categories.ok ? 'ok' : 'err');
 }
 
 async function handleTournamentConfigGet(form) {
@@ -8967,9 +9726,7 @@ async function handleTournamentConfigUpdate(form) {
 }
 
 async function handleTournamentCategoryList(form) {
-  setPanelOut(form, 'tournament-categories-res', 'Loading...');
-  const res = await http('GET', `${API_TOURNAMENTS}/categories`);
-  tournamentLogAndOut(form, 'tournament-categories-res', 'Tournament Categories (GET)', 'GET', res, `${API_TOURNAMENTS}/categories`);
+  return loadTournamentCategories({ form, silent: false, force: true });
 }
 
 async function handleTournamentCategoryGet(form) {
@@ -8979,6 +9736,10 @@ async function handleTournamentCategoryGet(form) {
   const url = `${API_TOURNAMENTS}/categories/${encodeURIComponent(id)}`;
   const res = await http('GET', url);
   tournamentLogAndOut(form, 'tournament-categories-res', `Tournament Category #${id} (GET)`, 'GET', res, url);
+  if (res.ok) {
+    upsertTournamentCategory(res.data);
+    applyTournamentCategorySelection(form, res.data);
+  }
 }
 
 async function handleTournamentCategoryCreate(form) {
@@ -8987,6 +9748,11 @@ async function handleTournamentCategoryCreate(form) {
   setPanelOut(form, 'tournament-category-create-res', 'Creating...');
   const res = await http('POST', `${API_TOURNAMENTS_MODS}/categories`, { body: payload });
   tournamentLogAndOut(form, 'tournament-category-create-res', 'Create Tournament Category (POST)', 'POST', res, `${API_TOURNAMENTS_MODS}/categories`);
+  if (res.ok) {
+    upsertTournamentCategory(res.data);
+    const panel = form.closest?.('[data-subpanel="tournament-categories"]') || document;
+    applyTournamentCategorySelection(panel, res.data, { showToast: false });
+  }
 }
 
 async function handleTournamentCategoryUpdate(form) {
@@ -8998,6 +9764,10 @@ async function handleTournamentCategoryUpdate(form) {
   const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}`;
   const res = await http('PATCH', url, { body: payload });
   tournamentLogAndOut(form, 'tournament-category-update-res', `Update Tournament Category #${id} (PATCH)`, 'PATCH', res, url);
+  if (res.ok) {
+    upsertTournamentCategory(res.data);
+    applyTournamentCategorySelection(form, res.data, { showToast: false });
+  }
 }
 
 async function handleTournamentCategoryDelete(form) {
@@ -9007,6 +9777,10 @@ async function handleTournamentCategoryDelete(form) {
   const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}`;
   const res = await http('DELETE', url);
   tournamentLogAndOut(form, 'tournament-category-delete-res', `Delete Tournament Category #${id} (DELETE)`, 'DELETE', res, url);
+  if (res.ok) {
+    removeTournamentCategoryFromCache(id);
+    resetEnhancedForm(form);
+  }
 }
 
 async function handleTournamentNextCycle(form) {
@@ -9126,6 +9900,83 @@ async function handleTournamentDebugCycleLength(form) {
   setPanelOut(form, 'tournament-lifecycle-res', 'Saving...');
   const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/debug-cycle-length`, { body });
   tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Debug Cycle Length (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/debug-cycle-length`);
+}
+
+function initTournamentOverviewPanel() {
+  const panel = document.querySelector('[data-subpanel="tournament-overview"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  const form = panel.querySelector('form[data-action="tournament-load-overview"]');
+  if (form) {
+    handleTournamentOverview(form, { silent: true });
+  }
+}
+
+function initTournamentCategoryPanel() {
+  const panel = document.querySelector('[data-subpanel="tournament-categories"]');
+  if (!panel) return;
+
+  enhanceTournamentCategoryInputs(panel);
+  enhanceTournamentNativeSelects(panel);
+  initTournamentXpRepeaters(panel);
+
+  if (panel.dataset.inited !== '1') {
+    panel.dataset.inited = '1';
+
+    panel.addEventListener('change', (event) => {
+      const select = event.target?.closest?.('select[name="category_pick_update"]');
+      if (!select) return;
+      const category = __modTournamentCategoryCache.find((item) => String(item.id) === String(select.value));
+      if (category) applyTournamentCategorySelection(panel, category);
+    });
+
+    panel.addEventListener('click', (event) => {
+      const card = event.target?.closest?.('[data-tournament-category-card][data-tournament-category-id]');
+      if (!card) return;
+      event.preventDefault();
+      const category = __modTournamentCategoryCache.find(
+        (item) => String(item.id) === String(card.dataset.tournamentCategoryId)
+      );
+      if (category) applyTournamentCategorySelection(panel, category);
+    });
+
+    const categoryIdInput = panel.querySelector('form[data-action="tournament-category-update"] [name="category_id"]');
+    const syncFromInput = () => {
+      const value = String(categoryIdInput?.value ?? '').trim();
+      if (!value) return;
+      const category = __modTournamentCategoryCache.find((item) => String(item.id) === value);
+      const picker = panel.querySelector('select[name="category_pick_update"]');
+      if (picker) {
+        picker.value = category ? value : '';
+        movementTechSyncDdField(picker);
+      }
+      if (category) applyTournamentCategorySelection(panel, category, { showToast: false });
+    };
+    categoryIdInput?.addEventListener('change', syncFromInput);
+    categoryIdInput?.addEventListener('blur', syncFromInput);
+  }
+
+  fillTournamentCategoryCreateDefaults(panel.querySelector('form[data-action="tournament-category-create"]'));
+  syncTournamentCategoryDatalist();
+  syncTournamentCategoryPickers();
+  renderTournamentCategoryCards();
+  updateTournamentCategoryCount();
+
+  const form = panel.querySelector('form[data-action="tournament-category-list"]');
+  loadTournamentCategories({ form, silent: true });
+}
+
+function initTournamentHelperPanel(name) {
+  const panel = document.querySelector(`[data-subpanel="${CSS.escape(name)}"]`);
+  if (!panel) return;
+  enhanceTournamentCategoryInputs(panel);
+  enhanceTournamentNativeSelects(panel);
+  syncTournamentCategoryDatalist();
+  syncTournamentCategoryPickers();
+  if (!__modTournamentCategoryCache.length) {
+    loadTournamentCategories({ silent: true });
+  }
 }
 
 async function handleStoreGetConfig(form) {

@@ -39,6 +39,24 @@ const state = {
 const i18n = window.TOURNAMENTS_I18N || {};
 
 const $ = (selector, root = document) => root.querySelector(selector);
+const TOURNAMENTS_CSP_NONCE = document.querySelector('meta[name="csp-nonce"]')?.content || '';
+const tournamentDynamicStyle = (() => {
+  const el = document.createElement('style');
+  if (TOURNAMENTS_CSP_NONCE) el.setAttribute('nonce', TOURNAMENTS_CSP_NONCE);
+  document.head.appendChild(el);
+  return el;
+})();
+const tournamentDynamicSheet = tournamentDynamicStyle.sheet;
+const tournamentDynamicRules = new Set();
+
+const DIFFICULTY_COLORS = {
+  Easy: '#cdff3a',
+  Medium: '#fbdf00',
+  Hard: '#ff9700',
+  'Very Hard': '#ff4500',
+  Extreme: '#ff0000',
+  Hell: '#9a0000',
+};
 
 function t(path, fallback = path) {
   return path.split('.').reduce((value, key) => value?.[key], i18n) ?? fallback;
@@ -61,6 +79,62 @@ function qs(params = {}) {
     }
   });
   return out.toString();
+}
+
+function addTournamentDynamicRule(selector, body) {
+  const key = `${selector}{${body}}`;
+  if (tournamentDynamicRules.has(key)) return;
+  try {
+    tournamentDynamicSheet.insertRule(key, tournamentDynamicSheet.cssRules.length);
+    tournamentDynamicRules.add(key);
+  } catch {}
+}
+
+function normalizeDifficulty(value) {
+  return String(value || '')
+    .replace(/\s*[+-]$/, '')
+    .trim();
+}
+
+function difficultyColor(value) {
+  const normalized = normalizeDifficulty(value).toLowerCase();
+  const key = Object.keys(DIFFICULTY_COLORS).find((item) => item.toLowerCase() === normalized);
+  return key ? DIFFICULTY_COLORS[key] : '';
+}
+
+const difficultyColorClassCache = new Map();
+
+function difficultyColorClass(value) {
+  const hex = difficultyColor(value);
+  if (!hex) return 'text-zinc-500 dark:text-zinc-400';
+
+  const safe = hex.toLowerCase().replace(/[^a-f0-9]/g, '') || 'default';
+  if (!difficultyColorClassCache.has(safe)) {
+    const cls = `tournament-difficulty-${safe}`;
+    addTournamentDynamicRule(`.${cls}`, `color:${hex}!important`);
+    difficultyColorClassCache.set(safe, cls);
+  }
+
+  return difficultyColorClassCache.get(safe);
+}
+
+function difficultyLabelHtml(value, className = '') {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const classes = [className, difficultyColorClass(text)].filter(Boolean).join(' ');
+  return `<span class="${classes}">${esc(text)}</span>`;
+}
+
+function difficultyListHtml(value, className = '') {
+  const list = normalizeStringList(value);
+  if (!list.length) return '';
+
+  return list
+    .map((item, index) => {
+      const separator = index < list.length - 1 ? '<span class="text-zinc-400 dark:text-zinc-500">, </span>' : '';
+      return `${difficultyLabelHtml(item, className)}${separator}`;
+    })
+    .join('');
 }
 
 async function api(path, params = {}) {
@@ -255,6 +329,107 @@ function mapBannerSrc(name) {
   });
 }
 
+function mapBannerImageHtml(name, className = '') {
+  return `
+    <img
+      src="${esc(mapBannerSrc(name))}"
+      alt=""
+      class="${className}"
+      loading="lazy"
+      decoding="async"
+      data-map-banner
+    />
+  `;
+}
+
+function bindMapBannerFallbacks(root = document) {
+  root.querySelectorAll('img[data-map-banner]:not([data-map-banner-bound])').forEach((img) => {
+    img.dataset.mapBannerBound = '1';
+    img.addEventListener(
+      'error',
+      () => {
+        img.removeAttribute('src');
+        img.classList.add('hidden');
+        img.closest('[data-map-banner-host]')?.classList.add('bg-zinc-100', 'dark:bg-zinc-900');
+      },
+      { once: true }
+    );
+  });
+}
+
+function cycleMapCaptionHtml(cycle) {
+  const category = cycle?.category_id ? categoryName(cycle.category_id) : '';
+  const difficulty = cycle?.map_difficulty || '';
+
+  if (!category && !difficulty) return esc(t('table.map', 'Map'));
+
+  return [
+    category ? `<span class="text-zinc-500 dark:text-zinc-400">${esc(category)}</span>` : '',
+    category && difficulty ? '<span class="text-zinc-400 dark:text-zinc-500"> / </span>' : '',
+    difficulty ? difficultyLabelHtml(difficulty, 'font-black') : '',
+  ].join('');
+}
+
+function mapBannerPanelHtml(cycle, { compact = false } = {}) {
+  if (!cycle) return '';
+  const minHeight = compact ? 'min-h-[92px]' : 'min-h-[132px]';
+  const mapName = cycle.map_name || 'Unknown map';
+  const mapCode = cycle.map_code || '';
+
+  return `
+    <article data-map-banner-host class="relative overflow-hidden rounded-xl border border-zinc-200/80 bg-zinc-100 ${minHeight} dark:border-white/10 dark:bg-zinc-950/50">
+      ${mapBannerImageHtml(mapName, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-[0.9] dark:opacity-35')}
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/50 dark:from-zinc-950/95 dark:via-zinc-950/75 dark:to-zinc-950/45"></div>
+      <div class="relative z-10 flex h-full flex-col justify-end gap-3 p-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0">
+          <p class="truncate text-xs font-black uppercase tracking-wide">${cycleMapCaptionHtml(cycle)}</p>
+          <h3 class="mt-1 truncate text-xl font-black text-zinc-950 dark:text-white">${esc(mapName)}</h3>
+          ${
+            mapCode
+              ? `<p class="mt-1 inline-flex rounded-md bg-zinc-950 px-2 py-1 font-mono text-xs font-black text-white dark:bg-black/60">${esc(mapCode)}</p>`
+              : ''
+          }
+        </div>
+        ${
+          cycle.winner_name
+            ? `<p class="rounded-lg border border-zinc-200/80 bg-white/75 px-3 py-2 text-xs font-semibold text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200">${esc(t('table.winner', 'Winner'))}: <span class="font-black">${esc(cycle.winner_name)}</span></p>`
+            : ''
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderLeaderboardMapBanner(cycle) {
+  const root = $('#tournamentLeaderboardMapBanner');
+  if (!root) return;
+
+  if (!cycle) {
+    root.classList.add('hidden');
+    root.innerHTML = '';
+    return;
+  }
+
+  root.innerHTML = mapBannerPanelHtml(cycle, { compact: true });
+  root.classList.remove('hidden');
+  bindMapBannerFallbacks(root);
+}
+
+function renderHistoryModalBanner(cycle) {
+  const root = $('#tournamentHistoryModalBanner');
+  if (!root) return;
+
+  if (!cycle) {
+    root.classList.add('hidden');
+    root.innerHTML = '';
+    return;
+  }
+
+  root.innerHTML = mapBannerPanelHtml(cycle);
+  root.classList.remove('hidden');
+  bindMapBannerFallbacks(root);
+}
+
 function normalizeMapRows(data) {
   if (Array.isArray(data?.results)) return data.results;
   if (Array.isArray(data?.data)) return data.data;
@@ -388,7 +563,7 @@ function pillListHtml(items) {
   return list
     .map(
       (item) => `
-        <span class="inline-flex items-center rounded-full border border-zinc-200/80 bg-white/70 px-2.5 py-1 text-xs font-semibold text-zinc-800 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100">
+        <span class="inline-flex items-center rounded-full border border-zinc-200/80 bg-white/35 px-2.5 py-1 text-[11px] font-semibold leading-none text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-zinc-900/3 dark:bg-white/10 dark:text-white/85">
           ${esc(item)}
         </span>
       `
@@ -399,8 +574,17 @@ function pillListHtml(items) {
 function detailRow(label, value) {
   return `
     <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
-      <dt class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${esc(label)}</dt>
-      <dd class="min-w-0 break-words text-sm font-black text-zinc-900 dark:text-zinc-100">${esc(value || '-')}</dd>
+      <dt class="text-xs text-zinc-900 dark:text-white/60">${esc(label)}</dt>
+      <dd class="min-w-0 break-words text-sm font-medium text-zinc-900 dark:text-white/90">${esc(value || '-')}</dd>
+    </div>
+  `;
+}
+
+function detailRowHtml(label, html) {
+  return `
+    <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+      <dt class="text-xs text-zinc-900 dark:text-white/60">${esc(label)}</dt>
+      <dd class="min-w-0 break-words text-sm font-medium">${html || '-'}</dd>
     </div>
   `;
 }
@@ -456,9 +640,9 @@ function renderTournamentMapModal(row, cycle, category, { loading = false, faile
   const completedChip = $('#tournamentMapModalCompleted', overlay);
   if (completedChip) {
     completedChip.className = completed
-      ? 'inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-500/30 dark:text-emerald-200'
-      : 'inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:text-zinc-200 dark:ring-white/15';
-    completedChip.innerHTML = `<span class="h-2 w-2 rounded-full ${completed ? 'bg-emerald-500' : 'bg-zinc-400'}"></span>${esc(completed ? t('labels.completed', 'Completed') : t('labels.not_completed', 'Not completed'))}`;
+      ? 'inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-300 ring-1 ring-emerald-400/30'
+      : 'inline-flex items-center gap-2 rounded-full bg-white/35 px-3 py-1 text-sm font-medium text-zinc-900 ring-1 ring-zinc-300/60 dark:bg-zinc-900/5 dark:bg-white/10 dark:text-white/80 dark:ring-white/15';
+    completedChip.innerHTML = `<span class="h-2 w-2 rounded-full ${completed ? 'bg-emerald-400' : 'bg-white/60'}"></span>${esc(completed ? t('labels.completed', 'Completed') : t('labels.not_completed', 'Not completed'))}`;
   }
 
   if (cover) {
@@ -504,7 +688,7 @@ function renderTournamentMapModal(row, cycle, category, { loading = false, faile
       detailRow(t('labels.checkpoints', 'Checkpoints'), formatNumber(row.checkpoints ?? row.checkpoint_count ?? row.cp_count)),
       detailRow(t('labels.upvotes', 'Upvotes'), formatNumber(row.upvotes)),
       detailRow(t('labels.map_type', 'Type'), typeText || '-'),
-      detailRow(t('labels.map_difficulty', 'Difficulty'), difficulty),
+      detailRowHtml(t('labels.map_difficulty', 'Difficulty'), difficultyLabelHtml(difficulty, 'font-black') || '-'),
       detailRow(t('labels.map_status', 'Status'), statusText),
       detailRow(t('labels.quality', 'Quality'), qualityRaw != null ? qualityStars(qualityRaw) : '-'),
     ].join('');
@@ -537,25 +721,25 @@ function ensureTournamentMapModal() {
     >
       <div
         id="tournamentMapModalShell"
-        class="mx-4 w-[min(96vw,1080px)] max-h-[calc(100dvh-2rem)] rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/25 to-emerald-400/20 p-px opacity-0 shadow-2xl ring-1 ring-zinc-300/60 transition-all duration-200 dark:ring-white/10 translate-y-3"
+        class="mx-4 w-[min(96vw,1080px)] max-h-[calc(100dvh-2rem)] rounded-3xl bg-gradient-to-tr from-white/25 via-indigo-400/30 p-px opacity-0 shadow-2xl ring-1 ring-zinc-300/60 transition-all duration-200 dark:ring-white/10 translate-y-3"
       >
         <div
           id="tournamentMapModalBox"
-          class="relative max-h-[calc(100dvh-2rem)] overflow-y-auto overflow-x-hidden rounded-3xl bg-white/95 text-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:bg-zinc-800/95 dark:text-zinc-100 dark:ring-white/10"
+          class="relative min-h-0 sm:min-h-[640px] max-h-[calc(100dvh-2rem)] overflow-y-auto overflow-x-hidden rounded-3xl bg-white/90 text-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:bg-zinc-900/90 dark:text-zinc-100 dark:ring-white/10"
         >
           <div class="relative h-56 overflow-hidden rounded-t-3xl">
-            <img id="tournamentMapModalCover" alt="" class="absolute inset-0 h-full w-full object-cover opacity-85" />
-            <div class="absolute inset-0 bg-gradient-to-b from-black/35 via-black/20 to-zinc-950/85"></div>
-            <div class="absolute left-0 right-0 top-0 flex items-start justify-between gap-3 p-4">
+            <img id="tournamentMapModalCover" alt="" class="absolute inset-0 block h-full w-full min-w-full max-w-none object-cover opacity-80" />
+            <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-zinc-900/80"></div>
+            <div class="absolute left-0 right-0 top-0 flex items-center justify-between gap-3 p-4">
               <span id="tournamentMapModalCompleted"></span>
               <button
                 id="tournamentMapModalClose"
                 type="button"
-                class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-black/35 text-white transition hover:bg-black/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                class="group inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-zinc-900/7 text-zinc-900 ring-1 ring-zinc-300/60 transition hover:bg-black/60 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 dark:bg-black/40 dark:text-white/85 dark:ring-white/15 dark:hover:text-white"
                 aria-label="${esc(t('buttons.close', 'Close'))}"
               >
-                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M4.28 4.28a.75.75 0 0 1 1.06 0L10 8.94l4.66-4.66a.75.75 0 1 1 1.06 1.06L11.06 10l4.66 4.66a.75.75 0 0 1-1.06 1.06L10 11.06l-4.66 4.66a.75.75 0 0 1-1.06-1.06L8.94 10 4.28 5.34a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-zinc-900 group-hover:text-zinc-900 dark:text-white/85 dark:group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
               </button>
             </div>
@@ -568,27 +752,32 @@ function ensureTournamentMapModal() {
 
           <div class="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-12">
             <div class="min-w-0 space-y-5 md:col-span-7">
-              <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+              <section class="rounded-2xl bg-white/85 p-3 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10 sm:p-4">
                 <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.map_code', 'Map code'))}</div>
-                    <div id="tournamentMapModalCode" class="mt-1 font-mono text-lg font-black">-</div>
+                    <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.map_code', 'Map code'))}</div>
+                    <div id="tournamentMapModalCode" class="mt-1 font-mono text-lg">-</div>
                   </div>
-                  <div class="flex flex-wrap gap-2">
+                  <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
                     <button
                       id="tournamentMapModalGuide"
                       type="button"
-                      class="hidden cursor-pointer items-center rounded-xl bg-indigo-100 px-3 py-2 text-sm font-black text-indigo-900 ring-1 ring-indigo-300 transition hover:bg-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-400/40 dark:hover:bg-indigo-500/25"
+                      class="hidden inline-flex cursor-pointer items-center rounded-xl bg-indigo-100 px-3 py-2 text-sm font-semibold text-indigo-900 ring-1 ring-indigo-300 transition-colors duration-150 hover:bg-indigo-200 hover:text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-400/40 dark:hover:bg-indigo-500/25 dark:hover:text-indigo-100 dark:focus:ring-indigo-400/60"
                       aria-disabled="true"
                     >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path d="M4 19.5V6a2 2 0 0 1 2-2h9.5A2.5 2.5 0 0 1 18 6.5V18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M4 8h10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M8 22l3-3-3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      </svg>
                       ${esc(t('buttons.guide', 'Guide'))}
                     </button>
                     <button
                       id="tournamentMapModalCopy"
                       type="button"
-                      class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-900 ring-1 ring-emerald-300 transition hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/40 dark:hover:bg-emerald-500/25"
+                      class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900 ring-1 ring-emerald-300 transition-colors duration-150 hover:bg-emerald-200 hover:text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-200 dark:focus:ring-emerald-400/60"
                     >
-                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <svg class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <rect x="9" y="9" width="13" height="13" rx="2" />
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                       </svg>
@@ -598,18 +787,18 @@ function ensureTournamentMapModal() {
                 </div>
               </section>
 
-              <section id="tournamentMapModalLinked" class="hidden rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
+              <section id="tournamentMapModalLinked" class="hidden rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10">
                 <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <div id="tournamentMapModalLinkedLabel" class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400"></div>
-                    <div id="tournamentMapModalLinkedCode" class="mt-1 font-mono text-sm font-black">-</div>
+                    <div id="tournamentMapModalLinkedLabel" class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60"></div>
+                    <div id="tournamentMapModalLinkedCode" class="mt-1 font-mono text-sm text-zinc-900 dark:text-white/90">-</div>
                   </div>
                   <button
                     id="tournamentMapModalLinkedCopy"
                     type="button"
-                    class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-900 ring-1 ring-emerald-300 transition hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/40 dark:hover:bg-emerald-500/25"
+                    class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
                   >
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <svg class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                       <rect x="9" y="9" width="13" height="13" rx="2" />
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                     </svg>
@@ -618,48 +807,48 @@ function ensureTournamentMapModal() {
                 </div>
               </section>
 
-              <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
-                <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.medals', 'Medals'))}</div>
+              <section class="rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.medals', 'Medals'))}</div>
                 <div class="mt-3 grid gap-3 sm:grid-cols-3">
-                  <div class="rounded-xl bg-yellow-400/15 p-3 ring-1 ring-yellow-500/30">
-                    <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">${esc(t('labels.gold', 'Gold'))}</div>
-                    <div id="tournamentMapModalMedalGold" class="mt-1 text-lg font-black">-</div>
+                  <div class="rounded-xl bg-yellow-500/10 p-3 ring-1 ring-yellow-400/30">
+                    <div class="text-xs text-zinc-900 dark:text-white/70">${esc(t('labels.gold', 'Gold'))}</div>
+                    <div id="tournamentMapModalMedalGold" class="text-lg font-semibold">-</div>
                   </div>
-                  <div class="rounded-xl bg-slate-300/20 p-3 ring-1 ring-slate-400/35">
-                    <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">${esc(t('labels.silver', 'Silver'))}</div>
-                    <div id="tournamentMapModalMedalSilver" class="mt-1 text-lg font-black">-</div>
+                  <div class="rounded-xl bg-slate-300/10 p-3 ring-1 ring-slate-300/30">
+                    <div class="text-xs text-zinc-900 dark:text-white/70">${esc(t('labels.silver', 'Silver'))}</div>
+                    <div id="tournamentMapModalMedalSilver" class="text-lg font-semibold">-</div>
                   </div>
-                  <div class="rounded-xl bg-orange-400/15 p-3 ring-1 ring-orange-500/30">
-                    <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">${esc(t('labels.bronze', 'Bronze'))}</div>
-                    <div id="tournamentMapModalMedalBronze" class="mt-1 text-lg font-black">-</div>
+                  <div class="rounded-xl bg-amber-700/10 p-3 ring-1 ring-amber-600/30">
+                    <div class="text-xs text-zinc-900 dark:text-white/70">${esc(t('labels.bronze', 'Bronze'))}</div>
+                    <div id="tournamentMapModalMedalBronze" class="text-lg font-semibold">-</div>
                   </div>
                 </div>
               </section>
 
-              <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
-                <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.description', 'Description'))}</div>
-                <p id="tournamentMapModalDescription" class="mt-2 leading-relaxed text-zinc-800 dark:text-zinc-100"></p>
+              <section class="rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.description', 'Description'))}</div>
+                <p id="tournamentMapModalDescription" class="mt-2 leading-relaxed text-zinc-900 dark:text-white/85"></p>
               </section>
 
               <div class="grid gap-4 sm:grid-cols-2">
-                <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
-                  <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.mechanics', 'Mechanics'))}</div>
+                <section class="rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10">
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.mechanics', 'Mechanics'))}</div>
                   <div id="tournamentMapModalMechanics" class="mt-2 flex flex-wrap gap-2"></div>
                 </section>
-                <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
-                  <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.restrictions', 'Restrictions'))}</div>
+                <section class="rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10">
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.restrictions', 'Restrictions'))}</div>
                   <div id="tournamentMapModalRestrictions" class="mt-2 flex flex-wrap gap-2"></div>
                 </section>
-                <section class="rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10 sm:col-span-2">
-                  <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.tags', 'Tags'))}</div>
+                <section class="rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10 sm:col-span-2">
+                  <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.tags', 'Tags'))}</div>
                   <div id="tournamentMapModalTags" class="mt-2 flex flex-wrap gap-2"></div>
                 </section>
               </div>
             </div>
 
             <aside class="min-w-0 md:col-span-5">
-              <section class="sticky top-4 rounded-2xl bg-white/90 p-4 ring-1 ring-zinc-300/60 dark:bg-white/10 dark:ring-white/10">
-                <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">${esc(t('labels.map_details', 'Map details'))}</div>
+              <section class="sticky top-4 rounded-2xl bg-white/85 p-4 ring-1 ring-zinc-300/60 dark:bg-zinc-900/3 dark:bg-white/5 dark:ring-white/10">
+                <div class="text-xs uppercase tracking-widest text-zinc-900 dark:text-white/60">${esc(t('labels.map_details', 'Map details'))}</div>
                 <dl id="tournamentMapModalDetails" class="mt-3"></dl>
               </section>
             </aside>
@@ -1130,13 +1319,13 @@ function renderCategories() {
   if (!chips) return;
   chips.innerHTML = state.categories
     .map((category) => {
-      const difficulties = Array.isArray(category.difficulties) ? category.difficulties.join(', ') : '';
+      const difficulties = normalizeStringList(category.difficulties).join(', ');
       const selected = String(category.id) === String(state.selectedCategoryId);
       return `
         <button
           type="button"
           data-category-id="${esc(category.id)}"
-          class="group w-full rounded-lg border px-3 py-2 text-left text-xs transition ${
+          class="group w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-xs transition ${
             selected
               ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.12)]'
               : 'border-zinc-200/80 bg-white/70 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-white/10'
@@ -1166,7 +1355,7 @@ function renderActiveCycles() {
     .map((category) => {
       const cycle = state.activeCycles.get(String(category.id));
       const isSelected = String(category.id) === String(state.selectedCategoryId);
-      const categoryDifficulties = Array.isArray(category.difficulties) ? category.difficulties.join(', ') : '';
+      const categoryDifficulties = difficultyListHtml(category.difficulties, 'font-black');
       const cardTone = isSelected
         ? 'border-emerald-500/40 bg-emerald-500/10 ring-1 ring-emerald-400/20'
         : 'border-zinc-200/80 bg-white/70 dark:border-white/10 dark:bg-zinc-900/50';
@@ -1177,7 +1366,7 @@ function renderActiveCycles() {
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <h3 class="truncate text-sm font-black">${esc(category.name)}</h3>
-                <p class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">${esc(categoryDifficulties || '...')}</p>
+                <p class="mt-0.5 truncate text-[11px]">${categoryDifficulties || '<span class="text-zinc-500 dark:text-zinc-400">...</span>'}</p>
               </div>
             </div>
             <div class="mt-3 rounded-lg border border-dashed border-zinc-300/80 px-3 py-2 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">
@@ -1188,14 +1377,16 @@ function renderActiveCycles() {
       }
 
       return `
-        <article class="min-h-[112px] rounded-lg border ${cardTone} p-3">
-          <div class="flex items-start justify-between gap-2">
+        <article data-map-banner-host class="relative min-h-[132px] overflow-hidden rounded-lg border ${cardTone} p-3">
+          ${mapBannerImageHtml(cycle.map_name, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-[0.9] dark:opacity-35')}
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/78 to-white/48 dark:from-zinc-950/95 dark:via-zinc-950/70 dark:to-zinc-950/38"></div>
+          <div class="relative z-10 flex items-start justify-between gap-2">
             <div class="min-w-0">
               <h3 class="truncate text-sm font-black">${esc(category.name)}</h3>
-              <p class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">${esc(cycle.map_difficulty || categoryDifficulties || '...')}</p>
+              <p class="mt-0.5 truncate text-[11px]">${difficultyLabelHtml(cycle.map_difficulty, 'font-black') || categoryDifficulties || '<span class="text-zinc-500 dark:text-zinc-400">...</span>'}</p>
             </div>
           </div>
-          <div class="mt-3 flex items-end justify-between gap-3">
+          <div class="relative z-10 mt-5 flex items-end justify-between gap-3">
             <div class="min-w-0 flex-1">
               <div class="truncate text-lg font-black leading-tight">${esc(cycle.map_name || 'Unknown map')}</div>
               <button
@@ -1232,6 +1423,8 @@ function renderActiveCycles() {
       `;
     })
     .join('');
+
+  bindMapBannerFallbacks(root);
 }
 
 function readAvatarCache() {
@@ -1436,6 +1629,25 @@ function archiveWinnerCell(cycle) {
   `;
 }
 
+function archiveMapCell(cycle) {
+  const mapName = cycle.map_name || 'Unknown map';
+  const mapCode = cycle.map_code || '';
+  const difficulty = difficultyLabelHtml(cycle.map_difficulty, 'font-black');
+
+  return `
+    <div class="flex min-w-[230px] items-center gap-3">
+      <div data-map-banner-host class="h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-100 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-zinc-900 dark:ring-white/10">
+        ${mapBannerImageHtml(mapName, 'h-full w-full object-cover')}
+      </div>
+      <div class="min-w-0">
+        <div class="truncate font-semibold">${esc(mapName)}</div>
+        <div class="mt-0.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">${esc(mapCode || '-')}</div>
+        ${difficulty ? `<div class="mt-0.5 truncate text-xs">${difficulty}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
 function topCard(entry, index) {
   const rank = Number(entry.rank || index + 1);
   const skin = podiumSkin(rank);
@@ -1550,6 +1762,7 @@ async function renderLeaderboard({ silent = false } = {}) {
     state.leaderboardCycleId = null;
     rows.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('messages.select_category', 'Select a category to view its leaderboard.'))}</td></tr>`;
     if (meta) meta.textContent = '';
+    renderLeaderboardMapBanner(null);
     renderTopFive();
     return;
   }
@@ -1562,6 +1775,7 @@ async function renderLeaderboard({ silent = false } = {}) {
 
   state.leaderboardLoading = !canKeepExisting;
   if (meta) meta.textContent = `${cycle.map_code || ''} / ${cycle.map_name || ''}`;
+  renderLeaderboardMapBanner(cycle);
   if (!canKeepExisting) {
     rows.innerHTML = tableSkeletonRows(4, 7);
   }
@@ -1667,10 +1881,7 @@ async function renderArchives({ silent = false } = {}) {
       .map(
         (cycle) => `
           <tr class="border-t border-zinc-200/80 transition hover:bg-zinc-50/80 dark:border-white/10 dark:hover:bg-white/[0.03]">
-            <td class="px-4 py-3">
-              <div class="font-semibold">${esc(cycle.map_name || 'Unknown map')}</div>
-              <div class="font-mono text-xs text-zinc-500 dark:text-zinc-400">${esc(cycle.map_code || '')}</div>
-            </td>
+            <td class="px-4 py-3">${archiveMapCell(cycle)}</td>
             <td class="px-4 py-3">${esc(categoryName(cycle.category_id))}</td>
             <td class="px-4 py-3">${archiveWinnerCell(cycle)}</td>
             <td class="px-4 py-3">${esc(formatDate(cycle.ended_at))}</td>
@@ -1699,6 +1910,7 @@ async function renderArchives({ silent = false } = {}) {
   const next = $('#tournamentArchiveNext');
   if (prev) prev.disabled = state.archiveOffset <= 0;
   if (next) next.disabled = state.archiveOffset + ARCHIVE_LIMIT >= total;
+  bindMapBannerFallbacks(rows);
   void hydrateTopAvatars(rows);
 }
 
@@ -1727,6 +1939,7 @@ async function openHistoryModal(cycleId) {
     ].filter(Boolean);
     meta.textContent = parts.join(' / ');
   }
+  renderHistoryModalBanner(cycle);
 
   modal.classList.remove('hidden');
   rows.innerHTML = tableSkeletonRows(4, 7);
