@@ -389,15 +389,21 @@ function cycleMapCaptionHtml(cycle) {
 
 function mapBannerPanelHtml(cycle, { compact = false, showWinner = false } = {}) {
   if (!cycle) return '';
-  const minHeight = compact ? 'min-h-[92px]' : 'min-h-[132px]';
+  const minHeight = compact ? 'min-h-[110px]' : 'min-h-[132px]';
+  const imageOpacity = compact
+    ? 'opacity-55 saturate-[0.95] dark:opacity-50'
+    : 'opacity-45 saturate-[0.9] dark:opacity-35';
+  const overlayTone = compact
+    ? 'from-white/88 via-white/66 to-white/34 dark:from-zinc-950/82 dark:via-zinc-950/54 dark:to-zinc-950/24'
+    : 'from-white/95 via-white/80 to-white/50 dark:from-zinc-950/95 dark:via-zinc-950/75 dark:to-zinc-950/45';
   const mapName = cycle.map_name || t('labels.unknown_map', 'Unknown map');
   const mapCode = cycle.map_code || '';
 
   return `
     <article data-map-banner-host class="relative overflow-hidden rounded-xl border border-zinc-200/80 bg-zinc-100 ${minHeight} dark:border-white/10 dark:bg-zinc-950/50">
       ${mapBannerPlaceholderHtml()}
-      ${mapBannerImageHtml(mapName, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-[0.9] dark:opacity-35')}
-      <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/50 dark:from-zinc-950/95 dark:via-zinc-950/75 dark:to-zinc-950/45"></div>
+      ${mapBannerImageHtml(mapName, `pointer-events-none absolute inset-0 h-full w-full object-cover ${imageOpacity}`)}
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-r ${overlayTone}"></div>
       <div class="relative z-10 flex h-full flex-col justify-end gap-3 p-3 sm:flex-row sm:items-end sm:justify-between">
         <div class="min-w-0">
           <p class="truncate text-xs font-black uppercase tracking-wide">${cycleMapCaptionHtml(cycle)}</p>
@@ -970,7 +976,7 @@ function skeletonBlock(className = 'h-4 w-full') {
 }
 
 function mapBannerSkeletonHtml({ compact = false, showWinner = false } = {}) {
-  const minHeight = compact ? 'min-h-[92px]' : 'min-h-[132px]';
+  const minHeight = compact ? 'min-h-[110px]' : 'min-h-[132px]';
 
   return `
     <article class="relative overflow-hidden rounded-xl border border-zinc-200/80 bg-zinc-100 ${minHeight} dark:border-white/10 dark:bg-zinc-950/50">
@@ -1463,8 +1469,8 @@ function renderActiveCycles() {
       return `
         <article data-map-banner-host class="relative min-h-[132px] overflow-hidden rounded-lg border ${cardTone} p-3">
           ${mapBannerPlaceholderHtml()}
-          ${mapBannerImageHtml(cycle.map_name, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-[0.9] dark:opacity-35')}
-          <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/78 to-white/48 dark:from-zinc-950/95 dark:via-zinc-950/70 dark:to-zinc-950/38"></div>
+          ${mapBannerImageHtml(cycle.map_name, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-55 saturate-[0.95] dark:opacity-50')}
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/88 via-white/64 to-white/32 dark:from-zinc-950/82 dark:via-zinc-950/50 dark:to-zinc-950/20"></div>
           <div class="relative z-10 flex items-start justify-between gap-2">
             <div class="min-w-0">
               <h3 class="truncate text-sm font-black">${esc(category.name)}</h3>
