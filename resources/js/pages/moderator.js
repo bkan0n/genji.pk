@@ -10665,8 +10665,13 @@ function renderTournamentLifecyclePanel({ edition, config, cycles }) {
   if (!tournamentIsProdEnv()) {
     const current = config?.debug_cycle_seconds;
     debug = `
-      <details class="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 dark:border-amber-400/15">
-        <summary class="cursor-pointer text-sm font-semibold text-amber-700 dark:text-amber-300">Debug tools (non-production only)</summary>
+      <details class="group rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 dark:border-amber-400/15">
+        <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-amber-700 marker:hidden dark:text-amber-300 [&::-webkit-details-marker]:hidden">
+          <svg class="h-4 w-4 shrink-0 text-amber-500 transition-transform group-open:rotate-90 dark:text-amber-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Debug tools (non-production only)</span>
+        </summary>
         <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Override the cycle length to speed up testing. Current override: <strong>${current != null ? `${tournamentEscape(current)}s` : 'none'}</strong>.</p>
         <div class="mt-3 flex flex-col gap-2 sm:flex-row">
           <input data-tournament-debug-seconds type="number" min="1" step="1" placeholder="seconds" value="${current != null ? tournamentEscape(current) : ''}" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
