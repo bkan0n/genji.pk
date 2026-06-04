@@ -1158,9 +1158,10 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'quest-update') initQuestUpdatePanel();
         if (name === 'tournament-overview') initTournamentOverviewPanel();
         if (name === 'tournament-categories') initTournamentCategoryPanel();
-        if (name === 'tournament-maps' || name === 'tournament-cycles' || name === 'tournament-lifecycle') {
+        if (name === 'tournament-maps' || name === 'tournament-cycles') {
           initTournamentHelperPanel(name);
         }
+        if (name === 'tournament-lifecycle') initTournamentLifecyclePanel();
         if (name === 'mod-quality') initModQualityPanel();
         if (name === 'dev-overpy-commit') initOverpyCommitPanel();
         if (name === 'dev-framework-version') initFrameworkVersionPanel();
@@ -9269,8 +9270,11 @@ function buildTournamentConfigPayload(form) {
   }
 
   for (const key of ['cadence', 'anchor_time', 'anchor_tz']) {
-    const value = String(fd.get(key) || '').trim();
-    if (value) payload[key] = value;
+    let value = String(fd.get(key) || '').trim();
+    if (!value) continue;
+    // Native <input type="time"> yields HH:MM (or HH:MM:SS with step). The API stores HH:MM:SS.
+    if (key === 'anchor_time' && /^\d{2}:\d{2}$/.test(value)) value = `${value}:00`;
+    payload[key] = value;
   }
 
   if (!Object.keys(payload).length) {
@@ -9293,6 +9297,36 @@ function fillTournamentConfigForm(form, data) {
 }
 
 let __modTournamentCategoryCache = [];
+// Category ids that currently have an active/finalizing cycle — PATCH/DELETE return 409 for these.
+let __modTournamentLockedCategories = new Set();
+
+function tournamentCategoryIsLocked(id) {
+  return __modTournamentLockedCategories.has(String(id));
+}
+
+async function refreshTournamentCategoryLocks() {
+  const results = await Promise.all([
+    http('GET', `${API_TOURNAMENTS}/cycles`, { query: { status: 'active', limit: 100 } }),
+    http('GET', `${API_TOURNAMENTS}/cycles`, { query: { status: 'finalizing', limit: 100 } }),
+  ]);
+
+  const locked = new Set();
+  results.forEach((res) => {
+    const cycles = Array.isArray(res.data?.cycles)
+      ? res.data.cycles
+      : Array.isArray(res.data)
+        ? res.data
+        : [];
+    cycles.forEach((cycle) => {
+      const categoryId = cycle?.category_id ?? cycle?.category?.id;
+      if (categoryId != null) locked.add(String(categoryId));
+    });
+  });
+
+  __modTournamentLockedCategories = locked;
+  renderTournamentCategoryCards();
+  applyTournamentCategoryLockUI();
+}
 
 function tournamentEscape(value) {
   return escapeHtml(String(value ?? ''));
@@ -9395,6 +9429,10 @@ function renderTournamentCategoryCards() {
     container.innerHTML = cards
       .map((category) => {
         const difficulties = category.difficulties.length ? category.difficulties.join(', ') : '-';
+        const locked = tournamentCategoryIsLocked(category.id);
+        const lockedPill = locked
+          ? '<span class="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">Locked</span>'
+          : '';
         return `
           <button
             type="button"
@@ -9407,7 +9445,10 @@ function renderTournamentCategoryCards() {
                 <span class="block truncate text-sm font-black text-zinc-900 dark:text-zinc-100">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</span>
                 <span class="mt-1 block truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(difficulties)}</span>
               </span>
-              ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+              <span class="flex flex-col items-end gap-1">
+                ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+                ${lockedPill}
+              </span>
             </span>
             <span class="mt-3 grid grid-cols-3 gap-2 text-xs">
               <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
@@ -9844,6 +9885,29 @@ function fillTournamentCategoryCreateDefaults(form) {
   }
 }
 
+function applyTournamentCategoryLockUI() {
+  const panel = document.querySelector('[data-panel="tournament"]');
+  if (!panel) return;
+
+  const updateForm = panel.querySelector('form[data-action="tournament-category-update"]');
+  const deleteForm = panel.querySelector('form[data-action="tournament-category-delete"]');
+  const id = String(updateForm?.querySelector('[name="category_id"]')?.value || '').trim();
+  const locked = !!id && tournamentCategoryIsLocked(id);
+
+  const badge = panel.querySelector('[data-tournament-lock-badge]');
+  if (badge) badge.classList.toggle('hidden', !locked);
+
+  [updateForm, deleteForm].forEach((form) => {
+    const btn = form?.querySelector('button[type="submit"], button:not([type])');
+    if (!btn) return;
+    btn.disabled = locked;
+    btn.classList.toggle('opacity-50', locked);
+    btn.classList.toggle('pointer-events-none', locked);
+    if (locked) btn.title = 'Locked while a cycle is active or finalizing.';
+    else btn.removeAttribute('title');
+  });
+}
+
 function applyTournamentCategorySelection(scope, category, { showToast = true } = {}) {
   if (!category) return;
   const panel = scope?.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]') || document;
@@ -9866,6 +9930,8 @@ function applyTournamentCategorySelection(scope, category, { showToast = true } 
 
   const deleteInput = panel.querySelector('form[data-action="tournament-category-delete"] [name="category_id"]');
   if (deleteInput) deleteInput.value = id;
+
+  applyTournamentCategoryLockUI();
 
   if (showToast) toast(`Category ${category.name || `#${id}`} loaded`, 'ok');
 }
@@ -10132,7 +10198,9 @@ async function handleTournamentConfigUpdate(form) {
 }
 
 async function handleTournamentCategoryList(form) {
-  return loadTournamentCategories({ form, silent: false, force: true });
+  const res = await loadTournamentCategories({ form, silent: false, force: true });
+  refreshTournamentCategoryLocks();
+  return res;
 }
 
 async function handleTournamentCategoryGet(form) {
@@ -10173,6 +10241,9 @@ async function handleTournamentCategoryUpdate(form) {
   if (res.ok) {
     upsertTournamentCategory(res.data);
     applyTournamentCategorySelection(form, res.data, { showToast: false });
+  } else if (res.status === 409) {
+    toast('Category is locked while a cycle is in progress', 'warn');
+    refreshTournamentCategoryLocks();
   }
 }
 
@@ -10186,6 +10257,9 @@ async function handleTournamentCategoryDelete(form) {
   if (res.ok) {
     removeTournamentCategoryFromCache(id);
     resetEnhancedForm(form);
+  } else if (res.status === 409) {
+    toast('Category is locked while a cycle is in progress', 'warn');
+    refreshTournamentCategoryLocks();
   }
 }
 
@@ -10231,9 +10305,23 @@ async function handleTournamentRerollActive(form) {
   const id = tournamentIdFrom(form);
   if (!id) return;
   if (!form.querySelector('input[name="confirm"]')?.checked) {
-    toast('Confirm live reroll first', 'warn');
+    toast('Tick the confirmation box first', 'warn');
     return;
   }
+
+  const category = __modTournamentCategoryCache.find((c) => String(c.id) === String(id));
+  const ok = await showConfirmDanger({
+    title: 'Reroll the LIVE map',
+    message:
+      `This rerolls the currently live map for ${category?.name ? `"${category.name}"` : `category #${id}`} and ` +
+      'DELETES ALL submissions already made for it.\n\n' +
+      'The edition window stays the same, but every run players submitted for the current map will be wiped. ' +
+      'This cannot be undone. Continue?',
+    confirm: 'Reroll & wipe submissions',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
   setPanelOut(form, 'tournament-maps-res', 'Rerolling active cycle...');
   const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/reroll-active`;
   const res = await http('POST', url, { body: {} });
@@ -10371,6 +10459,7 @@ function initTournamentCategoryPanel() {
 
   const form = panel.querySelector('form[data-action="tournament-category-list"]');
   loadTournamentCategories({ form, silent: true });
+  refreshTournamentCategoryLocks();
 }
 
 function initTournamentHelperPanel(name) {
@@ -10383,6 +10472,371 @@ function initTournamentHelperPanel(name) {
   if (!__modTournamentCategoryCache.length) {
     loadTournamentCategories({ silent: true });
   }
+}
+
+/* ===================== Tournament lifecycle (state-aware panel) ===================== */
+
+let __tournamentCountdownTimer = null;
+
+function tournamentLifecyclePanelEl() {
+  return document.querySelector('[data-tournament-lifecycle-panel]');
+}
+
+function tournamentIsProdEnv() {
+  const env = String(tournamentLifecyclePanelEl()?.dataset?.appEnv || '').toLowerCase();
+  return env === 'production' || env === 'prod';
+}
+
+function clearTournamentCountdown() {
+  if (__tournamentCountdownTimer) {
+    clearInterval(__tournamentCountdownTimer);
+    __tournamentCountdownTimer = null;
+  }
+}
+
+function populateTournamentTimezoneDatalist() {
+  const datalist = document.getElementById('tournamentTimezoneOptions');
+  if (!datalist || datalist.dataset.filled === '1') return;
+
+  let zones = [];
+  try {
+    zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
+  } catch {
+    zones = [];
+  }
+  if (!Array.isArray(zones) || !zones.length) {
+    zones = [
+      'UTC', 'America/Los_Angeles', 'America/Denver', 'America/Chicago', 'America/New_York',
+      'America/Sao_Paulo', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow',
+      'Asia/Dubai', 'Asia/Kolkata', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney',
+    ];
+  }
+
+  datalist.innerHTML = zones.map((zone) => `<option value="${tournamentEscape(zone)}"></option>`).join('');
+  datalist.dataset.filled = '1';
+}
+
+function tournamentCountdownText(target) {
+  const ms = target instanceof Date ? target.getTime() : Number(new Date(target).getTime());
+  if (!Number.isFinite(ms)) return '-';
+  let diff = Math.floor((ms - Date.now()) / 1000);
+  if (diff <= 0) return 'window ended — awaiting rollover';
+
+  const days = Math.floor(diff / 86400); diff -= days * 86400;
+  const hours = Math.floor(diff / 3600); diff -= hours * 3600;
+  const minutes = Math.floor(diff / 60);
+  const seconds = diff - minutes * 60;
+
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (days || hours) parts.push(`${hours}h`);
+  parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return parts.join(' ');
+}
+
+function tournamentBootstrapError(data) {
+  if (!data || typeof data !== 'object') return '';
+  if (typeof data.message === 'string' && data.message.trim()) return data.message.trim();
+  if (data.errors && typeof data.errors === 'object') {
+    const first = Object.values(data.errors).flat().filter(Boolean)[0];
+    if (first) return String(first);
+  }
+  return '';
+}
+
+function tournamentLifecycleHeader(config) {
+  const paused = config?.transitions_paused === true;
+  const rotationPill = paused
+    ? '<span class="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">Auto-rotation paused</span>'
+    : '<span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">Auto-rotation on</span>';
+  return rotationPill;
+}
+
+function renderTournamentLifecyclePanel({ edition, config, cycles }) {
+  const panel = tournamentLifecyclePanelEl();
+  if (!panel) return;
+  clearTournamentCountdown();
+
+  const status = edition && typeof edition === 'object' ? String(edition.status || '').toLowerCase() : null;
+  const header = tournamentLifecycleHeader(config);
+
+  let body = '';
+
+  if (!edition) {
+    // No active edition (404).
+    body = `
+      <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-950/40">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">No tournament running</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">There is no active edition. Starting the tournament does <strong>two</strong> things:</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-600 dark:text-zinc-300">
+          <li>Starts the first edition now and opens the first cycle for every active category.</li>
+          <li>Enables automatic weekly rotation by clearing the global pause flag.</li>
+        </ul>
+        <button type="button" data-tournament-lc-action="start" class="mt-4 w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+          Start tournament &amp; enable rotation
+        </button>
+      </div>`;
+  } else if (status === 'active') {
+    const paused = config?.transitions_paused === true;
+    const toggle = paused
+      ? `<button type="button" data-tournament-lc-action="resume" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Resume auto-rotation</button>`
+      : `<button type="button" data-tournament-lc-action="pause" class="w-full sm:w-auto cursor-pointer rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-700 hover:bg-amber-500/15 dark:text-amber-300">Pause auto-rotation</button>`;
+
+    const cycleRows = Array.isArray(cycles) && cycles.length
+      ? cycles.map((cycle) => {
+          const cached = __modTournamentCategoryCache.find((c) => String(c.id) === String(cycle.category_id));
+          const categoryName = cycle.category_name || cached?.name || `Category #${cycle.category_id ?? '-'}`;
+          return `
+          <div class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-zinc-900/55">
+            <div class="min-w-0">
+              <div class="truncate text-sm font-semibold">${tournamentEscape(categoryName)}</div>
+              <div class="truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(cycle.map_name || 'No map')} <span class="font-mono">${tournamentEscape(cycle.map_code || '')}</span> ${cycle.map_difficulty ? `· ${tournamentEscape(cycle.map_difficulty)}` : ''}</div>
+            </div>
+            ${tournamentStatusPill(cycle.status || 'active')}
+          </div>`;
+        }).join('')
+      : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No active cycles.</div>';
+
+    body = `
+      <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 dark:border-emerald-400/15">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition in progress</h4>
+          ${header}
+        </div>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-3">
+          <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Started</dt><dd class="text-sm font-semibold">${tournamentEscape(tournamentFormatDate(edition.started_at))}</dd></div>
+          <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Ends</dt><dd class="text-sm font-semibold">${tournamentEscape(tournamentFormatDate(edition.ends_at))}</dd></div>
+          <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Time left</dt><dd class="text-sm font-semibold tabular-nums" data-tournament-countdown data-ends-at="${tournamentEscape(edition.ends_at || '')}">…</dd></div>
+        </dl>
+        <div class="mt-4">
+          <div class="mb-2 text-sm font-semibold">Active cycles</div>
+          <div class="space-y-2">${cycleRows}</div>
+        </div>
+        <div class="mt-4 rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/40">
+          <p class="text-xs text-zinc-600 dark:text-zinc-300">Pausing is a <strong>hiatus</strong>: the current edition still finishes its full term. Only creation of the <strong>next</strong> edition at the boundary is suppressed until you resume.</p>
+          <div class="mt-3">${toggle}</div>
+        </div>
+      </div>`;
+  } else if (status === 'awaiting_results') {
+    const pending = edition.pending_verifications ?? edition.awaiting_verifications ?? edition.pending_count ?? null;
+    const pendingText = pending != null
+      ? `<strong>${tournamentEscape(pending)}</strong> verification${Number(pending) === 1 ? '' : 's'} still pending.`
+      : 'Verifications are still being processed.';
+
+    body = `
+      <div class="rounded-2xl border border-sky-500/20 bg-sky-500/[0.04] p-5 dark:border-sky-400/15">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition ended — awaiting results</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">The edition window closed and standings publish automatically once verifications finish. ${pendingText}</p>
+        <div class="mt-4 rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/40">
+          <p class="text-xs text-zinc-600 dark:text-zinc-300">Use <strong>Publish results now</strong> only as an escape hatch — it force-publishes from currently-verified runs and ignores any in-flight verifications.</p>
+          <button type="button" data-tournament-lc-action="publish" class="mt-3 w-full sm:w-auto cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500">Publish results now</button>
+        </div>
+      </div>`;
+  } else if (status === 'completed') {
+    body = `
+      <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-950/40">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition complete</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Final standings have been published${edition.ends_at ? ` (ended ${tournamentEscape(tournamentFormatDate(edition.ends_at))})` : ''}. The next edition starts automatically at the next anchor unless auto-rotation is paused.</p>
+        <button type="button" data-tournament-lc-action="open-cycles" class="mt-4 w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">View completed cycles &amp; standings</button>
+      </div>`;
+  } else {
+    body = `
+      <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-950/40">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition status: ${tournamentEscape(edition.status || 'unknown')}</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">No specific actions are available for this state right now.</p>
+      </div>`;
+  }
+
+  // Debug tools — hidden in production (the API itself returns 403 in prod).
+  let debug = '';
+  if (!tournamentIsProdEnv()) {
+    const current = config?.debug_cycle_seconds;
+    debug = `
+      <details class="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 dark:border-amber-400/15">
+        <summary class="cursor-pointer text-sm font-semibold text-amber-700 dark:text-amber-300">Debug tools (non-production only)</summary>
+        <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Override the cycle length to speed up testing. Current override: <strong>${current != null ? `${tournamentEscape(current)}s` : 'none'}</strong>.</p>
+        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input data-tournament-debug-seconds type="number" min="1" step="1" placeholder="seconds" value="${current != null ? tournamentEscape(current) : ''}" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
+          <button type="button" data-tournament-lc-action="debug-set" class="cursor-pointer rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">Set</button>
+          <button type="button" data-tournament-lc-action="debug-clear" class="cursor-pointer rounded-xl border border-zinc-200/80 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Clear override</button>
+        </div>
+      </details>`;
+  }
+
+  panel.innerHTML = body + debug;
+
+  // Live countdown for the active edition.
+  const countdownEl = panel.querySelector('[data-tournament-countdown]');
+  if (countdownEl) {
+    const endsAt = countdownEl.dataset.endsAt;
+    const tick = () => { countdownEl.textContent = tournamentCountdownText(endsAt); };
+    tick();
+    __tournamentCountdownTimer = setInterval(tick, 1000);
+  }
+}
+
+async function loadTournamentLifecycleState() {
+  const panel = tournamentLifecyclePanelEl();
+  if (!panel) return;
+
+  const [edition, config, activeCycles] = await Promise.all([
+    http('GET', `${API_TOURNAMENTS}/editions/active`),
+    http('GET', `${API_TOURNAMENTS}/config`),
+    http('GET', `${API_TOURNAMENTS}/cycles`, { query: { status: 'active', limit: 100 } }),
+  ]);
+
+  const cfg = config.ok && config.data && typeof config.data === 'object' ? config.data : {};
+  const editionData = edition.ok && edition.data && typeof edition.data === 'object' ? edition.data : null;
+  const cycles = Array.isArray(activeCycles.data?.cycles)
+    ? activeCycles.data.cycles
+    : Array.isArray(activeCycles.data)
+      ? activeCycles.data
+      : [];
+
+  const subpanel = document.querySelector('[data-subpanel="tournament-lifecycle"]');
+  if (config.ok) fillTournamentConfigForm(subpanel?.querySelector('form[data-action="tournament-config-update"]'), cfg);
+
+  renderTournamentLifecyclePanel({ edition: editionData, config: cfg, cycles });
+}
+
+function tournamentLifecycleOut(busyMsg) {
+  setPanelOut(tournamentLifecyclePanelEl(), 'tournament-lifecycle-res', busyMsg);
+}
+
+function tournamentLifecycleLog(title, method, url, res) {
+  logActivity({ title, method, url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  setPanelOut(tournamentLifecyclePanelEl(), 'tournament-lifecycle-res', res.data === '' ? { status: res.status } : res.data);
+}
+
+async function tournamentStartTournament() {
+  const ok = await showConfirmDanger({
+    title: 'Start tournament',
+    message:
+      'This does TWO things:\n\n' +
+      '• Starts the first edition now (opens the first cycle for every active category).\n' +
+      '• Enables automatic weekly rotation (clears the global pause flag).\n\n' +
+      'Editions will then roll over on their own at each anchor boundary until you pause. Continue?',
+    confirm: 'Start & enable rotation',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  tournamentLifecycleOut('Starting tournament…');
+  const url = `${API_TOURNAMENTS_MODS}/bootstrap`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLifecycleLog('Tournament Start (POST /bootstrap)', 'POST', url, res);
+
+  if (res.ok) toast('Tournament started — auto-rotation enabled', 'ok');
+  else if (res.status === 409) toast('A tournament edition already exists', 'warn');
+  else if (res.status === 422) toast(tournamentBootstrapError(res.data) || 'A category has no eligible map', 'err');
+  else toast('Failed to start tournament', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+async function tournamentSetPaused(paused) {
+  tournamentLifecycleOut(paused ? 'Pausing auto-rotation…' : 'Resuming auto-rotation…');
+  const url = `${API_TOURNAMENTS_MODS}/pause`;
+  const res = await http('PATCH', url, { body: { paused } });
+  tournamentLifecycleLog(`Tournament ${paused ? 'Pause' : 'Resume'} (PATCH /pause)`, 'PATCH', url, res);
+
+  if (res.ok) toast(paused ? 'Auto-rotation paused' : 'Auto-rotation resumed', 'ok');
+  else toast('Failed to update rotation', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+async function tournamentPublishResults() {
+  const ok = await showConfirmDanger({
+    title: 'Publish results now',
+    message:
+      'This force-publishes standings from currently-verified runs and IGNORES any in-flight verifications.\n\n' +
+      'Runs still awaiting verification will NOT be counted. This cannot be undone. Continue?',
+    confirm: 'Publish now',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  tournamentLifecycleOut('Publishing results…');
+  const url = `${API_TOURNAMENTS_MODS}/publish-results`;
+  const res = await http('PATCH', url, { body: {} });
+  tournamentLifecycleLog('Tournament Publish Results (PATCH)', 'PATCH', url, res);
+
+  if (res.ok) toast('Results published', 'ok');
+  else if (res.status === 409) toast('No edition is awaiting results', 'warn');
+  else toast('Failed to publish results', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+async function tournamentSetDebugCycle(panel, { clear = false } = {}) {
+  const input = panel.querySelector('[data-tournament-debug-seconds]');
+  let seconds = null;
+  if (!clear) {
+    const raw = String(input?.value || '').trim();
+    if (!raw) return toast('Enter a number of seconds (or use Clear override)', 'warn');
+    seconds = Number(raw);
+    if (!Number.isInteger(seconds) || seconds < 1) return toast('Invalid seconds', 'warn');
+  }
+
+  tournamentLifecycleOut(clear ? 'Clearing debug override…' : 'Setting debug cycle length…');
+  const url = `${API_TOURNAMENTS_MODS}/debug-cycle-length`;
+  const res = await http('PATCH', url, { body: { seconds } });
+  tournamentLifecycleLog('Tournament Debug Cycle Length (PATCH)', 'PATCH', url, res);
+
+  if (res.ok) toast(clear ? 'Debug override cleared' : 'Debug cycle length set', 'ok');
+  else if (res.status === 403) toast('Debug cycle length is disabled in production', 'warn');
+  else toast('Failed to update debug cycle length', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+function bindTournamentLifecyclePanel() {
+  const panel = tournamentLifecyclePanelEl();
+  if (!panel) return;
+
+  // Refresh button lives outside the re-rendered panel, so bind it on the subpanel.
+  const subpanel = document.querySelector('[data-subpanel="tournament-lifecycle"]');
+  if (subpanel && subpanel.dataset.lcBound !== '1') {
+    subpanel.dataset.lcBound = '1';
+    subpanel.addEventListener('click', (event) => {
+      const btn = event.target?.closest?.('[data-tournament-lc-action]');
+      if (!btn) return;
+      event.preventDefault();
+      const action = btn.dataset.tournamentLcAction;
+      if (action === 'refresh') return void loadTournamentLifecycleState();
+      if (action === 'start') return void tournamentStartTournament();
+      if (action === 'publish') return void tournamentPublishResults();
+      if (action === 'pause') return void tournamentSetPaused(true);
+      if (action === 'resume') return void tournamentSetPaused(false);
+      if (action === 'open-cycles') return void openTournamentWorkflowFromOverview({ subtab: 'tournament-cycles' });
+      if (action === 'debug-set') return void tournamentSetDebugCycle(tournamentLifecyclePanelEl());
+      if (action === 'debug-clear') return void tournamentSetDebugCycle(tournamentLifecyclePanelEl(), { clear: true });
+    });
+  }
+}
+
+function initTournamentLifecyclePanel() {
+  const subpanel = document.querySelector('[data-subpanel="tournament-lifecycle"]');
+  if (!subpanel) return;
+
+  enhanceTournamentNativeSelects(subpanel);
+  populateTournamentTimezoneDatalist();
+  bindTournamentLifecyclePanel();
+  loadTournamentLifecycleState();
 }
 
 async function handleStoreGetConfig(form) {
