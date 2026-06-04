@@ -42,12 +42,14 @@ abstract class BaseRankcardController
 
     protected function proxyOrFail(Response $resp)
     {
-        if ($resp->ok()) {
-            $json = $resp->json();
+        if ($resp->successful()) {
+            $status = $resp->status();
+            $body = $resp->body();
+            $json = trim($body) !== '' ? $resp->json() : null;
 
             return $json !== null
-              ? response()->json($json, 200)
-              : response($resp->body(), 200)->header(
+              ? response()->json($json, $status)
+              : response($body, $status)->header(
                   'Content-Type',
                   $resp->header('Content-Type', 'application/json'),
               );
