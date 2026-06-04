@@ -49,31 +49,33 @@
 
       <div id="panel-tournament-current" class="space-y-5">
         <section class="overflow-visible rounded-2xl border border-zinc-200/80 bg-zinc-100/90 p-2 shadow-sm dark:border-white/10 dark:bg-white/5">
-          <div class="grid gap-2 xl:grid-cols-[minmax(240px,.72fr)_minmax(520px,1.58fr)_minmax(210px,.55fr)]">
+          <div class="grid gap-2">
             <article class="rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-950/25">
-              <div class="flex items-start justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0">
                   <p class="text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     {{ __('tournaments.labels.active_edition') }}
                   </p>
                   <div id="tournamentEditionWindow" class="mt-1 text-sm font-black leading-snug sm:text-base">...</div>
                 </div>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 rounded-lg border border-zinc-200/80 bg-zinc-50/90 px-3 py-2 dark:border-white/10 dark:bg-zinc-900/60">
-                <p class="text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  {{ __('tournaments.labels.countdown') }}
-                </p>
-                <div id="tournamentCountdown" class="font-mono text-lg font-black tabular-nums">--:--:--</div>
+                <div class="flex min-w-[190px] items-center justify-between gap-3 rounded-lg border border-zinc-200/80 bg-zinc-50/90 px-3 py-2 dark:border-white/10 dark:bg-zinc-900/60">
+                  <p class="text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    {{ __('tournaments.labels.countdown') }}
+                  </p>
+                  <div id="tournamentCountdown" class="font-mono text-lg font-black tabular-nums">--:--:--</div>
+                </div>
               </div>
             </article>
 
             <section class="rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-950/20">
+              <div class="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <h2 class="text-base font-black tracking-tight">{{ __('tournaments.labels.active_maps') }}</h2>
+                <div class="min-w-0 lg:max-w-md">
+                  <p class="sr-only">{{ __('tournaments.labels.category') }}</p>
+                  <div id="tournamentCategoryChips" class="grid gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end"></div>
+                </div>
+              </div>
               <div id="tournamentActiveCycles" class="grid gap-2 md:grid-cols-2"></div>
-            </section>
-
-            <section class="rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-950/20">
-              <p class="sr-only">{{ __('tournaments.labels.category') }}</p>
-              <div id="tournamentCategoryChips" class="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"></div>
             </section>
           </div>
         </section>
@@ -90,7 +92,7 @@
       </div>
 
       <div id="panel-tournament-leaderboard" class="hidden">
-        <section class="grid gap-6 xl:grid-cols-[1.3fr_.7fr]">
+        <section>
           <article class="rounded-2xl border border-zinc-200/80 bg-zinc-100 p-4 dark:border-white/10 dark:bg-white/5">
             <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -127,33 +129,11 @@
                     <th class="px-4 py-3">{{ __('tournaments.table.rank') }}</th>
                     <th class="px-4 py-3">{{ __('tournaments.table.player') }}</th>
                     <th class="px-4 py-3">{{ __('tournaments.table.time') }}</th>
-                    <th class="px-4 py-3">{{ __('tournaments.table.verified') }}</th>
+                    <th class="px-4 py-3">{{ __('tournaments.table.streak') }}</th>
                   </tr>
                 </thead>
                 <tbody id="tournamentLeaderboardRows"></tbody>
               </table>
-            </div>
-          </article>
-
-          <article class="rounded-2xl border border-zinc-200/80 bg-zinc-100 p-4 dark:border-white/10 dark:bg-white/5">
-            <h2 class="text-lg font-semibold">{{ __('tournaments.labels.streak') }}</h2>
-            <form id="tournamentStreakForm" class="mt-3 space-y-3">
-              <label class="relative block text-sm text-zinc-600 dark:text-zinc-300">
-                {{ __('tournaments.labels.user_search') }}
-                <input
-                  id="tournamentStreakUser"
-                  type="text"
-                  autocomplete="off"
-                  placeholder="{{ __('tournaments.placeholders.user_search') }}"
-                  class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
-                />
-              </label>
-              <button class="w-full cursor-pointer rounded-xl border border-zinc-200/80 bg-white/80 px-4 py-2 font-semibold text-zinc-900 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
-                {{ __('tournaments.buttons.load_streak') }}
-              </button>
-            </form>
-            <div id="tournamentStreakResult" class="mt-4 rounded-xl border border-zinc-200/80 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-zinc-950/40">
-              {{ __('tournaments.empty.no_streak') }}
             </div>
           </article>
         </section>
@@ -188,10 +168,11 @@
                   <div data-select-menu class="absolute right-0 z-40 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 bg-white/95 p-1 shadow-2xl ring-1 ring-zinc-300/60 backdrop-blur dark:border-white/10 dark:bg-zinc-900/95 dark:ring-white/10"></div>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <button id="tournamentArchivePrev" type="button" class="cursor-pointer rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2 text-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-zinc-950/40 dark:hover:bg-white/10">
                   {{ __('tournaments.buttons.previous') }}
                 </button>
+                <div id="tournamentArchivePages" class="hidden items-center gap-1"></div>
                 <button id="tournamentArchiveNext" type="button" class="cursor-pointer rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2 text-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-zinc-950/40 dark:hover:bg-white/10">
                   {{ __('tournaments.buttons.next') }}
                 </button>
@@ -242,7 +223,6 @@
                     <th class="px-4 py-3">{{ __('tournaments.table.rank') }}</th>
                     <th class="px-4 py-3">{{ __('tournaments.table.player') }}</th>
                     <th class="px-4 py-3">{{ __('tournaments.table.time') }}</th>
-                    <th class="px-4 py-3">{{ __('tournaments.table.verified') }}</th>
                   </tr>
                 </thead>
                 <tbody id="tournamentHistoryModalRows"></tbody>

@@ -3,13 +3,18 @@ import { cdnImage } from "../utils/cdn";
 const API = '/api/tournaments';
 const POLL_MS = 60_000;
 const ARCHIVE_LIMIT = 10;
-const USER_AUTOCOMPLETE_LIMIT = 8;
 const AVATAR_CACHE_KEY = 'discord_avatar_cache_v5';
 const AVATAR_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const MEDAL_URLS = {
   1: 'https://cdn.genji.pk/assets/medals/gold.png',
   2: 'https://cdn.genji.pk/assets/medals/silver.png',
   3: 'https://cdn.genji.pk/assets/medals/bronze.png',
+};
+const VERIFICATION_ICONS = {
+  partial: 'https://cdn.genji.pk/assets/verifications/new/verification/verified_completion.avif',
+  full: 'https://cdn.genji.pk/assets/verifications/new/verification/verified_full.avif',
+  pendingPartial: 'https://cdn.genji.pk/assets/verifications/new/verification/pending_completion.avif',
+  pendingFull: 'https://cdn.genji.pk/assets/verifications/new/verification/pending_full.avif',
 };
 
 const state = {
@@ -22,11 +27,13 @@ const state = {
   leaderboardCycleId: null,
   leaderboardHash: '',
   leaderboardLoading: false,
+  streakCache: new Map(),
   archiveCycles: [],
   archiveKey: '',
   archiveHash: '',
   archiveTotal: 0,
   archiveOffset: 0,
+  hasLoaded: false,
   countdownTimer: null,
   pollTimer: null,
   tabsApi: null,
@@ -342,15 +349,25 @@ function mapBannerImageHtml(name, className = '') {
   `;
 }
 
+function mapBannerPlaceholderHtml() {
+  return '<div data-map-banner-placeholder aria-hidden="true" class="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,rgba(228,228,231,.95),rgba(244,244,245,.72),rgba(212,212,216,.9))] dark:bg-[linear-gradient(110deg,rgba(39,39,42,.95),rgba(63,63,70,.55),rgba(24,24,27,.95))]"></div>';
+}
+
 function bindMapBannerFallbacks(root = document) {
   root.querySelectorAll('img[data-map-banner]:not([data-map-banner-bound])').forEach((img) => {
     img.dataset.mapBannerBound = '1';
+    const host = img.closest('[data-map-banner-host]');
+    const placeholder = host?.querySelector('[data-map-banner-placeholder]');
+    const hidePlaceholder = () => placeholder?.classList.add('hidden');
+
+    if (img.complete && img.naturalWidth > 0) hidePlaceholder();
+    img.addEventListener('load', hidePlaceholder, { once: true });
     img.addEventListener(
       'error',
       () => {
         img.removeAttribute('src');
         img.classList.add('hidden');
-        img.closest('[data-map-banner-host]')?.classList.add('bg-zinc-100', 'dark:bg-zinc-900');
+        host?.classList.add('bg-zinc-100', 'dark:bg-zinc-900');
       },
       { once: true }
     );
@@ -370,14 +387,15 @@ function cycleMapCaptionHtml(cycle) {
   ].join('');
 }
 
-function mapBannerPanelHtml(cycle, { compact = false } = {}) {
+function mapBannerPanelHtml(cycle, { compact = false, showWinner = false } = {}) {
   if (!cycle) return '';
   const minHeight = compact ? 'min-h-[92px]' : 'min-h-[132px]';
-  const mapName = cycle.map_name || 'Unknown map';
+  const mapName = cycle.map_name || t('labels.unknown_map', 'Unknown map');
   const mapCode = cycle.map_code || '';
 
   return `
     <article data-map-banner-host class="relative overflow-hidden rounded-xl border border-zinc-200/80 bg-zinc-100 ${minHeight} dark:border-white/10 dark:bg-zinc-950/50">
+      ${mapBannerPlaceholderHtml()}
       ${mapBannerImageHtml(mapName, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-[0.9] dark:opacity-35')}
       <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/50 dark:from-zinc-950/95 dark:via-zinc-950/75 dark:to-zinc-950/45"></div>
       <div class="relative z-10 flex h-full flex-col justify-end gap-3 p-3 sm:flex-row sm:items-end sm:justify-between">
@@ -391,7 +409,7 @@ function mapBannerPanelHtml(cycle, { compact = false } = {}) {
           }
         </div>
         ${
-          cycle.winner_name
+          showWinner && cycle.winner_name
             ? `<p class="rounded-lg border border-zinc-200/80 bg-white/75 px-3 py-2 text-xs font-semibold text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200">${esc(t('table.winner', 'Winner'))}: <span class="font-black">${esc(cycle.winner_name)}</span></p>`
             : ''
         }
@@ -425,9 +443,23 @@ function renderHistoryModalBanner(cycle) {
     return;
   }
 
-  root.innerHTML = mapBannerPanelHtml(cycle);
+  root.innerHTML = mapBannerPanelHtml(cycle, { showWinner: true });
   root.classList.remove('hidden');
   bindMapBannerFallbacks(root);
+}
+
+function renderLeaderboardMapBannerSkeleton() {
+  const root = $('#tournamentLeaderboardMapBanner');
+  if (!root) return;
+  root.innerHTML = mapBannerSkeletonHtml({ compact: true });
+  root.classList.remove('hidden');
+}
+
+function renderHistoryModalBannerSkeleton() {
+  const root = $('#tournamentHistoryModalBanner');
+  if (!root) return;
+  root.innerHTML = mapBannerSkeletonHtml({ showWinner: true });
+  root.classList.remove('hidden');
 }
 
 function normalizeMapRows(data) {
@@ -536,7 +568,7 @@ function mapModalFallback(cycle, category) {
   return {
     code: cycle?.map_code || '',
     map_code: cycle?.map_code || '',
-    map_name: cycle?.map_name || 'Unknown map',
+    map_name: cycle?.map_name || t('labels.unknown_map', 'Unknown map'),
     difficulty: cycle?.map_difficulty || '',
     category: category?.name || categoryName(cycle?.category_id || state.selectedCategoryId),
   };
@@ -596,7 +628,7 @@ function setMapModalText(root, selector, value) {
 
 function renderTournamentMapModal(row, cycle, category, { loading = false, failed = false } = {}) {
   const overlay = ensureTournamentMapModal();
-  const mapName = row.original_map_name || row.map_name || cycle?.map_name || 'Unknown map';
+  const mapName = row.original_map_name || row.map_name || cycle?.map_name || t('labels.unknown_map', 'Unknown map');
   const mapCode = row.code || row.map_code || cycle?.map_code || '';
   const typeText = pickMapTypes(row).join(', ') || category?.name || categoryName(cycle?.category_id || state.selectedCategoryId);
   const difficulty = row.difficulty || cycle?.map_difficulty || '-';
@@ -933,195 +965,205 @@ function closeTournamentMapModal() {
   }, 180);
 }
 
-function debounce(fn, ms = 160) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), ms);
-  };
+function skeletonBlock(className = 'h-4 w-full') {
+  return `<span aria-hidden="true" class="block animate-pulse rounded bg-zinc-200/80 dark:bg-white/10 ${className}"></span>`;
 }
 
-function tableSkeletonRows(columns = 5, rows = 6) {
+function mapBannerSkeletonHtml({ compact = false, showWinner = false } = {}) {
+  const minHeight = compact ? 'min-h-[92px]' : 'min-h-[132px]';
+
+  return `
+    <article class="relative overflow-hidden rounded-xl border border-zinc-200/80 bg-zinc-100 ${minHeight} dark:border-white/10 dark:bg-zinc-950/50">
+      <div aria-hidden="true" class="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,rgba(228,228,231,.95),rgba(244,244,245,.72),rgba(212,212,216,.9))] dark:bg-[linear-gradient(110deg,rgba(39,39,42,.95),rgba(63,63,70,.55),rgba(24,24,27,.95))]"></div>
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/50 dark:from-zinc-950/95 dark:via-zinc-950/75 dark:to-zinc-950/45"></div>
+      <div class="relative z-10 flex h-full flex-col justify-end gap-3 p-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0 flex-1">
+          ${skeletonBlock('h-3 w-36')}
+          ${skeletonBlock('mt-2 h-7 w-48 max-w-full')}
+          ${skeletonBlock('mt-2 h-7 w-20 rounded-md')}
+        </div>
+        ${showWinner ? `<div class="w-full sm:w-44">${skeletonBlock('h-9 rounded-lg')}</div>` : ''}
+      </div>
+    </article>
+  `;
+}
+
+function leaderboardTableSkeletonRows(rows = 7) {
+  const nameWidths = ['w-32', 'w-40', 'w-28', 'w-36'];
+
   return Array.from({ length: rows })
-    .map(
-      () => `
+    .map((_, index) => {
+      const nameWidth = nameWidths[index % nameWidths.length];
+      return `
         <tr class="border-t border-zinc-200/80 dark:border-white/10">
-          ${Array.from({ length: columns })
-            .map(
-              () => `
-                <td class="px-4 py-3">
-                  <div class="h-4 w-full max-w-[10rem] animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
-                </td>
-              `
-            )
-            .join('')}
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              ${skeletonBlock('h-4 w-6')}
+              ${skeletonBlock('h-5 w-5 rounded-full')}
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex min-w-[12rem] items-center gap-3">
+              ${skeletonBlock('h-8 w-8 shrink-0 rounded-lg')}
+              <div class="min-w-0 flex-1">
+                ${skeletonBlock(`h-4 ${nameWidth}`)}
+                ${skeletonBlock('mt-2 h-3 w-20')}
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              ${skeletonBlock('h-4 w-16')}
+              ${skeletonBlock('h-5 w-5 rounded-md')}
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            ${skeletonBlock('h-8 w-16 rounded-lg')}
+          </td>
         </tr>
-      `
-    )
+      `;
+    })
     .join('');
 }
 
-function normalizeUserSuggestion(item) {
-  if (Array.isArray(item) && item.length >= 2) {
-    return { id: String(item[0] || ''), label: String(item[1] || item[0] || '') };
-  }
+function historyModalTableSkeletonRows(rows = 7) {
+  const nameWidths = ['w-32', 'w-40', 'w-28'];
 
-  if (item && typeof item === 'object') {
-    const id = item.id ?? item.user_id ?? item.value ?? '';
-    const label = item.label ?? item.name ?? item.nickname ?? item.global_name ?? item.display ?? String(id);
-    return { id: String(id || ''), label: String(label || id || '') };
-  }
-
-  return { id: String(item || ''), label: String(item || '') };
+  return Array.from({ length: rows })
+    .map((_, index) => `
+      <tr class="border-t border-zinc-200/80 dark:border-white/10">
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            ${skeletonBlock('h-4 w-6')}
+            ${skeletonBlock('h-5 w-5 rounded-full')}
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex min-w-[12rem] items-center gap-3">
+            ${skeletonBlock('h-8 w-8 shrink-0 rounded-lg')}
+            <div class="min-w-0 flex-1">
+              ${skeletonBlock(`h-4 ${nameWidths[index % nameWidths.length]}`)}
+              ${skeletonBlock('mt-2 h-3 w-16')}
+            </div>
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            ${skeletonBlock('h-4 w-16')}
+            ${skeletonBlock('h-5 w-5 rounded-md')}
+          </div>
+        </td>
+      </tr>
+    `)
+    .join('');
 }
 
-async function fetchUserSuggestions(query) {
-  const value = String(query || '').trim();
-  if (!value) return [];
-
-  try {
-    const url = new URL('/api/autocomplete/users', window.location.origin);
-    url.searchParams.set('value', value);
-    url.searchParams.set('page_size', String(USER_AUTOCOMPLETE_LIMIT));
-    const response = await fetch(url.toString(), {
-      headers: {
-        Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      credentials: 'same-origin',
-      cache: 'no-store',
-    });
-    const raw = response.ok ? await response.json().catch(() => []) : [];
-    const items = Array.isArray(raw) ? raw : raw.items || raw.results || raw.data || [];
-    return items.map(normalizeUserSuggestion).filter((item) => /^\d+$/.test(item.id));
-  } catch {
-    return [];
-  }
+function archiveTableSkeletonRows(rows = 7) {
+  return Array.from({ length: rows })
+    .map(() => `
+      <tr class="border-t border-zinc-200/80 dark:border-white/10">
+        <td class="px-4 py-3">
+          <div class="flex min-w-[230px] items-center gap-3">
+            ${skeletonBlock('h-14 w-28 shrink-0 rounded-lg')}
+            <div class="min-w-0 flex-1">
+              ${skeletonBlock('h-4 w-36')}
+              ${skeletonBlock('mt-2 h-3 w-16')}
+              ${skeletonBlock('mt-2 h-3 w-20')}
+            </div>
+          </div>
+        </td>
+        <td class="px-4 py-3">${skeletonBlock('h-4 w-20')}</td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-3">
+            ${skeletonBlock('h-8 w-8 shrink-0 rounded-lg')}
+            ${skeletonBlock('h-4 w-28')}
+          </div>
+        </td>
+        <td class="px-4 py-3">${skeletonBlock('h-4 w-24')}</td>
+        <td class="px-4 py-3 text-right">
+          <div class="flex justify-end">${skeletonBlock('h-8 w-14 rounded-lg')}</div>
+        </td>
+      </tr>
+    `)
+    .join('');
 }
 
-function setStreakMessage(message, tone = 'neutral') {
-  const root = $('#tournamentStreakResult');
-  if (!root) return;
-  const color =
-    tone === 'error'
-      ? 'text-rose-700 dark:text-rose-300'
-      : 'text-zinc-600 dark:text-zinc-300';
-  root.innerHTML = `<span class="${color}">${esc(message)}</span>`;
+function topFiveSkeletonHtml() {
+  return `
+    <div class="grid gap-4 lg:grid-cols-12">
+      ${Array.from({ length: 5 })
+        .map((_, index) => {
+          const isTop = index === 0;
+          const isMid = index === 1 || index === 2;
+          const colSpan = isTop ? 'lg:col-span-12' : 'lg:col-span-6';
+          const minHeight = isTop ? 'min-h-[178px] p-5 sm:p-6' : isMid ? 'min-h-[150px] p-4 sm:p-5' : 'min-h-[124px] p-4';
+          const avatar = isTop ? 'h-24 w-24 sm:h-28 sm:w-28' : isMid ? 'h-20 w-20' : 'h-16 w-16';
+          const name = isTop ? 'h-9 w-64' : isMid ? 'h-7 w-44' : 'h-6 w-36';
+          const time = isTop ? 'h-9 w-28' : isMid ? 'h-7 w-24' : 'h-6 w-20';
+
+          return `
+            <article class="${colSpan} relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-100 ${minHeight} dark:border-white/10 dark:bg-white/5">
+              <div class="absolute right-4 top-4">${skeletonBlock('h-8 w-20 rounded-lg')}</div>
+              <div class="flex h-full items-center gap-4 sm:gap-5">
+                ${skeletonBlock(`${avatar} shrink-0 rounded-2xl`)}
+                <div class="min-w-0 flex-1 pt-8 sm:pt-7">
+                  ${skeletonBlock(name)}
+                  <div class="mt-4 flex items-end justify-between gap-4 border-t border-zinc-200/70 pt-3 dark:border-white/10">
+                    ${skeletonBlock('h-8 w-16 rounded-lg')}
+                    <div class="flex items-center gap-2">
+                      ${skeletonBlock(time)}
+                      ${skeletonBlock('h-6 w-6 rounded-md')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
 }
 
-function wireStreakAutocomplete() {
-  const input = $('#tournamentStreakUser');
-  if (!input || input.dataset.autocompleteBound === '1') return;
-  input.dataset.autocompleteBound = '1';
-
-  const parent = input.parentElement;
-  parent?.classList.add('relative');
-
-  const list = document.createElement('div');
-  list.className =
-    'absolute left-0 right-0 top-full z-40 mt-1 hidden max-h-60 overflow-auto rounded-lg border border-zinc-200/80 bg-white/95 shadow-2xl ring-1 ring-zinc-300/60 backdrop-blur dark:border-white/10 dark:bg-zinc-900/95 dark:ring-white/10';
-  parent?.appendChild(list);
-
-  let items = [];
-  let activeIndex = -1;
-
-  const hide = () => list.classList.add('hidden');
-
-  const render = () => {
-    if (!items.length) {
-      hide();
-      return;
-    }
-
-    list.innerHTML = items
-      .map(
-        (item, index) => `
-          <button
-            type="button"
-            data-user-index="${index}"
-            class="block w-full cursor-pointer px-3 py-2 text-left text-sm ${index === activeIndex ? 'bg-zinc-100 dark:bg-white/10' : 'hover:bg-zinc-100 dark:hover:bg-white/10'}"
-          >
-            <span class="block truncate font-semibold">${esc(item.label)}</span>
-            <span class="block text-[11px] text-zinc-500 dark:text-zinc-400">${esc(item.id)}</span>
-          </button>
-        `
-      )
-      .join('');
-    list.classList.remove('hidden');
-  };
-
-  const pick = (index) => {
-    const item = items[index];
-    if (!item) return;
-    input.value = item.label;
-    input.dataset.uid = item.id;
-    hide();
-  };
-
-  const search = debounce(async () => {
-    const query = input.value.trim();
-    if (!query) {
-      items = [];
-      activeIndex = -1;
-      render();
-      return;
-    }
-
-    items = await fetchUserSuggestions(query);
-    activeIndex = items.length ? 0 : -1;
-    render();
-  }, 140);
-
-  input.addEventListener('input', () => {
-    delete input.dataset.uid;
-    search();
-  });
-
-  input.addEventListener('keydown', (event) => {
-    if (list.classList.contains('hidden')) return;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      activeIndex = Math.min(items.length - 1, activeIndex + 1);
-      render();
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      activeIndex = Math.max(0, activeIndex - 1);
-      render();
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      pick(activeIndex);
-    } else if (event.key === 'Escape') {
-      hide();
-    }
-  });
-
-  list.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-user-index]');
-    if (!button) return;
-    pick(Number(button.dataset.userIndex));
-  });
-
-  document.addEventListener('click', (event) => {
-    if (event.target !== input && !list.contains(event.target)) hide();
-  });
+function categoryChipsSkeletonHtml(count = 2) {
+  return Array.from({ length: count })
+    .map(() => `
+      <div class="rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-zinc-900/50">
+        <div class="flex items-center justify-between gap-2">
+          ${skeletonBlock('h-4 w-20')}
+          ${skeletonBlock('h-1.5 w-1.5 rounded-full')}
+        </div>
+        ${skeletonBlock('mt-2 h-3 w-28')}
+      </div>
+    `)
+    .join('');
 }
 
-async function resolveStreakUserId() {
-  const input = $('#tournamentStreakUser');
-  const raw = input?.value?.trim() || '';
-  const picked = input?.dataset?.uid || '';
-
-  if (/^\d+$/.test(picked)) return picked;
-  if (/^\d+$/.test(raw)) return raw;
-  if (!raw) return '';
-
-  const suggestions = await fetchUserSuggestions(raw);
-  const first = suggestions[0];
-  if (!first) return '';
-
-  input.value = first.label;
-  input.dataset.uid = first.id;
-  return first.id;
+function activeCyclesSkeletonHtml(count = 2) {
+  return Array.from({ length: count })
+    .map(() => `
+      <article class="relative min-h-[132px] overflow-hidden rounded-lg border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-900/50">
+        <div aria-hidden="true" class="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,rgba(228,228,231,.95),rgba(244,244,245,.72),rgba(212,212,216,.9))] dark:bg-[linear-gradient(110deg,rgba(39,39,42,.95),rgba(63,63,70,.55),rgba(24,24,27,.95))]"></div>
+        <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/78 to-white/48 dark:from-zinc-950/95 dark:via-zinc-950/70 dark:to-zinc-950/38"></div>
+        <div class="relative z-10 flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            ${skeletonBlock('h-4 w-20')}
+            ${skeletonBlock('mt-2 h-3 w-28')}
+          </div>
+        </div>
+        <div class="relative z-10 mt-5 flex items-end justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            ${skeletonBlock('h-6 w-40')}
+            ${skeletonBlock('mt-2 h-7 w-20 rounded-md')}
+          </div>
+          <div class="grid shrink-0 gap-1.5">
+            ${skeletonBlock('h-8 w-28 rounded-lg')}
+            ${skeletonBlock('h-8 w-28 rounded-lg')}
+          </div>
+        </div>
+      </article>
+    `)
+    .join('');
 }
 
 function setUrlSection(section) {
@@ -1246,6 +1288,48 @@ function renderEdition() {
   tickCountdown();
 }
 
+function renderActiveCyclesLoadingSkeleton() {
+  const root = $('#tournamentActiveCycles');
+  if (!root) return;
+  const count = Math.max(2, Math.min(state.categories.length || 2, 4));
+  root.innerHTML = activeCyclesSkeletonHtml(count);
+}
+
+function renderTopFiveLoadingSkeleton() {
+  const root = $('#tournamentTopFive');
+  const meta = $('#tournamentTopMeta');
+  if (meta) meta.innerHTML = skeletonBlock('h-4 w-64 max-w-full');
+  if (root) root.innerHTML = topFiveSkeletonHtml();
+}
+
+function renderCurrentLoadingSkeletons() {
+  const edition = $('#tournamentEditionWindow');
+  const countdown = $('#tournamentCountdown');
+  const chips = $('#tournamentCategoryChips');
+
+  if (edition) edition.innerHTML = skeletonBlock('h-5 w-56 max-w-full');
+  if (countdown) countdown.innerHTML = skeletonBlock('h-6 w-28');
+  if (chips) chips.innerHTML = categoryChipsSkeletonHtml(2);
+
+  renderActiveCyclesLoadingSkeleton();
+  renderTopFiveLoadingSkeleton();
+}
+
+function renderInitialLoadingSkeletons() {
+  renderCurrentLoadingSkeletons();
+
+  const leaderboardRows = $('#tournamentLeaderboardRows');
+  const leaderboardMeta = $('#tournamentLeaderboardMeta');
+  const archiveRows = $('#tournamentArchiveRows');
+  const archiveMeta = $('#tournamentArchiveMeta');
+  renderLeaderboardMapBannerSkeleton();
+  if (leaderboardRows) leaderboardRows.innerHTML = leaderboardTableSkeletonRows(7);
+  if (leaderboardMeta) leaderboardMeta.innerHTML = skeletonBlock('h-3 w-36');
+  if (archiveRows) archiveRows.innerHTML = archiveTableSkeletonRows(7);
+  updateArchiveControls(0, null);
+  if (archiveMeta) archiveMeta.innerHTML = skeletonBlock('h-3 w-24');
+}
+
 function closeTournamentSelects(except = null) {
   document.querySelectorAll('[data-tournament-select]').forEach((root) => {
     if (root === except) return;
@@ -1325,7 +1409,7 @@ function renderCategories() {
         <button
           type="button"
           data-category-id="${esc(category.id)}"
-          class="group w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-xs transition ${
+          class="group w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-xs transition lg:w-auto lg:min-w-36 ${
             selected
               ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.12)]'
               : 'border-zinc-200/80 bg-white/70 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-white/10'
@@ -1378,6 +1462,7 @@ function renderActiveCycles() {
 
       return `
         <article data-map-banner-host class="relative min-h-[132px] overflow-hidden rounded-lg border ${cardTone} p-3">
+          ${mapBannerPlaceholderHtml()}
           ${mapBannerImageHtml(cycle.map_name, 'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-[0.9] dark:opacity-35')}
           <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/78 to-white/48 dark:from-zinc-950/95 dark:via-zinc-950/70 dark:to-zinc-950/38"></div>
           <div class="relative z-10 flex items-start justify-between gap-2">
@@ -1388,12 +1473,12 @@ function renderActiveCycles() {
           </div>
           <div class="relative z-10 mt-5 flex items-end justify-between gap-3">
             <div class="min-w-0 flex-1">
-              <div class="truncate text-lg font-black leading-tight">${esc(cycle.map_name || 'Unknown map')}</div>
+              <div class="truncate text-lg font-black leading-tight">${esc(cycle.map_name || t('labels.unknown_map', 'Unknown map'))}</div>
               <button
                 type="button"
                 data-copy-map-code="${esc(cycle.map_code || '')}"
                 class="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-200/80 bg-zinc-950 px-2 py-1 font-mono text-xs font-black text-white transition hover:bg-zinc-800 dark:border-white/10 dark:bg-black/50 dark:hover:bg-black/70"
-                title="Copy map code"
+                title="${esc(t('buttons.copy_code', 'Copy map code'))}"
               >
                 <span>${esc(cycle.map_code || '...')}</span>
                 <svg class="h-3.5 w-3.5 opacity-75" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -1573,6 +1658,119 @@ function rankWithMedal(rank) {
   `;
 }
 
+function rankOrdinal(rank) {
+  const value = Number(rank);
+  if (!Number.isFinite(value)) return String(rank ?? '-');
+  const suffix = value % 100 >= 11 && value % 100 <= 13
+    ? 'th'
+    : ({ 1: 'st', 2: 'nd', 3: 'rd' }[value % 10] || 'th');
+  return `${value}${suffix}`;
+}
+
+function isTruthyFlag(value) {
+  if (typeof value === 'string') {
+    return ['1', 'true', 'yes', 'full', 'complete', 'completed'].includes(value.toLowerCase());
+  }
+  return value === true || value === 1;
+}
+
+function isFullVerification(entry) {
+  return isTruthyFlag(entry?.completion ?? entry?.completed ?? entry?.is_completion ?? entry?.is_full_completion);
+}
+
+function verificationIconHtml(entry, size = 'h-5 w-5') {
+  if (!entry || !Object.prototype.hasOwnProperty.call(entry, 'verified')) return '';
+
+  const full = isFullVerification(entry);
+  const verified = isTruthyFlag(entry.verified);
+  const label = verified
+    ? full
+      ? t('labels.full_verification', 'Full verification')
+      : t('labels.partial_verification', 'Partial verification')
+    : full
+      ? t('labels.pending_full_verification', 'Pending full verification')
+      : t('labels.pending_partial_verification', 'Pending partial verification');
+  const src = verified
+    ? full
+      ? VERIFICATION_ICONS.full
+      : VERIFICATION_ICONS.partial
+    : full
+      ? VERIFICATION_ICONS.pendingFull
+      : VERIFICATION_ICONS.pendingPartial;
+
+  return `
+    <img
+      src="${esc(src)}"
+      alt="${esc(label)}"
+      title="${esc(label)}"
+      class="${size} shrink-0 object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  `;
+}
+
+function timeWithVerification(entry) {
+  return `
+    <span class="inline-flex items-center gap-2 font-mono font-black tabular-nums">
+      <span>${esc(formatTime(entry.time))}</span>
+      ${verificationIconHtml(entry)}
+    </span>
+  `;
+}
+
+function normalizeStreakValue(data) {
+  const value = Number(data?.current_streak ?? data?.current ?? data?.streak ?? data ?? 0);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function streakBadgeHtml(value, { loading = false } = {}) {
+  const label = loading ? '--' : String(normalizeStreakValue(value));
+  return `
+    <span class="inline-flex min-w-[3.5rem] items-center justify-center gap-1.5 rounded-lg border border-orange-300/40 bg-orange-500/10 px-2.5 py-1 font-mono text-sm font-black tabular-nums text-orange-700 dark:border-orange-300/30 dark:bg-orange-400/10 dark:text-orange-200">
+      <span>${esc(label)}</span>
+      <span aria-hidden="true" class="text-base leading-none">🔥</span>
+    </span>
+  `;
+}
+
+function leaderboardStreakCell(entry) {
+  const userId = String(entry.user_id || '').replace(/\D/g, '');
+  if (!userId) return streakBadgeHtml(0);
+  const cached = state.streakCache.get(userId);
+  return `
+    <span data-tournament-streak data-user-id="${esc(userId)}">
+      ${streakBadgeHtml(cached, { loading: cached == null })}
+    </span>
+  `;
+}
+
+async function hydrateLeaderboardStreaks(root = document) {
+  const nodes = Array.from(root.querySelectorAll('[data-tournament-streak][data-user-id]'));
+  const ids = [...new Set(nodes.map((node) => String(node.dataset.userId || '').replace(/\D/g, '')).filter(Boolean))];
+  if (!ids.length) return;
+
+  nodes.forEach((node) => {
+    const cached = state.streakCache.get(String(node.dataset.userId || ''));
+    if (cached != null) node.innerHTML = streakBadgeHtml(cached);
+  });
+
+  const missing = ids.filter((id) => !state.streakCache.has(id));
+  if (!missing.length) return;
+
+  await Promise.all(
+    missing.map(async (id) => {
+      const response = await api(`/streaks/${encodeURIComponent(id)}`);
+      state.streakCache.set(id, response.ok && response.data ? response.data : { current_streak: 0 });
+    })
+  );
+
+  nodes.forEach((node) => {
+    const id = String(node.dataset.userId || '').replace(/\D/g, '');
+    node.innerHTML = streakBadgeHtml(state.streakCache.get(id));
+  });
+}
+
 function playerLeaderboardCell(entry, { showUserId = false } = {}) {
   const userId = String(entry.user_id || '');
   const name = entry.name || userId || 'Unknown';
@@ -1630,13 +1828,14 @@ function archiveWinnerCell(cycle) {
 }
 
 function archiveMapCell(cycle) {
-  const mapName = cycle.map_name || 'Unknown map';
+  const mapName = cycle.map_name || t('labels.unknown_map', 'Unknown map');
   const mapCode = cycle.map_code || '';
   const difficulty = difficultyLabelHtml(cycle.map_difficulty, 'font-black');
 
   return `
     <div class="flex min-w-[230px] items-center gap-3">
-      <div data-map-banner-host class="h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-100 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-zinc-900 dark:ring-white/10">
+      <div data-map-banner-host class="relative h-14 w-28 shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-100 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-zinc-900 dark:ring-white/10">
+        ${mapBannerPlaceholderHtml()}
         ${mapBannerImageHtml(mapName, 'h-full w-full object-cover')}
       </div>
       <div class="min-w-0">
@@ -1660,8 +1859,8 @@ function topCard(entry, index) {
         ? 'min-h-[150px] p-4 sm:p-5'
         : 'min-h-[124px] p-4';
   const avatarSize = skin.size === 'top' ? 'h-24 w-24 sm:h-28 sm:w-28' : skin.size === 'mid' ? 'h-20 w-20' : 'h-16 w-16';
-  const titleSize = skin.size === 'top' ? 'text-3xl sm:text-5xl' : skin.size === 'mid' ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl';
-  const timeSize = skin.size === 'top' ? 'text-3xl sm:text-5xl' : skin.size === 'mid' ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl';
+  const titleSize = skin.size === 'top' ? 'text-2xl sm:text-4xl' : skin.size === 'mid' ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl';
+  const timeSize = skin.size === 'top' ? 'text-2xl sm:text-4xl' : skin.size === 'mid' ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl';
   const colSpan = skin.size === 'top' ? 'lg:col-span-12' : 'lg:col-span-6';
   const medalUrl = MEDAL_URLS[rank] || '';
   const medalSize = skin.size === 'top' ? 'h-6 w-6' : 'h-5 w-5';
@@ -1670,7 +1869,7 @@ function topCard(entry, index) {
     <article class="${colSpan} relative overflow-hidden rounded-2xl border ${skin.card} ${sizeClasses}">
       <div class="absolute right-4 top-4 inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-xs font-black uppercase tracking-wide ${skin.badge}">
         ${medalUrl ? `<img src="${esc(medalUrl)}" alt="" class="${medalSize} object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.25)]" loading="lazy" decoding="async" />` : ''}
-        Top ${esc(rank)}
+        ${esc(rankOrdinal(rank))}
       </div>
       <div class="flex h-full items-center gap-4 sm:gap-5">
         <a
@@ -1697,8 +1896,12 @@ function topCard(entry, index) {
             ${esc(name)}
           </a>
           <div class="mt-4 flex items-end justify-between gap-4 border-t border-zinc-200/70 pt-3 dark:border-white/10">
-            <span class="${timeSize} font-black uppercase leading-none tracking-normal ${skin.time}">${esc(t('table.time', 'Time'))} :</span>
-            <span class="${timeSize} text-right font-black leading-none tabular-nums ${skin.time}">${esc(formatTime(entry.time, { unit: false }))}</span>
+            <span class="sr-only">${esc(t('table.time', 'Time'))}</span>
+            <span>${leaderboardStreakCell(entry)}</span>
+            <span class="inline-flex items-center justify-end gap-2 ${timeSize} text-right font-black leading-none tabular-nums ${skin.time}">
+              <span>${esc(formatTime(entry.time))}</span>
+              ${verificationIconHtml(entry, skin.size === 'top' ? 'h-7 w-7' : skin.size === 'mid' ? 'h-6 w-6' : 'h-5 w-5')}
+            </span>
           </div>
         </div>
       </div>
@@ -1724,17 +1927,7 @@ function renderTopFive() {
   }
 
   if (state.leaderboardLoading) {
-    root.innerHTML = `
-      <div class="grid gap-4 lg:grid-cols-12">
-        ${Array.from({ length: 5 })
-          .map(
-            (_, index) => `
-              <div class="${index === 0 ? 'lg:col-span-12 min-h-[178px]' : 'lg:col-span-6 min-h-[136px]'} animate-pulse rounded-2xl border border-zinc-200/80 bg-zinc-100 dark:border-white/10 dark:bg-white/5"></div>
-            `
-          )
-          .join('')}
-      </div>
-    `;
+    root.innerHTML = topFiveSkeletonHtml();
     return;
   }
 
@@ -1749,12 +1942,21 @@ function renderTopFive() {
 
   root.innerHTML = `<div class="grid gap-4 lg:grid-cols-12">${entries.map(topCard).join('')}</div>`;
   void hydrateTopAvatars(root);
+  void hydrateLeaderboardStreaks(root);
 }
 
 async function renderLeaderboard({ silent = false } = {}) {
   const rows = $('#tournamentLeaderboardRows');
   const meta = $('#tournamentLeaderboardMeta');
   if (!rows) return;
+
+  if (!state.hasLoaded && !state.categories.length) {
+    if (meta) meta.innerHTML = skeletonBlock('h-3 w-36');
+    renderLeaderboardMapBannerSkeleton();
+    rows.innerHTML = leaderboardTableSkeletonRows(7);
+    renderTopFiveLoadingSkeleton();
+    return;
+  }
 
   const cycle = selectedCycle();
   if (!cycle) {
@@ -1777,7 +1979,7 @@ async function renderLeaderboard({ silent = false } = {}) {
   if (meta) meta.textContent = `${cycle.map_code || ''} / ${cycle.map_name || ''}`;
   renderLeaderboardMapBanner(cycle);
   if (!canKeepExisting) {
-    rows.innerHTML = tableSkeletonRows(4, 7);
+    rows.innerHTML = leaderboardTableSkeletonRows(7);
   }
   renderTopFive();
 
@@ -1814,14 +2016,15 @@ async function renderLeaderboard({ silent = false } = {}) {
         <tr class="border-t border-zinc-200/80 transition hover:bg-zinc-50/80 dark:border-white/10 dark:hover:bg-white/[0.03]">
           <td class="px-4 py-3">${rankWithMedal(entry.rank)}</td>
           <td class="px-4 py-3">${playerLeaderboardCell(entry)}</td>
-          <td class="px-4 py-3 font-mono">${esc(formatTime(entry.time))}</td>
-          <td class="px-4 py-3">${entry.verified ? 'Yes' : 'No'}</td>
+          <td class="px-4 py-3">${timeWithVerification(entry)}</td>
+          <td class="px-4 py-3">${leaderboardStreakCell(entry)}</td>
         </tr>
       `
     )
     .join('');
 
   void hydrateTopAvatars(rows);
+  void hydrateLeaderboardStreaks(rows);
   renderTopFive();
 }
 
@@ -1830,11 +2033,18 @@ async function renderArchives({ silent = false } = {}) {
   const meta = $('#tournamentArchiveMeta');
   if (!rows) return;
 
+  if (!state.hasLoaded && !state.categories.length) {
+    if (meta) meta.innerHTML = skeletonBlock('h-3 w-24');
+    updateArchiveControls(0, null);
+    rows.innerHTML = archiveTableSkeletonRows(7);
+    return;
+  }
+
   const requestSeq = ++state.archiveRequestSeq;
   const archiveKey = `${state.selectedCategoryId || ''}:${state.archiveOffset}`;
   const canKeepExisting = silent && state.archiveKey === archiveKey && rows.children.length > 0;
   if (!canKeepExisting) {
-    rows.innerHTML = tableSkeletonRows(5, 7);
+    rows.innerHTML = archiveTableSkeletonRows(7);
   }
 
   const response = await api('/cycles', {
@@ -1861,15 +2071,7 @@ async function renderArchives({ silent = false } = {}) {
     const nextHash = JSON.stringify(cycles);
     if (silent && canKeepExisting && nextHash === state.archiveHash) {
       state.archiveTotal = total;
-      if (meta) {
-        const start = total ? state.archiveOffset + 1 : 0;
-        const end = Math.min(state.archiveOffset + ARCHIVE_LIMIT, total);
-        meta.textContent = `${start}-${end} / ${total}`;
-      }
-      const prev = $('#tournamentArchivePrev');
-      const next = $('#tournamentArchiveNext');
-      if (prev) prev.disabled = state.archiveOffset <= 0;
-      if (next) next.disabled = state.archiveOffset + ARCHIVE_LIMIT >= total;
+      updateArchiveControls(total, meta);
       return;
     }
 
@@ -1900,16 +2102,7 @@ async function renderArchives({ silent = false } = {}) {
       .join('');
   }
 
-  if (meta) {
-    const start = total ? state.archiveOffset + 1 : 0;
-    const end = Math.min(state.archiveOffset + ARCHIVE_LIMIT, total);
-    meta.textContent = `${start}-${end} / ${total}`;
-  }
-
-  const prev = $('#tournamentArchivePrev');
-  const next = $('#tournamentArchiveNext');
-  if (prev) prev.disabled = state.archiveOffset <= 0;
-  if (next) next.disabled = state.archiveOffset + ARCHIVE_LIMIT >= total;
+  updateArchiveControls(total, meta);
   bindMapBannerFallbacks(rows);
   void hydrateTopAvatars(rows);
 }
@@ -1920,6 +2113,63 @@ function findArchiveCycle(cycleId) {
 
 function closeHistoryModal() {
   $('#tournamentHistoryModal')?.classList.add('hidden');
+}
+
+function updateArchiveControls(total, meta = $('#tournamentArchiveMeta')) {
+  const numericTotal = Math.max(0, Number(total) || 0);
+  const totalPages = Math.ceil(numericTotal / ARCHIVE_LIMIT);
+  const currentPage = totalPages
+    ? Math.min(totalPages - 1, Math.max(0, Math.floor(state.archiveOffset / ARCHIVE_LIMIT)))
+    : 0;
+
+  if (meta) {
+    const start = numericTotal ? currentPage * ARCHIVE_LIMIT + 1 : 0;
+    const end = Math.min((currentPage + 1) * ARCHIVE_LIMIT, numericTotal);
+    meta.textContent = numericTotal ? `${start}-${end} ${t('labels.range_of', 'of')} ${numericTotal}` : '';
+  }
+
+  const prev = $('#tournamentArchivePrev');
+  const next = $('#tournamentArchiveNext');
+  if (prev) prev.disabled = totalPages <= 1 || currentPage <= 0;
+  if (next) next.disabled = totalPages <= 1 || currentPage >= totalPages - 1;
+
+  const pages = $('#tournamentArchivePages');
+  if (!pages) return;
+
+  if (totalPages <= 1) {
+    pages.classList.add('hidden');
+    pages.classList.remove('flex');
+    pages.innerHTML = '';
+    return;
+  }
+
+  const visible = 5;
+  let startPage = Math.max(0, currentPage - Math.floor(visible / 2));
+  let endPage = Math.min(totalPages, startPage + visible);
+  startPage = Math.max(0, endPage - visible);
+
+  pages.classList.remove('hidden');
+  pages.classList.add('flex');
+  pages.innerHTML = Array.from({ length: endPage - startPage })
+    .map((_, index) => {
+      const page = startPage + index;
+      const isActive = page === currentPage;
+      const classes = isActive
+        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-950'
+        : 'border-zinc-200/80 bg-white/70 text-zinc-700 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:text-zinc-200 dark:hover:bg-white/10';
+
+      return `
+        <button
+          type="button"
+          data-archive-page="${page}"
+          class="h-9 min-w-9 cursor-pointer rounded-lg border px-3 text-sm font-black tabular-nums transition ${classes}"
+          ${isActive ? 'aria-current="page"' : ''}
+        >
+          ${page + 1}
+        </button>
+      `;
+    })
+    .join('');
 }
 
 async function openHistoryModal(cycleId) {
@@ -1939,10 +2189,14 @@ async function openHistoryModal(cycleId) {
     ].filter(Boolean);
     meta.textContent = parts.join(' / ');
   }
-  renderHistoryModalBanner(cycle);
+  if (cycle) {
+    renderHistoryModalBanner(cycle);
+  } else {
+    renderHistoryModalBannerSkeleton();
+  }
 
   modal.classList.remove('hidden');
-  rows.innerHTML = tableSkeletonRows(4, 7);
+  rows.innerHTML = historyModalTableSkeletonRows(7);
 
   const requestSeq = ++state.historyRequestSeq;
   const response = await api(`/cycles/${encodeURIComponent(cycleId)}/leaderboard`);
@@ -1950,7 +2204,7 @@ async function openHistoryModal(cycleId) {
 
   const entries = response.ok && Array.isArray(response.data) ? response.data : [];
   if (!entries.length) {
-    rows.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_participants', 'No participant details for this tournament.'))}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="3" class="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">${esc(t('empty.no_participants', 'No participant details for this tournament.'))}</td></tr>`;
     return;
   }
 
@@ -1960,47 +2214,13 @@ async function openHistoryModal(cycleId) {
         <tr class="border-t border-zinc-200/80 transition hover:bg-zinc-50/80 dark:border-white/10 dark:hover:bg-white/[0.03]">
           <td class="px-4 py-3">${rankWithMedal(entry.rank)}</td>
           <td class="px-4 py-3">${playerLeaderboardCell(entry)}</td>
-          <td class="px-4 py-3 font-mono">${esc(formatTime(entry.time))}</td>
-          <td class="px-4 py-3">${entry.verified ? 'Yes' : 'No'}</td>
+          <td class="px-4 py-3">${timeWithVerification(entry)}</td>
         </tr>
       `
     )
     .join('');
 
   void hydrateTopAvatars(rows);
-}
-
-async function loadStreak(userId) {
-  const root = $('#tournamentStreakResult');
-  if (!root || !userId) return;
-  root.textContent = t('empty.loading', 'Loading tournaments...');
-  const response = await api(`/streaks/${encodeURIComponent(userId)}`);
-
-  if (response.status === 404) {
-    root.textContent = t('empty.no_streak', 'No streak yet.');
-    return;
-  }
-
-  if (!response.ok || !response.data) {
-    root.textContent = t('messages.request_failed', 'Unable to load tournament data.');
-    return;
-  }
-
-  root.innerHTML = `
-    <dl class="grid grid-cols-2 gap-3">
-      <div>
-        <dt class="text-xs text-zinc-500 dark:text-zinc-400">Current</dt>
-        <dd class="text-lg font-black">${esc(response.data.current_streak ?? 0)}</dd>
-      </div>
-      <div>
-        <dt class="text-xs text-zinc-500 dark:text-zinc-400">Max</dt>
-        <dd class="text-lg font-black">${esc(response.data.max_streak ?? 0)}</dd>
-      </div>
-      <div class="col-span-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Last cycle: ${esc(response.data.last_cycle_id ?? '-')}
-      </div>
-    </dl>
-  `;
 }
 
 function tickCountdown() {
@@ -2031,6 +2251,9 @@ async function loadActiveCycles() {
 }
 
 async function loadAll({ keepArchive = false, silent = false } = {}) {
+  const showInitialSkeletons = !silent && !state.hasLoaded;
+  if (showInitialSkeletons) renderInitialLoadingSkeletons();
+
   const [categories, edition] = await Promise.all([
     api('/categories'),
     api('/editions/active'),
@@ -2041,13 +2264,16 @@ async function loadAll({ keepArchive = false, silent = false } = {}) {
 
   if (!keepArchive) state.archiveOffset = 0;
 
-  await loadActiveCycles();
-
   renderEdition();
   renderCategories();
+  if (showInitialSkeletons) renderActiveCyclesLoadingSkeleton();
+
+  await loadActiveCycles();
+
   renderActiveCycles();
   await Promise.all([renderLeaderboard({ silent }), renderArchives({ silent })]);
   startCountdown();
+  state.hasLoaded = true;
 }
 
 function handleCategoryChange(value) {
@@ -2147,6 +2373,13 @@ function bindEvents() {
     void renderArchives();
   });
 
+  $('#tournamentArchivePages')?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-archive-page]');
+    if (!button) return;
+    state.archiveOffset = Math.max(0, Number(button.dataset.archivePage || 0) * ARCHIVE_LIMIT);
+    void renderArchives();
+  });
+
   $('#tournamentArchiveRows')?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-view-cycle]');
     if (!button) return;
@@ -2168,16 +2401,6 @@ function bindEvents() {
     }
   });
 
-  $('#tournamentStreakForm')?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const userId = await resolveStreakUserId();
-    if (!userId) {
-      setStreakMessage(t('messages.select_user', 'Select a player from the suggestions or enter a valid user ID.'), 'error');
-      return;
-    }
-    void loadStreak(userId);
-  });
-
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') void loadAll({ keepArchive: true, silent: true });
   });
@@ -2192,7 +2415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initTournamentTabs();
   switchSection(state.currentSection, { updateUrl: false });
-  wireStreakAutocomplete();
+  renderInitialLoadingSkeletons();
   bindEvents();
   void loadAll();
 
