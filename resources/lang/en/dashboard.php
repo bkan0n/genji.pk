@@ -86,6 +86,7 @@ return [
     'price'                  => 'Price',
     'price_coins'            => '{0} coins',
     'purchase'               => 'Purchase',
+    'keys_purchased'         => 'Keys purchased!',
     'discount'               => 'Discount: {0}%',
     'no_discount'            => 'No discount',
     'active_key'             => 'Active key',
@@ -106,6 +107,7 @@ return [
     'no_items'             => 'No items in rotation.',
     'price'                => 'Price',
     'buy'                  => 'Buy',
+    'item_purchased'       => 'Item purchased!',
     'owned'                => 'OWNED',
     'no_image'             => 'No image',
     'item_fallback'        => 'Item',
@@ -148,5 +150,6 @@ return [
     'load_failed'       => 'Failed to load.',
     'login_required'    => 'Login required.',
     'store_unavailable' => 'Store unavailable.',
+    'purchase_failed'   => 'Purchase failed.',
   ],
 ];

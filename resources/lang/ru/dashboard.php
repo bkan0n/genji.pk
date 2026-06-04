@@ -86,6 +86,7 @@ return [
     'price'                  => 'Цена',
     'price_coins'            => '{0} монет',
     'purchase'               => 'Купить',
+    'keys_purchased'         => 'Ключи куплены!',
     'discount'               => 'Скидка: {0}%',
     'no_discount'            => 'Без скидки',
     'active_key'             => 'Активный ключ',
@@ -106,6 +107,7 @@ return [
     'no_items'             => 'В ротации нет предметов.',
     'price'                => 'Цена',
     'buy'                  => 'Купить',
+    'item_purchased'       => 'Предмет куплен!',
     'owned'                => 'ЕСТЬ',
     'no_image'             => 'Нет изображения',
     'item_fallback'        => 'Предмет',
@@ -149,5 +151,6 @@ return [
     'load_failed'       => 'Не удалось загрузить.',
     'login_required'    => 'Требуется вход.',
     'store_unavailable' => 'Магазин недоступен.',
+    'purchase_failed'   => 'Покупка не удалась.',
   ],
 ];

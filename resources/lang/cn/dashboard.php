@@ -86,6 +86,7 @@ return [
     'price'                  => '价格',
     'price_coins'            => '{0} 金币',
     'purchase'               => '购买',
+    'keys_purchased'         => '钥匙购买成功！',
     'discount'               => '折扣：{0}%',
     'no_discount'            => '无折扣',
     'active_key'             => '当前钥匙',
@@ -106,6 +107,7 @@ return [
     'no_items'             => '轮换中暂无物品。',
     'price'                => '价格',
     'buy'                  => '购买',
+    'item_purchased'       => '购买成功！',
     'owned'                => '已拥有',
     'no_image'             => '无图片',
     'item_fallback'        => '物品',
@@ -149,5 +151,6 @@ return [
     'load_failed'       => '加载失败。',
     'login_required'    => '需要登录。',
     'store_unavailable' => '商店不可用。',
+    'purchase_failed'   => '购买失败。',
   ],
 ];

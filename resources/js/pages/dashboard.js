@@ -123,6 +123,9 @@ function showToast(message, type = "ok", opts = {}) {
 function showErrorToast(message) {
   showToast(message || t("errors.purchase_failed", "Purchase failed."), "error");
 }
+function showSuccessToast(message) {
+  showToast(message, "ok");
+}
 function showAvatarImg(img) {
   img?.classList.remove("opacity-0");
   img?.classList.add("opacity-100");
@@ -1961,6 +1964,7 @@ async function loadWeeklyShop() {
           }),
         });
 
+        showSuccessToast(t("weekly.item_purchased", "Item purchased!"));
         await Promise.allSettled([loadHeader(), loadPurchases(), loadWeeklyShop()]);
       } catch (e) {
         showErrorToast(e?.message);
@@ -2092,6 +2096,7 @@ async function loadKeyShop() {
         }),
       });
 
+      showSuccessToast(t("keyshop.keys_purchased", "Keys purchased!"));
       await Promise.allSettled([loadHeader(), loadPurchases()]);
     } catch (e) {
       showErrorToast(e?.message);

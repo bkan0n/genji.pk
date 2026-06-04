@@ -86,6 +86,7 @@ return [
     'price'                  => 'Prix',
     'price_coins'            => '{0} pièces',
     'purchase'               => 'Acheter',
+    'keys_purchased'         => 'Clés achetées !',
     'discount'               => 'Réduction : {0}%',
     'no_discount'            => 'Aucune réduction',
     'active_key'             => 'Clé active',
@@ -106,6 +107,7 @@ return [
     'no_items'             => 'Aucun objet en rotation.',
     'price'                => 'Prix',
     'buy'                  => 'Acheter',
+    'item_purchased'       => 'Objet acheté !',
     'owned'                => 'OBTENU',
     'no_image'             => 'Pas d’image',
     'item_fallback'        => 'Objet',
@@ -149,5 +151,6 @@ return [
     'load_failed'       => 'Chargement échoué.',
     'login_required'    => 'Connexion requise.',
     'store_unavailable' => 'Boutique indisponible.',
+    'purchase_failed'   => 'Échec de l’achat.',
   ],
 ];
