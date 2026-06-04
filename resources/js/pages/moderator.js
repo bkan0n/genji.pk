@@ -123,6 +123,348 @@ const escapeHtml = (s = '') =>
       })[ch]
   );
 
+const MOD_SECTION_META = {
+  users: {
+    kicker: 'Identity',
+    summary: 'Inspect player profiles, manage Overwatch aliases, link fake accounts, and keep visible names consistent.',
+    stats: ['Support workflow', 'Discord identity', 'Alias hygiene'],
+    hints: [
+      'Start with Get user or Get Overwatch usernames when you only have a Discord id.',
+      'Use Replace Overwatch names and Update names together after confirming the same profile.',
+    ],
+    cards: [
+      { sub: 'users-get', title: 'Inspect a player', desc: 'Load the moderator profile before changing names or links.' },
+      { sub: 'users-get-ow', title: 'Review aliases', desc: 'Check the current Overwatch names tied to a user.' },
+      { sub: 'users-overwatch', title: 'Replace aliases', desc: 'Rewrite the alias set and choose the primary username.' },
+      { sub: 'users-update', title: 'Update display names', desc: 'Patch global name and nickname after verification.' },
+      { sub: 'users-link', title: 'Link fake account', desc: 'Attach a fake member to the real Discord user.' },
+      { sub: 'users-create', title: 'Create fake member', desc: 'Create a placeholder member for legacy or imported records.' },
+    ],
+  },
+  lootbox: {
+    kicker: 'Rewards',
+    summary: 'Grant keys, XP, rewards, and inspect reward state with fewer context switches.',
+    stats: ['Inventory', 'XP economy', 'Reward debug'],
+    hints: [
+      'Load user keys or rewards before granting when the request is account-specific.',
+      'Debug reward grants bypass normal key ownership and should stay exceptional.',
+    ],
+    cards: [
+      { sub: 'lootbox-get-keys', title: 'Review keys', desc: 'Check a user inventory before granting more keys.' },
+      { sub: 'lootbox-key', title: 'Grant key', desc: 'Give a specific key type to a user.' },
+      { sub: 'lootbox-xp', title: 'Grant XP', desc: 'Apply manual XP with a clear reason.' },
+      { sub: 'lootbox-get-rewards', title: 'Review rewards', desc: 'Inspect rewards already attached to a user.' },
+      { sub: 'lootbox-reward', title: 'Debug reward', desc: 'Grant one reward directly for admin correction.', danger: true },
+      { sub: 'lootbox-set-active-key', title: 'Key availability', desc: 'Set active key types and XP multiplier tools.' },
+    ],
+  },
+  guides: {
+    kicker: 'Guides',
+    summary: 'Create, update, delete, and audit map guide links by map code and author.',
+    stats: ['Map guides', 'Creator links', 'Maintenance'],
+    hints: [
+      'Fetch guides for a map code before editing or deleting a user guide.',
+      'Create, edit, and delete operate on the same map-code/user relationship.',
+    ],
+    cards: [
+      { sub: 'guides-get', title: 'Map guide list', desc: 'Load the current guide set for a map.' },
+      { sub: 'guides-create', title: 'Create guide', desc: 'Attach a creator guide URL to a map.' },
+      { sub: 'guides-edit', title: 'Edit guide', desc: 'Patch an existing guide for a specific user.' },
+      { sub: 'guides-delete', title: 'Delete guide', desc: 'Remove a guide after checking author and map code.', danger: true },
+    ],
+  },
+  content: {
+    kicker: 'Knowledge base',
+    summary: 'Maintain movement-tech categories, difficulties, and techniques as one structured content workflow.',
+    stats: ['Taxonomy', 'Technique editor', 'Ordering'],
+    hints: [
+      'Categories and difficulties are loaded automatically to feed technique dropdowns.',
+      'Use the update dropdowns to pull existing values before changing IDs, text, tips, or videos.',
+    ],
+    cards: [
+      { sub: 'content-categories', title: 'Categories', desc: 'Create, update, delete, and reorder content categories.' },
+      { sub: 'content-difficulties', title: 'Difficulties', desc: 'Maintain difficulty labels used by techniques.' },
+      { sub: 'content-techniques', title: 'Techniques', desc: 'Edit full movement-tech entries with tips and videos.' },
+    ],
+  },
+  maps: {
+    kicker: 'Map operations',
+    summary: 'Search, submit, update, archive, convert, and request map edits from a single map pipeline.',
+    stats: ['Map data', 'Edit requests', 'Legacy tools'],
+    hints: [
+      'Search or load a map before update/convert actions so the form is filled from current data.',
+      'Archive and release-code actions affect public visibility, so verify the map code first.',
+    ],
+    cards: [
+      { sub: 'maps-search', title: 'Search map', desc: 'Find a map and inspect its public data.' },
+      { sub: 'maps-update', title: 'Update map', desc: 'Load current values, edit, then patch the same record.' },
+      { sub: 'maps-submit', title: 'Submit map', desc: 'Create a new map entry using the full submit workflow.' },
+      { sub: 'maps-edit-request', title: 'Edit request', desc: 'Create a structured request for map corrections.' },
+      { sub: 'maps-archive', title: 'Archive visibility', desc: 'Archive or unarchive one or many map codes.', danger: true },
+      { sub: 'maps-convert', title: 'Legacy conversion', desc: 'Convert a modern map code into legacy format.' },
+    ],
+  },
+  moderation: {
+    kicker: 'Quality control',
+    summary: 'Override quality votes and handle suspicious-completion flags with audit-friendly outputs.',
+    stats: ['Quality', 'Suspicious flags', 'Corrections'],
+    hints: [
+      'Use suspicious flag lookup before setting or clearing a flag.',
+      'Quality overrides should include the exact map code and verified quality value.',
+    ],
+    cards: [
+      { sub: 'mod-getsusp', title: 'Review flags', desc: 'List suspicious flags before changing a completion.' },
+      { sub: 'mod-suspicious', title: 'Set suspicious flag', desc: 'Mark or clear one completion flag.' },
+      { sub: 'mod-quality', title: 'Override quality', desc: 'Patch a map quality score after moderator review.' },
+    ],
+  },
+  verifications: {
+    kicker: 'Queues',
+    summary: 'Process completion submissions, playtest state, and pending map edit requests.',
+    stats: ['Completion queue', 'Edit requests', 'Review actions'],
+    hints: [
+      'Open pending queues from here; result cards include approve/reject actions where supported.',
+      'The resolved-by field is prepared from the connected moderator account when available.',
+    ],
+    cards: [
+      { sub: 'verif-pending', title: 'Completion queue', desc: 'Load pending completion verifications.' },
+      { sub: 'verif-edits', title: 'Map edit queue', desc: 'Review pending map edit requests.' },
+      { sub: 'verif-playtest', title: 'Playtests', desc: 'Handle playtest accept, deny, reset, and vote cleanup.' },
+    ],
+  },
+  tournament: {
+    kicker: 'Tournament ops',
+    summary: 'Operate tournament categories, map selection, active cycles, leaderboards, and edition lifecycle together.',
+    stats: ['Categories', 'Active cycles', 'Lifecycle controls'],
+    hints: [
+      'Open Overview first; it loads config, categories, active edition, and active cycles.',
+      'Category choices are reused across map and cycle tools to avoid copying IDs manually.',
+    ],
+    cards: [
+      { sub: 'tournament-overview', title: 'Live overview', desc: 'Load the complete tournament state and prefill lifecycle forms.' },
+      { sub: 'tournament-categories', title: 'Categories', desc: 'Create or update XP, difficulties, active state, and champion role.' },
+      { sub: 'tournament-maps', title: 'Map rotation', desc: 'Preview, choose, reroll, or force a category map.' },
+      { sub: 'tournament-cycles', title: 'Cycles and rankings', desc: 'List cycles, open leaderboards, and inspect user streaks.' },
+      { sub: 'tournament-lifecycle', title: 'Edition lifecycle', desc: 'Config, bootstrap, pause/resume, debug length, and result publishing.', danger: true },
+    ],
+  },
+  store: {
+    kicker: 'Commerce',
+    summary: 'Load store configuration, update economics, and generate rotations in the same section.',
+    stats: ['Config', 'Rotation', 'Dev-only'],
+    hints: ['Load config first, update values in place, then save from the same card.'],
+    cards: [
+      { sub: 'store-config', title: 'Store config', desc: 'Load and update live store configuration.' },
+      { sub: 'store-rotation', title: 'Generate rotation', desc: 'Create a new store rotation.', danger: true },
+    ],
+  },
+  quests: {
+    kicker: 'Quests',
+    summary: 'Configure weekly quests, edit the current rotation, and patch user progress.',
+    stats: ['Config', 'Weekly rotation', 'User progress'],
+    hints: [
+      'Load weekly quests before editing, then use the picker to fill the update form.',
+      'User progress editing is intentionally separate from quest configuration.',
+    ],
+    cards: [
+      { sub: 'quest-config', title: 'Quest config', desc: 'Load and update global quest settings.' },
+      { sub: 'quest-update', title: 'Weekly quests', desc: 'Pick and update a quest from the live weekly set.' },
+      { sub: 'quest-rotation', title: 'Generate rotation', desc: 'Force a new quest rotation.', danger: true },
+      { sub: 'quest-user-progress', title: 'User progress', desc: 'Load and patch a user quest-progress entry.' },
+    ],
+  },
+  devs: {
+    kicker: 'Web maintenance',
+    summary: 'Danger-zone maintenance tools for caches and converter metadata.',
+    stats: ['Caches', 'Converter', 'Restricted'],
+    hints: ['These actions are restricted because they can affect shared site behavior immediately.'],
+    cards: [
+      { sub: 'dev-cache-frameworks', title: 'Framework cache', desc: 'Clear framework cache.', danger: true },
+      { sub: 'dev-cache-avatars', title: 'Avatar cache', desc: 'Clear cached avatar data.', danger: true },
+      { sub: 'dev-cache-translations', title: 'Translation cache', desc: 'Clear translated string cache.', danger: true },
+      { sub: 'dev-overpy-commit', title: 'Overpy commit', desc: 'Update converter commit metadata.' },
+      { sub: 'dev-framework-version', title: 'Framework version', desc: 'Update the genji-framework CDN version.' },
+    ],
+  },
+};
+
+function modSectionMeta(tabId) {
+  const fallbackLabel = document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(String(tabId || ''))}"]`)?.dataset?.tabLabel || tabId || 'Section';
+  return MOD_SECTION_META[tabId] || {
+    kicker: 'Workflow',
+    summary: `Tools for ${fallbackLabel}.`,
+    stats: [],
+    hints: [],
+    cards: [],
+  };
+}
+
+function modSubtabLabel(panel, subId) {
+  const btn = panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
+  return btn?.textContent?.trim() || subId;
+}
+
+function modAvailableCards(panel, meta) {
+  const explicit = Array.isArray(meta.cards) ? meta.cards : [];
+  const cards = explicit
+    .filter((card) => panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(card.sub)}"]`))
+    .map((card) => ({ ...card, title: card.title || modSubtabLabel(panel, card.sub) }));
+
+  if (cards.length) return cards;
+
+  return $$('.mod-subtab[data-subtab]', panel).map((btn) => ({
+    sub: btn.dataset.subtab,
+    title: btn.textContent.trim(),
+    desc: 'Open this tool.',
+  }));
+}
+
+function renderModeratorWorkflowHome(panelOrId) {
+  const panel = typeof panelOrId === 'string'
+    ? document.querySelector(`.mod-panel[data-panel="${CSS.escape(panelOrId)}"]`)
+    : panelOrId;
+  if (!panel) return;
+
+  const tabId = panel.dataset.panel || 'users';
+  const meta = modSectionMeta(tabId);
+  const empty = panel.querySelector(':scope > .empty-state') || panel.querySelector('.empty-state');
+  if (!empty) return;
+
+  const cards = modAvailableCards(panel, meta);
+  const actionCount = panel.querySelectorAll('form[data-action]').length;
+  const subtabCount = panel.querySelectorAll('.mod-subtab[data-subtab]').length;
+  const chips = [
+    `${subtabCount} workflows`,
+    `${actionCount} actions`,
+    ...(meta.stats || []),
+  ];
+
+  empty.dataset.workflowHome = '1';
+  empty.className = 'empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 p-5 text-zinc-700 dark:text-zinc-200';
+  empty.innerHTML = `
+    <div data-workflow-home>
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div class="min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700 dark:text-emerald-300">${escapeHtml(meta.kicker || 'Workflow')}</div>
+          <h3 class="mt-2 text-xl font-black text-zinc-950 dark:text-white">${escapeHtml(document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId)}</h3>
+          <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-300">${escapeHtml(meta.summary || '')}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            ${chips.map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 text-xs font-semibold text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${escapeHtml(chip)}</span>`).join('')}
+          </div>
+        </div>
+        <button type="button" data-workflow-first-action class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200">
+          Open first action
+        </button>
+      </div>
+      <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        ${cards.map((card, index) => `
+          <button
+            type="button"
+            data-workflow-card
+            data-workflow-open-subtab="${escapeHtml(card.sub)}"
+            class="group rounded-2xl border p-4 text-left focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${card.danger ? 'hover:border-amber-500/45' : ''}"
+          >
+            <span class="flex items-start justify-between gap-3">
+              <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${card.danger ? 'bg-amber-500/12 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'} ring-1 ring-inset ring-current/15">${String(index + 1).padStart(2, '0')}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-black text-zinc-950 dark:text-white">${escapeHtml(card.title)}</span>
+                <span class="mt-1 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">${escapeHtml(card.desc || '')}</span>
+              </span>
+            </span>
+          </button>
+        `).join('')}
+      </div>
+      ${(meta.hints || []).length ? `
+        <div class="mt-5 grid gap-2 lg:grid-cols-2">
+          ${(meta.hints || []).map((hint) => `
+            <div class="rounded-xl border border-zinc-200/80 bg-white/50 p-3 text-xs leading-relaxed text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${escapeHtml(hint)}</div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  const first = empty.querySelector('[data-workflow-card]');
+  empty.querySelector('[data-workflow-first-action]')?.addEventListener('click', () => first?.click());
+}
+
+function refreshModeratorActiveHeader(tabId = document.querySelector('#modTabs .mod-tab.active')?.dataset?.tab || 'users') {
+  const meta = modSectionMeta(tabId);
+  const label = document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId;
+  const panel = document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
+  const subtabCount = panel?.querySelectorAll?.('.mod-subtab[data-subtab]').length || 0;
+  const actionCount = panel?.querySelectorAll?.('form[data-action]').length || 0;
+
+  const title = document.getElementById('modActiveTitle');
+  const kicker = document.getElementById('modActiveKicker');
+  const summary = document.getElementById('modActiveSummary');
+  const stats = document.getElementById('modActiveStats');
+
+  if (title) title.textContent = label || tabId;
+  if (kicker) kicker.textContent = meta.kicker || 'Workflow';
+  if (summary) summary.textContent = meta.summary || '';
+  if (stats) {
+    stats.innerHTML = [
+      `${subtabCount} workflows`,
+      `${actionCount} actions`,
+      ...(meta.stats || []),
+    ].map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 font-semibold dark:border-white/10 dark:bg-white/5">${escapeHtml(chip)}</span>`).join('');
+  }
+
+  const hintsRoot = document.getElementById('modContextHints');
+  if (hintsRoot) {
+    const hints = meta.hints?.length ? meta.hints : ['Pick a workflow card, then submit the focused form.'];
+    hintsRoot.innerHTML = hints.map((hint, index) => `
+      <div class="rounded-xl border ${index === 0 ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200' : 'border-zinc-200/80 bg-white/45 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300'} p-3">
+        ${escapeHtml(hint)}
+      </div>
+    `).join('');
+  }
+}
+
+function updateModeratorActivityStats() {
+  const cards = $$('#activityLog [data-log-card]');
+  const ok = cards.filter((card) => card.dataset.ok === '1').length;
+  const total = cards.length;
+  const values = { total, ok, err: total - ok };
+  Object.entries(values).forEach(([key, value]) => {
+    document.querySelectorAll(`[data-activity-stat="${CSS.escape(key)}"]`).forEach((el) => {
+      el.textContent = String(value);
+    });
+  });
+}
+
+function enhanceEndpointBadges(root = document) {
+  root.querySelectorAll('span:not([data-endpoint-enhanced])').forEach((el) => {
+    const text = el.textContent?.trim() || '';
+    if (!text.includes('/api/')) return;
+    el.dataset.endpointEnhanced = '1';
+    el.classList.add('mod-endpoint-badge');
+    el.title = text;
+  });
+}
+
+function enhanceModeratorChrome(root = document) {
+  enhanceEndpointBadges(root);
+  root.querySelectorAll('article.fade-in').forEach((article) => {
+    article.classList.add('backdrop-blur', 'transition', 'duration-150');
+  });
+  $$('.mod-panel').forEach((panel) => renderModeratorWorkflowHome(panel));
+  refreshModeratorActiveHeader();
+  updateModeratorActivityStats();
+}
+
+document.addEventListener('click', (event) => {
+  const card = event.target?.closest?.('[data-workflow-open-subtab]');
+  if (!card) return;
+  const panel = card.closest('.mod-panel');
+  const subId = card.dataset.workflowOpenSubtab;
+  const subtab = panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
+  if (!subtab) return;
+  event.preventDefault();
+  subtab.click();
+});
+
 async function copyText(text = '') {
   try {
     if (navigator.clipboard && window.isSecureContext) {
@@ -515,7 +857,7 @@ function logActivity({ title, method, url, ok, status, data }) {
   if (!container) return;
 
   const wrap = document.createElement('div');
-  wrap.className = 'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 fade-in min-w-0';
+  wrap.className = 'rounded-xl border border-zinc-200/80 bg-white/85 p-3 fade-in min-w-0 shadow-sm dark:border-white/10 dark:bg-zinc-900/80';
   wrap.dataset.logCard = '1';
   wrap.dataset.ok = ok ? '1' : '0';
   wrap.dataset.method = String(method || '');
@@ -535,16 +877,27 @@ function logActivity({ title, method, url, ok, status, data }) {
       lines.slice(0, shown).join('\n') + `\n...\n(${Math.max(0, lines.length - shown)} more lines)`;
   }
 
+  const methodLabel = String(method || 'REQ').toUpperCase();
+  const statusLabel = String(status ?? '-');
+  const statusClass = ok
+    ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-300';
+
   wrap.innerHTML = `
-    <div class="flex items-center justify-between text-xs mb-2">
-      <span class="font-semibold truncate">${title ?? 'Request'}</span>
-      <div class="flex items-center gap-2 shrink-0">
+    <div class="mb-2 flex items-start justify-between gap-3 text-xs">
+      <div class="min-w-0">
+        <div class="truncate font-black text-zinc-950 dark:text-white">${escapeHtml(String(title ?? 'Request'))}</div>
+        <div class="mt-1 flex max-w-full items-center gap-1.5 overflow-hidden text-[11px] text-zinc-600 dark:text-zinc-400">
+          <span class="shrink-0 rounded-md border border-zinc-200/80 bg-zinc-900/5 px-1.5 py-0.5 font-mono dark:border-white/10 dark:bg-white/5">${escapeHtml(methodLabel)}</span>
+          <span class="truncate">${escapeHtml(String(url || '-'))}</span>
+        </div>
+      </div>
+      <div class="flex shrink-0 flex-col items-end gap-1">
         <span class="text-zinc-500 dark:text-zinc-400">${hhmmss}</span>
-        <span class="${ok ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}">${status}</span>
+        <span class="rounded-full border px-2 py-0.5 font-semibold ${statusClass}">${escapeHtml(statusLabel)}</span>
       </div>
     </div>
-    <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-2 break-all">${method} ${url}</div>
-    <pre class="resp text-xs whitespace-pre-wrap leading-tight max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
+    <pre class="resp max-h-48 overflow-auto rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2 text-xs leading-tight text-zinc-700 dark:border-white/10 dark:bg-zinc-950/55 dark:text-zinc-300 whitespace-pre-wrap max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
     <div class="mt-2 flex items-center gap-2">
       <button class="view-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">View full</button>
       <button class="copy-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">Copy</button>
@@ -565,6 +918,7 @@ function logActivity({ title, method, url, ok, status, data }) {
 
   ensureActivityPlaceholder(container);
   applyActivityFilters();
+  updateModeratorActivityStats();
 }
 
 (function setupLogDelegation() {
@@ -673,6 +1027,9 @@ function http(method, url, { body, query, headers } = {}) {
           $('.empty-state', panel)?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
         }
       });
+      refreshModeratorActiveHeader(id);
+      const nextPanel = panels.find?.((panel) => panel.dataset.panel === id);
+      if (nextPanel) renderModeratorWorkflowHome(nextPanel);
       setTimeout(() => btn.focus({ preventScroll: true }), 0);
     })
   );
@@ -787,6 +1144,7 @@ function scrollIntoViewWithOffset(el, offset) {
         $('.empty-state', panel)?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
         active.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
         wireDdSelect(active);
+        enhanceEndpointBadges(active);
         active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
@@ -836,6 +1194,7 @@ $('#clearLog')?.addEventListener('click', () => {
   container.innerHTML = '';
   ensureActivityPlaceholder(container);
   applyActivityFilters();
+  updateModeratorActivityStats();
 });
 
 //———————————————————————————————————————————————————————————————
@@ -9511,6 +9870,45 @@ function applyTournamentCategorySelection(scope, category, { showToast = true } 
   if (showToast) toast(`Category ${category.name || `#${id}`} loaded`, 'ok');
 }
 
+function openTournamentWorkflowFromOverview({ categoryId = '', cycleId = '', subtab = 'tournament-overview' } = {}) {
+  const panel = document.querySelector('[data-panel="tournament"]');
+  if (!panel) return;
+
+  const categoryValue = String(categoryId || '').trim();
+  if (categoryValue) {
+    const category = __modTournamentCategoryCache.find((item) => String(item.id) === categoryValue);
+    if (category) {
+      applyTournamentCategorySelection(panel, category, { showToast: false });
+    } else {
+      panel.querySelectorAll('input[name="category_id"], select[name="category_id"]').forEach((field) => {
+        field.value = categoryValue;
+        if (field.tagName === 'SELECT') movementTechSyncDdField(field);
+      });
+    }
+  }
+
+  const cycleValue = String(cycleId || '').trim();
+  if (cycleValue) {
+    panel.querySelectorAll('input[name="cycle_id"]').forEach((field) => {
+      field.value = cycleValue;
+    });
+  }
+
+  const subtabBtn = panel.querySelector(`.mod-subtab[data-subtab="${CSS.escape(subtab)}"]`);
+  subtabBtn?.click();
+}
+
+document.addEventListener('click', (event) => {
+  const btn = event.target?.closest?.('[data-tournament-overview-subtab]');
+  if (!btn) return;
+  event.preventDefault();
+  openTournamentWorkflowFromOverview({
+    categoryId: btn.dataset.tournamentOverviewCategoryId,
+    cycleId: btn.dataset.tournamentOverviewCycleId,
+    subtab: btn.dataset.tournamentOverviewSubtab,
+  });
+});
+
 async function loadTournamentCategories({ form = null, silent = false, force = false } = {}) {
   if (__modTournamentCategoryCache.length && !force) {
     setTournamentCategoryCache(__modTournamentCategoryCache);
@@ -9574,6 +9972,10 @@ function renderTournamentOverview(form, payload) {
               <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Placement <strong>${tournamentEscape(tournamentXpSummary(category.placement_xp, 'place', 'xp'))}</strong></div>
               <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Streak <strong>${tournamentEscape(tournamentXpSummary(category.streak_xp, 'threshold', 'xp'))}</strong></div>
             </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button type="button" data-tournament-overview-category-id="${tournamentEscape(category.id)}" data-tournament-overview-subtab="tournament-categories" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Edit category</button>
+              <button type="button" data-tournament-overview-category-id="${tournamentEscape(category.id)}" data-tournament-overview-subtab="tournament-maps" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Map tools</button>
+            </div>
           </article>`)
         .join('')
     : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No categories returned.</div>';
@@ -9597,6 +9999,10 @@ function renderTournamentOverview(form, payload) {
                 <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Started</dt><dd class="font-semibold">${tournamentEscape(tournamentFormatDate(cycle.started_at))}</dd></div>
                 <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Winner</dt><dd class="truncate font-semibold">${tournamentEscape(cycle.winner_name || cycle.winner_user_id || '-')}</dd></div>
               </dl>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" data-tournament-overview-category-id="${tournamentEscape(entry?.category_id ?? cycle.category_id ?? '')}" data-tournament-overview-subtab="tournament-maps" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Open map tools</button>
+                ${cycle.id != null ? `<button type="button" data-tournament-overview-cycle-id="${tournamentEscape(cycle.id)}" data-tournament-overview-subtab="tournament-cycles" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Open leaderboard</button>` : ''}
+              </div>
             </article>`;
         })
         .join('')
@@ -10844,6 +11250,8 @@ function initializeApp() {
     });
   } catch {}
 
+  enhanceModeratorChrome(document);
+
   const state = {
     syncingFromUrl: false,
     entries: [],
@@ -10868,9 +11276,7 @@ function initializeApp() {
   }
 
   function setHeader(tabId) {
-    const label = $(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel;
-    const h = $('#modActiveTitle');
-    if (h) h.textContent = label || tabId;
+    refreshModeratorActiveHeader(tabId);
   }
 
   function setUrlState({ tab, sub } = {}, { replace = false } = {}) {
@@ -11001,7 +11407,8 @@ const sp = new URLSearchParams(window.location.search);
     $$('#modTabs .mod-tab').forEach((b) => {
       const tabId = b.dataset.tab;
       const label = b.dataset.tabLabel || b.textContent.trim();
-      if (tabId) entries.push({ kind: 'tab', tabId, label });
+      const meta = modSectionMeta(tabId);
+      if (tabId) entries.push({ kind: 'tab', tabId, label, desc: meta.summary, kicker: meta.kicker });
 
       const panel = document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
       if (!panel) return;
@@ -11011,7 +11418,15 @@ const sp = new URLSearchParams(window.location.search);
         const subId = sb.dataset.subtab;
         const subLabel = sb.textContent.trim();
         if (!subId) return;
-        entries.push({ kind: 'sub', tabId, subId, label: `${label} / ${subLabel}` });
+        const cardMeta = (meta.cards || []).find((card) => card.sub === subId);
+        entries.push({
+          kind: 'sub',
+          tabId,
+          subId,
+          label: `${label} / ${subLabel}`,
+          desc: cardMeta?.desc || '',
+          kicker: meta.kicker,
+        });
       });
     });
 
@@ -11039,8 +11454,11 @@ const sp = new URLSearchParams(window.location.search);
 
       row.innerHTML = `
         <div class="flex items-center justify-between gap-3">
-          <div class="font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(it.label)}</div>
-          <div class="text-[10px] text-zinc-600 dark:text-zinc-400">${it.kind === 'tab' ? 'Tab' : 'Tool'}</div>
+          <div class="min-w-0">
+            <div class="truncate font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(it.label)}</div>
+            ${it.desc ? `<div class="mt-0.5 truncate text-xs text-zinc-600 dark:text-zinc-400">${escapeHtml(it.desc)}</div>` : ''}
+          </div>
+          <div class="shrink-0 rounded-full border border-zinc-200/80 bg-white/60 px-2 py-0.5 text-[10px] text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400">${it.kind === 'tab' ? 'Section' : 'Tool'}</div>
         </div>
       `;
 

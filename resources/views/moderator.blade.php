@@ -6,14 +6,113 @@
 
 @section('content')
   <section class="mod-ui relative overflow-hidden min-h-[100vh] text-zinc-900 dark:text-white selection:bg-emerald-500/30 selection:text-white [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed [&_button[disabled]]:cursor-not-allowed [&_button:focus]:outline-none [&_button:focus]:ring-1 [&_button:focus]:ring-emerald-500/30">
+    <style>
+      .mod-ui {
+        --mod-panel: rgba(255, 255, 255, .62);
+        --mod-panel-strong: rgba(255, 255, 255, .82);
+        --mod-border: rgba(212, 212, 216, .78);
+        --mod-muted: rgba(113, 113, 122, 1);
+      }
+
+      .dark .mod-ui {
+        --mod-panel: rgba(24, 24, 27, .58);
+        --mod-panel-strong: rgba(39, 39, 42, .68);
+        --mod-border: rgba(255, 255, 255, .11);
+        --mod-muted: rgba(161, 161, 170, 1);
+      }
+
+      .mod-ui::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 16% 10%, rgba(16, 185, 129, .13), transparent 30rem),
+          radial-gradient(circle at 84% 18%, rgba(59, 130, 246, .10), transparent 30rem),
+          linear-gradient(180deg, rgba(250, 250, 250, .24), transparent 24rem);
+      }
+
+      .dark .mod-ui::before {
+        background:
+          radial-gradient(circle at 16% 10%, rgba(16, 185, 129, .16), transparent 30rem),
+          radial-gradient(circle at 84% 18%, rgba(59, 130, 246, .11), transparent 30rem),
+          linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 24rem);
+      }
+
+      .mod-ui article.fade-in,
+      .mod-ui .empty-state,
+      .mod-ui [data-workflow-home],
+      .mod-ui [data-out-wrap="1"] {
+        background: var(--mod-panel);
+        border-color: var(--mod-border);
+        box-shadow: 0 18px 54px rgba(15, 23, 42, .08);
+      }
+
+      .dark .mod-ui article.fade-in,
+      .dark .mod-ui .empty-state,
+      .dark .mod-ui [data-workflow-home],
+      .dark .mod-ui [data-out-wrap="1"] {
+        box-shadow: 0 22px 70px rgba(0, 0, 0, .28);
+      }
+
+      .mod-ui .mod-subtab {
+        border-radius: 999px !important;
+        min-height: 2.35rem;
+      }
+
+      .mod-ui .mod-subtab.active {
+        border-color: rgba(16, 185, 129, .42) !important;
+        background: rgba(16, 185, 129, .12) !important;
+        color: rgb(4, 120, 87) !important;
+      }
+
+      .dark .mod-ui .mod-subtab.active {
+        color: rgb(167, 243, 208) !important;
+      }
+
+      .mod-ui .mod-tab.active {
+        border-color: rgba(16, 185, 129, .42) !important;
+        background: linear-gradient(135deg, rgba(16, 185, 129, .13), rgba(59, 130, 246, .06)) !important;
+      }
+
+      .mod-ui [data-workflow-card] {
+        background: var(--mod-panel-strong);
+        border-color: var(--mod-border);
+        transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+      }
+
+      .mod-ui [data-workflow-card]:hover {
+        transform: translateY(-1px);
+        border-color: rgba(16, 185, 129, .42);
+      }
+
+      .mod-ui .mod-endpoint-badge {
+        display: inline-flex;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border: 1px solid var(--mod-border);
+        border-radius: .75rem;
+        padding: .25rem .5rem;
+        background: rgba(255, 255, 255, .46);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+
+      .dark .mod-ui .mod-endpoint-badge {
+        background: rgba(255, 255, 255, .045);
+      }
+    </style>
     <input type="hidden" id="modUserId" value="{{ (string) (session('user_id') ?? session('discord_user_id') ?? session('discord_id') ?? '') }}">
     <div class="relative mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
       <!-- Header -->
       <header class="mb-8">
         <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Moderator Panel</h1>
-            <p class="block text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">Internal tools for moderators</p>
+            <h1 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Operations Console</h1>
+            <p class="mt-1 max-w-2xl text-sm font-medium text-zinc-600 dark:text-zinc-300 sm:text-base">
+              Domain workflows for user support, content maintenance, map operations, verification queues, and tournaments.
+            </p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
@@ -261,15 +360,25 @@
 
           <!-- Main -->
           <div class="lg:col-span-7 min-w-0">
-            <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 backdrop-blur sm:p-5">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div id="modActiveKicker" class="text-xs text-zinc-500 dark:text-zinc-400">Section</div>
-                  <h2 id="modActiveTitle" class="text-lg font-semibold tracking-tight">Users</h2>
+            <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 backdrop-blur sm:p-5">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div class="min-w-0">
+                  <div id="modActiveKicker" class="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700 dark:text-emerald-300">Workflow</div>
+                  <h2 id="modActiveTitle" class="mt-1 text-2xl font-black tracking-tight">Users</h2>
+                  <p id="modActiveSummary" class="mt-1 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">
+                    Search, inspect, and update player identity data without leaving the section.
+                  </p>
+                  <div id="modActiveStats" class="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"></div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <button id="modScrollTop" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">Top</button>
-                  <button id="modFocusActions" type="button" class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">Actions</button>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button id="modFocusActions" type="button" class="inline-flex items-center gap-2 cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 4h14v2H5V4m0 7h14v2H5v-2m0 7h14v2H5v-2Z"/></svg>
+                    Actions
+                  </button>
+                  <button id="modScrollTop" type="button" class="inline-flex items-center gap-2 cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 4l7 7h-4v9H9v-9H5l7-7Z"/></svg>
+                    Top
+                  </button>
                 </div>
               </div>
             </div>
@@ -6229,8 +6338,8 @@
               <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 backdrop-blur">
                 <div class="flex items-center justify-between">
                   <div>
-                    <div class="text-xs font-semibold">Activity</div>
-                    <div class="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">Requests & responses (click to view full)</div>
+                    <div class="text-xs font-semibold">Request audit</div>
+                    <div class="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">Readable log with full JSON on demand</div>
                   </div>
                   <button
                     id="clearLog"
@@ -6239,6 +6348,20 @@
                   >
                     Clear
                   </button>
+                </div>
+                <div id="activitySummary" class="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                  <div class="rounded-xl border border-zinc-200/80 bg-white/50 px-2 py-2 dark:border-white/10 dark:bg-white/5">
+                    <div class="text-zinc-500 dark:text-zinc-400">Requests</div>
+                    <div data-activity-stat="total" class="mt-0.5 text-sm font-black text-zinc-900 dark:text-zinc-100">0</div>
+                  </div>
+                  <div class="rounded-xl border border-zinc-200/80 bg-white/50 px-2 py-2 dark:border-white/10 dark:bg-white/5">
+                    <div class="text-zinc-500 dark:text-zinc-400">Success</div>
+                    <div data-activity-stat="ok" class="mt-0.5 text-sm font-black text-emerald-700 dark:text-emerald-300">0</div>
+                  </div>
+                  <div class="rounded-xl border border-zinc-200/80 bg-white/50 px-2 py-2 dark:border-white/10 dark:bg-white/5">
+                    <div class="text-zinc-500 dark:text-zinc-400">Errors</div>
+                    <div data-activity-stat="err" class="mt-0.5 text-sm font-black text-red-700 dark:text-red-300">0</div>
+                  </div>
                 </div>
                 <div class="mt-3 space-y-2">
                   <label class="block">
@@ -6260,13 +6383,20 @@
                   </div>
                 </div>
                 <div id="activityLog" class="mt-3 max-h-[70vh] space-y-2 overflow-y-auto overflow-x-hidden pr-1 text-sm min-w-0 break-words [overflow-wrap:anywhere]">
-                  <p class="text-zinc-500 dark:text-zinc-400">Responses from endpoints will appear here</p>
+                  <p class="text-zinc-500 dark:text-zinc-400">Run an action to see the request result here.</p>
                 </div>
               </div>
 
               <div class="hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 backdrop-blur lg:block">
-                <div class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Safety</div>
-                <p class="mt-2 text-xs text-zinc-300/80">Some actions are irreversible. Double-check IDs and confirmations before submitting.</p>
+                <div class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Operational guardrails</div>
+                <div id="modContextHints" class="mt-3 space-y-2 text-xs text-zinc-600 dark:text-zinc-300">
+                  <div class="rounded-xl border border-zinc-200/80 bg-white/45 p-3 dark:border-white/10 dark:bg-white/5">
+                    Use the workflow cards first, then fine-tune fields inside the selected tool.
+                  </div>
+                  <div class="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-amber-800 dark:text-amber-200">
+                    Destructive actions stay grouped in warning blocks and require explicit confirmation when available.
+                  </div>
+                </div>
               </div>
             </div>
           </aside>
