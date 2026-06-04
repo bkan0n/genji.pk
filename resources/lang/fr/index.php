@@ -94,6 +94,15 @@ return [
                 ],
             ],
 
+            'tournament' => [
+                'title'       => 'Tournois hebdomadaires',
+                'pill'        => 'Nouveau',
+                'description' => 'Affrontez les autres joueurs sur des maps en rotation, grimpez le classement actif et suivez la course au champion.',
+                'links' => [
+                    'tournaments' => 'Voir les tournois',
+                ],
+            ],
+
             'guides' => [
                 'title'       => 'Tutoriels',
                 'pill'        => 'Nouveau',
@@ -119,6 +128,18 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     // CTA STRIP
     // ──────────────────────────────────────────────────────────────────────
+    'tournament_spotlight' => [
+        'live_label'     => 'Cycle actuel',
+        'current_leader' => 'Leader actuel',
+        'current_leaders' => 'Leaders actuels',
+        'live_count'     => ':count tournois',
+        'rank_one'       => 'Rang 1',
+        'time'           => 'Temps',
+        'empty'          => 'Aucun leader de tournoi pour le moment.',
+        'empty_short'    => 'Aucun leader',
+        'unknown_player' => 'Joueur inconnu',
+    ],
+
     'cta' => [
         'title'       => 'Prêt à grimper dans le classement ?',
         'description' => 'Connectez-vous pour sauvegarder vos records et débloquer des récompenses.',

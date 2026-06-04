@@ -93,6 +93,15 @@ return [
                 ],
             ],
 
+            'tournament' => [
+                'title'             => '每周锦标赛',
+                'pill'              => '新',
+                'description'       => '在轮换地图中竞争，冲击当前锦标赛排行榜，并关注冠军争夺。',
+                'links' => [
+                    'tournaments'   => '查看锦标赛',
+                ],
+            ],
+
             'guides' => [
                 'title'          => '教程',
                 'pill'           => 'New',
@@ -118,6 +127,18 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     // CTA STRIP
     // ──────────────────────────────────────────────────────────────────────
+    'tournament_spotlight' => [
+        'live_label'     => '当前周期',
+        'current_leader' => '当前领先者',
+        'current_leaders' => '当前领先者',
+        'live_count'     => ':count 个锦标赛',
+        'rank_one'       => '第 1 名',
+        'time'           => '时间',
+        'empty'          => '暂无锦标赛领先者。',
+        'empty_short'    => '暂无领先者',
+        'unknown_player' => '未知玩家',
+    ],
+
     'cta' => [
         'title'          => '准备好攀登排行榜了吗?',
         'description'    => '登录以上传你的记录、获得奖牌',
