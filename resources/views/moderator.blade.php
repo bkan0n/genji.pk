@@ -4926,7 +4926,13 @@
 
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <h3 class="font-semibold">Update / delete category</h3>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="font-semibold">Update / delete category</h3>
+                      <span data-tournament-lock-badge class="hidden inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V8H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm2.5 7V5.5a2.5 2.5 0 0 0-5 0V8h5Z" clip-rule="evenodd"></path></svg>
+                        Locked — cycle in progress
+                      </span>
+                    </div>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH + DELETE /api/mods/tournaments/categories/{id}</span>
                   </div>
                   <label class="block text-sm">
@@ -5111,11 +5117,45 @@
                     <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Load config</button>
                   </form>
                   <form data-action="tournament-config-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
-                    <label class="text-sm">blacklist_weeks<input name="blacklist_weeks" type="number" min="0" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
-                    <label class="text-sm">cadence<select name="cadence" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"><option value="">unchanged</option><option value="weekly">weekly</option><option value="biweekly">biweekly</option></select></label>
-                    <label class="text-sm">anchor_weekday<input name="anchor_weekday" type="number" min="0" max="6" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
-                    <label class="text-sm">anchor_time<input name="anchor_time" placeholder="12:00:00" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
-                    <label class="text-sm sm:col-span-2">anchor_tz<input name="anchor_tz" placeholder="America/New_York" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+                    <label class="text-sm">
+                      Cadence
+                      <select name="cadence" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                        <option value="">Leave unchanged</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Biweekly</option>
+                      </select>
+                      <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">How often a new edition starts.</span>
+                    </label>
+                    <label class="text-sm">
+                      Rotation day
+                      <select name="anchor_weekday" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
+                        <option value="">Leave unchanged</option>
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                      </select>
+                      <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Day of week each edition rolls over.</span>
+                    </label>
+                    <label class="text-sm">
+                      Rotation time
+                      <input name="anchor_time" type="time" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Wall-clock time in the timezone below (not UTC).</span>
+                    </label>
+                    <label class="text-sm">
+                      Timezone
+                      <input name="anchor_tz" type="text" list="tournamentTimezoneOptions" autocomplete="off" spellcheck="false" placeholder="America/New_York" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <datalist id="tournamentTimezoneOptions"></datalist>
+                      <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Type to search IANA zones (e.g. America/Los_Angeles).</span>
+                    </label>
+                    <label class="text-sm sm:col-span-2">
+                      Blacklist window (weeks)
+                      <input name="blacklist_weeks" type="number" min="0" step="1" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" />
+                      <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Number of weeks a map stays excluded after being used.</span>
+                    </label>
                     <div class="sm:col-span-2">
                       <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save config</button>
                     </div>
@@ -5125,31 +5165,17 @@
 
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <h3 class="font-semibold">Edition lifecycle</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">bootstrap / publish-results / pause / debug-cycle-length</span>
+                    <div>
+                      <h3 class="font-semibold">Tournament lifecycle</h3>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">Reads the current edition and shows only the actions that are valid right now.</p>
+                    </div>
+                    <button type="button" data-tournament-lc-action="refresh" class="w-full sm:w-auto cursor-pointer rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">
+                      Refresh
+                    </button>
                   </div>
-                  <div class="grid gap-3 sm:grid-cols-2">
-                    <form data-action="tournament-active-edition" autocomplete="off">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get active edition</button>
-                    </form>
-                    <form data-action="tournament-bootstrap" autocomplete="off">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Bootstrap first edition</button>
-                    </form>
-                    <form data-action="tournament-publish-results" autocomplete="off">
-                      <button class="w-full cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Force publish results</button>
-                    </form>
-                    <form data-action="tournament-pause" autocomplete="off" class="flex gap-2">
-                      <select name="paused" required class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">
-                        <option value="1">pause</option>
-                        <option value="0">resume</option>
-                      </select>
-                      <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Apply</button>
-                    </form>
+                  <div data-tournament-lifecycle-panel data-app-env="{{ app()->environment() }}" class="space-y-4">
+                    <div class="h-28 animate-pulse rounded-2xl bg-zinc-900/5 dark:bg-white/5"></div>
                   </div>
-                  <form data-action="tournament-debug-cycle-length" autocomplete="off" class="grid gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 sm:grid-cols-[1fr_auto]">
-                    <input name="seconds" type="number" min="1" step="1" placeholder="seconds; empty clears override" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
-                    <button class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Set debug length</button>
-                  </form>
                   <pre data-out="tournament-lifecycle-res" class="hidden"></pre>
                 </article>
               </div>
