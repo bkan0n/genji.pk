@@ -361,8 +361,8 @@
           <!-- Main -->
           <div class="lg:col-span-7 min-w-0">
             <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 backdrop-blur sm:p-5">
-              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div class="min-w-0">
+              <div class="relative min-w-0">
+                <div class="min-w-0 pr-44 sm:pr-48">
                   <div id="modActiveKicker" class="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700 dark:text-emerald-300">Workflow</div>
                   <h2 id="modActiveTitle" class="mt-1 text-2xl font-black tracking-tight">Users</h2>
                   <p id="modActiveSummary" class="mt-1 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">
@@ -370,12 +370,12 @@
                   </p>
                   <div id="modActiveStats" class="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"></div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <button id="modFocusActions" type="button" class="inline-flex items-center gap-2 cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+                <div class="absolute right-0 top-0 flex flex-nowrap items-center justify-end gap-2">
+                  <button id="modFocusActions" type="button" class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 4h14v2H5V4m0 7h14v2H5v-2m0 7h14v2H5v-2Z"/></svg>
                     Actions
                   </button>
-                  <button id="modScrollTop" type="button" class="inline-flex items-center gap-2 cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+                  <button id="modScrollTop" type="button" class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 4l7 7h-4v9H9v-9H5l7-7Z"/></svg>
                     Top
                   </button>
