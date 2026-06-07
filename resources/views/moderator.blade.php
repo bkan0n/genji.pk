@@ -104,7 +104,7 @@
       }
     </style>
     <input type="hidden" id="modUserId" value="{{ (string) (session('user_id') ?? session('discord_user_id') ?? session('discord_id') ?? '') }}">
-    <div class="relative mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="relative mx-auto max-w-[96rem] px-4 sm:px-6 lg:px-10 py-10 sm:py-14 min-h-[130vh]">
       <!-- Header -->
       <header class="mb-8">
         <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -458,6 +458,11 @@
                     </div>
                   </form>
                 </article>
+                <div
+                  data-user-endpoint-response="get-user"
+                  class="hidden"
+                  aria-live="polite"
+                ></div>
               </div>
 
               {{-- Subpanel: GET OW USERNAMES --}}
@@ -491,6 +496,11 @@
                     </div>
                   </form>
                 </article>
+                <div
+                  data-user-endpoint-response="get-ow-usernames"
+                  class="hidden"
+                  aria-live="polite"
+                ></div>
               </div>
 
               {{-- Subpanel: LINK --}}
@@ -528,6 +538,11 @@
                     </button>
                   </form>
                 </article>
+                <div
+                  data-user-endpoint-response="link-fake"
+                  class="hidden"
+                  aria-live="polite"
+                ></div>
               </div>
 
               {{-- Subpanel: REPLACE OW --}}
@@ -753,6 +768,11 @@
                     </div>
                   </form>
                 </article>
+                <div
+                  data-user-endpoint-response="replace-overwatch"
+                  class="hidden"
+                  aria-live="polite"
+                ></div>
               </div>
 
               {{-- Subpanel: UPDATE NAMES --}}
@@ -802,6 +822,11 @@
                     </button>
                   </form>
                 </article>
+                <div
+                  data-user-endpoint-response="update-names"
+                  class="hidden"
+                  aria-live="polite"
+                ></div>
               </div>
 
               {{-- Subpanel: CREATE FAKE --}}
@@ -831,6 +856,11 @@
                     </button>
                   </form>
                 </article>
+                <div
+                  data-user-endpoint-response="create-fake"
+                  class="hidden"
+                  aria-live="polite"
+                ></div>
               </div>
             </div>
 
@@ -3464,26 +3494,6 @@
                               Edit
                             </button>
                           </div>
-                        </div>
-
-                        <!-- Guide URLs -->
-                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
-                          <div class="flex items-center justify-between">
-                            <div>
-                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Guide (URL)</div>
-                              <div id="u-optGuide" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
-                            </div>
-                            <button
-                              type="button"
-                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
-                              data-edit-target="u-optGuide"
-                            >
-                              Edit
-                            </button>
-                          </div>
-                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            One URL per line; first valid URL is used.
-                          </p>
                         </div>
 
                         <!-- Medals -->

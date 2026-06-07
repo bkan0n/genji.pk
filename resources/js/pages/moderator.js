@@ -959,7 +959,84 @@ function logActivity({ title, method, url, ok, status, data }) {
 })();
 
 // --- HTTP ---
+let __moderatorRequestContext = null;
+
+function parseJsonPreservingLargeIntegers(raw) {
+  const source = String(raw ?? '');
+  if (!source.trim()) return { ok: false, value: null };
+
+  let transformed = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < source.length;) {
+    const char = source[index];
+
+    if (inString) {
+      transformed += char;
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      transformed += char;
+      index += 1;
+      continue;
+    }
+
+    if (char === '-' || (char >= '0' && char <= '9')) {
+      const match = source.slice(index).match(
+        /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/
+      );
+      if (match) {
+        const token = match[0];
+        const isInteger = !token.includes('.') && !/[eE]/.test(token);
+        let unsafeInteger = false;
+
+        if (isInteger && token.replace('-', '').length >= 16) {
+          try {
+            const value = BigInt(token);
+            unsafeInteger =
+              value > BigInt(Number.MAX_SAFE_INTEGER) ||
+              value < BigInt(Number.MIN_SAFE_INTEGER);
+          } catch {
+            unsafeInteger = false;
+          }
+        }
+
+        transformed += unsafeInteger ? JSON.stringify(token) : token;
+        index += token.length;
+        continue;
+      }
+    }
+
+    transformed += char;
+    index += 1;
+  }
+
+  try {
+    return { ok: true, value: JSON.parse(transformed) };
+  } catch {
+    return { ok: false, value: null };
+  }
+}
+
+async function readResponseDataPreservingLargeIntegers(response) {
+  const raw = await response.text().catch(() => '');
+  const parsed = parseJsonPreservingLargeIntegers(raw);
+  return parsed.ok ? parsed.value : raw;
+}
+
 function http(method, url, { body, query, headers } = {}) {
+  const requestContext = __moderatorRequestContext;
   const qs = query
     ? '?' +
       new URLSearchParams(
@@ -988,16 +1065,28 @@ function http(method, url, { body, query, headers } = {}) {
     ...(body ? { body: JSON.stringify(body) } : {}),
   };
 
-  return fetch(url + qs, opts).then(async (r) => ({
-    ok: r.ok,
-    status: r.status,
-    url: r.url,
-    data:
-      (await r
-        .clone()
-        .json()
-        .catch(() => null)) ?? (await r.text().catch(() => '')),
-  }));
+  return fetch(url + qs, opts)
+    .then(async (r) => {
+      const result = {
+        ok: r.ok,
+        status: r.status,
+        url: r.url,
+        data: await readResponseDataPreservingLargeIntegers(r),
+      };
+
+      if (requestContext) {
+        requestContext.responses.push({
+          method: String(method || 'GET').toUpperCase(),
+          ...result,
+        });
+      }
+
+      return result;
+    })
+    .catch((error) => {
+      if (requestContext) requestContext.networkError = error;
+      throw error;
+    });
 }
 
 // --- Tabs (niveau 1) ---
@@ -1250,7 +1339,7 @@ async function acFetch(kind, q) {
       credentials: 'same-origin',
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
-    const raw = await res.json();
+    const raw = await readResponseDataPreservingLargeIntegers(res);
     const arr = Array.isArray(raw) ? raw : raw.items || raw.results || raw.data || [];
 
     if (kind === 'users') {
@@ -1481,6 +1570,15 @@ $$('form[data-action]').forEach((form) => {
     const submitter = e.submitter || form.querySelector('button[type="submit"], button:not([type])');
     const action = submitter?.dataset?.submitAction || form.dataset.action;
     const releasePending = setFormPending(form, true, submitter);
+    const previousRequestContext = __moderatorRequestContext;
+    const requestContext = {
+      action,
+      form,
+      responses: [],
+      networkError: null,
+    };
+    __moderatorRequestContext = requestContext;
+    beginModeratorEndpointResponse(requestContext);
     try {
       const runAction = async () => {
       switch (action) {
@@ -1697,7 +1795,22 @@ $$('form[data-action]').forEach((form) => {
       }
       };
       await runAction();
+      completeModeratorEndpointResponse(requestContext);
     } catch (err) {
+      const errorData = { message: String(err) };
+      if (USER_ENDPOINT_RESPONSE_META[action]) {
+        renderUserEndpointResponse(form, action, {
+          ok: false,
+          status: 'ERR',
+          data: errorData,
+        });
+      } else {
+        completeModeratorEndpointResponse(requestContext, {
+          ok: false,
+          status: 'ERR',
+          data: errorData,
+        });
+      }
       toast('Unexpected error', 'err');
       logActivity({
         title: action,
@@ -1705,9 +1818,13 @@ $$('form[data-action]').forEach((form) => {
         url: '-',
         ok: false,
         status: 'ERR',
-        data: { message: String(err) },
+        data: errorData,
       });
     } finally {
+      if (__moderatorRequestContext === requestContext) {
+        __moderatorRequestContext =
+          previousRequestContext === requestContext ? null : previousRequestContext;
+      }
       delete form.dataset.submitLocked;
       releasePending();
     }
@@ -1852,18 +1969,742 @@ function setupArchiveMapsUI() {
 //———————————————————————————————————————————————————————————————
 // HANDLERS
 //———————————————————————————————————————————————————————————————
+// ENDPOINT RESPONSES
+function moderatorResponseActionTitle(action) {
+  const exact = {
+    'grant-key': 'Grant lootbox key',
+    'grant-xp': 'Grant XP',
+    'grant-reward': 'Grant reward',
+    'get-user-keys': 'User lootbox keys',
+    'get-user-rewards': 'User rewards',
+    'view-all-rewards': 'Reward catalog',
+    'get-xp-multiplier': 'XP multiplier',
+    'set-xp-multiplier': 'XP multiplier update',
+    'get-pending-verifs': 'Pending verifications',
+    'get-pending-edit-requests': 'Pending map edits',
+    'tournament-load-overview': 'Tournament overview',
+  };
+  if (exact[action]) return exact[action];
+
+  return String(action || 'Endpoint response')
+    .replace(/^(content|tournament|store|quest)-/, '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => {
+      const upper = {
+        xp: 'XP',
+        ow: 'Overwatch',
+        api: 'API',
+        id: 'ID',
+      };
+      return upper[part] || `${part.charAt(0).toUpperCase()}${part.slice(1)}`;
+    })
+    .join(' ');
+}
+
+function moderatorResponseMount(context) {
+  const article = context?.form?.closest?.('article') || context?.article || null;
+  if (!article) return null;
+
+  if (article.__moderatorEndpointResponseMount?.isConnected) {
+    return article.__moderatorEndpointResponseMount;
+  }
+
+  const mount = document.createElement('div');
+  mount.dataset.moderatorEndpointResponse = '1';
+  mount.className = 'hidden';
+  mount.setAttribute('aria-live', 'polite');
+  article.insertAdjacentElement('afterend', mount);
+  article.__moderatorEndpointResponseMount = mount;
+  return mount;
+}
+
+function moderatorResponseJson(data) {
+  try {
+    const value = typeof data === 'string' ? data : JSON.stringify(data ?? null, null, 2);
+    return value == null ? '' : String(value);
+  } catch {
+    return String(data ?? '');
+  }
+}
+
+function moderatorResponseLabel(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function moderatorResponseScalar(value) {
+  if (value == null || value === '') {
+    return '<span class="text-zinc-400 dark:text-zinc-500">Not set</span>';
+  }
+  if (typeof value === 'boolean') {
+    const classes = value
+      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      : 'border-zinc-300 bg-zinc-900/5 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300';
+    return `<span class="inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${classes}">${value ? 'True' : 'False'}</span>`;
+  }
+  if (typeof value === 'number') {
+    return `<span class="font-mono tabular-nums">${escapeHtml(String(value))}</span>`;
+  }
+  return escapeHtml(String(value));
+}
+
+const __moderatorResponseTables = new Map();
+let __moderatorResponseTableId = 0;
+
+function moderatorResponseTableRows(rows, columns) {
+  return rows.map((row) => `
+    <tr class="bg-white/45 dark:bg-zinc-950/20">
+      ${columns.map((column) => `<td class="max-w-64 px-3 py-2 font-medium text-zinc-800 dark:text-zinc-200">${moderatorResponseScalar(row[column])}</td>`).join('')}
+    </tr>`).join('');
+}
+
+function renderModeratorResponseTablePage(tableId) {
+  const state = __moderatorResponseTables.get(tableId);
+  const root = document.querySelector(
+    `[data-moderator-response-table="${CSS.escape(tableId)}"]`
+  );
+  if (!state || !root) return;
+
+  const totalPages = Math.max(1, Math.ceil(state.rows.length / state.pageSize));
+  state.page = Math.min(Math.max(1, state.page), totalPages);
+
+  const start = (state.page - 1) * state.pageSize;
+  const end = Math.min(start + state.pageSize, state.rows.length);
+  const tbody = root.querySelector('[data-response-table-body]');
+  if (tbody) {
+    tbody.innerHTML = moderatorResponseTableRows(
+      state.rows.slice(start, end),
+      state.columns
+    );
+  }
+
+  const range = root.querySelector('[data-response-table-range]');
+  if (range) {
+    range.textContent = `${state.rows.length ? start + 1 : 0}-${end} of ${state.rows.length}`;
+  }
+
+  const current = root.querySelector('[data-response-table-current]');
+  if (current) current.textContent = String(state.page);
+
+  const total = root.querySelector('[data-response-table-total]');
+  if (total) total.textContent = String(totalPages);
+
+  const previous = root.querySelector('[data-response-page="previous"]');
+  const next = root.querySelector('[data-response-page="next"]');
+  if (previous) previous.disabled = state.page <= 1;
+  if (next) next.disabled = state.page >= totalPages;
+}
+
+function clearModeratorResponseTables(root) {
+  root?.querySelectorAll?.('[data-moderator-response-table]').forEach((table) => {
+    __moderatorResponseTables.delete(table.dataset.moderatorResponseTable);
+  });
+}
+
+function moderatorResponseTable(items) {
+  const rows = items.filter((item) => item && typeof item === 'object' && !Array.isArray(item));
+  if (!rows.length) return '';
+
+  const columns = [];
+  rows.slice(0, 10).forEach((row) => {
+    Object.entries(row).forEach(([key, value]) => {
+      if (
+        columns.length < 6 &&
+        !columns.includes(key) &&
+        (value == null || ['string', 'number', 'boolean'].includes(typeof value))
+      ) {
+        columns.push(key);
+      }
+    });
+  });
+  if (!columns.length) return '';
+
+  const tableId = `moderator-response-table-${++__moderatorResponseTableId}`;
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  __moderatorResponseTables.set(tableId, {
+    rows,
+    columns,
+    page: 1,
+    pageSize,
+  });
+
+  return `
+    <div data-moderator-response-table="${tableId}">
+      <div class="overflow-x-auto rounded-xl border border-zinc-200/80 dark:border-white/10">
+        <table class="min-w-full text-left text-xs">
+          <thead class="bg-zinc-900/5 text-zinc-500 dark:bg-white/5 dark:text-zinc-400">
+            <tr>
+              ${columns.map((column) => `<th class="whitespace-nowrap px-3 py-2 font-semibold uppercase">${escapeHtml(moderatorResponseLabel(column))}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody data-response-table-body class="divide-y divide-zinc-200/80 dark:divide-white/10">
+            ${moderatorResponseTableRows(rows.slice(0, pageSize), columns)}
+          </tbody>
+        </table>
+      </div>
+      ${rows.length > pageSize ? `
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span data-response-table-range class="text-xs font-medium text-zinc-500 dark:text-zinc-400">1-${Math.min(pageSize, rows.length)} of ${rows.length}</span>
+          <div class="flex items-center gap-2">
+            <button type="button" data-response-page="previous" title="Previous page" disabled class="rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">
+              Previous
+            </button>
+            <span class="min-w-20 text-center text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+              Page <span data-response-table-current>1</span> / <span data-response-table-total>${totalPages}</span>
+            </span>
+            <button type="button" data-response-page="next" title="Next page" class="rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">
+              Next
+            </button>
+          </div>
+        </div>` : ''}
+    </div>
+  `;
+}
+
+document.addEventListener('click', (event) => {
+  const button = event.target?.closest?.('[data-response-page]');
+  if (!button) return;
+
+  const root = button.closest('[data-moderator-response-table]');
+  const tableId = root?.dataset?.moderatorResponseTable;
+  const state = tableId ? __moderatorResponseTables.get(tableId) : null;
+  if (!state) return;
+
+  event.preventDefault();
+  state.page += button.dataset.responsePage === 'previous' ? -1 : 1;
+  renderModeratorResponseTablePage(tableId);
+});
+
+function moderatorResponseStructuredData(data, { compact = false } = {}) {
+  if (data == null || data === '') {
+    return `
+      <div class="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">✓</span>
+        <span>The request completed without a response body.</span>
+      </div>`;
+  }
+
+  if (Array.isArray(data)) {
+    if (!data.length) {
+      return `
+        <div class="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">✓</span>
+          <span>The API returned an empty list.</span>
+        </div>`;
+    }
+
+    const table = moderatorResponseTable(data);
+    if (table) {
+      return `
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <span class="text-sm font-bold text-zinc-950 dark:text-white">${data.length} record${data.length === 1 ? '' : 's'}</span>
+        </div>
+        ${table}`;
+    }
+
+    return `
+      <div class="flex flex-wrap gap-2">
+        ${data.slice(0, compact ? 8 : 20).map((value) => `
+          <span class="rounded-lg border border-zinc-200/80 bg-white/60 px-2.5 py-1 text-sm font-medium text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200">
+            ${moderatorResponseScalar(value)}
+          </span>`).join('')}
+      </div>`;
+  }
+
+  if (typeof data !== 'object') {
+    return `
+      <div class="rounded-xl border border-zinc-200/80 bg-white/55 px-4 py-3 font-mono text-lg font-black text-zinc-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+        ${moderatorResponseScalar(data)}
+      </div>`;
+  }
+
+  const entries = Object.entries(data);
+  const scalarEntries = entries.filter(([, value]) =>
+    value == null || ['string', 'number', 'boolean'].includes(typeof value)
+  );
+  const nestedEntries = entries.filter(([, value]) =>
+    value != null && typeof value === 'object'
+  );
+  const message = [data.message, data.detail]
+    .find((value) => typeof value === 'string' && value.trim());
+
+  return `
+    ${message ? `
+      <div class="mb-4 border-l-2 border-emerald-500/60 pl-3">
+        <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">Message</div>
+        <div class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">${escapeHtml(message)}</div>
+      </div>` : ''}
+    ${scalarEntries.length ? `
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        ${scalarEntries.slice(0, compact ? 6 : 15).map(([key, value]) => `
+          <div class="min-w-0 border-l-2 border-zinc-300/80 pl-3 dark:border-white/15">
+            <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">${escapeHtml(moderatorResponseLabel(key))}</div>
+            <div class="mt-1 break-words text-sm font-semibold text-zinc-950 dark:text-white">${moderatorResponseScalar(value)}</div>
+          </div>`).join('')}
+      </div>` : ''}
+    ${nestedEntries.length ? `
+      <div class="${scalarEntries.length ? 'mt-5 border-t border-zinc-200/80 pt-4 dark:border-white/10' : ''} space-y-3">
+        ${nestedEntries.slice(0, compact ? 3 : 8).map(([key, value]) => `
+          <details class="rounded-xl border border-zinc-200/80 bg-white/40 dark:border-white/10 dark:bg-white/5" ${nestedEntries.length === 1 ? 'open' : ''}>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-zinc-950 dark:text-white">
+              <span>${escapeHtml(moderatorResponseLabel(key))}</span>
+              <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">${Array.isArray(value) ? `${value.length} item${value.length === 1 ? '' : 's'}` : `${Object.keys(value).length} fields`}</span>
+            </summary>
+            <div class="border-t border-zinc-200/80 px-4 py-4 dark:border-white/10">
+              ${moderatorResponseStructuredData(value, { compact: true })}
+            </div>
+          </details>`).join('')}
+      </div>` : ''}
+  `;
+}
+
+function moderatorResponseRawDetails(data, label = 'Raw response') {
+  return `
+    <details class="mt-4 border-t border-zinc-200/80 pt-3 dark:border-white/10">
+      <summary class="cursor-pointer select-none text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white">${escapeHtml(label)}</summary>
+      <pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-zinc-950 p-3 font-mono text-xs text-zinc-100">${escapeHtml(moderatorResponseJson(data))}</pre>
+    </details>`;
+}
+
+function beginModeratorEndpointResponse(context) {
+  if (!context || USER_ENDPOINT_RESPONSE_META[context.action]) return;
+  const mount = moderatorResponseMount(context);
+  if (!mount) return;
+
+  clearModeratorResponseTables(mount);
+  mount.classList.remove('hidden');
+  mount.innerHTML = `
+    <section class="fade-in overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/60 shadow-sm dark:border-white/10 dark:bg-zinc-900/55">
+      <div class="flex items-center justify-between gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10">
+        <div>
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(moderatorResponseActionTitle(context.action))}</h4>
+        </div>
+        <span class="rounded-full border border-zinc-200/80 bg-zinc-900/5 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">Loading</span>
+      </div>
+      <div class="space-y-3 p-5" aria-hidden="true">
+        <div class="h-4 w-40 animate-pulse rounded bg-zinc-200 dark:bg-white/10"></div>
+        <div class="h-3 w-full animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+        <div class="h-3 w-2/3 animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+      </div>
+    </section>`;
+}
+
+function completeModeratorEndpointResponse(context, forcedResponse = null) {
+  if (!context || USER_ENDPOINT_RESPONSE_META[context.action]) return;
+  const mount = moderatorResponseMount(context);
+  if (!mount) return;
+
+  clearModeratorResponseTables(mount);
+  let responses = Array.isArray(context.responses) ? context.responses.slice() : [];
+  if (forcedResponse) {
+    responses = [{
+      method: 'ERROR',
+      url: '-',
+      ...forcedResponse,
+    }];
+  } else if (!responses.length && context.networkError) {
+    responses = [{
+      method: 'ERROR',
+      url: '-',
+      ok: false,
+      status: 'ERR',
+      data: { message: String(context.networkError) },
+    }];
+  }
+
+  if (!responses.length) {
+    if (context.hideIfEmpty) {
+      mount.innerHTML = '';
+      mount.classList.add('hidden');
+      return;
+    }
+    mount.innerHTML = `
+      <section class="fade-in overflow-hidden rounded-2xl border border-amber-500/25 bg-amber-500/5 shadow-sm">
+        <div class="border-b border-amber-500/15 px-5 py-4">
+          <div class="text-[11px] font-semibold uppercase text-amber-700 dark:text-amber-300">No request sent</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(moderatorResponseActionTitle(context.action))}</h4>
+        </div>
+        <p class="px-5 py-4 text-sm text-zinc-700 dark:text-zinc-300">The action stopped before contacting the endpoint. Check the form values and permissions.</p>
+      </section>`;
+    return;
+  }
+
+  const allOk = responses.every((response) => response.ok);
+  const latest = responses[responses.length - 1];
+  const shellClass = allOk
+    ? 'border-emerald-500/25 bg-emerald-500/5'
+    : 'border-red-500/25 bg-red-500/5';
+  const statusClass = allOk
+    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
+  const statusText = responses.length === 1
+    ? `${latest.status || (allOk ? 'OK' : 'ERR')} ${allOk ? 'Success' : 'Error'}`
+    : `${responses.filter((response) => response.ok).length}/${responses.length} successful`;
+
+  const body = responses.length === 1
+    ? `
+      ${!latest.ok ? `<div class="mb-4 text-sm font-semibold text-red-700 dark:text-red-300">${escapeHtml(userResponseErrorMessage(latest.data, latest.status))}</div>` : ''}
+      ${moderatorResponseStructuredData(latest.data)}
+      ${moderatorResponseRawDetails(latest.data)}`
+    : `
+      <div class="mb-4 text-sm text-zinc-600 dark:text-zinc-300">${responses.length} related endpoint calls were made by this action.</div>
+      <div class="space-y-3">
+        ${responses.map((response, index) => `
+          <details class="overflow-hidden rounded-xl border ${response.ok ? 'border-zinc-200/80 dark:border-white/10' : 'border-red-500/25'} bg-white/40 dark:bg-white/5" ${index === responses.length - 1 ? 'open' : ''}>
+            <summary class="flex cursor-pointer list-none flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 text-xs font-bold">
+                  <span class="rounded-md border border-zinc-200/80 bg-zinc-900/5 px-1.5 py-0.5 font-mono dark:border-white/10 dark:bg-white/5">${escapeHtml(response.method)}</span>
+                  <span class="${response.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}">${escapeHtml(String(response.status || 'ERR'))}</span>
+                </div>
+                <div class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(String(response.url || '-'))}</div>
+              </div>
+              <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Request ${index + 1}</span>
+            </summary>
+            <div class="border-t border-zinc-200/80 px-4 py-4 dark:border-white/10">
+              ${!response.ok ? `<div class="mb-4 text-sm font-semibold text-red-700 dark:text-red-300">${escapeHtml(userResponseErrorMessage(response.data, response.status))}</div>` : ''}
+              ${moderatorResponseStructuredData(response.data, { compact: true })}
+              ${moderatorResponseRawDetails(response.data)}
+            </div>
+          </details>`).join('')}
+      </div>`;
+
+  mount.classList.remove('hidden');
+  mount.innerHTML = `
+    <section class="fade-in overflow-hidden rounded-2xl border ${shellClass} shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(moderatorResponseActionTitle(context.action))}</h4>
+          ${responses.length === 1 ? `<div class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(`${latest.method} ${latest.url || '-'}`)}</div>` : ''}
+        </div>
+        <span class="self-start rounded-full border px-2.5 py-1 text-xs font-semibold sm:self-auto ${statusClass}">${escapeHtml(statusText)}</span>
+      </div>
+      <div class="p-5">${body}</div>
+    </section>`;
+}
+
+async function runModeratorEndpointAction({ action, article, form = null }, callback) {
+  const previousRequestContext = __moderatorRequestContext;
+  const context = {
+    action,
+    article,
+    form,
+    responses: [],
+    networkError: null,
+    hideIfEmpty: true,
+  };
+
+  __moderatorRequestContext = context;
+  beginModeratorEndpointResponse(context);
+
+  try {
+    const result = await callback();
+    completeModeratorEndpointResponse(context);
+    return result;
+  } catch (error) {
+    const data = { message: String(error) };
+    completeModeratorEndpointResponse(context, {
+      ok: false,
+      status: 'ERR',
+      data,
+    });
+    toast('Unexpected error', 'err');
+    logActivity({
+      title: moderatorResponseActionTitle(action),
+      method: 'ERROR',
+      url: '-',
+      ok: false,
+      status: 'ERR',
+      data,
+    });
+    return null;
+  } finally {
+    if (__moderatorRequestContext === context) {
+      __moderatorRequestContext =
+        previousRequestContext === context ? null : previousRequestContext;
+    }
+  }
+}
+
 // USERS
+const USER_ENDPOINT_RESPONSE_META = {
+  'get-user': {
+    title: 'User profile',
+    success: 'User loaded',
+  },
+  'get-ow-usernames': {
+    title: 'Overwatch usernames',
+    success: 'Usernames loaded',
+  },
+  'link-fake': {
+    title: 'Fake member link',
+    success: 'Accounts linked',
+  },
+  'replace-overwatch': {
+    title: 'Overwatch usernames',
+    success: 'Usernames replaced',
+  },
+  'update-names': {
+    title: 'User names',
+    success: 'Names updated',
+  },
+  'create-fake': {
+    title: 'Fake member',
+    success: 'Member created',
+  },
+};
+
+function userEndpointResponseMount(form, kind) {
+  const subpanel = form?.closest?.('[data-subpanel]');
+  if (!subpanel) return null;
+  return subpanel.querySelector(
+    `[data-user-endpoint-response="${CSS.escape(String(kind || ''))}"]`
+  );
+}
+
+function userResponseValue(value, fallback = '—') {
+  if (value == null || value === '') return fallback;
+  return String(value);
+}
+
+function userResponseField(label, value, { mono = false, accent = false } = {}) {
+  return `
+    <div class="min-w-0 border-l-2 ${accent ? 'border-emerald-500/60' : 'border-zinc-300/80 dark:border-white/15'} pl-3">
+      <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        ${escapeHtml(String(label))}
+      </div>
+      <div class="mt-1 break-words text-sm font-semibold ${mono ? 'font-mono tabular-nums' : ''} ${accent ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-950 dark:text-white'}">
+        ${escapeHtml(userResponseValue(value))}
+      </div>
+    </div>`;
+}
+
+function userResponseRawDetails(data, label = 'Response details') {
+  let pretty = '';
+  try {
+    pretty = typeof data === 'string' ? data : JSON.stringify(data ?? null, null, 2);
+  } catch {
+    pretty = String(data ?? '');
+  }
+
+  return `
+    <details class="mt-4 border-t border-zinc-200/80 pt-3 dark:border-white/10">
+      <summary class="cursor-pointer select-none text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white">
+        ${escapeHtml(label)}
+      </summary>
+      <pre class="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-zinc-950 p-3 font-mono text-xs text-zinc-100">${escapeHtml(pretty)}</pre>
+    </details>`;
+}
+
+function userResponseErrorMessage(data, status) {
+  const candidates = [
+    data?.message,
+    data?.error,
+    data?.detail,
+    data?.error?.message,
+  ];
+  const message = candidates.find((value) => typeof value === 'string' && value.trim());
+  if (message) return message.trim();
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  return `The request failed${status ? ` with status ${status}` : ''}.`;
+}
+
+function renderGetUserResponse(data) {
+  const aliases = Array.isArray(data?.overwatch_usernames)
+    ? data.overwatch_usernames.filter((value) => value != null && String(value).trim())
+    : [];
+  const coins = Number(data?.coins);
+  const coinsText = Number.isFinite(coins) ? coins.toLocaleString() : userResponseValue(data?.coins);
+
+  return `
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1 border-b border-zinc-200/80 pb-4 dark:border-white/10">
+        <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Display identity</span>
+        <span class="text-xl font-black text-zinc-950 dark:text-white">${escapeHtml(userResponseValue(data?.coalesced_name, 'Unnamed user'))}</span>
+        <span class="font-mono text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(userResponseValue(data?.id))}</span>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        ${userResponseField('Global name', data?.global_name)}
+        ${userResponseField('Nickname', data?.nickname)}
+        ${userResponseField('Coins', coinsText, { mono: true, accent: true })}
+      </div>
+
+      <div class="border-t border-zinc-200/80 pt-4 dark:border-white/10">
+        <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Overwatch usernames</div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          ${aliases.length
+            ? aliases.map((username, index) => `
+                <span class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1 text-sm font-semibold text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200">
+                  ${index === 0 ? '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>' : ''}
+                  ${escapeHtml(String(username))}
+                </span>`).join('')
+            : '<span class="text-sm text-zinc-500 dark:text-zinc-400">No Overwatch username.</span>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGetOverwatchResponse(data) {
+  return `
+    <div class="space-y-4">
+      <div class="border-b border-zinc-200/80 pb-3 font-mono text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+        User ${escapeHtml(userResponseValue(data?.user_id))}
+      </div>
+      <div class="grid gap-4 sm:grid-cols-3">
+        ${userResponseField('Primary', data?.primary, { accent: true })}
+        ${userResponseField('Secondary', data?.secondary)}
+        ${userResponseField('Tertiary', data?.tertiary)}
+      </div>
+    </div>`;
+}
+
+function renderUserOperationResponse(kind, data, meta) {
+  if (kind === 'create-fake') {
+    const memberId =
+      typeof data === 'number' || typeof data === 'string'
+        ? data
+        : data?.id ?? data?.user_id ?? data?.member_id;
+    return `
+      <div class="flex flex-col gap-1">
+        <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Created member ID</span>
+        <span class="font-mono text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">${escapeHtml(userResponseValue(memberId))}</span>
+      </div>`;
+  }
+
+  if (kind === 'replace-overwatch' && data?.success === true) {
+    return `
+      <div>
+        <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">The API confirmed the replacement.</p>
+      </div>`;
+  }
+
+  if (Array.isArray(data) && data.length === 0) {
+    return `
+      <div>
+        <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">The operation completed successfully. The API returned an empty array.</p>
+      </div>`;
+  }
+
+  if (data == null || data === '') {
+    return `
+      <div>
+        <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">The operation completed without a response body.</p>
+      </div>`;
+  }
+
+  return `
+    <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+    ${userResponseRawDetails(data)}`;
+}
+
+function renderUserEndpointResponse(form, kind, {
+  pending = false,
+  ok = false,
+  status = '',
+  data = null,
+} = {}) {
+  const mount = userEndpointResponseMount(form, kind);
+  if (!mount) return;
+
+  const meta = USER_ENDPOINT_RESPONSE_META[kind] || {
+    title: 'Endpoint response',
+    success: 'Request completed',
+  };
+
+  mount.classList.remove('hidden');
+
+  if (pending) {
+    mount.innerHTML = `
+      <section class="fade-in overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/60 shadow-sm dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="flex items-center justify-between gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10">
+          <div>
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+            <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(meta.title)}</h4>
+          </div>
+          <span class="rounded-full border border-zinc-200/80 bg-zinc-900/5 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">Loading</span>
+        </div>
+        <div class="space-y-3 p-5" aria-hidden="true">
+          <div class="h-4 w-40 animate-pulse rounded bg-zinc-200 dark:bg-white/10"></div>
+          <div class="h-3 w-full animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+          <div class="h-3 w-2/3 animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+        </div>
+      </section>`;
+    return;
+  }
+
+  const statusText = ok
+    ? `${status || 'OK'} Success`
+    : `${status || 'ERR'} Error`;
+  const statusClass = ok
+    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
+  const shellClass = ok
+    ? 'border-emerald-500/25 bg-emerald-500/5'
+    : 'border-red-500/25 bg-red-500/5';
+
+  let body;
+  if (!ok) {
+    body = `
+      <div>
+        <div class="text-base font-black text-red-700 dark:text-red-300">Request failed</div>
+        <p class="mt-1 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">${escapeHtml(userResponseErrorMessage(data, status))}</p>
+      </div>
+      ${userResponseRawDetails(data, 'Error details')}`;
+  } else if (kind === 'get-user') {
+    body = renderGetUserResponse(data);
+  } else if (kind === 'get-ow-usernames') {
+    body = renderGetOverwatchResponse(data);
+  } else {
+    body = renderUserOperationResponse(kind, data, meta);
+  }
+
+  mount.innerHTML = `
+    <section class="fade-in overflow-hidden rounded-2xl border ${shellClass} shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(meta.title)}</h4>
+        </div>
+        <span class="self-start rounded-full border px-2.5 py-1 text-xs font-semibold sm:self-auto ${statusClass}">
+          ${escapeHtml(statusText)}
+        </span>
+      </div>
+      <div class="p-5">${body}</div>
+    </section>`;
+}
+
 async function handleCreateFake(form) {
   const name = form.name.value?.trim();
+  renderUserEndpointResponse(form, 'create-fake', { pending: true });
   const { ok, status, url, data } = await http('POST', `${API_MODS}/users/fake`, {
     query: { name },
   });
   logActivity({ title: 'Create fake member', method: 'POST', url, ok, status, data });
+  renderUserEndpointResponse(form, 'create-fake', { ok, status, data });
   toast(ok ? 'Fake user created' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleReplaceOverwatch(form) {
   const user_id = getUserIdFrom(form.user_id);
+
+  if (!user_id) {
+    renderUserEndpointResponse(form, 'replace-overwatch', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'User ID is required.' },
+    });
+    toast('User ID required', 'warn');
+    return;
+  }
 
   const usernames = [1, 2, 3]
     .map((i) => {
@@ -1875,10 +2716,16 @@ async function handleReplaceOverwatch(form) {
     .filter(Boolean);
 
   if (usernames.length === 0) {
+    renderUserEndpointResponse(form, 'replace-overwatch', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'Provide at least one Overwatch username.' },
+    });
     toast('Please provide at least one username', 'warn');
     return;
   }
 
+  renderUserEndpointResponse(form, 'replace-overwatch', { pending: true });
   const { ok, status, url, data } = await http(
     'PUT',
     `${API_MODS}/users/${encodeURIComponent(user_id)}/overwatch`,
@@ -1886,6 +2733,7 @@ async function handleReplaceOverwatch(form) {
   );
 
   logActivity({ title: 'Replace Overwatch names', method: 'PUT', url, ok, status, data });
+  renderUserEndpointResponse(form, 'replace-overwatch', { ok, status, data });
   if (!ok && status === 422)
     toast('Validation failed: exactly one username must be primary.', 'err');
   else toast(ok ? 'Usernames replaced' : 'Failed', ok ? 'ok' : 'err');
@@ -1900,51 +2748,69 @@ async function handleUpdateNames(form) {
   if (global_name) body.global_name = global_name;
   if (nickname) body.nickname = nickname;
 
+  renderUserEndpointResponse(form, 'update-names', { pending: true });
   const { ok, status, url, data } = await http(
     'PATCH',
     `${API_MODS}/users/${encodeURIComponent(user_id)}`,
     { body }
   );
   logActivity({ title: 'Update user names', method: 'PATCH', url, ok, status, data });
+  renderUserEndpointResponse(form, 'update-names', { ok, status, data });
   toast(ok ? 'Names updated' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleLinkFake(form) {
   const fake = getUserIdFrom(form.fake_user_id);
   const real = getUserIdFrom(form.real_user_id);
+  renderUserEndpointResponse(form, 'link-fake', { pending: true });
   const { ok, status, url, data } = await http(
     'PUT',
     `${API_MODS}/users/fake/${encodeURIComponent(fake)}/link/${encodeURIComponent(real)}`
   );
   logActivity({ title: 'Link fake → real', method: 'PUT', url, ok, status, data });
+  renderUserEndpointResponse(form, 'link-fake', { ok, status, data });
   toast(ok ? 'Linked' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleGetUser(form) {
   const user_id = getUserIdFrom(form.user_id);
   if (!user_id) {
+    renderUserEndpointResponse(form, 'get-user', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'User ID is required.' },
+    });
     toast('User ID required', 'warn');
     return;
   }
+  renderUserEndpointResponse(form, 'get-user', { pending: true });
   const { ok, status, url, data } = await http(
     'GET',
     `${API_MODS}/users/${encodeURIComponent(user_id)}`
   );
   logActivity({ title: 'Get User', method: 'GET', url, ok, status, data });
+  renderUserEndpointResponse(form, 'get-user', { ok, status, data });
   toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleGetOwUsernames(form) {
   const user_id = getUserIdFrom(form.user_id);
   if (!user_id) {
+    renderUserEndpointResponse(form, 'get-ow-usernames', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'User ID is required.' },
+    });
     toast('User ID required', 'warn');
     return;
   }
+  renderUserEndpointResponse(form, 'get-ow-usernames', { pending: true });
   const { ok, status, url, data } = await http(
     'GET',
     `${API_MODS}/users/${encodeURIComponent(user_id)}/overwatch`
   );
   logActivity({ title: 'Get OW Usernames', method: 'GET', url, ok, status, data });
+  renderUserEndpointResponse(form, 'get-ow-usernames', { ok, status, data });
   toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
 }
 
@@ -3649,9 +4515,15 @@ async function handleArchiveMaps(form) {
 }
 
 async function handleUpdateMap(form) {
-  const codePath = (document.getElementById('u-metaCode')?.textContent || '').trim();
+  const codeEl = document.getElementById('u-metaCode');
+  const editedCode = (codeEl?.textContent || '').trim();
+  const codePath = (codeEl?.dataset?.originalCode || editedCode || '').trim();
   if (!codePath) {
     toast('Missing map code (target route).', 'warn');
+    return;
+  }
+  if (!editedCode || /^n\/?a$/i.test(editedCode)) {
+    toast('Map code required', 'warn');
     return;
   }
 
@@ -3671,9 +4543,6 @@ async function handleUpdateMap(form) {
   const tags = getCheckedValues('#u-tagsDropdown');
   const description = (document.getElementById('u-optDescription')?.textContent || '').trim();
   const title = (document.getElementById('u-optTitleInput')?.value || '').trim().slice(0, 128);
-
-  const guideRaw = (document.getElementById('u-optGuide')?.textContent || '').trim();
-  const guide_url = !guideRaw || /^n\/?a$/i.test(guideRaw) ? null : firstHttpUrlOrNull(guideRaw);
 
   const hidden = form.querySelector('#u-flagHidden')?.checked === true;
   const archived = form.querySelector('#u-flagArchived')?.checked === true;
@@ -3702,6 +4571,7 @@ async function handleUpdateMap(form) {
   };
 
   put('map_name', name || undefined);
+  put('code', editedCode);
   if (Number.isFinite(checkpoints)) put('checkpoints', checkpoints);
   put('category', category || undefined);
   put('difficulty', difficulty || undefined);
@@ -3711,7 +4581,6 @@ async function handleUpdateMap(form) {
   if (description && !/^n\/?a$/i.test(description)) put('description', description);
   if (title) put('title', title);
   if (custom_banner) put('custom_banner', custom_banner);
-  if (guide_url) put('guide_url', guide_url);
   if (medalsCheck.values) put('medals', medalsCheck.values);
   put('hidden', hidden);
   put('archived', archived);
@@ -3731,6 +4600,7 @@ async function handleUpdateMap(form) {
   logActivity({ title: 'Update map (UI)', method: 'PATCH', url, ok, status, data });
   toast(ok ? 'Updated' : 'Failed', ok ? 'ok' : 'err');
   if (ok) {
+    if (codeEl && editedCode) codeEl.dataset.originalCode = editedCode;
     form.dataset.loadedMapArchived = String(archived);
     updateReleaseCodeButtonVisibility(form);
   }
@@ -4302,8 +5172,12 @@ async function __merFillMechanicsAndRestrictions() {
         fetch('/api/autocomplete/map-restrictions', { headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
       ]);
 
-      const mechanicsData = mechResp.ok ? await mechResp.json() : [];
-      const restrictionsData = restrResp.ok ? await restrResp.json() : [];
+      const mechanicsData = mechResp.ok
+        ? await readResponseDataPreservingLargeIntegers(mechResp)
+        : [];
+      const restrictionsData = restrResp.ok
+        ? await readResponseDataPreservingLargeIntegers(restrResp)
+        : [];
 
       const toOpt = (data, keyPrefix) => {
         const base = __merToNameArray(data)
@@ -4362,7 +5236,7 @@ async function __merFetchUserProfile(userId) {
         credentials: 'same-origin',
       });
       if (!resp.ok) return null;
-      return await resp.json();
+      return await readResponseDataPreservingLargeIntegers(resp);
     } catch {
       return null;
     }
@@ -5100,7 +5974,7 @@ function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) 
         const res = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
         if (!res.ok) return __merHideSuggestionBox(boxEl);
 
-        const data = await res.json();
+        const data = await readResponseDataPreservingLargeIntegers(res);
         const list = Array.isArray(data) ? data : (data.items || data.data || []);
         const items = (list || [])
           .map((x) => {
@@ -5966,8 +6840,7 @@ function openMapEditRequestModal(map, opts = {}) {
           credentials: 'same-origin',
         });
 
-        const contentType = resp.headers.get('content-type') || '';
-        const data = contentType.includes('application/json') ? await resp.json() : await resp.text();
+        const data = await readResponseDataPreservingLargeIntegers(resp);
 
         if (!resp.ok) {
           __merErr(__merFormatApiError(data, resp.status));
@@ -6585,7 +7458,7 @@ async function fetchStrings(url) {
       credentials: 'same-origin',
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
-    const j = await res.json().catch(() => []);
+    const j = await readResponseDataPreservingLargeIntegers(res);
     const arr = Array.isArray(j) ? j : j.items || j.data || j.results || [];
     return (arr || []).map((it) => it.value || it.name || it.label || it.title || it).map(String);
   } catch {
@@ -7154,21 +8027,12 @@ async function initUpdatePanel() {
     releaseBtn.dataset.bound = '1';
     releaseBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      handleReleaseMapCode(updateForm);
+      void runModeratorEndpointAction({
+        action: 'release-map-code',
+        article: updateForm.closest('article'),
+      }, () => handleReleaseMapCode(updateForm));
     });
   }
-}
-
-function firstGuideUrlFromItem(item) {
-  if (Array.isArray(item?.guides) && item.guides.length) {
-    const g0 = item.guides[0];
-    if (typeof g0 === 'string') return firstHttpUrlOrNull(g0);
-    if (g0 && typeof g0 === 'object' && g0.url) return String(g0.url);
-  }
-  if (typeof item?.guides === 'string') return firstHttpUrlOrNull(item.guides);
-  if (item?.guide_url) return String(item.guide_url);
-  if (item?.guides_url) return String(item.guides_url);
-  return null;
 }
 
 function populateUpdatePanel(item) {
@@ -7207,6 +8071,8 @@ function populateUpdatePanel(item) {
 
   // Meta simples
   setText(form, '#u-metaCode', item?.code);
+  const codeEl = form.querySelector('#u-metaCode');
+  if (codeEl) codeEl.dataset.originalCode = item?.code ? String(item.code).trim() : '';
   setText(form, '#u-metaMap', item?.map_name);
   setText(form, '#u-metaCheckpoints', item?.checkpoints);
 
@@ -7237,7 +8103,6 @@ function populateUpdatePanel(item) {
   // Optional
   setValue(form, '#u-optTitleInput', item?.title ?? '');
   setText(form, '#u-optDescription', item?.description);
-  setText(form, '#u-optGuide', firstGuideUrlFromItem(item) || 'N/A');
 
   const drop = form.querySelector('#u-bannerDrop');
   drop?.querySelector('img')?.remove();
@@ -7901,11 +8766,16 @@ document.addEventListener('click', async (e) => {
 
   if (btnAccept) {
     e.preventDefault();
-    const { ok, status, url, data } = await http(
-      'PUT',
-      `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
-      { body: { accepted: true, resolved_by: String(resolved_by) } }
-    );
+    const response = await runModeratorEndpointAction({
+      action: 'resolve-map-edit-accept',
+      article: card.closest('article'),
+    }, () => http(
+        'PUT',
+        `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+        { body: { accepted: true, resolved_by: String(resolved_by) } }
+      ));
+    if (!response) return;
+    const { ok, status, url, data } = response;
 
     logActivity({ title: `Resolve edit ${editId} (accept)`, method: 'PUT', url, ok, status, data });
     toast(ok ? 'Edit request accepted' : 'Failed', ok ? 'ok' : 'err');
@@ -7921,17 +8791,22 @@ document.addEventListener('click', async (e) => {
     });
     if (dlg.cancelled) return;
 
-    const { ok, status, url, data } = await http(
-      'PUT',
-      `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
-      {
-        body: {
-          accepted: false,
-          resolved_by: String(resolved_by),
-          rejection_reason: dlg.reason,
-        },
-      }
-    );
+    const response = await runModeratorEndpointAction({
+      action: 'resolve-map-edit-reject',
+      article: card.closest('article'),
+    }, () => http(
+        'PUT',
+        `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+        {
+          body: {
+            accepted: false,
+            resolved_by: String(resolved_by),
+            rejection_reason: dlg.reason,
+          },
+        }
+      ));
+    if (!response) return;
+    const { ok, status, url, data } = response;
 
     logActivity({ title: `Resolve edit ${editId} (reject)`, method: 'PUT', url, ok, status, data });
     toast(ok ? 'Edit request rejected' : 'Failed', ok ? 'ok' : 'err');
@@ -7999,7 +8874,10 @@ document.addEventListener('click', async (e) => {
       toast("Auto verify is restricted to devs.", "warn");
       return;
     }
-    return void autoVerifyCard(card);
+    return void runModeratorEndpointAction({
+      action: 'auto-verify-completion',
+      article: card.closest('article'),
+    }, () => autoVerifyCard(card));
   }
 
   // Manual verify / deny
@@ -8022,11 +8900,16 @@ document.addEventListener('click', async (e) => {
 
   const body = { verified, verified_by: MOD_USER_ID, reason };
 
-  const { ok, status, url, data } = await http(
-    'PUT',
-    `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
-    { body }
-  );
+  const response = await runModeratorEndpointAction({
+    action: verified ? 'verify-completion' : 'deny-completion',
+    article: card.closest('article'),
+  }, () => http(
+      'PUT',
+      `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
+      { body }
+    ));
+  if (!response) return;
+  const { ok, status, url, data } = response;
 
   logActivity({
     title: verified ? 'Verify completion' : 'Deny completion',
@@ -10822,14 +11705,24 @@ function bindTournamentLifecyclePanel() {
       if (!btn) return;
       event.preventDefault();
       const action = btn.dataset.tournamentLcAction;
-      if (action === 'refresh') return void loadTournamentLifecycleState();
-      if (action === 'start') return void tournamentStartTournament();
-      if (action === 'publish') return void tournamentPublishResults();
-      if (action === 'pause') return void tournamentSetPaused(true);
-      if (action === 'resume') return void tournamentSetPaused(false);
       if (action === 'open-cycles') return void openTournamentWorkflowFromOverview({ subtab: 'tournament-cycles' });
-      if (action === 'debug-set') return void tournamentSetDebugCycle(tournamentLifecyclePanelEl());
-      if (action === 'debug-clear') return void tournamentSetDebugCycle(tournamentLifecyclePanelEl(), { clear: true });
+
+      const callbacks = {
+        refresh: () => loadTournamentLifecycleState(),
+        start: () => tournamentStartTournament(),
+        publish: () => tournamentPublishResults(),
+        pause: () => tournamentSetPaused(true),
+        resume: () => tournamentSetPaused(false),
+        'debug-set': () => tournamentSetDebugCycle(tournamentLifecyclePanelEl()),
+        'debug-clear': () => tournamentSetDebugCycle(tournamentLifecyclePanelEl(), { clear: true }),
+      };
+      const callback = callbacks[action];
+      if (!callback) return;
+
+      return void runModeratorEndpointAction({
+        action: `tournament-lifecycle-${action}`,
+        article: btn.closest('article'),
+      }, callback);
     });
   }
 }
