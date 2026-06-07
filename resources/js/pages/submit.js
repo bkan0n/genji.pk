@@ -4043,20 +4043,20 @@ function bannerHTML() {
   const li1    = (typeof t === 'function' && t('notice.pending_accept'))     || 'Your completion may remain pending until it’s accepted.';
   const li2    = (typeof t === 'function' && t('notice.mutable_difficulty')) || 'Difficulty may change while the map is in playtesting.';
   return `
-    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice" id="srPlaytestingNotice" role="status" aria-live="polite">
+    <div class="mb-4 rounded-xl border border-amber-300/50 bg-amber-50 p-3 ring-1 ring-amber-400/20 dark:border-amber-400/30 dark:bg-amber-500/10 sm:p-4 sr-notice" id="srPlaytestingNotice" role="status" aria-live="polite">
       <div class="flex items-start gap-3">
-        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
         </svg>
         <div class="min-w-0">
-          <div class="font-semibold text-amber-300">${title}</div>
-          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+          <div class="font-semibold text-amber-800 dark:text-amber-300">${title}</div>
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-700 dark:text-amber-100">
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600 dark:bg-amber-300"></span>
               <span>${li1}</span>
             </li>
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600 dark:bg-amber-300"></span>
               <span>${li2}</span>
             </li>
           </ul>
@@ -4286,8 +4286,10 @@ function ensureViewModalButtonForLastCode(code) {
     'gp-cta',
     'inline-flex','items-center','justify-center','cursor-pointer','ml-auto',
     'rounded-lg','px-3','py-2','text-sm',
-    'border','border-amber-500/30','bg-amber-500/10','text-amber-200',
-    'hover:bg-amber-500/15','hover:text-zinc-900 dark:text-white',
+    'border','border-amber-300/50','bg-amber-50','text-amber-800',
+    'hover:bg-amber-100','hover:text-amber-900',
+    'dark:border-amber-500/30','dark:bg-amber-500/10','dark:text-amber-200',
+    'dark:hover:bg-amber-500/15','dark:hover:text-white',
     'focus:outline-none','focus-visible:ring-2','focus-visible:ring-amber-400/60'
   ].join(' ');
 
