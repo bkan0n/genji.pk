@@ -123,6 +123,9 @@ function showToast(message, type = "ok", opts = {}) {
 function showErrorToast(message) {
   showToast(message || t("errors.purchase_failed", "Purchase failed."), "error");
 }
+function showSuccessToast(message) {
+  showToast(message, "ok");
+}
 function showAvatarImg(img) {
   img?.classList.remove("opacity-0");
   img?.classList.add("opacity-100");
@@ -1961,6 +1964,7 @@ async function loadWeeklyShop() {
           }),
         });
 
+        showSuccessToast(t("weekly.item_purchased", "Item purchased!"));
         await Promise.allSettled([loadHeader(), loadPurchases(), loadWeeklyShop()]);
       } catch (e) {
         showErrorToast(e?.message);
@@ -2092,6 +2096,7 @@ async function loadKeyShop() {
         }),
       });
 
+      showSuccessToast(t("keyshop.keys_purchased", "Keys purchased!"));
       await Promise.allSettled([loadHeader(), loadPurchases()]);
     } catch (e) {
       showErrorToast(e?.message);
@@ -2573,10 +2578,11 @@ async function loadQuestsPanel() {
                       data-claim-btn="1"
                       data-progress-id="${pid ?? ""}"
                       ${canClaim ? "" : "disabled"}
-                      class="mt-2 cursor-pointer inline-flex items-center justify-center rounded-xl px-3 py-1.5 text-xs font-extrabold transition
+                      aria-disabled="${canClaim ? "false" : "true"}"
+                      class="mt-2 inline-flex items-center justify-center rounded-xl px-3 py-1.5 text-xs font-extrabold transition
                         ${
                           canClaim
-                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow"
+                            ? "cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white shadow"
                             : "bg-white/60 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 border border-zinc-200/70 dark:border-white/10 opacity-70 cursor-not-allowed"
                         }"
                       title="${canClaim ? "" : t("quests.complete_to_claim", "Complete the quest to claim")}"

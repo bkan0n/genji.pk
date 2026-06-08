@@ -18,6 +18,15 @@ use App\Http\Controllers\Content\ListMovementTechCategoriesController;
 use App\Http\Controllers\Content\ListMovementTechDifficultiesController;
 use App\Http\Controllers\Content\ListMovementTechniquesController;
 
+use App\Http\Controllers\Tournament\GetActiveTournamentEditionController;
+use App\Http\Controllers\Tournament\GetTournamentCategoryController;
+use App\Http\Controllers\Tournament\GetTournamentConfigController;
+use App\Http\Controllers\Tournament\GetTournamentLeaderboardController;
+use App\Http\Controllers\Tournament\GetTournamentNextCycleController;
+use App\Http\Controllers\Tournament\GetTournamentStreakController;
+use App\Http\Controllers\Tournament\ListTournamentCategoriesController;
+use App\Http\Controllers\Tournament\ListTournamentCyclesController;
+
 use App\Http\Controllers\Store\GetCurrentRotationController;
 use App\Http\Controllers\Store\GetKeyPricingController;
 use App\Http\Controllers\Store\GetPurchaseHistoryController;
@@ -114,6 +123,19 @@ use App\Http\Controllers\Mods\Quests\UpdateQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestController;
 use App\Http\Controllers\Mods\Quests\UpdateUserQuestProgressController;
 
+use App\Http\Controllers\Mods\Tournament\BootstrapTournamentEditionController;
+use App\Http\Controllers\Mods\Tournament\ChooseTournamentNextMapController;
+use App\Http\Controllers\Mods\Tournament\CreateTournamentCategoryController;
+use App\Http\Controllers\Mods\Tournament\DebugTournamentCycleLengthController;
+use App\Http\Controllers\Mods\Tournament\DeleteTournamentCategoryController;
+use App\Http\Controllers\Mods\Tournament\PauseTournamentTransitionsController;
+use App\Http\Controllers\Mods\Tournament\PublishTournamentResultsController;
+use App\Http\Controllers\Mods\Tournament\RerollActiveTournamentMapController;
+use App\Http\Controllers\Mods\Tournament\RerollTournamentMapController;
+use App\Http\Controllers\Mods\Tournament\SelectTournamentMapController;
+use App\Http\Controllers\Mods\Tournament\UpdateTournamentCategoryController;
+use App\Http\Controllers\Mods\Tournament\UpdateTournamentConfigController;
+
 use App\Http\Controllers\Newsfeed\ChangelogsController;
 use App\Http\Controllers\Newsfeed\EmojiController;
 use App\Http\Controllers\Newsfeed\GifController;
@@ -182,6 +204,18 @@ Route::prefix('content/movement-tech')->group(function () {
     Route::get('/', ListMovementTechniquesController::class);
     Route::get('categories', ListMovementTechCategoriesController::class);
     Route::get('difficulties', ListMovementTechDifficultiesController::class);
+});
+
+/* ================== TOURNAMENTS ================== */
+Route::prefix('tournaments')->group(function () {
+    Route::get('config', GetTournamentConfigController::class);
+    Route::get('categories', ListTournamentCategoriesController::class);
+    Route::get('categories/{category}', GetTournamentCategoryController::class)->whereNumber('category');
+    Route::get('categories/{category}/next-cycle', GetTournamentNextCycleController::class)->whereNumber('category');
+    Route::get('cycles', ListTournamentCyclesController::class);
+    Route::get('cycles/{cycle}/leaderboard', GetTournamentLeaderboardController::class)->whereNumber('cycle');
+    Route::get('editions/active', GetActiveTournamentEditionController::class);
+    Route::get('streaks/{user}', GetTournamentStreakController::class)->where('user', '\d{1,20}');
 });
 
 /* ================== CONVERTER ================== */
@@ -428,6 +462,22 @@ Route::prefix('mods')
             Route::patch('admin/users/{user_id}/progress/{progress_id}', UpdateUserQuestProgressController::class)
                 ->whereNumber('user_id')
                 ->whereNumber('progress_id');
+        });
+
+        // TOURNAMENTS
+        Route::prefix('tournaments')->group(function () {
+            Route::post('categories', CreateTournamentCategoryController::class);
+            Route::patch('categories/{category}', UpdateTournamentCategoryController::class)->whereNumber('category');
+            Route::delete('categories/{category}', DeleteTournamentCategoryController::class)->whereNumber('category');
+            Route::patch('config', UpdateTournamentConfigController::class);
+            Route::post('categories/{category}/select-map', SelectTournamentMapController::class)->whereNumber('category');
+            Route::post('categories/{category}/reroll', RerollTournamentMapController::class)->whereNumber('category');
+            Route::post('categories/{category}/reroll-active', RerollActiveTournamentMapController::class)->whereNumber('category');
+            Route::patch('categories/{category}/next-cycle', ChooseTournamentNextMapController::class)->whereNumber('category');
+            Route::post('bootstrap', BootstrapTournamentEditionController::class);
+            Route::patch('publish-results', PublishTournamentResultsController::class);
+            Route::patch('pause', PauseTournamentTransitionsController::class);
+            Route::patch('debug-cycle-length', DebugTournamentCycleLengthController::class);
         });
 
         // GUIDES

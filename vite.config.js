@@ -1,6 +1,10 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
+
+const shim = (file) =>
+  fileURLToPath(new URL(`./resources/js/shims/${file}`, import.meta.url));
 
 export default defineConfig({
   worker: {
@@ -8,9 +12,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      fs: '/resources/js/shims/fs-browser.js',
-      path: '/resources/js/shims/path-browser.cjs',
-      vm: '/resources/js/shims/vm-browser.cjs',
+      fs: shim('fs-browser.js'),
+      path: shim('path-browser.cjs'),
+      vm: shim('vm-browser.cjs'),
     },
   },
   plugins: [
@@ -22,6 +26,7 @@ export default defineConfig({
         'resources/js/pages/leaderboard.js',
         'resources/js/pages/newsfeed.js',
         'resources/js/pages/statistics.js',
+        'resources/js/pages/tournaments.js',
         'resources/js/pages/tutorials.js',
         'resources/js/pages/search.js',
         'resources/js/pages/rank_card.js',

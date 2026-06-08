@@ -74,7 +74,17 @@
   const mapSkeleton  = document.getElementById('mapDetailSkeleton');
   const mapError     = document.getElementById('mapDetailError');
 
+  const tournamentSpotlight = document.getElementById('homeTournamentSpotlight');
+  const tournamentLeaderEl  = document.getElementById('homeTournamentLeader');
+  const tournamentSkeleton  = document.getElementById('homeTournamentSkeleton');
+  const tournamentEmpty     = document.getElementById('homeTournamentEmpty');
+  const tournamentMeta      = document.getElementById('homeTournamentMeta');
+
   const fmt2 = (n) => (typeof n === 'number' ? (Math.round(n * 100) / 100).toFixed(2) : '0.00');
+  const fmtTournamentTime = (n) => {
+    const value = Number(n);
+    return Number.isFinite(value) ? `${value.toFixed(2)}s` : '--';
+  };
   const esc  = (s) => String(s ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
@@ -177,6 +187,215 @@
       }
     }
     return m.map_name;
+  }
+
+  async function fetchJson(url) {
+    const res = await fetch(toAbs(url), {
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    return res.json();
+  }
+
+  function defaultAvatarForId(id) {
+    const digits = String(id || '').replace(/\D/g, '');
+    if (!digits) return 'https://cdn.discordapp.com/embed/avatars/0.png?size=64';
+    try {
+      return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(digits) % 5n)}.png?size=64`;
+    } catch {
+      return `https://cdn.discordapp.com/embed/avatars/${Number(digits.slice(-1)) % 5}.png?size=64`;
+    }
+  }
+
+  function ensureAvatarSize(url) {
+    const value = String(url || '').trim();
+    if (!value) return '';
+    if (!value.includes('cdn.discordapp.com')) return value;
+    return value.replace(/\?size=\d+$/i, '') + '?size=64';
+  }
+
+  async function hydrateTournamentLeaderAvatar(img, userId) {
+    const id = String(userId || '').replace(/\D/g, '');
+    if (!img || !id) return;
+
+    try {
+      const url = new URL('/api/settings/user-avatar', window.location.origin);
+      url.searchParams.set('user_id', id);
+      const data = await fetchJson(url.toString());
+      const entry = data?.[id] || (String(data?.user_id) === id ? data : null);
+      img.src = ensureAvatarSize(entry?.avatar_url) || defaultAvatarForId(id);
+    } catch {
+      img.src = defaultAvatarForId(id);
+    }
+  }
+
+  function setTournamentEmpty() {
+    tournamentSkeleton?.classList.add('hidden');
+    tournamentLeaderEl?.classList.add('hidden');
+    tournamentEmpty?.classList.remove('hidden');
+    if (tournamentMeta) tournamentMeta.textContent = '';
+  }
+
+  function getTournamentLeaderEntry(leaderboard) {
+    const entries = Array.isArray(leaderboard)
+      ? leaderboard
+      : Array.isArray(leaderboard?.leaderboard)
+        ? leaderboard.leaderboard
+        : [];
+
+    return entries
+      .filter((entry) => entry && (entry.user_id || entry.name || entry.username))
+      .sort((a, b) => {
+        const rankA = Number(a.rank ?? 9999);
+        const rankB = Number(b.rank ?? 9999);
+        if (rankA !== rankB) return rankA - rankB;
+        return Number(a.time ?? Infinity) - Number(b.time ?? Infinity);
+      })[0] || null;
+  }
+
+  function renderTournamentLeaderCard(cycle, entry) {
+    const userId = String(entry?.user_id || '').trim();
+    const name = entry?.name || entry?.username || entry?.nickname || userId || tOr('tournament_spotlight.unknown_player', 'Unknown player');
+    const href = userId ? `/rank_card?user_id=${encodeURIComponent(userId)}` : '/tournaments';
+    const details = [
+      cycle?.category_name || '',
+      cycle?.map_name || '',
+      cycle?.map_code ? `#${cycle.map_code}` : '',
+    ].filter(Boolean);
+
+    if (!entry) {
+      return `
+        <div class="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white/60 p-3 ring-1 ring-black/5 dark:border-white/10 dark:bg-white/5 dark:ring-white/10">
+          <span class="min-w-0">
+            <span class="block truncate text-sm font-black text-zinc-900 dark:text-white">
+              ${esc(cycle?.category_name || tOr('tournament_spotlight.live_label', 'Current cycle'))}
+            </span>
+            <span class="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">
+              ${esc(details.slice(1).join(' / ') || tOr('tournament_spotlight.empty', 'No tournament leader yet.'))}
+            </span>
+          </span>
+          <span class="shrink-0 rounded-lg bg-zinc-900/5 px-2 py-1 text-xs font-semibold text-zinc-500 dark:bg-white/10 dark:text-zinc-400">
+            ${esc(tOr('tournament_spotlight.empty_short', 'No leader'))}
+          </span>
+        </div>
+      `;
+    }
+
+    return `
+      <a href="${esc(href)}" class="group flex min-w-0 items-center gap-3 rounded-xl border border-amber-500/25 bg-white/70 p-3 ring-1 ring-black/5 transition hover:border-amber-500/45 hover:bg-white/90 dark:border-amber-300/15 dark:bg-white/5 dark:ring-white/10 dark:hover:border-amber-300/35 dark:hover:bg-white/10">
+        <span class="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-amber-400/40 bg-zinc-100 ring-1 ring-black/5 dark:border-amber-300/35 dark:bg-zinc-900 dark:ring-white/10">
+          <img
+            src="${esc(defaultAvatarForId(userId))}"
+            alt="${esc(name)}"
+            class="h-full w-full object-cover"
+            width="48"
+            height="48"
+            data-home-tournament-avatar
+            data-user-id="${esc(userId)}"
+            decoding="async"
+          />
+          <img
+            src="https://cdn.genji.pk/assets/medals/gold.png"
+            alt=""
+            class="absolute -right-1 -top-1 h-5 w-5 object-contain drop-shadow"
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
+
+        <span class="min-w-0 flex-1">
+          <span class="block text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            ${esc(tOr('tournament_spotlight.rank_one', 'Rank 1'))}
+          </span>
+          <span class="block truncate text-sm font-black text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-emerald-300">
+            ${esc(name)}
+          </span>
+          <span class="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">
+            ${esc(details.join(' / '))}
+          </span>
+        </span>
+
+        <span class="shrink-0 text-right">
+          <span class="block text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            ${esc(tOr('tournament_spotlight.time', 'Time'))}
+          </span>
+          <span class="block font-mono text-xl font-black tabular-nums text-amber-700 dark:text-amber-200">
+            ${esc(fmtTournamentTime(entry?.time))}
+          </span>
+        </span>
+      </a>
+    `;
+  }
+
+  function renderTournamentLeaders(items) {
+    if (!tournamentLeaderEl) return;
+
+    tournamentLeaderEl.innerHTML = items
+      .map(({ cycle, entry }) => renderTournamentLeaderCard(cycle, entry))
+      .join('');
+
+    tournamentSkeleton?.classList.add('hidden');
+    tournamentEmpty?.classList.add('hidden');
+    tournamentLeaderEl.classList.remove('hidden');
+    if (tournamentMeta) {
+      const countText = t('tournament_spotlight.live_count', { count: items.length });
+      tournamentMeta.textContent = countText === 'tournament_spotlight.live_count'
+        ? `${items.length} tournaments`
+        : countText;
+    }
+
+    tournamentLeaderEl.querySelectorAll('[data-home-tournament-avatar]').forEach((avatar) => {
+      void hydrateTournamentLeaderAvatar(avatar, avatar.dataset.userId);
+    });
+  }
+
+  async function loadTournamentSpotlight() {
+    if (!tournamentSpotlight || !tournamentLeaderEl) return;
+
+    try {
+      const [cyclesPayload, categoriesPayload] = await Promise.all([
+        fetchJson('/api/tournaments/cycles?status=active&limit=8'),
+        fetchJson('/api/tournaments/categories').catch(() => []),
+      ]);
+      const cycles = Array.isArray(cyclesPayload?.cycles)
+        ? cyclesPayload.cycles
+        : Array.isArray(cyclesPayload)
+          ? cyclesPayload
+          : [];
+      const categories = Array.isArray(categoriesPayload) ? categoriesPayload : [];
+      const categoryNames = new Map(categories
+        .filter((category) => category?.id && category?.name)
+        .map((category) => [String(category.id), category.name]));
+
+      const activeCycles = cycles
+        .filter((cycle) => cycle?.id)
+        .slice(0, 2)
+        .map((cycle) => ({
+          ...cycle,
+          category_name: cycle.category_name
+            || categoryNames.get(String(cycle.category_id))
+            || (cycle.category_id ? `#${cycle.category_id}` : ''),
+        }));
+      if (!activeCycles.length) {
+        setTournamentEmpty();
+        return;
+      }
+
+      const leaders = await Promise.all(activeCycles.map(async (cycle) => {
+        try {
+          const leaderboard = await fetchJson(`/api/tournaments/cycles/${encodeURIComponent(cycle.id)}/leaderboard`);
+          return { cycle, entry: getTournamentLeaderEntry(leaderboard) };
+        } catch {
+          return { cycle, entry: null };
+        }
+      }));
+
+      renderTournamentLeaders(leaders);
+    } catch {
+      setTournamentEmpty();
+    }
   }
 
   /* ---------------- Renderers ---------------- */
@@ -382,6 +601,7 @@
   });
 
   loadTop3();
+  loadTournamentSpotlight();
 
   /* ---------------- Copy / Toast helpers ---------------- */
   function copyMapCode(code) {

@@ -17,11 +17,12 @@
           {{-- Ligne 1 : avatar + username + tabs --}}
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-center gap-3">
-              <div class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-zinc-300/60 dark:ring-white/10">
+              <div data-discord-avatar-frame class="h-12 w-12 overflow-hidden rounded-full ring-1 ring-zinc-300/60 dark:ring-white/10">
               <img
                 id="headerAvatar"
                 src="{{ $avatar_url ?: cdn_asset('assets/img/default-avatar.jpg') }}"
                 alt="{{ __('rank_card.alts.user_avatar') }}"
+                data-discord-avatar
                 class="h-full w-full object-cover"
               />
               </div>

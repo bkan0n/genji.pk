@@ -175,6 +175,14 @@
             <li>
               <a
                 class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                href="{{ url('/tournaments') }}"
+              >
+                {{ __('navbar.tournaments') }}
+              </a>
+            </li>
+            <li>
+              <a
+                class="block px-4 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                 href="{{ url('/statistics') }}"
               >
                 {{ __('navbar.statistics') }}
@@ -370,10 +378,11 @@
                   <img
                     src="{{ $avatarUrl }}"
                     alt="User Avatar"
+                    data-discord-avatar
                     class="h-8 w-8 min-h-8 min-w-8 shrink-0 rounded-full object-cover"
                   />
                 @else
-                  <div class="flex h-8 w-8 min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
+                  <div data-discord-avatar class="flex h-8 w-8 min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full {{ $avatarBgColor }} text-xs font-bold text-zinc-900 dark:text-white">
                     {{ $initials }}
                   </div>
                 @endif
@@ -527,6 +536,12 @@
               class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
             >
               {{ __('navbar.leaderboard') }}
+            </a>
+            <a
+              href="{{ url('/tournaments') }}"
+              class="rounded-lg px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white"
+            >
+              {{ __('navbar.tournaments') }}
             </a>
             <a
               href="{{ url('/statistics') }}"

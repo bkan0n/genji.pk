@@ -4,6 +4,8 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const API_MODS = '/api/mods';
 const API_CONTENT_PUBLIC = '/api/content/movement-tech';
 const API_CONTENT_MODS = `${API_MODS}/content/movement-tech`;
+const API_TOURNAMENTS = '/api/tournaments';
+const API_TOURNAMENTS_MODS = `${API_MODS}/tournaments`;
 const asId = (input) => String(input?.value ?? '').trim();
 const isDigits = (s) => /^\d+$/.test(String(s || ''));
 const getBool = (id) => !!document.getElementById(id)?.checked;
@@ -120,6 +122,348 @@ const escapeHtml = (s = '') =>
         '=': '&#x3D;',
       })[ch]
   );
+
+const MOD_SECTION_META = {
+  users: {
+    kicker: 'Identity',
+    summary: 'Inspect player profiles, manage Overwatch aliases, link fake accounts, and keep visible names consistent.',
+    stats: ['Support workflow', 'Discord identity', 'Alias hygiene'],
+    hints: [
+      'Start with Get user or Get Overwatch usernames when you only have a Discord id.',
+      'Use Replace Overwatch names and Update names together after confirming the same profile.',
+    ],
+    cards: [
+      { sub: 'users-get', title: 'Inspect a player', desc: 'Load the moderator profile before changing names or links.' },
+      { sub: 'users-get-ow', title: 'Review aliases', desc: 'Check the current Overwatch names tied to a user.' },
+      { sub: 'users-overwatch', title: 'Replace aliases', desc: 'Rewrite the alias set and choose the primary username.' },
+      { sub: 'users-update', title: 'Update display names', desc: 'Patch global name and nickname after verification.' },
+      { sub: 'users-link', title: 'Link fake account', desc: 'Attach a fake member to the real Discord user.' },
+      { sub: 'users-create', title: 'Create fake member', desc: 'Create a placeholder member for legacy or imported records.' },
+    ],
+  },
+  lootbox: {
+    kicker: 'Rewards',
+    summary: 'Grant keys, XP, rewards, and inspect reward state with fewer context switches.',
+    stats: ['Inventory', 'XP economy', 'Reward debug'],
+    hints: [
+      'Load user keys or rewards before granting when the request is account-specific.',
+      'Debug reward grants bypass normal key ownership and should stay exceptional.',
+    ],
+    cards: [
+      { sub: 'lootbox-get-keys', title: 'Review keys', desc: 'Check a user inventory before granting more keys.' },
+      { sub: 'lootbox-key', title: 'Grant key', desc: 'Give a specific key type to a user.' },
+      { sub: 'lootbox-xp', title: 'Grant XP', desc: 'Apply manual XP with a clear reason.' },
+      { sub: 'lootbox-get-rewards', title: 'Review rewards', desc: 'Inspect rewards already attached to a user.' },
+      { sub: 'lootbox-reward', title: 'Debug reward', desc: 'Grant one reward directly for admin correction.', danger: true },
+      { sub: 'lootbox-set-active-key', title: 'Key availability', desc: 'Set active key types and XP multiplier tools.' },
+    ],
+  },
+  guides: {
+    kicker: 'Guides',
+    summary: 'Create, update, delete, and audit map guide links by map code and author.',
+    stats: ['Map guides', 'Creator links', 'Maintenance'],
+    hints: [
+      'Fetch guides for a map code before editing or deleting a user guide.',
+      'Create, edit, and delete operate on the same map-code/user relationship.',
+    ],
+    cards: [
+      { sub: 'guides-get', title: 'Map guide list', desc: 'Load the current guide set for a map.' },
+      { sub: 'guides-create', title: 'Create guide', desc: 'Attach a creator guide URL to a map.' },
+      { sub: 'guides-edit', title: 'Edit guide', desc: 'Patch an existing guide for a specific user.' },
+      { sub: 'guides-delete', title: 'Delete guide', desc: 'Remove a guide after checking author and map code.', danger: true },
+    ],
+  },
+  content: {
+    kicker: 'Knowledge base',
+    summary: 'Maintain movement-tech categories, difficulties, and techniques as one structured content workflow.',
+    stats: ['Taxonomy', 'Technique editor', 'Ordering'],
+    hints: [
+      'Categories and difficulties are loaded automatically to feed technique dropdowns.',
+      'Use the update dropdowns to pull existing values before changing IDs, text, tips, or videos.',
+    ],
+    cards: [
+      { sub: 'content-categories', title: 'Categories', desc: 'Create, update, delete, and reorder content categories.' },
+      { sub: 'content-difficulties', title: 'Difficulties', desc: 'Maintain difficulty labels used by techniques.' },
+      { sub: 'content-techniques', title: 'Techniques', desc: 'Edit full movement-tech entries with tips and videos.' },
+    ],
+  },
+  maps: {
+    kicker: 'Map operations',
+    summary: 'Search, submit, update, archive, convert, and request map edits from a single map pipeline.',
+    stats: ['Map data', 'Edit requests', 'Legacy tools'],
+    hints: [
+      'Search or load a map before update/convert actions so the form is filled from current data.',
+      'Archive and release-code actions affect public visibility, so verify the map code first.',
+    ],
+    cards: [
+      { sub: 'maps-search', title: 'Search map', desc: 'Find a map and inspect its public data.' },
+      { sub: 'maps-update', title: 'Update map', desc: 'Load current values, edit, then patch the same record.' },
+      { sub: 'maps-submit', title: 'Submit map', desc: 'Create a new map entry using the full submit workflow.' },
+      { sub: 'maps-edit-request', title: 'Edit request', desc: 'Create a structured request for map corrections.' },
+      { sub: 'maps-archive', title: 'Archive visibility', desc: 'Archive or unarchive one or many map codes.', danger: true },
+      { sub: 'maps-convert', title: 'Legacy conversion', desc: 'Convert a modern map code into legacy format.' },
+    ],
+  },
+  moderation: {
+    kicker: 'Quality control',
+    summary: 'Override quality votes and handle suspicious-completion flags with audit-friendly outputs.',
+    stats: ['Quality', 'Suspicious flags', 'Corrections'],
+    hints: [
+      'Use suspicious flag lookup before setting or clearing a flag.',
+      'Quality overrides should include the exact map code and verified quality value.',
+    ],
+    cards: [
+      { sub: 'mod-getsusp', title: 'Review flags', desc: 'List suspicious flags before changing a completion.' },
+      { sub: 'mod-suspicious', title: 'Set suspicious flag', desc: 'Mark or clear one completion flag.' },
+      { sub: 'mod-quality', title: 'Override quality', desc: 'Patch a map quality score after moderator review.' },
+    ],
+  },
+  verifications: {
+    kicker: 'Queues',
+    summary: 'Process completion submissions, playtest state, and pending map edit requests.',
+    stats: ['Completion queue', 'Edit requests', 'Review actions'],
+    hints: [
+      'Open pending queues from here; result cards include approve/reject actions where supported.',
+      'The resolved-by field is prepared from the connected moderator account when available.',
+    ],
+    cards: [
+      { sub: 'verif-pending', title: 'Completion queue', desc: 'Load pending completion verifications.' },
+      { sub: 'verif-edits', title: 'Map edit queue', desc: 'Review pending map edit requests.' },
+      { sub: 'verif-playtest', title: 'Playtests', desc: 'Handle playtest accept, deny, reset, and vote cleanup.' },
+    ],
+  },
+  tournament: {
+    kicker: 'Tournament ops',
+    summary: 'Operate tournament categories, map selection, active cycles, leaderboards, and edition lifecycle together.',
+    stats: ['Categories', 'Active cycles', 'Lifecycle controls'],
+    hints: [
+      'Open Overview first; it loads config, categories, active edition, and active cycles.',
+      'Category choices are reused across map and cycle tools to avoid copying IDs manually.',
+    ],
+    cards: [
+      { sub: 'tournament-overview', title: 'Live overview', desc: 'Load the complete tournament state and prefill lifecycle forms.' },
+      { sub: 'tournament-categories', title: 'Categories', desc: 'Create or update XP, difficulties, active state, and champion role.' },
+      { sub: 'tournament-maps', title: 'Map rotation', desc: 'Preview, choose, reroll, or force a category map.' },
+      { sub: 'tournament-cycles', title: 'Cycles and rankings', desc: 'List cycles, open leaderboards, and inspect user streaks.' },
+      { sub: 'tournament-lifecycle', title: 'Edition lifecycle', desc: 'Config, bootstrap, pause/resume, debug length, and result publishing.', danger: true },
+    ],
+  },
+  store: {
+    kicker: 'Commerce',
+    summary: 'Load store configuration, update economics, and generate rotations in the same section.',
+    stats: ['Config', 'Rotation', 'Dev-only'],
+    hints: ['Load config first, update values in place, then save from the same card.'],
+    cards: [
+      { sub: 'store-config', title: 'Store config', desc: 'Load and update live store configuration.' },
+      { sub: 'store-rotation', title: 'Generate rotation', desc: 'Create a new store rotation.', danger: true },
+    ],
+  },
+  quests: {
+    kicker: 'Quests',
+    summary: 'Configure weekly quests, edit the current rotation, and patch user progress.',
+    stats: ['Config', 'Weekly rotation', 'User progress'],
+    hints: [
+      'Load weekly quests before editing, then use the picker to fill the update form.',
+      'User progress editing is intentionally separate from quest configuration.',
+    ],
+    cards: [
+      { sub: 'quest-config', title: 'Quest config', desc: 'Load and update global quest settings.' },
+      { sub: 'quest-update', title: 'Weekly quests', desc: 'Pick and update a quest from the live weekly set.' },
+      { sub: 'quest-rotation', title: 'Generate rotation', desc: 'Force a new quest rotation.', danger: true },
+      { sub: 'quest-user-progress', title: 'User progress', desc: 'Load and patch a user quest-progress entry.' },
+    ],
+  },
+  devs: {
+    kicker: 'Web maintenance',
+    summary: 'Danger-zone maintenance tools for caches and converter metadata.',
+    stats: ['Caches', 'Converter', 'Restricted'],
+    hints: ['These actions are restricted because they can affect shared site behavior immediately.'],
+    cards: [
+      { sub: 'dev-cache-frameworks', title: 'Framework cache', desc: 'Clear framework cache.', danger: true },
+      { sub: 'dev-cache-avatars', title: 'Avatar cache', desc: 'Clear cached avatar data.', danger: true },
+      { sub: 'dev-cache-translations', title: 'Translation cache', desc: 'Clear translated string cache.', danger: true },
+      { sub: 'dev-overpy-commit', title: 'Overpy commit', desc: 'Update converter commit metadata.' },
+      { sub: 'dev-framework-version', title: 'Framework version', desc: 'Update the genji-framework CDN version.' },
+    ],
+  },
+};
+
+function modSectionMeta(tabId) {
+  const fallbackLabel = document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(String(tabId || ''))}"]`)?.dataset?.tabLabel || tabId || 'Section';
+  return MOD_SECTION_META[tabId] || {
+    kicker: 'Workflow',
+    summary: `Tools for ${fallbackLabel}.`,
+    stats: [],
+    hints: [],
+    cards: [],
+  };
+}
+
+function modSubtabLabel(panel, subId) {
+  const btn = panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
+  return btn?.textContent?.trim() || subId;
+}
+
+function modAvailableCards(panel, meta) {
+  const explicit = Array.isArray(meta.cards) ? meta.cards : [];
+  const cards = explicit
+    .filter((card) => panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(card.sub)}"]`))
+    .map((card) => ({ ...card, title: card.title || modSubtabLabel(panel, card.sub) }));
+
+  if (cards.length) return cards;
+
+  return $$('.mod-subtab[data-subtab]', panel).map((btn) => ({
+    sub: btn.dataset.subtab,
+    title: btn.textContent.trim(),
+    desc: 'Open this tool.',
+  }));
+}
+
+function renderModeratorWorkflowHome(panelOrId) {
+  const panel = typeof panelOrId === 'string'
+    ? document.querySelector(`.mod-panel[data-panel="${CSS.escape(panelOrId)}"]`)
+    : panelOrId;
+  if (!panel) return;
+
+  const tabId = panel.dataset.panel || 'users';
+  const meta = modSectionMeta(tabId);
+  const empty = panel.querySelector(':scope > .empty-state') || panel.querySelector('.empty-state');
+  if (!empty) return;
+
+  const cards = modAvailableCards(panel, meta);
+  const actionCount = panel.querySelectorAll('form[data-action]').length;
+  const subtabCount = panel.querySelectorAll('.mod-subtab[data-subtab]').length;
+  const chips = [
+    `${subtabCount} workflows`,
+    `${actionCount} actions`,
+    ...(meta.stats || []),
+  ];
+
+  empty.dataset.workflowHome = '1';
+  empty.className = 'empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 p-5 text-zinc-700 dark:text-zinc-200';
+  empty.innerHTML = `
+    <div data-workflow-home>
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div class="min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700 dark:text-emerald-300">${escapeHtml(meta.kicker || 'Workflow')}</div>
+          <h3 class="mt-2 text-xl font-black text-zinc-950 dark:text-white">${escapeHtml(document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId)}</h3>
+          <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-300">${escapeHtml(meta.summary || '')}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            ${chips.map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 text-xs font-semibold text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${escapeHtml(chip)}</span>`).join('')}
+          </div>
+        </div>
+        <button type="button" data-workflow-first-action class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200">
+          Open first action
+        </button>
+      </div>
+      <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        ${cards.map((card, index) => `
+          <button
+            type="button"
+            data-workflow-card
+            data-workflow-open-subtab="${escapeHtml(card.sub)}"
+            class="group rounded-2xl border p-4 text-left focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${card.danger ? 'hover:border-amber-500/45' : ''}"
+          >
+            <span class="flex items-start justify-between gap-3">
+              <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${card.danger ? 'bg-amber-500/12 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'} ring-1 ring-inset ring-current/15">${String(index + 1).padStart(2, '0')}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-black text-zinc-950 dark:text-white">${escapeHtml(card.title)}</span>
+                <span class="mt-1 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">${escapeHtml(card.desc || '')}</span>
+              </span>
+            </span>
+          </button>
+        `).join('')}
+      </div>
+      ${(meta.hints || []).length ? `
+        <div class="mt-5 grid gap-2 lg:grid-cols-2">
+          ${(meta.hints || []).map((hint) => `
+            <div class="rounded-xl border border-zinc-200/80 bg-white/50 p-3 text-xs leading-relaxed text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${escapeHtml(hint)}</div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  const first = empty.querySelector('[data-workflow-card]');
+  empty.querySelector('[data-workflow-first-action]')?.addEventListener('click', () => first?.click());
+}
+
+function refreshModeratorActiveHeader(tabId = document.querySelector('#modTabs .mod-tab.active')?.dataset?.tab || 'users') {
+  const meta = modSectionMeta(tabId);
+  const label = document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId;
+  const panel = document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
+  const subtabCount = panel?.querySelectorAll?.('.mod-subtab[data-subtab]').length || 0;
+  const actionCount = panel?.querySelectorAll?.('form[data-action]').length || 0;
+
+  const title = document.getElementById('modActiveTitle');
+  const kicker = document.getElementById('modActiveKicker');
+  const summary = document.getElementById('modActiveSummary');
+  const stats = document.getElementById('modActiveStats');
+
+  if (title) title.textContent = label || tabId;
+  if (kicker) kicker.textContent = meta.kicker || 'Workflow';
+  if (summary) summary.textContent = meta.summary || '';
+  if (stats) {
+    stats.innerHTML = [
+      `${subtabCount} workflows`,
+      `${actionCount} actions`,
+      ...(meta.stats || []),
+    ].map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 font-semibold dark:border-white/10 dark:bg-white/5">${escapeHtml(chip)}</span>`).join('');
+  }
+
+  const hintsRoot = document.getElementById('modContextHints');
+  if (hintsRoot) {
+    const hints = meta.hints?.length ? meta.hints : ['Pick a workflow card, then submit the focused form.'];
+    hintsRoot.innerHTML = hints.map((hint, index) => `
+      <div class="rounded-xl border ${index === 0 ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200' : 'border-zinc-200/80 bg-white/45 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300'} p-3">
+        ${escapeHtml(hint)}
+      </div>
+    `).join('');
+  }
+}
+
+function updateModeratorActivityStats() {
+  const cards = $$('#activityLog [data-log-card]');
+  const ok = cards.filter((card) => card.dataset.ok === '1').length;
+  const total = cards.length;
+  const values = { total, ok, err: total - ok };
+  Object.entries(values).forEach(([key, value]) => {
+    document.querySelectorAll(`[data-activity-stat="${CSS.escape(key)}"]`).forEach((el) => {
+      el.textContent = String(value);
+    });
+  });
+}
+
+function enhanceEndpointBadges(root = document) {
+  root.querySelectorAll('span:not([data-endpoint-enhanced])').forEach((el) => {
+    const text = el.textContent?.trim() || '';
+    if (!text.includes('/api/')) return;
+    el.dataset.endpointEnhanced = '1';
+    el.classList.add('mod-endpoint-badge');
+    el.title = text;
+  });
+}
+
+function enhanceModeratorChrome(root = document) {
+  enhanceEndpointBadges(root);
+  root.querySelectorAll('article.fade-in').forEach((article) => {
+    article.classList.add('backdrop-blur', 'transition', 'duration-150');
+  });
+  $$('.mod-panel').forEach((panel) => renderModeratorWorkflowHome(panel));
+  refreshModeratorActiveHeader();
+  updateModeratorActivityStats();
+}
+
+document.addEventListener('click', (event) => {
+  const card = event.target?.closest?.('[data-workflow-open-subtab]');
+  if (!card) return;
+  const panel = card.closest('.mod-panel');
+  const subId = card.dataset.workflowOpenSubtab;
+  const subtab = panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
+  if (!subtab) return;
+  event.preventDefault();
+  subtab.click();
+});
 
 async function copyText(text = '') {
   try {
@@ -513,7 +857,7 @@ function logActivity({ title, method, url, ok, status, data }) {
   if (!container) return;
 
   const wrap = document.createElement('div');
-  wrap.className = 'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 fade-in min-w-0';
+  wrap.className = 'rounded-xl border border-zinc-200/80 bg-white/85 p-3 fade-in min-w-0 shadow-sm dark:border-white/10 dark:bg-zinc-900/80';
   wrap.dataset.logCard = '1';
   wrap.dataset.ok = ok ? '1' : '0';
   wrap.dataset.method = String(method || '');
@@ -533,16 +877,27 @@ function logActivity({ title, method, url, ok, status, data }) {
       lines.slice(0, shown).join('\n') + `\n...\n(${Math.max(0, lines.length - shown)} more lines)`;
   }
 
+  const methodLabel = String(method || 'REQ').toUpperCase();
+  const statusLabel = String(status ?? '-');
+  const statusClass = ok
+    ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-300';
+
   wrap.innerHTML = `
-    <div class="flex items-center justify-between text-xs mb-2">
-      <span class="font-semibold truncate">${title ?? 'Request'}</span>
-      <div class="flex items-center gap-2 shrink-0">
+    <div class="mb-2 flex items-start justify-between gap-3 text-xs">
+      <div class="min-w-0">
+        <div class="truncate font-black text-zinc-950 dark:text-white">${escapeHtml(String(title ?? 'Request'))}</div>
+        <div class="mt-1 flex max-w-full items-center gap-1.5 overflow-hidden text-[11px] text-zinc-600 dark:text-zinc-400">
+          <span class="shrink-0 rounded-md border border-zinc-200/80 bg-zinc-900/5 px-1.5 py-0.5 font-mono dark:border-white/10 dark:bg-white/5">${escapeHtml(methodLabel)}</span>
+          <span class="truncate">${escapeHtml(String(url || '-'))}</span>
+        </div>
+      </div>
+      <div class="flex shrink-0 flex-col items-end gap-1">
         <span class="text-zinc-500 dark:text-zinc-400">${hhmmss}</span>
-        <span class="${ok ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}">${status}</span>
+        <span class="rounded-full border px-2 py-0.5 font-semibold ${statusClass}">${escapeHtml(statusLabel)}</span>
       </div>
     </div>
-    <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mb-2 break-all">${method} ${url}</div>
-    <pre class="resp text-xs whitespace-pre-wrap leading-tight max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
+    <pre class="resp max-h-48 overflow-auto rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2 text-xs leading-tight text-zinc-700 dark:border-white/10 dark:bg-zinc-950/55 dark:text-zinc-300 whitespace-pre-wrap max-w-full break-words [overflow-wrap:anywhere] ${isLong ? 'cursor-zoom-in' : ''}"></pre>
     <div class="mt-2 flex items-center gap-2">
       <button class="view-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">View full</button>
       <button class="copy-full cursor-pointer text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 hover:bg-zinc-900/3 dark:bg-white/5">Copy</button>
@@ -563,6 +918,7 @@ function logActivity({ title, method, url, ok, status, data }) {
 
   ensureActivityPlaceholder(container);
   applyActivityFilters();
+  updateModeratorActivityStats();
 }
 
 (function setupLogDelegation() {
@@ -603,7 +959,84 @@ function logActivity({ title, method, url, ok, status, data }) {
 })();
 
 // --- HTTP ---
+let __moderatorRequestContext = null;
+
+function parseJsonPreservingLargeIntegers(raw) {
+  const source = String(raw ?? '');
+  if (!source.trim()) return { ok: false, value: null };
+
+  let transformed = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < source.length;) {
+    const char = source[index];
+
+    if (inString) {
+      transformed += char;
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      transformed += char;
+      index += 1;
+      continue;
+    }
+
+    if (char === '-' || (char >= '0' && char <= '9')) {
+      const match = source.slice(index).match(
+        /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/
+      );
+      if (match) {
+        const token = match[0];
+        const isInteger = !token.includes('.') && !/[eE]/.test(token);
+        let unsafeInteger = false;
+
+        if (isInteger && token.replace('-', '').length >= 16) {
+          try {
+            const value = BigInt(token);
+            unsafeInteger =
+              value > BigInt(Number.MAX_SAFE_INTEGER) ||
+              value < BigInt(Number.MIN_SAFE_INTEGER);
+          } catch {
+            unsafeInteger = false;
+          }
+        }
+
+        transformed += unsafeInteger ? JSON.stringify(token) : token;
+        index += token.length;
+        continue;
+      }
+    }
+
+    transformed += char;
+    index += 1;
+  }
+
+  try {
+    return { ok: true, value: JSON.parse(transformed) };
+  } catch {
+    return { ok: false, value: null };
+  }
+}
+
+async function readResponseDataPreservingLargeIntegers(response) {
+  const raw = await response.text().catch(() => '');
+  const parsed = parseJsonPreservingLargeIntegers(raw);
+  return parsed.ok ? parsed.value : raw;
+}
+
 function http(method, url, { body, query, headers } = {}) {
+  const requestContext = __moderatorRequestContext;
   const qs = query
     ? '?' +
       new URLSearchParams(
@@ -632,16 +1065,28 @@ function http(method, url, { body, query, headers } = {}) {
     ...(body ? { body: JSON.stringify(body) } : {}),
   };
 
-  return fetch(url + qs, opts).then(async (r) => ({
-    ok: r.ok,
-    status: r.status,
-    url: r.url,
-    data:
-      (await r
-        .clone()
-        .json()
-        .catch(() => null)) ?? (await r.text().catch(() => '')),
-  }));
+  return fetch(url + qs, opts)
+    .then(async (r) => {
+      const result = {
+        ok: r.ok,
+        status: r.status,
+        url: r.url,
+        data: await readResponseDataPreservingLargeIntegers(r),
+      };
+
+      if (requestContext) {
+        requestContext.responses.push({
+          method: String(method || 'GET').toUpperCase(),
+          ...result,
+        });
+      }
+
+      return result;
+    })
+    .catch((error) => {
+      if (requestContext) requestContext.networkError = error;
+      throw error;
+    });
 }
 
 // --- Tabs (niveau 1) ---
@@ -671,6 +1116,9 @@ function http(method, url, { body, query, headers } = {}) {
           $('.empty-state', panel)?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
         }
       });
+      refreshModeratorActiveHeader(id);
+      const nextPanel = panels.find?.((panel) => panel.dataset.panel === id);
+      if (nextPanel) renderModeratorWorkflowHome(nextPanel);
       setTimeout(() => btn.focus({ preventScroll: true }), 0);
     })
   );
@@ -785,6 +1233,7 @@ function scrollIntoViewWithOffset(el, offset) {
         $('.empty-state', panel)?.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
         active.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
         wireDdSelect(active);
+        enhanceEndpointBadges(active);
         active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
@@ -796,6 +1245,12 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'store-config') initStoreConfigPanel();
         if (name === 'quest-config') initQuestConfigPanel();
         if (name === 'quest-update') initQuestUpdatePanel();
+        if (name === 'tournament-overview') initTournamentOverviewPanel();
+        if (name === 'tournament-categories') initTournamentCategoryPanel();
+        if (name === 'tournament-maps' || name === 'tournament-cycles') {
+          initTournamentHelperPanel(name);
+        }
+        if (name === 'tournament-lifecycle') initTournamentLifecyclePanel();
         if (name === 'mod-quality') initModQualityPanel();
         if (name === 'dev-overpy-commit') initOverpyCommitPanel();
         if (name === 'dev-framework-version') initFrameworkVersionPanel();
@@ -829,6 +1284,7 @@ $('#clearLog')?.addEventListener('click', () => {
   container.innerHTML = '';
   ensureActivityPlaceholder(container);
   applyActivityFilters();
+  updateModeratorActivityStats();
 });
 
 //———————————————————————————————————————————————————————————————
@@ -883,7 +1339,7 @@ async function acFetch(kind, q) {
       credentials: 'same-origin',
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
-    const raw = await res.json();
+    const raw = await readResponseDataPreservingLargeIntegers(res);
     const arr = Array.isArray(raw) ? raw : raw.items || raw.results || raw.data || [];
 
     if (kind === 'users') {
@@ -1037,6 +1493,7 @@ function getUserIdFrom(input) {
 
 function wireFormAutocompletes(root = document) {
   root.querySelectorAll('input[name="code"]').forEach(attachMapCodeAutocomplete);
+  root.querySelectorAll('input[name="map_code"]').forEach(attachMapCodeAutocomplete);
   root.querySelectorAll('form[data-action="replace-overwatch"]').forEach((form) => {
     const inp = form?.querySelector('input[name$="user_id"]');
     if (!inp || inp.__acBound) return;
@@ -1113,6 +1570,15 @@ $$('form[data-action]').forEach((form) => {
     const submitter = e.submitter || form.querySelector('button[type="submit"], button:not([type])');
     const action = submitter?.dataset?.submitAction || form.dataset.action;
     const releasePending = setFormPending(form, true, submitter);
+    const previousRequestContext = __moderatorRequestContext;
+    const requestContext = {
+      action,
+      form,
+      responses: [],
+      networkError: null,
+    };
+    __moderatorRequestContext = requestContext;
+    beginModeratorEndpointResponse(requestContext);
     try {
       const runAction = async () => {
       switch (action) {
@@ -1225,6 +1691,50 @@ $$('form[data-action]').forEach((form) => {
           return handleGetPendingEditRequests();
         case 'verify-completion':
           return handleVerifyCompletion(form);
+
+        // TOURNAMENTS
+        case 'tournament-load-overview':
+          return handleTournamentOverview(form);
+        case 'tournament-config-get':
+          return handleTournamentConfigGet(form);
+        case 'tournament-config-update':
+          return handleTournamentConfigUpdate(form);
+        case 'tournament-category-list':
+          return handleTournamentCategoryList(form);
+        case 'tournament-category-get':
+          return handleTournamentCategoryGet(form);
+        case 'tournament-category-create':
+          return handleTournamentCategoryCreate(form);
+        case 'tournament-category-update':
+          return handleTournamentCategoryUpdate(form);
+        case 'tournament-category-delete':
+          return handleTournamentCategoryDelete(form);
+        case 'tournament-next-cycle':
+          return handleTournamentNextCycle(form);
+        case 'tournament-select-map':
+          return handleTournamentSelectMap(form);
+        case 'tournament-choose-map':
+          return handleTournamentChooseMap(form);
+        case 'tournament-reroll-map':
+          return handleTournamentRerollMap(form);
+        case 'tournament-reroll-active':
+          return handleTournamentRerollActive(form);
+        case 'tournament-cycle-list':
+          return handleTournamentCycleList(form);
+        case 'tournament-leaderboard':
+          return handleTournamentLeaderboard(form);
+        case 'tournament-streak':
+          return handleTournamentStreak(form);
+        case 'tournament-active-edition':
+          return handleTournamentActiveEdition(form);
+        case 'tournament-bootstrap':
+          return handleTournamentBootstrap(form);
+        case 'tournament-publish-results':
+          return handleTournamentPublishResults(form);
+        case 'tournament-pause':
+          return handleTournamentPause(form);
+        case 'tournament-debug-cycle-length':
+          return handleTournamentDebugCycleLength(form);
         
         // DEVS (API_MODS)
         case 'clear-frameworks-cache':
@@ -1285,7 +1795,22 @@ $$('form[data-action]').forEach((form) => {
       }
       };
       await runAction();
+      completeModeratorEndpointResponse(requestContext);
     } catch (err) {
+      const errorData = { message: String(err) };
+      if (USER_ENDPOINT_RESPONSE_META[action]) {
+        renderUserEndpointResponse(form, action, {
+          ok: false,
+          status: 'ERR',
+          data: errorData,
+        });
+      } else {
+        completeModeratorEndpointResponse(requestContext, {
+          ok: false,
+          status: 'ERR',
+          data: errorData,
+        });
+      }
       toast('Unexpected error', 'err');
       logActivity({
         title: action,
@@ -1293,9 +1818,13 @@ $$('form[data-action]').forEach((form) => {
         url: '-',
         ok: false,
         status: 'ERR',
-        data: { message: String(err) },
+        data: errorData,
       });
     } finally {
+      if (__moderatorRequestContext === requestContext) {
+        __moderatorRequestContext =
+          previousRequestContext === requestContext ? null : previousRequestContext;
+      }
       delete form.dataset.submitLocked;
       releasePending();
     }
@@ -1428,7 +1957,7 @@ function setupArchiveMapsUI() {
     const dd = radio.closest('[data-dd-select]');
     if (!dd) return;
 
-    const baseName = radio.name.replace(/_ui$/, '');
+    const baseName = radio.dataset.ddTargetName || radio.name.replace(/_ui$/, '');
     const sel = dd.querySelector(`select[name="${CSS.escape(baseName)}"]`);
     if (!sel) return;
 
@@ -1440,18 +1969,742 @@ function setupArchiveMapsUI() {
 //———————————————————————————————————————————————————————————————
 // HANDLERS
 //———————————————————————————————————————————————————————————————
+// ENDPOINT RESPONSES
+function moderatorResponseActionTitle(action) {
+  const exact = {
+    'grant-key': 'Grant lootbox key',
+    'grant-xp': 'Grant XP',
+    'grant-reward': 'Grant reward',
+    'get-user-keys': 'User lootbox keys',
+    'get-user-rewards': 'User rewards',
+    'view-all-rewards': 'Reward catalog',
+    'get-xp-multiplier': 'XP multiplier',
+    'set-xp-multiplier': 'XP multiplier update',
+    'get-pending-verifs': 'Pending verifications',
+    'get-pending-edit-requests': 'Pending map edits',
+    'tournament-load-overview': 'Tournament overview',
+  };
+  if (exact[action]) return exact[action];
+
+  return String(action || 'Endpoint response')
+    .replace(/^(content|tournament|store|quest)-/, '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => {
+      const upper = {
+        xp: 'XP',
+        ow: 'Overwatch',
+        api: 'API',
+        id: 'ID',
+      };
+      return upper[part] || `${part.charAt(0).toUpperCase()}${part.slice(1)}`;
+    })
+    .join(' ');
+}
+
+function moderatorResponseMount(context) {
+  const article = context?.form?.closest?.('article') || context?.article || null;
+  if (!article) return null;
+
+  if (article.__moderatorEndpointResponseMount?.isConnected) {
+    return article.__moderatorEndpointResponseMount;
+  }
+
+  const mount = document.createElement('div');
+  mount.dataset.moderatorEndpointResponse = '1';
+  mount.className = 'hidden';
+  mount.setAttribute('aria-live', 'polite');
+  article.insertAdjacentElement('afterend', mount);
+  article.__moderatorEndpointResponseMount = mount;
+  return mount;
+}
+
+function moderatorResponseJson(data) {
+  try {
+    const value = typeof data === 'string' ? data : JSON.stringify(data ?? null, null, 2);
+    return value == null ? '' : String(value);
+  } catch {
+    return String(data ?? '');
+  }
+}
+
+function moderatorResponseLabel(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function moderatorResponseScalar(value) {
+  if (value == null || value === '') {
+    return '<span class="text-zinc-400 dark:text-zinc-500">Not set</span>';
+  }
+  if (typeof value === 'boolean') {
+    const classes = value
+      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      : 'border-zinc-300 bg-zinc-900/5 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300';
+    return `<span class="inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${classes}">${value ? 'True' : 'False'}</span>`;
+  }
+  if (typeof value === 'number') {
+    return `<span class="font-mono tabular-nums">${escapeHtml(String(value))}</span>`;
+  }
+  return escapeHtml(String(value));
+}
+
+const __moderatorResponseTables = new Map();
+let __moderatorResponseTableId = 0;
+
+function moderatorResponseTableRows(rows, columns) {
+  return rows.map((row) => `
+    <tr class="bg-white/45 dark:bg-zinc-950/20">
+      ${columns.map((column) => `<td class="max-w-64 px-3 py-2 font-medium text-zinc-800 dark:text-zinc-200">${moderatorResponseScalar(row[column])}</td>`).join('')}
+    </tr>`).join('');
+}
+
+function renderModeratorResponseTablePage(tableId) {
+  const state = __moderatorResponseTables.get(tableId);
+  const root = document.querySelector(
+    `[data-moderator-response-table="${CSS.escape(tableId)}"]`
+  );
+  if (!state || !root) return;
+
+  const totalPages = Math.max(1, Math.ceil(state.rows.length / state.pageSize));
+  state.page = Math.min(Math.max(1, state.page), totalPages);
+
+  const start = (state.page - 1) * state.pageSize;
+  const end = Math.min(start + state.pageSize, state.rows.length);
+  const tbody = root.querySelector('[data-response-table-body]');
+  if (tbody) {
+    tbody.innerHTML = moderatorResponseTableRows(
+      state.rows.slice(start, end),
+      state.columns
+    );
+  }
+
+  const range = root.querySelector('[data-response-table-range]');
+  if (range) {
+    range.textContent = `${state.rows.length ? start + 1 : 0}-${end} of ${state.rows.length}`;
+  }
+
+  const current = root.querySelector('[data-response-table-current]');
+  if (current) current.textContent = String(state.page);
+
+  const total = root.querySelector('[data-response-table-total]');
+  if (total) total.textContent = String(totalPages);
+
+  const previous = root.querySelector('[data-response-page="previous"]');
+  const next = root.querySelector('[data-response-page="next"]');
+  if (previous) previous.disabled = state.page <= 1;
+  if (next) next.disabled = state.page >= totalPages;
+}
+
+function clearModeratorResponseTables(root) {
+  root?.querySelectorAll?.('[data-moderator-response-table]').forEach((table) => {
+    __moderatorResponseTables.delete(table.dataset.moderatorResponseTable);
+  });
+}
+
+function moderatorResponseTable(items) {
+  const rows = items.filter((item) => item && typeof item === 'object' && !Array.isArray(item));
+  if (!rows.length) return '';
+
+  const columns = [];
+  rows.slice(0, 10).forEach((row) => {
+    Object.entries(row).forEach(([key, value]) => {
+      if (
+        columns.length < 6 &&
+        !columns.includes(key) &&
+        (value == null || ['string', 'number', 'boolean'].includes(typeof value))
+      ) {
+        columns.push(key);
+      }
+    });
+  });
+  if (!columns.length) return '';
+
+  const tableId = `moderator-response-table-${++__moderatorResponseTableId}`;
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  __moderatorResponseTables.set(tableId, {
+    rows,
+    columns,
+    page: 1,
+    pageSize,
+  });
+
+  return `
+    <div data-moderator-response-table="${tableId}">
+      <div class="overflow-x-auto rounded-xl border border-zinc-200/80 dark:border-white/10">
+        <table class="min-w-full text-left text-xs">
+          <thead class="bg-zinc-900/5 text-zinc-500 dark:bg-white/5 dark:text-zinc-400">
+            <tr>
+              ${columns.map((column) => `<th class="whitespace-nowrap px-3 py-2 font-semibold uppercase">${escapeHtml(moderatorResponseLabel(column))}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody data-response-table-body class="divide-y divide-zinc-200/80 dark:divide-white/10">
+            ${moderatorResponseTableRows(rows.slice(0, pageSize), columns)}
+          </tbody>
+        </table>
+      </div>
+      ${rows.length > pageSize ? `
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span data-response-table-range class="text-xs font-medium text-zinc-500 dark:text-zinc-400">1-${Math.min(pageSize, rows.length)} of ${rows.length}</span>
+          <div class="flex items-center gap-2">
+            <button type="button" data-response-page="previous" title="Previous page" disabled class="rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">
+              Previous
+            </button>
+            <span class="min-w-20 text-center text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+              Page <span data-response-table-current>1</span> / <span data-response-table-total>${totalPages}</span>
+            </span>
+            <button type="button" data-response-page="next" title="Next page" class="rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">
+              Next
+            </button>
+          </div>
+        </div>` : ''}
+    </div>
+  `;
+}
+
+document.addEventListener('click', (event) => {
+  const button = event.target?.closest?.('[data-response-page]');
+  if (!button) return;
+
+  const root = button.closest('[data-moderator-response-table]');
+  const tableId = root?.dataset?.moderatorResponseTable;
+  const state = tableId ? __moderatorResponseTables.get(tableId) : null;
+  if (!state) return;
+
+  event.preventDefault();
+  state.page += button.dataset.responsePage === 'previous' ? -1 : 1;
+  renderModeratorResponseTablePage(tableId);
+});
+
+function moderatorResponseStructuredData(data, { compact = false } = {}) {
+  if (data == null || data === '') {
+    return `
+      <div class="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">✓</span>
+        <span>The request completed without a response body.</span>
+      </div>`;
+  }
+
+  if (Array.isArray(data)) {
+    if (!data.length) {
+      return `
+        <div class="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">✓</span>
+          <span>The API returned an empty list.</span>
+        </div>`;
+    }
+
+    const table = moderatorResponseTable(data);
+    if (table) {
+      return `
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <span class="text-sm font-bold text-zinc-950 dark:text-white">${data.length} record${data.length === 1 ? '' : 's'}</span>
+        </div>
+        ${table}`;
+    }
+
+    return `
+      <div class="flex flex-wrap gap-2">
+        ${data.slice(0, compact ? 8 : 20).map((value) => `
+          <span class="rounded-lg border border-zinc-200/80 bg-white/60 px-2.5 py-1 text-sm font-medium text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200">
+            ${moderatorResponseScalar(value)}
+          </span>`).join('')}
+      </div>`;
+  }
+
+  if (typeof data !== 'object') {
+    return `
+      <div class="rounded-xl border border-zinc-200/80 bg-white/55 px-4 py-3 font-mono text-lg font-black text-zinc-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+        ${moderatorResponseScalar(data)}
+      </div>`;
+  }
+
+  const entries = Object.entries(data);
+  const scalarEntries = entries.filter(([, value]) =>
+    value == null || ['string', 'number', 'boolean'].includes(typeof value)
+  );
+  const nestedEntries = entries.filter(([, value]) =>
+    value != null && typeof value === 'object'
+  );
+  const message = [data.message, data.detail]
+    .find((value) => typeof value === 'string' && value.trim());
+
+  return `
+    ${message ? `
+      <div class="mb-4 border-l-2 border-emerald-500/60 pl-3">
+        <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">Message</div>
+        <div class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">${escapeHtml(message)}</div>
+      </div>` : ''}
+    ${scalarEntries.length ? `
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        ${scalarEntries.slice(0, compact ? 6 : 15).map(([key, value]) => `
+          <div class="min-w-0 border-l-2 border-zinc-300/80 pl-3 dark:border-white/15">
+            <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">${escapeHtml(moderatorResponseLabel(key))}</div>
+            <div class="mt-1 break-words text-sm font-semibold text-zinc-950 dark:text-white">${moderatorResponseScalar(value)}</div>
+          </div>`).join('')}
+      </div>` : ''}
+    ${nestedEntries.length ? `
+      <div class="${scalarEntries.length ? 'mt-5 border-t border-zinc-200/80 pt-4 dark:border-white/10' : ''} space-y-3">
+        ${nestedEntries.slice(0, compact ? 3 : 8).map(([key, value]) => `
+          <details class="rounded-xl border border-zinc-200/80 bg-white/40 dark:border-white/10 dark:bg-white/5" ${nestedEntries.length === 1 ? 'open' : ''}>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-zinc-950 dark:text-white">
+              <span>${escapeHtml(moderatorResponseLabel(key))}</span>
+              <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">${Array.isArray(value) ? `${value.length} item${value.length === 1 ? '' : 's'}` : `${Object.keys(value).length} fields`}</span>
+            </summary>
+            <div class="border-t border-zinc-200/80 px-4 py-4 dark:border-white/10">
+              ${moderatorResponseStructuredData(value, { compact: true })}
+            </div>
+          </details>`).join('')}
+      </div>` : ''}
+  `;
+}
+
+function moderatorResponseRawDetails(data, label = 'Raw response') {
+  return `
+    <details class="mt-4 border-t border-zinc-200/80 pt-3 dark:border-white/10">
+      <summary class="cursor-pointer select-none text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white">${escapeHtml(label)}</summary>
+      <pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-zinc-950 p-3 font-mono text-xs text-zinc-100">${escapeHtml(moderatorResponseJson(data))}</pre>
+    </details>`;
+}
+
+function beginModeratorEndpointResponse(context) {
+  if (!context || USER_ENDPOINT_RESPONSE_META[context.action]) return;
+  const mount = moderatorResponseMount(context);
+  if (!mount) return;
+
+  clearModeratorResponseTables(mount);
+  mount.classList.remove('hidden');
+  mount.innerHTML = `
+    <section class="fade-in overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/60 shadow-sm dark:border-white/10 dark:bg-zinc-900/55">
+      <div class="flex items-center justify-between gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10">
+        <div>
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(moderatorResponseActionTitle(context.action))}</h4>
+        </div>
+        <span class="rounded-full border border-zinc-200/80 bg-zinc-900/5 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">Loading</span>
+      </div>
+      <div class="space-y-3 p-5" aria-hidden="true">
+        <div class="h-4 w-40 animate-pulse rounded bg-zinc-200 dark:bg-white/10"></div>
+        <div class="h-3 w-full animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+        <div class="h-3 w-2/3 animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+      </div>
+    </section>`;
+}
+
+function completeModeratorEndpointResponse(context, forcedResponse = null) {
+  if (!context || USER_ENDPOINT_RESPONSE_META[context.action]) return;
+  const mount = moderatorResponseMount(context);
+  if (!mount) return;
+
+  clearModeratorResponseTables(mount);
+  let responses = Array.isArray(context.responses) ? context.responses.slice() : [];
+  if (forcedResponse) {
+    responses = [{
+      method: 'ERROR',
+      url: '-',
+      ...forcedResponse,
+    }];
+  } else if (!responses.length && context.networkError) {
+    responses = [{
+      method: 'ERROR',
+      url: '-',
+      ok: false,
+      status: 'ERR',
+      data: { message: String(context.networkError) },
+    }];
+  }
+
+  if (!responses.length) {
+    if (context.hideIfEmpty) {
+      mount.innerHTML = '';
+      mount.classList.add('hidden');
+      return;
+    }
+    mount.innerHTML = `
+      <section class="fade-in overflow-hidden rounded-2xl border border-amber-500/25 bg-amber-500/5 shadow-sm">
+        <div class="border-b border-amber-500/15 px-5 py-4">
+          <div class="text-[11px] font-semibold uppercase text-amber-700 dark:text-amber-300">No request sent</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(moderatorResponseActionTitle(context.action))}</h4>
+        </div>
+        <p class="px-5 py-4 text-sm text-zinc-700 dark:text-zinc-300">The action stopped before contacting the endpoint. Check the form values and permissions.</p>
+      </section>`;
+    return;
+  }
+
+  const allOk = responses.every((response) => response.ok);
+  const latest = responses[responses.length - 1];
+  const shellClass = allOk
+    ? 'border-emerald-500/25 bg-emerald-500/5'
+    : 'border-red-500/25 bg-red-500/5';
+  const statusClass = allOk
+    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
+  const statusText = responses.length === 1
+    ? `${latest.status || (allOk ? 'OK' : 'ERR')} ${allOk ? 'Success' : 'Error'}`
+    : `${responses.filter((response) => response.ok).length}/${responses.length} successful`;
+
+  const body = responses.length === 1
+    ? `
+      ${!latest.ok ? `<div class="mb-4 text-sm font-semibold text-red-700 dark:text-red-300">${escapeHtml(userResponseErrorMessage(latest.data, latest.status))}</div>` : ''}
+      ${moderatorResponseStructuredData(latest.data)}
+      ${moderatorResponseRawDetails(latest.data)}`
+    : `
+      <div class="mb-4 text-sm text-zinc-600 dark:text-zinc-300">${responses.length} related endpoint calls were made by this action.</div>
+      <div class="space-y-3">
+        ${responses.map((response, index) => `
+          <details class="overflow-hidden rounded-xl border ${response.ok ? 'border-zinc-200/80 dark:border-white/10' : 'border-red-500/25'} bg-white/40 dark:bg-white/5" ${index === responses.length - 1 ? 'open' : ''}>
+            <summary class="flex cursor-pointer list-none flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 text-xs font-bold">
+                  <span class="rounded-md border border-zinc-200/80 bg-zinc-900/5 px-1.5 py-0.5 font-mono dark:border-white/10 dark:bg-white/5">${escapeHtml(response.method)}</span>
+                  <span class="${response.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}">${escapeHtml(String(response.status || 'ERR'))}</span>
+                </div>
+                <div class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(String(response.url || '-'))}</div>
+              </div>
+              <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Request ${index + 1}</span>
+            </summary>
+            <div class="border-t border-zinc-200/80 px-4 py-4 dark:border-white/10">
+              ${!response.ok ? `<div class="mb-4 text-sm font-semibold text-red-700 dark:text-red-300">${escapeHtml(userResponseErrorMessage(response.data, response.status))}</div>` : ''}
+              ${moderatorResponseStructuredData(response.data, { compact: true })}
+              ${moderatorResponseRawDetails(response.data)}
+            </div>
+          </details>`).join('')}
+      </div>`;
+
+  mount.classList.remove('hidden');
+  mount.innerHTML = `
+    <section class="fade-in overflow-hidden rounded-2xl border ${shellClass} shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(moderatorResponseActionTitle(context.action))}</h4>
+          ${responses.length === 1 ? `<div class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(`${latest.method} ${latest.url || '-'}`)}</div>` : ''}
+        </div>
+        <span class="self-start rounded-full border px-2.5 py-1 text-xs font-semibold sm:self-auto ${statusClass}">${escapeHtml(statusText)}</span>
+      </div>
+      <div class="p-5">${body}</div>
+    </section>`;
+}
+
+async function runModeratorEndpointAction({ action, article, form = null }, callback) {
+  const previousRequestContext = __moderatorRequestContext;
+  const context = {
+    action,
+    article,
+    form,
+    responses: [],
+    networkError: null,
+    hideIfEmpty: true,
+  };
+
+  __moderatorRequestContext = context;
+  beginModeratorEndpointResponse(context);
+
+  try {
+    const result = await callback();
+    completeModeratorEndpointResponse(context);
+    return result;
+  } catch (error) {
+    const data = { message: String(error) };
+    completeModeratorEndpointResponse(context, {
+      ok: false,
+      status: 'ERR',
+      data,
+    });
+    toast('Unexpected error', 'err');
+    logActivity({
+      title: moderatorResponseActionTitle(action),
+      method: 'ERROR',
+      url: '-',
+      ok: false,
+      status: 'ERR',
+      data,
+    });
+    return null;
+  } finally {
+    if (__moderatorRequestContext === context) {
+      __moderatorRequestContext =
+        previousRequestContext === context ? null : previousRequestContext;
+    }
+  }
+}
+
 // USERS
+const USER_ENDPOINT_RESPONSE_META = {
+  'get-user': {
+    title: 'User profile',
+    success: 'User loaded',
+  },
+  'get-ow-usernames': {
+    title: 'Overwatch usernames',
+    success: 'Usernames loaded',
+  },
+  'link-fake': {
+    title: 'Fake member link',
+    success: 'Accounts linked',
+  },
+  'replace-overwatch': {
+    title: 'Overwatch usernames',
+    success: 'Usernames replaced',
+  },
+  'update-names': {
+    title: 'User names',
+    success: 'Names updated',
+  },
+  'create-fake': {
+    title: 'Fake member',
+    success: 'Member created',
+  },
+};
+
+function userEndpointResponseMount(form, kind) {
+  const subpanel = form?.closest?.('[data-subpanel]');
+  if (!subpanel) return null;
+  return subpanel.querySelector(
+    `[data-user-endpoint-response="${CSS.escape(String(kind || ''))}"]`
+  );
+}
+
+function userResponseValue(value, fallback = '—') {
+  if (value == null || value === '') return fallback;
+  return String(value);
+}
+
+function userResponseField(label, value, { mono = false, accent = false } = {}) {
+  return `
+    <div class="min-w-0 border-l-2 ${accent ? 'border-emerald-500/60' : 'border-zinc-300/80 dark:border-white/15'} pl-3">
+      <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        ${escapeHtml(String(label))}
+      </div>
+      <div class="mt-1 break-words text-sm font-semibold ${mono ? 'font-mono tabular-nums' : ''} ${accent ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-950 dark:text-white'}">
+        ${escapeHtml(userResponseValue(value))}
+      </div>
+    </div>`;
+}
+
+function userResponseRawDetails(data, label = 'Response details') {
+  let pretty = '';
+  try {
+    pretty = typeof data === 'string' ? data : JSON.stringify(data ?? null, null, 2);
+  } catch {
+    pretty = String(data ?? '');
+  }
+
+  return `
+    <details class="mt-4 border-t border-zinc-200/80 pt-3 dark:border-white/10">
+      <summary class="cursor-pointer select-none text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white">
+        ${escapeHtml(label)}
+      </summary>
+      <pre class="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-zinc-950 p-3 font-mono text-xs text-zinc-100">${escapeHtml(pretty)}</pre>
+    </details>`;
+}
+
+function userResponseErrorMessage(data, status) {
+  const candidates = [
+    data?.message,
+    data?.error,
+    data?.detail,
+    data?.error?.message,
+  ];
+  const message = candidates.find((value) => typeof value === 'string' && value.trim());
+  if (message) return message.trim();
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  return `The request failed${status ? ` with status ${status}` : ''}.`;
+}
+
+function renderGetUserResponse(data) {
+  const aliases = Array.isArray(data?.overwatch_usernames)
+    ? data.overwatch_usernames.filter((value) => value != null && String(value).trim())
+    : [];
+  const coins = Number(data?.coins);
+  const coinsText = Number.isFinite(coins) ? coins.toLocaleString() : userResponseValue(data?.coins);
+
+  return `
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1 border-b border-zinc-200/80 pb-4 dark:border-white/10">
+        <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Display identity</span>
+        <span class="text-xl font-black text-zinc-950 dark:text-white">${escapeHtml(userResponseValue(data?.coalesced_name, 'Unnamed user'))}</span>
+        <span class="font-mono text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(userResponseValue(data?.id))}</span>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        ${userResponseField('Global name', data?.global_name)}
+        ${userResponseField('Nickname', data?.nickname)}
+        ${userResponseField('Coins', coinsText, { mono: true, accent: true })}
+      </div>
+
+      <div class="border-t border-zinc-200/80 pt-4 dark:border-white/10">
+        <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Overwatch usernames</div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          ${aliases.length
+            ? aliases.map((username, index) => `
+                <span class="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1 text-sm font-semibold text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200">
+                  ${index === 0 ? '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>' : ''}
+                  ${escapeHtml(String(username))}
+                </span>`).join('')
+            : '<span class="text-sm text-zinc-500 dark:text-zinc-400">No Overwatch username.</span>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGetOverwatchResponse(data) {
+  return `
+    <div class="space-y-4">
+      <div class="border-b border-zinc-200/80 pb-3 font-mono text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+        User ${escapeHtml(userResponseValue(data?.user_id))}
+      </div>
+      <div class="grid gap-4 sm:grid-cols-3">
+        ${userResponseField('Primary', data?.primary, { accent: true })}
+        ${userResponseField('Secondary', data?.secondary)}
+        ${userResponseField('Tertiary', data?.tertiary)}
+      </div>
+    </div>`;
+}
+
+function renderUserOperationResponse(kind, data, meta) {
+  if (kind === 'create-fake') {
+    const memberId =
+      typeof data === 'number' || typeof data === 'string'
+        ? data
+        : data?.id ?? data?.user_id ?? data?.member_id;
+    return `
+      <div class="flex flex-col gap-1">
+        <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Created member ID</span>
+        <span class="font-mono text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">${escapeHtml(userResponseValue(memberId))}</span>
+      </div>`;
+  }
+
+  if (kind === 'replace-overwatch' && data?.success === true) {
+    return `
+      <div>
+        <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">The API confirmed the replacement.</p>
+      </div>`;
+  }
+
+  if (Array.isArray(data) && data.length === 0) {
+    return `
+      <div>
+        <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">The operation completed successfully. The API returned an empty array.</p>
+      </div>`;
+  }
+
+  if (data == null || data === '') {
+    return `
+      <div>
+        <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">The operation completed without a response body.</p>
+      </div>`;
+  }
+
+  return `
+    <div class="text-base font-black text-zinc-950 dark:text-white">${escapeHtml(meta.success)}</div>
+    ${userResponseRawDetails(data)}`;
+}
+
+function renderUserEndpointResponse(form, kind, {
+  pending = false,
+  ok = false,
+  status = '',
+  data = null,
+} = {}) {
+  const mount = userEndpointResponseMount(form, kind);
+  if (!mount) return;
+
+  const meta = USER_ENDPOINT_RESPONSE_META[kind] || {
+    title: 'Endpoint response',
+    success: 'Request completed',
+  };
+
+  mount.classList.remove('hidden');
+
+  if (pending) {
+    mount.innerHTML = `
+      <section class="fade-in overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/60 shadow-sm dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="flex items-center justify-between gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10">
+          <div>
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+            <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(meta.title)}</h4>
+          </div>
+          <span class="rounded-full border border-zinc-200/80 bg-zinc-900/5 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">Loading</span>
+        </div>
+        <div class="space-y-3 p-5" aria-hidden="true">
+          <div class="h-4 w-40 animate-pulse rounded bg-zinc-200 dark:bg-white/10"></div>
+          <div class="h-3 w-full animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+          <div class="h-3 w-2/3 animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+        </div>
+      </section>`;
+    return;
+  }
+
+  const statusText = ok
+    ? `${status || 'OK'} Success`
+    : `${status || 'ERR'} Error`;
+  const statusClass = ok
+    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
+  const shellClass = ok
+    ? 'border-emerald-500/25 bg-emerald-500/5'
+    : 'border-red-500/25 bg-red-500/5';
+
+  let body;
+  if (!ok) {
+    body = `
+      <div>
+        <div class="text-base font-black text-red-700 dark:text-red-300">Request failed</div>
+        <p class="mt-1 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">${escapeHtml(userResponseErrorMessage(data, status))}</p>
+      </div>
+      ${userResponseRawDetails(data, 'Error details')}`;
+  } else if (kind === 'get-user') {
+    body = renderGetUserResponse(data);
+  } else if (kind === 'get-ow-usernames') {
+    body = renderGetOverwatchResponse(data);
+  } else {
+    body = renderUserOperationResponse(kind, data, meta);
+  }
+
+  mount.innerHTML = `
+    <section class="fade-in overflow-hidden rounded-2xl border ${shellClass} shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-zinc-200/80 px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Endpoint response</div>
+          <h4 class="mt-0.5 font-black text-zinc-950 dark:text-white">${escapeHtml(meta.title)}</h4>
+        </div>
+        <span class="self-start rounded-full border px-2.5 py-1 text-xs font-semibold sm:self-auto ${statusClass}">
+          ${escapeHtml(statusText)}
+        </span>
+      </div>
+      <div class="p-5">${body}</div>
+    </section>`;
+}
+
 async function handleCreateFake(form) {
   const name = form.name.value?.trim();
+  renderUserEndpointResponse(form, 'create-fake', { pending: true });
   const { ok, status, url, data } = await http('POST', `${API_MODS}/users/fake`, {
     query: { name },
   });
   logActivity({ title: 'Create fake member', method: 'POST', url, ok, status, data });
+  renderUserEndpointResponse(form, 'create-fake', { ok, status, data });
   toast(ok ? 'Fake user created' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleReplaceOverwatch(form) {
   const user_id = getUserIdFrom(form.user_id);
+
+  if (!user_id) {
+    renderUserEndpointResponse(form, 'replace-overwatch', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'User ID is required.' },
+    });
+    toast('User ID required', 'warn');
+    return;
+  }
 
   const usernames = [1, 2, 3]
     .map((i) => {
@@ -1463,10 +2716,16 @@ async function handleReplaceOverwatch(form) {
     .filter(Boolean);
 
   if (usernames.length === 0) {
+    renderUserEndpointResponse(form, 'replace-overwatch', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'Provide at least one Overwatch username.' },
+    });
     toast('Please provide at least one username', 'warn');
     return;
   }
 
+  renderUserEndpointResponse(form, 'replace-overwatch', { pending: true });
   const { ok, status, url, data } = await http(
     'PUT',
     `${API_MODS}/users/${encodeURIComponent(user_id)}/overwatch`,
@@ -1474,6 +2733,7 @@ async function handleReplaceOverwatch(form) {
   );
 
   logActivity({ title: 'Replace Overwatch names', method: 'PUT', url, ok, status, data });
+  renderUserEndpointResponse(form, 'replace-overwatch', { ok, status, data });
   if (!ok && status === 422)
     toast('Validation failed: exactly one username must be primary.', 'err');
   else toast(ok ? 'Usernames replaced' : 'Failed', ok ? 'ok' : 'err');
@@ -1488,51 +2748,69 @@ async function handleUpdateNames(form) {
   if (global_name) body.global_name = global_name;
   if (nickname) body.nickname = nickname;
 
+  renderUserEndpointResponse(form, 'update-names', { pending: true });
   const { ok, status, url, data } = await http(
     'PATCH',
     `${API_MODS}/users/${encodeURIComponent(user_id)}`,
     { body }
   );
   logActivity({ title: 'Update user names', method: 'PATCH', url, ok, status, data });
+  renderUserEndpointResponse(form, 'update-names', { ok, status, data });
   toast(ok ? 'Names updated' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleLinkFake(form) {
   const fake = getUserIdFrom(form.fake_user_id);
   const real = getUserIdFrom(form.real_user_id);
+  renderUserEndpointResponse(form, 'link-fake', { pending: true });
   const { ok, status, url, data } = await http(
     'PUT',
     `${API_MODS}/users/fake/${encodeURIComponent(fake)}/link/${encodeURIComponent(real)}`
   );
   logActivity({ title: 'Link fake → real', method: 'PUT', url, ok, status, data });
+  renderUserEndpointResponse(form, 'link-fake', { ok, status, data });
   toast(ok ? 'Linked' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleGetUser(form) {
   const user_id = getUserIdFrom(form.user_id);
   if (!user_id) {
+    renderUserEndpointResponse(form, 'get-user', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'User ID is required.' },
+    });
     toast('User ID required', 'warn');
     return;
   }
+  renderUserEndpointResponse(form, 'get-user', { pending: true });
   const { ok, status, url, data } = await http(
     'GET',
     `${API_MODS}/users/${encodeURIComponent(user_id)}`
   );
   logActivity({ title: 'Get User', method: 'GET', url, ok, status, data });
+  renderUserEndpointResponse(form, 'get-user', { ok, status, data });
   toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleGetOwUsernames(form) {
   const user_id = getUserIdFrom(form.user_id);
   if (!user_id) {
+    renderUserEndpointResponse(form, 'get-ow-usernames', {
+      ok: false,
+      status: 'INPUT',
+      data: { message: 'User ID is required.' },
+    });
     toast('User ID required', 'warn');
     return;
   }
+  renderUserEndpointResponse(form, 'get-ow-usernames', { pending: true });
   const { ok, status, url, data } = await http(
     'GET',
     `${API_MODS}/users/${encodeURIComponent(user_id)}/overwatch`
   );
   logActivity({ title: 'Get OW Usernames', method: 'GET', url, ok, status, data });
+  renderUserEndpointResponse(form, 'get-ow-usernames', { ok, status, data });
   toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
 }
 
@@ -1945,16 +3223,17 @@ function movementTechContentOptionLabel(entity, item) {
   return [id, name].filter(Boolean).join(' - ');
 }
 
-function movementTechBuildContentDropdownOption(selectName, value, labelText) {
+function movementTechBuildContentDropdownOption(selectName, value, labelText, radioName = `${selectName}_ui`) {
   const wrapper = document.createElement('label');
   wrapper.className =
     'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5';
 
   const radio = document.createElement('input');
   radio.type = 'radio';
-  radio.name = `${selectName}_ui`;
+  radio.name = radioName;
   radio.value = value;
   radio.dataset.label = labelText;
+  radio.dataset.ddTargetName = selectName;
   radio.className = 'accent-emerald-500';
 
   const label = document.createElement('span');
@@ -2138,7 +3417,12 @@ function movementTechSyncDdField(field) {
 
   const value = String(field.value ?? '');
   const radios = Array.from(
-    list?.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}_ui"]`) || []
+    list?.querySelectorAll(
+      [
+        `input[type="radio"][name="${CSS.escape(name)}_ui"]`,
+        `input[type="radio"][data-dd-target-name="${CSS.escape(name)}"]`,
+      ].join(',')
+    ) || []
   );
 
   let matched = null;
@@ -3231,9 +4515,15 @@ async function handleArchiveMaps(form) {
 }
 
 async function handleUpdateMap(form) {
-  const codePath = (document.getElementById('u-metaCode')?.textContent || '').trim();
+  const codeEl = document.getElementById('u-metaCode');
+  const editedCode = (codeEl?.textContent || '').trim();
+  const codePath = (codeEl?.dataset?.originalCode || editedCode || '').trim();
   if (!codePath) {
     toast('Missing map code (target route).', 'warn');
+    return;
+  }
+  if (!editedCode || /^n\/?a$/i.test(editedCode)) {
+    toast('Map code required', 'warn');
     return;
   }
 
@@ -3253,9 +4543,6 @@ async function handleUpdateMap(form) {
   const tags = getCheckedValues('#u-tagsDropdown');
   const description = (document.getElementById('u-optDescription')?.textContent || '').trim();
   const title = (document.getElementById('u-optTitleInput')?.value || '').trim().slice(0, 128);
-
-  const guideRaw = (document.getElementById('u-optGuide')?.textContent || '').trim();
-  const guide_url = !guideRaw || /^n\/?a$/i.test(guideRaw) ? null : firstHttpUrlOrNull(guideRaw);
 
   const hidden = form.querySelector('#u-flagHidden')?.checked === true;
   const archived = form.querySelector('#u-flagArchived')?.checked === true;
@@ -3284,6 +4571,7 @@ async function handleUpdateMap(form) {
   };
 
   put('map_name', name || undefined);
+  put('code', editedCode);
   if (Number.isFinite(checkpoints)) put('checkpoints', checkpoints);
   put('category', category || undefined);
   put('difficulty', difficulty || undefined);
@@ -3293,7 +4581,6 @@ async function handleUpdateMap(form) {
   if (description && !/^n\/?a$/i.test(description)) put('description', description);
   if (title) put('title', title);
   if (custom_banner) put('custom_banner', custom_banner);
-  if (guide_url) put('guide_url', guide_url);
   if (medalsCheck.values) put('medals', medalsCheck.values);
   put('hidden', hidden);
   put('archived', archived);
@@ -3313,6 +4600,7 @@ async function handleUpdateMap(form) {
   logActivity({ title: 'Update map (UI)', method: 'PATCH', url, ok, status, data });
   toast(ok ? 'Updated' : 'Failed', ok ? 'ok' : 'err');
   if (ok) {
+    if (codeEl && editedCode) codeEl.dataset.originalCode = editedCode;
     form.dataset.loadedMapArchived = String(archived);
     updateReleaseCodeButtonVisibility(form);
   }
@@ -3884,8 +5172,12 @@ async function __merFillMechanicsAndRestrictions() {
         fetch('/api/autocomplete/map-restrictions', { headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
       ]);
 
-      const mechanicsData = mechResp.ok ? await mechResp.json() : [];
-      const restrictionsData = restrResp.ok ? await restrResp.json() : [];
+      const mechanicsData = mechResp.ok
+        ? await readResponseDataPreservingLargeIntegers(mechResp)
+        : [];
+      const restrictionsData = restrResp.ok
+        ? await readResponseDataPreservingLargeIntegers(restrResp)
+        : [];
 
       const toOpt = (data, keyPrefix) => {
         const base = __merToNameArray(data)
@@ -3944,7 +5236,7 @@ async function __merFetchUserProfile(userId) {
         credentials: 'same-origin',
       });
       if (!resp.ok) return null;
-      return await resp.json();
+      return await readResponseDataPreservingLargeIntegers(resp);
     } catch {
       return null;
     }
@@ -4682,7 +5974,7 @@ function __merSetupAutocomplete({ inputEl, boxEl, kind, minChars = 1, onPick }) 
         const res = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
         if (!res.ok) return __merHideSuggestionBox(boxEl);
 
-        const data = await res.json();
+        const data = await readResponseDataPreservingLargeIntegers(res);
         const list = Array.isArray(data) ? data : (data.items || data.data || []);
         const items = (list || [])
           .map((x) => {
@@ -5548,8 +6840,7 @@ function openMapEditRequestModal(map, opts = {}) {
           credentials: 'same-origin',
         });
 
-        const contentType = resp.headers.get('content-type') || '';
-        const data = contentType.includes('application/json') ? await resp.json() : await resp.text();
+        const data = await readResponseDataPreservingLargeIntegers(resp);
 
         if (!resp.ok) {
           __merErr(__merFormatApiError(data, resp.status));
@@ -6167,7 +7458,7 @@ async function fetchStrings(url) {
       credentials: 'same-origin',
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
-    const j = await res.json().catch(() => []);
+    const j = await readResponseDataPreservingLargeIntegers(res);
     const arr = Array.isArray(j) ? j : j.items || j.data || j.results || [];
     return (arr || []).map((it) => it.value || it.name || it.label || it.title || it).map(String);
   } catch {
@@ -6736,21 +8027,12 @@ async function initUpdatePanel() {
     releaseBtn.dataset.bound = '1';
     releaseBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      handleReleaseMapCode(updateForm);
+      void runModeratorEndpointAction({
+        action: 'release-map-code',
+        article: updateForm.closest('article'),
+      }, () => handleReleaseMapCode(updateForm));
     });
   }
-}
-
-function firstGuideUrlFromItem(item) {
-  if (Array.isArray(item?.guides) && item.guides.length) {
-    const g0 = item.guides[0];
-    if (typeof g0 === 'string') return firstHttpUrlOrNull(g0);
-    if (g0 && typeof g0 === 'object' && g0.url) return String(g0.url);
-  }
-  if (typeof item?.guides === 'string') return firstHttpUrlOrNull(item.guides);
-  if (item?.guide_url) return String(item.guide_url);
-  if (item?.guides_url) return String(item.guides_url);
-  return null;
 }
 
 function populateUpdatePanel(item) {
@@ -6789,6 +8071,8 @@ function populateUpdatePanel(item) {
 
   // Meta simples
   setText(form, '#u-metaCode', item?.code);
+  const codeEl = form.querySelector('#u-metaCode');
+  if (codeEl) codeEl.dataset.originalCode = item?.code ? String(item.code).trim() : '';
   setText(form, '#u-metaMap', item?.map_name);
   setText(form, '#u-metaCheckpoints', item?.checkpoints);
 
@@ -6819,7 +8103,6 @@ function populateUpdatePanel(item) {
   // Optional
   setValue(form, '#u-optTitleInput', item?.title ?? '');
   setText(form, '#u-optDescription', item?.description);
-  setText(form, '#u-optGuide', firstGuideUrlFromItem(item) || 'N/A');
 
   const drop = form.querySelector('#u-bannerDrop');
   drop?.querySelector('img')?.remove();
@@ -7483,11 +8766,16 @@ document.addEventListener('click', async (e) => {
 
   if (btnAccept) {
     e.preventDefault();
-    const { ok, status, url, data } = await http(
-      'PUT',
-      `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
-      { body: { accepted: true, resolved_by: String(resolved_by) } }
-    );
+    const response = await runModeratorEndpointAction({
+      action: 'resolve-map-edit-accept',
+      article: card.closest('article'),
+    }, () => http(
+        'PUT',
+        `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+        { body: { accepted: true, resolved_by: String(resolved_by) } }
+      ));
+    if (!response) return;
+    const { ok, status, url, data } = response;
 
     logActivity({ title: `Resolve edit ${editId} (accept)`, method: 'PUT', url, ok, status, data });
     toast(ok ? 'Edit request accepted' : 'Failed', ok ? 'ok' : 'err');
@@ -7503,17 +8791,22 @@ document.addEventListener('click', async (e) => {
     });
     if (dlg.cancelled) return;
 
-    const { ok, status, url, data } = await http(
-      'PUT',
-      `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
-      {
-        body: {
-          accepted: false,
-          resolved_by: String(resolved_by),
-          rejection_reason: dlg.reason,
-        },
-      }
-    );
+    const response = await runModeratorEndpointAction({
+      action: 'resolve-map-edit-reject',
+      article: card.closest('article'),
+    }, () => http(
+        'PUT',
+        `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+        {
+          body: {
+            accepted: false,
+            resolved_by: String(resolved_by),
+            rejection_reason: dlg.reason,
+          },
+        }
+      ));
+    if (!response) return;
+    const { ok, status, url, data } = response;
 
     logActivity({ title: `Resolve edit ${editId} (reject)`, method: 'PUT', url, ok, status, data });
     toast(ok ? 'Edit request rejected' : 'Failed', ok ? 'ok' : 'err');
@@ -7581,7 +8874,10 @@ document.addEventListener('click', async (e) => {
       toast("Auto verify is restricted to devs.", "warn");
       return;
     }
-    return void autoVerifyCard(card);
+    return void runModeratorEndpointAction({
+      action: 'auto-verify-completion',
+      article: card.closest('article'),
+    }, () => autoVerifyCard(card));
   }
 
   // Manual verify / deny
@@ -7604,11 +8900,16 @@ document.addEventListener('click', async (e) => {
 
   const body = { verified, verified_by: MOD_USER_ID, reason };
 
-  const { ok, status, url, data } = await http(
-    'PUT',
-    `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
-    { body }
-  );
+  const response = await runModeratorEndpointAction({
+    action: verified ? 'verify-completion' : 'deny-completion',
+    article: card.closest('article'),
+  }, () => http(
+      'PUT',
+      `${API_MODS}/completions/${encodeURIComponent(record_id)}/verification`,
+      { body }
+    ));
+  if (!response) return;
+  const { ok, status, url, data } = response;
 
   logActivity({
     title: verified ? 'Verify completion' : 'Deny completion',
@@ -8354,6 +9655,16 @@ function resetEnhancedForm(form) {
   if (form.matches?.('form[data-action="content-technique-update"]')) {
     movementTechClearTechniqueUpdateForm(form);
   }
+
+  if (form.matches?.('form[data-action="tournament-category-create"]')) {
+    setTournamentXpGroupRows(form, 'placement_xp_json', tournamentDefaultXpRows('placement'));
+    setTournamentXpGroupRows(form, 'streak_xp_json', tournamentDefaultXpRows('streak'));
+  }
+
+  if (form.matches?.('form[data-action="tournament-category-update"]')) {
+    setTournamentXpGroupRows(form, 'placement_xp_json', []);
+    setTournamentXpGroupRows(form, 'streak_xp_json', []);
+  }
 }
 
 function placeResetButton(form, submitBtn, resetBtn) {
@@ -8730,6 +10041,1700 @@ function initQuestUpdatePanel() {
 
   questIdInput?.addEventListener('change', syncFromInput);
   questIdInput?.addEventListener('blur', syncFromInput);
+}
+
+//———————————————————————————————————————————————————————————————
+// TOURNAMENTS
+//———————————————————————————————————————————————————————————————
+function tournamentIdFrom(form, name = 'category_id') {
+  const value = String(new FormData(form).get(name) || '').trim();
+  if (!isDigits(value) || Number(value) < 1) {
+    toast(`Invalid ${name}`, 'warn');
+    return null;
+  }
+  return value;
+}
+
+function tournamentOptionalNumber(fd, key, payload, { allowZero = true } = {}) {
+  const raw = fd.get(key);
+  if (raw === '' || raw == null) return true;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || (!allowZero && value <= 0) || (allowZero && value < 0)) {
+    toast(`Invalid ${key}`, 'warn');
+    return false;
+  }
+  payload[key] = value;
+  return true;
+}
+
+function tournamentReadJsonArray(raw, label) {
+  const text = String(raw || '').trim();
+  if (!text) return undefined;
+  const parsed = readJsonField(text);
+  if (!Array.isArray(parsed)) {
+    toast(`${label} must be a JSON array`, 'err');
+    return null;
+  }
+  return parsed;
+}
+
+function tournamentLogAndOut(form, outKey, title, method, res, fallbackUrl = '') {
+  logActivity({
+    title,
+    method,
+    url: res.url || fallbackUrl,
+    ok: res.ok,
+    status: res.status,
+    data: res.data,
+  });
+
+  setPanelOut(form, outKey, res.data === '' ? { status: res.status } : res.data);
+  toast(res.ok ? 'Tournament request done' : 'Tournament request failed', res.ok ? 'ok' : 'err');
+  return res;
+}
+
+function buildTournamentCategoryPayload(form, { creating = false } = {}) {
+  syncTournamentXpRepeaters(form);
+  const fd = new FormData(form);
+  const payload = {};
+
+  const name = String(fd.get('name') || '').trim();
+  if (name) payload.name = name;
+  else if (creating) {
+    toast('name is required', 'warn');
+    return null;
+  }
+
+  const difficulties = fd.getAll('difficulties[]').map((value) => String(value || '').trim()).filter(Boolean);
+  if (difficulties.length) payload.difficulties = difficulties;
+  else if (creating) {
+    toast('Pick at least one difficulty', 'warn');
+    return null;
+  }
+
+  if (!tournamentOptionalNumber(fd, 'participation_xp', payload)) return null;
+
+  const championRoleId = String(fd.get('champion_role_id') || '').trim();
+  if (championRoleId === 'null') payload.champion_role_id = null;
+  else if (championRoleId) {
+    if (!isDigits(championRoleId)) {
+      toast('Invalid champion_role_id', 'warn');
+      return null;
+    }
+    payload.champion_role_id = championRoleId;
+  }
+
+  const isActive = String(fd.get('is_active') || '');
+  if (isActive === '1') payload.is_active = true;
+  if (isActive === '0') payload.is_active = false;
+
+  const placement = tournamentReadJsonArray(fd.get('placement_xp_json'), 'placement_xp');
+  if (placement === null) return null;
+  if (placement !== undefined) payload.placement_xp = placement;
+
+  const streak = tournamentReadJsonArray(fd.get('streak_xp_json'), 'streak_xp');
+  if (streak === null) return null;
+  if (streak !== undefined) payload.streak_xp = streak;
+
+  if (!Object.keys(payload).length) {
+    toast('Nothing to submit', 'warn');
+    return null;
+  }
+
+  return payload;
+}
+
+function buildTournamentConfigPayload(form) {
+  const fd = new FormData(form);
+  const payload = {};
+
+  for (const key of ['blacklist_weeks', 'anchor_weekday']) {
+    if (!tournamentOptionalNumber(fd, key, payload)) return null;
+  }
+
+  for (const key of ['cadence', 'anchor_time', 'anchor_tz']) {
+    let value = String(fd.get(key) || '').trim();
+    if (!value) continue;
+    // Native <input type="time"> yields HH:MM (or HH:MM:SS with step). The API stores HH:MM:SS.
+    if (key === 'anchor_time' && /^\d{2}:\d{2}$/.test(value)) value = `${value}:00`;
+    payload[key] = value;
+  }
+
+  if (!Object.keys(payload).length) {
+    toast('Nothing to update', 'warn');
+    return null;
+  }
+
+  return payload;
+}
+
+function fillTournamentConfigForm(form, data) {
+  if (!form || !data || typeof data !== 'object') return;
+  ['blacklist_weeks', 'cadence', 'anchor_weekday', 'anchor_time', 'anchor_tz'].forEach((key) => {
+    const el = form.querySelector(`[name="${CSS.escape(key)}"]`);
+    if (el && data[key] != null) {
+      el.value = String(data[key]);
+      if (el.tagName === 'SELECT') movementTechSyncDdField(el);
+    }
+  });
+}
+
+let __modTournamentCategoryCache = [];
+// Category ids that currently have an active/finalizing cycle — PATCH/DELETE return 409 for these.
+let __modTournamentLockedCategories = new Set();
+
+function tournamentCategoryIsLocked(id) {
+  return __modTournamentLockedCategories.has(String(id));
+}
+
+async function refreshTournamentCategoryLocks() {
+  const results = await Promise.all([
+    http('GET', `${API_TOURNAMENTS}/cycles`, { query: { status: 'active', limit: 100 } }),
+    http('GET', `${API_TOURNAMENTS}/cycles`, { query: { status: 'finalizing', limit: 100 } }),
+  ]);
+
+  const locked = new Set();
+  results.forEach((res) => {
+    const cycles = Array.isArray(res.data?.cycles)
+      ? res.data.cycles
+      : Array.isArray(res.data)
+        ? res.data
+        : [];
+    cycles.forEach((cycle) => {
+      const categoryId = cycle?.category_id ?? cycle?.category?.id;
+      if (categoryId != null) locked.add(String(categoryId));
+    });
+  });
+
+  __modTournamentLockedCategories = locked;
+  renderTournamentCategoryCards();
+  applyTournamentCategoryLockUI();
+}
+
+function tournamentEscape(value) {
+  return escapeHtml(String(value ?? ''));
+}
+
+function tournamentFormatDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function normalizeTournamentCategories(data) {
+  const rows = Array.isArray(data?.categories)
+    ? data.categories
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
+
+  return rows
+    .filter((category) => category && category.id != null)
+    .map((category) => ({
+      ...category,
+      id: Number(category.id),
+      difficulties: Array.isArray(category.difficulties) ? category.difficulties : [],
+      placement_xp: Array.isArray(category.placement_xp) ? category.placement_xp : [],
+      streak_xp: Array.isArray(category.streak_xp) ? category.streak_xp : [],
+    }));
+}
+
+function tournamentCategoryLabel(category) {
+  const id = category?.id == null ? '' : `#${category.id}`;
+  const name = String(category?.name ?? 'Unnamed category').trim();
+  const difficulties = Array.isArray(category?.difficulties)
+    ? category.difficulties.filter(Boolean).join(', ')
+    : '';
+  return `${id} - ${name}${difficulties ? ` (${difficulties})` : ''}`;
+}
+
+function tournamentDropdownRadioName(select, prefix = 'tournament_dd') {
+  if (!select.dataset.tournamentRadioName) {
+    const index = document.querySelectorAll('[data-tournament-radio-seed]').length + 1;
+    select.dataset.tournamentRadioSeed = '1';
+    select.dataset.tournamentRadioName = `${prefix}_${select.name || 'field'}_${index}_ui`;
+  }
+  return select.dataset.tournamentRadioName;
+}
+
+function tournamentDropdownOption(select, value, labelText) {
+  return movementTechBuildContentDropdownOption(
+    select.name,
+    value,
+    labelText,
+    tournamentDropdownRadioName(select)
+  );
+}
+
+function tournamentStatusPill(status) {
+  const text = String(status ?? '-');
+  const normalized = text.toLowerCase();
+  const cls = normalized === 'active' || normalized === 'true'
+    ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+    : normalized === 'pending'
+      ? 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+      : normalized === 'completed'
+        ? 'border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+        : 'border-zinc-200/80 bg-white/70 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300';
+
+  return `<span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${cls}">${tournamentEscape(text)}</span>`;
+}
+
+function tournamentXpSummary(rows, keyA, keyB) {
+  if (!Array.isArray(rows) || !rows.length) return '-';
+  return rows
+    .map((row) => `${row?.[keyA] ?? '?'}:${row?.[keyB] ?? '?'}`)
+    .join(' / ');
+}
+
+function renderTournamentCategoryCards() {
+  const containers = document.querySelectorAll('[data-tournament-category-cards]');
+  const cards = __modTournamentCategoryCache;
+
+  containers.forEach((container) => {
+    if (!cards.length) {
+      container.innerHTML = `
+        <div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+          No tournament categories loaded.
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = cards
+      .map((category) => {
+        const difficulties = category.difficulties.length ? category.difficulties.join(', ') : '-';
+        const locked = tournamentCategoryIsLocked(category.id);
+        const lockedPill = locked
+          ? '<span class="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">Locked</span>'
+          : '';
+        return `
+          <button
+            type="button"
+            data-tournament-category-card
+            data-tournament-category-id="${tournamentEscape(category.id)}"
+            class="group rounded-xl border border-zinc-200/80 bg-white/80 p-3 text-left transition hover:border-emerald-500/45 hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:border-white/10 dark:bg-zinc-900/60 dark:hover:border-emerald-400/35 dark:hover:bg-zinc-900"
+          >
+            <span class="flex items-start justify-between gap-3">
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-black text-zinc-900 dark:text-zinc-100">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</span>
+                <span class="mt-1 block truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(difficulties)}</span>
+              </span>
+              <span class="flex flex-col items-end gap-1">
+                ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+                ${lockedPill}
+              </span>
+            </span>
+            <span class="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
+                <span class="block text-zinc-500 dark:text-zinc-400">Participation</span>
+                <span class="font-semibold">${tournamentEscape(category.participation_xp ?? '-')} XP</span>
+              </span>
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
+                <span class="block text-zinc-500 dark:text-zinc-400">Placement</span>
+                <span class="font-semibold">${tournamentEscape(tournamentXpSummary(category.placement_xp, 'place', 'xp'))}</span>
+              </span>
+              <span class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">
+                <span class="block text-zinc-500 dark:text-zinc-400">Streak</span>
+                <span class="font-semibold">${tournamentEscape(tournamentXpSummary(category.streak_xp, 'threshold', 'xp'))}</span>
+              </span>
+            </span>
+          </button>`;
+      })
+      .join('');
+  });
+}
+
+function syncTournamentCategoryDatalist() {
+  let datalist = document.getElementById('tournamentCategoryOptions');
+  if (!datalist) {
+    datalist = document.createElement('datalist');
+    datalist.id = 'tournamentCategoryOptions';
+    document.body.appendChild(datalist);
+  }
+
+  datalist.innerHTML = '';
+  __modTournamentCategoryCache.forEach((category) => {
+    const option = document.createElement('option');
+    option.value = String(category.id);
+    option.label = tournamentCategoryLabel(category);
+    datalist.appendChild(option);
+  });
+
+  document
+    .querySelectorAll('[data-panel="tournament"] input[name="category_id"]')
+    .forEach((input) => {
+      input.setAttribute('list', 'tournamentCategoryOptions');
+      input.placeholder = input.placeholder || 'category_id';
+    });
+}
+
+function syncTournamentCategoryPickers() {
+  document.querySelectorAll('[data-tournament-category-picker]').forEach((dd) => {
+    const select = dd.querySelector('select[name]');
+    const list = dd.querySelector('[data-dd-list]');
+    const btn = dd.querySelector('[data-dd-btn]');
+    if (!select || !list || !btn) return;
+
+    const placeholder = btn.getAttribute('data-placeholder') || 'Select a category';
+    const currentValue = String(select.value ?? '');
+
+    select.innerHTML = '';
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = placeholder;
+    select.appendChild(blank);
+
+    __modTournamentCategoryCache.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = String(category.id);
+      option.textContent = tournamentCategoryLabel(category);
+      select.appendChild(option);
+    });
+
+    list.innerHTML = '';
+    list.appendChild(tournamentDropdownOption(select, '', placeholder));
+    __modTournamentCategoryCache.forEach((category) => {
+      list.appendChild(
+        tournamentDropdownOption(select, String(category.id), tournamentCategoryLabel(category))
+      );
+    });
+
+    select.value = __modTournamentCategoryCache.some((category) => String(category.id) === currentValue)
+      ? currentValue
+      : '';
+    movementTechSyncDdField(select);
+  });
+}
+
+function updateTournamentCategoryCount() {
+  document.querySelectorAll('[data-tournament-category-count]').forEach((el) => {
+    el.textContent = __modTournamentCategoryCache.length
+      ? `${__modTournamentCategoryCache.length} categories loaded`
+      : 'No categories loaded';
+  });
+}
+
+function buildTournamentDropdownShell({ placeholder = 'Select...', fieldName = '', picker = '' } = {}) {
+  const dd = document.createElement('div');
+  dd.className = 'relative';
+  dd.dataset.ddSelect = '';
+  if (fieldName) dd.dataset.ddField = fieldName;
+  if (picker) dd.dataset.tournamentCategoryPicker = picker;
+  dd.innerHTML = `
+    <button
+      type="button"
+      data-dd-btn
+      data-placeholder="${tournamentEscape(placeholder)}"
+      aria-haspopup="listbox"
+      aria-expanded="false"
+      class="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-left text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+    >
+      <span class="dd-label truncate">${tournamentEscape(placeholder)}</span>
+      <svg class="h-4 w-4 shrink-0 opacity-70" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+    <div
+      data-dd-list
+      role="listbox"
+      class="custom-multiselect-list absolute left-0 right-0 top-full z-50 mt-1 hidden max-h-[260px] overflow-auto rounded-lg border border-zinc-200/80 bg-white/95 p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900/95"
+    ></div>
+  `;
+  return dd;
+}
+
+function enhanceTournamentCategoryInputs(root = document) {
+  const panel = root.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]');
+  const scope = root.matches?.('[data-panel="tournament"]') ? root : panel || root;
+  if (!scope) return;
+
+  scope.querySelectorAll('input[name="category_id"]:not([data-tournament-category-enhanced])').forEach((input) => {
+    input.dataset.tournamentCategoryEnhanced = '1';
+    const currentValue = String(input.value || '');
+    const placeholder = input.placeholder || 'Select category';
+    const select = document.createElement('select');
+    select.name = input.name;
+    select.className = 'hidden';
+    select.setAttribute('aria-hidden', 'true');
+    select.dataset.tournamentCategoryHidden = '1';
+    select.value = currentValue;
+
+    const dd = buildTournamentDropdownShell({
+      fieldName: select.name,
+      placeholder,
+      picker: input.closest('form')?.dataset?.action || 'category-id',
+    });
+    dd.appendChild(select);
+    input.replaceWith(dd);
+  });
+}
+
+function enhanceTournamentNativeSelects(root = document) {
+  const panel = root.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]');
+  const scope = root.matches?.('[data-panel="tournament"]') ? root : panel || root;
+  if (!scope) return;
+
+  scope
+    .querySelectorAll('select[name]:not(.hidden):not([data-tournament-native-enhanced])')
+    .forEach((select) => {
+      if (select.closest('[data-dd-select]')) return;
+      select.dataset.tournamentNativeEnhanced = '1';
+      const currentValue = String(select.value ?? '');
+      const placeholder =
+        select.querySelector('option[value=""]')?.textContent?.trim() ||
+        select.closest('label')?.childNodes?.[0]?.textContent?.trim() ||
+        'Select...';
+
+      const dd = buildTournamentDropdownShell({
+        fieldName: select.name,
+        placeholder,
+      });
+      const list = dd.querySelector('[data-dd-list]');
+
+      Array.from(select.options).forEach((option) => {
+        list.appendChild(tournamentDropdownOption(select, option.value, option.textContent || option.value || placeholder));
+      });
+
+      select.classList.add('hidden');
+      select.setAttribute('aria-hidden', 'true');
+      select.parentNode.insertBefore(dd, select);
+      dd.appendChild(select);
+      select.value = currentValue;
+      movementTechSyncDdField(select);
+    });
+}
+
+function tournamentXpConfig(kind) {
+  return kind === 'streak'
+    ? { key: 'threshold', keyLabel: 'Threshold', valueLabel: 'XP', addLabel: 'Add threshold / XP' }
+    : { key: 'place', keyLabel: 'Place', valueLabel: 'XP', addLabel: 'Add place / XP' };
+}
+
+function tournamentDefaultXpRows(kind) {
+  return kind === 'streak'
+    ? [
+        { threshold: 3, xp: 150 },
+        { threshold: 5, xp: 300 },
+      ]
+    : [
+        { place: 1, xp: 200 },
+        { place: 2, xp: 100 },
+        { place: 3, xp: 50 },
+      ];
+}
+
+function normalizeTournamentXpRows(rows, kind) {
+  const config = tournamentXpConfig(kind);
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => {
+      const left = Number(row?.[config.key]);
+      const xp = Number(row?.xp);
+      if (!Number.isFinite(left) || !Number.isFinite(xp)) return null;
+      return { [config.key]: left, xp };
+    })
+    .filter(Boolean);
+}
+
+function parseTournamentXpTextarea(textarea, kind) {
+  const raw = String(textarea?.value || '').trim();
+  if (!raw) return [];
+  const parsed = readJsonField(raw);
+  return normalizeTournamentXpRows(parsed, kind);
+}
+
+function tournamentXpRowHtml(kind, row = {}) {
+  const config = tournamentXpConfig(kind);
+  return `
+    <div data-tournament-xp-row class="grid gap-2 rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-950/40 sm:grid-cols-[1fr_1fr_auto]">
+      <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        ${tournamentEscape(config.keyLabel)}
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value="${tournamentEscape(row?.[config.key] ?? '')}"
+          data-tournament-xp-field="${tournamentEscape(config.key)}"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
+      <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        ${tournamentEscape(config.valueLabel)}
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value="${tournamentEscape(row?.xp ?? '')}"
+          data-tournament-xp-field="xp"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
+      <button
+        type="button"
+        data-tournament-xp-remove
+        class="self-end rounded-lg border border-zinc-200/80 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10"
+      >
+        Remove
+      </button>
+    </div>`;
+}
+
+function syncTournamentXpGroup(group) {
+  const form = group?.closest?.('form');
+  const textarea = form?.querySelector?.(`textarea[name="${CSS.escape(group.dataset.tournamentXpTarget || '')}"]`);
+  if (!textarea) return;
+
+  const config = tournamentXpConfig(group.dataset.tournamentXpKind || 'placement');
+  const rows = Array.from(group.querySelectorAll('[data-tournament-xp-row]'))
+    .map((row) => {
+      const left = row.querySelector(`[data-tournament-xp-field="${CSS.escape(config.key)}"]`)?.value;
+      const xp = row.querySelector('[data-tournament-xp-field="xp"]')?.value;
+      if (left === '' && xp === '') return null;
+      const leftNumber = Number(left);
+      const xpNumber = Number(xp);
+      if (!Number.isFinite(leftNumber) || !Number.isFinite(xpNumber)) return null;
+      return { [config.key]: leftNumber, xp: xpNumber };
+    })
+    .filter(Boolean);
+
+  textarea.value = rows.length ? JSON.stringify(rows, null, 2) : '';
+}
+
+function setTournamentXpGroupRows(formOrGroup, targetName, rows) {
+  const form = formOrGroup?.matches?.('form') ? formOrGroup : formOrGroup?.closest?.('form');
+  const group =
+    formOrGroup?.matches?.('[data-tournament-xp-group]') && formOrGroup.dataset.tournamentXpTarget === targetName
+      ? formOrGroup
+      : form?.querySelector?.(`[data-tournament-xp-group][data-tournament-xp-target="${CSS.escape(targetName)}"]`);
+  const textarea = form?.querySelector?.(`textarea[name="${CSS.escape(targetName)}"]`);
+  const kind = targetName === 'streak_xp_json' ? 'streak' : 'placement';
+  const normalized = normalizeTournamentXpRows(rows, kind);
+
+  if (group) {
+    const rowMount = group.querySelector('[data-tournament-xp-rows]');
+    if (rowMount) {
+      rowMount.innerHTML = normalized
+        .map((row) => tournamentXpRowHtml(kind, row))
+        .join('');
+    }
+    syncTournamentXpGroup(group);
+  } else if (textarea) {
+    textarea.value = normalized.length ? JSON.stringify(normalized, null, 2) : '';
+  }
+}
+
+function initTournamentXpRepeaters(root = document) {
+  root.querySelectorAll('textarea[name="placement_xp_json"], textarea[name="streak_xp_json"]').forEach((textarea) => {
+    if (textarea.dataset.tournamentXpEnhanced === '1') return;
+    textarea.dataset.tournamentXpEnhanced = '1';
+
+    const kind = textarea.name === 'streak_xp_json' ? 'streak' : 'placement';
+    const config = tournamentXpConfig(kind);
+    const group = document.createElement('div');
+    group.dataset.tournamentXpGroup = '1';
+    group.dataset.tournamentXpTarget = textarea.name;
+    group.dataset.tournamentXpKind = kind;
+    group.className = 'space-y-2';
+    group.innerHTML = `
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${tournamentEscape(config.keyLabel)} / XP</div>
+          <div class="text-xs text-zinc-500 dark:text-zinc-400">Rows are converted to ${tournamentEscape(textarea.name)} automatically.</div>
+        </div>
+        <button
+          type="button"
+          data-tournament-xp-add
+          class="rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10"
+        >
+          ${tournamentEscape(config.addLabel)}
+        </button>
+      </div>
+      <div data-tournament-xp-rows class="space-y-2"></div>
+    `;
+
+    textarea.classList.add('hidden');
+    textarea.setAttribute('aria-hidden', 'true');
+    const label = textarea.closest('label');
+    const anchor = label || textarea;
+    anchor.parentNode.insertBefore(group, anchor);
+    if (label) label.classList.add('hidden');
+
+    const initialRows = parseTournamentXpTextarea(textarea, kind);
+    const defaults = textarea.closest('form')?.dataset?.action === 'tournament-category-create'
+      ? tournamentDefaultXpRows(kind)
+      : [];
+    setTournamentXpGroupRows(group, textarea.name, initialRows.length ? initialRows : defaults);
+  });
+
+  if (root.dataset?.tournamentXpBound === '1') return;
+  if (root.dataset) root.dataset.tournamentXpBound = '1';
+
+  root.addEventListener('click', (event) => {
+    const add = event.target?.closest?.('[data-tournament-xp-add]');
+    if (add) {
+      event.preventDefault();
+      const group = add.closest('[data-tournament-xp-group]');
+      const rows = group?.querySelector('[data-tournament-xp-rows]');
+      if (!group || !rows) return;
+      rows.insertAdjacentHTML('beforeend', tournamentXpRowHtml(group.dataset.tournamentXpKind || 'placement', {}));
+      syncTournamentXpGroup(group);
+      return;
+    }
+
+    const remove = event.target?.closest?.('[data-tournament-xp-remove]');
+    if (remove) {
+      event.preventDefault();
+      const group = remove.closest('[data-tournament-xp-group]');
+      remove.closest('[data-tournament-xp-row]')?.remove();
+      syncTournamentXpGroup(group);
+    }
+  });
+
+  root.addEventListener('input', (event) => {
+    const field = event.target?.closest?.('[data-tournament-xp-field]');
+    if (!field) return;
+    syncTournamentXpGroup(field.closest('[data-tournament-xp-group]'));
+  });
+}
+
+function syncTournamentXpRepeaters(form) {
+  form?.querySelectorAll?.('[data-tournament-xp-group]').forEach(syncTournamentXpGroup);
+}
+
+function setTournamentCategoryCache(categories) {
+  __modTournamentCategoryCache = normalizeTournamentCategories(categories);
+  enhanceTournamentCategoryInputs(document);
+  enhanceTournamentNativeSelects(document);
+  syncTournamentCategoryPickers();
+  syncTournamentCategoryDatalist();
+  renderTournamentCategoryCards();
+  updateTournamentCategoryCount();
+}
+
+function upsertTournamentCategory(category) {
+  if (!category || category.id == null) return;
+  const normalized = normalizeTournamentCategories([category])[0];
+  if (!normalized) return;
+  const idx = __modTournamentCategoryCache.findIndex((item) => String(item.id) === String(normalized.id));
+  if (idx >= 0) __modTournamentCategoryCache[idx] = normalized;
+  else __modTournamentCategoryCache.push(normalized);
+  setTournamentCategoryCache(__modTournamentCategoryCache);
+}
+
+function removeTournamentCategoryFromCache(categoryId) {
+  __modTournamentCategoryCache = __modTournamentCategoryCache.filter(
+    (item) => String(item.id) !== String(categoryId)
+  );
+  setTournamentCategoryCache(__modTournamentCategoryCache);
+}
+
+function fillTournamentCategoryFormFromItem(form, category) {
+  if (!form || !category) return;
+
+  setInputValue(form, 'category_id', category.id);
+  setInputValue(form, 'name', category.name ?? '');
+  setInputValue(form, 'participation_xp', category.participation_xp ?? '');
+  setInputValue(form, 'champion_role_id', category.champion_role_id ?? '');
+  setInputValue(form, 'is_active', category.is_active === true ? '1' : category.is_active === false ? '0' : '');
+  setTournamentXpGroupRows(form, 'placement_xp_json', category.placement_xp ?? []);
+  setTournamentXpGroupRows(form, 'streak_xp_json', category.streak_xp ?? []);
+
+  const selectedDifficulties = new Set((category.difficulties || []).map((value) => String(value)));
+  form.querySelectorAll('input[type="checkbox"][name="difficulties[]"]').forEach((input) => {
+    input.checked = selectedDifficulties.has(String(input.value));
+  });
+}
+
+function fillTournamentCategoryCreateDefaults(form) {
+  if (!form) return;
+  if (!form.querySelector('[name="participation_xp"]')?.value) {
+    setInputValue(form, 'participation_xp', 50);
+  }
+  const placement = form.querySelector('[name="placement_xp_json"]');
+  if (placement && !placement.value.trim()) {
+    setTournamentXpGroupRows(form, 'placement_xp_json', tournamentDefaultXpRows('placement'));
+  }
+  const streak = form.querySelector('[name="streak_xp_json"]');
+  if (streak && !streak.value.trim()) {
+    setTournamentXpGroupRows(form, 'streak_xp_json', tournamentDefaultXpRows('streak'));
+  }
+}
+
+function applyTournamentCategoryLockUI() {
+  const panel = document.querySelector('[data-panel="tournament"]');
+  if (!panel) return;
+
+  const updateForm = panel.querySelector('form[data-action="tournament-category-update"]');
+  const deleteForm = panel.querySelector('form[data-action="tournament-category-delete"]');
+  const id = String(updateForm?.querySelector('[name="category_id"]')?.value || '').trim();
+  const locked = !!id && tournamentCategoryIsLocked(id);
+
+  const badge = panel.querySelector('[data-tournament-lock-badge]');
+  if (badge) badge.classList.toggle('hidden', !locked);
+
+  [updateForm, deleteForm].forEach((form) => {
+    const btn = form?.querySelector('button[type="submit"], button:not([type])');
+    if (!btn) return;
+    btn.disabled = locked;
+    btn.classList.toggle('opacity-50', locked);
+    btn.classList.toggle('pointer-events-none', locked);
+    if (locked) btn.title = 'Locked while a cycle is active or finalizing.';
+    else btn.removeAttribute('title');
+  });
+}
+
+function applyTournamentCategorySelection(scope, category, { showToast = true } = {}) {
+  if (!category) return;
+  const panel = scope?.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]') || document;
+  const id = String(category.id);
+
+  panel.querySelectorAll('input[name="category_id"], select[name="category_id"]').forEach((field) => {
+    field.value = id;
+    if (field.tagName === 'SELECT') movementTechSyncDdField(field);
+  });
+
+  panel.querySelectorAll('[data-tournament-category-picker] select[name]').forEach((select) => {
+    select.value = id;
+    movementTechSyncDdField(select);
+  });
+
+  fillTournamentCategoryFormFromItem(
+    panel.querySelector('form[data-action="tournament-category-update"]'),
+    category
+  );
+
+  const deleteInput = panel.querySelector('form[data-action="tournament-category-delete"] [name="category_id"]');
+  if (deleteInput) deleteInput.value = id;
+
+  applyTournamentCategoryLockUI();
+
+  if (showToast) toast(`Category ${category.name || `#${id}`} loaded`, 'ok');
+}
+
+function openTournamentWorkflowFromOverview({ categoryId = '', cycleId = '', subtab = 'tournament-overview' } = {}) {
+  const panel = document.querySelector('[data-panel="tournament"]');
+  if (!panel) return;
+
+  const categoryValue = String(categoryId || '').trim();
+  if (categoryValue) {
+    const category = __modTournamentCategoryCache.find((item) => String(item.id) === categoryValue);
+    if (category) {
+      applyTournamentCategorySelection(panel, category, { showToast: false });
+    } else {
+      panel.querySelectorAll('input[name="category_id"], select[name="category_id"]').forEach((field) => {
+        field.value = categoryValue;
+        if (field.tagName === 'SELECT') movementTechSyncDdField(field);
+      });
+    }
+  }
+
+  const cycleValue = String(cycleId || '').trim();
+  if (cycleValue) {
+    panel.querySelectorAll('input[name="cycle_id"]').forEach((field) => {
+      field.value = cycleValue;
+    });
+  }
+
+  const subtabBtn = panel.querySelector(`.mod-subtab[data-subtab="${CSS.escape(subtab)}"]`);
+  subtabBtn?.click();
+}
+
+document.addEventListener('click', (event) => {
+  const btn = event.target?.closest?.('[data-tournament-overview-subtab]');
+  if (!btn) return;
+  event.preventDefault();
+  openTournamentWorkflowFromOverview({
+    categoryId: btn.dataset.tournamentOverviewCategoryId,
+    cycleId: btn.dataset.tournamentOverviewCycleId,
+    subtab: btn.dataset.tournamentOverviewSubtab,
+  });
+});
+
+async function loadTournamentCategories({ form = null, silent = false, force = false } = {}) {
+  if (__modTournamentCategoryCache.length && !force) {
+    setTournamentCategoryCache(__modTournamentCategoryCache);
+    return { ok: true, status: 200, data: __modTournamentCategoryCache, fromCache: true };
+  }
+
+  if (form && !silent) setPanelOut(form, 'tournament-categories-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/categories`);
+
+  if (!silent) {
+    logActivity({
+      title: 'Tournament Categories (GET)',
+      method: 'GET',
+      url: res.url || `${API_TOURNAMENTS}/categories`,
+      ok: res.ok,
+      status: res.status,
+      data: res.data,
+    });
+  }
+
+  if (res.ok) {
+    setTournamentCategoryCache(res.data);
+    if (form && !silent) setPanelOut(form, 'tournament-categories-res', res.data);
+    if (!silent) toast('Tournament categories loaded', 'ok');
+  } else {
+    if (form && !silent) setPanelOut(form, 'tournament-categories-res', res.data ?? 'Request failed');
+    toast('Failed to load tournament categories', 'err');
+  }
+
+  return res;
+}
+
+function renderTournamentOverview(form, payload) {
+  const root =
+    form?.closest?.('[data-subpanel="tournament-overview"]')?.querySelector?.('[data-tournament-overview-view]') ||
+    document.querySelector('[data-tournament-overview-view]');
+  if (!root) return;
+
+  const config = payload?.config && typeof payload.config === 'object' ? payload.config : {};
+  const categories = normalizeTournamentCategories(payload?.categories);
+  const edition = payload?.active_edition && typeof payload.active_edition === 'object' ? payload.active_edition : {};
+  const activeCycles = Array.isArray(payload?.active_cycles) ? payload.active_cycles : [];
+  const paused = config.transitions_paused === true;
+  const anchor = [config.anchor_weekday != null ? `weekday ${config.anchor_weekday}` : '', config.anchor_time, config.anchor_tz]
+    .filter(Boolean)
+    .join(' - ') || '-';
+
+  const categoryCards = categories.length
+    ? categories
+        .map((category) => `
+          <article class="rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-900/55">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="truncate font-black">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</div>
+                <div class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(category.difficulties.join(', ') || '-')}</div>
+              </div>
+              ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+            </div>
+            <div class="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+              <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Participation <strong>${tournamentEscape(category.participation_xp ?? '-')}</strong></div>
+              <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Placement <strong>${tournamentEscape(tournamentXpSummary(category.placement_xp, 'place', 'xp'))}</strong></div>
+              <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5">Streak <strong>${tournamentEscape(tournamentXpSummary(category.streak_xp, 'threshold', 'xp'))}</strong></div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button type="button" data-tournament-overview-category-id="${tournamentEscape(category.id)}" data-tournament-overview-subtab="tournament-categories" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Edit category</button>
+              <button type="button" data-tournament-overview-category-id="${tournamentEscape(category.id)}" data-tournament-overview-subtab="tournament-maps" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Map tools</button>
+            </div>
+          </article>`)
+        .join('')
+    : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No categories returned.</div>';
+
+  const cycleCards = activeCycles.length
+    ? activeCycles
+        .map((entry) => {
+          const cycle = entry?.cycle || {};
+          return `
+            <article class="rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-900/55">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="truncate text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">${tournamentEscape(entry?.category_name || `Category #${entry?.category_id ?? '-'}`)}</div>
+                  <div class="mt-1 truncate text-base font-black">${tournamentEscape(cycle.map_name || 'No active map')}</div>
+                </div>
+                ${tournamentStatusPill(cycle.status || entry?.response_status || '-')}
+              </div>
+              <dl class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Code</dt><dd class="font-mono font-semibold">${tournamentEscape(cycle.map_code || '-')}</dd></div>
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Difficulty</dt><dd class="font-semibold">${tournamentEscape(cycle.map_difficulty || '-')}</dd></div>
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Started</dt><dd class="font-semibold">${tournamentEscape(tournamentFormatDate(cycle.started_at))}</dd></div>
+                <div class="rounded-lg bg-zinc-900/5 px-2 py-1 dark:bg-white/5"><dt class="text-zinc-500 dark:text-zinc-400">Winner</dt><dd class="truncate font-semibold">${tournamentEscape(cycle.winner_name || cycle.winner_user_id || '-')}</dd></div>
+              </dl>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" data-tournament-overview-category-id="${tournamentEscape(entry?.category_id ?? cycle.category_id ?? '')}" data-tournament-overview-subtab="tournament-maps" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Open map tools</button>
+                ${cycle.id != null ? `<button type="button" data-tournament-overview-cycle-id="${tournamentEscape(cycle.id)}" data-tournament-overview-subtab="tournament-cycles" class="rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Open leaderboard</button>` : ''}
+              </div>
+            </article>`;
+        })
+        .join('')
+    : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No active cycles returned.</div>';
+
+  root.innerHTML = `
+    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Edition</div>
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <div class="font-black">${tournamentEscape(edition.status || '-')}</div>
+          ${tournamentStatusPill(edition.status || '-')}
+        </div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(tournamentFormatDate(edition.started_at))} -> ${tournamentEscape(tournamentFormatDate(edition.ends_at))}</div>
+      </section>
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Cadence</div>
+        <div class="mt-2 font-black">${tournamentEscape(config.cadence || '-')}</div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(anchor)}</div>
+      </section>
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Transitions</div>
+        <div class="mt-2">${tournamentStatusPill(paused ? 'paused' : 'running')}</div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Debug: ${tournamentEscape(config.debug_cycle_seconds ?? '-')}</div>
+      </section>
+      <section class="rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <div class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Categories</div>
+        <div class="mt-2 font-black">${tournamentEscape(categories.length)}</div>
+        <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Blacklist: ${tournamentEscape(config.blacklist_weeks ?? '-')} weeks</div>
+      </section>
+    </div>
+
+    <section class="mt-4">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h4 class="font-semibold">Active cycles</h4>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(activeCycles.length)} live rows</span>
+      </div>
+      <div class="grid gap-3 xl:grid-cols-2">${cycleCards}</div>
+    </section>
+
+    <section class="mt-4">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h4 class="font-semibold">Categories</h4>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(categories.length)} configured</span>
+      </div>
+      <div class="grid gap-3 xl:grid-cols-2">${categoryCards}</div>
+    </section>
+  `;
+  root.classList.remove('hidden');
+}
+
+function fillTournamentLifecycleFormsFromOverview(form, payload) {
+  const panel = form?.closest?.('[data-panel="tournament"]') || document.querySelector('[data-panel="tournament"]') || document;
+  const config = payload?.config && typeof payload.config === 'object' ? payload.config : null;
+  if (!config) return;
+
+  fillTournamentConfigForm(panel.querySelector('form[data-action="tournament-config-update"]'), config);
+  const pauseSelect = panel.querySelector('form[data-action="tournament-pause"] select[name="paused"]');
+  if (pauseSelect) {
+    pauseSelect.value = config.transitions_paused === true ? '1' : '0';
+    movementTechSyncDdField(pauseSelect);
+  }
+  const debugSeconds = panel.querySelector('form[data-action="tournament-debug-cycle-length"] input[name="seconds"]');
+  if (debugSeconds) debugSeconds.value = config.debug_cycle_seconds ?? '';
+}
+
+async function handleTournamentOverview(form, { silent = false } = {}) {
+  setPanelOut(form, 'tournament-overview', 'Loading...');
+
+  const [config, categories, edition] = await Promise.all([
+    http('GET', `${API_TOURNAMENTS}/config`),
+    http('GET', `${API_TOURNAMENTS}/categories`),
+    http('GET', `${API_TOURNAMENTS}/editions/active`),
+  ]);
+
+  const categoryRows = Array.isArray(categories.data) ? categories.data : [];
+  const activeCycles = await Promise.all(
+    categoryRows.map(async (category) => {
+      const res = await http('GET', `${API_TOURNAMENTS}/cycles`, {
+        query: { status: 'active', category_id: category.id, limit: 1 },
+      });
+      return {
+        category_id: category.id,
+        category_name: category.name,
+        response_status: res.status,
+        cycle: Array.isArray(res.data?.cycles) ? res.data.cycles[0] ?? null : null,
+      };
+    })
+  );
+
+  const payload = {
+    config: config.data,
+    categories: categories.data,
+    active_edition: edition.ok ? edition.data : { status: edition.status, data: edition.data },
+    active_cycles: activeCycles,
+  };
+
+  if (categories.ok) setTournamentCategoryCache(categories.data);
+  renderTournamentOverview(form, payload);
+  fillTournamentLifecycleFormsFromOverview(form, payload);
+
+  logActivity({
+    title: 'Tournament Overview',
+    method: 'GET',
+    url: `${API_TOURNAMENTS}/*`,
+    ok: config.ok && categories.ok,
+    status: config.ok && categories.ok ? 200 : 'ERR',
+    data: payload,
+  });
+  setPanelOut(form, 'tournament-overview', payload);
+  if (!silent) toast('Tournament overview loaded', config.ok && categories.ok ? 'ok' : 'err');
+}
+
+async function handleTournamentConfigGet(form) {
+  setPanelOut(form, 'tournament-config-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/config`);
+  tournamentLogAndOut(form, 'tournament-config-res', 'Tournament Config (GET)', 'GET', res, `${API_TOURNAMENTS}/config`);
+  if (res.ok) fillTournamentConfigForm(findRelatedActionForm(form, 'tournament-config-update'), res.data);
+}
+
+async function handleTournamentConfigUpdate(form) {
+  const payload = buildTournamentConfigPayload(form);
+  if (!payload) return;
+  setPanelOut(form, 'tournament-config-res', 'Saving...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/config`, { body: payload });
+  tournamentLogAndOut(form, 'tournament-config-res', 'Tournament Config (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/config`);
+}
+
+async function handleTournamentCategoryList(form) {
+  const res = await loadTournamentCategories({ form, silent: false, force: true });
+  refreshTournamentCategoryLocks();
+  return res;
+}
+
+async function handleTournamentCategoryGet(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-categories-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/categories/${encodeURIComponent(id)}`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-categories-res', `Tournament Category #${id} (GET)`, 'GET', res, url);
+  if (res.ok) {
+    upsertTournamentCategory(res.data);
+    applyTournamentCategorySelection(form, res.data);
+  }
+}
+
+async function handleTournamentCategoryCreate(form) {
+  const payload = buildTournamentCategoryPayload(form, { creating: true });
+  if (!payload) return;
+  setPanelOut(form, 'tournament-category-create-res', 'Creating...');
+  const res = await http('POST', `${API_TOURNAMENTS_MODS}/categories`, { body: payload });
+  tournamentLogAndOut(form, 'tournament-category-create-res', 'Create Tournament Category (POST)', 'POST', res, `${API_TOURNAMENTS_MODS}/categories`);
+  if (res.ok) {
+    upsertTournamentCategory(res.data);
+    const panel = form.closest?.('[data-subpanel="tournament-categories"]') || document;
+    applyTournamentCategorySelection(panel, res.data, { showToast: false });
+  }
+}
+
+async function handleTournamentCategoryUpdate(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  const payload = buildTournamentCategoryPayload(form);
+  if (!payload) return;
+  setPanelOut(form, 'tournament-category-update-res', 'Saving...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}`;
+  const res = await http('PATCH', url, { body: payload });
+  tournamentLogAndOut(form, 'tournament-category-update-res', `Update Tournament Category #${id} (PATCH)`, 'PATCH', res, url);
+  if (res.ok) {
+    upsertTournamentCategory(res.data);
+    applyTournamentCategorySelection(form, res.data, { showToast: false });
+  } else if (res.status === 409) {
+    toast('Category is locked while a cycle is in progress', 'warn');
+    refreshTournamentCategoryLocks();
+  }
+}
+
+async function handleTournamentCategoryDelete(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-category-delete-res', 'Deleting...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}`;
+  const res = await http('DELETE', url);
+  tournamentLogAndOut(form, 'tournament-category-delete-res', `Delete Tournament Category #${id} (DELETE)`, 'DELETE', res, url);
+  if (res.ok) {
+    removeTournamentCategoryFromCache(id);
+    resetEnhancedForm(form);
+  } else if (res.status === 409) {
+    toast('Category is locked while a cycle is in progress', 'warn');
+    refreshTournamentCategoryLocks();
+  }
+}
+
+async function handleTournamentNextCycle(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-maps-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/categories/${encodeURIComponent(id)}/next-cycle`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Next Cycle #${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentSelectMap(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-maps-res', 'Selecting...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/select-map`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Select Map #${id} (POST)`, 'POST', res, url);
+}
+
+async function handleTournamentChooseMap(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  const mapCode = String(new FormData(form).get('map_code') || '').trim().toUpperCase();
+  if (!mapCode) return toast('map_code is required', 'warn');
+  setPanelOut(form, 'tournament-maps-res', 'Choosing...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/next-cycle`;
+  const res = await http('PATCH', url, { body: { map_code: mapCode } });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Choose Map #${id} (PATCH)`, 'PATCH', res, url);
+}
+
+async function handleTournamentRerollMap(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  setPanelOut(form, 'tournament-maps-res', 'Rerolling...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/reroll`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Reroll Pending #${id} (POST)`, 'POST', res, url);
+}
+
+async function handleTournamentRerollActive(form) {
+  const id = tournamentIdFrom(form);
+  if (!id) return;
+  if (!form.querySelector('input[name="confirm"]')?.checked) {
+    toast('Tick the confirmation box first', 'warn');
+    return;
+  }
+
+  const category = __modTournamentCategoryCache.find((c) => String(c.id) === String(id));
+  const ok = await showConfirmDanger({
+    title: 'Reroll the LIVE map',
+    message:
+      `This rerolls the currently live map for ${category?.name ? `"${category.name}"` : `category #${id}`} and ` +
+      'DELETES ALL submissions already made for it.\n\n' +
+      'The edition window stays the same, but every run players submitted for the current map will be wiped. ' +
+      'This cannot be undone. Continue?',
+    confirm: 'Reroll & wipe submissions',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  setPanelOut(form, 'tournament-maps-res', 'Rerolling active cycle...');
+  const url = `${API_TOURNAMENTS_MODS}/categories/${encodeURIComponent(id)}/reroll-active`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLogAndOut(form, 'tournament-maps-res', `Tournament Reroll Active #${id} (POST)`, 'POST', res, url);
+}
+
+async function handleTournamentCycleList(form) {
+  const fd = new FormData(form);
+  const query = {};
+  ['status', 'category_id', 'limit', 'offset'].forEach((key) => {
+    const value = String(fd.get(key) || '').trim();
+    if (value) query[key] = value;
+  });
+  setPanelOut(form, 'tournament-cycles-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/cycles`, { query });
+  tournamentLogAndOut(form, 'tournament-cycles-res', 'Tournament Cycles (GET)', 'GET', res, `${API_TOURNAMENTS}/cycles`);
+}
+
+async function handleTournamentLeaderboard(form) {
+  const id = tournamentIdFrom(form, 'cycle_id');
+  if (!id) return;
+  setPanelOut(form, 'tournament-cycles-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/cycles/${encodeURIComponent(id)}/leaderboard`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-cycles-res', `Tournament Leaderboard #${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentStreak(form) {
+  const id = tournamentIdFrom(form, 'user_id');
+  if (!id) return;
+  setPanelOut(form, 'tournament-cycles-res', 'Loading...');
+  const url = `${API_TOURNAMENTS}/streaks/${encodeURIComponent(id)}`;
+  const res = await http('GET', url);
+  tournamentLogAndOut(form, 'tournament-cycles-res', `Tournament Streak ${id} (GET)`, 'GET', res, url);
+}
+
+async function handleTournamentActiveEdition(form) {
+  setPanelOut(form, 'tournament-lifecycle-res', 'Loading...');
+  const res = await http('GET', `${API_TOURNAMENTS}/editions/active`);
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Active Edition (GET)', 'GET', res, `${API_TOURNAMENTS}/editions/active`);
+}
+
+async function handleTournamentBootstrap(form) {
+  setPanelOut(form, 'tournament-lifecycle-res', 'Bootstrapping...');
+  const res = await http('POST', `${API_TOURNAMENTS_MODS}/bootstrap`, { body: {} });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Bootstrap (POST)', 'POST', res, `${API_TOURNAMENTS_MODS}/bootstrap`);
+}
+
+async function handleTournamentPublishResults(form) {
+  setPanelOut(form, 'tournament-lifecycle-res', 'Publishing...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/publish-results`, { body: {} });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Publish Results (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/publish-results`);
+}
+
+async function handleTournamentPause(form) {
+  const paused = String(new FormData(form).get('paused') || '');
+  const body = { paused: paused === '1' };
+  setPanelOut(form, 'tournament-lifecycle-res', 'Saving...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/pause`, { body });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Pause (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/pause`);
+}
+
+async function handleTournamentDebugCycleLength(form) {
+  const raw = String(new FormData(form).get('seconds') || '').trim();
+  const body = { seconds: raw ? Number(raw) : null };
+  if (raw && (!Number.isInteger(body.seconds) || body.seconds < 1)) {
+    toast('Invalid seconds', 'warn');
+    return;
+  }
+  setPanelOut(form, 'tournament-lifecycle-res', 'Saving...');
+  const res = await http('PATCH', `${API_TOURNAMENTS_MODS}/debug-cycle-length`, { body });
+  tournamentLogAndOut(form, 'tournament-lifecycle-res', 'Tournament Debug Cycle Length (PATCH)', 'PATCH', res, `${API_TOURNAMENTS_MODS}/debug-cycle-length`);
+}
+
+function initTournamentOverviewPanel() {
+  const panel = document.querySelector('[data-subpanel="tournament-overview"]');
+  if (!panel || panel.dataset.inited === '1') return;
+  panel.dataset.inited = '1';
+
+  const form = panel.querySelector('form[data-action="tournament-load-overview"]');
+  if (form) {
+    handleTournamentOverview(form, { silent: true });
+  }
+}
+
+function initTournamentCategoryPanel() {
+  const panel = document.querySelector('[data-subpanel="tournament-categories"]');
+  if (!panel) return;
+
+  enhanceTournamentCategoryInputs(panel);
+  enhanceTournamentNativeSelects(panel);
+  initTournamentXpRepeaters(panel);
+
+  if (panel.dataset.inited !== '1') {
+    panel.dataset.inited = '1';
+
+    panel.addEventListener('change', (event) => {
+      const select = event.target?.closest?.('select[name="category_pick_update"]');
+      if (!select) return;
+      const category = __modTournamentCategoryCache.find((item) => String(item.id) === String(select.value));
+      if (category) applyTournamentCategorySelection(panel, category);
+    });
+
+    panel.addEventListener('click', (event) => {
+      const card = event.target?.closest?.('[data-tournament-category-card][data-tournament-category-id]');
+      if (!card) return;
+      event.preventDefault();
+      const category = __modTournamentCategoryCache.find(
+        (item) => String(item.id) === String(card.dataset.tournamentCategoryId)
+      );
+      if (category) applyTournamentCategorySelection(panel, category);
+    });
+
+    const categoryIdInput = panel.querySelector('form[data-action="tournament-category-update"] [name="category_id"]');
+    const syncFromInput = () => {
+      const value = String(categoryIdInput?.value ?? '').trim();
+      if (!value) return;
+      const category = __modTournamentCategoryCache.find((item) => String(item.id) === value);
+      const picker = panel.querySelector('select[name="category_pick_update"]');
+      if (picker) {
+        picker.value = category ? value : '';
+        movementTechSyncDdField(picker);
+      }
+      if (category) applyTournamentCategorySelection(panel, category, { showToast: false });
+    };
+    categoryIdInput?.addEventListener('change', syncFromInput);
+    categoryIdInput?.addEventListener('blur', syncFromInput);
+  }
+
+  fillTournamentCategoryCreateDefaults(panel.querySelector('form[data-action="tournament-category-create"]'));
+  syncTournamentCategoryDatalist();
+  syncTournamentCategoryPickers();
+  renderTournamentCategoryCards();
+  updateTournamentCategoryCount();
+
+  const form = panel.querySelector('form[data-action="tournament-category-list"]');
+  loadTournamentCategories({ form, silent: true });
+  refreshTournamentCategoryLocks();
+}
+
+function initTournamentHelperPanel(name) {
+  const panel = document.querySelector(`[data-subpanel="${CSS.escape(name)}"]`);
+  if (!panel) return;
+  enhanceTournamentCategoryInputs(panel);
+  enhanceTournamentNativeSelects(panel);
+  syncTournamentCategoryDatalist();
+  syncTournamentCategoryPickers();
+  if (!__modTournamentCategoryCache.length) {
+    loadTournamentCategories({ silent: true });
+  }
+}
+
+/* ===================== Tournament lifecycle (state-aware panel) ===================== */
+
+let __tournamentCountdownTimer = null;
+
+function tournamentLifecyclePanelEl() {
+  return document.querySelector('[data-tournament-lifecycle-panel]');
+}
+
+function tournamentIsProdEnv() {
+  const env = String(tournamentLifecyclePanelEl()?.dataset?.appEnv || '').toLowerCase();
+  return env === 'production' || env === 'prod';
+}
+
+function clearTournamentCountdown() {
+  if (__tournamentCountdownTimer) {
+    clearInterval(__tournamentCountdownTimer);
+    __tournamentCountdownTimer = null;
+  }
+}
+
+function populateTournamentTimezoneDatalist() {
+  const datalist = document.getElementById('tournamentTimezoneOptions');
+  if (!datalist || datalist.dataset.filled === '1') return;
+
+  let zones = [];
+  try {
+    zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
+  } catch {
+    zones = [];
+  }
+  if (!Array.isArray(zones) || !zones.length) {
+    zones = [
+      'UTC', 'America/Los_Angeles', 'America/Denver', 'America/Chicago', 'America/New_York',
+      'America/Sao_Paulo', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow',
+      'Asia/Dubai', 'Asia/Kolkata', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney',
+    ];
+  }
+
+  datalist.innerHTML = zones.map((zone) => `<option value="${tournamentEscape(zone)}"></option>`).join('');
+  datalist.dataset.filled = '1';
+}
+
+function tournamentCountdownText(target) {
+  const ms = target instanceof Date ? target.getTime() : Number(new Date(target).getTime());
+  if (!Number.isFinite(ms)) return '-';
+  let diff = Math.floor((ms - Date.now()) / 1000);
+  if (diff <= 0) return 'window ended — awaiting rollover';
+
+  const days = Math.floor(diff / 86400); diff -= days * 86400;
+  const hours = Math.floor(diff / 3600); diff -= hours * 3600;
+  const minutes = Math.floor(diff / 60);
+  const seconds = diff - minutes * 60;
+
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (days || hours) parts.push(`${hours}h`);
+  parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return parts.join(' ');
+}
+
+function tournamentBootstrapError(data) {
+  if (!data || typeof data !== 'object') return '';
+  if (typeof data.message === 'string' && data.message.trim()) return data.message.trim();
+  if (data.errors && typeof data.errors === 'object') {
+    const first = Object.values(data.errors).flat().filter(Boolean)[0];
+    if (first) return String(first);
+  }
+  return '';
+}
+
+function tournamentLifecycleHeader(config) {
+  const paused = config?.transitions_paused === true;
+  const rotationPill = paused
+    ? '<span class="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">Auto-rotation paused</span>'
+    : '<span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">Auto-rotation on</span>';
+  return rotationPill;
+}
+
+function renderTournamentLifecyclePanel({ edition, config, cycles }) {
+  const panel = tournamentLifecyclePanelEl();
+  if (!panel) return;
+  clearTournamentCountdown();
+
+  const status = edition && typeof edition === 'object' ? String(edition.status || '').toLowerCase() : null;
+  const header = tournamentLifecycleHeader(config);
+
+  let body = '';
+
+  if (!edition) {
+    // No active edition (404).
+    body = `
+      <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-950/40">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">No tournament running</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">There is no active edition. Starting the tournament does <strong>two</strong> things:</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-600 dark:text-zinc-300">
+          <li>Starts the first edition now and opens the first cycle for every active category.</li>
+          <li>Enables automatic weekly rotation by clearing the global pause flag.</li>
+        </ul>
+        <button type="button" data-tournament-lc-action="start" class="mt-4 w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+          Start tournament &amp; enable rotation
+        </button>
+      </div>`;
+  } else if (status === 'active') {
+    const paused = config?.transitions_paused === true;
+    const toggle = paused
+      ? `<button type="button" data-tournament-lc-action="resume" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Resume auto-rotation</button>`
+      : `<button type="button" data-tournament-lc-action="pause" class="w-full sm:w-auto cursor-pointer rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-700 hover:bg-amber-500/15 dark:text-amber-300">Pause auto-rotation</button>`;
+
+    const cycleRows = Array.isArray(cycles) && cycles.length
+      ? cycles.map((cycle) => {
+          const cached = __modTournamentCategoryCache.find((c) => String(c.id) === String(cycle.category_id));
+          const categoryName = cycle.category_name || cached?.name || `Category #${cycle.category_id ?? '-'}`;
+          return `
+          <div class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-zinc-900/55">
+            <div class="min-w-0">
+              <div class="truncate text-sm font-semibold">${tournamentEscape(categoryName)}</div>
+              <div class="truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(cycle.map_name || 'No map')} <span class="font-mono">${tournamentEscape(cycle.map_code || '')}</span> ${cycle.map_difficulty ? `· ${tournamentEscape(cycle.map_difficulty)}` : ''}</div>
+            </div>
+            ${tournamentStatusPill(cycle.status || 'active')}
+          </div>`;
+        }).join('')
+      : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No active cycles.</div>';
+
+    body = `
+      <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 dark:border-emerald-400/15">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition in progress</h4>
+          ${header}
+        </div>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-3">
+          <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Started</dt><dd class="text-sm font-semibold">${tournamentEscape(tournamentFormatDate(edition.started_at))}</dd></div>
+          <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Ends</dt><dd class="text-sm font-semibold">${tournamentEscape(tournamentFormatDate(edition.ends_at))}</dd></div>
+          <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Time left</dt><dd class="text-sm font-semibold tabular-nums" data-tournament-countdown data-ends-at="${tournamentEscape(edition.ends_at || '')}">…</dd></div>
+        </dl>
+        <div class="mt-4">
+          <div class="mb-2 text-sm font-semibold">Active cycles</div>
+          <div class="space-y-2">${cycleRows}</div>
+        </div>
+        <div class="mt-4 rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/40">
+          <p class="text-xs text-zinc-600 dark:text-zinc-300">Pausing is a <strong>hiatus</strong>: the current edition still finishes its full term. Only creation of the <strong>next</strong> edition at the boundary is suppressed until you resume.</p>
+          <div class="mt-3">${toggle}</div>
+        </div>
+      </div>`;
+  } else if (status === 'awaiting_results') {
+    const pending = edition.pending_verifications ?? edition.awaiting_verifications ?? edition.pending_count ?? null;
+    const pendingText = pending != null
+      ? `<strong>${tournamentEscape(pending)}</strong> verification${Number(pending) === 1 ? '' : 's'} still pending.`
+      : 'Verifications are still being processed.';
+
+    body = `
+      <div class="rounded-2xl border border-sky-500/20 bg-sky-500/[0.04] p-5 dark:border-sky-400/15">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition ended — awaiting results</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">The edition window closed and standings publish automatically once verifications finish. ${pendingText}</p>
+        <div class="mt-4 rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/40">
+          <p class="text-xs text-zinc-600 dark:text-zinc-300">Use <strong>Publish results now</strong> only as an escape hatch — it force-publishes from currently-verified runs and ignores any in-flight verifications.</p>
+          <button type="button" data-tournament-lc-action="publish" class="mt-3 w-full sm:w-auto cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500">Publish results now</button>
+        </div>
+      </div>`;
+  } else if (status === 'completed') {
+    body = `
+      <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-950/40">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition complete</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Final standings have been published${edition.ends_at ? ` (ended ${tournamentEscape(tournamentFormatDate(edition.ends_at))})` : ''}. The next edition starts automatically at the next anchor unless auto-rotation is paused.</p>
+        <button type="button" data-tournament-lc-action="open-cycles" class="mt-4 w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">View completed cycles &amp; standings</button>
+      </div>`;
+  } else {
+    body = `
+      <div class="rounded-2xl border border-zinc-200/80 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-950/40">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="text-base font-black">Edition status: ${tournamentEscape(edition.status || 'unknown')}</h4>
+          ${header}
+        </div>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">No specific actions are available for this state right now.</p>
+      </div>`;
+  }
+
+  // Debug tools — hidden in production (the API itself returns 403 in prod).
+  let debug = '';
+  if (!tournamentIsProdEnv()) {
+    const current = config?.debug_cycle_seconds;
+    debug = `
+      <details class="group rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 dark:border-amber-400/15">
+        <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-amber-700 marker:hidden dark:text-amber-300 [&::-webkit-details-marker]:hidden">
+          <svg class="h-4 w-4 shrink-0 text-amber-500 transition-transform group-open:rotate-90 dark:text-amber-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Debug tools (non-production only)</span>
+        </summary>
+        <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Override the cycle length to speed up testing. Current override: <strong>${current != null ? `${tournamentEscape(current)}s` : 'none'}</strong>.</p>
+        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input data-tournament-debug-seconds type="number" min="1" step="1" placeholder="seconds" value="${current != null ? tournamentEscape(current) : ''}" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
+          <button type="button" data-tournament-lc-action="debug-set" class="cursor-pointer rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">Set</button>
+          <button type="button" data-tournament-lc-action="debug-clear" class="cursor-pointer rounded-xl border border-zinc-200/80 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Clear override</button>
+        </div>
+      </details>`;
+  }
+
+  panel.innerHTML = body + debug;
+
+  // Live countdown for the active edition.
+  const countdownEl = panel.querySelector('[data-tournament-countdown]');
+  if (countdownEl) {
+    const endsAt = countdownEl.dataset.endsAt;
+    const tick = () => { countdownEl.textContent = tournamentCountdownText(endsAt); };
+    tick();
+    __tournamentCountdownTimer = setInterval(tick, 1000);
+  }
+}
+
+async function loadTournamentLifecycleState() {
+  const panel = tournamentLifecyclePanelEl();
+  if (!panel) return;
+
+  const [edition, config, activeCycles] = await Promise.all([
+    http('GET', `${API_TOURNAMENTS}/editions/active`),
+    http('GET', `${API_TOURNAMENTS}/config`),
+    http('GET', `${API_TOURNAMENTS}/cycles`, { query: { status: 'active', limit: 100 } }),
+  ]);
+
+  const cfg = config.ok && config.data && typeof config.data === 'object' ? config.data : {};
+  const editionData = edition.ok && edition.data && typeof edition.data === 'object' ? edition.data : null;
+  const cycles = Array.isArray(activeCycles.data?.cycles)
+    ? activeCycles.data.cycles
+    : Array.isArray(activeCycles.data)
+      ? activeCycles.data
+      : [];
+
+  const subpanel = document.querySelector('[data-subpanel="tournament-lifecycle"]');
+  if (config.ok) fillTournamentConfigForm(subpanel?.querySelector('form[data-action="tournament-config-update"]'), cfg);
+
+  renderTournamentLifecyclePanel({ edition: editionData, config: cfg, cycles });
+}
+
+function tournamentLifecycleOut(busyMsg) {
+  setPanelOut(tournamentLifecyclePanelEl(), 'tournament-lifecycle-res', busyMsg);
+}
+
+function tournamentLifecycleLog(title, method, url, res) {
+  logActivity({ title, method, url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  setPanelOut(tournamentLifecyclePanelEl(), 'tournament-lifecycle-res', res.data === '' ? { status: res.status } : res.data);
+}
+
+async function tournamentStartTournament() {
+  const ok = await showConfirmDanger({
+    title: 'Start tournament',
+    message:
+      'This does TWO things:\n\n' +
+      '• Starts the first edition now (opens the first cycle for every active category).\n' +
+      '• Enables automatic weekly rotation (clears the global pause flag).\n\n' +
+      'Editions will then roll over on their own at each anchor boundary until you pause. Continue?',
+    confirm: 'Start & enable rotation',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  tournamentLifecycleOut('Starting tournament…');
+  const url = `${API_TOURNAMENTS_MODS}/bootstrap`;
+  const res = await http('POST', url, { body: {} });
+  tournamentLifecycleLog('Tournament Start (POST /bootstrap)', 'POST', url, res);
+
+  if (res.ok) toast('Tournament started — auto-rotation enabled', 'ok');
+  else if (res.status === 409) toast('A tournament edition already exists', 'warn');
+  else if (res.status === 422) toast(tournamentBootstrapError(res.data) || 'A category has no eligible map', 'err');
+  else toast('Failed to start tournament', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+async function tournamentSetPaused(paused) {
+  tournamentLifecycleOut(paused ? 'Pausing auto-rotation…' : 'Resuming auto-rotation…');
+  const url = `${API_TOURNAMENTS_MODS}/pause`;
+  const res = await http('PATCH', url, { body: { paused } });
+  tournamentLifecycleLog(`Tournament ${paused ? 'Pause' : 'Resume'} (PATCH /pause)`, 'PATCH', url, res);
+
+  if (res.ok) toast(paused ? 'Auto-rotation paused' : 'Auto-rotation resumed', 'ok');
+  else toast('Failed to update rotation', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+async function tournamentPublishResults() {
+  const ok = await showConfirmDanger({
+    title: 'Publish results now',
+    message:
+      'This force-publishes standings from currently-verified runs and IGNORES any in-flight verifications.\n\n' +
+      'Runs still awaiting verification will NOT be counted. This cannot be undone. Continue?',
+    confirm: 'Publish now',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  tournamentLifecycleOut('Publishing results…');
+  const url = `${API_TOURNAMENTS_MODS}/publish-results`;
+  const res = await http('PATCH', url, { body: {} });
+  tournamentLifecycleLog('Tournament Publish Results (PATCH)', 'PATCH', url, res);
+
+  if (res.ok) toast('Results published', 'ok');
+  else if (res.status === 409) toast('No edition is awaiting results', 'warn');
+  else toast('Failed to publish results', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+async function tournamentSetDebugCycle(panel, { clear = false } = {}) {
+  const input = panel.querySelector('[data-tournament-debug-seconds]');
+  let seconds = null;
+  if (!clear) {
+    const raw = String(input?.value || '').trim();
+    if (!raw) return toast('Enter a number of seconds (or use Clear override)', 'warn');
+    seconds = Number(raw);
+    if (!Number.isInteger(seconds) || seconds < 1) return toast('Invalid seconds', 'warn');
+  }
+
+  tournamentLifecycleOut(clear ? 'Clearing debug override…' : 'Setting debug cycle length…');
+  const url = `${API_TOURNAMENTS_MODS}/debug-cycle-length`;
+  const res = await http('PATCH', url, { body: { seconds } });
+  tournamentLifecycleLog('Tournament Debug Cycle Length (PATCH)', 'PATCH', url, res);
+
+  if (res.ok) toast(clear ? 'Debug override cleared' : 'Debug cycle length set', 'ok');
+  else if (res.status === 403) toast('Debug cycle length is disabled in production', 'warn');
+  else toast('Failed to update debug cycle length', 'err');
+
+  await loadTournamentLifecycleState();
+}
+
+function bindTournamentLifecyclePanel() {
+  const panel = tournamentLifecyclePanelEl();
+  if (!panel) return;
+
+  // Refresh button lives outside the re-rendered panel, so bind it on the subpanel.
+  const subpanel = document.querySelector('[data-subpanel="tournament-lifecycle"]');
+  if (subpanel && subpanel.dataset.lcBound !== '1') {
+    subpanel.dataset.lcBound = '1';
+    subpanel.addEventListener('click', (event) => {
+      const btn = event.target?.closest?.('[data-tournament-lc-action]');
+      if (!btn) return;
+      event.preventDefault();
+      const action = btn.dataset.tournamentLcAction;
+      if (action === 'open-cycles') return void openTournamentWorkflowFromOverview({ subtab: 'tournament-cycles' });
+
+      const callbacks = {
+        refresh: () => loadTournamentLifecycleState(),
+        start: () => tournamentStartTournament(),
+        publish: () => tournamentPublishResults(),
+        pause: () => tournamentSetPaused(true),
+        resume: () => tournamentSetPaused(false),
+        'debug-set': () => tournamentSetDebugCycle(tournamentLifecyclePanelEl()),
+        'debug-clear': () => tournamentSetDebugCycle(tournamentLifecyclePanelEl(), { clear: true }),
+      };
+      const callback = callbacks[action];
+      if (!callback) return;
+
+      return void runModeratorEndpointAction({
+        action: `tournament-lifecycle-${action}`,
+        article: btn.closest('article'),
+      }, callback);
+    });
+  }
+}
+
+function initTournamentLifecyclePanel() {
+  const subpanel = document.querySelector('[data-subpanel="tournament-lifecycle"]');
+  if (!subpanel) return;
+
+  enhanceTournamentNativeSelects(subpanel);
+  populateTournamentTimezoneDatalist();
+  bindTournamentLifecyclePanel();
+  loadTournamentLifecycleState();
 }
 
 async function handleStoreGetConfig(form) {
@@ -9597,6 +12602,8 @@ function initializeApp() {
     });
   } catch {}
 
+  enhanceModeratorChrome(document);
+
   const state = {
     syncingFromUrl: false,
     entries: [],
@@ -9621,9 +12628,7 @@ function initializeApp() {
   }
 
   function setHeader(tabId) {
-    const label = $(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel;
-    const h = $('#modActiveTitle');
-    if (h) h.textContent = label || tabId;
+    refreshModeratorActiveHeader(tabId);
   }
 
   function setUrlState({ tab, sub } = {}, { replace = false } = {}) {
@@ -9754,7 +12759,8 @@ const sp = new URLSearchParams(window.location.search);
     $$('#modTabs .mod-tab').forEach((b) => {
       const tabId = b.dataset.tab;
       const label = b.dataset.tabLabel || b.textContent.trim();
-      if (tabId) entries.push({ kind: 'tab', tabId, label });
+      const meta = modSectionMeta(tabId);
+      if (tabId) entries.push({ kind: 'tab', tabId, label, desc: meta.summary, kicker: meta.kicker });
 
       const panel = document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
       if (!panel) return;
@@ -9764,7 +12770,15 @@ const sp = new URLSearchParams(window.location.search);
         const subId = sb.dataset.subtab;
         const subLabel = sb.textContent.trim();
         if (!subId) return;
-        entries.push({ kind: 'sub', tabId, subId, label: `${label} / ${subLabel}` });
+        const cardMeta = (meta.cards || []).find((card) => card.sub === subId);
+        entries.push({
+          kind: 'sub',
+          tabId,
+          subId,
+          label: `${label} / ${subLabel}`,
+          desc: cardMeta?.desc || '',
+          kicker: meta.kicker,
+        });
       });
     });
 
@@ -9792,8 +12806,11 @@ const sp = new URLSearchParams(window.location.search);
 
       row.innerHTML = `
         <div class="flex items-center justify-between gap-3">
-          <div class="font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(it.label)}</div>
-          <div class="text-[10px] text-zinc-600 dark:text-zinc-400">${it.kind === 'tab' ? 'Tab' : 'Tool'}</div>
+          <div class="min-w-0">
+            <div class="truncate font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(it.label)}</div>
+            ${it.desc ? `<div class="mt-0.5 truncate text-xs text-zinc-600 dark:text-zinc-400">${escapeHtml(it.desc)}</div>` : ''}
+          </div>
+          <div class="shrink-0 rounded-full border border-zinc-200/80 bg-white/60 px-2 py-0.5 text-[10px] text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400">${it.kind === 'tab' ? 'Section' : 'Tool'}</div>
         </div>
       `;
 

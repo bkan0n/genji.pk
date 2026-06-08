@@ -269,7 +269,7 @@
   </section>
 
   <!-- Feature cards -->
-  <section id="features" class="py-14 sm:py-20">
+  <section id="features" class="pt-1 pb-14 sm:pt-1 sm:pb-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="mb-10 flex items-end justify-between sm:mb-14">
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl font-mona-light">
@@ -279,6 +279,74 @@
           {{ __('index.features.join') }}
         </a>
       </div>
+
+      <article
+        id="homeTournamentSpotlight"
+        class="mb-6 overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/12 via-zinc-100 to-emerald-500/10 p-5 ring-1 ring-amber-400/20 dark:from-amber-500/10 dark:via-white/5 dark:to-emerald-500/10 sm:p-6"
+      >
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)] lg:items-start">
+          <div class="min-w-0 pt-1">
+            <div class="mb-4 flex flex-wrap items-center gap-3">
+              <span class="inline-flex items-center rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-black text-amber-800 ring-1 ring-amber-500/30 dark:text-amber-200 dark:ring-amber-300/25">
+                {{ __('index.features.cards.tournament.pill') }}
+              </span>
+              <h3 class="text-xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-2xl">
+                {{ __('index.features.cards.tournament.title') }}
+              </h3>
+            </div>
+
+            <p class="max-w-2xl text-base font-medium leading-7 text-zinc-600 dark:text-zinc-300">
+              {{ __('index.features.cards.tournament.description') }}
+            </p>
+
+            <div class="mt-6 flex flex-wrap gap-2">
+              <a
+                href="{{ url('tournaments') }}"
+                class="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+              >
+                {{ __('index.features.cards.tournament.links.tournaments') }}
+                <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d="M14 3l7 7-7 7v-4H3v-6h11V3z" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-zinc-200/80 bg-white/75 p-4 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-zinc-950/45 dark:ring-white/10">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <span class="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                {{ __('index.tournament_spotlight.current_leaders') }}
+              </span>
+              <span id="homeTournamentMeta" class="min-w-0 truncate text-right text-xs text-zinc-500 dark:text-zinc-400"></span>
+            </div>
+
+            <div id="homeTournamentLeader" class="hidden grid gap-3"></div>
+
+            <div id="homeTournamentSkeleton" class="grid gap-3" aria-hidden="true">
+              <div class="flex items-center gap-3 rounded-xl border border-zinc-200/70 bg-white/50 p-3 dark:border-white/10 dark:bg-white/5">
+                <div class="h-12 w-12 shrink-0 animate-pulse rounded-xl bg-zinc-200/80 dark:bg-white/10"></div>
+                <div class="min-w-0 flex-1">
+                  <div class="h-4 w-36 max-w-full animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+                  <div class="mt-2 h-3 w-48 max-w-full animate-pulse rounded bg-zinc-200/60 dark:bg-white/5"></div>
+                </div>
+                <div class="h-8 w-16 shrink-0 animate-pulse rounded-lg bg-zinc-200/80 dark:bg-white/10"></div>
+              </div>
+              <div class="flex items-center gap-3 rounded-xl border border-zinc-200/70 bg-white/50 p-3 dark:border-white/10 dark:bg-white/5">
+                <div class="h-12 w-12 shrink-0 animate-pulse rounded-xl bg-zinc-200/80 dark:bg-white/10"></div>
+                <div class="min-w-0 flex-1">
+                  <div class="h-4 w-32 max-w-full animate-pulse rounded bg-zinc-200/80 dark:bg-white/10"></div>
+                  <div class="mt-2 h-3 w-44 max-w-full animate-pulse rounded bg-zinc-200/60 dark:bg-white/5"></div>
+                </div>
+                <div class="h-8 w-16 shrink-0 animate-pulse rounded-lg bg-zinc-200/80 dark:bg-white/10"></div>
+              </div>
+            </div>
+
+            <p id="homeTournamentEmpty" class="hidden text-sm text-zinc-500 dark:text-zinc-400">
+              {{ __('index.tournament_spotlight.empty') }}
+            </p>
+          </div>
+        </div>
+      </article>
 
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Card 1 -->

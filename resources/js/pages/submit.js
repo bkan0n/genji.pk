@@ -1199,7 +1199,7 @@ function renderPlaytestSkeletonCards(count = window.itemsPerPage || 12) {
     card.innerHTML = `
       <header class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 min-w-0">
-          <div class="h-8 w-8 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
+          <div class="h-8 w-8 rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 ring-1 ring-zinc-300/60 dark:ring-white/10"></div>
           <div class="space-y-1">
             <div class="h-3 w-36 max-w-[60vw] rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
             <div class="h-2.5 w-20 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10"></div>
@@ -4043,20 +4043,20 @@ function bannerHTML() {
   const li1    = (typeof t === 'function' && t('notice.pending_accept'))     || 'Your completion may remain pending until it’s accepted.';
   const li2    = (typeof t === 'function' && t('notice.mutable_difficulty')) || 'Difficulty may change while the map is in playtesting.';
   return `
-    <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 ring-1 ring-amber-400/20 sm:p-4 sr-notice" id="srPlaytestingNotice" role="status" aria-live="polite">
+    <div class="mb-4 rounded-xl border border-amber-300/50 bg-amber-50 p-3 ring-1 ring-amber-400/20 dark:border-amber-400/30 dark:bg-amber-500/10 sm:p-4 sr-notice" id="srPlaytestingNotice" role="status" aria-live="polite">
       <div class="flex items-start gap-3">
-        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-6h2v6Zm0-8h-2V6h2v2Z" />
         </svg>
         <div class="min-w-0">
-          <div class="font-semibold text-amber-300">${title}</div>
-          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-100">
+          <div class="font-semibold text-amber-800 dark:text-amber-300">${title}</div>
+          <ul class="mt-1.5 space-y-1 text-sm leading-5 text-amber-700 dark:text-amber-100">
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600 dark:bg-amber-300"></span>
               <span>${li1}</span>
             </li>
             <li class="flex items-center gap-2">
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300 relative top-px"></span>
+              <span class="relative top-px h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600 dark:bg-amber-300"></span>
               <span>${li2}</span>
             </li>
           </ul>
@@ -4286,8 +4286,10 @@ function ensureViewModalButtonForLastCode(code) {
     'gp-cta',
     'inline-flex','items-center','justify-center','cursor-pointer','ml-auto',
     'rounded-lg','px-3','py-2','text-sm',
-    'border','border-amber-500/30','bg-amber-500/10','text-amber-200',
-    'hover:bg-amber-500/15','hover:text-zinc-900 dark:text-white',
+    'border','border-amber-300/50','bg-amber-50','text-amber-800',
+    'hover:bg-amber-100','hover:text-amber-900',
+    'dark:border-amber-500/30','dark:bg-amber-500/10','dark:text-amber-200',
+    'dark:hover:bg-amber-500/15','dark:hover:text-white',
     'focus:outline-none','focus-visible:ring-2','focus-visible:ring-amber-400/60'
   ].join(' ');
 
@@ -5902,7 +5904,7 @@ async function appendVoterToModal(userId) {
   row.setAttribute('data-user-id', String(userId));
   row.innerHTML = `
     <img src="${avatar || cdnAsset('assets/profile/default-avatar.png')}" alt="${name || '—'}"
-         class="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
+         class="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" data-discord-avatar loading="lazy">
     <span class="mt-1 text-sm text-zinc-800 dark:text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
     <span class="text-[11px] text-zinc-600 dark:text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
   `;
@@ -6015,6 +6017,7 @@ function buildVotersGridHTML(preloaded, voterIds) {
                 src="${esc(avatar)}"
                 alt="${esc(name)}"
                 class="open-rank-card h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10 cursor-pointer focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                data-discord-avatar
                 data-user-id="${esc(key)}"
                 loading="lazy"
               >
@@ -6500,7 +6503,7 @@ function renderPlaytestCard(data, index) {
              data-ptidx="${index}" role="button" tabindex="0" aria-label="${esc(safe.name)}">
       <header class="flex items-center justify-between gap-3 p-3">
         <div class="flex items-center gap-2 min-w-0">
-          <img src="${esc(safe.avatar)}" alt="Avatar" class="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" loading="lazy">
+          <img src="${esc(safe.avatar)}" alt="Avatar" class="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" data-discord-avatar loading="lazy">
           <div class="truncate">
             <span class="block text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">${esc(safe.creators)}</span>
             <span class="block text-xs text-zinc-600 dark:text-zinc-400 truncate">${esc(safe.code)}</span>
@@ -7070,7 +7073,7 @@ const mapNameUi =
               .map(
                 () => `
               <div class="flex flex-col items-center text-center">
-                <div class="h-10 w-10 shrink-0 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
+                <div class="h-10 w-10 shrink-0 rounded-lg bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                 <div class="mt-1 h-2.5 w-20 max-w-full rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                 <div class="mt-1 h-2.5 w-24 max-w-full rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
               </div>
@@ -7100,6 +7103,7 @@ const mapNameUi =
                 data-user-id="${esc(data.primary_creator_id || '')}"
                 alt="Creator avatar"
                 class="open-rank-card h-10 w-10 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10"
+                data-discord-avatar
                 loading="lazy"
                 role="link" tabindex="0">
             <div class="min-w-0">

@@ -94,6 +94,15 @@ return [
                 ],
             ],
 
+            'tournament' => [
+                'title' => 'Weekly tournaments',
+                'pill' => 'New',
+                'description' => 'Compete on rotating maps, climb the active tournament leaderboard, and follow the current champion race.',
+                'links' => [
+                    'tournaments' => 'View tournaments',
+                ],
+            ],
+
             'guides' => [
                 'title' => 'Tutorials',
                 'pill' => 'New',
@@ -119,6 +128,18 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     // CTA STRIP
     // ──────────────────────────────────────────────────────────────────────
+    'tournament_spotlight' => [
+        'live_label' => 'Current cycle',
+        'current_leader' => 'Current leader',
+        'current_leaders' => 'Current leaders',
+        'live_count' => ':count tournaments',
+        'rank_one' => 'Rank 1',
+        'time' => 'Time',
+        'empty' => 'No tournament leader yet.',
+        'empty_short' => 'No leader',
+        'unknown_player' => 'Unknown player',
+    ],
+
     'cta' => [
         'title' => 'Ready to climb the leaderboard?',
         'description' => 'Log in to save your records and unlock rewards.',
