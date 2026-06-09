@@ -1196,6 +1196,26 @@ img.avatar-loaded{animation:none!important;background:none!important}
 #srPlaytestingNotice.sr-notice {opacity: 0;transform: none;filter: none;transition: opacity .5s ease, transform 0.5s ease;will-change: opacity;}
 #srPlaytestingNotice.sr-notice.is-visible {opacity: 1;transform: none;filter: none;}
 /* ================= LOOTBOX ================= */
+@keyframes lootbox-stage-shimmer{
+  from{transform:translateX(0)}
+  to{transform:translateX(500%)}
+}
+@keyframes lootbox-stage-progress{
+  from{transform:translateX(-110%)}
+  to{transform:translateX(410%)}
+}
+.lootbox-stage-shimmer{
+  animation:lootbox-stage-shimmer 2.2s ease-in-out infinite;
+  will-change:transform;
+}
+.lootbox-stage-progress{
+  animation:lootbox-stage-progress 1.25s cubic-bezier(.45,0,.55,1) infinite;
+  will-change:transform;
+}
+@media (prefers-reduced-motion:reduce){
+  .lootbox-stage-shimmer,.lootbox-stage-progress{animation:none}
+  .lootbox-stage-progress{left:33%}
+}
 #infoModal .modal-infos{max-height:80svh;overflow-y:auto;overscroll-behavior:contain}
 @supports not (height:1svh){#infoModal .modal-infos{max-height:80vh}}
 @media (min-width:640px){#infoModal .modal-infos{max-height:70svh}@supports not (height:1svh){#infoModal .modal-infos{max-height:70vh}}}

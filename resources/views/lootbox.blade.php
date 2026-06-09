@@ -32,58 +32,53 @@
     <div class="mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 sm:px-6 lg:px-8">
       <!-- Stage 3D  -->
       <div class="w-full flex justify-center">
-        <div class="relative w-full max-w-[980px]">
+        <div class="relative min-h-[320px] w-full max-w-[980px]">
           <!-- Mount 3D -->
-          <div id="box" class="w-full relative">
-            <!-- Skeleton -->
-            <div
-              id="box-skeleton"
-              class="absolute inset-0 z-10 rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-950/35 ring-1 ring-zinc-200/40 dark:ring-white/10 overflow-hidden"
-              aria-live="polite"
-              aria-busy="true"
-            >
-              <div class="p-4 space-y-4 animate-pulse">
-                <div class="flex items-center justify-between gap-3">
-                  <div class="space-y-2 min-w-0 flex-1">
-                    <div class="h-4 w-40 rounded bg-zinc-900/10 dark:bg-white/10"></div>
-                    <div class="h-3 w-28 rounded bg-zinc-900/5 dark:bg-white/5"></div>
-                  </div>
-                  <div class="h-8 w-20 rounded-lg bg-zinc-900/10 dark:bg-white/10"></div>
-                </div>
+          <div id="box" class="relative min-h-[320px] w-full"></div>
 
-                <div class="rounded-xl border border-zinc-200/60 dark:border-white/10 bg-zinc-900/5 dark:bg-white/5 aspect-[16/9]"></div>
+          <!-- Skeleton -->
+          <div
+            id="box-skeleton"
+            class="absolute inset-0 z-10 overflow-hidden rounded-2xl border border-zinc-200/70 bg-white/70 ring-1 ring-zinc-200/40 dark:border-white/10 dark:bg-zinc-950/35 dark:ring-white/10"
+            aria-live="polite"
+            aria-busy="true"
+            role="status"
+          >
+            <div class="relative flex h-full min-h-[320px] items-center justify-center overflow-hidden">
+              <div class="absolute inset-x-8 top-8 h-px bg-gradient-to-r from-transparent via-zinc-400/20 to-transparent dark:via-white/10"></div>
+              <div class="absolute inset-x-8 bottom-8 h-px bg-gradient-to-r from-transparent via-zinc-400/20 to-transparent dark:via-white/10"></div>
+              <div class="lootbox-stage-shimmer absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/45 to-transparent blur-xl dark:via-white/10"></div>
 
-                <div class="flex items-center justify-between gap-3">
-                  <div class="h-3 w-24 rounded bg-zinc-900/5 dark:bg-white/5"></div>
-                  <div class="h-3 w-32 rounded bg-zinc-900/5 dark:bg-white/5"></div>
-                </div>
-
-                <div class="text-xs text-zinc-600 dark:text-zinc-300">
+              <div class="relative flex flex-col items-center">
+                <div class="relative text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   {{ __('lootbox.ui.loading_3d') }}
                 </div>
+                <div class="relative mt-3 h-1.5 w-44 overflow-hidden rounded-full bg-zinc-200/90 ring-1 ring-zinc-300/50 dark:bg-white/10 dark:ring-white/10">
+                  <div class="lootbox-stage-progress absolute inset-y-0 left-0 w-1/3 rounded-full bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_rgba(16,185,129,.55)]"></div>
+                </div>
               </div>
             </div>
+          </div>
 
-            <!-- Optional error -->
-            <div
-              id="box-fallback"
-              class="hidden absolute inset-0 z-10 rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/80 dark:bg-zinc-950/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-5"
-              role="status"
-            >
-              <div class="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                {{ __('lootbox.ui.loading_3d_failed_title') }}
-              </div>
-              <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
-                {{ __('lootbox.ui.loading_3d_failed_desc') }}
-              </div>
-              <button
-                id="box-retry"
-                type="button"
-                class="mt-4 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/40 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/5 transition"
-              >
-                {{ __('lootbox.ui.retry') }}
-              </button>
+          <!-- Optional error -->
+          <div
+            id="box-fallback"
+            class="hidden absolute inset-0 z-10 rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/80 dark:bg-zinc-950/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-5"
+            role="status"
+          >
+            <div class="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              {{ __('lootbox.ui.loading_3d_failed_title') }}
             </div>
+            <div class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+              {{ __('lootbox.ui.loading_3d_failed_desc') }}
+            </div>
+            <button
+              id="box-retry"
+              type="button"
+              class="mt-4 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/40 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/5 transition"
+            >
+              {{ __('lootbox.ui.retry') }}
+            </button>
           </div>
 
           <ul id="crate" class="absolute inset-0 hidden opacity-0 pointer-events-none"></ul>
