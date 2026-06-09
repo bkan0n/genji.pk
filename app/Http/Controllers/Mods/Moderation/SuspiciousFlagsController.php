@@ -75,6 +75,39 @@ class SuspiciousFlagsController extends Controller
         }
     }
 
+    public function destroy(Request $request): JsonResponse
+    {
+        $input = $request->only([
+            'message_id',
+            'verification_id',
+        ]);
+        foreach (['message_id', 'verification_id'] as $key) {
+            if (($input[$key] ?? '') === '') {
+                $input[$key] = null;
+            }
+        }
+
+        $payload = validator($input, [
+            'message_id' => ['nullable', 'string', 'regex:/^\d+$/'],
+            'verification_id' => ['nullable', 'string', 'regex:/^\d+$/'],
+        ])->validate();
+
+        try {
+            $res = $this->client()->delete('/api/v3/completions/suspicious', $payload);
+            $json = $this->decodeUpstreamPreserveBigInts($res);
+
+            return response()->json(is_string($json) ? ['raw' => $json] : $json ?? [], $res->status());
+        } catch (Throwable $e) {
+            return response()->json(
+                [
+                    'error' => 'Upstream unavailable',
+                    'detail' => $e->getMessage(),
+                ],
+                502,
+            );
+        }
+    }
+
     protected function client()
     {
         $base = rtrim((string) config('services.genji_api.root'), '/');

@@ -214,7 +214,8 @@ const MOD_SECTION_META = {
     ],
     cards: [
       { sub: 'mod-getsusp', title: 'Review flags', desc: 'List suspicious flags before changing a completion.' },
-      { sub: 'mod-suspicious', title: 'Set suspicious flag', desc: 'Mark or clear one completion flag.' },
+      { sub: 'mod-suspicious', title: 'Set suspicious flag', desc: 'Mark one completion as suspicious.' },
+      { sub: 'mod-remove-suspicious', title: 'Remove suspicious flag', desc: 'Clear an existing completion flag.', danger: true },
       { sub: 'mod-quality', title: 'Override quality', desc: 'Patch a map quality score after moderator review.' },
     ],
   },
@@ -1681,6 +1682,8 @@ $$('form[data-action]').forEach((form) => {
           return handleOverrideQuality(form);
         case 'set-suspicious':
           return handleSetSuspicious(form);
+        case 'remove-suspicious':
+          return handleRemoveSuspicious(form);
         case 'get-suspicious':
           return handleGetSuspicious(form);
 
@@ -4965,6 +4968,36 @@ async function handleSetSuspicious(form) {
 
   logActivity({ title: 'Set suspicious flag', method: 'POST', url, ok, status, data });
   toast(ok ? 'Flag created' : 'Failed', ok ? 'ok' : 'err');
+}
+
+async function handleRemoveSuspicious(form) {
+  const msgRaw = asId(form.message_id);
+  const verRaw = asId(form.verification_id);
+
+  let message_id = null;
+  if (msgRaw !== '') {
+    if (!isDigits(msgRaw)) {
+      toast('message_id must be digits', 'warn');
+      return;
+    }
+    message_id = msgRaw;
+  }
+
+  let verification_id = null;
+  if (verRaw !== '') {
+    if (!isDigits(verRaw)) {
+      toast('verification_id must be digits', 'warn');
+      return;
+    }
+    verification_id = verRaw;
+  }
+
+  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/completions/suspicious`, {
+    body: { message_id, verification_id },
+  });
+
+  logActivity({ title: 'Remove suspicious flag', method: 'DELETE', url, ok, status, data });
+  toast(ok ? 'Flag removed' : 'Failed', ok ? 'ok' : 'err');
 }
 
 async function handleGetSuspicious(form) {

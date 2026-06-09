@@ -497,6 +497,7 @@ Route::prefix('mods')
         Route::match(['post', 'patch'], 'maps/{code}/quality', OverrideQualityController::class);
         Route::get('completions/suspicious', [SuspiciousFlagsController::class, 'index']);
         Route::post('completions/suspicious', [SuspiciousFlagsController::class, 'store']);
+        Route::delete('completions/suspicious', [SuspiciousFlagsController::class, 'destroy']);
 
         // VERIFICATIONS
         Route::get('verifications/pending', [PendingVerificationsController::class, 'index']);

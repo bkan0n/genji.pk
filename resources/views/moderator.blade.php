@@ -4493,6 +4493,12 @@
                 </button>
                 <button
                   class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  data-subtab="mod-remove-suspicious"
+                >
+                  Remove suspicious flag
+                </button>
+                <button
+                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
                   data-subtab="mod-getsusp"
                 >
                   Get suspicious flags
@@ -4666,6 +4672,49 @@
                         class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         Flag
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+
+              <!-- Remove Suspicious Flag -->
+              <div data-subpanel="mod-remove-suspicious" class="hidden space-y-6">
+                <article class="fade-in rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
+                  <div class="mb-4 flex items-center justify-between">
+                    <h3 class="font-semibold">Remove Suspicious Flag</h3>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/completions/suspicious</span>
+                  </div>
+                  <form
+                    data-action="remove-suspicious"
+                    autocomplete="off"
+                    class="grid gap-3 sm:grid-cols-2"
+                  >
+                    <label>
+                      Message ID (opt.)
+                      <input
+                        name="message_id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-red-500/60 focus:outline-none"
+                      />
+                    </label>
+
+                    <label>
+                      Verification ID (opt.)
+                      <input
+                        name="verification_id"
+                        type="text"
+                        inputmode="numeric"
+                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-red-500/60 focus:outline-none"
+                      />
+                    </label>
+
+                    <div class="sm:col-span-2">
+                      <button
+                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500"
+                      >
+                        Remove flag
                       </button>
                     </div>
                   </form>
