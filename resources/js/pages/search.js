@@ -4167,6 +4167,32 @@ async function displayMapSearchResultsTable(rowsInput) {
 /* =========================
    RENDER MAP SEARCH MODAL
    ========================= */
+function prepareDetailsModalInteractions(overlay, boxSelector) {
+  const box = overlay?.querySelector(boxSelector);
+  if (!box) return;
+
+  overlay.classList.remove('modal-content-visible');
+
+  const revealItems = Array.from(
+    box.querySelectorAll(
+      ':scope > .relative:first-child, :scope > .grid .rounded-2xl, :scope > .grid section'
+    )
+  );
+
+  Array.from(new Set(revealItems)).forEach((item, index) => {
+    item.setAttribute('data-modal-reveal', '');
+    item.style.setProperty('--modal-reveal-delay', `${Math.min(index * 45, 270)}ms`);
+    if (item.classList.contains('rounded-2xl')) {
+      item.classList.add('modal-interactive-card');
+    }
+  });
+
+  clearTimeout(overlay.__modalRevealTimer);
+  overlay.__modalRevealTimer = setTimeout(() => {
+    revealItems.forEach((item) => item.style.setProperty('--modal-reveal-delay', '0ms'));
+  }, 700);
+}
+
 function ensureSearchDetailsModal() {
   let overlay = document.getElementById('detailsModalOverlay');
   if (overlay && !overlay.querySelector('#mapCode')) {
@@ -4235,7 +4261,7 @@ function ensureSearchDetailsModal() {
                   <!-- Guide button -->
                   <button id="btnGuide"
                           type="button"
-                          class="hidden inline-flex cursor-pointer items-center rounded-xl px-3 py-2 text-sm font-semibold
+                          class="hidden inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold
                               bg-indigo-100 text-indigo-900 ring-1 ring-indigo-300
                               hover:bg-indigo-200 hover:text-indigo-950
                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40
@@ -4244,17 +4270,17 @@ function ensureSearchDetailsModal() {
                               dark:focus:ring-indigo-400/60
                               transition-colors duration-150"
                           aria-disabled="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M4 19.5V6a2 2 0 0 1 2-2h9.5A2.5 2.5 0 0 1 18 6.5V18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                       <path d="M4 8h10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                       <path d="M8 22l3-3-3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>
-                    ${t('guides') || 'Guides'}
+                    <span>${t('guides') || 'Guides'}</span>
                   </button>
 
                   <button id="btnCopyCode"
                           title="${t('popup.copy_map_code')}"
-                          class="inline-flex cursor-pointer items-center rounded-xl px-3 py-2 text-sm font-semibold
+                          class="inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold
                               bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300
                               hover:bg-emerald-200 hover:text-emerald-950
                               focus:outline-none focus:ring-2 focus:ring-emerald-500/40
@@ -4262,11 +4288,11 @@ function ensureSearchDetailsModal() {
                               dark:hover:bg-emerald-500/20 dark:hover:text-emerald-200
                               dark:focus:ring-emerald-400/60
                               transition-colors duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
-                    ${t('popup.copy_map_code')}
+                    <span>${t('popup.copy_map_code')}</span>
                   </button>
                 </div>
               </div>
@@ -4281,12 +4307,12 @@ function ensureSearchDetailsModal() {
                 </div>
                 <button id="btnCopyLinkedCode"
                         title="${t('popup.copy_map_code')}"
-                        class="inline-flex cursor-pointer items-center rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        class="inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
-                  ${t('popup.copy_map_code')}
+                  <span>${t('popup.copy_map_code')}</span>
                 </button>
               </div>
 
@@ -4351,6 +4377,9 @@ function ensureSearchDetailsModal() {
                   </div>
                   <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
                     <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapDifficulty')}</dt><dd id="mapDiffDetail" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
+                  </div>
+                  <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
+                    <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapOfficial', 'Official')}</dt><dd id="mapOfficial" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
                   </div>
                   <div class="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-3 border-t border-zinc-200/70 py-2.5 first:border-t-0 dark:border-white/10">
                     <dt class="text-xs text-zinc-900 dark:text-white/60">${t('thead.mapStatus', 'Status')}</dt><dd id="mapStatus" class="text-sm font-medium text-zinc-900 dark:text-white/90">—</dd>
@@ -6588,7 +6617,10 @@ async function openSearchDetailsModal(r, opts = {}) {
   const mapCode = r?.code || '';
   if (syncUrl && !fromUrl && mapCode) __urlOpenModal('map', { code: mapCode }, { push: true });
 
-  const tSafe = (k, d) => (typeof t === 'function' ? t(k) : d);
+  const tSafe = (k, d) => {
+    const translated = typeof t === 'function' ? t(k) : null;
+    return typeof translated === 'string' && translated !== k ? translated : d;
+  };
   // Change requests
   const __merBtn = document.getElementById('btnOpenMapEditRequest');
   const __merBtnText = document.getElementById('btnOpenMapEditRequestText');
@@ -6612,14 +6644,6 @@ async function openSearchDetailsModal(r, opts = {}) {
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const fmt = (n)=> typeof n==="number" ? new Intl.NumberFormat().format(n) : String(n ?? "0");
-  const qualityStarsText = (val = 0, max = 6) => {
-    const on = Math.max(0, Math.min(max, Math.floor(Number(val) || 0)));
-    return '\u2605'.repeat(on) + '\u2606'.repeat(max - on);
-  };
-  const star5 = (val=0)=> {
-    const on = Math.max(0, Math.min(5, Math.round(Number(val)||0)));
-    return "★★★★★".slice(0,on) + "☆☆☆☆☆".slice(0,5-on);
-  };
   const diffSlug = (d='') => {
     const L = String(d).toLowerCase();
     if (L.startsWith('very hard')) return 'veryhard';
@@ -6638,6 +6662,30 @@ async function openSearchDetailsModal(r, opts = {}) {
       el.className = 'inline-flex items-center gap-2 rounded-full bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 px-3 py-1 text-sm font-medium text-zinc-900 dark:text-white/80 ring-1 ring-zinc-300/60 dark:ring-white/15';
       el.innerHTML = '<span class="h-2 w-2 rounded-full bg-white/60"></span> ' + esc(tSafe('card.not_completed','Not completed'));
     }
+  };
+  const setPlaytestingChip = (el, status) => {
+    if (!el) return;
+
+    const raw = String(status ?? '').trim();
+    el.innerHTML = '';
+
+    if (!raw) {
+      el.textContent = '—';
+      return;
+    }
+
+    const key = raw.toLowerCase().replace(/[\s-]+/g, '_');
+    const label = tSafe(`filters_toolbar.${key}`, raw);
+    const variants = {
+      approved: 'bg-emerald-500/10 text-emerald-700 ring-emerald-400/30 dark:text-emerald-300',
+      in_progress: 'bg-amber-500/10 text-amber-700 ring-amber-400/30 dark:text-amber-300',
+      rejected: 'bg-red-500/10 text-red-700 ring-red-400/30 dark:text-red-300',
+    };
+
+    const chip = document.createElement('span');
+    chip.className = `inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${variants[key] || 'bg-zinc-500/10 text-zinc-700 ring-zinc-400/30 dark:text-zinc-300'}`;
+    chip.textContent = label;
+    el.appendChild(chip);
   };
   const mountPills = (container, items=[]) => {
     container.innerHTML = '';
@@ -6658,7 +6706,6 @@ async function openSearchDetailsModal(r, opts = {}) {
   const typeText = Array.isArray(r.category) ? r.category.join(', ') : (r.category || 'Classic');
   const difficulty = r.difficulty || 'Easy';
   const qualityRaw = r.ratings!=null ? r.ratings : r.quality;
-  const qualityStars = qualityRaw!=null ? star5(qualityRaw) : '—';
   const medalGold   = r.medals?.gold   ?? r.gold   ?? '—';
   const medalSilver = r.medals?.silver ?? r.silver ?? '—';
   const medalBronze = r.medals?.bronze ?? r.bronze ?? '—';
@@ -6666,6 +6713,7 @@ async function openSearchDetailsModal(r, opts = {}) {
   const desc = r.description || r.desc || tSafe('no_description','No description available');
   const checkpoints = r.checkpoints ?? '—';
   const upvotes = r.upvotes ?? '—';
+  const playtesting = r.playtesting ?? '';
   const hasNonNullTime = r.time!=null && String(r.time).trim().toLowerCase()!=='null';
   const completed = Boolean(window.user_id) && (r.user_has_completion || r.user_has_record || r.user_completed || hasNonNullTime);
   const linkedCode = r.linked_code || r.linkedCode || '';
@@ -6714,13 +6762,32 @@ async function openSearchDetailsModal(r, opts = {}) {
   g('mapUpvotes', fmt(upvotes));
   g('mapTypeDetail', typeText || '—');
   g('mapDiffDetail', difficulty || '—');
-  g('mapQualityDetail', qualityRaw != null ? qualityStarsText(qualityRaw) : '\u2014');
-    const statusText =
+  const difficultyEl = document.getElementById('mapDiffDetail');
+  if (difficultyEl) {
+    const previousColorClass = difficultyEl.dataset.colorClass;
+    if (previousColorClass) difficultyEl.classList.remove(previousColorClass);
+
+    const difficultyColorClass = __clsTextColor(
+      difficultyColors[normalizeDifficulty(difficulty)] || '#e5e7eb'
+    );
+    difficultyEl.classList.add(difficultyColorClass);
+    difficultyEl.dataset.colorClass = difficultyColorClass;
+  }
+  const qualityEl = document.getElementById('mapQualityDetail');
+  if (qualityEl) {
+    qualityEl.innerHTML =
+      qualityRaw != null
+        ? qualityMicroBarHTML(qualityRaw)
+        : '<span class="text-zinc-600 dark:text-zinc-500">—</span>';
+    animateQualityBars();
+  }
+  const officialText =
     isOfficial === null
       ? '—'
       : (isOfficial ? t('card.official', 'Official') : t('card.unofficial', 'Unofficial'));
 
-  g('mapStatus', statusText);
+  g('mapOfficial', officialText);
+  setPlaytestingChip(document.getElementById('mapStatus'), playtesting);
 
   const guideBtn = document.getElementById('btnGuide');
   if (guideBtn) {
@@ -6775,16 +6842,19 @@ async function openSearchDetailsModal(r, opts = {}) {
 
   const overlay = document.getElementById('detailsModalOverlay');
   const gradientWrap = overlay.querySelector('.bg-gradient-to-tr');
+  prepareDetailsModalInteractions(overlay, '#detailsModalBox');
   overlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); overlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(() => {
     overlay.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); overlay.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
     gradientWrap.classList.remove(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.add(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    overlay.classList.add('modal-content-visible');
   });
 
   const closeBtn = document.getElementById('modalCloseBtn');
   const close = () => {
     overlay.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); overlay.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
     gradientWrap.classList.add(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.remove(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    overlay.classList.remove('modal-content-visible');
     setTimeout(() => { overlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)); overlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean)); }, 180);
     document.removeEventListener('keydown', onEsc);
     overlay.removeEventListener('pointerdown', onOutside, true);
@@ -7842,16 +7912,19 @@ function openCompletionsDetailsModal(r, opts = {}){
 
   const modalOverlay = document.getElementById('completionModalOverlay');
   const gradientWrap = modalOverlay.querySelector('.bg-gradient-to-tr');
+  prepareDetailsModalInteractions(modalOverlay, '#completionModalBox');
   modalOverlay.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.add(...String('flex').trim().split(/\s+/).filter(Boolean));
   requestAnimationFrame(()=>{
     modalOverlay.classList.remove(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.add(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
     gradientWrap.classList.remove(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.add(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    modalOverlay.classList.add('modal-content-visible');
   });
 
   const closeBtn = document.getElementById('completionModalCloseBtn');
   const close = ()=>{
     modalOverlay.classList.add(...String('opacity-0').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.remove(...String('opacity-100').trim().split(/\s+/).filter(Boolean));
     gradientWrap.classList.add(...String('translate-y-3').trim().split(/\s+/).filter(Boolean), ...String('opacity-0').trim().split(/\s+/).filter(Boolean)); gradientWrap.classList.remove(...String('translate-y-0').trim().split(/\s+/).filter(Boolean), ...String('opacity-100').trim().split(/\s+/).filter(Boolean));
+    modalOverlay.classList.remove('modal-content-visible');
     setTimeout(()=>{ modalOverlay.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)); modalOverlay.classList.remove(...String('flex').trim().split(/\s+/).filter(Boolean)); }, 180);
     document.removeEventListener('keydown', onEsc);
     modalOverlay.removeEventListener('pointerdown', onOutside, true);
