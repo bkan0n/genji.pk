@@ -115,14 +115,14 @@ function formulaMarkup(config) {
           1,
           text('difficulty_title'),
           `
-            ${formulaBlock('difficulty points = growth<sup>(difficulty - 1.5)</sup>')}
+            ${formulaBlock('Difficulty Score = Growth<sup>(Difficulty - 1.5)</sup>')}
             <div class="skill-formula-current">
               <span>${text('current_values')}</span>
-              ${formulaBlock(`difficulty points = ${diffBase}<sup>(difficulty - 1.5)</sup>`)}
+              ${formulaBlock(`Difficulty Score = ${diffBase}<sup>(Difficulty - 1.5)</sup>`)}
             </div>
             ${definitionList([
-              ['difficulty', text('raw_difficulty')],
-              ['growth', text('diff_base', { value: diffBase })],
+              ['Difficulty', text('raw_difficulty')],
+              ['Growth', text('diff_base', { value: diffBase })],
             ])}
           `
         )}
@@ -132,10 +132,10 @@ function formulaMarkup(config) {
           text('without_video_title'),
           `
             <p class="skill-formula-condition">${text('without_video_condition')}</p>
-            ${formulaBlock('map score = difficulty points × no-video factor')}
+            ${formulaBlock('Map Score = Difficulty Score × No-Video Multiplier')}
             <div class="skill-formula-current">
               <span>${text('current_values')}</span>
-              ${formulaBlock(`map score = difficulty points × ${partialFactor}`)}
+              ${formulaBlock(`Map Score = Difficulty Score × ${partialFactor}`)}
             </div>
             <p class="skill-formula-note">${text('without_video_note')}</p>
           `
@@ -146,19 +146,19 @@ function formulaMarkup(config) {
           text('time_title'),
           `
             <p class="skill-formula-condition">${text('with_video_condition')}</p>
-            ${formulaBlock('reliability = <span class="skill-formula-fraction"><span>players</span><span>players + smoothing</span></span>')}
-            ${formulaBlock('time multiplier = 1 + time bonus × reliability × time quality')}
+            ${formulaBlock('Reliability = <span class="skill-formula-fraction"><span>Players</span><span>Players + Smoothing</span></span>')}
+            ${formulaBlock('Time Multiplier = 1 + Time Weight × Reliability × Time Quality')}
             <div class="skill-formula-current">
               <span>${text('current_values')}</span>
-              ${formulaBlock(`time multiplier = 1 + ${timeBonus} × <span class="skill-formula-fraction"><span>players</span><span>players + ${shrinkK}</span></span> × time quality`)}
+              ${formulaBlock(`Time Multiplier = 1 + ${timeBonus} × <span class="skill-formula-fraction"><span>Players</span><span>Players + ${shrinkK}</span></span> × Time Quality`)}
             </div>
             ${definitionList([
-              ['players', text('field_size')],
-              ['your rank', text('field_rank')],
-              ['time quality', text('time_pct')],
+              ['Players', text('field_size')],
+              ['Your Rank', text('field_rank')],
+              ['Time Quality', text('time_pct')],
             ])}
             <p class="skill-formula-condition">${text('time_pct_interpretation')}</p>
-            ${formulaBlock('time quality = <span class="skill-formula-fraction"><span>players - your rank</span><span>players - 1</span></span>')}
+            ${formulaBlock('Time Quality = <span class="skill-formula-fraction"><span>Players - Your Rank</span><span>Players - 1</span></span>')}
           `
         )}
 
@@ -166,7 +166,7 @@ function formulaMarkup(config) {
           4,
           text('medal_title'),
           `
-            <p class="skill-formula-condition">medal bonus =</p>
+            <p class="skill-formula-condition">Medal Multiplier =</p>
             <div class="skill-formula-cases">
               <div><strong>${medalGold}</strong><span>${text('gold')}</span></div>
               <div><strong>${medalSilver}</strong><span>${text('silver')}</span></div>
@@ -182,10 +182,10 @@ function formulaMarkup(config) {
           text('wr_title'),
           `
             <p class="skill-formula-condition">${text('wr_condition')}</p>
-            ${formulaBlock(`verified video &nbsp; ${text('and')} &nbsp; your rank = 1`)}
-            ${formulaBlock(`record bonus = 1 + ${wrBonus} = ${wrMultiplier}`)}
+            ${formulaBlock(`Verified Video &nbsp; ${text('and')} &nbsp; Your Rank = 1`)}
+            ${formulaBlock(`Record Multiplier = 1 + ${wrBonus} = ${wrMultiplier}`)}
             <p class="skill-formula-condition">${text('otherwise')}:</p>
-            ${formulaBlock('record bonus = 1')}
+            ${formulaBlock('Record Multiplier = 1')}
             <p class="skill-formula-warning">${text('video_rank_note')}</p>
           `
         )}
@@ -194,7 +194,7 @@ function formulaMarkup(config) {
           6,
           text('final_map_title'),
           formulaBlock(
-            `map score = ${diffBase}<sup>(difficulty - 1.5)</sup> × <span class="skill-formula-bracket">(1 + ${timeBonus} × <span class="skill-formula-fraction"><span>players</span><span>players + ${shrinkK}</span></span> × time quality)</span> × medal bonus × record bonus`,
+            `Map Score = ${diffBase}<sup>(Difficulty - 1.5)</sup> × <span class="skill-formula-bracket">(1 + ${timeBonus} × <span class="skill-formula-fraction"><span>Players</span><span>Players + ${shrinkK}</span></span> × Time Quality)</span> × Medal Multiplier × Record Multiplier`,
             'skill-formula-boxed'
           )
         )}
@@ -204,10 +204,10 @@ function formulaMarkup(config) {
           text('player_title'),
           `
             <p class="skill-formula-condition">${text('sorted_scores')}</p>
-            ${formulaBlock('contribution<sub>i</sub> = <span class="skill-formula-fraction"><span>map score<sub>i</sub></span><span>i<sup>falloff</sup></span></span>')}
+            ${formulaBlock('Contribution<sub>i</sub> = <span class="skill-formula-fraction"><span>Map Score<sub>i</sub></span><span>i<sup>Falloff</sup></span></span>')}
             <div class="skill-formula-current">
-              <span>falloff = ${gamma}</span>
-              ${formulaBlock(`Skill Score = <span class="skill-formula-sum">Σ</span><sub>i=1</sub><sup>N</sup> <span class="skill-formula-fraction"><span>map score<sub>i</sub></span><span>i<sup>${gamma}</sup></span></span>`)}
+              <span>Falloff = ${gamma}</span>
+              ${formulaBlock(`Skill Score = <span class="skill-formula-sum">Σ</span><sub>i=1</sub><sup>N</sup> <span class="skill-formula-fraction"><span>Map Score<sub>i</sub></span><span>i<sup>${gamma}</sup></span></span>`)}
             </div>
             <p class="skill-formula-warning">${text('personal_rank_note')}</p>
             <p class="skill-formula-note">${text('raw_score_note', { gamma })}</p>
