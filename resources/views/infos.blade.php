@@ -28,25 +28,25 @@
 
     {{-- Tabs --}}
     <div class="mb-8 overflow-x-auto pb-2">
-      <div id="infosTabs" class="relative inline-flex rounded-xl border border-zinc-200 bg-white/70 p-1 text-xs shadow-sm backdrop-blur sm:text-sm dark:border-white/10 dark:bg-white/5">
-        <div id="tabHighlight" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] rounded-lg bg-zinc-900 shadow-[0_1px_0_rgba(0,0,0,.06),0_12px_30px_rgba(0,0,0,.14)] transition-all duration-300 ease-out will-change-transform dark:bg-white dark:shadow-[0_1px_0_rgba(255,255,255,.06),0_8px_30px_rgba(0,0,0,.25)]"></div>
+      <div id="infosTabs" class="relative inline-flex rounded-xl border border-zinc-200/80 bg-zinc-100 p-1 text-xs sm:text-sm dark:border-white/10 dark:bg-white/5">
+        <span id="tabHighlight" aria-hidden="true"></span>
 
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="skill_rank" data-active="true">
+        <button type="button" class="infos-tab cursor-pointer rounded-lg px-4 py-2 font-semibold text-zinc-900 dark:text-white" data-infos-tab="skill_rank" data-active="true">
           {{ __('infos.tabs.skill_rank') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="skill_score">
+        <button type="button" class="infos-tab cursor-pointer rounded-lg px-4 py-2 font-semibold text-zinc-900 dark:text-white" data-infos-tab="skill_score">
           {{ __('infos.tabs.skill_score') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="score_rank">
+        <button type="button" class="infos-tab cursor-pointer rounded-lg px-4 py-2 font-semibold text-zinc-900 dark:text-white" data-infos-tab="score_rank">
           {{ __('infos.tabs.score_rank') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="playtesting">
+        <button type="button" class="infos-tab cursor-pointer rounded-lg px-4 py-2 font-semibold text-zinc-900 dark:text-white" data-infos-tab="playtesting">
           {{ __('infos.tabs.playtesting') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="submit">
+        <button type="button" class="infos-tab cursor-pointer rounded-lg px-4 py-2 font-semibold text-zinc-900 dark:text-white" data-infos-tab="submit">
           {{ __('infos.tabs.submit_map') }}
         </button>
-        <button type="button" class="infos-tab relative z-10 rounded-lg px-4 py-2 font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-white dark:hover:bg-white/10" data-infos-tab="techs">
+        <button type="button" class="infos-tab cursor-pointer rounded-lg px-4 py-2 font-semibold text-zinc-900 dark:text-white" data-infos-tab="techs">
           {{ __('infos.tabs.techs') }}
         </button>
       </div>
