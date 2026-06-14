@@ -18,7 +18,6 @@ return [
         'field_rank' => 'the player’s rank in that global leaderboard',
         'time_pct' => 'relative time quality, from 0 for the slowest to 1 for the fastest',
         'time_pct_interpretation' => 'Without ties, time_pct can be interpreted as:',
-        'time_pct_warning' => 'score.py does not calculate this value: it directly uses the provided time_pct. Ties can therefore differ from this simplified formula.',
         'medal_title' => 'Medal multiplier',
         'medal_note' => 'This multiplier is applied only when fully_verified = true.',
         'gold' => 'Gold',

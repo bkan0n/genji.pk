@@ -159,7 +159,6 @@ function formulaMarkup(config) {
             ])}
             <p class="skill-formula-condition">${text('time_pct_interpretation')}</p>
             ${formulaBlock('time_pct = <span class="skill-formula-fraction"><span>field_size - field_rank</span><span>field_size - 1</span></span>')}
-            <p class="skill-formula-warning">${text('time_pct_warning')}</p>
           `
         )}
 

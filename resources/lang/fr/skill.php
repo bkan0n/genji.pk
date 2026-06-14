@@ -18,7 +18,6 @@ return [
         'field_rank' => 'le rang du joueur dans ce leaderboard global',
         'time_pct' => 'la qualité relative du temps, de 0 pour le plus lent à 1 pour le plus rapide',
         'time_pct_interpretation' => 'Sans égalités, time_pct peut être interprété ainsi :',
-        'time_pct_warning' => 'score.py ne calcule pas cette valeur : il utilise directement le time_pct fourni. Les égalités peuvent donc créer une différence avec cette formule simplifiée.',
         'medal_title' => 'Multiplicateur de médaille',
         'medal_note' => 'Ce multiplicateur est appliqué uniquement lorsque fully_verified = true.',
         'gold' => 'Or',

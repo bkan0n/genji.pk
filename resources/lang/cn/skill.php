@@ -18,7 +18,6 @@ return [
         'field_rank' => '玩家在该全球排行榜中的名次',
         'time_pct' => '时间的相对质量，最慢为 0，最快为 1',
         'time_pct_interpretation' => '没有并列时，time_pct 可理解为：',
-        'time_pct_warning' => 'score.py 不会计算此值，而是直接使用提供的 time_pct。因此，并列情况可能与此简化公式产生差异。',
         'medal_title' => '奖牌倍率',
         'medal_note' => '此倍率仅在 fully_verified = true 时应用。',
         'gold' => '金牌',
