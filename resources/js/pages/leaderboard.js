@@ -1,3 +1,5 @@
+import { cdnAsset } from "../utils/cdn";
+
 /* =========================
    CONFIG & UTILS
    ========================= */
@@ -149,11 +151,11 @@ function ensureLeaderboard() {
           <div class="col-xp px-2 font-semibold">
             ${tt('leaderboard.table.xp', 'XP')}
           </div>
-          <div class="col-tier px-2 font-semibold">
-            ${tt('leaderboard.table.tier', 'Tier')}
-          </div>
           <div class="col-skill-rank px-2 font-semibold">
-            ${tt('leaderboard.table.skill_rank', 'Skill rank')}
+            ${tt('leaderboard.table.skill_rank', 'Rank')}
+          </div>
+          <div class="col-skill-score px-2 font-semibold">
+            ${tt('leaderboard.table.skill_score', 'Skill Score')}
           </div>
           <div class="col-wr px-2 font-semibold">
             ${tt('leaderboard.table.world_records', 'World records')}
@@ -222,6 +224,51 @@ function getSkillRankClass(rank) {
     default:
       return '';
   }
+}
+
+const SKILL_SCORE_TIERS = [
+  'Unranked',
+  'Bronze',
+  'Silver',
+  'Gold',
+  'Emerald',
+  'Diamond',
+  'Ascendant',
+  'Elite',
+  'Champion',
+];
+
+function skillScoreTierName(player) {
+  const supplied = String(player?.skill_tier_name || '').trim();
+  if (SKILL_SCORE_TIERS.includes(supplied)) return supplied;
+
+  const tier = Number(player?.skill_tier ?? 0);
+  return SKILL_SCORE_TIERS[Number.isInteger(tier) && tier >= 0 && tier <= 8 ? tier : 0];
+}
+
+function skillScoreCell(player) {
+  const tierName = skillScoreTierName(player);
+  const score = Number(player?.skill_score ?? 0);
+  const scoreText = Number.isFinite(score)
+    ? score.toLocaleString(undefined, { maximumFractionDigits: 2 })
+    : '0';
+  return `
+    <div class="inline-flex min-w-0 items-center gap-2">
+      <span class="shrink-0">
+        <img
+          src="${escAttr(cdnAsset(`assets/skill/rank-icons/${tierName}.png`))}"
+          alt=""
+          class="h-8 w-8 object-contain"
+          loading="lazy"
+          decoding="async"
+        >
+      </span>
+      <div class="min-w-0">
+        <div class="font-extrabold tabular-nums text-zinc-900 dark:text-zinc-100">${esc(scoreText)}</div>
+        <div class="truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${esc(tierName)}</div>
+      </div>
+    </div>
+  `;
 }
 const fmt = (n) => (Number(n) || 0).toLocaleString();
 
@@ -309,37 +356,6 @@ const SKILL_COLORS = {
 function skillRankColor(rank) {
   const k = normalizeSkillRank(rank).toLowerCase();
   return SKILL_COLORS[k] || '#525252';
-}
-
-const TIER_COLORS = {
-  bronze: '#b45309',
-  silver: '#9ca3af',
-  gold: '#f59e0b',
-  platinum: '#22d3ee',
-  diamond: '#38bdf8',
-  master: '#a78bfa',
-  grandmaster: '#ef4444',
-  god: '#e11d48',
-  legend: '#f472b6',
-  mythic: '#fde047',
-};
-function tierColor(name) {
-  if (!name) return '#525252';
-  const n = String(name).trim().toLowerCase();
-  for (const key in TIER_COLORS) if (n.includes(key)) return TIER_COLORS[key];
-  const PALETTE = [
-    '#94a3b8',
-    '#a78bfa',
-    '#38bdf8',
-    '#22c55e',
-    '#f59e0b',
-    '#f97316',
-    '#e11d48',
-    '#14b8a6',
-  ];
-  let h = 0;
-  for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
 }
 
 function hexToRgb(hex) {
@@ -447,11 +463,6 @@ function pill(label, baseHex) {
 function mkSkillPill(rank) {
   const label = normalizeSkillRank(rank) || 'N/A';
   return pill(label, skillRankColor(label));
-}
-
-function mkTierPill(name) {
-  const label = name || 'N/A';
-  return pill(label, tierColor(label));
 }
 
 /* =========================
@@ -629,12 +640,12 @@ function renderRows(data, pageNumber, pageSize, options = {}) {
         ${valueHtml(xpText)}
       </div>
 
-      <div class="col-tier px-2 py-2">
-        ${mkTierPill(player.tier_name)}
-      </div>
-
       <div class="col-skill-rank px-2 py-2">
         ${mkSkillPill(skillRank)}
+      </div>
+
+      <div class="col-skill-score px-2 py-2">
+        ${skillScoreCell(player)}
       </div>
 
       <div class="col-wr px-2 py-2"${valueAttr(wrText)}>
@@ -743,7 +754,13 @@ async function prefetchNextPageIfAny({ total, pageNumber, pageSize }, baseFilter
 /* =========================
    TABLE FILTERS
    ========================= */
-const sortMap = { xp: 'xp_amount', wr: 'wr_count', maps: 'map_count', votes: 'playtest_count' };
+const sortMap = {
+  xp: 'xp_amount',
+  wr: 'wr_count',
+  maps: 'map_count',
+  votes: 'playtest_count',
+  skill_score: 'skill_score',
+};
 
 function bindDropdown(triggerEl, menuEl, onPick) {
   if (!triggerEl || !menuEl) return;
@@ -1002,13 +1019,14 @@ function renderSkeletonRows(count = pageSize) {
       </div>
 
       <!-- Tier pill : skeleton à la même hauteur/padding qu’une .pill -->
-      <div class="col-tier px-2 py-2">
-        <span class="skel skel-pill skel-pill-w-20"></span>
-      </div>
-
       <!-- Skill rank pill -->
       <div class="col-skill-rank px-2 py-2">
         <span class="skel skel-pill skel-pill-w-16"></span>
+      </div>
+
+      <!-- Skill Score -->
+      <div class="col-skill-score px-2 py-2">
+        <span class="skel skel-pill skel-pill-w-20"></span>
       </div>
 
       <!-- WR / Maps / Playtest (tabular) -->

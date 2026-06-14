@@ -73,7 +73,7 @@
               </button>
               <ul
                 id="sortMenu"
-                class="invisible absolute right-0 left-0 z-50 mt-2 max-h-36 translate-y-1 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
+                class="invisible absolute right-0 left-0 z-50 mt-2 max-h-64 translate-y-1 overflow-y-auto rounded-lg bg-white/95 dark:bg-zinc-900/95 py-2 opacity-0 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 backdrop-blur transition"
               >
                 <li>
                   <button
@@ -108,6 +108,15 @@
                     class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
                   >
                     {{ __('leaderboard.filters.sort_options.votes') }}
+                    <span class="check hidden">✓</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    data-value="skill_score"
+                    class="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10"
+                  >
+                    {{ __('leaderboard.filters.sort_options.skill_score') }}
                     <span class="check hidden">✓</span>
                   </button>
                 </li>
@@ -257,14 +266,14 @@
                     {{ __('leaderboard.table.xp') }}
                   </th>
                   <th
-                    class="col-tier px-4 py-3 text-left align-middle font-semibold whitespace-nowrap"
-                  >
-                    {{ __('leaderboard.table.tier') }}
-                  </th>
-                  <th
                     class="col-skill-rank px-4 py-3 text-left align-middle font-semibold whitespace-nowrap"
                   >
                     {{ __('leaderboard.table.skill_rank') }}
+                  </th>
+                  <th
+                    class="col-skill-score px-4 py-3 text-left align-middle font-semibold whitespace-nowrap"
+                  >
+                    {{ __('leaderboard.table.skill_score') }}
                   </th>
                   <th
                     class="col-wr px-4 py-3 text-left align-middle font-semibold whitespace-nowrap"

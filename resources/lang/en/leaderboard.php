@@ -39,6 +39,7 @@ return [
             'wr' => 'World Records',
             'maps' => 'Maps made',
             'votes' => 'Playtest Votes',
+            'skill_score' => 'Skill Score',
         ],
 
         'rank_label' => 'Search rank',
@@ -64,7 +65,8 @@ return [
         'nickname'       => 'Nickname',
         'xp'             => 'XP',
         'tier'           => 'Tier',
-        'skill_rank'     => 'Skill rank',
+        'skill_rank'     => 'Rank',
+        'skill_score'    => 'Skill Score',
         'world_records'  => 'World records',
         'maps_made'      => 'Maps made',
         'playtest_votes' => 'Playtest votes',
