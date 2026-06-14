@@ -214,6 +214,8 @@ return [
         'vote_updated'             => 'Votre vote a été mis à jour',
         'no_votes'                 => 'Aucun vote pour le moment',
         'cannot_vote_own_map'      => 'Vous ne pouvez pas voter pour votre propre carte',
+        'vote_value'               => 'Valeur du vote',
+        'voted_difficulty'         => 'Difficulté votée',
     ],
 
     // ──────────────────────────────────────────────────────────────────────

@@ -214,6 +214,8 @@ return [
         'vote_updated'             => 'Your vote has been updated',
         'no_votes'                 => 'No votes yet',
         'cannot_vote_own_map'      => 'You cannot vote for your own map',
+        'vote_value'               => 'Vote value',
+        'voted_difficulty'         => 'Voted difficulty',
     ],
 
     // ──────────────────────────────────────────────────────────────────────
