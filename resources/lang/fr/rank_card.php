@@ -64,6 +64,7 @@ return [
     'xp'              => 'XP',
     'prestige_level'  => 'Niveau de prestige',
     'community_rank'  => 'Rang communautaire',
+    'skill_score'     => 'Score de skill',
 
     // ──────────────────────────────────────────────────────────────────────
     // IMAGES ALT TEXTS

@@ -39,6 +39,7 @@ return [
             'wr'        => '世界纪录',
             'maps'      => '作图数',
             'votes'     => '地图测试投票',
+            'skill_score' => '技能分数',
         ],
 
         'rank_label'      => '只显示该段位',
@@ -65,6 +66,7 @@ return [
         'xp'             => 'XP',
         'tier'           => '技能等级',
         'skill_rank'     => '段位',
+        'skill_score'    => '技能分数',
         'world_records'  => '世界纪录',
         'maps_made'      => '作图数',
         'playtest_votes' => '地图测试投票',

@@ -1,0 +1,239 @@
+const DEFAULT_CONFIG = Object.freeze({
+  diff_base: 1.44,
+  gamma: 0.68,
+  time_bonus: 0.55,
+  shrink_k: 10,
+  wr_bonus: 0.1,
+  partial_factor: 0.6,
+  medal_gold: 1.12,
+  medal_silver: 1.07,
+  medal_bronze: 1.03,
+});
+
+const CONFIG_FIELDS = Object.keys(DEFAULT_CONFIG);
+let configPromise = null;
+
+function text(key, replacements = {}) {
+  let value = window.SKILL_SCORE_I18N?.[key] ?? key;
+
+  Object.entries(replacements).forEach(([name, replacement]) => {
+    value = String(value).replaceAll(`:${name}`, String(replacement));
+  });
+
+  return value;
+}
+
+function normalizeConfig(payload) {
+  return CONFIG_FIELDS.reduce((config, field) => {
+    const value = Number(payload?.[field]);
+    config[field] = Number.isFinite(value) ? value : DEFAULT_CONFIG[field];
+    return config;
+  }, {});
+}
+
+function loadConfig() {
+  if (!configPromise) {
+    configPromise = fetch('/api/skill/config', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Skill config request failed (${response.status})`);
+        return response.json();
+      })
+      .then(normalizeConfig)
+      .catch(() => ({ ...DEFAULT_CONFIG }));
+  }
+
+  return configPromise;
+}
+
+function formatNumber(value, minimumFractionDigits = 0, maximumFractionDigits = 4) {
+  return new Intl.NumberFormat(document.documentElement.lang || 'en', {
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(value);
+}
+
+function formulaBlock(formula, className = '') {
+  return `<div class="skill-formula-equation ${className}">${formula}</div>`;
+}
+
+function formulaSection(number, title, content) {
+  return `
+    <section class="skill-formula-section">
+      <div class="skill-formula-section-title">
+        <span>${number}</span>
+        <h3>${title}</h3>
+      </div>
+      ${content}
+    </section>
+  `;
+}
+
+function definitionList(entries) {
+  return `
+    <dl class="skill-formula-definitions">
+      ${entries
+        .map(
+          ([term, definition]) => `
+            <div>
+              <dt>${term}</dt>
+              <dd>${definition}</dd>
+            </div>
+          `
+        )
+        .join('')}
+    </dl>
+  `;
+}
+
+function formulaMarkup(config) {
+  const diffBase = formatNumber(config.diff_base);
+  const gamma = formatNumber(config.gamma);
+  const timeBonus = formatNumber(config.time_bonus);
+  const shrinkK = formatNumber(config.shrink_k);
+  const wrBonus = formatNumber(config.wr_bonus, 2);
+  const wrMultiplier = formatNumber(1 + config.wr_bonus, 2);
+  const partialFactor = formatNumber(config.partial_factor, 2);
+  const medalGold = formatNumber(config.medal_gold, 2);
+  const medalSilver = formatNumber(config.medal_silver, 2);
+  const medalBronze = formatNumber(config.medal_bronze, 2);
+
+  return `
+    <div class="skill-formula-panel">
+      <header class="skill-formula-header">
+        <div>
+          <div class="skill-formula-kicker">${text('kicker')}</div>
+          <h2>${text('title')}</h2>
+          <p>${text('intro')}</p>
+        </div>
+      </header>
+
+      <div class="skill-formula-fluid-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 8v5"></path>
+          <path d="M12 16.5h.01"></path>
+          <circle cx="12" cy="12" r="9"></circle>
+        </svg>
+        <p>${text('fluid_score_note')}</p>
+      </div>
+
+      <div class="skill-formula-body">
+        ${formulaSection(
+          1,
+          text('difficulty_title'),
+          `
+            ${formulaBlock('Difficulty Score = Growth<sup>(Difficulty - 1.5)</sup>')}
+            <div class="skill-formula-current">
+              <span>${text('current_values')}</span>
+              ${formulaBlock(`Difficulty Score = ${diffBase}<sup>(Difficulty - 1.5)</sup>`)}
+            </div>
+            ${definitionList([
+              ['Difficulty', text('raw_difficulty')],
+              ['Growth', text('diff_base', { value: diffBase })],
+            ])}
+          `
+        )}
+
+        ${formulaSection(
+          2,
+          text('without_video_title'),
+          `
+            <p class="skill-formula-condition">${text('without_video_condition')}</p>
+            ${formulaBlock('Map Score = Difficulty Score × No-Video Multiplier')}
+            <div class="skill-formula-current">
+              <span>${text('current_values')}</span>
+              ${formulaBlock(`Map Score = Difficulty Score × ${partialFactor}`)}
+            </div>
+            <p class="skill-formula-note">${text('without_video_note')}</p>
+          `
+        )}
+
+        ${formulaSection(
+          3,
+          text('time_title'),
+          `
+            <p class="skill-formula-condition">${text('with_video_condition')}</p>
+            ${formulaBlock('Reliability = <span class="skill-formula-fraction"><span>Players</span><span>Players + Smoothing</span></span>')}
+            ${formulaBlock('Time Multiplier = 1 + Time Weight × Reliability × Time Quality')}
+            <div class="skill-formula-current">
+              <span>${text('current_values')}</span>
+              ${formulaBlock(`Time Multiplier = 1 + ${timeBonus} × <span class="skill-formula-fraction"><span>Players</span><span>Players + ${shrinkK}</span></span> × Time Quality`)}
+            </div>
+            ${definitionList([
+              ['Players', text('field_size')],
+              ['Your Rank', text('field_rank')],
+              ['Time Quality', text('time_pct')],
+            ])}
+            <p class="skill-formula-condition">${text('time_pct_interpretation')}</p>
+            ${formulaBlock('Time Quality = <span class="skill-formula-fraction"><span>Players - Your Rank</span><span>Players - 1</span></span>')}
+          `
+        )}
+
+        ${formulaSection(
+          4,
+          text('medal_title'),
+          `
+            <p class="skill-formula-condition">Medal Multiplier =</p>
+            <div class="skill-formula-cases">
+              <div><strong>${medalGold}</strong><span>${text('gold')}</span></div>
+              <div><strong>${medalSilver}</strong><span>${text('silver')}</span></div>
+              <div><strong>${medalBronze}</strong><span>${text('bronze')}</span></div>
+              <div><strong>${formatNumber(1, 2)}</strong><span>${text('no_medal')}</span></div>
+            </div>
+            <p class="skill-formula-note">${text('medal_note')}</p>
+          `
+        )}
+
+        ${formulaSection(
+          5,
+          text('wr_title'),
+          `
+            <p class="skill-formula-condition">${text('wr_condition')}</p>
+            ${formulaBlock(`Verified Video &nbsp; ${text('and')} &nbsp; Your Rank = 1`)}
+            ${formulaBlock(`Record Multiplier = 1 + ${wrBonus} = ${wrMultiplier}`)}
+            <p class="skill-formula-condition">${text('otherwise')}:</p>
+            ${formulaBlock('Record Multiplier = 1')}
+            <p class="skill-formula-warning">${text('video_rank_note')}</p>
+          `
+        )}
+
+        ${formulaSection(
+          6,
+          text('final_map_title'),
+          formulaBlock(
+            `Map Score = ${diffBase}<sup>(Difficulty - 1.5)</sup> × <span class="skill-formula-bracket">(1 + ${timeBonus} × <span class="skill-formula-fraction"><span>Players</span><span>Players + ${shrinkK}</span></span> × Time Quality)</span> × Medal Multiplier × Record Multiplier`,
+            'skill-formula-boxed'
+          )
+        )}
+
+        ${formulaSection(
+          7,
+          text('player_title'),
+          `
+            <p class="skill-formula-condition">${text('sorted_scores')}</p>
+            ${formulaBlock('Contribution<sub>i</sub> = <span class="skill-formula-fraction"><span>Map Score<sub>i</sub></span><span>i<sup>Falloff</sup></span></span>')}
+            <div class="skill-formula-current">
+              <span>Falloff = ${gamma}</span>
+              ${formulaBlock(`Skill Score = <span class="skill-formula-sum">Σ</span><sub>i=1</sub><sup>N</sup> <span class="skill-formula-fraction"><span>Map Score<sub>i</sub></span><span>i<sup>${gamma}</sup></span></span>`)}
+            </div>
+            <p class="skill-formula-warning">${text('personal_rank_note')}</p>
+            <p class="skill-formula-note">${text('raw_score_note', { gamma })}</p>
+          `
+        )}
+      </div>
+    </div>
+  `;
+}
+
+export async function renderSkillScoreFormula(container) {
+  if (!container) return;
+
+  container.innerHTML = formulaMarkup(DEFAULT_CONFIG);
+  const config = await loadConfig();
+
+  if (container.isConnected) {
+    container.innerHTML = formulaMarkup(config);
+  }
+}

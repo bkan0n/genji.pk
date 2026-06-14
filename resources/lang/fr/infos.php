@@ -32,11 +32,36 @@ return [
     // TABS
     // ──────────────────────────────────────────────────────────────────────
     'tabs' => [
-        'ranking_process'  => 'Processus de classement',
-        'ranks_threshold'  => 'Seuils de rangs',
+        'skill_rank'       => 'Skill Rank',
+        'skill_score'      => 'Skill Score',
+        'score_rank'       => 'Score Rank',
         'playtesting'      => 'Playtesting',
         'submit_map'       => 'Soumission de cartes',
         'techs'            => 'Techniques & difficultés',
+    ],
+
+    'score_rank' => [
+        'kicker' => 'Tiers du Skill Score',
+        'title' => 'Score Rank',
+        'intro' => 'Le Score Rank situe le Skill Score d’un joueur dans la population classée actuelle.',
+        'population_note' => 'Les seuils sont recalculés depuis le snapshot actuel des Skill Scores et peuvent évoluer avec les scores.',
+        'tier' => 'Tier {tier}',
+        'unranked_note' => 'Aucun run éligible, ou le seuil minimal de population classée n’est pas atteint.',
+        'bronze_range' => 'Sous le percentile {percentile}',
+        'starts_at' => 'Commence au percentile {percentile}',
+        'score_from' => 'Score à partir de {score}',
+        'threshold_unavailable' => 'Seuil actuellement indisponible',
+        'ranks' => [
+            'unranked' => 'Non classé',
+            'bronze' => 'Bronze',
+            'silver' => 'Argent',
+            'gold' => 'Or',
+            'emerald' => 'Émeraude',
+            'diamond' => 'Diamant',
+            'ascendant' => 'Ascendant',
+            'elite' => 'Élite',
+            'champion' => 'Champion',
+        ],
     ],
 
 

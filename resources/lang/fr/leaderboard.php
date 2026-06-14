@@ -39,6 +39,7 @@ return [
             'wr'    => 'Records du monde',
             'maps'  => 'Maps créées',
             'votes' => 'Votes playtest',
+            'skill_score' => 'Score de skill',
         ],
 
         'rank_label' => 'Rechercher un rang',
@@ -64,7 +65,8 @@ return [
         'nickname'       => 'Pseudo',
         'xp'             => 'XP',
         'tier'           => 'Niveau',
-        'skill_rank'     => 'Rang de compétence',
+        'skill_rank'     => 'Rang',
+        'skill_score'    => 'Score de skill',
         'world_records'  => 'Records du monde',
         'maps_made'      => 'Maps créées',
         'playtest_votes' => 'Votes playtest',

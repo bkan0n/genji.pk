@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\UserAvatarController;
-
 use App\Http\Controllers\Community\LeaderboardController;
 use App\Http\Controllers\Community\Statistics\AllMapsByNameController;
 use App\Http\Controllers\Community\Statistics\MapCompletionTimesController;
@@ -12,86 +11,30 @@ use App\Http\Controllers\Community\Statistics\PlayersPerXpTierController;
 use App\Http\Controllers\Community\Statistics\TimePlayedPerBaseDifficultyController;
 use App\Http\Controllers\Community\Statistics\TopCreatorsByAverageQualityController;
 use App\Http\Controllers\Community\Statistics\TopMapsByDifficultyController;
-
 use App\Http\Controllers\CompileController;
-use App\Http\Controllers\Content\ListMovementTechCategoriesController;
-use App\Http\Controllers\Content\ListMovementTechDifficultiesController;
-use App\Http\Controllers\Content\ListMovementTechniquesController;
-
-use App\Http\Controllers\Tournament\GetActiveTournamentEditionController;
-use App\Http\Controllers\Tournament\GetTournamentCategoryController;
-use App\Http\Controllers\Tournament\GetTournamentConfigController;
-use App\Http\Controllers\Tournament\GetTournamentLeaderboardController;
-use App\Http\Controllers\Tournament\GetTournamentNextCycleController;
-use App\Http\Controllers\Tournament\GetTournamentStreakController;
-use App\Http\Controllers\Tournament\ListTournamentCategoriesController;
-use App\Http\Controllers\Tournament\ListTournamentCyclesController;
-
-use App\Http\Controllers\Store\GetCurrentRotationController;
-use App\Http\Controllers\Store\GetKeyPricingController;
-use App\Http\Controllers\Store\GetPurchaseHistoryController;
-use App\Http\Controllers\Store\PurchaseItemController;
-use App\Http\Controllers\Store\PurchaseKeysController;
-use App\Http\Controllers\Store\UserCoinsController;
-
-use App\Http\Controllers\Quests\GetWeeklyQuestsController;
-use App\Http\Controllers\Quests\GetQuestHistoryController;
-use App\Http\Controllers\Quests\ClaimQuestRewardsController;
-
 use App\Http\Controllers\Completions\GetCompletionUpvotesController;
 use App\Http\Controllers\Completions\ListAllCompletionsController;
 use App\Http\Controllers\Completions\MapLeaderboardController;
 use App\Http\Controllers\Completions\SubmitCompletionController;
 use App\Http\Controllers\Completions\UpvoteCompletionController;
 use App\Http\Controllers\Completions\UserCompletionsController;
-
-use App\Http\Controllers\Lootbox\CoinsController;
+use App\Http\Controllers\Content\ListMovementTechCategoriesController;
+use App\Http\Controllers\Content\ListMovementTechDifficultiesController;
+use App\Http\Controllers\Content\ListMovementTechniquesController;
+use App\Http\Controllers\Lootbox\GetUserXpSummaryController;
 use App\Http\Controllers\Lootbox\KeysController;
 use App\Http\Controllers\Lootbox\RewardsController;
-use App\Http\Controllers\Lootbox\GetUserXpSummaryController;
-
+use App\Http\Controllers\Map_edit\CreateMapEditRequestController;
+use App\Http\Controllers\Map_edit\GetEditRequestController;
+use App\Http\Controllers\Map_edit\GetEditRequestSubmissionViewController;
+use App\Http\Controllers\Map_edit\GetPendingEditRequestsController;
+use App\Http\Controllers\Map_edit\ResolveEditRequestController;
 use App\Http\Controllers\Maps\Guides\GuidesController;
 use App\Http\Controllers\Maps\MapSearchController;
 use App\Http\Controllers\Maps\Playtests\PlaytestVoteController;
-
+use App\Http\Controllers\Maps\QualityVoteController;
 use App\Http\Controllers\Maps\SubmitMapController;
 use App\Http\Controllers\Maps\TrendingMapsController;
-use App\Http\Controllers\Maps\QualityVoteController;
-
-use App\Http\Controllers\Mods\Guides\CreateGuideController;
-use App\Http\Controllers\Mods\Guides\DeleteGuideController;
-use App\Http\Controllers\Mods\Guides\EditGuideController;
-
-use App\Http\Controllers\Mods\Lootbox\DebugGrantRewardWithoutKeyController;
-use App\Http\Controllers\Mods\Lootbox\GrantKeyToUserController;
-use App\Http\Controllers\Mods\Lootbox\GrantXpToUserController;
-use App\Http\Controllers\Mods\Lootbox\SetActiveKeyTypeController;
-
-use App\Http\Controllers\Mods\Lootbox\XP\GetXpMultiplierController;
-use App\Http\Controllers\Mods\Lootbox\XP\ChangeXpMultiplierController;
-
-use App\Http\Controllers\Mods\Maps\ArchiveMapsController;
-use App\Http\Controllers\Mods\Maps\ConvertToLegacyController;
-use App\Http\Controllers\Mods\Maps\ReleaseMapCodeController;
-use App\Http\Controllers\Mods\Maps\UpdateMapController;
-
-use App\Http\Controllers\Mods\Moderation\OverrideQualityController;
-use App\Http\Controllers\Mods\Moderation\SuspiciousFlagsController;
-
-use App\Http\Controllers\Mods\Users\CreateFakeMemberController;
-use App\Http\Controllers\Mods\Users\GetOverwatchNamesController;
-use App\Http\Controllers\Mods\Users\GetUserController;
-use App\Http\Controllers\Mods\Users\LinkFakeToRealController;
-use App\Http\Controllers\Mods\Users\ReplaceOverwatchNamesController;
-use App\Http\Controllers\Mods\Users\UpdateUserNamesController;
-
-use App\Http\Controllers\Mods\Verifications\CompletionSubmissionController;
-use App\Http\Controllers\Mods\Verifications\PendingVerificationsController;
-use App\Http\Controllers\Mods\Verifications\VerifyCompletionController;
-
-use App\Http\Controllers\Mods\Devs\CacheController;
-use App\Http\Controllers\Mods\Devs\OverpyCommitController;
-use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechniqueController;
@@ -105,24 +48,40 @@ use App\Http\Controllers\Mods\Content\ReorderMovementTechniqueController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechniqueController;
-
+use App\Http\Controllers\Mods\Devs\CacheController;
+use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
+use App\Http\Controllers\Mods\Devs\OverpyCommitController;
+use App\Http\Controllers\Mods\Guides\CreateGuideController;
+use App\Http\Controllers\Mods\Guides\DeleteGuideController;
+use App\Http\Controllers\Mods\Guides\EditGuideController;
+use App\Http\Controllers\Mods\Lootbox\DebugGrantRewardWithoutKeyController;
+use App\Http\Controllers\Mods\Lootbox\GrantKeyToUserController;
+use App\Http\Controllers\Mods\Lootbox\GrantXpToUserController;
+use App\Http\Controllers\Mods\Lootbox\SetActiveKeyTypeController;
+use App\Http\Controllers\Mods\Lootbox\XP\ChangeXpMultiplierController;
+use App\Http\Controllers\Mods\Lootbox\XP\GetXpMultiplierController;
+use App\Http\Controllers\Mods\Maps\ArchiveMapsController;
+use App\Http\Controllers\Mods\Maps\ConvertToLegacyController;
+use App\Http\Controllers\Mods\Maps\ReleaseMapCodeController;
+use App\Http\Controllers\Mods\Maps\UpdateMapController;
+use App\Http\Controllers\Mods\Moderation\OverrideQualityController;
+use App\Http\Controllers\Mods\Moderation\SuspiciousFlagsController;
 use App\Http\Controllers\Mods\Playtests\ApprovePlaytestController;
+use App\Http\Controllers\Mods\Playtests\DeleteAllPlaytestVotesController;
+use App\Http\Controllers\Mods\Playtests\DeletePlaytestVoteController;
 use App\Http\Controllers\Mods\Playtests\ForceAcceptPlaytestController;
 use App\Http\Controllers\Mods\Playtests\ForceDenyPlaytestController;
 use App\Http\Controllers\Mods\Playtests\ResetPlaytestController;
-use App\Http\Controllers\Mods\Playtests\DeleteAllPlaytestVotesController;
-use App\Http\Controllers\Mods\Playtests\DeletePlaytestVoteController;
-
-use App\Http\Controllers\Mods\Store\GenerateNewRotationController;
-use App\Http\Controllers\Mods\Store\GetStoreConfigController;
-use App\Http\Controllers\Mods\Store\UpdateStoreConfigController;
-
 use App\Http\Controllers\Mods\Quests\GenerateQuestRotationController;
 use App\Http\Controllers\Mods\Quests\GetQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestController;
 use App\Http\Controllers\Mods\Quests\UpdateUserQuestProgressController;
-
+use App\Http\Controllers\Mods\Skill\SkillConfigController;
+use App\Http\Controllers\Mods\Skill\SkillTiersController;
+use App\Http\Controllers\Mods\Store\GenerateNewRotationController;
+use App\Http\Controllers\Mods\Store\GetStoreConfigController;
+use App\Http\Controllers\Mods\Store\UpdateStoreConfigController;
 use App\Http\Controllers\Mods\Tournament\BootstrapTournamentEditionController;
 use App\Http\Controllers\Mods\Tournament\ChooseTournamentNextMapController;
 use App\Http\Controllers\Mods\Tournament\CreateTournamentCategoryController;
@@ -135,20 +94,45 @@ use App\Http\Controllers\Mods\Tournament\RerollTournamentMapController;
 use App\Http\Controllers\Mods\Tournament\SelectTournamentMapController;
 use App\Http\Controllers\Mods\Tournament\UpdateTournamentCategoryController;
 use App\Http\Controllers\Mods\Tournament\UpdateTournamentConfigController;
-
+use App\Http\Controllers\Mods\Users\CreateFakeMemberController;
+use App\Http\Controllers\Mods\Users\GetOverwatchNamesController;
+use App\Http\Controllers\Mods\Users\GetUserController;
+use App\Http\Controllers\Mods\Users\LinkFakeToRealController;
+use App\Http\Controllers\Mods\Users\ReplaceOverwatchNamesController;
+use App\Http\Controllers\Mods\Users\UpdateUserNamesController;
+use App\Http\Controllers\Mods\Verifications\CompletionSubmissionController;
+use App\Http\Controllers\Mods\Verifications\PendingVerificationsController;
+use App\Http\Controllers\Mods\Verifications\VerifyCompletionController;
 use App\Http\Controllers\Newsfeed\ChangelogsController;
 use App\Http\Controllers\Newsfeed\EmojiController;
 use App\Http\Controllers\Newsfeed\GifController;
 use App\Http\Controllers\Newsfeed\ListNewsfeedController;
 use App\Http\Controllers\Newsfeed\TranslateController;
-
+use App\Http\Controllers\Notifications\WebNotificationsController;
+use App\Http\Controllers\Quests\ClaimQuestRewardsController;
+use App\Http\Controllers\Quests\GetQuestHistoryController;
+use App\Http\Controllers\Quests\GetWeeklyQuestsController;
+use App\Http\Controllers\Skill\SkillController;
+use App\Http\Controllers\Store\GetCurrentRotationController;
+use App\Http\Controllers\Store\GetKeyPricingController;
+use App\Http\Controllers\Store\GetPurchaseHistoryController;
+use App\Http\Controllers\Store\PurchaseItemController;
+use App\Http\Controllers\Store\PurchaseKeysController;
+use App\Http\Controllers\Store\UserCoinsController;
+use App\Http\Controllers\Tournament\GetActiveTournamentEditionController;
+use App\Http\Controllers\Tournament\GetTournamentCategoryController;
+use App\Http\Controllers\Tournament\GetTournamentConfigController;
+use App\Http\Controllers\Tournament\GetTournamentLeaderboardController;
+use App\Http\Controllers\Tournament\GetTournamentNextCycleController;
+use App\Http\Controllers\Tournament\GetTournamentStreakController;
+use App\Http\Controllers\Tournament\ListTournamentCategoriesController;
+use App\Http\Controllers\Tournament\ListTournamentCyclesController;
 use App\Http\Controllers\Users\GetUserController as PublicGetUserController;
 use App\Http\Controllers\Users\GetUserDashboardCompletionsController;
 use App\Http\Controllers\Users\Notifications\GetNotificationSettingsController;
 use App\Http\Controllers\Users\Notifications\ToggleSingleNotificationController;
 use App\Http\Controllers\Users\Overwatch\GetOverwatchUsernamesController;
 use App\Http\Controllers\Users\Overwatch\ReplaceOverwatchUsernamesController;
-
 use App\Http\Controllers\Users\Rankcard\GetAvatarPoseController;
 use App\Http\Controllers\Users\Rankcard\GetAvatarSkinController;
 use App\Http\Controllers\Users\Rankcard\GetBackgroundController;
@@ -159,27 +143,15 @@ use App\Http\Controllers\Users\Rankcard\SetAvatarPoseController;
 use App\Http\Controllers\Users\Rankcard\SetAvatarSkinController;
 use App\Http\Controllers\Users\Rankcard\SetBackgroundController;
 use App\Http\Controllers\Users\Rankcard\SetBadgeSettingsController;
-
 use App\Http\Controllers\Utilities\Autocomplete\MapCodesController;
 use App\Http\Controllers\Utilities\Autocomplete\MapMechanicsController;
 use App\Http\Controllers\Utilities\Autocomplete\MapNamesController;
 use App\Http\Controllers\Utilities\Autocomplete\MapRestrictionsController;
 use App\Http\Controllers\Utilities\Autocomplete\TagsController;
 use App\Http\Controllers\Utilities\Autocomplete\UsersController;
-
-use App\Http\Controllers\Utilities\UploadImageController;
 use App\Http\Controllers\Utilities\LogMapClickController;
 use App\Http\Controllers\Utilities\OcrController;
-
-use App\Http\Controllers\Notifications\WebNotificationsController;
-
-use App\Http\Controllers\Map_edit\CreateMapEditRequestController;
-use App\Http\Controllers\Map_edit\GetEditRequestController;
-use App\Http\Controllers\Map_edit\GetEditRequestSubmissionViewController;
-use App\Http\Controllers\Map_edit\GetPendingEditRequestsController;
-use App\Http\Controllers\Map_edit\GetUsersEditRequestsController;
-use App\Http\Controllers\Map_edit\ResolveEditRequestController;
-
+use App\Http\Controllers\Utilities\UploadImageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -198,6 +170,15 @@ Route::prefix('community')->group(function () {
     );
 });
 
+/* ================== SKILL ================== */
+Route::prefix('skill')->group(function () {
+    Route::get('config', [SkillController::class, 'config']);
+    Route::get('users/{user_id}', [SkillController::class, 'summary'])
+        ->where('user_id', '\d{1,20}');
+    Route::get('users/{user_id}/breakdown', [SkillController::class, 'breakdown'])
+        ->where('user_id', '\d{1,20}');
+    Route::get('tiers', [SkillController::class, 'tiers']);
+});
 
 /* ================== CONTENT ================== */
 Route::prefix('content/movement-tech')->group(function () {
@@ -226,6 +207,9 @@ Route::post('compile', [CompileController::class, 'store'])
 /* ================== MAPS ================== */
 Route::prefix('maps')->group(function () {
     Route::get('/', [MapSearchController::class, 'index'])->name('api.maps.index');
+    Route::get('playtests/{thread_id}/votes', [PlaytestVoteController::class, 'index'])
+        ->whereNumber('thread_id')
+        ->name('playtests.votes.index');
     Route::get('{code}/guides', GuidesController::class)
         ->where('code', '[A-Za-z0-9\-]+')
         ->name('api.maps.guides');
@@ -414,7 +398,6 @@ Route::prefix('mods')
             ->whereNumber('real_user_id')
             ->name('mods.users.link-fake-to-real');
 
-
         // CONTENT
         Route::prefix('content/movement-tech')->group(function () {
             Route::post('categories', CreateMovementTechCategoryController::class);
@@ -451,6 +434,13 @@ Route::prefix('mods')
             Route::post('rotation/generate', GenerateNewRotationController::class);
             Route::get('config', GetStoreConfigController::class);
             Route::put('config', UpdateStoreConfigController::class);
+        });
+
+        // SKILL
+        Route::prefix('skill')->group(function () {
+            Route::get('config', [SkillConfigController::class, 'show']);
+            Route::patch('config', [SkillConfigController::class, 'update']);
+            Route::patch('tiers', [SkillTiersController::class, 'update']);
         });
 
         // QUESTS
@@ -497,6 +487,7 @@ Route::prefix('mods')
         Route::match(['post', 'patch'], 'maps/{code}/quality', OverrideQualityController::class);
         Route::get('completions/suspicious', [SuspiciousFlagsController::class, 'index']);
         Route::post('completions/suspicious', [SuspiciousFlagsController::class, 'store']);
+        Route::delete('completions/suspicious', [SuspiciousFlagsController::class, 'destroy']);
 
         // VERIFICATIONS
         Route::get('verifications/pending', [PendingVerificationsController::class, 'index']);

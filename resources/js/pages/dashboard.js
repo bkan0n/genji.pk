@@ -19,9 +19,31 @@ const EP = {
   unreadCount: () => `/api/notifications/unread-count`,
   xpSummary: (uid) => `/api/lootbox/users/${encodeURIComponent(uid)}/xp-summary`,
   dashboardCompletions: (uid, pageSize = 10, pageNumber = 1) => `/api/users/${encodeURIComponent(uid)}/completions/dashboard?page_size=${encodeURIComponent(pageSize)}&page_number=${encodeURIComponent(pageNumber)}`,
+  streak: (uid) => `/api/tournaments/streaks/${encodeURIComponent(uid)}`,
+  skillSummary: (uid) => `/api/skill/users/${encodeURIComponent(uid)}`,
   claimQuest: (progressId) => `/api/quests/${encodeURIComponent(progressId)}/claim`,
   overwatchByUser: (uid) => `/api/users/${encodeURIComponent(uid)}`,
 };
+
+const SKILL_TIER_NAMES = [
+  "Unranked",
+  "Bronze",
+  "Silver",
+  "Gold",
+  "Emerald",
+  "Diamond",
+  "Ascendant",
+  "Elite",
+  "Champion",
+];
+
+function normalizeSkillTier(data) {
+  const supplied = String(data?.skill_tier_name ?? "").trim();
+  if (SKILL_TIER_NAMES.includes(supplied)) return supplied;
+
+  const tier = Number(data?.skill_tier ?? data?.tier ?? 0);
+  return SKILL_TIER_NAMES[Number.isInteger(tier) && tier >= 0 && tier <= 8 ? tier : 0];
+}
 
 /* =========================
    DOM + HELPERS
@@ -1781,6 +1803,53 @@ async function loadRewardsSummary() {
   }
 }
 
+async function loadStreakSummary() {
+  const uid = state.userId;
+  const streakEl = $("dash-streak");
+  if (!uid || !streakEl) return;
+
+  try {
+    const payload = await httpJson(EP.streak(uid), { cache: "no-store" });
+    const value = Number(payload?.current_streak ?? payload?.current ?? payload?.streak ?? payload ?? 0);
+    streakEl.textContent = fmtIntSpaces(Number.isFinite(value) && value > 0 ? value : 0);
+  } catch (error) {
+    streakEl.textContent =
+      String(error?.message || "").trim().toLowerCase() ===
+      "tournament streak record not found."
+        ? "0"
+        : "—";
+  }
+}
+
+async function loadSkillSummary() {
+  const uid = state.userId;
+  const scoreEl = $("dash-skill-score");
+  const tierEl = $("dash-skill-tier");
+  const iconEl = $("dash-skill-icon");
+  if (!uid || !scoreEl || !tierEl || !iconEl) return;
+
+  try {
+    const payload = await httpJson(EP.skillSummary(uid), { cache: "no-store" });
+    const data = payload?.data && typeof payload.data === "object" ? payload.data : payload;
+    const tierName = normalizeSkillTier(data);
+    const score = Number(data?.skill_score ?? 0);
+    const percentile = Number(data?.skill_percentile ?? data?.percentile);
+
+    scoreEl.textContent = Number.isFinite(score)
+      ? score.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : "0";
+    tierEl.textContent = tierName;
+    iconEl.src = cdnAsset(`assets/skill/rank-icons/${tierName}.png`);
+    iconEl.alt = tierName;
+
+  } catch {
+    scoreEl.textContent = "—";
+    tierEl.textContent = "Unranked";
+    iconEl.src = cdnAsset("assets/skill/rank-icons/Unranked.png");
+    iconEl.alt = "Unranked";
+  }
+}
+
 /* =========================
    LOAD: PURCHASES
    ========================= */
@@ -2206,6 +2275,17 @@ async function loadQuestsPanel() {
     return "bg-zinc-900/5 dark:bg-white/5 text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-white/10";
   };
 
+  const bountyTypeLabel = (value) => {
+    const key = String(value || "").trim().toLowerCase();
+    if (!key) return "";
+
+    const fallback = key
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+    return t(`quests.bounty_types.${key}`, fallback);
+  };
+
   const medalPill = (medalType) => {
     const m = String(medalType || "").trim().toLowerCase();
     const base =
@@ -2323,10 +2403,11 @@ async function loadQuestsPanel() {
 
     state.quests = quests;
 
+    const questsDoneEl = $("dash-quests-done");
     if (summary) {
-      $("dash-quests-done").textContent = fmtIntSpaces(Number(summary.completed ?? 0));
-    } else {
-      $("dash-quests-done").textContent = fmtIntSpaces(quests.filter((q) => q?.completed === true).length);
+      if (questsDoneEl) questsDoneEl.textContent = fmtIntSpaces(Number(summary.completed ?? 0));
+    } else if (questsDoneEl) {
+      questsDoneEl.textContent = fmtIntSpaces(quests.filter((q) => q?.completed === true).length);
     }
 
     weekly.innerHTML = "";
@@ -2716,7 +2797,7 @@ async function loadQuestsPanel() {
                   h?.bounty_type
                     ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold
                             bg-sky-500/10 ring-1 ring-sky-400/20 text-sky-700 dark:text-sky-300">
-                        ${String(h.bounty_type)}
+                        ${bountyTypeLabel(h.bounty_type)}
                       </span>`
                     : ""
                 }
@@ -2844,6 +2925,8 @@ async function refreshAll() {
   await Promise.allSettled([
     loadHeader(),
     loadRewardsSummary(),
+    loadStreakSummary(),
+    loadSkillSummary(),
     loadPurchases(),
     loadRecentSubmissions(),
     loadWeeklyShop(),

@@ -51,6 +51,8 @@ return [
     'keys_winter'     => 'Winter Keys',
     'rewards_owned'   => 'Rewards',
     'quests_done'     => 'Quests Done',
+    'streak'          => 'Streak',
+    'skill_score'     => 'Skill Score',
   ],
 
   'overview' => [
@@ -134,6 +136,9 @@ return [
     'claim'               => 'Claim',
     'complete_to_claim'   => 'Complete the quest to claim',
     'claim_failed'        => 'Claim failed.',
+    'bounty_types'        => [
+      'rival_challenge' => 'Rival Challenge',
+    ],
   ],
   'submissions' => [
     'title'             => 'Recent submissions',

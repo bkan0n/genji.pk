@@ -46,6 +46,108 @@ const MEDAL_ICON = {
   bronze: cdnAsset('assets/medals/bronze.png'),
 };
 
+const SKILL_TIER_NAMES = [
+  'Unranked',
+  'Bronze',
+  'Silver',
+  'Gold',
+  'Emerald',
+  'Diamond',
+  'Ascendant',
+  'Elite',
+  'Champion',
+];
+
+function normalizeSkillTier(data) {
+  const supplied = String(data?.skill_tier_name ?? '').trim();
+  const matchedTier = SKILL_TIER_NAMES.find(
+    (tierName) => tierName.toLowerCase() === supplied.toLowerCase()
+  );
+  if (matchedTier) return matchedTier;
+
+  const tier = Number(data?.skill_tier ?? 0);
+  return SKILL_TIER_NAMES[Number.isInteger(tier) && tier >= 0 && tier <= 8 ? tier : 0];
+}
+
+function masteryBadgePillClass(level) {
+  const styles = {
+    rookie: 'bg-emerald-600/85 text-emerald-50 ring-emerald-300/40',
+    explorer: 'bg-sky-600/85 text-sky-50 ring-sky-300/40',
+    trailblazer: 'bg-orange-600/85 text-orange-50 ring-orange-300/40',
+    pathfinder: 'bg-violet-600/85 text-violet-50 ring-violet-300/40',
+    prodigy: 'bg-fuchsia-600/85 text-fuchsia-50 ring-fuchsia-300/40',
+    gold: 'bg-yellow-600/85 text-yellow-50 ring-yellow-300/40',
+    silver: 'bg-slate-500/85 text-white ring-slate-300/40',
+    bronze: 'bg-amber-700/85 text-amber-50 ring-amber-300/40',
+  };
+
+  return styles[String(level).trim().toLowerCase()]
+    || 'bg-zinc-600/80 text-zinc-100 ring-zinc-300/30';
+}
+
+function skillScoreStatHtml(data) {
+  const tierName = normalizeSkillTier(data);
+  const score = Number(data?.skill_score ?? 0);
+  const safeScore = Number.isFinite(score) ? score : 0;
+
+  return `
+    <div class="rounded-lg bg-white/5 p-2 text-center ring-1 ring-white/10">
+      <span class="block text-xs text-white/70">${t('skill_score')}</span>
+      <div class="mt-0.5 flex min-w-0 items-center justify-center gap-1.5">
+        <img
+          src="${cdnAsset(`assets/skill/rank-icons/${tierName}.png`)}"
+          alt="${tierName}"
+          class="h-8 w-8 shrink-0 object-contain"
+          loading="lazy"
+          decoding="async"
+        >
+        <div class="min-w-0 text-left">
+          <span
+            class="stat-value block truncate text-base font-semibold tabular-nums text-white/90"
+            data-value="${safeScore}"
+            data-decimals="2"
+          >0</span>
+          <span class="block truncate text-[9px] font-semibold uppercase tracking-wide text-white/60">${tierName}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function fitRankCardPlayerInfo(rankCardContent) {
+  const left = rankCardContent.querySelector('.rank-section-container');
+  const right = rankCardContent.querySelector('.player-info');
+  if (!left || !right) {
+    releaseRankCardContentHeight(rankCardContent);
+    return;
+  }
+
+  const applyHeights = () => {
+    const height = left.getBoundingClientRect().height;
+    right.style.height = `${height}px`;
+
+    const avatar = right.querySelector('.player-avatar');
+    if (!avatar) return;
+
+    const styles = getComputedStyle(right);
+    const paddingY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const gap = parseFloat(styles.rowGap || styles.gap || 12);
+    const fixedHeight = Array.from(right.children)
+      .filter((child) => child !== avatar)
+      .reduce((total, child) => total + child.getBoundingClientRect().height, 0);
+    const totalGaps = gap * Math.max(0, right.children.length - 1);
+    const avatarMarginTop = parseFloat(getComputedStyle(avatar).marginTop) || 0;
+    const usable = Math.max(0, height - fixedHeight - paddingY - totalGaps - avatarMarginTop);
+    avatar.style.maxHeight = `${usable}px`;
+  };
+
+  applyHeights();
+  releaseRankCardContentHeight(rankCardContent);
+  const resizeObserver = new ResizeObserver(applyHeights);
+  resizeObserver.observe(left);
+  window.addEventListener('resize', applyHeights, { passive: true });
+}
+
 
 /* =========================
    CDN HELPERS
@@ -467,13 +569,16 @@ function updateButtonContainerVisibility() {
   setResetFilterEnabled(!!currentUserId);
 }
 
-function animateValue(element, start, end, duration) {
+function animateValue(element, start, end, duration, decimals = 0) {
   const range = end - start;
   let startTime = null;
   const step = (ts) => {
     if (!startTime) startTime = ts;
     const progress = Math.min((ts - startTime) / duration, 1);
-    element.textContent = Math.floor(progress * range + start);
+    const value = progress * range + start;
+    element.textContent = decimals > 0
+      ? value.toLocaleString(undefined, { maximumFractionDigits: decimals })
+      : Math.floor(value);
     if (progress < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
@@ -758,7 +863,7 @@ async function loadRankCardContent() {
                       .join('')}
                   </div>
 
-                  <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
+                  <div class="inline-stats mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('xp')}</span>
                       <span class="stat-value text-lg font-semibold text-white/90" data-value="${Number(data.xp || 0)}">0</span>
@@ -771,6 +876,7 @@ async function loadRankCardContent() {
                       <span class="block text-xs text-white/70">${t('community_rank')}</span>
                       <span class="text-base font-semibold text-white/90">${data.community_rank || '—'}</span>
                     </div>
+                    ${skillScoreStatHtml(data)}
                   </div>
 
                   <!-- Bas -->
@@ -827,33 +933,7 @@ async function loadRankCardContent() {
     `;
     revealRankCardContainer();
     requestAnimationFrame(() => {
-      const left = rankCardContent.querySelector('.rank-section-container');
-      const right = rankCardContent.querySelector('.player-info');
-      if (!left || !right) {
-        releaseRankCardContentHeight(rankCardContent);
-        return;
-      }
-
-      const applyHeights = () => {
-        const H = left.getBoundingClientRect().height;
-        right.style.height = `${H}px`;
-
-        const avatar = right.querySelector('.player-avatar');
-        const header = right.querySelector('.inline-flex');
-        if (avatar && header) {
-          const cs = getComputedStyle(right);
-          const py = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-          const gap = parseFloat(cs.rowGap || cs.gap || 12);
-          const usable = Math.max(0, H - header.getBoundingClientRect().height - py - gap);
-          avatar.style.maxHeight = `${usable}px`;
-        }
-      };
-
-      applyHeights();
-      releaseRankCardContentHeight(rankCardContent);
-      const ro = new ResizeObserver(() => applyHeights());
-      ro.observe(left);
-      window.addEventListener('resize', applyHeights, { passive: true });
+      fitRankCardPlayerInfo(rankCardContent);
     });
 
     setTimeout(() => {
@@ -866,8 +946,9 @@ async function loadRankCardContent() {
 
     applyProgressColors(rankCardContent);
     rankCardContent.querySelectorAll('.stat-value').forEach((stat) => {
-      const end = parseInt(stat.getAttribute('data-value') || '0', 10);
-      animateValue(stat, 0, end, 1600);
+      const end = Number(stat.getAttribute('data-value') || 0);
+      const decimals = Number.parseInt(stat.getAttribute('data-decimals') || '0', 10);
+      animateValue(stat, 0, Number.isFinite(end) ? end : 0, 1600, decimals);
     });
 
     rankCardContent.dataset.loadedFor = rankCardLoadKey(me);
@@ -970,7 +1051,7 @@ async function fetchUserRankCard(userId, opts = {}) {
                       .join('')}
                   </div>
 
-                  <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
+                  <div class="inline-stats mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
                     <div class="rounded-lg bg-white/5 p-2 ring-1 ring-white/10 text-center">
                       <span class="block text-xs text-white/70">${t('xp')}</span>
                       <span class="stat-value text-lg font-semibold text-white/90" data-value="${Number(data.xp || 0)}">0</span>
@@ -983,6 +1064,7 @@ async function fetchUserRankCard(userId, opts = {}) {
                       <span class="block text-xs text-white/70">${t('community_rank')}</span>
                       <span class="text-base font-semibold text-white/90">${data.community_rank || '—'}</span>
                     </div>
+                    ${skillScoreStatHtml(data)}
                   </div>
 
                   <div class="combined-container mt-3 grid gap-4 md:grid-cols-2 items-stretch">
@@ -1036,33 +1118,7 @@ async function fetchUserRankCard(userId, opts = {}) {
     if (!silent) revealRankCardContainer();
 
     requestAnimationFrame(() => {
-      const left = rankCardContent.querySelector('.rank-section-container');
-      const right = rankCardContent.querySelector('.player-info');
-      if (!left || !right) {
-        releaseRankCardContentHeight(rankCardContent);
-        return;
-      }
-
-      const applyHeights = () => {
-        const H = left.getBoundingClientRect().height;
-        right.style.height = `${H}px`;
-
-        const avatar = right.querySelector('.player-avatar');
-        const header = right.querySelector('.inline-flex');
-        if (avatar && header) {
-          const cs = getComputedStyle(right);
-          const py = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-          const gap = parseFloat(cs.rowGap || cs.gap || 12);
-          const usable = Math.max(0, H - header.getBoundingClientRect().height - py - gap);
-          avatar.style.maxHeight = `${usable}px`;
-        }
-      };
-
-      applyHeights();
-      releaseRankCardContentHeight(rankCardContent);
-      const ro = new ResizeObserver(() => applyHeights());
-      ro.observe(left);
-      window.addEventListener('resize', applyHeights, { passive: true });
+      fitRankCardPlayerInfo(rankCardContent);
     });
 
     setTimeout(() => {
@@ -1075,8 +1131,9 @@ async function fetchUserRankCard(userId, opts = {}) {
 
     applyProgressColors(rankCardContent);
     rankCardContent.querySelectorAll('.stat-value').forEach((stat) => {
-      const end = parseInt(stat.getAttribute('data-value') || '0', 10);
-      animateValue(stat, 0, end, 1600);
+      const end = Number(stat.getAttribute('data-value') || 0);
+      const decimals = Number.parseInt(stat.getAttribute('data-decimals') || '0', 10);
+      animateValue(stat, 0, Number.isFinite(end) ? end : 0, 1600, decimals);
     });
 
     rankCardContent.dataset.loadedFor = rankCardLoadKey(userId);
@@ -1159,16 +1216,7 @@ async function fetchUserMastery(userId) {
       if (badge.map_name === 'Tools' || badge.map_name === 'Framework') return;
 
       const badgeLevel = (badge.level === 'Placeholder' ? 'Unranked' : badge.level) || 'Unranked';
-      const pillClass =
-        badgeLevel === 'Prodigy'
-          ? 'bg-fuchsia-600/80 text-fuchsia-50'
-          : badgeLevel === 'Gold'
-            ? 'bg-yellow-600/80 text-yellow-50'
-            : badgeLevel === 'Silver'
-              ? 'bg-slate-500/80 text-zinc-900 dark:text-white'
-              : badgeLevel === 'Bronze'
-                ? 'bg-amber-700/80 text-amber-50'
-                : 'bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 text-zinc-900 dark:text-white/80';
+      const pillClass = masteryBadgePillClass(badgeLevel);
 
       const el = document.createElement('article');
       el.className =
@@ -1180,7 +1228,7 @@ async function fetchUserMastery(userId) {
                class="mx-auto h-16 w-16 rounded-lg object-contain ring-zinc-300/60 dark:ring-white/10
                       group-hover:ring-zinc-400/60 dark:ring-white/20 cursor-pointer"
                onclick="showBadgeViewer('${badge.icon_url}', '${badge.map_name.replace(/'/g, "\\'")}')">
-          <span class="absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-[10px] ring-1 ring-zinc-300/60 dark:ring-white/10 shadow ${pillClass}">
+          <span class="absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 shadow ${pillClass}">
             ${badgeLevel}
           </span>
         </div>
@@ -2547,8 +2595,8 @@ function rankCardSkeletonHTML() {
                 </div>
 
                 <!-- Stats inline -->
-                <div class="inline-stats mt-3 grid gap-2 grid-cols-1 sm:grid-cols-3">
-                  ${Array.from({ length: 3 }).map(() => `
+                <div class="inline-stats mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
+                  ${Array.from({ length: 4 }).map(() => `
                     <div class="rounded-lg bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 p-2 ring-1 ring-zinc-300/60 dark:ring-white/10 text-center">
                       <div class="mx-auto h-3 w-16 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
                       <div class="mx-auto mt-2 h-5 w-10 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>

@@ -32,11 +32,36 @@ return [
     // TABS
     // ──────────────────────────────────────────────────────────────────────
     'tabs' => [
-        'ranking_process'  => 'Ranking process',
-        'ranks_threshold'  => 'Ranks threshold',
+        'skill_rank'       => 'Skill Rank',
+        'skill_score'      => 'Skill Score',
+        'score_rank'       => 'Score Rank',
         'playtesting'      => 'Playtesting',
         'submit_map'       => 'Map submissions',
         'techs'            => 'Techs & difficulties',
+    ],
+
+    'score_rank' => [
+        'kicker' => 'Skill Score tiers',
+        'title' => 'Score Rank',
+        'intro' => 'Score Ranks place a player’s Skill Score within the current ranked population.',
+        'population_note' => 'Thresholds are recalculated from the current Skill Score snapshot and may change as scores evolve.',
+        'tier' => 'Tier {tier}',
+        'unranked_note' => 'No eligible runs, or the ranked population floor has not been met.',
+        'bronze_range' => 'Below percentile {percentile}',
+        'starts_at' => 'Starts at percentile {percentile}',
+        'score_from' => 'Score from {score}',
+        'threshold_unavailable' => 'Threshold currently unavailable',
+        'ranks' => [
+            'unranked' => 'Unranked',
+            'bronze' => 'Bronze',
+            'silver' => 'Silver',
+            'gold' => 'Gold',
+            'emerald' => 'Emerald',
+            'diamond' => 'Diamond',
+            'ascendant' => 'Ascendant',
+            'elite' => 'Elite',
+            'champion' => 'Champion',
+        ],
     ],
 
 

@@ -1,4 +1,5 @@
 import { cdnAsset } from "../utils/cdn";
+import { renderSkillScoreFormula } from "../components/skill-score-formula";
 
 let translations = window.INFOS_I18N || {};
 
@@ -19,6 +20,145 @@ function t(path, params = {}) {
     }
   }
   return result;
+}
+
+const SCORE_RANKS = [
+  { tier: 0, key: 'unranked', image: 'Unranked.png' },
+  { tier: 1, key: 'bronze', image: 'Bronze.png' },
+  { tier: 2, key: 'silver', image: 'Silver.png' },
+  { tier: 3, key: 'gold', image: 'Gold.png' },
+  { tier: 4, key: 'emerald', image: 'Emerald.png' },
+  { tier: 5, key: 'diamond', image: 'Diamond.png' },
+  { tier: 6, key: 'ascendant', image: 'Ascendant.png' },
+  { tier: 7, key: 'elite', image: 'Elite.png' },
+  { tier: 8, key: 'champion', image: 'Champion.png' },
+];
+
+let skillTiersPromise = null;
+
+function loadSkillTiers() {
+  if (!skillTiersPromise) {
+    skillTiersPromise = fetch('/api/skill/tiers', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Skill tiers request failed (${response.status})`);
+        return response.json();
+      })
+      .catch(() => null);
+  }
+
+  return skillTiersPromise;
+}
+
+function formatScoreRankNumber(value, options = {}) {
+  return new Intl.NumberFormat(document.documentElement.lang || 'en', options).format(value);
+}
+
+function scoreRankThreshold(rank, tiers) {
+  const percentiles = Array.isArray(tiers?.percentiles) ? tiers.percentiles : [];
+  const boundaries = Array.isArray(tiers?.boundaries) ? tiers.boundaries : [];
+
+  if (rank.tier === 0) {
+    return `<p class="score-rank-note">${t('score_rank.unranked_note')}</p>`;
+  }
+
+  if (rank.tier === 1) {
+    const upperPercentile = Number(percentiles[0]);
+    return Number.isFinite(upperPercentile)
+      ? `<p class="score-rank-threshold">${t('score_rank.bronze_range', {
+          percentile: formatScoreRankNumber(upperPercentile, {
+            style: 'percent',
+            maximumFractionDigits: 1,
+          }),
+        })}</p>`
+      : `<p class="score-rank-note">${t('score_rank.threshold_unavailable')}</p>`;
+  }
+
+  const thresholdIndex = rank.tier - 2;
+  const percentile = Number(percentiles[thresholdIndex]);
+  const boundary = Number(boundaries[thresholdIndex]);
+  const details = [];
+
+  if (Number.isFinite(percentile)) {
+    details.push(
+      t('score_rank.starts_at', {
+        percentile: formatScoreRankNumber(percentile, {
+          style: 'percent',
+          maximumFractionDigits: 1,
+        }),
+      })
+    );
+  }
+
+  if (Number.isFinite(boundary)) {
+    details.push(
+      t('score_rank.score_from', {
+        score: formatScoreRankNumber(boundary, { maximumFractionDigits: 2 }),
+      })
+    );
+  }
+
+  return details.length
+    ? `<p class="score-rank-threshold">${details.join('<br>')}</p>`
+    : `<p class="score-rank-note">${t('score_rank.threshold_unavailable')}</p>`;
+}
+
+function scoreRankMarkup(tiers = null) {
+  const cards = SCORE_RANKS.map((rank) => {
+    const name = t(`score_rank.ranks.${rank.key}`);
+    return `
+      <article class="score-rank-card score-rank-${rank.key}">
+        <div class="score-rank-image-wrap">
+          <img
+            src="${cdnAsset(`assets/skill/rank-icons/${rank.image}`)}"
+            alt="${name}"
+            class="score-rank-image"
+            loading="lazy"
+            decoding="async"
+          >
+        </div>
+        <div class="score-rank-content">
+          <div class="score-rank-tier">${t('score_rank.tier', { tier: rank.tier })}</div>
+          <h3>${name}</h3>
+          ${scoreRankThreshold(rank, tiers)}
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  return `
+    <div class="score-rank-panel">
+      <header class="score-rank-header">
+        <div class="skill-formula-kicker">${t('score_rank.kicker')}</div>
+        <h2>${t('score_rank.title')}</h2>
+        <p>${t('score_rank.intro')}</p>
+      </header>
+      <div class="score-rank-body">
+        <div class="score-rank-callout">${t('score_rank.population_note')}</div>
+        <div class="score-rank-grid">${cards}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function renderScoreRank(container) {
+  container.innerHTML = scoreRankMarkup();
+  const tiers = await loadSkillTiers();
+
+  if (container.isConnected) {
+    container.innerHTML = scoreRankMarkup(tiers);
+  }
+}
+
+function decorateInfoSection(container) {
+  const panel = container.firstElementChild;
+  if (!panel || panel.classList.contains('skill-formula-panel') || panel.classList.contains('score-rank-panel')) {
+    return;
+  }
+
+  panel.classList.add('infos-unified-panel');
 }
 
 /* =========================
@@ -808,91 +948,120 @@ function renderMapHelpContent(kind) {
    ========================= */
 function initInfosTabs() {
   const tabsContainer = document.getElementById('infosTabs');
-  if (!tabsContainer) return;
+  const highlight = document.getElementById('tabHighlight');
+  if (!tabsContainer || !highlight) return;
+
+  if (highlight.parentElement !== tabsContainer) {
+    tabsContainer.appendChild(highlight);
+  }
 
   if (getComputedStyle(tabsContainer).position === 'static') {
     tabsContainer.style.position = 'relative';
   }
 
-  const tabs   = Array.from(document.querySelectorAll('[data-infos-tab]'));
+  const tabs = Array.from(tabsContainer.querySelectorAll('[data-infos-tab]'));
   const panels = Array.from(document.querySelectorAll('[data-infos-group]'));
   if (!tabs.length) return;
 
-  let highlight = document.getElementById('tabHighlight');
-  if (!highlight) {
-    highlight = document.createElement('span');
-    highlight.id = 'tabHighlight';
-    Object.assign(highlight.style, {
-      position: 'absolute',
-      top: '2px',
-      bottom: '2px',
-      left: '0',
-      width: '0',
-      borderRadius: '0.625rem',
-      background: (document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark' || document.body?.classList.contains('dark') || document.body?.getAttribute('data-theme') === 'dark') ? 'white' : '#18181b',
-      boxShadow: (document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark' || document.body?.classList.contains('dark') || document.body?.getAttribute('data-theme') === 'dark') ? '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)' : '0 1px 0 0 rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.14)',
-      transform: 'translate3d(0,0,0)',
-      transition: 'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)',
-      willChange: 'transform,width',
-      zIndex: '0'
-    });
-    tabsContainer.appendChild(highlight);
-  }
+  const HL_TRANSITION =
+    'transform .28s cubic-bezier(.22,.9,.24,1), width .28s cubic-bezier(.22,.9,.24,1)';
 
-  tabs.forEach(btn => {
-    btn.classList.add('cursor-pointer');
-    btn.style.position = 'relative';
-    btn.style.zIndex = '1';
+  Object.assign(highlight.style, {
+    position: 'absolute',
+    top: '2px',
+    bottom: '2px',
+    left: '0',
+    width: '0',
+    borderRadius: '0.625rem',
+    background: 'white',
+    boxShadow: '0 1px 0 0 rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.25)',
+    transform: 'translate3d(0,0,0)',
+    transition: 'none',
+    willChange: 'transform,width',
+    zIndex: '0',
   });
 
-  const moveHighlightTo = (btn) => {
+  tabs.forEach((btn) => {
+    btn.style.position = 'relative';
+    btn.style.zIndex = '1';
+
+    btn.style.transition =
+      'background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease';
+
+    btn.classList.remove('transition', 'transition-all', 'transition-colors');
+  });
+
+  const moveHighlightTo = (btn, { animate = true } = {}) => {
     if (!btn) return;
+
     const br = btn.getBoundingClientRect();
     const cr = tabsContainer.getBoundingClientRect();
-    const left = br.left - cr.left;
-    const width = br.width;
-    requestAnimationFrame(() => {
+    const left = Math.round(br.left - cr.left);
+    const width = Math.round(br.width);
+
+    const prevLeft = Number(highlight.dataset.hlLeft || NaN);
+    const prevWidth = Number(highlight.dataset.hlWidth || NaN);
+    if (left === prevLeft && width === prevWidth) return;
+
+    highlight.dataset.hlLeft = String(left);
+    highlight.dataset.hlWidth = String(width);
+
+    const apply = () => {
       highlight.style.width = `${Math.max(0, width)}px`;
       highlight.style.transform = `translate3d(${Math.max(0, left)}px,0,0)`;
-    });
+    };
+
+    if (!animate) {
+      const previousTransition = highlight.style.transition;
+      highlight.style.transition = 'none';
+      apply();
+      requestAnimationFrame(() => {
+        highlight.style.transition =
+          previousTransition && previousTransition !== 'none'
+            ? previousTransition
+            : HL_TRANSITION;
+      });
+      return;
+    }
+
+    if (highlight.style.transition === 'none') {
+      highlight.style.transition = HL_TRANSITION;
+    }
+    requestAnimationFrame(apply);
   };
 
-  const setActiveTab = (group, { updateUrl = true } = {}) => {
+  const setActiveTab = (
+    group,
+    { updateUrl = true, animateHighlight = true } = {}
+  ) => {
+    const activeBtn =
+      tabs.find((btn) => btn.getAttribute('data-infos-tab') === group) || tabs[0];
+    const activeGroup = activeBtn?.getAttribute('data-infos-tab') || group;
+
     tabs.forEach((btn) => {
-      const isActive = btn.getAttribute('data-infos-tab') === group;
+      const isActive = btn === activeBtn;
 
-      if (isActive) {
-        // Light: white text on dark highlight
-        // Dark : dark text on white highlight
-        btn.classList.remove(
-          'text-zinc-700',
-          'hover:bg-zinc-100',
-          'dark:text-white',
-          'dark:hover:bg-white/10'
-        );
-        btn.classList.add('text-white', 'dark:text-zinc-900');
-
-        moveHighlightTo(btn);
-      } else {
-        btn.classList.remove('text-white', 'dark:text-zinc-900');
-        btn.classList.add(
-          'text-zinc-700',
-          'hover:bg-zinc-100',
-          'dark:text-white',
-          'dark:hover:bg-white/10'
-        );
-      }
+      btn.classList.toggle('is-active', isActive);
+      btn.classList.add('text-zinc-900');
+      btn.classList.toggle('dark:text-white', !isActive);
+      btn.classList.toggle('dark:text-zinc-900', isActive);
+      btn.classList.toggle('hover:bg-zinc-100', !isActive);
+      btn.classList.toggle('dark:hover:bg-white/10', !isActive);
     });
 
     panels.forEach((panel) => {
-      panel.hidden = panel.getAttribute('data-infos-group') !== group;
+      panel.hidden = panel.getAttribute('data-infos-group') !== activeGroup;
     });
+
+    moveHighlightTo(activeBtn, { animate: animateHighlight });
 
     if (updateUrl) {
       const url = new URL(window.location.href);
-      url.hash = `tab=${encodeURIComponent(group)}`;
+      url.hash = `tab=${encodeURIComponent(activeGroup)}`;
       history.replaceState(null, '', url.toString());
     }
+
+    return activeGroup;
   };
 
   const getDesiredTab = () => {
@@ -904,29 +1073,46 @@ function initInfosTabs() {
   };
 
   tabs.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const group = btn.getAttribute('data-infos-tab');
-      if (group) setActiveTab(group, { updateUrl: true });
+    const group = btn.getAttribute('data-infos-tab');
+    if (!group) return;
+
+    const preselect = () =>
+      setActiveTab(group, { updateUrl: false, animateHighlight: true });
+
+    btn.addEventListener('pointerdown', (event) => {
+      if (typeof event.button === 'number' && event.button !== 0) return;
+      preselect();
+    });
+
+    btn.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') preselect();
+    });
+
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      setActiveTab(group, { updateUrl: true, animateHighlight: true });
     });
   });
 
   const desired = getDesiredTab();
   const initialBtn =
-    (desired && document.querySelector(`[data-infos-tab="${desired}"]`)) ||
-    document.querySelector('[data-infos-tab][data-active="true"]') ||
+    (desired && tabs.find((btn) => btn.getAttribute('data-infos-tab') === desired)) ||
+    tabs.find((btn) => btn.hasAttribute('data-active')) ||
     tabs[0];
 
   requestAnimationFrame(() => {
     if (initialBtn) {
-      setActiveTab(initialBtn.getAttribute('data-infos-tab'), { updateUrl: !!desired });
-      moveHighlightTo(initialBtn);
+      setActiveTab(initialBtn.getAttribute('data-infos-tab'), {
+        updateUrl: !!desired,
+        animateHighlight: false,
+      });
     }
+
     const recalc = () => {
-      const active =
-        document.querySelector('[data-infos-tab].text-zinc-900') ||
-        initialBtn;
-      if (active) moveHighlightTo(active);
+      const active = tabs.find((btn) => btn.classList.contains('is-active')) || initialBtn;
+      if (active) moveHighlightTo(active, { animate: false });
     };
+
     window.addEventListener('resize', recalc);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(recalc);
@@ -1005,6 +1191,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const kind = el.getAttribute('data-infos-kind');
     if (!kind) return;
 
+    if (kind === 'skill_score') {
+      renderSkillScoreFormula(el);
+      return;
+    }
+
+    if (kind === 'score_rank') {
+      renderScoreRank(el);
+      return;
+    }
+
     let html = '';
     if (
       kind === 'rank_how_to_submit' ||
@@ -1018,13 +1214,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     el.innerHTML = html;
+    decorateInfoSection(el);
   });
 
   const GROUP_BY_KIND = {
-    rank_how_to_submit:     'ranking_process',
-    rank_submission_rules:  'ranking_process',
-    rank_info_thresholds:   'ranks_threshold',
-    rank_medals_thresholds: 'ranks_threshold',
+    rank_how_to_submit:     'skill_rank',
+    rank_submission_rules:  'skill_rank',
+    rank_info_thresholds:   'skill_rank',
+    rank_medals_thresholds: 'skill_rank',
   };
 
   document.querySelectorAll('[data-infos-kind]').forEach((el) => {

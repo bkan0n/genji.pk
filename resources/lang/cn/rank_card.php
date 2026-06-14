@@ -64,6 +64,7 @@ return [
     'xp'             => '经验值',
     'prestige_level' => '声望',
     'community_rank' => '等级',
+    'skill_score'    => '技能分数',
 
     // ───────────────────────────────────────────────────────────────────────
     // IMAGES ALT TEXTS

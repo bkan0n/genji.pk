@@ -140,6 +140,25 @@ const DIFFICULTY_FINE_OPTIONS = [
   { text: () => t('filters.hell'), value: 'Hell', raw: 'Hell' },
 ];
 
+const PLAYTEST_DIFFICULTY_RANGES = [
+  ['Easy -', 0.0, 1.18],
+  ['Easy', 1.18, 1.76],
+  ['Easy +', 1.76, 2.35],
+  ['Medium -', 2.35, 2.94],
+  ['Medium', 2.94, 3.53],
+  ['Medium +', 3.53, 4.12],
+  ['Hard -', 4.12, 4.71],
+  ['Hard', 4.71, 5.29],
+  ['Hard +', 5.29, 5.88],
+  ['Very Hard -', 5.88, 6.47],
+  ['Very Hard', 6.47, 7.06],
+  ['Very Hard +', 7.06, 7.65],
+  ['Extreme -', 7.65, 8.24],
+  ['Extreme', 8.24, 8.82],
+  ['Extreme +', 8.82, 9.41],
+  ['Hell', 9.41, 10.0],
+];
+
 const CURRENT_LANG = document.documentElement.lang || 'en';
 let translations = window.SUBMIT_I18N || {};
 let addingSecondaryCreator = false;
@@ -4228,9 +4247,12 @@ async function openPlaytestModalForCode(code) {
   try { setupRatingDropdown(); } catch {}
   try { await hydratePlaytestModalCreatorAvatar(modal); } catch {}
   try {
-    const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
-    const pre = await preloadVoters(voterIds);
-    injectVotersGrid(modal, pre, voterIds);
+    const voters = await fetchPlaytestVotes(
+      data.playtest_thread_id,
+      Array.isArray(data.playtest_voters) ? data.playtest_voters : []
+    );
+    const pre = await preloadVoters(voters);
+    injectVotersGrid(modal, pre, voters);
     registerVoterInteractions(modal);
   } catch {}
 
@@ -4969,6 +4991,56 @@ function validateSubmitRecordForm(event) {
 /* =========================
    HELPERS PLAYTEST
    ========================= */
+function playtestDifficultyFromValue(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '';
+
+  const match =
+    PLAYTEST_DIFFICULTY_RANGES.find(([, , max]) => numericValue < max) ||
+    PLAYTEST_DIFFICULTY_RANGES[PLAYTEST_DIFFICULTY_RANGES.length - 1];
+
+  return match?.[0] || '';
+}
+
+function translatePlaytestDifficulty(label) {
+  const option = DIFFICULTY_FINE_OPTIONS.find((item) => item.value === label);
+  return option ? option.text() : String(label || '');
+}
+
+function normalizePlaytestVoter(voter) {
+  if (voter == null) return null;
+
+  if (typeof voter !== 'object') {
+    const userId = String(voter).trim();
+    return userId ? { user_id: userId, name: '', difficulty_value: null, difficulty_label: '' } : null;
+  }
+
+  const userId = String(
+    voter.user_id ?? voter.id ?? voter.discord_id ?? voter.voter_id ?? ''
+  ).trim();
+  if (!userId) return null;
+
+  const rawDifficulty = voter.difficulty ?? voter.vote_value ?? voter.difficulty_value ?? voter.value;
+  const difficultyValue = Number(rawDifficulty);
+  const explicitLabel =
+    voter.difficulty_label ??
+    voter.voted_difficulty ??
+    (typeof rawDifficulty === 'string' && !Number.isFinite(difficultyValue) ? rawDifficulty : '');
+
+  return {
+    user_id: userId,
+    name: String(voter.name ?? voter.display_name ?? '').trim(),
+    difficulty_value: Number.isFinite(difficultyValue) ? difficultyValue : null,
+    difficulty_label:
+      String(explicitLabel || '').trim() ||
+      (Number.isFinite(difficultyValue) ? playtestDifficultyFromValue(difficultyValue) : ''),
+  };
+}
+
+function playtestVoterId(voter) {
+  return normalizePlaytestVoter(voter)?.user_id || '';
+}
+
 function normalizePlaytest(item) {
   const creators = Array.isArray(item?.creators) ? item.creators : [];
   const primary = creators.find((c) => c.is_primary) || creators[0] || {};
@@ -5046,7 +5118,7 @@ function normalizePlaytest(item) {
   const playtest_thread_id = asStr(item.playtest?.thread_id);
 
   const playtest_voters = Array.isArray(item.playtest?.voters)
-    ? item.playtest.voters.map((v) => (typeof v === 'string' ? v : String(v)))
+    ? item.playtest.voters.map(normalizePlaytestVoter).filter(Boolean)
     : [];
 
   const medals = item.medals ?? null;
@@ -5594,43 +5666,10 @@ function setupRatingDropdown() {
         .filter(Boolean)
     : [];
 
-  const difficulties = [
-    'Easy -',
-    'Easy',
-    'Easy +',
-    'Medium -',
-    'Medium',
-    'Medium +',
-    'Hard -',
-    'Hard',
-    'Hard +',
-    'Very Hard -',
-    'Very Hard',
-    'Very Hard +',
-    'Extreme -',
-    'Extreme',
-    'Extreme +',
-    'Hell',
-  ];
-
-  const labelToRange = {
-    'Easy -': [0.0, 1.18],
-    Easy: [1.18, 1.76],
-    'Easy +': [1.76, 2.35],
-    'Medium -': [2.35, 2.94],
-    Medium: [2.94, 3.53],
-    'Medium +': [3.53, 4.12],
-    'Hard -': [4.12, 4.71],
-    Hard: [4.71, 5.29],
-    'Hard +': [5.29, 5.88],
-    'Very Hard -': [5.88, 6.47],
-    'Very Hard': [6.47, 7.06],
-    'Very Hard +': [7.06, 7.65],
-    'Extreme -': [7.65, 8.24],
-    Extreme: [8.24, 8.82],
-    'Extreme +': [8.82, 9.41],
-    Hell: [9.41, 10.0],
-  };
+  const difficulties = PLAYTEST_DIFFICULTY_RANGES.map(([label]) => label);
+  const labelToRange = Object.fromEntries(
+    PLAYTEST_DIFFICULTY_RANGES.map(([label, min, max]) => [label, [min, max]])
+  );
   const mid = (arr) => +((arr[0] + arr[1]) / 2).toFixed(2);
 
   const dotClass = (label) => {
@@ -5785,10 +5824,14 @@ function setupRatingDropdown() {
             : (baseAvg * baseCount + difficultyValue) / Math.max(1, baseCount + 1)
           : difficultyValue;
 
+      try {
+        await appendVoterToModal(userId, {
+          difficulty: difficultyValue,
+          difficulty_label: selectedLabel,
+        });
+      } catch {}
+
       if (!alreadyVoted) {
-        try {
-          await appendVoterToModal(userId);
-        } catch {}
         initialVoters.push(userId);
         rateQuestion.dataset.voters = initialVoters.join(',');
       }
@@ -5873,12 +5916,47 @@ document.addEventListener('mousedown', (e) => {
   }
 }, true);
 
-async function appendVoterToModal(userId) {
+function voterVoteMetaHTML(voter, escapeHtml = (value) => String(value ?? '')) {
+  const normalized = normalizePlaytestVoter(voter);
+  const value = normalized?.difficulty_value;
+  const label = normalized?.difficulty_label;
+
+  if (!Number.isFinite(value) || !label) {
+    return '<div class="mt-1 h-4" data-voter-vote></div>';
+  }
+
+  const translatedLabel = translatePlaytestDifficulty(label);
+  const colorClasses = difficultyClasses(label, value);
+
+  return `
+    <div class="mt-1 flex h-4 max-w-full items-center justify-center gap-1 overflow-hidden text-[10px] leading-none"
+         data-voter-vote>
+      <span class="min-w-0 truncate rounded border px-1 py-0.5 ${colorClasses.chip}"
+            title="${escapeHtml(t('playtest.voted_difficulty'))}: ${escapeHtml(translatedLabel)}">
+        ${escapeHtml(translatedLabel)}
+      </span>
+      <span class="shrink-0 tabular-nums text-zinc-600 dark:text-zinc-400"
+            title="${escapeHtml(t('playtest.vote_value'))}: ${value.toFixed(2)}">
+        ${value.toFixed(2)}
+      </span>
+    </div>
+  `;
+}
+
+async function appendVoterToModal(userId, vote = {}) {
   const modal = document.getElementById('playtestModalInner');
   const mount = modal?.querySelector('#votersMount');
   if (!mount) return;
 
-  if (mount.querySelector(`[data-voter-row][data-user-id="${String(userId)}"]`)) return;
+  const normalizedVote = normalizePlaytestVoter({ user_id: userId, ...vote });
+  const existingRow = mount.querySelector(
+    `[data-voter-row][data-user-id="${String(userId)}"]`
+  );
+  if (existingRow) {
+    const meta = existingRow.querySelector('[data-voter-vote]');
+    if (meta) meta.outerHTML = voterVoteMetaHTML(normalizedVote);
+    return;
+  }
 
   if (mount.getAttribute('aria-busy') === 'true') {
     mount.innerHTML = '';
@@ -5899,14 +5977,14 @@ async function appendVoterToModal(userId) {
 
   const row = document.createElement('div');
   row.className =
-    'flex flex-col items-center text-center opacity-0 translate-y-1 transition-all duration-300';
+    'voter-card flex flex-col items-center text-center opacity-0 translate-y-1 transition-all duration-300';
   row.setAttribute('data-voter-row', '1');
   row.setAttribute('data-user-id', String(userId));
   row.innerHTML = `
     <img src="${avatar || cdnAsset('assets/profile/default-avatar.png')}" alt="${name || '—'}"
          class="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-300/60 dark:ring-white/10" data-discord-avatar loading="lazy">
     <span class="mt-1 text-sm text-zinc-800 dark:text-zinc-200 font-medium truncate max-w-[120px]">${name || '—'}</span>
-    <span class="text-[11px] text-zinc-600 dark:text-zinc-500 truncate max-w-[120px]">${String(userId)}</span>
+    ${voterVoteMetaHTML(normalizedVote)}
   `;
   list.appendChild(row);
 
@@ -5980,16 +6058,46 @@ function bumpVoteCountersInModal({
   }
 }
 
-async function preloadVoters(voterIds = []) {
-  const ids = Array.from(new Set((Array.isArray(voterIds) ? voterIds : []).map((v) => String(v))));
+async function fetchPlaytestVotes(threadId, fallbackVoters = []) {
+  const fallback = (Array.isArray(fallbackVoters) ? fallbackVoters : [])
+    .map(normalizePlaytestVoter)
+    .filter(Boolean);
+  if (!threadId) return fallback;
+
+  try {
+    const response = await fetch(
+      `/api/maps/playtests/${encodeURIComponent(threadId)}/votes`,
+      {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      }
+    );
+    if (!response.ok) return fallback;
+
+    const json = await response.json();
+    if (!Array.isArray(json?.votes)) return fallback;
+
+    return json.votes.map(normalizePlaytestVoter).filter(Boolean);
+  } catch {
+    return fallback;
+  }
+}
+
+async function preloadVoters(voters = []) {
+  const normalizedVoters = (Array.isArray(voters) ? voters : [])
+    .map(normalizePlaytestVoter)
+    .filter(Boolean);
+  const uniqueVoters = Array.from(
+    new Map(normalizedVoters.map((voter) => [voter.user_id, voter])).values()
+  );
   const out = Object.create(null);
   await Promise.all(
-    ids.map(async (id) => {
+    uniqueVoters.map(async (voter) => {
       const [avatarUrl, displayName] = await Promise.all([
-        fetchDiscordAvatar(id),
-        fetchUserPrimaryName(id),
+        fetchDiscordAvatar(voter.user_id),
+        voter.name ? Promise.resolve(voter.name) : fetchUserPrimaryName(voter.user_id),
       ]);
-      out[id] = {
+      out[voter.user_id] = {
         avatar: avatarUrl || cdnAsset('assets/profile/default-avatar.png'),
         name: displayName || '—',
       };
@@ -5998,16 +6106,24 @@ async function preloadVoters(voterIds = []) {
   return out;
 }
 
-function buildVotersGridHTML(preloaded, voterIds) {
-  const esc = (s) => String(s ?? '');
-  if (!voterIds?.length) {
+function buildVotersGridHTML(preloaded, voters) {
+  const esc = (s) =>
+    String(s ?? '').replace(
+      /[&<>"']/g,
+      (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]
+    );
+  const normalizedVoters = (Array.isArray(voters) ? voters : [])
+    .map(normalizePlaytestVoter)
+    .filter(Boolean);
+
+  if (!normalizedVoters.length) {
     return `<div class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">"${t('playtest.no_votes')}"</div>`;
   }
   return `
     <div class="voters-list opacity-0 translate-y-1 transition-all duration-300 ease-out flex flex-col gap-3
-            max-h-[35vh] overflow-y-auto overflow-x-hidden pr-1 overscroll-contain">
-      ${voterIds.map((id) => {
-        const key = String(id);
+            pr-1">
+      ${normalizedVoters.map((voter) => {
+        const key = voter.user_id;
         const avatar = preloaded[key]?.avatar || cdnAsset('assets/profile/default-avatar.png');
         const name = preloaded[key]?.name || '—';
         return `
@@ -6041,6 +6157,7 @@ function buildVotersGridHTML(preloaded, voterIds) {
             >
               ${esc(name)}
             </button>
+            ${voterVoteMetaHTML(voter, esc)}
           </div>
         `;
       }).join('')}
@@ -6048,11 +6165,11 @@ function buildVotersGridHTML(preloaded, voterIds) {
   `;
 }
 
-function injectVotersGrid(modalEl, preloaded, voterIds) {
+function injectVotersGrid(modalEl, preloaded, voters) {
   const mount = modalEl.querySelector('#votersMount');
   if (!mount) return;
   mount.setAttribute('aria-busy', 'false');
-  mount.innerHTML = buildVotersGridHTML(preloaded, voterIds);
+  mount.innerHTML = buildVotersGridHTML(preloaded, voters);
   const grid = mount.querySelector('.voters-list');
   if (grid) {
     requestAnimationFrame(() => {
@@ -6595,9 +6712,12 @@ function mountModeratorActions(modalEl, playtest) {
       mountModeratorActions(modalInner, data);
 
       try {
-        const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
-        const pre = await preloadVoters(voterIds);
-        injectVotersGrid(modal, pre, voterIds);
+        const voters = await fetchPlaytestVotes(
+          data.playtest_thread_id,
+          Array.isArray(data.playtest_voters) ? data.playtest_voters : []
+        );
+        const pre = await preloadVoters(voters);
+        injectVotersGrid(modal, pre, voters);
         registerVoterInteractions(modal);
       } catch {}
       const initialAvg = (() => {
@@ -7064,7 +7184,7 @@ const mapNameUi =
 
   const votersMount = `
     <div id="votersMount"
-     class="mt-3 max-h-[300px] w-full overflow-y-hidden overflow-x-hidden pr-1 pt-2 overscroll-contain scrollbar-stable">
+     class="mt-3 max-h-[300px] w-full overflow-y-auto overflow-x-hidden pr-1 pt-2 overscroll-contain scrollbar-stable">
       <div class="max-h-[160px] overflow-hidden">
         <div class="space-y-2.5" aria-busy="true" aria-live="polite">
           <div class="h-3.5 w-20 rounded bg-white/35 dark:bg-zinc-900/5 dark:bg-white/10 animate-pulse"></div>
@@ -7268,7 +7388,7 @@ const mapNameUi =
           data-code="${esc(data.code || '')}"
           data-user-id="${esc(uid)}"
           data-creator-ids="${esc(Array.isArray(creatorIds) ? creatorIds.join(',') : '')}"
-          data-voters="${esc(Array.isArray(data.playtest_voters) ? data.playtest_voters.map((v) => String(v)).join(',') : '')}"
+          data-voters="${esc(Array.isArray(data.playtest_voters) ? data.playtest_voters.map(playtestVoterId).filter(Boolean).join(',') : '')}"
         >
           <div class="flex items-center gap-2">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/85 dark:bg-zinc-900/3 dark:bg-white/5 ring-1 ring-inset ring-zinc-300/60 dark:ring-white/10">
@@ -7341,9 +7461,12 @@ async function initializePlaytestCards(userId) {
         mountModeratorActions(modalInner, data);
 
         try {
-          const voterIds = Array.isArray(data.playtest_voters) ? data.playtest_voters : [];
-          const pre = await preloadVoters(voterIds);
-          injectVotersGrid(modal, pre, voterIds);
+          const voters = await fetchPlaytestVotes(
+            data.playtest_thread_id,
+            Array.isArray(data.playtest_voters) ? data.playtest_voters : []
+          );
+          const pre = await preloadVoters(voters);
+          injectVotersGrid(modal, pre, voters);
           registerVoterInteractions(modal);
         } catch {}
 
