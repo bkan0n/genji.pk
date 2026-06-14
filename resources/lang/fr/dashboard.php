@@ -51,6 +51,8 @@ return [
     'keys_winter'     => 'Clés hiver',
     'rewards_owned'   => 'Récompenses',
     'quests_done'     => 'Quêtes terminées',
+    'streak'          => 'Série',
+    'skill_score'     => 'Score de skill',
   ],
 
   'overview' => [
@@ -134,6 +136,9 @@ return [
     'claim'               => 'Récupérer',
     'complete_to_claim'   => 'Terminez la quête pour récupérer',
     'claim_failed'        => 'Récupération échouée.',
+    'bounty_types'        => [
+      'rival_challenge' => 'Défi rival',
+    ],
   ],
 
   'submissions' => [

@@ -51,6 +51,8 @@ return [
     'keys_winter'     => 'Зимние ключи',
     'rewards_owned'   => 'Награды',
     'quests_done'     => 'Заданий выполнено',
+    'streak'          => 'Серия',
+    'skill_score'     => 'Рейтинг навыка',
   ],
 
   'overview' => [
@@ -134,6 +136,9 @@ return [
     'claim'               => 'Получить',
     'complete_to_claim'   => 'Завершите задание, чтобы получить награду',
     'claim_failed'        => 'Не удалось получить награду.',
+    'bounty_types'        => [
+      'rival_challenge' => 'Вызов соперника',
+    ],
   ],
 
   'submissions' => [

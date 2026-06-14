@@ -6,20 +6,22 @@
 
 @push('head')
   @php($nonce = csp_nonce())
+  @php($dashboardUserId = session('user_id'))
 @endpush
 
 @section('content')
   <section class="relative mb-12 min-h-[100vh]">
     <div class="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
       <div
-        class="relative overflow-visible rounded-3xl border border-zinc-200/70 dark:border-white/10
+        id="dashboard-hero"
+        class="relative overflow-hidden rounded-3xl border border-zinc-200/70 dark:border-white/10
                bg-white/80 dark:bg-zinc-950/30 ring-1 ring-zinc-200/40 dark:ring-white/10 shadow-2xl"
       >
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-zinc-50/70 via-white/40 to-brand-200/20 dark:from-white/5 dark:via-zinc-950/20 dark:to-brand-500/10"></div>
 
         <div class="relative p-5 sm:p-6 lg:p-7">
-          <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:gap-6">
-            <div class="flex items-center gap-4 lg:flex-1 lg:min-w-0">
+          <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:gap-6">
+            <div class="flex min-w-0 items-center gap-4 xl:flex-1">
               <button id="dash-open-rankcard" type="button" class="relative group shrink-0">
                 <div data-discord-avatar-frame class="h-16 w-16 overflow-hidden rounded-full ring-2 ring-brand-500/60 shadow-[0_0_20px_rgba(99,102,241,.25)] bg-zinc-900/5 dark:bg-white/5 transition group-hover:shadow-[0_0_28px_rgba(99,102,241,.35)]">
                   <img
@@ -108,7 +110,7 @@
               {{-- /HEADER --}}
             </div>
 
-            <div class="min-w-0 w-full lg:flex-none lg:w-[420px] lg:px-6">
+            <div class="min-w-0 w-full xl:flex-none xl:w-[min(34vw,420px)] xl:px-4">
               <div class="flex items-center justify-between">
                 <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
                   {{ __('dashboard.header.xp_progress') }}
@@ -134,8 +136,8 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-3 shrink-0">
-              <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 px-4 py-3">
+            <div class="flex w-full flex-wrap items-stretch gap-3 xl:w-auto xl:shrink-0">
+              <div class="min-w-[8rem] flex-1 rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 px-4 py-3 xl:flex-none">
                 <div class="flex items-center gap-2">
                   <svg class="h-5 w-5 text-amber-500" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2Z"/>
@@ -154,7 +156,7 @@
 
               <a
                 href="{{ url('/rank_card') }}"
-                class="inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-semibold
+                class="inline-flex min-w-[8rem] flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-4 py-3 font-semibold xl:flex-none
                        bg-brand-500 hover:bg-brand-400 text-white shadow transition"
               >
                 <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -166,64 +168,89 @@
           </div>
 
           {{-- STATS --}}
-          <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="dashboard-summary-grid mt-6">
             {{-- KEYS (ALL TYPES) --}}
-            <div class="col-span-2 rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
+            <div class="dashboard-inventory-card rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-3">
               <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
                 {{ __('dashboard.lootboxes.your_inventory') }}
               </div>
 
-              <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                <div class="flex items-center gap-2">
-                  <img src="{{ cdn_asset('assets/lootbox/keys/classic.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
-                  <div>
-                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Classic') }}</div>
+              <div class="dashboard-key-grid mt-1.5">
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/classic.png') }}" alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div class="min-w-0">
+                    <div class="truncate text-[9px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Classic') }}</div>
                     <div id="dash-keys-classic" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <img src="{{ cdn_asset('assets/lootbox/keys/winter.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
-                  <div>
-                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Winter') }}</div>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/winter.png') }}" alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div class="min-w-0">
+                    <div class="truncate text-[9px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Winter') }}</div>
                     <div id="dash-keys-winter" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <img src="{{ cdn_asset('assets/lootbox/keys/spring.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
-                  <div>
-                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Spring') }}</div>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/spring.png') }}" alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div class="min-w-0">
+                    <div class="truncate text-[9px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Spring') }}</div>
                     <div id="dash-keys-spring" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <img src="{{ cdn_asset('assets/lootbox/keys/summer.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
-                  <div>
-                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Summer') }}</div>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/summer.png') }}" alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div class="min-w-0">
+                    <div class="truncate text-[9px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Summer') }}</div>
                     <div id="dash-keys-summer" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <img src="{{ cdn_asset('assets/lootbox/keys/autumn.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain" loading="lazy" decoding="async" />
-                  <div>
-                    <div class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Autumn') }}</div>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <img src="{{ cdn_asset('assets/lootbox/keys/autumn.png') }}" alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" decoding="async" />
+                  <div class="min-w-0">
+                    <div class="truncate text-[9px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('lootbox.ui.key_types.Autumn') }}</div>
                     <div id="dash-keys-autumn" class="text-lg font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
+            <div class="dashboard-summary-card rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
               <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.rewards_owned') }}</div>
               <div id="dash-rewards" class="mt-1 text-xl font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
             </div>
 
-            <div class="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
-              <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.quests_done') }}</div>
-              <div id="dash-quests-done" class="mt-1 text-xl font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+            <div class="dashboard-summary-card rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
+              <div class="flex items-center justify-between gap-2">
+                <div class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.streak') }}</div>
+                <svg class="h-4 w-4 shrink-0 text-orange-500 dark:text-orange-300" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d="M13.5 2.5c.4 3.3-1.6 4.8-3.3 6.5C8.6 10.5 7 12.1 7 14.8A5 5 0 0 0 12 20a5 5 0 0 0 5-5.2c0-2.4-1.2-4.6-3.5-6.8.1 2.1-.7 3.3-1.8 4.2.2-3.2-1.1-6.4-3.7-8.7 0 2.5-1.1 4-2.2 5.4C4.4 10.6 3 12.4 3 15a9 9 0 0 0 18 0c0-5.1-3.2-9.4-7.5-12.5Z"/>
+                </svg>
+              </div>
+              <div id="dash-streak" class="mt-1 text-xl font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
+            </div>
+
+            <div class="dashboard-summary-card rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
+              <div class="truncate text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.skill_score') }}</div>
+              <div class="mt-2 flex items-center gap-2">
+                <div class="shrink-0">
+                  <img
+                    id="dash-skill-icon"
+                    src="{{ cdn_asset('assets/skill/rank-icons/Unranked.png') }}"
+                    alt=""
+                    class="h-9 w-9 object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <div id="dash-skill-score" class="truncate text-lg font-extrabold leading-none text-zinc-900 dark:text-zinc-50 sm:text-xl">—</div>
+                  <div id="dash-skill-tier" class="mt-1 truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Unranked</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -439,7 +466,7 @@
         </div>
       </div>
 
-      <input id="dash-current-user" type="hidden" value="{{ (string) (auth()->check() ? auth()->id() : '') }}" />
+      <input id="dash-current-user" type="hidden" value="{{ (string) ($dashboardUserId ?? '') }}" />
     </div>
   </section>
 @endsection
@@ -448,7 +475,7 @@
   <script nonce="{{ $nonce }}">
     document.documentElement.lang = @json(app()->getLocale());
     window.DASHBOARD_I18N = @json(\Illuminate\Support\Facades\Lang::get('dashboard'));
-    window.user_id = @json(auth()->check() ? (string) auth()->id() : null);
+    window.user_id = @json($dashboardUserId !== null ? (string) $dashboardUserId : null);
   </script>
 
   @vite('resources/js/pages/dashboard.js', null, ['nonce' => csp_nonce()])

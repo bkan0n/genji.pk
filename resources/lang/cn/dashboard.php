@@ -51,6 +51,8 @@ return [
     'keys_winter'     => '冬季钥匙',
     'rewards_owned'   => '奖励',
     'quests_done'     => '已完成任务',
+    'streak'          => '连胜',
+    'skill_score'     => '技能分数',
   ],
 
   'overview' => [
@@ -134,6 +136,9 @@ return [
     'claim'               => '领取',
     'complete_to_claim'   => '完成任务后可领取',
     'claim_failed'        => '领取失败。',
+    'bounty_types'        => [
+      'rival_challenge' => '对手挑战',
+    ],
   ],
 
   'submissions' => [
