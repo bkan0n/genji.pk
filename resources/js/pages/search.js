@@ -249,7 +249,11 @@ function buildAutocompleteUrl(kind, { value = '', locale = 'en', pageSize = 10 }
    ========================= */
 const sectionLoadingOperations = {
   mapSearch: async () => {
-    const params = new URLSearchParams({ page_size: '25', page_number: '1' });
+    const params = new URLSearchParams({
+      archived: 'false',
+      page_size: '25',
+      page_number: '1',
+    });
 
     const uid = typeof window !== 'undefined' && window.user_id ? String(window.user_id) : '';
     if (uid) params.set('user_id', uid);
@@ -452,6 +456,7 @@ function initializeIcons() {
     'playtest_filter',
     'completion_filter',
     'medal_filter',
+    'archived',
     'official', 
     'apply_filters',
     'clear_filters',
@@ -482,6 +487,7 @@ function getIconSVG(id) {
     playtest_filter: `<path d="M14.2639 15.9376L12.5958 14.2835C11.7909 13.4852 11.3884 13.0861 10.9266 12.9402C10.5204 12.8119 10.0838 12.8166 9.68048 12.9537C9.22188 13.1096 8.82814 13.5173 8.04068 14.3327L4.04409 18.2802M14.2639 15.9376L14.6053 15.5991C15.4112 14.7999 15.8141 14.4003 16.2765 14.2544C16.6831 14.1262 17.12 14.1312 17.5236 14.2688C17.9824 14.4252 18.3761 14.834 19.1634 15.6515L20 16.4936M14.2639 15.9376L18.275 19.9566M18.275 19.9566C17.9176 20.0001 17.4543 20.0001 16.8 20.0001H7.2C6.07989 20.0001 5.51984 20.0001 5.09202 19.7821C4.71569 19.5904 4.40973 19.2844 4.21799 18.9081C4.12796 18.7314 4.07512 18.5322 4.04409 18.2802M18.275 19.9566C18.5293 19.9257 18.7301 19.8728 18.908 19.7821C19.2843 19.5904 19.5903 19.2844 19.782 18.9081C20 18.4803 20 17.9202 20 16.8001V16.4936M12.5 4L7.2 4.00011C6.07989 4.00011 5.51984 4.00011 5.09202 4.21809C4.71569 4.40984 4.40973 4.7158 4.21799 5.09213C4 5.51995 4 6.08 4 7.20011V16.8001C4 17.4576 4 17.9222 4.04409 18.2802M20 11.5V16.4936M14 10.0002L16.0249 9.59516C16.2015 9.55984 16.2898 9.54219 16.3721 9.5099C16.4452 9.48124 16.5146 9.44407 16.579 9.39917C16.6515 9.34859 16.7152 9.28492 16.8425 9.1576L21 5.00015C21.5522 4.44787 21.5522 3.55244 21 3.00015C20.4477 2.44787 19.5522 2.44787 19 3.00015L14.8425 7.1576C14.7152 7.28492 14.6515 7.34859 14.6009 7.42112C14.556 7.4855 14.5189 7.55494 14.4902 7.62801C14.4579 7.71033 14.4403 7.79862 14.4049 7.97518L14 10.0002Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     completion_filter: `<path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     medal_filter: `<path d="M12 11L8 3H4L8.5058 12.4622M12 11L16 3H20L15.4942 12.4622M12 11C13.344 11 14.5848 11.5635 15.4942 12.4622M12 11C10.656 11 9.41518 11.5635 8.5058 12.4622M15.4942 12.4622C16.4182 13.3753 17 14.6344 17 16C17 18.7614 14.7614 21 12 21C9.23858 21 7 18.7614 7 16C7 14.6344 7.58179 13.3753 8.5058 12.4622" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`,
+    archived: `<path d="M4 7h16M5 7l1 13h12l1-13M9 11h6M8 4h8l1 3H7l1-3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     official: `<path d="M12 3L5 6V12C5 16.4183 8.13401 19.5 12 21C15.866 19.5 19 16.4183 19 12V6L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M9 12L11 14L15 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     apply_filters: `<path d="M4 12.6111L8.92308 17.5L20 6.5" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     clear_filters: `<path d="M6 6L18 18M18 6L6 18" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
@@ -1004,6 +1010,9 @@ async function selectSection(sectionId, opts = {}) {
       if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
         persistentFilters.playtest_filter = 'All';
       }
+      if (persistentFilters.archived == null || String(persistentFilters.archived).trim() === '') {
+        persistentFilters.archived = 'False';
+      }
       if (persistentFilters.sort == null || String(persistentFilters.sort).trim() === '') {
         persistentFilters.sort = 'difficulty:asc';
       }
@@ -1046,6 +1055,9 @@ async function selectSection(sectionId, opts = {}) {
 
     if (persistentFilters.playtest_filter == null || String(persistentFilters.playtest_filter).trim() === '') {
       persistentFilters.playtest_filter = 'All';
+    }
+    if (persistentFilters.archived == null || String(persistentFilters.archived).trim() === '') {
+      persistentFilters.archived = 'False';
     }
     if (persistentFilters.sort == null || String(persistentFilters.sort).trim() === '') {
       persistentFilters.sort = 'difficulty:asc';
@@ -1112,6 +1124,7 @@ const URL_FILTER_KEYS = new Set([
   'restrictions',
   'tags',
   'playtest_filter',
+  'archived',
   'official',
   'user_id',
   'medal_filter',
@@ -1146,6 +1159,14 @@ function __urlNormalizeOfficial(v) {
   if (!s) return '';
   if (['true', '1', 'yes', 'on', 'with', 'global'].includes(s)) return 'True';
   if (['false', '0', 'no', 'off', 'without', 'cn', 'china'].includes(s)) return 'False';
+  return String(v ?? '').trim();
+}
+
+function __urlNormalizeBoolean(v) {
+  const s = String(v ?? '').trim().toLowerCase();
+  if (!s) return '';
+  if (['true', '1', 'yes', 'on'].includes(s)) return 'True';
+  if (['false', '0', 'no', 'off'].includes(s)) return 'False';
   return String(v ?? '').trim();
 }
 
@@ -1214,6 +1235,12 @@ function __urlReadFilters() {
     if (k === 'official') {
       const norm = __urlNormalizeOfficial(arr[0]);
       if (norm) out.official = norm;
+      continue;
+    }
+
+    if (k === 'archived') {
+      const norm = __urlNormalizeBoolean(arr[0]);
+      if (norm) out.archived = norm;
       continue;
     }
 
@@ -2452,6 +2479,17 @@ function initializeToolbarButtons() {
             false
           );
           break;
+        case 'archived':
+          optionsContainer = showOptionsContainer(
+            'archivedOptions',
+            [
+              { text: t('filters_toolbar.not_archived'), value: 'False', raw: 'False' },
+              { text: t('filters_toolbar.archived_only'), value: 'True', raw: 'True' },
+            ],
+            button,
+            false
+          );
+          break;
         case 'tags':
           optionsContainer = showOptionsContainer(
             'tagsOptions',
@@ -2520,6 +2558,7 @@ function updateActiveFilters() {
     restrictions: 'restrictions',
     tags: 'tags',
     completionFilter: 'completion_filter',
+    archived: 'archived',
     official: 'official',
   };
 
@@ -2611,7 +2650,7 @@ function updateToolbarButtonStates() {
     creator: ['creator_ids', 'creator_names'],
   };
 
-  const booleanLikeFilters = new Set(['completion_filter', 'medal_filter', 'official']);
+  const booleanLikeFilters = new Set(['completion_filter', 'medal_filter', 'archived', 'official']);
 
   function boolBadgeLabel(v) {
     const s = String(v || '').trim();
@@ -2835,6 +2874,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
     playtest_filter: 'playtest_filter',
     completionFilter: 'completion_filter',
     medalFilter: 'medal_filter',
+    archived: 'archived',
     official: 'official',
   };
   const mapped = map[filterKeyRaw] || filterKeyRaw;
@@ -2898,6 +2938,9 @@ function clearFilters(silent = false) {
     activeFilters.playtest_filter = 'All';
     persistentFilters.playtest_filter = 'All';
 
+    activeFilters.archived = 'False';
+    persistentFilters.archived = 'False';
+
     activeFilters.sort = 'difficulty:asc';
     persistentFilters.sort = 'difficulty:asc';
     try { __syncMapSearchSortUI('difficulty:asc'); } catch {}
@@ -2934,6 +2977,8 @@ function clearFilters(silent = false) {
     const def = (lang === 'cn') ? 'False' : 'True';
     persistentFilters.official = def;
     activeFilters.official = def;
+    persistentFilters.archived = 'False';
+    activeFilters.archived = 'False';
   }
 
   updateToolbarButtonStates();
