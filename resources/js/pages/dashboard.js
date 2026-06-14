@@ -1812,8 +1812,12 @@ async function loadStreakSummary() {
     const payload = await httpJson(EP.streak(uid), { cache: "no-store" });
     const value = Number(payload?.current_streak ?? payload?.current ?? payload?.streak ?? payload ?? 0);
     streakEl.textContent = fmtIntSpaces(Number.isFinite(value) && value > 0 ? value : 0);
-  } catch {
-    streakEl.textContent = "—";
+  } catch (error) {
+    streakEl.textContent =
+      String(error?.message || "").trim().toLowerCase() ===
+      "tournament streak record not found."
+        ? "0"
+        : "—";
   }
 }
 
