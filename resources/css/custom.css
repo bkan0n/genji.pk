@@ -470,7 +470,7 @@ i.flag-zw:before,i.flag-zimbabwe:before{background-position:-108px -390px!import
 #leaderboard[aria-busy="true"] .lb-inner{min-width:0!important;width:100%!important}
 #leaderboard[aria-busy="true"] .lb-rows{overflow:hidden}
 /* --- GRID LAYOUT --- */
-.lb-grid{display:grid;grid-template-columns:3.25rem minmax(180px,2fr) minmax(90px,1fr) minmax(120px,1fr) minmax(120px,1fr) minmax(110px,1fr) minmax(110px,1fr) minmax(130px,1fr) minmax(180px,2fr);gap:.5rem;align-items:center}
+.lb-grid{display:grid;grid-template-columns:3.25rem minmax(190px,2fr) minmax(90px,.8fr) minmax(120px,.9fr) minmax(155px,1.2fr) minmax(95px,.75fr) minmax(95px,.75fr) minmax(120px,.9fr) minmax(170px,1.5fr);gap:.5rem;align-items:center}
 .lb-head{background: var(--lb-head-bg);color: var(--lb-head-text);border-radius:.5rem;margin-bottom:.25rem;padding:.5rem}
 /* --- ROW "CARD" --- */
 .lb-row{position:relative;border-radius:.75rem;padding:.5rem;background: var(--lb-row-bg);transition: background .2s;}
@@ -549,6 +549,428 @@ img.avatar-loaded{animation:none!important;background:none!important}
   mix-blend-mode:screen;opacity:.35;pointer-events:none;
 }
 .qmb .qmb-text{font-variant-numeric:tabular-nums;font-size:.8rem;color:#a1a1aa}
+#mapQualityDetail .qmb{width:100%;max-width:190px;gap:.625rem}
+#mapQualityDetail .qmb-track{width:auto;min-width:72px;flex:1;background:rgba(24,24,27,.1);box-shadow:inset 0 0 0 1px rgba(24,24,27,.08)}
+#mapQualityDetail .qmb-text{min-width:2.75rem;text-align:right;color:#52525b;font-weight:600}
+.dark #mapQualityDetail .qmb-track{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.dark #mapQualityDetail .qmb-text{color:#a1a1aa}
+
+/* ================= Dashboard summary ================= */
+#dashboard-hero{container-type:inline-size;container-name:dashboard-hero}
+.dashboard-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:.75rem}
+.dashboard-inventory-card{grid-column:span 2;min-width:0;container-type:inline-size;container-name:dashboard-inventory}
+.dashboard-summary-card{min-width:0;overflow:hidden}
+.infos-unified-panel,
+.score-rank-panel {
+  width: 100%;
+  overflow: clip;
+  border: 1px solid var(--infos-border);
+  border-radius: 1.25rem;
+  background: var(--infos-card);
+  box-shadow: var(--infos-shadow-pop);
+  color: var(--infos-text);
+}
+.infos-unified-panel {
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+.infos-unified-panel > h2:first-child {
+  margin: -1.25rem -1.35rem 1.25rem;
+  padding: 1.25rem 1.35rem;
+  border-bottom: 1px solid var(--infos-border);
+  background: linear-gradient(135deg, rgba(16, 185, 129, .12), rgba(56, 189, 248, .06));
+  color: var(--infos-text);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.infos-unified-panel > section,
+.infos-unified-panel > div:not(.help-pt) {
+  border-color: var(--infos-border) !important;
+  background-color: var(--infos-surface-2);
+  box-shadow: none;
+}
+.skill-formula-panel {
+  width: 100%;
+  overflow: clip;
+  border: 1px solid var(--infos-border);
+  border-radius: 1.25rem;
+  background: var(--infos-card);
+  box-shadow: var(--infos-shadow-pop);
+  color: var(--infos-text);
+}
+.skill-formula-header {
+  padding: 1.25rem 1.35rem;
+  border-bottom: 1px solid var(--infos-border);
+  background: linear-gradient(135deg, rgba(16, 185, 129, .12), rgba(56, 189, 248, .06));
+}
+.skill-formula-header h2 {
+  margin: .2rem 0 0;
+  color: var(--infos-text);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.skill-formula-header p {
+  margin: .25rem 0 0;
+  color: var(--infos-muted);
+  font-size: .85rem;
+}
+.skill-formula-kicker {
+  color: rgb(16, 185, 129);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.skill-formula-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+.skill-formula-section {
+  padding: 1rem;
+  border: 1px solid var(--infos-border);
+  border-radius: .9rem;
+  background: var(--infos-surface-2);
+}
+.skill-formula-section:nth-child(6),
+.skill-formula-section:nth-child(7) {grid-column: 1 / -1;}
+.skill-formula-section-title {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin-bottom: .8rem;
+}
+.skill-formula-section-title > span {
+  display: inline-flex;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: .5rem;
+  background: rgba(16, 185, 129, .14);
+  color: rgb(5, 150, 105);
+  font-size: .7rem;
+  font-weight: 900;
+}
+.skill-formula-section-title h3 {
+  margin: 0;
+  color: var(--infos-text);
+  font-size: .88rem;
+  font-weight: 900;
+}
+.skill-formula-condition {
+  margin: .65rem 0;
+  color: var(--infos-muted);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+.skill-formula-equation {
+  overflow-x: auto;
+  padding: .65rem .75rem;
+  border: 1px solid var(--infos-border);
+  border-radius: .65rem;
+  background: var(--infos-surface-3);
+  color: var(--infos-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: .82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.skill-formula-equation + .skill-formula-equation {margin-top: .5rem;}
+.skill-formula-current {
+  margin-top: .55rem;
+  padding: .6rem .75rem;
+  border: 1px solid rgba(56, 189, 248, .16);
+  border-radius: .65rem;
+  background: rgba(56, 189, 248, .06);
+}
+.skill-formula-current > span {
+  display: block;
+  color: rgb(2, 132, 199);
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.skill-formula-current .skill-formula-equation {
+  margin-top: .25rem;
+  padding: .25rem 0 0;
+  border: 0;
+  background: transparent;
+}
+.skill-formula-boxed {
+  border-color: rgba(16, 185, 129, .32);
+  background: rgba(16, 185, 129, .08);
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, .08);
+}
+.skill-formula-sum {font-size: 1.65rem;line-height: 1;}
+.skill-formula-fraction {
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  margin: 0 .2rem;
+  vertical-align: middle;
+  text-align: center;
+}
+.skill-formula-fraction > span:first-child {
+  padding: 0 .25rem .08rem;
+  border-bottom: 1px solid currentColor;
+}
+.skill-formula-fraction > span:last-child {padding: .08rem .25rem 0;}
+.skill-formula-definitions {
+  display: grid;
+  gap: .45rem;
+  margin: .8rem 0 0;
+}
+.skill-formula-definitions > div {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
+  gap: .6rem;
+  font-size: .77rem;
+}
+.skill-formula-definitions dt {
+  color: rgb(5, 150, 105);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 900;
+}
+.skill-formula-definitions dd {margin: 0;color: var(--infos-muted);}
+.skill-formula-cases {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .45rem;
+}
+.skill-formula-cases > div {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  padding: .55rem .65rem;
+  border: 1px solid var(--infos-border);
+  border-radius: .65rem;
+  background: var(--infos-surface-3);
+}
+.skill-formula-cases strong {
+  color: var(--infos-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: .85rem;
+}
+.skill-formula-cases span {
+  color: var(--infos-muted);
+  font-size: .68rem;
+}
+.skill-formula-note {
+  margin: .75rem 0 0;
+  padding: .75rem .85rem;
+  border: 1px solid rgba(16, 185, 129, .2);
+  border-radius: .75rem;
+  background: rgba(16, 185, 129, .08);
+  color: rgb(4, 120, 87);
+  font-size: .75rem;
+  line-height: 1.55;
+}
+.skill-formula-warning {
+  margin: .75rem 0 0;
+  padding: .7rem .8rem;
+  border: 1px solid rgba(245, 158, 11, .2);
+  border-radius: .7rem;
+  background: rgba(245, 158, 11, .07);
+  color: rgb(180, 83, 9);
+  font-size: .74rem;
+  line-height: 1.55;
+}
+html[data-theme="dark"] .skill-formula-kicker,
+html[data-theme="dark"] .skill-formula-section-title > span,
+html[data-theme="dark"] .skill-formula-definitions dt {color: rgb(110, 231, 183);}
+html[data-theme="dark"] .skill-formula-current > span {color: rgb(125, 211, 252);}
+html[data-theme="dark"] .skill-formula-note {color: rgb(167, 243, 208);}
+html[data-theme="dark"] .skill-formula-warning {color: rgb(253, 230, 138);}
+.score-rank-header {
+  padding: 1.25rem 1.35rem;
+  border-bottom: 1px solid var(--infos-border);
+  background: linear-gradient(135deg, rgba(16, 185, 129, .12), rgba(56, 189, 248, .06));
+}
+.score-rank-header h2 {
+  margin: .2rem 0 0;
+  color: var(--infos-text);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.score-rank-header p {
+  margin: .25rem 0 0;
+  color: var(--infos-muted);
+  font-size: .85rem;
+}
+.score-rank-body {padding: 1.25rem 1.35rem 1.4rem;}
+.score-rank-callout {
+  margin-bottom: 1rem;
+  padding: .8rem .9rem;
+  border: 1px solid rgba(16, 185, 129, .2);
+  border-radius: .75rem;
+  background: rgba(16, 185, 129, .08);
+  color: rgb(4, 120, 87);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+.score-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: .75rem;
+}
+.score-rank-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .9rem;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--infos-border);
+  border-radius: .9rem;
+  background: var(--infos-surface-2);
+}
+.score-rank-card::after {
+  position: absolute;
+  inset: auto -2rem -3rem auto;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 9999px;
+  background: currentColor;
+  content: "";
+  opacity: .04;
+}
+.score-rank-image-wrap {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--infos-border-soft);
+  border-radius: .85rem;
+  background: var(--infos-surface-3);
+}
+.score-rank-image {
+  width: 3.75rem;
+  height: 3.75rem;
+  object-fit: contain;
+}
+.score-rank-content {min-width: 0;}
+.score-rank-tier {
+  color: var(--infos-muted-2);
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.score-rank-content h3 {
+  margin: .15rem 0 0;
+  color: var(--infos-text);
+  font-size: 1rem;
+  font-weight: 900;
+}
+.score-rank-threshold,
+.score-rank-note {
+  margin: .35rem 0 0;
+  color: var(--infos-muted);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+.score-rank-unranked {color: rgb(113, 113, 122);}
+.score-rank-bronze {color: rgb(180, 83, 9);}
+.score-rank-silver {color: rgb(100, 116, 139);}
+.score-rank-gold {color: rgb(202, 138, 4);}
+.score-rank-emerald {color: rgb(5, 150, 105);}
+.score-rank-diamond {color: rgb(2, 132, 199);}
+.score-rank-ascendant {color: rgb(124, 58, 237);}
+.score-rank-elite {color: rgb(219, 39, 119);}
+.score-rank-champion {color: rgb(234, 88, 12);}
+html[data-theme="dark"] .score-rank-callout {color: rgb(167, 243, 208);}
+@media (max-width: 560px) {
+  .infos-unified-panel {padding: .8rem;}
+  .infos-unified-panel > h2:first-child {
+    margin: -.8rem -.8rem .8rem;
+    padding: 1rem;
+  }
+  .skill-formula-body {grid-template-columns: minmax(0, 1fr);padding: .8rem;}
+  .skill-formula-section:nth-child(6),
+  .skill-formula-section:nth-child(7) {grid-column: auto;}
+  .skill-formula-section {padding: .8rem;}
+  .skill-formula-definitions > div {grid-template-columns: minmax(0, 1fr);}
+  .skill-formula-cases {grid-template-columns: repeat(2, minmax(0, 1fr));}
+  .score-rank-body {padding: .8rem;}
+  .score-rank-grid {grid-template-columns: minmax(0, 1fr);}
+}
+.dashboard-key-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.375rem}
+@container dashboard-inventory (max-width:22rem){
+  .dashboard-key-grid{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:.625rem}
+}
+@container dashboard-inventory (max-width:14rem){
+  .dashboard-key-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container dashboard-hero (max-width:34rem){
+  .dashboard-inventory-card{grid-column:1/-1}
+}
+
+/* ================= Search details modals ================= */
+#detailsModalOverlay [data-modal-reveal],
+#completionModalOverlay [data-modal-reveal]{
+  opacity:0;
+  transform:translateY(12px) scale(.985);
+  filter:blur(3px);
+  transition:
+    opacity .38s cubic-bezier(.22,.8,.3,1) var(--modal-reveal-delay,0ms),
+    transform .42s cubic-bezier(.22,.8,.3,1) var(--modal-reveal-delay,0ms),
+    filter .38s ease var(--modal-reveal-delay,0ms),
+    box-shadow .2s ease,
+    background-color .2s ease;
+}
+#detailsModalOverlay.modal-content-visible [data-modal-reveal],
+#completionModalOverlay.modal-content-visible [data-modal-reveal]{
+  opacity:1;
+  transform:none;
+  filter:none;
+}
+#detailsModalOverlay.modal-content-visible .modal-interactive-card:hover,
+#completionModalOverlay.modal-content-visible .modal-interactive-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 34px rgba(0,0,0,.12);
+}
+.dark #detailsModalOverlay.modal-content-visible .modal-interactive-card:hover,
+.dark #completionModalOverlay.modal-content-visible .modal-interactive-card:hover{
+  background-color:rgba(255,255,255,.07);
+  box-shadow:0 16px 38px rgba(0,0,0,.3);
+}
+#detailsModalOverlay #mapModalCover,
+#completionModalOverlay #completionModalCover{
+  transform:scale(1.035);
+  transition:transform 1s cubic-bezier(.22,.8,.3,1);
+}
+#detailsModalOverlay.modal-content-visible #mapModalCover,
+#completionModalOverlay.modal-content-visible #completionModalCover{
+  transform:scale(1);
+}
+#detailsModalOverlay button,
+#detailsModalOverlay a,
+#completionModalOverlay button,
+#completionModalOverlay a{
+  transition-property:transform,background-color,color,box-shadow,opacity;
+  transition-duration:.16s;
+}
+#detailsModalOverlay button:active,
+#detailsModalOverlay a:active,
+#completionModalOverlay button:active,
+#completionModalOverlay a:active{
+  transform:scale(.97);
+}
+@media (prefers-reduced-motion:reduce){
+  #detailsModalOverlay [data-modal-reveal],
+  #completionModalOverlay [data-modal-reveal],
+  #detailsModalOverlay #mapModalCover,
+  #completionModalOverlay #completionModalCover{
+    opacity:1!important;
+    transform:none!important;
+    filter:none!important;
+    transition:none!important;
+  }
+}
 
 /* ================= Split-flap mini ================= */
 .sf{display:inline-block;color:inherit;white-space:pre-wrap}
@@ -1161,7 +1583,7 @@ img.avatar-loaded{animation:none!important;background:none!important}
   transition: opacity 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 /* Voters grid */
-#playtestModalInner .voters-list{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:12px!important}
+#playtestModalInner .voters-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(110px,auto);align-content:start;gap:12px!important;padding-bottom:16px}
 #playtestModalInner .voters-list .voter-card{min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 /* Anim modal */
 #playtestModal.pt-anim.pt-in {opacity: 1;}
@@ -1278,6 +1700,440 @@ img.avatar-loaded{animation:none!important;background:none!important}
 .modal-panel{transform:translateY(8px) scale(.98);opacity:0;transition:transform .22s ease,opacity .22s ease}
 .modal-overlay.is-open .modal-panel{transform:translateY(0) scale(1);opacity:1}
 /* ================= MODERATOR ================= */
+.mod-ui {
+  --mod-panel: rgba(255, 255, 255, .62);
+  --mod-panel-strong: rgba(255, 255, 255, .82);
+  --mod-border: rgba(212, 212, 216, .78);
+  --mod-muted: rgba(113, 113, 122, 1);
+}
+.dark .mod-ui {
+  --mod-panel: rgba(24, 24, 27, .58);
+  --mod-panel-strong: rgba(39, 39, 42, .68);
+  --mod-border: rgba(255, 255, 255, .11);
+  --mod-muted: rgba(161, 161, 170, 1);
+}
+.mod-ui::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 16% 10%, rgba(16, 185, 129, .13), transparent 30rem),
+    radial-gradient(circle at 84% 18%, rgba(59, 130, 246, .10), transparent 30rem),
+    linear-gradient(180deg, rgba(250, 250, 250, .24), transparent 24rem);
+}
+.dark .mod-ui::before {
+  background:
+    radial-gradient(circle at 16% 10%, rgba(16, 185, 129, .16), transparent 30rem),
+    radial-gradient(circle at 84% 18%, rgba(59, 130, 246, .11), transparent 30rem),
+    linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 24rem);
+}
+.mod-ui article.fade-in,
+.mod-ui .empty-state,
+.mod-ui [data-workflow-home],
+.mod-ui [data-out-wrap="1"] {
+  background: var(--mod-panel);
+  border-color: var(--mod-border);
+  box-shadow: 0 18px 54px rgba(15, 23, 42, .08);
+}
+.dark .mod-ui article.fade-in,
+.dark .mod-ui .empty-state,
+.dark .mod-ui [data-workflow-home],
+.dark .mod-ui [data-out-wrap="1"] {
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .28);
+}
+.mod-ui .mod-subtab {
+  min-height: 2.35rem;
+  border-radius: 999px !important;
+}
+.mod-ui .mod-subtab.active {
+  border-color: rgba(16, 185, 129, .42) !important;
+  background: rgba(16, 185, 129, .12) !important;
+  color: rgb(4, 120, 87) !important;
+}
+.dark .mod-ui .mod-subtab.active {color: rgb(167, 243, 208) !important;}
+.mod-ui .mod-tab.active {
+  border-color: rgba(16, 185, 129, .42) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, .13), rgba(59, 130, 246, .06)) !important;
+}
+.mod-ui [data-workflow-card] {
+  background: var(--mod-panel-strong);
+  border-color: var(--mod-border);
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+.mod-ui [data-workflow-card]:hover {
+  transform: translateY(-1px);
+  border-color: rgba(16, 185, 129, .42);
+}
+.mod-ui .mod-endpoint-badge {
+  display: inline-flex;
+  max-width: 100%;
+  overflow: hidden;
+  padding: .25rem .5rem;
+  border: 1px solid var(--mod-border);
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .46);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dark .mod-ui .mod-endpoint-badge {background: rgba(255, 255, 255, .045);}
+.mod-ui .skill-tier-preview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .75rem;
+}
+@media (min-width: 640px) {
+  .mod-ui .skill-tier-preview-grid {grid-template-columns: repeat(2, minmax(0, 1fr));}
+}
+@media (min-width: 1180px) {
+  .mod-ui .skill-tier-preview-grid {grid-template-columns: repeat(4, minmax(0, 1fr));}
+}
+.mod-ui .skill-tier-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  padding: .9rem;
+  border: 1px solid var(--mod-border);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--skill-tier-color) 22%, transparent), transparent 55%),
+    var(--mod-panel-strong);
+}
+.mod-ui .skill-tier-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: .2rem;
+  background: var(--skill-tier-color);
+}
+.mod-ui .skill-tier-bronze {--skill-tier-color: #a16207;}
+.mod-ui .skill-tier-silver {--skill-tier-color: #94a3b8;}
+.mod-ui .skill-tier-gold {--skill-tier-color: #eab308;}
+.mod-ui .skill-tier-emerald {--skill-tier-color: #10b981;}
+.mod-ui .skill-tier-diamond {--skill-tier-color: #38bdf8;}
+.mod-ui .skill-tier-ascendant {--skill-tier-color: #8b5cf6;}
+.mod-ui .skill-tier-elite {--skill-tier-color: #ec4899;}
+.mod-ui .skill-tier-champion {--skill-tier-color: #f97316;}
+.mod-ui .skill-tier-segment {background: var(--skill-tier-color);}
+.mod-ui .skill-tier-share {
+  color: var(--skill-tier-color);
+  background: color-mix(in srgb, var(--skill-tier-color) 13%, transparent);
+}
+.mod-ui .skill-tier-icon {
+  position: relative;
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: .85rem;
+  background: color-mix(in srgb, var(--skill-tier-color) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--skill-tier-color) 35%, transparent);
+  color: var(--skill-tier-color);
+}
+.mod-ui .skill-tier-icon img {
+  position: absolute;
+  inset: .2rem;
+  width: calc(100% - .4rem);
+  height: calc(100% - .4rem);
+  object-fit: contain;
+}
+.mod-ui .skill-player-sample {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.55rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .45rem;
+  padding: .3rem .4rem;
+  border-radius: .65rem;
+  background: rgba(127, 127, 127, .08);
+}
+.mod-ui .skill-threshold-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(13rem, 2.6fr) minmax(7.5rem, auto);
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 1rem;
+  border: 1px solid var(--mod-border);
+  border-radius: 1rem;
+  background: var(--mod-panel-strong);
+}
+.mod-ui .skill-threshold-silver {--skill-tier-from: #a16207;--skill-tier-color: #94a3b8;}
+.mod-ui .skill-threshold-gold {--skill-tier-from: #94a3b8;--skill-tier-color: #eab308;}
+.mod-ui .skill-threshold-emerald {--skill-tier-from: #eab308;--skill-tier-color: #10b981;}
+.mod-ui .skill-threshold-diamond {--skill-tier-from: #10b981;--skill-tier-color: #38bdf8;}
+.mod-ui .skill-threshold-ascendant {--skill-tier-from: #38bdf8;--skill-tier-color: #8b5cf6;}
+.mod-ui .skill-threshold-elite {--skill-tier-from: #8b5cf6;--skill-tier-color: #ec4899;}
+.mod-ui .skill-threshold-champion {--skill-tier-from: #ec4899;--skill-tier-color: #f97316;}
+.mod-ui .skill-threshold-from-dot {background: var(--skill-tier-from);}
+.mod-ui .skill-threshold-number-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .25rem;
+  color: var(--skill-tier-color);
+  font-size: 1rem;
+  font-weight: 900;
+}
+.mod-ui .skill-threshold-number {
+  width: 5.25rem;
+  border: 1px solid color-mix(in srgb, var(--skill-tier-color) 38%, var(--mod-border));
+  border-radius: .65rem;
+  background: rgba(127, 127, 127, .08);
+  padding: .38rem .5rem;
+  color: inherit;
+  font-weight: 900;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.mod-ui .skill-threshold-number:focus {
+  border-color: var(--skill-tier-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--skill-tier-color) 18%, transparent);
+}
+@media (max-width: 760px) {
+  .mod-ui .skill-threshold-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+}
+.mod-ui .skill-threshold-input,
+.mod-ui .skill-weight-range {
+  width: 100%;
+  height: .7rem;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, .18);
+}
+.mod-ui .skill-threshold-input {
+  background:
+    linear-gradient(
+      90deg,
+      var(--skill-tier-from) 0%,
+      var(--skill-tier-color) var(--skill-range-progress),
+      rgba(161, 161, 170, .22) var(--skill-range-progress),
+      rgba(161, 161, 170, .22) 100%
+    );
+}
+.mod-ui .skill-weight-card {
+  position: relative;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--mod-border);
+  border-radius: 1rem;
+  background: var(--mod-panel-strong);
+}
+.mod-ui .skill-weight-card:hover,
+.mod-ui .skill-weight-card:focus-within {z-index: 20;}
+.mod-ui .skill-weight-info {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.mod-ui .skill-weight-info-button {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(16, 185, 129, .45);
+  border-radius: 999px;
+  background: rgba(16, 185, 129, .1);
+  color: rgb(5, 150, 105);
+  cursor: help;
+  outline: none;
+}
+.mod-ui .skill-weight-info-button svg {
+  display: block;
+  width: .65rem;
+  height: .65rem;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+}
+.dark .mod-ui .skill-weight-info-button {color: rgb(110, 231, 183);}
+.mod-ui .skill-weight-info-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, .2);
+}
+.mod-ui .skill-weight-tooltip {
+  position: absolute;
+  top: calc(100% + .55rem);
+  left: -.25rem;
+  z-index: 50;
+  width: min(18rem, calc(100vw - 3rem));
+  padding: .7rem .75rem;
+  border: 1px solid var(--mod-border);
+  border-radius: .75rem;
+  background: rgb(255, 255, 255);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .2);
+  color: rgb(39, 39, 42);
+  font-size: .72rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-.2rem);
+  transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+}
+.dark .mod-ui .skill-weight-tooltip {
+  background: rgb(24, 24, 27);
+  color: rgb(228, 228, 231);
+}
+.mod-ui .skill-weight-info:hover .skill-weight-tooltip,
+.mod-ui .skill-weight-info:focus-within .skill-weight-tooltip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .mod-ui .skill-weight-card:nth-child(2n) .skill-weight-tooltip {
+    right: -.25rem;
+    left: auto;
+  }
+}
+@media (min-width: 1024px) {
+  .mod-ui .skill-weight-card:nth-child(3n) .skill-weight-tooltip {
+    right: -.25rem;
+    left: auto;
+  }
+}
+.mod-ui .skill-weight-range {
+  --skill-weight-progress: 0%;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(16, 185, 129) 0%,
+      rgb(56, 189, 248) var(--skill-weight-progress),
+      rgba(161, 161, 170, .22) var(--skill-weight-progress),
+      rgba(161, 161, 170, .22) 100%
+    );
+}
+.mod-ui .skill-weight-number {
+  width: 5.5rem;
+  border: 1px solid var(--mod-border);
+  border-radius: .65rem;
+  background: rgba(127, 127, 127, .08);
+  padding: .4rem .55rem;
+  font-weight: 800;
+  text-align: right;
+}
+.mod-ui .skill-threshold-input::-webkit-slider-runnable-track,
+.mod-ui .skill-weight-range::-webkit-slider-runnable-track {
+  height: .7rem;
+  background: transparent;
+}
+.mod-ui .skill-threshold-input::-webkit-slider-thumb,
+.mod-ui .skill-weight-range::-webkit-slider-thumb {
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: -.3rem;
+  appearance: none;
+  border: 3px solid rgb(255, 255, 255);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .38);
+  cursor: grab;
+}
+.mod-ui .skill-threshold-input::-webkit-slider-thumb {
+  background: var(--skill-tier-color);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .38), 0 0 0 4px color-mix(in srgb, var(--skill-tier-color) 18%, transparent);
+}
+.mod-ui .skill-weight-range::-webkit-slider-thumb {
+  background: rgb(16, 185, 129);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .38), 0 0 0 4px rgba(16, 185, 129, .16);
+}
+.mod-ui .skill-threshold-input::-moz-range-track,
+.mod-ui .skill-weight-range::-moz-range-track {
+  height: .7rem;
+  background: transparent;
+}
+.mod-ui .skill-threshold-input::-moz-range-progress,
+.mod-ui .skill-weight-range::-moz-range-progress {
+  height: .7rem;
+  border-radius: 999px;
+}
+.mod-ui .skill-threshold-input::-moz-range-progress {background: var(--skill-tier-color);}
+.mod-ui .skill-weight-range::-moz-range-progress {background: rgb(16, 185, 129);}
+.mod-ui .skill-threshold-input::-moz-range-thumb,
+.mod-ui .skill-weight-range::-moz-range-thumb {
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 3px solid rgb(255, 255, 255);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .38);
+  cursor: grab;
+}
+.mod-ui .skill-threshold-input::-moz-range-thumb {background: var(--skill-tier-color);}
+.mod-ui .skill-weight-range::-moz-range-thumb {background: rgb(16, 185, 129);}
+.mod-ui .skill-breakdown-list {
+  display: flex;
+  max-height: 30rem;
+  flex-direction: column;
+  gap: .6rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: .35rem;
+  scrollbar-color: rgba(16, 185, 129, .55) transparent;
+  scrollbar-width: thin;
+}
+.mod-ui .skill-breakdown-list::-webkit-scrollbar {width: .55rem;}
+.mod-ui .skill-breakdown-list::-webkit-scrollbar-track {background: transparent;}
+.mod-ui .skill-breakdown-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, .5);
+  background-clip: padding-box;
+}
+.mod-ui .skill-breakdown-item {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(12rem, 1.5fr) minmax(11rem, 1fr) minmax(9rem, auto);
+  align-items: center;
+  gap: 1rem;
+  padding: .8rem .9rem;
+  border: 1px solid var(--mod-border);
+  border-radius: .85rem;
+  background: var(--mod-panel-strong);
+}
+.mod-ui .skill-breakdown-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+  font-size: .75rem;
+}
+.mod-ui .skill-breakdown-metrics > div {
+  min-width: 0;
+  padding: .35rem .5rem;
+  border-radius: .55rem;
+  background: rgba(127, 127, 127, .07);
+}
+.mod-ui .skill-breakdown-metrics span {
+  display: block;
+  color: rgb(113, 113, 122);
+}
+.dark .mod-ui .skill-breakdown-metrics span {color: rgb(161, 161, 170);}
+.mod-ui .skill-breakdown-metrics strong {
+  display: block;
+  overflow: hidden;
+  color: rgb(39, 39, 42);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dark .mod-ui .skill-breakdown-metrics strong {color: rgb(228, 228, 231);}
+@media (max-width: 860px) {
+  .mod-ui .skill-breakdown-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+}
 .mod-ui form[data-action] [data-form-actions="1"] {display: flex;flex-wrap: wrap;align-items: flex-end;gap: .5rem;}
 .mod-ui form[data-action] [data-form-actions="1"] > button {width: auto !important;min-height: 2.45rem;}
 .mod-ui form[data-action] [data-form-actions="1"] > button[data-form-primary="1"] {min-width: 10rem;}

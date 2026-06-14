@@ -28,6 +28,7 @@ class LeaderboardController extends Controller
                     'playtest_count',
                     'discord_tag',
                     'skill_rank',
+                    'skill_score',
                 ]),
             ],
             'sort_direction' => ['nullable', Rule::in(['asc', 'desc'])],
@@ -67,7 +68,7 @@ class LeaderboardController extends Controller
         try {
             $resp = Http::withHeaders(['X-API-KEY' => $key])
                 ->withOptions(['verify' => $verify])
-                ->get($root . '/api/v3/community/leaderboard', $query);
+                ->get($root.'/api/v3/community/leaderboard', $query);
 
             if ($resp->successful()) {
                 $payload = $resp->json();
