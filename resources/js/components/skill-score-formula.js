@@ -110,6 +110,15 @@ function formulaMarkup(config) {
         </div>
       </header>
 
+      <div class="skill-formula-fluid-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 8v5"></path>
+          <path d="M12 16.5h.01"></path>
+          <circle cx="12" cy="12" r="9"></circle>
+        </svg>
+        <p>${text('fluid_score_note')}</p>
+      </div>
+
       <div class="skill-formula-body">
         ${formulaSection(
           1,

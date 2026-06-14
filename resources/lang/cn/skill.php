@@ -5,6 +5,7 @@ return [
         'kicker' => '技能分数',
         'title' => '技能分数公式',
         'intro' => '每张地图得分、已验证视频加成以及总分贡献的精确计算方式。',
+        'fluid_score_note' => '技能分数是动态的。任何玩家提交新成绩或添加新地图时，您的分数都可能发生变化，即使您自己没有提交任何内容。',
         'current_values' => '当前数值',
         'difficulty_title' => '难度权重',
         'raw_difficulty' => '地图的数值难度',

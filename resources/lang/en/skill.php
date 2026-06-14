@@ -5,6 +5,7 @@ return [
         'kicker' => 'Skill Score',
         'title' => 'How Skill Score works',
         'intro' => 'Every map you complete earns points. Harder maps are worth more, a verified video unlocks extra bonuses, and your best runs are added up into your total Skill Score. Here is each step.',
+        'fluid_score_note' => 'Skill Score is dynamic. It can change whenever anyone submits a run or when a new map is added, even if you do not submit anything yourself.',
         'current_values' => 'Current values',
         'difficulty_title' => 'Step 1: Difficulty',
         'raw_difficulty' => 'how hard the map is rated',

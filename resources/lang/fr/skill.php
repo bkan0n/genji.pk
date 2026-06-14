@@ -5,6 +5,7 @@ return [
         'kicker' => 'Skill Score',
         'title' => 'Formule du Skill Score',
         'intro' => 'Calcul exact du score par map, des bonus de vidéo vérifiée et de la contribution au score total.',
+        'fluid_score_note' => 'Le Skill Score est dynamique. Il peut évoluer à chaque nouvelle soumission, quel que soit le joueur, ou lors de l’ajout d’une nouvelle map, même si vous ne soumettez rien vous-même.',
         'current_values' => 'Valeurs actuelles',
         'difficulty_title' => 'Poids de difficulté',
         'raw_difficulty' => 'la difficulté numérique de la map',
