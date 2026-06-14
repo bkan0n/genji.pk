@@ -32,11 +32,36 @@ return [
     // TABS
     // ──────────────────────────────────────────────────────────────────────
     'tabs' => [
-        'ranking_process'  => '升段流程',
-        'ranks_threshold'  => '段位门槛',
+        'skill_rank'       => '技能段位',
+        'skill_score'      => '技能分数',
+        'score_rank'       => '分数段位',
         'playtesting'      => '地图测试',
         'submit_map'       => '跑图提交',
         'techs'            => '技巧与难度',
+    ],
+
+    'score_rank' => [
+        'kicker' => '技能分数段位',
+        'title' => '分数段位',
+        'intro' => '分数段位用于表示玩家的技能分数在当前排名玩家中的位置。',
+        'population_note' => '门槛会根据当前技能分数快照重新计算，并可能随玩家分数变化。',
+        'tier' => '等级 {tier}',
+        'unranked_note' => '没有符合条件的记录，或排名人口尚未达到最低要求。',
+        'bronze_range' => '低于 {percentile} 百分位',
+        'starts_at' => '从 {percentile} 百分位开始',
+        'score_from' => '分数从 {score} 开始',
+        'threshold_unavailable' => '当前暂无门槛数据',
+        'ranks' => [
+            'unranked' => '未排名',
+            'bronze' => '青铜',
+            'silver' => '白银',
+            'gold' => '黄金',
+            'emerald' => '翡翠',
+            'diamond' => '钻石',
+            'ascendant' => '超凡',
+            'elite' => '精英',
+            'champion' => '冠军',
+        ],
     ],
 
 

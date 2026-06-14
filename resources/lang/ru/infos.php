@@ -32,11 +32,36 @@ return [
     // TABS
     // ──────────────────────────────────────────────────────────────────────
     'tabs' => [
-        'ranking_process'  => 'Процесс ранжирования',
-        'ranks_threshold'  => 'Требования к рангам',
+        'skill_rank'       => 'Skill Rank',
+        'skill_score'      => 'Skill Score',
+        'score_rank'       => 'Score Rank',
         'playtesting'      => 'Плейтест',
         'submit_map'       => 'Отправка карт',
         'techs'            => 'Техники и сложности',
+    ],
+
+    'score_rank' => [
+        'kicker' => 'Уровни Skill Score',
+        'title' => 'Score Rank',
+        'intro' => 'Score Rank показывает положение Skill Score игрока среди текущего рейтингового населения.',
+        'population_note' => 'Пороги пересчитываются по текущему снимку Skill Score и могут меняться вместе с результатами.',
+        'tier' => 'Уровень {tier}',
+        'unranked_note' => 'Нет подходящих прохождений или не достигнут минимальный размер рейтингового населения.',
+        'bronze_range' => 'Ниже процентиля {percentile}',
+        'starts_at' => 'Начинается с процентиля {percentile}',
+        'score_from' => 'Очки от {score}',
+        'threshold_unavailable' => 'Порог временно недоступен',
+        'ranks' => [
+            'unranked' => 'Без ранга',
+            'bronze' => 'Бронза',
+            'silver' => 'Серебро',
+            'gold' => 'Золото',
+            'emerald' => 'Изумруд',
+            'diamond' => 'Алмаз',
+            'ascendant' => 'Вознесённый',
+            'elite' => 'Элита',
+            'champion' => 'Чемпион',
+        ],
     ],
 
 

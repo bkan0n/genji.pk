@@ -1,4 +1,5 @@
 import { cdnAsset } from "../utils/cdn";
+import { renderSkillScoreFormula } from "../components/skill-score-formula";
 
 let translations = window.INFOS_I18N || {};
 
@@ -19,6 +20,145 @@ function t(path, params = {}) {
     }
   }
   return result;
+}
+
+const SCORE_RANKS = [
+  { tier: 0, key: 'unranked', image: 'Unranked.png' },
+  { tier: 1, key: 'bronze', image: 'Bronze.png' },
+  { tier: 2, key: 'silver', image: 'Silver.png' },
+  { tier: 3, key: 'gold', image: 'Gold.png' },
+  { tier: 4, key: 'emerald', image: 'Emerald.png' },
+  { tier: 5, key: 'diamond', image: 'Diamond.png' },
+  { tier: 6, key: 'ascendant', image: 'Ascendant.png' },
+  { tier: 7, key: 'elite', image: 'Elite.png' },
+  { tier: 8, key: 'champion', image: 'Champion.png' },
+];
+
+let skillTiersPromise = null;
+
+function loadSkillTiers() {
+  if (!skillTiersPromise) {
+    skillTiersPromise = fetch('/api/skill/tiers', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Skill tiers request failed (${response.status})`);
+        return response.json();
+      })
+      .catch(() => null);
+  }
+
+  return skillTiersPromise;
+}
+
+function formatScoreRankNumber(value, options = {}) {
+  return new Intl.NumberFormat(document.documentElement.lang || 'en', options).format(value);
+}
+
+function scoreRankThreshold(rank, tiers) {
+  const percentiles = Array.isArray(tiers?.percentiles) ? tiers.percentiles : [];
+  const boundaries = Array.isArray(tiers?.boundaries) ? tiers.boundaries : [];
+
+  if (rank.tier === 0) {
+    return `<p class="score-rank-note">${t('score_rank.unranked_note')}</p>`;
+  }
+
+  if (rank.tier === 1) {
+    const upperPercentile = Number(percentiles[0]);
+    return Number.isFinite(upperPercentile)
+      ? `<p class="score-rank-threshold">${t('score_rank.bronze_range', {
+          percentile: formatScoreRankNumber(upperPercentile, {
+            style: 'percent',
+            maximumFractionDigits: 1,
+          }),
+        })}</p>`
+      : `<p class="score-rank-note">${t('score_rank.threshold_unavailable')}</p>`;
+  }
+
+  const thresholdIndex = rank.tier - 2;
+  const percentile = Number(percentiles[thresholdIndex]);
+  const boundary = Number(boundaries[thresholdIndex]);
+  const details = [];
+
+  if (Number.isFinite(percentile)) {
+    details.push(
+      t('score_rank.starts_at', {
+        percentile: formatScoreRankNumber(percentile, {
+          style: 'percent',
+          maximumFractionDigits: 1,
+        }),
+      })
+    );
+  }
+
+  if (Number.isFinite(boundary)) {
+    details.push(
+      t('score_rank.score_from', {
+        score: formatScoreRankNumber(boundary, { maximumFractionDigits: 2 }),
+      })
+    );
+  }
+
+  return details.length
+    ? `<p class="score-rank-threshold">${details.join('<br>')}</p>`
+    : `<p class="score-rank-note">${t('score_rank.threshold_unavailable')}</p>`;
+}
+
+function scoreRankMarkup(tiers = null) {
+  const cards = SCORE_RANKS.map((rank) => {
+    const name = t(`score_rank.ranks.${rank.key}`);
+    return `
+      <article class="score-rank-card score-rank-${rank.key}">
+        <div class="score-rank-image-wrap">
+          <img
+            src="${cdnAsset(`assets/skill/rank-icons/${rank.image}`)}"
+            alt="${name}"
+            class="score-rank-image"
+            loading="lazy"
+            decoding="async"
+          >
+        </div>
+        <div class="score-rank-content">
+          <div class="score-rank-tier">${t('score_rank.tier', { tier: rank.tier })}</div>
+          <h3>${name}</h3>
+          ${scoreRankThreshold(rank, tiers)}
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  return `
+    <div class="score-rank-panel">
+      <header class="score-rank-header">
+        <div class="skill-formula-kicker">${t('score_rank.kicker')}</div>
+        <h2>${t('score_rank.title')}</h2>
+        <p>${t('score_rank.intro')}</p>
+      </header>
+      <div class="score-rank-body">
+        <div class="score-rank-callout">${t('score_rank.population_note')}</div>
+        <div class="score-rank-grid">${cards}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function renderScoreRank(container) {
+  container.innerHTML = scoreRankMarkup();
+  const tiers = await loadSkillTiers();
+
+  if (container.isConnected) {
+    container.innerHTML = scoreRankMarkup(tiers);
+  }
+}
+
+function decorateInfoSection(container) {
+  const panel = container.firstElementChild;
+  if (!panel || panel.classList.contains('skill-formula-panel') || panel.classList.contains('score-rank-panel')) {
+    return;
+  }
+
+  panel.classList.add('infos-unified-panel');
 }
 
 /* =========================
@@ -1005,6 +1145,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const kind = el.getAttribute('data-infos-kind');
     if (!kind) return;
 
+    if (kind === 'skill_score') {
+      renderSkillScoreFormula(el);
+      return;
+    }
+
+    if (kind === 'score_rank') {
+      renderScoreRank(el);
+      return;
+    }
+
     let html = '';
     if (
       kind === 'rank_how_to_submit' ||
@@ -1018,13 +1168,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     el.innerHTML = html;
+    decorateInfoSection(el);
   });
 
   const GROUP_BY_KIND = {
-    rank_how_to_submit:     'ranking_process',
-    rank_submission_rules:  'ranking_process',
-    rank_info_thresholds:   'ranks_threshold',
-    rank_medals_thresholds: 'ranks_threshold',
+    rank_how_to_submit:     'skill_rank',
+    rank_submission_rules:  'skill_rank',
+    rank_info_thresholds:   'skill_rank',
+    rank_medals_thresholds: 'skill_rank',
   };
 
   document.querySelectorAll('[data-infos-kind]').forEach((el) => {
