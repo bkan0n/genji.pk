@@ -1,4 +1,5 @@
 import { cdnImage, cdnAsset } from "../utils/cdn";
+import { bindSkillHistoryTriggers, updateSkillHistoryTrigger } from "../components/skill-history-modal";
 
 /* =========================
    CONFIG
@@ -1349,10 +1350,33 @@ let state = {
   keysLoaded: false,
   coins: null,
   xpSummary: null,
+  skillSummary: null,
   keyShopPurchaseInFlight: false,
 };
 
 let __keysInFlight = null;
+
+function syncDashboardSkillHistoryTrigger(extra = {}) {
+  const trigger = $("dash-skill-card");
+  if (!trigger || !state.userId) return;
+
+  const summary = state.skillSummary || {};
+  const tierName = normalizeSkillTier(summary);
+  const score = summary?.skill_score ?? extra.skillScore ?? "";
+  const rankName = $("dash-rank-pill")?.textContent?.trim() || "";
+  const name = $("dash-username")?.textContent?.trim() || "";
+
+  updateSkillHistoryTrigger(trigger, {
+    userId: state.userId,
+    name,
+    avatar: state.avatarUrl || "",
+    skillScore: score,
+    skillTier: summary?.skill_tier ?? summary?.tier ?? extra.skillTier ?? "",
+    skillTierName: summary?.skill_tier_name || extra.skillTierName || tierName,
+    rankName: rankName && rankName !== "—" && rankName !== "â€”" ? rankName : "",
+    ...extra,
+  });
+}
 
 async function ensureKeysLoaded(uid) {
   const u = String(uid || "").trim();
@@ -1723,6 +1747,7 @@ async function loadHeader() {
     if (elAutumn) elAutumn.textContent = "—";
   }
 
+  syncDashboardSkillHistoryTrigger();
   setHeaderLoading(false);
 }
 
@@ -1834,6 +1859,12 @@ async function loadSkillSummary() {
     const tierName = normalizeSkillTier(data);
     const score = Number(data?.skill_score ?? 0);
     const percentile = Number(data?.skill_percentile ?? data?.percentile);
+    state.skillSummary = {
+      ...data,
+      skill_score: Number.isFinite(score) ? score : 0,
+      skill_tier_name: tierName,
+      skill_percentile: Number.isFinite(percentile) ? percentile : data?.skill_percentile,
+    };
 
     scoreEl.textContent = Number.isFinite(score)
       ? score.toLocaleString(undefined, { maximumFractionDigits: 2 })
@@ -1841,12 +1872,23 @@ async function loadSkillSummary() {
     tierEl.textContent = tierName;
     iconEl.src = cdnAsset(`assets/skill/rank-icons/${tierName}.png`);
     iconEl.alt = tierName;
+    syncDashboardSkillHistoryTrigger({
+      skillScore: Number.isFinite(score) ? score : 0,
+      skillTierName: tierName,
+      skillTier: data?.skill_tier ?? data?.tier ?? "",
+    });
 
   } catch {
+    state.skillSummary = null;
     scoreEl.textContent = "—";
     tierEl.textContent = "Unranked";
     iconEl.src = cdnAsset("assets/skill/rank-icons/Unranked.png");
     iconEl.alt = "Unranked";
+    syncDashboardSkillHistoryTrigger({
+      skillScore: 0,
+      skillTierName: "Unranked",
+      skillTier: 0,
+    });
   }
 }
 
@@ -2950,6 +2992,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   ensureXpBarSmooth();
   initCustomDropdowns();
+  bindSkillHistoryTriggers();
 
   renderRows($("dash-purchases"), 4);
   renderCards($("dash-recent-rewards"), 4);

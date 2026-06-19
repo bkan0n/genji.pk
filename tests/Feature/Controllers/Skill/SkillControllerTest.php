@@ -58,6 +58,64 @@ class SkillControllerTest extends TestCase
             ->assertJsonCount(7, 'percentiles');
     }
 
+    public function test_user_skill_history_is_proxied_with_window(): void
+    {
+        Http::fake([
+            'https://genji-api.test/api/v3/skill/users/42/history?window=30d' => Http::response([
+                'user_id' => 42,
+                'points' => [
+                    [
+                        'captured_at' => '2026-06-16T14:32:00Z',
+                        'skill_score' => 1520.4,
+                    ],
+                ],
+            ]),
+        ]);
+
+        $this->getJson('/api/skill/users/42/history?window=30d')
+            ->assertOk()
+            ->assertJsonPath('user_id', '42')
+            ->assertJsonPath('points.0.skill_score', 1520.4);
+
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'GET'
+            && $request->url() === 'https://genji-api.test/api/v3/skill/users/42/history?window=30d');
+    }
+
+    public function test_user_skill_change_feed_and_detail_are_proxied(): void
+    {
+        Http::fake([
+            'https://genji-api.test/api/v3/skill/users/42/changes?window=30d&limit=20&offset=0' => Http::response([
+                [
+                    'change_id' => 9981,
+                    'captured_at' => '2026-06-16T14:32:00Z',
+                    'delta' => 22.3,
+                    'cause_category' => 'PLAYER_ACTION',
+                    'description' => 'New verified completion',
+                ],
+            ]),
+            'https://genji-api.test/api/v3/skill/users/42/changes/9981' => Http::response([
+                'change_id' => 9981,
+                'previous_score' => 1498.1,
+                'new_score' => 1520.4,
+                'delta' => 22.3,
+            ]),
+        ]);
+
+        $this->getJson('/api/skill/users/42/changes?window=30d&limit=20&offset=0')
+            ->assertOk()
+            ->assertJsonPath('0.change_id', 9981)
+            ->assertJsonPath('0.cause_category', 'PLAYER_ACTION');
+
+        $this->getJson('/api/skill/users/42/changes/9981')
+            ->assertOk()
+            ->assertJsonPath('new_score', 1520.4);
+
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'GET'
+            && $request->url() === 'https://genji-api.test/api/v3/skill/users/42/changes?window=30d&limit=20&offset=0');
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'GET'
+            && $request->url() === 'https://genji-api.test/api/v3/skill/users/42/changes/9981');
+    }
+
     public function test_public_skill_config_is_proxied_read_only(): void
     {
         Http::fake([

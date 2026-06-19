@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Skill;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Client\Response as ClientResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,53 @@ class SkillController extends Controller
     public function breakdown(string $user_id)
     {
         $response = $this->get('/api/v3/skill/users/'.rawurlencode($user_id).'/breakdown');
+
+        return $this->proxyResponse($response, $response->json());
+    }
+
+    public function history(Request $request, string $user_id)
+    {
+        $window = trim((string) ($request->query('window') ?? $request->query('range', '')));
+        $path = '/api/v3/skill/users/'.rawurlencode($user_id).'/history';
+
+        if ($window !== '') {
+            $path .= '?'.http_build_query(['window' => $window]);
+        }
+
+        $response = $this->get($path);
+        $payload = $response->json();
+
+        if (is_array($payload) && array_key_exists('user_id', $payload)) {
+            $payload['user_id'] = (string) $payload['user_id'];
+        }
+
+        return $this->proxyResponse($response, $payload);
+    }
+
+    public function changes(Request $request, string $user_id)
+    {
+        $query = array_filter([
+            'window' => trim((string) ($request->query('window') ?? $request->query('range', ''))),
+            'limit' => $request->query('limit'),
+            'offset' => $request->query('offset'),
+        ], fn ($value): bool => $value !== null && $value !== '');
+
+        $path = '/api/v3/skill/users/'.rawurlencode($user_id).'/changes';
+
+        if ($query !== []) {
+            $path .= '?'.http_build_query($query);
+        }
+
+        $response = $this->get($path);
+
+        return $this->proxyResponse($response, $response->json());
+    }
+
+    public function changeDetail(string $user_id, int $change_id)
+    {
+        $response = $this->get(
+            '/api/v3/skill/users/'.rawurlencode($user_id).'/changes/'.rawurlencode((string) $change_id),
+        );
 
         return $this->proxyResponse($response, $response->json());
     }

@@ -177,6 +177,13 @@ Route::prefix('skill')->group(function () {
         ->where('user_id', '\d{1,20}');
     Route::get('users/{user_id}/breakdown', [SkillController::class, 'breakdown'])
         ->where('user_id', '\d{1,20}');
+    Route::get('users/{user_id}/history', [SkillController::class, 'history'])
+        ->where('user_id', '\d{1,20}');
+    Route::get('users/{user_id}/changes', [SkillController::class, 'changes'])
+        ->where('user_id', '\d{1,20}');
+    Route::get('users/{user_id}/changes/{change_id}', [SkillController::class, 'changeDetail'])
+        ->where('user_id', '\d{1,20}')
+        ->whereNumber('change_id');
     Route::get('tiers', [SkillController::class, 'tiers']);
 });
 
