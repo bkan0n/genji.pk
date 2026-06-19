@@ -147,6 +147,7 @@
     <script nonce="{{ $nonce }}">
       document.documentElement.lang = @json(app()->getLocale());
       window.NOTIFICATIONS_I18N = @json(\Illuminate\Support\Facades\Lang::get('modals'));
+      window.SKILL_HISTORY_I18N = @json(\Illuminate\Support\Facades\Lang::get('skill.history'));
       window.user_id = @json(session('user_id'));
       window.currentLang = @json($lang);
       window.SESSION_COOKIE_NAME = @json(config('session.cookie'));

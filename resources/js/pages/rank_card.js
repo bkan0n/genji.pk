@@ -1,4 +1,5 @@
 import { cdnAsset, cdnImage } from "../utils/cdn";
+import { bindSkillHistoryTriggers } from "../components/skill-history-modal";
 
 /* =========================
    Endpoints
@@ -85,13 +86,26 @@ function masteryBadgePillClass(level) {
     || 'bg-zinc-600/80 text-zinc-100 ring-zinc-300/30';
 }
 
-function skillScoreStatHtml(data) {
+function skillScoreStatHtml(data, userId = '') {
   const tierName = normalizeSkillTier(data);
   const score = Number(data?.skill_score ?? 0);
   const safeScore = Number.isFinite(score) ? score : 0;
+  const safeUserId = userId || data?.user_id || '';
+  const nickname = data?.nickname || '';
+  const avatar = cdnifyAssetUrl(data?.avatar_url) || '';
+  const rankName = data?.rank_name || '';
 
   return `
-    <div class="rounded-lg bg-white/5 p-2 text-center ring-1 ring-white/10">
+    <button
+      type="button"
+      class="skill-history-trigger w-full rounded-lg bg-white/5 p-2 text-center ring-1 ring-white/10"
+      data-skill-history-user-id="${escapeHTML(safeUserId)}"
+      data-skill-history-name="${escapeHTML(nickname)}"
+      data-skill-history-avatar="${escapeHTML(avatar)}"
+      data-skill-history-score="${safeScore}"
+      data-skill-history-tier="${escapeHTML(tierName)}"
+      data-skill-history-rank-name="${escapeHTML(rankName)}"
+    >
       <span class="block text-xs text-white/70">${t('skill_score')}</span>
       <div class="mt-0.5 flex min-w-0 items-center justify-center gap-1.5">
         <img
@@ -110,7 +124,7 @@ function skillScoreStatHtml(data) {
           <span class="block truncate text-[9px] font-semibold uppercase tracking-wide text-white/60">${tierName}</span>
         </div>
       </div>
-    </div>
+    </button>
   `;
 }
 
@@ -240,6 +254,7 @@ if (typeof window !== 'undefined') {
    BOOT & CORE
    ========================= */
 document.addEventListener('DOMContentLoaded', async () => {
+  bindSkillHistoryTriggers();
   await initRankCard();
 });
 
@@ -876,7 +891,7 @@ async function loadRankCardContent() {
                       <span class="block text-xs text-white/70">${t('community_rank')}</span>
                       <span class="text-base font-semibold text-white/90">${data.community_rank || '—'}</span>
                     </div>
-                    ${skillScoreStatHtml(data)}
+                    ${skillScoreStatHtml(data, me)}
                   </div>
 
                   <!-- Bas -->
@@ -1064,7 +1079,7 @@ async function fetchUserRankCard(userId, opts = {}) {
                       <span class="block text-xs text-white/70">${t('community_rank')}</span>
                       <span class="text-base font-semibold text-white/90">${data.community_rank || '—'}</span>
                     </div>
-                    ${skillScoreStatHtml(data)}
+                    ${skillScoreStatHtml(data, userId)}
                   </div>
 
                   <div class="combined-container mt-3 grid gap-4 md:grid-cols-2 items-stretch">

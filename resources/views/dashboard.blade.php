@@ -233,7 +233,12 @@
               <div id="dash-streak" class="mt-1 text-xl font-extrabold text-zinc-900 dark:text-zinc-50">—</div>
             </div>
 
-            <div class="dashboard-summary-card rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4">
+            <button
+              id="dash-skill-card"
+              type="button"
+              class="dashboard-summary-card skill-history-trigger rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 ring-1 ring-zinc-200/40 dark:ring-white/10 p-4 text-left"
+              data-skill-history-user-id="{{ $dashboardUserId !== null ? (string) $dashboardUserId : '' }}"
+            >
               <div class="truncate text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{{ __('dashboard.stats.skill_score') }}</div>
               <div class="mt-2 flex items-center gap-2">
                 <div class="shrink-0">
@@ -251,7 +256,7 @@
                   <div id="dash-skill-tier" class="mt-1 truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Unranked</div>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>

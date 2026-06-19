@@ -1,4 +1,5 @@
 import { cdnAsset } from "../utils/cdn";
+import { bindSkillHistoryTriggers } from "../components/skill-history-modal";
 
 /* =========================
    CONFIG & UTILS
@@ -252,8 +253,20 @@ function skillScoreCell(player) {
   const scoreText = Number.isFinite(score)
     ? score.toLocaleString(undefined, { maximumFractionDigits: 2 })
     : '0';
+  const userId = player?.user_id ?? '';
+  const nickname = player?.nickname || '';
+  const avatar = player?.avatar_url || defaultDiscordAvatarFromId(extractDiscordId(player));
   return `
-    <div class="inline-flex min-w-0 items-center gap-2">
+    <button
+      type="button"
+      class="skill-history-trigger inline-flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-left"
+      data-skill-history-user-id="${escAttr(userId)}"
+      data-skill-history-name="${escAttr(nickname)}"
+      data-skill-history-avatar="${escAttr(avatar)}"
+      data-skill-history-score="${escAttr(Number.isFinite(score) ? score : 0)}"
+      data-skill-history-tier="${escAttr(tierName)}"
+      data-skill-history-rank-name="${escAttr(player?.skill_rank || '')}"
+    >
       <span class="shrink-0">
         <img
           src="${escAttr(cdnAsset(`assets/skill/rank-icons/${tierName}.png`))}"
@@ -267,7 +280,7 @@ function skillScoreCell(player) {
         <div class="font-extrabold tabular-nums text-zinc-900 dark:text-zinc-100">${esc(scoreText)}</div>
         <div class="truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${esc(tierName)}</div>
       </div>
-    </div>
+    </button>
   `;
 }
 const fmt = (n) => (Number(n) || 0).toLocaleString();
@@ -1138,6 +1151,8 @@ function setAvatarSrc(img, url, fallback) {
    GLOBAL INIT
    ========================= */
 document.addEventListener('DOMContentLoaded', () => {
+  bindSkillHistoryTriggers();
+
   if (searchInput) {
     searchInput.addEventListener('input', handleSearch);
     searchInput.addEventListener('keydown', (e) => {
