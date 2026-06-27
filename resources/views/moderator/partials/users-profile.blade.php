@@ -1,5 +1,5 @@
-{{-- Identity header (read-only) --}}
-<div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
+{{-- Identity header (read-only) — first divider separates it from the search above --}}
+<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <div data-field-view="coalesced_name" class="text-2xl font-black tracking-tight">—</div>
@@ -14,7 +14,7 @@
 </div>
 
 {{-- Names --}}
-<div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
+<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
   <div class="flex items-center justify-between">
     <h3 class="text-sm font-semibold">Names</h3>
     <span data-dirty="names" class="hidden text-xs text-amber-600 dark:text-amber-400">Unsaved</span>
@@ -34,7 +34,7 @@
 </div>
 
 {{-- Overwatch aliases --}}
-<div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
+<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
   <div class="flex items-center justify-between">
     <h3 class="text-sm font-semibold">Overwatch aliases</h3>
     <span data-dirty="aliases" class="hidden text-xs text-amber-600 dark:text-amber-400">Unsaved</span>
@@ -56,7 +56,7 @@
 </div>
 
 {{-- Link --}}
-<div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
+<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
   <h3 class="text-sm font-semibold">Link account</h3>
   <div class="mt-3 flex flex-wrap items-end gap-2">
     <label class="block text-xs text-zinc-500">This user is the
