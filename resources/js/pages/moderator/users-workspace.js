@@ -15,11 +15,18 @@ export function initUsersWorkspace(deps) {
 
   const search = $('[data-users-search]', root);
   if (search) {
-    DEPS.attachUsersAutocomplete(search); // suggestion fills value with user_id
+    // On pick, wireAutocomplete sets input.value to the name and stores the real
+    // id in dataset.uid; auto-load on pick, and prefer dataset.uid on Enter.
+    DEPS.wireAutocomplete(search, {
+      kind: 'users',
+      onPick: ({ id }) => {
+        if (id) loadUser(root, String(id));
+      },
+    });
     search.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      const id = cleanId(search.value);
+      const id = pickedId(search);
       if (id) loadUser(root, id);
       else DEPS.toast('Enter a user ID or pick a suggestion', 'warn');
     });
@@ -32,6 +39,12 @@ export function initUsersWorkspace(deps) {
 function cleanId(raw) {
   const m = String(raw || '').match(/\d{5,}/);
   return m ? m[0] : '';
+}
+
+// Prefer the id stored by autocomplete (dataset.uid) over the visible value,
+// which holds the display name after a pick.
+function pickedId(input) {
+  return cleanId(input?.dataset?.uid || '') || cleanId(input?.value || '');
 }
 
 async function loadUser(root, userId) {
@@ -295,15 +308,15 @@ function bindLink(root, user) {
   DEPS.attachUsersAutocomplete(other);
 
   submit.onclick = async () => {
-    const pickedId = cleanId(other.value);
-    if (!pickedId) {
+    const otherId = pickedId(other);
+    if (!otherId) {
       DEPS.toast('Pick the other account', 'warn');
       return;
     }
     // Direction: "this user is the real/fake account".
     const thisIsReal = dir.value === 'real';
-    const realId = thisIsReal ? String(user.id) : pickedId;
-    const fakeId = thisIsReal ? pickedId : String(user.id);
+    const realId = thisIsReal ? String(user.id) : otherId;
+    const fakeId = thisIsReal ? otherId : String(user.id);
     if (realId === fakeId) {
       DEPS.toast('Cannot link an account to itself', 'warn');
       return;

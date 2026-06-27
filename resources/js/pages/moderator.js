@@ -13318,7 +13318,7 @@ function initializeApp() {
   wireDdSelect(document);
   ensureFormUx(document);
   initActivityControls();
-  initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete });
+  initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
