@@ -1,10 +1,11 @@
+import {
+  $, $$, pickedId, setView, makeRecentStore, renderRecentChips, wireUserSearch,
+} from './workspace-shell.js';
+
 const API_MODS = '/api/mods';
 
 let DEPS = null;
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-const RECENT_KEY = 'mod.users.recent';
+const recent = makeRecentStore('mod.users.recent');
 let CURRENT = null; // loaded user object
 
 export function initUsersWorkspace(deps) {
@@ -14,37 +15,11 @@ export function initUsersWorkspace(deps) {
   setView(root, 'empty');
 
   const search = $('[data-users-search]', root);
-  if (search) {
-    // On pick, wireAutocomplete sets input.value to the name and stores the real
-    // id in dataset.uid; auto-load on pick, and prefer dataset.uid on Enter.
-    DEPS.wireAutocomplete(search, {
-      kind: 'users',
-      onPick: ({ id }) => {
-        if (id) loadUser(root, String(id));
-      },
-    });
-    search.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter') return;
-      e.preventDefault();
-      const id = pickedId(search);
-      if (id) loadUser(root, id);
-      else DEPS.toast('Enter a user ID or pick a suggestion', 'warn');
-    });
-  }
+  // On pick, wireAutocomplete sets input.value to the name and stores the real
+  // id in dataset.uid; auto-load on pick, and prefer dataset.uid on Enter.
+  wireUserSearch(search, { deps: DEPS, onLoad: (id) => loadUser(root, id) });
   renderRecent(root);
   bindCreateFake();
-}
-
-// Strip <@123>, spaces, non-digits → bare ID (string, precision-safe).
-function cleanId(raw) {
-  const m = String(raw || '').match(/\d{5,}/);
-  return m ? m[0] : '';
-}
-
-// Prefer the id stored by autocomplete (dataset.uid) over the visible value,
-// which holds the display name after a pick.
-function pickedId(input) {
-  return cleanId(input?.dataset?.uid || '') || cleanId(input?.value || '');
 }
 
 async function loadUser(root, userId) {
@@ -61,7 +36,7 @@ async function loadUser(root, userId) {
     return showError(root, data?.message || `Lookup failed (${status}).`);
   }
   CURRENT = data;
-  pushRecent({ id: String(data.id), name: data.coalesced_name || String(data.id) });
+  recent.push({ id: String(data.id), name: data.coalesced_name || String(data.id) });
   renderRecent(root);
   renderProfile(root, data);
   setView(root, 'loaded');
@@ -338,38 +313,7 @@ function bindLink(root, user) {
   };
 }
 
-// --- Recent lookups (localStorage) ---
-function getRecent() {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-function pushRecent(entry) {
-  const list = getRecent().filter((r) => r.id !== entry.id);
-  list.unshift(entry);
-  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8)));
-}
+// --- Recent lookups (localStorage, via shared shell) ---
 function renderRecent(root) {
-  const wrap = $('[data-users-recent]', root);
-  if (!wrap) return;
-  const list = getRecent();
-  wrap.innerHTML = '';
-  for (const r of list) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className =
-      'rounded-full border border-zinc-200/80 dark:border-white/10 px-3 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-white/10';
-    btn.textContent = r.name;
-    btn.onclick = () => loadUser(root, r.id);
-    wrap.appendChild(btn);
-  }
-}
-
-function setView(root, view) {
-  for (const name of ['loading', 'error', 'loaded']) {
-    const el = $(`[data-view="${name}"]`, root);
-    if (el) el.classList.toggle('hidden', name !== view);
-  }
+  renderRecentChips($('[data-users-recent]', root), recent, (id) => loadUser(root, id));
 }
