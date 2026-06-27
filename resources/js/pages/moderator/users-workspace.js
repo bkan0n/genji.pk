@@ -154,6 +154,105 @@ function bindNames(root, user) {
   saveBtn.onclick = saveNames;
 }
 
+function bindAliases(root, user) {
+  const rows = $$('[data-alias-row]', root);
+  const saveBtn = $('[data-save="aliases"]', root);
+  const resetBtn = $('[data-reset="aliases"]', root);
+  const dirtyTag = $('[data-dirty="aliases"]', root);
+
+  // Baseline from user.overwatch_usernames: [{ username, is_primary }]
+  const src = Array.isArray(user.overwatch_usernames) ? user.overwatch_usernames : [];
+  const baseline = src.slice(0, 3).map((a) => ({
+    username: a.username ?? '',
+    is_primary: !!a.is_primary,
+  }));
+  while (baseline.length < 3) baseline.push({ username: '', is_primary: false });
+
+  const setPrimary = (row, on) =>
+    $('[data-alias-primary]', row).setAttribute('data-primary', on ? 'true' : 'false');
+  const getPrimary = (row) =>
+    $('[data-alias-primary]', row).getAttribute('data-primary') === 'true';
+
+  const fill = () => {
+    rows.forEach((row, i) => {
+      $('[data-alias-name]', row).value = baseline[i].username;
+      setPrimary(row, baseline[i].is_primary);
+    });
+  };
+
+  const current = () =>
+    rows.map((row) => ({
+      username: $('[data-alias-name]', row).value.trim(),
+      is_primary: getPrimary(row),
+    }));
+  const nonEmpty = (list) => list.filter((a) => a.username !== '');
+
+  const validate = (list) => {
+    const filled = nonEmpty(list);
+    if (filled.length === 0) return { ok: true, payload: [] };
+    const primaries = filled.filter((a) => a.is_primary).length;
+    if (primaries !== 1) return { ok: false, reason: 'Exactly one alias must be primary.' };
+    const names = filled.map((a) => a.username.toLowerCase());
+    if (new Set(names).size !== names.length) return { ok: false, reason: 'Duplicate aliases.' };
+    if (filled.some((a) => a.username.length > 64))
+      return { ok: false, reason: 'Alias too long (max 64).' };
+    return { ok: true, payload: filled };
+  };
+
+  const baselineKey = () =>
+    JSON.stringify(
+      baseline.map((b) => ({ username: b.username.trim(), is_primary: b.is_primary }))
+    );
+  const isDirty = () => JSON.stringify(current()) !== baselineKey();
+  const refresh = () => {
+    const dirty = isDirty();
+    const valid = validate(current()).ok;
+    saveBtn.disabled = !(dirty && valid);
+    dirtyTag.classList.toggle('hidden', !dirty);
+  };
+
+  rows.forEach((row) => {
+    $('[data-alias-name]', row).oninput = refresh;
+    $('[data-alias-primary]', row).onclick = () => {
+      rows.forEach((r) => setPrimary(r, r === row));
+      refresh();
+    };
+  });
+  resetBtn.onclick = () => {
+    fill();
+    refresh();
+  };
+  fill();
+  refresh();
+
+  async function saveAliases() {
+    const result = validate(current());
+    if (!result.ok) {
+      DEPS.toast(result.reason, 'warn');
+      return;
+    }
+    const { ok, status, url, data } = await DEPS.http(
+      'PUT',
+      `${API_MODS}/users/${encodeURIComponent(user.id)}/overwatch`,
+      { body: { usernames: result.payload } }
+    );
+    DEPS.logActivity({ title: 'Replace OW Aliases', method: 'PUT', url, ok, status, data });
+    if (!ok) {
+      DEPS.toast(data?.message || `Save failed (${status})`, 'err');
+      return;
+    }
+    // New baseline = saved set, padded back to 3 rows.
+    const saved = result.payload.slice(0, 3);
+    for (let i = 0; i < 3; i++)
+      baseline[i] = saved[i] ? { ...saved[i] } : { username: '', is_primary: false };
+    fill();
+    refresh();
+    DEPS.toast('Aliases saved', 'ok');
+  }
+
+  saveBtn.onclick = saveAliases;
+}
+
 // --- Recent lookups (localStorage) ---
 function getRecent() {
   try {
