@@ -4,6 +4,7 @@ import {
 
 const API_MODS = '/api/mods';
 const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
+const XP_TYPES = ['Map Submission', 'Playtest', 'Guide', 'Completion', 'Record', 'World Record', 'Other'];
 const recent = makeRecentStore('mod.lootbox.recent');
 let DEPS = null;
 let CURRENT_ID = null;
@@ -64,7 +65,62 @@ async function loadUser(root, userId) {
   renderIdentity(root, data);
   loadXpSummary(root, String(data.id));
   loadKeys(root, String(data.id));
+  renderXpSection(root, String(data.id));
   setView(root, 'loaded');
+}
+
+function renderXpSection(root, userId) {
+  const mount = $('[data-lb-xp]', root);
+  if (!mount) return;
+  mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
+    <h3 class="text-sm font-semibold">Grant XP</h3>
+    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+      <label class="block text-xs text-zinc-500">Amount
+        <input data-lb-xp-amount type="number" step="1" placeholder="100" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none" />
+      </label>
+      <label class="block text-xs text-zinc-500">Type
+        <select data-lb-xp-type class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none">
+          ${XP_TYPES.map((t) => `<option value="${t}"${t === 'Other' ? ' selected' : ''}>${t}</option>`).join('')}
+        </select>
+      </label>
+      <label class="block text-xs text-zinc-500">Reason (optional)
+        <input data-lb-xp-reason type="text" placeholder="Manual grant from moderator panel" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none" />
+      </label>
+    </div>
+    <label class="mt-3 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+      <input data-lb-xp-mult type="checkbox" class="h-4 w-4 accent-emerald-500" /> Apply XP multiplier
+    </label>
+    <div class="mt-3">
+      <button data-lb-grant-xp type="button" class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">Grant XP</button>
+    </div>
+  </div>`;
+
+  $('[data-lb-grant-xp]', mount).onclick = () => grantXp(root, userId, mount);
+}
+
+async function grantXp(root, userId, mount) {
+  const amount = Number.parseInt($('[data-lb-xp-amount]', mount).value, 10);
+  if (!Number.isInteger(amount) || amount === 0)
+    return DEPS.toast('Amount must be a non-zero integer', 'warn');
+  const payload = {
+    amount,
+    type: ($('[data-lb-xp-type]', mount).value || 'Other').trim() || 'Other',
+    apply_multiplier: !!$('[data-lb-xp-mult]', mount).checked,
+    source: 'mods',
+  };
+  const reason = $('[data-lb-xp-reason]', mount).value.trim();
+  if (reason) payload.reason = reason;
+
+  const { ok, status, url, data } = await DEPS.http(
+    'POST',
+    `${API_MODS}/lootbox/users/${encodeURIComponent(userId)}/xp`,
+    { headers: { 'Content-Type': 'application/json' }, body: payload }
+  );
+  DEPS.logActivity({ title: 'Grant XP', method: 'POST', url, ok, status, data });
+  if (!ok && status === 422)
+    return DEPS.toast(data?.error || 'Validation failed (check amount/type/user)', 'err');
+  DEPS.toast(ok ? 'XP granted' : 'Failed', ok ? 'ok' : 'err');
+  if (ok) loadXpSummary(root, userId);
 }
 
 function keySelect(name) {
