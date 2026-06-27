@@ -174,12 +174,15 @@ function bindAliases(root, user) {
   const resetBtn = $('[data-reset="aliases"]', root);
   const dirtyTag = $('[data-dirty="aliases"]', root);
 
-  // Baseline from user.overwatch_usernames: [{ username, is_primary }]
+  // GET /users/{id} returns overwatch_usernames as an ordered array of strings,
+  // primary first (index 0). Coerce to the { username, is_primary } shape the
+  // editor uses. (Defensive: also accept an object entry with a username field.)
   const src = Array.isArray(user.overwatch_usernames) ? user.overwatch_usernames : [];
-  const baseline = src.slice(0, 3).map((a) => ({
-    username: a.username ?? '',
-    is_primary: !!a.is_primary,
-  }));
+  const baseline = src
+    .map((entry) => (typeof entry === 'string' ? entry : (entry?.username ?? '')))
+    .filter((name) => String(name).trim() !== '')
+    .slice(0, 3)
+    .map((name, i) => ({ username: String(name), is_primary: i === 0 }));
   while (baseline.length < 3) baseline.push({ username: '', is_primary: false });
 
   const setPrimary = (row, on) =>
