@@ -3,6 +3,7 @@ import {
 } from './workspace-shell.js';
 
 const API_MODS = '/api/mods';
+const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
 const recent = makeRecentStore('mod.lootbox.recent');
 let DEPS = null;
 let CURRENT_ID = null;
@@ -62,7 +63,72 @@ async function loadUser(root, userId) {
   renderRecent(root);
   renderIdentity(root, data);
   loadXpSummary(root, String(data.id));
+  loadKeys(root, String(data.id));
   setView(root, 'loaded');
+}
+
+function keySelect(name) {
+  return `<select name="${name}" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none">
+    ${KEY_TYPES.map((k) => `<option value="${k}">${k}</option>`).join('')}
+  </select>`;
+}
+
+async function loadKeys(root, userId) {
+  const mount = $('[data-lb-keys]', root);
+  if (!mount) return;
+  mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
+    <h3 class="text-sm font-semibold">Keys inventory</h3>
+    <div data-lb-keys-body class="mt-3 text-sm text-zinc-500">Loading keys…</div>
+    <div class="mt-3 flex flex-wrap items-end gap-2">
+      ${keySelect('key_type')}
+      <button data-lb-grant-key type="button" class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">Grant key</button>
+    </div>
+  </div>`;
+
+  $('[data-lb-grant-key]', mount).onclick = () =>
+    grantKey(root, userId, $('select[name="key_type"]', mount).value);
+  await refreshKeys(root, userId);
+}
+
+async function refreshKeys(root, userId) {
+  const body = $('[data-lb-keys-body]', root);
+  if (!body) return;
+  let res;
+  try {
+    res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/keys`);
+  } catch {
+    body.textContent = 'Keys unavailable (network).';
+    return;
+  }
+  const { ok, status, url, data } = res;
+  DEPS.logActivity({ title: 'Get user keys', method: 'GET', url, ok, status, data });
+  if (!ok) {
+    body.textContent = `Keys unavailable (${status}).`;
+    return;
+  }
+  // Accept either a {Classic: n, ...} map or an array of {key_type,count}-ish.
+  const counts = {};
+  if (Array.isArray(data)) {
+    for (const row of data) {
+      const k = row?.key_type || row?.type || row?.name;
+      if (k) counts[k] = (counts[k] || 0) + Number(row?.count ?? row?.amount ?? 1);
+    }
+  } else if (data && typeof data === 'object') {
+    for (const [k, v] of Object.entries(data)) if (typeof v !== 'object') counts[k] = Number(v) || 0;
+  }
+  const shown = KEY_TYPES.map((k) => `${k} ${counts[k] ?? 0}`).join(' · ');
+  body.textContent = shown || 'No keys.';
+}
+
+async function grantKey(root, userId, keyType) {
+  if (!keyType) return DEPS.toast('Pick a key type', 'warn');
+  const { ok, status, url, data } = await DEPS.http(
+    'POST',
+    `${API_MODS}/lootbox/users/${encodeURIComponent(userId)}/keys/${encodeURIComponent(keyType)}`
+  );
+  DEPS.logActivity({ title: 'Grant key', method: 'POST', url, ok, status, data });
+  DEPS.toast(ok ? 'Key granted' : 'Failed', ok ? 'ok' : 'err');
+  if (ok) refreshKeys(root, userId);
 }
 
 function renderIdentity(root, user) {
