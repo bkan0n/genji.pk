@@ -253,6 +253,42 @@ function bindAliases(root, user) {
   saveBtn.onclick = saveAliases;
 }
 
+function bindLink(root, user) {
+  const dir = $('[data-link-direction]', root);
+  const other = $('[data-link-other]', root);
+  const submit = $('[data-link-submit]', root);
+
+  // Autocomplete fills the input value with the picked user_id.
+  DEPS.attachUsersAutocomplete(other);
+
+  submit.onclick = async () => {
+    const pickedId = cleanId(other.value);
+    if (!pickedId) {
+      DEPS.toast('Pick the other account', 'warn');
+      return;
+    }
+    // Direction: "this user is the real/fake account".
+    const thisIsReal = dir.value === 'real';
+    const realId = thisIsReal ? String(user.id) : pickedId;
+    const fakeId = thisIsReal ? pickedId : String(user.id);
+    if (realId === fakeId) {
+      DEPS.toast('Cannot link an account to itself', 'warn');
+      return;
+    }
+    if (!confirm(`Link fake ${fakeId} → real ${realId}? This cannot be easily undone.`)) return;
+
+    const { ok, status, url, data } = await DEPS.http(
+      'PUT',
+      `${API_MODS}/users/fake/${encodeURIComponent(fakeId)}/link/${encodeURIComponent(realId)}`
+    );
+    DEPS.logActivity({ title: 'Link Fake→Real', method: 'PUT', url, ok, status, data });
+    DEPS.toast(ok ? 'Linked' : data?.message || `Link failed (${status})`, ok ? 'ok' : 'err');
+    if (ok) {
+      other.value = '';
+    }
+  };
+}
+
 // --- Recent lookups (localStorage) ---
 function getRecent() {
   try {
