@@ -5,6 +5,8 @@ import {
 const API_MODS = '/api/mods';
 const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
 const XP_TYPES = ['Map Submission', 'Playtest', 'Guide', 'Completion', 'Record', 'World Record', 'Other'];
+const RARITIES = ['Common', 'Rare', 'Epic', 'Legendary'];
+let CATALOG = null; // cached reward catalog (array)
 const recent = makeRecentStore('mod.lootbox.recent');
 let DEPS = null;
 let CURRENT_ID = null;
@@ -66,7 +68,135 @@ async function loadUser(root, userId) {
   loadXpSummary(root, String(data.id));
   loadKeys(root, String(data.id));
   renderXpSection(root, String(data.id));
+  renderRewardsSection(root, String(data.id));
   setView(root, 'loaded');
+}
+
+async function fetchCatalog() {
+  if (CATALOG) return CATALOG;
+  try {
+    const { ok, data } = await DEPS.http('GET', '/api/lootbox/rewards');
+    CATALOG = ok && Array.isArray(data) ? data : ok && Array.isArray(data?.rewards) ? data.rewards : [];
+  } catch {
+    CATALOG = [];
+  }
+  return CATALOG;
+}
+
+function rewardTypeOptions(list) {
+  const types = [...new Set(list.map((r) => r?.reward_type || r?.type).filter(Boolean))];
+  return [
+    '<option value="">any type</option>',
+    ...types.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`),
+  ].join('');
+}
+
+function renderRewardsSection(root, userId) {
+  const mount = $('[data-lb-rewards]', root);
+  if (!mount) return;
+  mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-semibold">Rewards owned</h3>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <select data-lb-rw-type class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">any type</option></select>
+      <select data-lb-rw-rarity class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
+        <option value="">any rarity</option>${RARITIES.map((r) => `<option value="${r}">${r}</option>`).join('')}
+      </select>
+      <button data-lb-rw-apply type="button" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm">Filter</button>
+    </div>
+    <div data-lb-rw-body class="mt-3 text-sm text-zinc-500">Loading rewards…</div>
+
+    <details class="mt-4 rounded-xl border border-amber-400/40 bg-amber-500/5 p-3">
+      <summary class="cursor-pointer text-sm font-semibold text-amber-700 dark:text-amber-400">Debug grant reward (danger)</summary>
+      <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Bypasses normal key ownership. Pick a reward from the catalog.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        ${keySelect('dbg_key_type')}
+        <select data-lb-dbg-reward class="min-w-[16rem] rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">Loading catalog…</option></select>
+        <button data-lb-dbg-grant type="button" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Grant reward</button>
+      </div>
+    </details>
+  </div>`;
+
+  $('[data-lb-rw-apply]', mount).onclick = () => refreshRewards(root, userId, mount);
+  populateRewardControls(mount);
+  $('[data-lb-dbg-grant]', mount).onclick = () => debugGrant(root, userId, mount);
+  refreshRewards(root, userId, mount);
+}
+
+async function populateRewardControls(mount) {
+  const list = await fetchCatalog();
+  const typeSel = $('[data-lb-rw-type]', mount);
+  if (typeSel) typeSel.innerHTML = rewardTypeOptions(list);
+  const dbg = $('[data-lb-dbg-reward]', mount);
+  if (dbg)
+    dbg.innerHTML = list.length
+      ? list
+          .map((r) => {
+            const type = r?.reward_type || r?.type || '';
+            const name = r?.reward_name || r?.name || '';
+            return `<option value="${esc(type)}::${esc(name)}">${esc(type)} — ${esc(name)}</option>`;
+          })
+          .join('')
+      : '<option value="">No catalog entries</option>';
+}
+
+async function refreshRewards(root, userId, mount) {
+  const body = $('[data-lb-rw-body]', mount);
+  if (!body) return;
+  body.textContent = 'Loading rewards…';
+  const query = {};
+  const type = $('[data-lb-rw-type]', mount).value.trim();
+  const rarity = $('[data-lb-rw-rarity]', mount).value.trim();
+  if (type) query.reward_type = type;
+  if (rarity) query.rarity = rarity;
+
+  let res;
+  try {
+    res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/rewards`, { query });
+  } catch {
+    body.textContent = 'Rewards unavailable (network).';
+    return;
+  }
+  const { ok, status, url, data } = res;
+  DEPS.logActivity({ title: 'Get user rewards', method: 'GET', url, ok, status, data });
+  if (!ok) {
+    body.textContent = `Rewards unavailable (${status}).`;
+    return;
+  }
+  const list = Array.isArray(data) ? data : Array.isArray(data?.rewards) ? data.rewards : [];
+  if (!list.length) {
+    body.textContent = 'No rewards.';
+    return;
+  }
+  body.innerHTML = `<ul class="space-y-1">${list
+    .map((r) => {
+      const name = r?.reward_name || r?.name || '(unnamed)';
+      const t = r?.reward_type || r?.type || '';
+      const rar = r?.rarity ? ` · ${esc(r.rarity)}` : '';
+      return `<li class="rounded-lg bg-zinc-900/5 dark:bg-white/5 px-3 py-1.5">${esc(name)} <span class="text-zinc-400">${esc(t)}${rar}</span></li>`;
+    })
+    .join('')}</ul>`;
+}
+
+async function debugGrant(root, userId, mount) {
+  const keyType = $('select[name="dbg_key_type"]', mount).value;
+  const combo = $('[data-lb-dbg-reward]', mount).value;
+  if (!combo) return DEPS.toast('Pick a reward from the catalog', 'warn');
+  const [reward_type, reward_name] = combo.split('::');
+  if (!reward_type || !reward_name) return DEPS.toast('Invalid reward selection', 'warn');
+  if (
+    !confirm(
+      `Debug-grant "${reward_name}" (${reward_type}, ${keyType}) to user ${userId}? This bypasses key ownership.`
+    )
+  )
+    return;
+
+  const path = `${API_MODS}/lootbox/users/debug/${encodeURIComponent(userId)}/${encodeURIComponent(keyType)}/${encodeURIComponent(reward_type)}/${encodeURIComponent(reward_name)}`;
+  const { ok, status, url, data } = await DEPS.http('POST', path);
+  DEPS.logActivity({ title: 'Grant reward (debug)', method: 'POST', url, ok, status, data });
+  DEPS.toast(ok ? 'Reward granted' : 'Failed', ok ? 'ok' : 'err');
+  if (ok) refreshRewards(root, userId, mount);
 }
 
 function renderXpSection(root, userId) {
