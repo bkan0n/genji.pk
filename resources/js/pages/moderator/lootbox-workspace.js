@@ -60,6 +60,48 @@ async function loadUser(root, userId) {
 
   recent.push({ id: String(data.id), name: data.coalesced_name || String(data.id) });
   renderRecent(root);
-  // Section renders are added in later tasks.
+  renderIdentity(root, data);
+  loadXpSummary(root, String(data.id));
   setView(root, 'loaded');
+}
+
+function renderIdentity(root, user) {
+  setText(root, '[data-lb-view="coalesced_name"]', user.coalesced_name || '—');
+  setText(root, '[data-lb-view="id"]', String(user.id));
+  setText(root, '[data-lb-view="coins"]', Number(user.coins || 0).toLocaleString());
+  const copyBtn = $('[data-lb-copy-id]', root);
+  if (copyBtn)
+    copyBtn.onclick = () => {
+      navigator.clipboard?.writeText(String(user.id));
+      DEPS.toast('ID copied', 'ok');
+    };
+}
+
+async function loadXpSummary(root, userId) {
+  const box = $('[data-lb-xp-summary]', root);
+  if (box) box.textContent = 'Loading XP…';
+  let res;
+  try {
+    res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/xp-summary`);
+  } catch {
+    if (box) box.textContent = 'XP summary unavailable (network).';
+    return;
+  }
+  const { ok, status, url, data } = res;
+  DEPS.logActivity({ title: 'XP summary', method: 'GET', url, ok, status, data });
+  if (!ok || !data || typeof data !== 'object') {
+    if (box) box.textContent = `XP summary unavailable (${status}).`;
+    return;
+  }
+  // Render defensively: show present primitive fields only.
+  const pairs = Object.entries(data).filter(([, v]) => v !== null && typeof v !== 'object');
+  if (box)
+    box.innerHTML = pairs.length
+      ? pairs
+          .map(
+            ([k, v]) =>
+              `<span class="mr-3 whitespace-nowrap"><span class="text-zinc-400">${esc(k.replace(/_/g, ' '))}:</span> <span class="font-semibold">${esc(String(v))}</span></span>`
+          )
+          .join('')
+      : 'No XP summary fields returned.';
 }
