@@ -1133,7 +1133,14 @@ function http(method, url, { body, query, headers } = {}) {
           });
           const subpanels = $$('[data-subpanel]', panel);
           subpanels.forEach((sp) => sp.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean)));
-          $('.empty-state', panel)?.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+          const emptyState = $('.empty-state', panel);
+          if (emptyState) {
+            emptyState.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
+          } else {
+            // Panels without a workflow-home landing (e.g. the Users workspace)
+            // default to their first sub-tab instead of leaving nothing selected.
+            $('.mod-subtab', panel)?.click();
+          }
         }
       });
       refreshModeratorActiveHeader(id);
