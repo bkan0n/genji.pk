@@ -1,5 +1,6 @@
 import { initUsersWorkspace } from './moderator/users-workspace.js';
 import { initLootboxWorkspace } from './moderator/lootbox-workspace.js';
+import { initLootboxSettings } from './moderator/lootbox-settings.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -13331,6 +13332,7 @@ function initializeApp() {
   initActivityControls();
   initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete });
   initLootboxWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete });
+  initLootboxSettings({ http, toast, logActivity });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();

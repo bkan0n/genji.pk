@@ -1,5 +1,5 @@
 import {
-  $, $$, pickedId, setView, makeRecentStore, renderRecentChips, wireUserSearch,
+  $, setView, makeRecentStore, renderRecentChips, wireUserSearch,
 } from './workspace-shell.js';
 
 const API_MODS = '/api/mods';
