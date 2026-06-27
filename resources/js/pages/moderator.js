@@ -129,6 +129,7 @@ const MOD_SECTION_META = {
   users: {
     kicker: 'Identity',
     summary: 'Inspect player profiles, manage Overwatch aliases, link fake accounts, and keep visible names consistent.',
+    hideStats: true,
     stats: ['Support workflow', 'Discord identity', 'Alias hygiene'],
     hints: [
       'Start with Get user or Get Overwatch usernames when you only have a Discord id.',
@@ -421,11 +422,13 @@ function refreshModeratorActiveHeader(tabId = document.querySelector('#modTabs .
   if (kicker) kicker.textContent = meta.kicker || 'Workflow';
   if (summary) summary.textContent = meta.summary || '';
   if (stats) {
-    stats.innerHTML = [
-      `${subtabCount} workflows`,
-      `${actionCount} actions`,
-      ...(meta.stats || []),
-    ].map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 font-semibold dark:border-white/10 dark:bg-white/5">${escapeHtml(chip)}</span>`).join('');
+    stats.innerHTML = meta.hideStats
+      ? ''
+      : [
+          `${subtabCount} workflows`,
+          `${actionCount} actions`,
+          ...(meta.stats || []),
+        ].map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 font-semibold dark:border-white/10 dark:bg-white/5">${escapeHtml(chip)}</span>`).join('');
   }
 
   const hintsRoot = document.getElementById('modContextHints');
