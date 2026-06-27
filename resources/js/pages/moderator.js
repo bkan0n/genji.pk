@@ -1,3 +1,5 @@
+import { initUsersWorkspace } from './moderator/users-workspace.js';
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -13462,6 +13464,7 @@ function initializeApp() {
   wireDdSelect(document);
   ensureFormUx(document);
   initActivityControls();
+  initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
