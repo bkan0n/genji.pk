@@ -25,6 +25,7 @@ export function initUsersWorkspace(deps) {
     });
   }
   renderRecent(root);
+  bindCreateFake();
 }
 
 // Strip <@123>, spaces, non-digits → bare ID (string, precision-safe).
@@ -251,6 +252,38 @@ function bindAliases(root, user) {
   }
 
   saveBtn.onclick = saveAliases;
+}
+
+function bindCreateFake() {
+  const name = $('[data-fake-name]');
+  const submit = $('[data-fake-submit]');
+  const result = $('[data-fake-result]');
+  if (!name || !submit) return;
+
+  const create = async () => {
+    const value = name.value.trim();
+    if (!value) {
+      DEPS.toast('Name required', 'warn');
+      return;
+    }
+    const { ok, status, url, data } = await DEPS.http('POST', `${API_MODS}/users/fake`, {
+      query: { name: value },
+    });
+    DEPS.logActivity({ title: 'Create Fake Member', method: 'POST', url, ok, status, data });
+    if (!ok) {
+      DEPS.toast(data?.message || `Create failed (${status})`, 'err');
+      return;
+    }
+    const newId = data?.id ?? data?.user_id ?? '';
+    if (result) result.textContent = newId ? `Created: ${newId}` : 'Created';
+    name.value = '';
+    DEPS.toast('Fake member created', 'ok');
+  };
+
+  submit.onclick = create;
+  name.onkeydown = (e) => {
+    if (e.key === 'Enter') create();
+  };
 }
 
 function bindLink(root, user) {
