@@ -146,23 +146,6 @@ const MOD_SECTION_META = {
       { sub: 'users-create', title: 'Create fake member', desc: 'Create a placeholder member for legacy or imported records.' },
     ],
   },
-  lootbox: {
-    kicker: 'Rewards',
-    summary: 'Grant keys, XP, rewards, and inspect reward state with fewer context switches.',
-    stats: ['Inventory', 'XP economy', 'Reward debug'],
-    hints: [
-      'Load user keys or rewards before granting when the request is account-specific.',
-      'Debug reward grants bypass normal key ownership and should stay exceptional.',
-    ],
-    cards: [
-      { sub: 'lootbox-get-keys', title: 'Review keys', desc: 'Check a user inventory before granting more keys.' },
-      { sub: 'lootbox-key', title: 'Grant key', desc: 'Give a specific key type to a user.' },
-      { sub: 'lootbox-xp', title: 'Grant XP', desc: 'Apply manual XP with a clear reason.' },
-      { sub: 'lootbox-get-rewards', title: 'Review rewards', desc: 'Inspect rewards already attached to a user.' },
-      { sub: 'lootbox-reward', title: 'Debug reward', desc: 'Grant one reward directly for admin correction.', danger: true },
-      { sub: 'lootbox-set-active-key', title: 'Key availability', desc: 'Set active key types and XP multiplier tools.' },
-    ],
-  },
   guides: {
     kicker: 'Guides',
     summary: 'Create, update, delete, and audit map guide links by map code and author.',
@@ -1616,26 +1599,6 @@ $$('form[data-action]').forEach((form) => {
     try {
       const runAction = async () => {
       switch (action) {
-        // LOOTBOX (API_MODS)
-        case 'grant-key':
-          return handleGrantKey(form);
-        case 'grant-xp':
-          return handleGrantXp(form);
-        case 'grant-reward':
-          return handleGrantReward(form);
-        case 'get-user-keys':
-          return handleGetUserKeys(form);
-        case 'get-user-rewards':
-          return handleGetUserRewards(form);
-        case 'view-all-rewards':
-          return handleViewAllRewards(form);
-        case 'set-active-key-type':
-          return handleSetActiveKeyType(form);
-        case 'get-xp-multiplier':
-          return handleGetXpMultiplier(form);
-        case 'set-xp-multiplier':
-          return handleSetXpMultiplier(form);
-
         // GUIDES (API_MODS)
         case 'create-guide':
           return handleCreateGuide(form);
@@ -2008,14 +1971,6 @@ function setupArchiveMapsUI() {
 // ENDPOINT RESPONSES
 function moderatorResponseActionTitle(action) {
   const exact = {
-    'grant-key': 'Grant lootbox key',
-    'grant-xp': 'Grant XP',
-    'grant-reward': 'Grant reward',
-    'get-user-keys': 'User lootbox keys',
-    'get-user-rewards': 'User rewards',
-    'view-all-rewards': 'Reward catalog',
-    'get-xp-multiplier': 'XP multiplier',
-    'set-xp-multiplier': 'XP multiplier update',
     'get-pending-verifs': 'Pending verifications',
     'get-pending-edit-requests': 'Pending map edits',
     'tournament-load-overview': 'Tournament overview',
@@ -2716,190 +2671,6 @@ function renderUserEndpointResponse(form, kind, {
       </div>
       <div class="p-5">${body}</div>
     </section>`;
-}
-
-// LOOTBOX
-async function handleGrantKey(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  const key_type = form.key_type.value;
-  const { ok, status, url, data } = await http(
-    'POST',
-    `${API_MODS}/lootbox/users/${encodeURIComponent(user_id)}/keys/${encodeURIComponent(key_type)}`
-  );
-  logActivity({ title: 'Grant key', method: 'POST', url, ok, status, data });
-  toast(ok ? 'Key granted' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGrantXp(form) {
-  const user_id = String(getUserIdFrom(form.user_id)).trim();
-
-  if (!isDigits(user_id)) {
-    toast('Pick a user from suggestions (user id required)', 'warn');
-    return;
-  }
-
-  const amount = Number.parseInt(form.amount.value, 10);
-  if (!Number.isInteger(amount) || amount === 0) {
-    toast('Amount must be a non-zero integer', 'warn');
-    return;
-  }
-
-  const type = String(form.type?.value || 'Other').trim() || 'Other';
-  const reason = String(form.reason?.value || '').trim();
-  const apply_multiplier = !!form.apply_multiplier?.checked;
-
-  const payload = {
-    amount,
-    type,
-    ...(reason ? { reason } : {}),
-    apply_multiplier,
-    source: 'mods',
-  };
-
-  const { ok, status, url, data } = await http(
-    'POST',
-    `${API_MODS}/lootbox/users/${encodeURIComponent(user_id)}/xp`,
-    {
-      headers: { 'Content-Type': 'application/json' },
-      body: payload,
-    }
-  );
-
-  logActivity({ title: 'Grant XP', method: 'POST', url, ok, status, data });
-
-  if (!ok && status === 422) {
-    toast(data?.error || 'Validation failed (check amount/type/user)', 'err');
-    return;
-  }
-
-  toast(ok ? 'XP granted' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGrantReward(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  const key_type = form.key_type.value;
-  const reward_type = (form.reward_type.value || '').trim();
-  const reward_name = (form.reward_name.value || '').trim();
-  if (!reward_type || !reward_name) {
-    toast('Reward type and name are required', 'warn');
-    return;
-  }
-
-  const path = `${API_MODS}/lootbox/users/debug/${encodeURIComponent(user_id)}/${encodeURIComponent(key_type)}/${encodeURIComponent(reward_type)}/${encodeURIComponent(reward_name)}`;
-  const { ok, status, url, data } = await http('POST', path);
-  logActivity({ title: 'Grant reward (debug)', method: 'POST', url, ok, status, data });
-  toast(ok ? 'Reward granted' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGetUserKeys(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  if (!user_id) {
-    toast('User ID required', 'warn');
-    return;
-  }
-  const key_type = form.key_type.value;
-  const query = {};
-  if (key_type) query.key_type = key_type;
-  const path = `/api/lootbox/users/${encodeURIComponent(user_id)}/keys`;
-  const { ok, status, url, data } = await http('GET', path, { query });
-  logActivity({ title: 'Get user keys', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Keys loaded' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGetUserRewards(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  if (!user_id) {
-    toast('User ID required', 'warn');
-    return;
-  }
-  const reward_type = form.reward_type.value.trim();
-  const key_type = form.key_type.value;
-  const rarity = form.rarity.value.trim();
-
-  const query = {};
-  if (reward_type) query.reward_type = reward_type;
-  if (key_type) query.key_type = key_type;
-  if (rarity) query.rarity = rarity;
-
-  const path = `/api/lootbox/users/${encodeURIComponent(user_id)}/rewards`;
-  const { ok, status, url, data } = await http('GET', path, { query });
-  logActivity({ title: 'Get user rewards', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Rewards loaded' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleViewAllRewards(form) {
-  const reward_type = (form.reward_type.value || 'any').trim();
-  const key_type = (form.key_type.value || 'any').trim();
-  const rarity = (form.rarity.value || 'any').trim();
-
-  const query = {};
-  if (reward_type && reward_type !== 'any') query.reward_type = reward_type;
-  if (key_type && key_type !== 'any') query.key_type = key_type;
-  if (rarity && rarity !== 'any') query.rarity = rarity;
-
-  const { ok, status, url, data } = await http('GET', `/api/lootbox/rewards`, { query });
-
-  logActivity({ title: 'View all rewards', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Rewards loaded' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleSetActiveKeyType(form) {
-  const key_type = form.key_type.value;
-  if (!key_type) {
-    toast('Pick a key type', 'warn');
-    return;
-  }
-
-  const confirmed = await showConfirmActiveKeyType();
-  if (!confirmed) return;
-
-  const { ok, status, url, data } = await http(
-    'PATCH',
-    `/api/lootbox/keys/${encodeURIComponent(key_type)}`
-  );
-
-  logActivity({ title: 'Set active key type', method: 'PATCH', url, ok, status, data });
-  toast(ok ? 'Active key type updated' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGetXpMultiplier(form) {
-  const { ok, status, url, data } = await http('GET', `/api/lootbox/xp/multiplier`);
-
-  let value = null;
-  if (data && typeof data === 'object' && 'value' in data) value = data.value;
-  else if (typeof data === 'string' && data.trim() !== '' && !Number.isNaN(+data)) value = +data;
-
-  logActivity({ title: 'Get XP multiplier', method: 'GET', url, ok, status, data });
-
-  if (!ok) {
-    toast('Failed', 'err');
-    return;
-  }
-
-  toast(value != null ? `XP multiplier: ${value}` : 'XP multiplier fetched', 'ok');
-}
-
-async function handleSetXpMultiplier(form) {
-  const raw = form.value.value;
-  const value = raw === '' ? NaN : +raw;
-
-  if (!Number.isFinite(value) || value < 1 || value > 10) {
-    toast('Value must be between 1 and 10', 'warn');
-    return;
-  }
-
-  const { ok, status, url, data } = await http('POST', `/api/lootbox/xp/multiplier`, {
-    body: { value },
-  });
-
-  logActivity({ title: 'Set XP multiplier', method: 'POST', url, ok, status, data });
-
-  if (!ok && status === 422) {
-    toast('Validation failed (1 → 10)', 'err');
-    return;
-  }
-
-  toast(ok ? 'XP multiplier updated' : 'Failed', ok ? 'ok' : 'err');
 }
 
 // GUIDES
@@ -7165,54 +6936,6 @@ async function handleGetPendingEditRequests() {
 //———————————————————————————————————————————————————————————————
 // LOOTBOX
 //———————————————————————————————————————————————————————————————
-function showConfirmActiveKeyType() {
-  return new Promise((resolve) => {
-    const overlay = document.createElement('div');
-    overlay.className =
-      'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
-    overlay.innerHTML = `
-      <div class="w-full max-w-md rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
-        <div class="px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
-          <h3 class="font-semibold text-sm">Confirm change</h3>
-        </div>
-        <div class="p-4 space-y-4">
-          <p class="text-sm text-zinc-800 dark:text-zinc-200">Are you sure you want to modify the global active key type ?</p>
-          <div class="flex justify-end gap-2">
-            <button class="btn-confirm cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400">I know what I'm doing</button>
-            <button class="btn-cancel cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">Cancel</button>
-          </div>
-        </div>
-      </div>
-    `;
-    appendOverlay(overlay);
-
-
-    const close = (val) => {
-      overlay.remove();
-      resolve(val);
-    };
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) close(false);
-    });
-    overlay.querySelector('.btn-cancel')?.addEventListener('click', () => close(false));
-    overlay.querySelector('.btn-confirm')?.addEventListener('click', () => close(true));
-    document.addEventListener(
-      'keydown',
-      function onKey(ev) {
-        if (ev.key === 'Escape') {
-          close(false);
-          document.removeEventListener('keydown', onKey);
-        }
-        if (ev.key === 'Enter') {
-          close(true);
-          document.removeEventListener('keydown', onKey);
-        }
-      },
-      { once: true }
-    );
-  });
-}
-
 //———————————————————————————————————————————————————————————————
 // SUBMIT MAP
 //———————————————————————————————————————————————————————————————
