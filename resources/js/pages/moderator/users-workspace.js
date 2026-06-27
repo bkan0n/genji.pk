@@ -79,6 +79,81 @@ function setText(root, sel, value) {
   if (el) el.textContent = value;
 }
 
+function bindSections(root, user) {
+  bindNames(root, user);
+  // bindAliases + bindLink added in later tasks.
+  if (typeof bindAliases === 'function') bindAliases(root, user);
+  if (typeof bindLink === 'function') bindLink(root, user);
+}
+
+function bindNames(root, user) {
+  const gn = $('[data-field="global_name"]', root);
+  const nn = $('[data-field="nickname"]', root);
+  const saveBtn = $('[data-save="names"]', root);
+  const resetBtn = $('[data-reset="names"]', root);
+  const dirtyTag = $('[data-dirty="names"]', root);
+
+  const baseline = {
+    global_name: user.global_name ?? '',
+    nickname: user.nickname ?? '',
+  };
+  const fill = () => {
+    gn.value = baseline.global_name;
+    nn.value = baseline.nickname;
+  };
+  fill();
+
+  const isDirty = () => gn.value !== baseline.global_name || nn.value !== baseline.nickname;
+  const refresh = () => {
+    const dirty = isDirty();
+    saveBtn.disabled = !dirty;
+    dirtyTag.classList.toggle('hidden', !dirty);
+  };
+  gn.oninput = refresh;
+  nn.oninput = refresh;
+  gn.onkeydown = nn.onkeydown = (e) => {
+    if (e.key === 'Enter' && !saveBtn.disabled) saveNames();
+  };
+  resetBtn.onclick = () => {
+    fill();
+    refresh();
+  };
+  refresh();
+
+  async function saveNames() {
+    const body = {};
+    if (gn.value !== baseline.global_name) body.global_name = gn.value === '' ? null : gn.value;
+    if (nn.value !== baseline.nickname) body.nickname = nn.value === '' ? null : nn.value;
+    if (Object.keys(body).length === 0) return;
+    // Nullable unset confirm
+    if (
+      (body.global_name === null || body.nickname === null) &&
+      !confirm('You are clearing a name field to empty. Continue?')
+    )
+      return;
+
+    const { ok, status, url, data } = await DEPS.http(
+      'PATCH',
+      `${API_MODS}/users/${encodeURIComponent(user.id)}`,
+      { body }
+    );
+    DEPS.logActivity({ title: 'Update Names', method: 'PATCH', url, ok, status, data });
+    if (!ok) {
+      DEPS.toast(data?.message || `Save failed (${status})`, 'err');
+      return; // keep edits intact
+    }
+    // Adopt updated values; refresh header if coalesced_name changed.
+    baseline.global_name = gn.value;
+    baseline.nickname = nn.value;
+    if (data && 'coalesced_name' in data)
+      setText(root, '[data-field-view="coalesced_name"]', data.coalesced_name || '—');
+    refresh();
+    DEPS.toast('Names saved', 'ok');
+  }
+
+  saveBtn.onclick = saveNames;
+}
+
 // --- Recent lookups (localStorage) ---
 function getRecent() {
   try {
