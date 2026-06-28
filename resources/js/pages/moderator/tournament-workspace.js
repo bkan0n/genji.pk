@@ -40,6 +40,9 @@ function wireSubtabLoading(root) {
     const name = tab.dataset.subtab;
     if (name === 'tournament-status') loadStatus(root, { force: false });
     if (name === 'tournament-setup') loadSetup(root, { force: false });
+    // 'tournament-utility' needs no data loading: the streak lookup is read-only
+    // and on-demand (bound once via wireStreakLookup). The generic sub-tab
+    // switcher shows the panel; nothing to preload here.
   });
 }
 
