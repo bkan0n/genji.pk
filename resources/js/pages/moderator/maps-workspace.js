@@ -13,6 +13,8 @@ export function initMapWorkspace(deps) {
 
   const search = $('[data-maps-search]', root);
   wireMapSearch(search, { deps: DEPS, onLoad: (code) => loadMap(root, code) });
+  search?.focus();
+  search?.addEventListener('paste', () => setTimeout(() => { search.value = search.value.trim().replace(/^#/, ''); }, 0));
   renderRecent(root);
   // Build the separate submit-new-map tool's dropdowns/banner/medals once.
   // The form's submit is handled by moderator.js's existing form[data-action]
