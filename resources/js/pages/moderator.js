@@ -1893,8 +1893,6 @@ function setupArchiveMapsUI() {
 // ENDPOINT RESPONSES
 function moderatorResponseActionTitle(action) {
   const exact = {
-    'get-pending-verifs': 'Pending verifications',
-    'get-pending-edit-requests': 'Pending map edits',
     'tournament-load-overview': 'Tournament overview',
   };
   if (exact[action]) return exact[action];
@@ -7107,7 +7105,7 @@ function validateUpdateMedals(allowEmpty = true) {
 }
 
 // ———————————————————————————————————————————————————————————————
-// VERIFICATION QUEUE – init & helpers
+// MODERATOR CONTEXT
 // ———————————————————————————————————————————————————————————————
 const MOD_USER_ID = (
   document.getElementById('modUserId')?.value ??
@@ -11447,14 +11445,6 @@ const sp = new URLSearchParams(window.location.search);
   if (typeof MOD_USER_ID !== 'undefined' && MOD_USER_ID) {
     const createdBy = document.querySelector('input[name="created_by_user_id"]');
     if (createdBy && !createdBy.value) createdBy.value = MOD_USER_ID;
-
-    const resolvedBy = document.getElementById('editResolvedByInput');
-    if (resolvedBy) {
-      if (!resolvedBy.value) resolvedBy.value = MOD_USER_ID;
-      resolvedBy.readOnly = true;
-      resolvedBy.setAttribute('aria-readonly', 'true');
-      resolvedBy.classList.add(...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean));
-    }
   }
 
   // Click -> URL sync
