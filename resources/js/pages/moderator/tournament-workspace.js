@@ -1084,19 +1084,32 @@ function wireStreakLookup(root) {
 
   // Reuse the shared users autocomplete; picking sets input.dataset.uid + label,
   // and we read the resolved id on submit. Pressing Enter on a typed id works too.
+  //
+  // Autocomplete registers its own keydown on `input` BEFORE ours, so on
+  // Enter-to-pick its handler runs first and calls onPick (which opens the
+  // overlay) synchronously. The flag below lets onPick claim that single open
+  // and tells our own keydown (which fires right after, same dispatch) to bail.
+  let pickJustOpened = false;
   if (DEPS.wireAutocomplete) {
     DEPS.wireAutocomplete(input, {
       kind: 'users',
-      onPick: ({ id }) => { if (id != null) openStreak(root, id).catch(() => {}); },
+      onPick: ({ id }) => {
+        if (id == null) return;
+        openStreak(root, id).catch(() => {});
+        // Suppress the duplicate open from our keydown, which runs synchronously
+        // right after this within the same event dispatch. Reset on the next
+        // tick so a later, unrelated manual Enter is NOT suppressed.
+        pickJustOpened = true;
+        setTimeout(() => { pickJustOpened = false; }, 0);
+      },
     });
   }
 
   input.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
-    // When the autocomplete dropdown is open, its own Enter handler owns this
-    // event (pick() → onPick opens the overlay). Bail so we don't double-open.
-    const acOpen = input.parentElement?.querySelector('.ac-list:not(.hidden)');
-    if (acOpen) return;
+    // onPick already opened the overlay for this Enter-to-pick selection; let it
+    // be the single opener and bail so we don't double-open.
+    if (pickJustOpened) return;
     // Otherwise resolve from a prior pick (dataset.uid) or the raw typed value
     // (must be a numeric user id).
     const uid = input.dataset.uid || String(input.value || '').trim();
