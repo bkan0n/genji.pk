@@ -146,8 +146,8 @@
               </button>
 
               <button
-                data-tab="moderation"
-                data-tab-label="Moderation"
+                data-tab="records"
+                data-tab-label="Records"
                 class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
                 type="button"
               >
@@ -156,7 +156,7 @@
                     <path fill="currentColor" d="M12 1l3 5h6l-4.5 4l1.5 6l-6-3.5L6 16l1.5-6L3 6h6Z" />
                   </svg>
                 </span>
-                <span class="min-w-0 flex-1 truncate">Moderation</span>
+                <span class="min-w-0 flex-1 truncate">Records</span>
                 <span class="shrink-0 whitespace-nowrap text-[10px] text-zinc-500">Ops</span>
               </button>
 
@@ -302,217 +302,8 @@
             {{-- ============ MAPS ============ --}}
             @include('moderator.partials.maps')
 
-            {{-- ============ MODERATION ============ --}}
-            <div data-panel="moderation" class="mod-panel hidden space-y-4">
-              <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="mod-suspicious"
-                >
-                  Set suspicious flag
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="mod-remove-suspicious"
-                >
-                  Remove suspicious flag
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="mod-getsusp"
-                >
-                  Get suspicious flags
-                </button>
-              </div>
-              <div
-                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
-              >
-                Choose a Moderation action.
-              </div>
-
-              <!-- Set Suspicious Flag -->
-              <div data-subpanel="mod-suspicious" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
-                  <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-semibold">Set Suspicious Flag</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/completions/suspicious</span>
-                  </div>
-                  <form
-                    data-action="set-suspicious"
-                    autocomplete="off"
-                    class="grid gap-3 sm:grid-cols-3"
-                  >
-                    <label>
-                      Context
-                      <input
-                        name="context"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                        placeholder="tool-assisted, impossible, …"
-                      />
-                    </label>
-
-                    <label>
-                      Flag type
-                      <div class="relative mt-1" data-dd-select>
-                        <button
-                          type="button"
-                          data-dd-btn
-                          class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left focus:ring-1 focus:ring-emerald-500/30 focus:outline-none"
-                        >
-                          <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Cheating</span>
-                          <svg
-                            class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                            />
-                          </svg>
-                        </button>
-                        <div
-                          data-dd-list
-                          class="absolute z-20 mt-1 hidden w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
-                        >
-                          <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
-                          >
-                            <input
-                              type="radio"
-                              name="flag_type"
-                              value="Cheating"
-                              class="accent-emerald-500"
-                              checked
-                              data-label="Cheating"
-                            />
-                            <span>Cheating</span>
-                          </label>
-                          <label
-                            class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
-                          >
-                            <input
-                              type="radio"
-                              name="flag_type"
-                              value="Scripting"
-                              class="accent-emerald-500"
-                              data-label="Scripting"
-                            />
-                            <span>Scripting</span>
-                          </label>
-                        </div>
-                      </div>
-                    </label>
-
-                    <label>
-                      Flagged user (uid)
-                      <input
-                        name="flagged_by"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      />
-                    </label>
-
-                    <label class="sm:col-span-1">
-                      Message ID (opt.)
-                      <input
-                        name="message_id"
-                        type="number"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      />
-                    </label>
-
-                    <label class="sm:col-span-1">
-                      Verification ID (opt.)
-                      <input
-                        name="verification_id"
-                        type="number"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      />
-                    </label>
-
-                    <div class="sm:col-span-3">
-                      <button
-                        class="w-full sm:w-auto cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
-                      >
-                        Flag
-                      </button>
-                    </div>
-                  </form>
-                </article>
-              </div>
-
-              <!-- Remove Suspicious Flag -->
-              <div data-subpanel="mod-remove-suspicious" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
-                  <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-semibold">Remove Suspicious Flag</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">DELETE /api/mods/completions/suspicious</span>
-                  </div>
-                  <form
-                    data-action="remove-suspicious"
-                    autocomplete="off"
-                    class="grid gap-3 sm:grid-cols-2"
-                  >
-                    <label>
-                      Message ID (opt.)
-                      <input
-                        name="message_id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-red-500/60 focus:outline-none"
-                      />
-                    </label>
-
-                    <label>
-                      Verification ID (opt.)
-                      <input
-                        name="verification_id"
-                        type="text"
-                        inputmode="numeric"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-red-500/60 focus:outline-none"
-                      />
-                    </label>
-
-                    <div class="sm:col-span-2">
-                      <button
-                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500"
-                      >
-                        Remove flag
-                      </button>
-                    </div>
-                  </form>
-                </article>
-              </div>
-
-              <!-- Get Suspicious Flags -->
-              <div data-subpanel="mod-getsusp" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
-                  <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-semibold">Get Suspicious Flags</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/mods/completions/suspicious</span>
-                  </div>
-                  <form
-                    data-action="get-suspicious"
-                    autocomplete="off"
-                    class="grid gap-3 sm:grid-cols-3"
-                  >
-                    <label>
-                      User name
-                      <input
-                        name="user_id"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
-                      />
-                    </label>
-                    <div class="sm:col-span-3">
-                      <button
-                        class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
-                      >
-                        Fetch
-                      </button>
-                    </div>
-                  </form>
-                </article>
-              </div>
-            </div>
+            {{-- ============ RECORDS ============ --}}
+            @include('moderator.partials.records')
 
             {{-- ============ VERIFICATIONS (nouvelle section) ============ --}}
             <div data-panel="verifications" class="mod-panel hidden space-y-4">

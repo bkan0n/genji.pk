@@ -3,6 +3,7 @@ import { initLootboxWorkspace } from './moderator/lootbox-workspace.js';
 import { initLootboxSettings } from './moderator/lootbox-settings.js';
 import { initMapWorkspace } from './moderator/maps-workspace.js';
 import { initContentWorkspace } from './moderator/content-workspace.js';
+import { initRecordsWorkspace } from './moderator/records-workspace.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -201,18 +202,13 @@ const MOD_SECTION_META = {
     summary: 'Tools for Lootbox.',
     hideStats: true,
   },
-  moderation: {
+  records: {
     kicker: 'Quality control',
-    summary: 'Override quality votes and handle suspicious-completion flags with audit-friendly outputs.',
-    stats: ['Quality', 'Suspicious flags', 'Corrections'],
+    summary: 'Review and manage suspicious-completion flags for a single player.',
+    hideStats: true,
     hints: [
-      'Use suspicious flag lookup before setting or clearing a flag.',
-      'Quality overrides should include the exact map code and verified quality value.',
-    ],
-    cards: [
-      { sub: 'mod-getsusp', title: 'Review flags', desc: 'List suspicious flags before changing a completion.' },
-      { sub: 'mod-suspicious', title: 'Set suspicious flag', desc: 'Mark one completion as suspicious.' },
-      { sub: 'mod-remove-suspicious', title: 'Remove suspicious flag', desc: 'Clear an existing completion flag.', danger: true },
+      'Search a player to see their suspicious flags.',
+      'Provide exactly one record reference — a message ID or a verification ID.',
     ],
   },
   verifications: {
@@ -1537,8 +1533,6 @@ function wireFormAutocompletes(root = document) {
     if (!input.__acBound) attachUsersAutocomplete(input);
   });
 
-  root.querySelectorAll('input[name$="flagged_by"]').forEach(attachUsersAutocomplete);
-
   const mapNameInput = root.querySelector('#mapNameInput');
   if (mapNameInput) {
     attachMapNameAutocomplete(mapNameInput, ({ value }) => {
@@ -1611,14 +1605,6 @@ $$('form[data-action]').forEach((form) => {
           return handleSubmitMap(form);
         case 'convert-legacy':
           return handleConvertLegacy(form);
-
-        // MODERATION (API_MODS)
-        case 'set-suspicious':
-          return handleSetSuspicious(form);
-        case 'remove-suspicious':
-          return handleRemoveSuspicious(form);
-        case 'get-suspicious':
-          return handleGetSuspicious(form);
 
         // SKILL
         case 'skill-user-summary':
@@ -4349,102 +4335,6 @@ async function applyOverrideQuality(code, value) {
   logActivity({ title: 'Override quality', method: 'POST', url, ok, status, data });
   toast(ok ? 'Applied' : 'Failed', ok ? 'ok' : 'err');
   return ok;
-}
-
-async function handleSetSuspicious(form) {
-  const context = (form.context.value || '').trim();
-  const flag_type = (form.flag_type.value || '').trim();
-
-  const flagged_by_raw = getUserIdFrom(form.flagged_by);
-  const msgRaw = asId(form.message_id);
-  const verRaw = asId(form.verification_id);
-
-  if (!context) {
-    toast('Context is required', 'warn');
-    return;
-  }
-  if (!flag_type) {
-    toast('Flag type is required', 'warn');
-    return;
-  }
-
-  if (!isDigits(flagged_by_raw)) {
-    toast('flagged_by must be digits', 'warn');
-    return;
-  }
-  const flagged_by = flagged_by_raw;
-
-  let message_id = null;
-  if (msgRaw !== '') {
-    if (!isDigits(msgRaw)) {
-      toast('message_id must be digits', 'warn');
-      return;
-    }
-    message_id = msgRaw;
-  }
-
-  let verification_id = null;
-  if (verRaw !== '') {
-    if (!isDigits(verRaw)) {
-      toast('verification_id must be digits', 'warn');
-      return;
-    }
-    verification_id = verRaw;
-  }
-
-  const body = { context, flag_type, flagged_by, message_id, verification_id };
-
-  const { ok, status, url, data } = await http('POST', `${API_MODS}/completions/suspicious`, {
-    body,
-  });
-
-  logActivity({ title: 'Set suspicious flag', method: 'POST', url, ok, status, data });
-  toast(ok ? 'Flag created' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleRemoveSuspicious(form) {
-  const msgRaw = asId(form.message_id);
-  const verRaw = asId(form.verification_id);
-
-  let message_id = null;
-  if (msgRaw !== '') {
-    if (!isDigits(msgRaw)) {
-      toast('message_id must be digits', 'warn');
-      return;
-    }
-    message_id = msgRaw;
-  }
-
-  let verification_id = null;
-  if (verRaw !== '') {
-    if (!isDigits(verRaw)) {
-      toast('verification_id must be digits', 'warn');
-      return;
-    }
-    verification_id = verRaw;
-  }
-
-  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/completions/suspicious`, {
-    body: { message_id, verification_id },
-  });
-
-  logActivity({ title: 'Remove suspicious flag', method: 'DELETE', url, ok, status, data });
-  toast(ok ? 'Flag removed' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGetSuspicious(form) {
-  const user_id = getUserIdFrom(form.user_id);
-  if (!isDigits(user_id)) {
-    toast('User ID is required (digits)', 'warn');
-    return;
-  }
-
-  const { ok, status, url, data } = await http('GET', `${API_MODS}/completions/suspicious`, {
-    query: { user_id },
-  });
-
-  logActivity({ title: 'Get suspicious flags', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Loaded' : 'Failed', ok ? 'ok' : 'err');
 }
 
 // VERIFICATIONS
@@ -12707,6 +12597,7 @@ function initializeApp() {
     handleContentTechniqueDelete,
     loadContentTechniqueIntoUpdateForm,
   });
+  initRecordsWorkspace({ http, toast, logActivity, wireAutocomplete });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
