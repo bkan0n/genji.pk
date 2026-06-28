@@ -140,7 +140,7 @@ function buildRow(entity, item, index, total) {
   return row;
 }
 
-// ---- wiring (filled in across later tasks) ----
+// ---- event wiring ----
 
 function wireListContainer(entity) {
   const c = listContainer(entity);
@@ -227,7 +227,8 @@ function makeIdForm(id) {
 
 function armDelete(entity, row, id) {
   if (!row) return;
-  const name = items(entity).find((it) => String(it?.id) === String(id))?.name ?? `#${escapeHtml(String(id))}`;
+  // Raw fallback is fine: `name` is escaped at the innerHTML sink below.
+  const name = items(entity).find((it) => String(it?.id) === String(id))?.name ?? `#${id}`;
   row.innerHTML = `
     <div class="min-w-0 flex-1 text-sm text-zinc-700 dark:text-zinc-200">Delete “${escapeHtml(String(name))}”?</div>
     <div class="flex shrink-0 items-center gap-2">
