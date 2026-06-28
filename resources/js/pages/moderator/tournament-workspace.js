@@ -254,20 +254,6 @@ function renderEditionStrip(root, { edition, config, cycles }) {
       ? `<button type="button" data-tournament-lc-action="resume" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Resume auto-rotation</button>`
       : `<button type="button" data-tournament-lc-action="pause" class="w-full sm:w-auto cursor-pointer rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-700 hover:bg-amber-500/15 dark:text-amber-300">Pause auto-rotation</button>`;
 
-    const cycleRows = Array.isArray(cycles) && cycles.length
-      ? cycles.map((cycle) => {
-          const categoryName = cycle.category_name || `Category #${cycle.category_id ?? '-'}`;
-          return `
-          <div class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-zinc-900/55">
-            <div class="min-w-0">
-              <div class="truncate text-sm font-semibold">${tournamentEscape(categoryName)}</div>
-              <div class="truncate text-xs text-zinc-500 dark:text-zinc-400">${tournamentEscape(cycle.map_name || 'No map')} <span class="font-mono">${tournamentEscape(cycle.map_code || '')}</span> ${cycle.map_difficulty ? `· ${tournamentEscape(cycle.map_difficulty)}` : ''}</div>
-            </div>
-            ${tournamentStatusPill(cycle.status || 'active')}
-          </div>`;
-        }).join('')
-      : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-3 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No active cycles.</div>';
-
     body = `
       <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 dark:border-emerald-400/15">
         <div class="flex items-center justify-between gap-3">
@@ -279,10 +265,6 @@ function renderEditionStrip(root, { edition, config, cycles }) {
           <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Ends</dt><dd class="text-sm font-semibold">${tournamentEscape(tournamentFormatDate(edition.ends_at))}</dd></div>
           <div class="rounded-xl bg-white/70 px-3 py-2 dark:bg-zinc-900/55"><dt class="text-xs text-zinc-500 dark:text-zinc-400">Time left</dt><dd class="text-sm font-semibold tabular-nums" data-tournament-countdown data-ends-at="${tournamentEscape(edition.ends_at || '')}">…</dd></div>
         </dl>
-        <div class="mt-4">
-          <div class="mb-2 text-sm font-semibold">Active cycles</div>
-          <div class="space-y-2">${cycleRows}</div>
-        </div>
         <div class="mt-4 rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/40">
           <p class="text-xs text-zinc-600 dark:text-zinc-300">Pausing is a <strong>hiatus</strong>: the current edition still finishes its full term. Only creation of the <strong>next</strong> edition at the boundary is suppressed until you resume.</p>
           <div class="mt-3">${toggle}</div>
@@ -425,13 +407,6 @@ function submissionCountFrom(cycle) {
   return n == null ? null : n;
 }
 
-function mapThumbMarkup(thumb, alt) {
-  if (!thumb) {
-    return `<div class="flex h-16 w-24 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-300/80 text-[10px] text-zinc-400 dark:border-white/10">No image</div>`;
-  }
-  return `<img src="${tournamentEscape(thumb)}" alt="${tournamentEscape(alt || 'map thumbnail')}" loading="lazy" class="h-16 w-24 shrink-0 rounded-lg border border-zinc-200/80 object-cover dark:border-white/10" />`;
-}
-
 function difficultyBadges(difficulties) {
   if (!Array.isArray(difficulties) || !difficulties.length) {
     return '<span class="text-xs text-zinc-500 dark:text-zinc-400">No difficulties</span>';
@@ -501,23 +476,19 @@ async function renderCategoryCards(root, { config, edition, cycles }) {
 
       const liveCode = live?.map_code || null;
       const liveDifficulty = live?.map_difficulty || null;
-      const liveThumb = mapThumbnail(live);
       const submissions = submissionCountFrom(live);
 
       const liveSection = live
         ? `
           <div class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-3 dark:border-emerald-400/15">
             <div class="mb-2 text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">Live cycle</div>
-            <div class="flex items-start gap-3">
-              ${mapThumbMarkup(liveThumb, live.map_name || liveCode || 'live map')}
-              <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-black">${tournamentEscape(live.map_name || 'No active map')}</div>
-                <div class="mt-1 grid grid-cols-2 gap-2 text-xs">
-                  <div><span class="text-zinc-500 dark:text-zinc-400">Code</span> <span class="font-mono font-semibold">${tournamentEscape(liveCode || '-')}</span></div>
-                  <div><span class="text-zinc-500 dark:text-zinc-400">Difficulty</span> <span class="font-semibold">${tournamentEscape(liveDifficulty || '-')}</span></div>
-                  <div><span class="text-zinc-500 dark:text-zinc-400">Time left</span> <span class="font-semibold tabular-nums">${tournamentEscape(edition?.ends_at ? tournamentCountdownText(edition.ends_at) : '-')}</span></div>
-                  <div><span class="text-zinc-500 dark:text-zinc-400">Submissions</span> <span class="font-semibold tabular-nums">${tournamentEscape(submissions ?? '-')}</span></div>
-                </div>
+            <div class="min-w-0">
+              <div class="truncate text-sm font-black">${tournamentEscape(live.map_name || 'No active map')}</div>
+              <div class="mt-1 grid grid-cols-2 gap-2 text-xs">
+                <div><span class="text-zinc-500 dark:text-zinc-400">Code</span> <span class="font-mono font-semibold">${tournamentEscape(liveCode || '-')}</span></div>
+                <div><span class="text-zinc-500 dark:text-zinc-400">Difficulty</span> <span class="font-semibold">${tournamentEscape(liveDifficulty || '-')}</span></div>
+                <div><span class="text-zinc-500 dark:text-zinc-400">Time left</span> <span class="font-semibold tabular-nums">${tournamentEscape(edition?.ends_at ? tournamentCountdownText(edition.ends_at) : '-')}</span></div>
+                <div><span class="text-zinc-500 dark:text-zinc-400">Submissions</span> <span class="font-semibold tabular-nums">${tournamentEscape(submissions ?? '-')}</span></div>
               </div>
             </div>
           </div>`
@@ -527,12 +498,9 @@ async function renderCategoryCards(root, { config, edition, cycles }) {
         ? `
           <div class="mt-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-3 dark:border-amber-400/15">
             <div class="mb-2 text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Pending / next map</div>
-            <div class="flex items-center gap-3">
-              ${mapThumbMarkup(pending.thumb, pending.name || pending.code || 'pending map')}
-              <div class="min-w-0">
-                <div class="truncate text-sm font-semibold">${tournamentEscape(pending.name || '-')}</div>
-                <div class="text-xs"><span class="text-zinc-500 dark:text-zinc-400">Code</span> <span class="font-mono font-semibold">${tournamentEscape(pending.code || '-')}</span></div>
-              </div>
+            <div class="min-w-0">
+              <div class="truncate text-sm font-semibold">${tournamentEscape(pending.name || '-')}</div>
+              <div class="text-xs"><span class="text-zinc-500 dark:text-zinc-400">Code</span> <span class="font-mono font-semibold">${tournamentEscape(pending.code || '-')}</span></div>
             </div>
           </div>`
         : `<div class="mt-2 rounded-xl border border-dashed border-zinc-300/80 p-3 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">No pending map queued.</div>`;
