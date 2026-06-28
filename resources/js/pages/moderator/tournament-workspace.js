@@ -1777,15 +1777,10 @@ function buildSetupConfigPayload(form) {
   const fd = new FormData(form);
   const payload = {};
 
+  // Reuse the shared optional-number guard (rejects negatives, matching the
+  // original tournamentOptionalNumber semantics) instead of a divergent local check.
   for (const key of ['blacklist_weeks', 'anchor_weekday']) {
-    const raw = String(fd.get(key) || '').trim();
-    if (!raw) continue;
-    const num = Number(raw);
-    if (!Number.isInteger(num)) {
-      DEPS.toast(`Invalid ${key}`, 'warn');
-      return null;
-    }
-    payload[key] = num;
+    if (!tournamentOptionalNumber(fd, key, payload)) return null;
   }
 
   for (const key of ['cadence', 'anchor_time', 'anchor_tz']) {
