@@ -236,6 +236,7 @@ function renderCompletionCard(item) {
         ${kvRow('time', item?.time)}
         ${kvRow('code', item?.code)}
         ${kvRow('map', item?.map_name)}
+        ${kvRow('also_known_as', item?.also_known_as)}
         ${kvRow('earns', earns, { rawHtml: true })}
         ${kvRow('video', linkOrDash(item?.video), { rawHtml: true })}
       </div>
@@ -247,7 +248,6 @@ function renderCompletionCard(item) {
         ${kvRow('message_id', item?.message_id == null ? '—' : String(item.message_id))}
         ${kvRow('inserted_at', item?.inserted_at)}
         ${kvRow('verified_by', item?.verified_by == null ? '—' : String(item.verified_by))}
-        ${kvRow('also_known_as', item?.also_known_as)}
         ${kvRow('verified', boolChip(item?.verified), { rawHtml: true })}
         ${kvRow('completion', boolChip(item?.completion), { rawHtml: true })}
       </div>
