@@ -153,7 +153,13 @@ function wireListContainer(entity) {
     const confirmBtn = e.target.closest('[data-confirm-delete]');
     if (confirmBtn) {
       const id = confirmBtn.closest('[data-content-row]')?.dataset.contentRow;
-      if (id) confirmDelete(entity, id);
+      if (id) {
+        // Neutralise the button before the async delete so a second click
+        // during the round-trip can't fire a duplicate request.
+        confirmBtn.disabled = true;
+        confirmBtn.removeAttribute('data-confirm-delete');
+        confirmDelete(entity, id);
+      }
       return;
     }
 
@@ -208,7 +214,42 @@ async function reorder(entity, id, direction) {
   }
 }
 
+function makeIdForm(id) {
+  // A detached form whose named control `id` is reachable as form.id
+  // (HTMLFormElement override-builtins), matching what the handlers read.
+  const form = document.createElement('form');
+  const input = document.createElement('input');
+  input.name = 'id';
+  input.value = String(id);
+  form.appendChild(input);
+  return form;
+}
+
+function armDelete(entity, row, id) {
+  if (!row) return;
+  const name = items(entity).find((it) => String(it?.id) === String(id))?.name ?? `#${escapeHtml(String(id))}`;
+  row.innerHTML = `
+    <div class="min-w-0 flex-1 text-sm text-zinc-700 dark:text-zinc-200">Delete “${escapeHtml(String(name))}”?</div>
+    <div class="flex shrink-0 items-center gap-2">
+      <button type="button" data-confirm-delete class="cursor-pointer rounded-lg border border-rose-500/40 px-3 py-1 text-sm font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-500/10">Delete</button>
+      <button type="button" data-cancel-delete class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">Cancel</button>
+    </div>`;
+}
+
+async function confirmDelete(entity, id) {
+  const meta = ENTITIES[entity];
+  const form = makeIdForm(id);
+  try {
+    return entity === 'techniques'
+      ? await DEPS.handleContentTechniqueDelete(form)
+      : await DEPS.handleContentDeleteNamedEntity(form, entity, meta.singular, meta.outKey);
+  } finally {
+    // Always reconcile from cache so a failed/thrown delete restores the row
+    // instead of leaving it frozen in its "Delete X?" armed state.
+    renderRows(entity);
+  }
+}
+
 // Implemented in later tasks:
-function armDelete() {}
-function confirmDelete() {}
+
 function openEditor() {}
