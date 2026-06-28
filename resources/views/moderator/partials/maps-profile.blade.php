@@ -18,7 +18,439 @@
   </div>
 
   {{-- B. Map fields (Task 3) --}}
-  <div data-maps-fields class="hidden"></div>
+  <div data-maps-fields class="space-y-6">
+    <div data-subpanel="maps-update">
+                  <form
+                    id="u-updateMapForm"
+                    data-action="update-map"
+                    autocomplete="off"
+                    class="mt-6 hidden space-y-6"
+                  >
+                    <!-- META -->
+                    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Creators -->
+                        <div class="sm:col-span-2">
+                          <span class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Creator</span>
+                          <div id="u-metaCreatorsCol" class="flex flex-wrap items-center gap-2">
+                            <!-- Primary -->
+                            <span
+                              class="main-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
+                            >
+                              <span
+                                id="u-metaCreatorMain"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
+                                data-raw-id=""
+                              >
+                                N/A
+                              </span>
+                              <button
+                                type="button"
+                                class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                                data-edit-target="u-metaCreatorMain"
+                              >
+                                Edit
+                              </button>
+                            </span>
+
+                            <!-- Secondary (même affichage que le primary) -->
+                            <span
+                              class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
+                            >
+                              <span
+                                id="u-metaCreatorSecond"
+                                class="text-sm text-zinc-800 dark:text-zinc-200"
+                                data-raw-id=""
+                              >
+                                N/A
+                              </span>
+                              <button
+                                type="button"
+                                class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                                data-edit-target="u-metaCreatorSecond"
+                              >
+                                Edit
+                              </button>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Map Code -->
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Code</div>
+                          <div class="flex items-center gap-2">
+                            <div id="u-metaCode" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+                            <button
+                              type="button"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                              data-edit-target="u-metaCode"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Map Name -->
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Map name</div>
+                          <div class="flex items-center gap-2">
+                            <div id="u-metaMap" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+                            <button
+                              type="button"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                              data-edit-target="u-metaMap"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Checkpoints -->
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Checkpoints</div>
+                          <div class="flex items-center gap-2">
+                            <div id="u-metaCheckpoints" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+                            <button
+                              type="button"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                              data-edit-target="u-metaCheckpoints"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- REQUIRED -->
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Required</h3>
+
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Difficulty -->
+                        <div>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select difficulty</label>
+                          <div id="u-difficultyDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select difficulty</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select category</label>
+                          <div id="u-categoryDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select category</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
+                        <!-- Mechanics -->
+                        <div>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select mechanics</label>
+                          <div id="u-mechanicsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select mechanics</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
+                        <!-- Restrictions -->
+                        <div>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
+                            Select restrictions
+                          </label>
+                          <div id="u-restrictionsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">
+                                Select restrictions
+                              </span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- FLAGS & REVIEW -->
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Flags</h3>
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Hidden -->
+                        <label
+                          class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2"
+                        >
+                          <input id="u-flagHidden" type="checkbox" class="accent-emerald-500" />
+                          <span class="text-sm text-zinc-800 dark:text-zinc-200">Hidden</span>
+                        </label>
+
+                        <!-- Archived -->
+                        <label
+                          class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2"
+                        >
+                          <input id="u-flagArchived" type="checkbox" class="accent-emerald-500" />
+                          <span class="text-sm text-zinc-800 dark:text-zinc-200">Archived</span>
+                        </label>
+
+                        <!-- Official -->
+                        <label
+                          class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2"
+                        >
+                          <input id="u-flagOfficial" type="checkbox" class="accent-emerald-500" />
+                          <span class="text-sm text-zinc-800 dark:text-zinc-200">Official</span>
+                        </label>
+
+                        <!-- Playtesting -->
+                        <div>
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Playtesting</label>
+                          <div id="u-playtestingDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select playtesting</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select tags</label>
+                          <div id="u-tagsDropdown" class="relative">
+                            <button
+                              type="button"
+                              data-dd-btn
+                              class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                            >
+                              <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select tags</span>
+                              <svg
+                                class="h-4 w-4 text-zinc-500 dark:text-zinc-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              data-dd-list
+                              class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                            ></div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <!-- OPTIONAL -->
+                    <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Optional</h3>
+
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Title -->
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <label class="mb-1 block text-[11px] text-zinc-500 dark:text-zinc-400" for="u-optTitleInput">
+                            Title
+                          </label>
+                          <input
+                            id="u-optTitleInput"
+                            type="text"
+                            maxlength="128"
+                            class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                            placeholder="Optional short title (max 128 chars)"
+                          />
+                        </div>
+
+                        <!-- Custom banner -->
+                        <div>
+                          <div class="mb-1 text-[11px] text-zinc-500 dark:text-zinc-400">Custom banner</div>
+                          <div
+                            id="u-bannerDrop"
+                            class="group relative flex h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/15 bg-white/60 dark:bg-zinc-900/60"
+                          >
+                            <input id="u-bannerInput" type="file" accept="image/*" class="hidden" />
+                            <div
+                              id="u-bannerPlaceholder"
+                              class="px-3 text-center text-sm text-zinc-600 dark:text-zinc-300 select-none"
+                            >
+                              Drag & drop or click to upload
+                              <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                                Recommended 16:9. JPG/PNG/WebP/AVIF, max 8MB.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                          <div class="flex items-center justify-between">
+                            <div>
+                              <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Description</div>
+                              <div id="u-optDescription" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
+                            </div>
+                            <button
+                              type="button"
+                              class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                              data-edit-target="u-optDescription"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Medals -->
+                        <div
+                          class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 sm:col-span-2"
+                        >
+                          <div class="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Medals</div>
+                          <div class="grid gap-3 sm:grid-cols-3">
+                            <label class="flex items-center gap-2">
+                              <span class="inline-flex min-w-0 items-center gap-2">
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥇 Gold</span>
+                              </span>
+                              <input
+                                id="u-medalGoldInput"
+                                type="text"
+                                inputmode="decimal"
+                                pattern="\d{1,5}(?:\.\d{1,2})?"
+                                placeholder="e.g. 5550.23"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                              />
+                            </label>
+
+                            <label class="flex items-center gap-2">
+                              <span class="inline-flex min-w-0 items-center gap-2">
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥈 Silver</span>
+                              </span>
+                              <input
+                                id="u-medalSilverInput"
+                                type="text"
+                                inputmode="decimal"
+                                pattern="\d{1,5}(?:\.\d{1,2})?"
+                                placeholder="e.g. 7599.33"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                              />
+                            </label>
+
+                            <label class="flex items-center gap-2">
+                              <span class="inline-flex min-w-0 items-center gap-2">
+                                <span class="text-sm text-zinc-800 dark:text-zinc-200">🥉 Bronze</span>
+                              </span>
+                              <input
+                                id="u-medalBronzeInput"
+                                type="text"
+                                inputmode="decimal"
+                                pattern="\d{1,5}(?:\.\d{1,2})?"
+                                placeholder="e.g. 8066.75"
+                                class="w-40 shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                              />
+                            </label>
+                          </div>
+                          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            Format: max 5 digits before the decimal and up to 2 after. Values ≥ 0.
+                            Required order: bronze &gt; silver &gt; gold.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+    </div>
+
+    {{-- Module-owned sticky Save/Reset bar (Task 3) --}}
+    <div data-fields-bar class="sticky bottom-4 z-10 mt-4 hidden flex items-center justify-end gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 px-4 py-2 shadow-lg backdrop-blur">
+      <span class="mr-auto text-xs text-zinc-500 dark:text-zinc-400">Unsaved changes</span>
+      <button type="button" data-fields-reset class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Reset</button>
+      <button type="button" data-fields-save class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">Save changes</button>
+    </div>
+  </div>
   {{-- C. Guides (Task 4) --}}
   <div data-maps-guides class="hidden"></div>
   {{-- D. Collapsed actions (Task 5) --}}
