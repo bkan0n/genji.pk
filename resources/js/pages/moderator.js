@@ -215,7 +215,7 @@ const MOD_SECTION_META = {
   verifications: {
     kicker: 'Queues',
     summary: 'Process completion submissions, playtest state, and pending map edit requests.',
-    stats: ['Completion queue', 'Edit requests', 'Review actions'],
+    hideStats: true,
     hints: [
       'Open pending queues from here; result cards include approve/reject actions where supported.',
       'The resolved-by field is prepared from the connected moderator account when available.',
