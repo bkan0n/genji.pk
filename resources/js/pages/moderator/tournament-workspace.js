@@ -373,7 +373,12 @@ function wireEditionActions(root) {
       'debug-clear': () => tournamentSetDebugCycle(root, btn, { clear: true }),
     };
     const handler = handlers[action];
-    if (handler) void handler();
+    // DEPS.http rejects on network failure; surface a toast + log so a thrown
+    // handler never becomes a silent unhandled rejection.
+    if (handler) Promise.resolve().then(handler).catch((err) => {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament action error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
     // 'open-cycles' is a Setup/cycles navigation concern handled in a later task.
   });
 }
@@ -400,7 +405,8 @@ async function tournamentStartTournament(root) {
   else if (res.status === 422) DEPS.toast(tournamentBootstrapError(res.data) || 'A category has no eligible map', 'err');
   else DEPS.toast('Failed to start tournament', 'err');
 
-  if (res.ok) await loadStatus(root, { force: true });
+  // Always re-sync: even on 409/422 the server state may have moved.
+  await loadStatus(root, { force: true });
 }
 
 async function tournamentSetPaused(root, paused) {
@@ -411,7 +417,8 @@ async function tournamentSetPaused(root, paused) {
   if (res.ok) DEPS.toast(paused ? 'Auto-rotation paused' : 'Auto-rotation resumed', 'ok');
   else DEPS.toast('Failed to update rotation', 'err');
 
-  if (res.ok) await loadStatus(root, { force: true });
+  // Always re-sync: even on a rejected change the server state may have moved.
+  await loadStatus(root, { force: true });
 }
 
 async function tournamentPublishResults(root) {
@@ -433,7 +440,8 @@ async function tournamentPublishResults(root) {
   else if (res.status === 409) DEPS.toast('No edition is awaiting results', 'warn');
   else DEPS.toast('Failed to publish results', 'err');
 
-  if (res.ok) await loadStatus(root, { force: true });
+  // Always re-sync: even on 409 the server state may have moved.
+  await loadStatus(root, { force: true });
 }
 
 async function tournamentSetDebugCycle(root, btn, { clear = false } = {}) {
@@ -455,7 +463,8 @@ async function tournamentSetDebugCycle(root, btn, { clear = false } = {}) {
   else if (res.status === 403) DEPS.toast('Debug cycle length is disabled in production', 'warn');
   else DEPS.toast('Failed to update debug cycle length', 'err');
 
-  if (res.ok) await loadStatus(root, { force: true });
+  // Always re-sync: even on 403 the server state may have moved.
+  await loadStatus(root, { force: true });
 }
 
 // Stub — implemented in a later task.
