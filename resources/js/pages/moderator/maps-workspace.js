@@ -346,3 +346,78 @@ function renderGuideRow(code, g, reload) {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+
+// ———————————————————————————————————————————————————————————————
+// Block D — collapsed disclosure of heavier/destructive actions (Task 5).
+// Each action reuses the real moderator.js handler via DEPS, so the request
+// shape stays identical to the legacy panels:
+//   archive   → handleArchiveMaps(syntheticForm)   PATCH /api/mods/maps/archive?code=…  body { status, codes:[code] }
+//   convert   → handleConvertLegacy(syntheticForm) POST  /api/mods/maps/{code}/legacy[?reason=…]
+//   release   → handleReleaseMapCode(realForm)     PATCH /api/mods/maps/{code}/release-code
+//   editreq   → openMapEditRequestModal(map, {})   (opens the modal; no request here)
+//
+// Confirmation policy (exactly one prompt per destructive action):
+//  - archive/convert issue NO confirm of their own → we add a confirm() here.
+//  - handleReleaseMapCode runs its OWN showConfirmDanger → we add NO confirm,
+//    and pass the real #u-updateMapForm so its #u-metaCode + dataset reads work.
+// ———————————————————————————————————————————————————————————————
+
+function bindActions(root, map) {
+  const code = String(map.code || '');
+  const archived = !!(map.archived ?? map.is_archived);
+  const ws = $('[data-maps-workspace]');
+
+  // handleArchiveMaps reads form.status.value, form.mode?.value, form.code.value.
+  // 'single' mode never calls form.querySelectorAll, but we expose it defensively.
+  // It issues no confirm of its own, so we add one here.
+  const archiveBtn = $('[data-action-archive]', root);
+  if (archiveBtn) archiveBtn.onclick = async () => {
+    if (!code) return;
+    const toStatus = archived ? 'unarchive' : 'archive';
+    const verb = archived ? 'Unarchive' : 'Archive';
+    if (!confirm(`${verb} map ${code}?`)) return;
+    await DEPS.handleArchiveMaps({
+      status: { value: toStatus },
+      mode: { value: 'single' },
+      code: { value: code },
+      querySelectorAll: () => [],
+    });
+    loadMap(ws, code);
+  };
+
+  // handleConvertLegacy reads form.code?.value, form.reason?.value, and
+  // form.querySelector('button[type="submit"]') for its busy-state. It issues
+  // no confirm of its own, so we add one here. querySelector must not throw.
+  const convertBtn = $('[data-action-convert]', root);
+  if (convertBtn) convertBtn.onclick = async () => {
+    if (!code) return;
+    const reason = ($('[data-convert-reason]', root)?.value || '').trim();
+    if (!confirm(`Convert map ${code} to legacy?`)) return;
+    await DEPS.handleConvertLegacy({
+      code: { value: code },
+      reason: { value: reason },
+      querySelector: () => null,
+    });
+    loadMap(ws, code);
+  };
+
+  // handleReleaseMapCode reads form.querySelector('#u-metaCode').textContent +
+  // form.dataset.loadedMapArchived, and runs its OWN showConfirmDanger — so we
+  // pass the real form and add no confirm here (single prompt). Only archived
+  // maps can release a code, so the button is shown only when archived.
+  const releaseBtn = $('[data-action-release]', root);
+  if (releaseBtn) {
+    releaseBtn.classList.toggle('hidden', !archived);
+    releaseBtn.onclick = async () => {
+      const form = document.getElementById('u-updateMapForm');
+      if (!form) return;
+      await DEPS.handleReleaseMapCode(form);
+      loadMap(ws, code);
+    };
+  }
+
+  // openMapEditRequestModal(map, opts) takes the loaded map object and prefills
+  // the modal from it; passing {} keeps default url-sync behavior.
+  const editReqBtn = $('[data-action-editrequest]', root);
+  if (editReqBtn) editReqBtn.onclick = () => DEPS.openMapEditRequestModal(map, {});
+}

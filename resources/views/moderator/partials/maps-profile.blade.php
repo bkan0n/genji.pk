@@ -469,5 +469,20 @@
     </form>
   </div>
   {{-- D. Collapsed actions (Task 5) --}}
-  <div data-maps-actions class="hidden"></div>
+  <details data-maps-actions class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40">
+    <summary class="cursor-pointer select-none px-4 py-3 text-sm font-semibold">Map actions</summary>
+    <div class="space-y-3 border-t border-zinc-200/80 dark:border-white/10 p-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" data-action-archive class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Archive / Unarchive</button>
+        <button type="button" data-action-editrequest class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Create edit request</button>
+      </div>
+      <div class="flex flex-wrap items-end gap-2 border-t border-zinc-200/80 dark:border-white/10 pt-3">
+        <label class="flex-1 min-w-[12rem] text-xs text-zinc-500 dark:text-zinc-400">Reason (for convert)
+          <input data-convert-reason type="text" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" />
+        </label>
+        <button type="button" data-action-convert class="rounded-lg border border-amber-300/60 px-3 py-1.5 text-sm text-amber-700 dark:text-amber-300 hover:bg-amber-500/10">Convert to legacy</button>
+        <button type="button" data-action-release class="hidden rounded-lg border border-red-300/60 px-3 py-1.5 text-sm text-red-700 dark:text-red-300 hover:bg-red-500/10">Release map code</button>
+      </div>
+    </div>
+  </details>
 </div>
