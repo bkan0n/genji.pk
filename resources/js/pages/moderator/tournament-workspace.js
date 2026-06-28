@@ -961,7 +961,11 @@ function openHistory(root, categoryId) {
   const limitInput = $('[data-history-limit]', content);
   const results = $('[data-history-results]', content);
 
+  // Per-overlay monotonic token: ignore any response superseded by a newer
+  // fetch (filters can change faster than the network responds).
+  let reqSeq = 0;
   const fetchRows = async () => {
+    const mine = ++reqSeq;
     results.replaceChildren(overlayLoading());
     const query = { category_id: categoryId };
     const status = String(statusSel.value || 'any');
@@ -969,7 +973,7 @@ function openHistory(root, categoryId) {
     const limitRaw = String(limitInput.value || '').trim();
     if (limitRaw) {
       const n = Number(limitRaw);
-      if (Number.isInteger(n) && n >= 1) query.limit = n;
+      if (Number.isInteger(n) && n >= 1) query.limit = Math.min(n, 100);
     }
 
     const url = `${API}/cycles`;
@@ -978,16 +982,19 @@ function openHistory(root, categoryId) {
       res = await DEPS.http('GET', url, { query });
     } catch (err) {
       DEPS.logActivity({ title: `Tournament Cycle History #${categoryId} error`, method: 'ERROR', url, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+      if (mine !== reqSeq) return;
       DEPS.toast('Failed to load history', 'err');
       results.replaceChildren(overlayInfo('Failed to load history.'));
       return;
     }
     DEPS.logActivity({ title: `Tournament Cycle History #${categoryId} (GET)`, method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
     if (!res.ok) {
+      if (mine !== reqSeq) return;
       DEPS.toast('Failed to load history', 'err');
       results.replaceChildren(overlayInfo('Failed to load history.'));
       return;
     }
+    if (mine !== reqSeq) return;
     results.replaceChildren(buildHistoryTable(root, res.data));
   };
 
@@ -1086,9 +1093,12 @@ function wireStreakLookup(root) {
 
   input.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
-    // The autocomplete handler already handles Enter when its list is open; if a
-    // user was picked it stamps dataset.uid. Prefer that resolved id, else the
-    // raw typed value (must be a numeric user id).
+    // When the autocomplete dropdown is open, its own Enter handler owns this
+    // event (pick() → onPick opens the overlay). Bail so we don't double-open.
+    const acOpen = input.parentElement?.querySelector('.ac-list:not(.hidden)');
+    if (acOpen) return;
+    // Otherwise resolve from a prior pick (dataset.uid) or the raw typed value
+    // (must be a numeric user id).
     const uid = input.dataset.uid || String(input.value || '').trim();
     if (!/^\d{1,20}$/.test(String(uid))) {
       DEPS.toast('Enter a numeric user ID', 'warn');
