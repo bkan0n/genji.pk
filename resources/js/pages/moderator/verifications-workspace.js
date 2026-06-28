@@ -86,6 +86,7 @@ export function initVerificationsWorkspace(deps) {
   wireSubtabLoading(root);
   wireRefreshButtons(root);
   wireCompletionActions(root);
+  wireEditActions(root);
   // remaining wiring added in later tasks
 }
 
@@ -722,5 +723,403 @@ function wireCompletionActions(root) {
   });
 }
 
-// TODO(task4): replaced by real edit-queue loader
-function loadEdits(root, opts) {}
+// ——— Edit diff helpers + summarizeChanges (copied from moderator.js:6220-6412) ———
+function __editFormatDateTime(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return '';
+  try {
+    const d = new Date(s);
+    if (!Number.isFinite(d.getTime())) return s;
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return s;
+  }
+}
+
+function __editNormalizeChange(c) {
+  if (!c || typeof c !== 'object') return { field: 'change', from: '', to: '' };
+
+  const field =
+    c.field ?? c.key ?? c.name ?? c.path ?? c.property ?? c.type ?? c.kind ?? 'change';
+
+  const from =
+    c.old_value ?? c.oldValue ?? c.from ?? c.old ?? c.before ?? c.prev ?? c.previous ?? '';
+
+  const to =
+    c.new_value ?? c.newValue ?? c.to ?? c.new ?? c.after ?? c.next ?? c.updated ?? '';
+
+  return { field: String(field), from, to };
+}
+
+function __editParseBoolLike(v) {
+  if (v == null) return null;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+
+  const s = String(v).trim().toLowerCase();
+  if (['true', '1', 'yes', 'y', 'on'].includes(s)) return true;
+  if (['false', '0', 'no', 'n', 'off'].includes(s)) return false;
+
+  // common API renderings
+  if (s === 'not set' || s === 'n/a' || s === 'na' || s === '') return null;
+  return null;
+}
+
+function __editTextBlock(text) {
+  const s = String(text ?? '').trim();
+  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
+  return `<div class="rounded-lg bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1.5 text-[13px] text-zinc-900 dark:text-zinc-100 ring-1 ring-zinc-300/60 dark:ring-white/10 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(s)}</div>`;
+}
+
+function __editChipList(text) {
+  const s = String(text ?? '').trim();
+  if (!s || /^not set$/i.test(s)) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
+
+  // Split on commas (good enough for mechanics/restrictions)
+  const items = s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  if (!items.length) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
+
+  const max = 14;
+  const chips = items.slice(0, max).map((it) =>
+    `<span class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[11px] text-zinc-900 dark:text-white/85">${escapeHtml(it)}</span>`
+  );
+
+  const more = items.length > max
+    ? `<span class="text-[11px] text-zinc-600 dark:text-zinc-400">+${items.length - max}</span>`
+    : '';
+
+  return `<div class="flex flex-wrap gap-1.5">${chips.join('')}${more}</div>`;
+}
+
+function __editBannerPreview(url) {
+  const u = String(url ?? '').trim();
+  if (!u || /^not set$/i.test(u)) return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
+
+  if (!/^https?:\/\//i.test(u)) return __editTextBlock(u);
+
+  return `
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="h-12 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-black/20">
+        <img src="${escapeHtml(u)}" alt="" class="h-full w-full object-cover cursor-pointer" data-enlarge="${escapeHtml(u)}">
+      </div>
+      <div class="min-w-0">
+        <a href="${escapeHtml(u)}" target="_blank" class="text-xs underline decoration-dotted text-zinc-800 dark:text-zinc-200 hover:opacity-80 break-all">${escapeHtml(u)}</a>
+        <div class="mt-1 text-[11px] text-zinc-600 dark:text-zinc-500">click image to enlarge</div>
+      </div>
+    </div>
+  `;
+}
+
+function __editValueHtml(field, value) {
+  const f = String(field ?? '').trim();
+  const fLower = f.toLowerCase();
+  const raw = value == null ? '' : String(value);
+  const s = raw.trim();
+
+  if (!s || /^not set$/i.test(s) || s === 'N/A') return `<span class="text-zinc-600 dark:text-zinc-500">—</span>`;
+
+  // common boolean flags
+  if (/(^|\b)(official|hidden|archived)(\b|$)/.test(fLower)) {
+    const b = __editParseBoolLike(s);
+    if (b !== null) return boolChip(b);
+  }
+
+  // special lists
+  if (fLower.includes('mechanic')) return __editChipList(s);
+  if (fLower.includes('restriction')) return __editChipList(s);
+
+  // banner
+  if (fLower.includes('banner')) return __editBannerPreview(s);
+
+  // difficulty
+  if (fLower.includes('difficulty')) {
+    const dotCls = (typeof difficultyDotClass === 'function')
+      ? difficultyDotClass(s)
+      : (String(s).toLowerCase().startsWith('easy') ? 'bg-emerald-400'
+        : String(s).toLowerCase().startsWith('medium') ? 'bg-yellow-400'
+        : String(s).toLowerCase().startsWith('very hard') ? 'bg-orange-500'
+        : String(s).toLowerCase().startsWith('hard') ? 'bg-orange-400'
+        : String(s).toLowerCase().startsWith('extreme') ? 'bg-red-500'
+        : String(s).toLowerCase().startsWith('hell') ? 'bg-rose-500'
+        : 'bg-zinc-400');
+
+    return `
+      <span class="inline-flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full ${dotCls}"></span>
+        ${decorateValue('difficulty', s)}
+      </span>
+    `;
+  }
+
+  // numbers / ids / urls
+  if (s.length > 90) return __editTextBlock(s);
+
+  // code
+  if (fLower === 'code' || fLower.includes(' code')) return monoChip(s);
+
+  // creators
+  if (fLower.includes('creator')) return __editTextBlock(s);
+
+  return decorateValue(fLower.replace(/\s+/g, '_'), s);
+}
+
+function summarizeChanges(changes) {
+  const list = Array.isArray(changes) ? changes : [];
+  if (!list.length) return `<div class="text-xs text-zinc-600 dark:text-zinc-400">No change details.</div>`;
+
+  const header = `
+    <div class="grid grid-cols-12 gap-3 px-3 py-2 text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400 bg-zinc-900/3 dark:bg-white/5">
+      <div class="col-span-12 sm:col-span-3">Field</div>
+      <div class="col-span-12 sm:col-span-4">Old</div>
+      <div class="col-span-12 sm:col-span-5">New</div>
+    </div>
+  `;
+
+  const maxRows = 40;
+  const rows = list.slice(0, maxRows).map((c) => {
+    const { field, from, to } = __editNormalizeChange(c);
+    const f = String(field || 'change');
+
+    return `
+      <div class="grid grid-cols-12 gap-3 px-3 py-2 border-t border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5 transition min-w-0">
+        <div class="col-span-12 sm:col-span-3 min-w-0">
+          <div class="text-[12px] font-semibold text-zinc-800 dark:text-zinc-200 break-words [overflow-wrap:anywhere]">${escapeHtml(f)}</div>
+        </div>
+        <div class="col-span-12 sm:col-span-4 min-w-0">
+          ${__editValueHtml(f, from)}
+        </div>
+        <div class="col-span-12 sm:col-span-5 min-w-0">
+          ${__editValueHtml(f, to)}
+        </div>
+      </div>
+    `;
+  });
+
+  const more = list.length > maxRows
+    ? `<div class="px-3 py-2 text-xs text-zinc-600 dark:text-zinc-500 border-t border-zinc-200/80 dark:border-white/10">Showing ${maxRows} / ${list.length} changes.</div>`
+    : '';
+
+  return `
+    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-black/20 overflow-hidden min-w-0">
+      ${header}
+      ${rows.join('')}
+      ${more}
+    </div>
+  `;
+}
+
+// ——— renderEditRequestCard (copied from moderator.js:6414-6496; View JSON button
+//     and _editRow/_editSubmission assignments removed) ———
+function renderEditRequestCard({ row, submission }) {
+  const rid = String(row?.id ?? submission?.id ?? '').trim();
+  const code = String(submission?.code ?? row?.code ?? '').trim();
+  const mapName = String(submission?.map_name ?? row?.map_name ?? '').trim();
+  const difficulty = String(submission?.difficulty ?? row?.difficulty ?? '').trim();
+
+  const reason = String(submission?.reason ?? row?.reason ?? '').trim();
+  const createdAtRaw = submission?.created_at ?? row?.created_at ?? '';
+  const createdAt = __editFormatDateTime(createdAtRaw);
+
+  const submitterName = String(submission?.submitter_name ?? row?.submitter_name ?? '').trim();
+  const submitterId = submission?.submitter_id ?? row?.submitter_id ?? row?.created_by ?? '';
+  const messageId = submission?.message_id ?? row?.message_id ?? '';
+
+  const changes = submission?.changes ?? row?.changes ?? null;
+
+  const wrap = document.createElement('article');
+  wrap.className =
+    'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16 min-w-0';
+  wrap.dataset.editId = rid;
+
+  const badge = `
+    <span class="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-200 ring-1 ring-amber-400/20">
+      <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Pending
+    </span>`;
+
+  const difficultyDot = difficulty ? __editValueHtml('difficulty', difficulty) : '';
+
+  wrap.innerHTML = `
+    <div class="flex items-start justify-between gap-3 min-w-0">
+      <div class="min-w-0">
+        <h4 class="font-semibold text-lg min-w-0 break-words [overflow-wrap:anywhere]">Edit request #${escapeHtml(rid || '?')}</h4>
+        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 min-w-0">
+          <span class="inline-flex items-center gap-2">
+            <span class="text-zinc-600 dark:text-zinc-500">code</span> ${monoChip(code || '—')}
+          </span>
+          ${mapName ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-600 dark:text-zinc-500">map</span> ${decorateValue('map_name', mapName)}</span>` : ''}
+          ${difficulty ? `<span class="inline-flex items-center gap-2"><span class="text-zinc-600 dark:text-zinc-500">difficulty</span> ${difficultyDot}</span>` : ''}
+        </div>
+      </div>
+      <div class="flex items-end flex-col gap-2">
+        ${badge}
+        ${createdAt ? `<div class="text-[11px] text-zinc-600 dark:text-zinc-500">${escapeHtml(createdAt)}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="mt-3 grid gap-1.5 min-w-0">
+      ${submitterName || submitterId ? kvRow('submitter', `${submitterName || ''}${submitterId ? ` (${submitterId})` : ''}`) : ''}
+      ${messageId ? kvRow('message_id', String(messageId)) : ''}
+      ${reason ? `
+        <div class="mt-2 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 p-3">
+          <div class="text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-400">Reason</div>
+          <div class="mt-1 text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${escapeHtml(reason)}</div>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="mt-4 min-w-0">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="text-xs text-zinc-600 dark:text-zinc-400">Changes <span class="text-zinc-600 dark:text-zinc-500">(${Array.isArray(changes) ? changes.length : 0})</span></div>
+        <div class="text-[11px] text-zinc-600 dark:text-zinc-500">old → new</div>
+      </div>
+      <div class="min-w-0">${summarizeChanges(changes)}</div>
+    </div>
+
+    <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
+      <button class="btn-edit-accept cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+        Accept
+      </button>
+      <button class="btn-edit-reject cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+        Reject
+      </button>
+    </div>
+  `;
+
+  return wrap;
+}
+
+// ——— removeCardFromEditList (copied verbatim from moderator.js:7815-7843) ———
+function removeCardFromEditList(card) {
+  if (!card) return;
+  const container = card.parentElement;
+
+  const h = card.offsetHeight;
+  card.style.height = h + 'px';
+  card.style.transition =
+    'height 200ms ease, opacity 160ms ease, transform 160ms ease, margin 200ms ease, padding 200ms ease';
+  void card.offsetHeight;
+
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(-4px)';
+  card.style.height = '0px';
+  card.style.marginTop = '0px';
+  card.style.marginBottom = '0px';
+  card.style.paddingTop = '0px';
+  card.style.paddingBottom = '0px';
+
+  card.addEventListener(
+    'transitionend',
+    () => {
+      card.remove();
+      if (container && !container.querySelector('[data-edit-id]')) {
+        container.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
+      }
+    },
+    { once: true }
+  );
+}
+
+async function loadEdits(root, { force }) {
+  if (loaded.edits && !force) return;
+  const queueEl = $('[data-verif-queue="edits"]', root);
+  const listEl = $('[data-verif-edit-list]', root);
+  setQueueView(queueEl, 'loading');
+
+  let res;
+  try {
+    res = await DEPS.http('GET', `${API_MODS}/maps/map-edits/pending`);
+  } catch {
+    return showQueueError(queueEl, 'Network error — try again.');
+  }
+  const { ok, status, url, data } = res;
+  DEPS.logActivity({ title: 'Pending edit requests', method: 'GET', url, ok, status, data });
+  if (!ok) return showQueueError(queueEl, `Failed to load edit queue (${status}).`);
+
+  const rows = (Array.isArray(data) ? data : []).filter((r) => String(r?.id ?? '').trim());
+  loaded.edits = true;
+  if (!rows.length) { setCount(root, 'edits', 0); return setQueueView(queueEl, 'empty'); }
+
+  const limit = 25;
+  const subset = rows.slice(0, limit);
+  const progress = $('[data-verif-progress]', queueEl);
+  let done = 0;
+  const cards = await mapLimit(subset, 4, async (row) => {
+    const editId = String(row.id).trim();
+    let sub;
+    try {
+      sub = await DEPS.http('GET', `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/submission`);
+    } catch {
+      // A single submission failing must not reject the whole load (which would
+      // strand the queue on the loading view); render the row without its submission.
+      done += 1;
+      if (progress) progress.textContent = `Loading ${done}/${subset.length}…`;
+      return renderEditRequestCard({ row, submission: null });
+    }
+    DEPS.logActivity({ title: `Edit submission ${editId}`, method: 'GET', url: sub.url, ok: sub.ok, status: sub.status, data: sub.data });
+    done += 1;
+    if (progress) progress.textContent = `Loading ${done}/${subset.length}…`;
+    return renderEditRequestCard({ row, submission: sub.ok ? sub.data : null });
+  });
+
+  listEl.innerHTML = '';
+  cards.forEach((c) => listEl.appendChild(c));
+  if (rows.length > limit) {
+    const note = document.createElement('div');
+    note.className = 'text-xs text-zinc-500 dark:text-zinc-500';
+    note.textContent = `Showing ${limit} / ${rows.length}.`;
+    listEl.appendChild(note);
+  }
+  setCount(root, 'edits', rows.length);
+  setQueueView(queueEl, 'loaded');
+}
+
+function wireEditActions(root) {
+  const listEl = $('[data-verif-edit-list]', root);
+  if (!listEl) return;
+  listEl.addEventListener('click', async (e) => {
+    const accept = e.target.closest('.btn-edit-accept');
+    const reject = e.target.closest('.btn-edit-reject');
+    if (!accept && !reject) return;
+    const card = e.target.closest('[data-edit-id]');
+    const editId = card?.dataset?.editId;
+    if (!editId) return;
+    if (!/^\d+$/.test(MOD_USER_ID)) return DEPS.toast('Your moderator ID is missing', 'warn');
+
+    if (accept) {
+      const response = await DEPS.runModeratorEndpointAction(
+        { action: 'resolve-map-edit-accept', article: card },
+        () => DEPS.http('PUT', `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+          { body: { accepted: true, resolved_by: String(MOD_USER_ID) } })
+      );
+      if (!response) return;
+      const { ok, status, url, data } = response;
+      DEPS.logActivity({ title: `Resolve edit ${editId} (accept)`, method: 'PUT', url, ok, status, data });
+      DEPS.toast(ok ? 'Edit accepted' : 'Failed', ok ? 'ok' : 'err');
+      if (ok) { removeCardFromEditList(card); setCount(root, 'edits', Math.max(0, $$('[data-edit-id]', listEl).length - 1)); }
+      return;
+    }
+
+    const dlg = await showDenyDialog({ title: `Reject edit request #${editId}`, placeholder: 'Rejection reason (optional)' });
+    if (dlg.cancelled) return;
+    const response = await DEPS.runModeratorEndpointAction(
+      { action: 'resolve-map-edit-reject', article: card },
+      () => DEPS.http('PUT', `${API_MODS}/maps/map-edits/${encodeURIComponent(editId)}/resolve`,
+        { body: { accepted: false, resolved_by: String(MOD_USER_ID), rejection_reason: dlg.reason } })
+    );
+    if (!response) return;
+    const { ok, status, url, data } = response;
+    DEPS.logActivity({ title: `Resolve edit ${editId} (reject)`, method: 'PUT', url, ok, status, data });
+    DEPS.toast(ok ? 'Edit rejected' : 'Failed', ok ? 'ok' : 'err');
+    if (ok) { removeCardFromEditList(card); setCount(root, 'edits', Math.max(0, $$('[data-edit-id]', listEl).length - 1)); }
+  });
+}
