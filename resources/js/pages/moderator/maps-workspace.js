@@ -3,6 +3,7 @@ import { $, setView, makeRecentStore, renderRecentChips, wireMapSearch } from '.
 let DEPS = null;
 const recent = makeRecentStore('mod.maps.recent');
 let CURRENT = null; // loaded map object
+let metaObserver = null; // single observer for the static meta spans; disconnected/recreated on each bind
 
 export function initMapWorkspace(deps) {
   DEPS = deps;
@@ -129,10 +130,13 @@ async function bindFields(root, map) {
   form.onchange = refresh;
   form.onclick = () => setTimeout(refresh, 0);
   // Meta spans store values in textContent / data-raw-id; observe them.
-  const mo = new MutationObserver(() => refresh());
+  // bindFields runs on every load AND save, but the meta spans are never recreated,
+  // so disconnect any prior observer before recreating to avoid accumulation.
+  if (metaObserver) metaObserver.disconnect();
+  metaObserver = new MutationObserver(() => refresh());
   for (const id of ['u-metaCode', 'u-metaMap', 'u-metaCheckpoints', 'u-metaCreatorMain', 'u-metaCreatorSecond']) {
     const el = document.getElementById(id);
-    if (el) mo.observe(el, { childList: true, characterData: true, attributes: true, subtree: true });
+    if (el) metaObserver.observe(el, { childList: true, characterData: true, attributes: true, subtree: true });
   }
 
   if (resetBtn) resetBtn.onclick = () => { DEPS.populateUpdatePanel(CURRENT); baseline = fieldSignature(form); refresh(); };
