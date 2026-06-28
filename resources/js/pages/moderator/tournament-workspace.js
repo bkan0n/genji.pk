@@ -25,8 +25,9 @@ export function initTournamentWorkspace(deps) {
   wireSubtabLoading(root);
   wireRefresh(root);
   wireEditionActions(root);
+  wireCategoryActions(root);
   // Feature wiring added in later tasks:
-  // wireCategoryActions(root); wireStreakLookup(root); wireSetup(root);
+  // wireStreakLookup(root); wireSetup(root);
 }
 
 function wireSubtabLoading(root) {
@@ -63,7 +64,7 @@ async function loadStatus(root, { force }) {
   hideStatusError(root);
   renderPausedBanner(root, { config, edition });
   renderEditionStrip(root, { edition, config, cycles });
-  // renderCategoryCards(root, { config, edition, cycles }); — Task 3
+  await renderCategoryCards(root, { config, edition, cycles });
   loaded.status = true;
 }
 
@@ -350,6 +351,306 @@ function renderEditionStrip(root, { edition, config, cycles }) {
     tick();
     countdownTimer = setInterval(tick, 1000);
   }
+}
+
+// ===== Status sub-tab: category cards + inline map actions =====
+
+// Normalize the categories list response into a stable array, mirroring
+// normalizeTournamentCategories from moderator.js.
+function normalizeCategories(data) {
+  const rows = Array.isArray(data?.categories)
+    ? data.categories
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
+
+  return rows
+    .filter((category) => category && category.id != null)
+    .map((category) => ({
+      ...category,
+      id: Number(category.id),
+      difficulties: Array.isArray(category.difficulties) ? category.difficulties : [],
+    }));
+}
+
+// Extract the live cycle for a category from the already-loaded active cycles.
+// renderEditionStrip uses flat cycle objects; renderTournamentOverview wraps
+// them as { cycle }. Accept both so we work against whatever the API returns.
+function liveCycleFor(cycles, categoryId) {
+  if (!Array.isArray(cycles)) return null;
+  const idStr = String(categoryId);
+  const match = cycles.find((c) => {
+    const cid = c?.category_id ?? c?.category?.id ?? c?.cycle?.category_id;
+    return cid != null && String(cid) === idStr;
+  });
+  if (!match) return null;
+  return match.cycle && typeof match.cycle === 'object' ? match.cycle : match;
+}
+
+// Try the common thumbnail field names; degrade to '' (no thumb) when absent.
+function mapThumbnail(source) {
+  if (!source || typeof source !== 'object') return '';
+  return source.map_thumbnail || source.thumbnail_url || source.map_image || source.thumbnail || '';
+}
+
+// Pull the pending/next map out of a next-cycle response. The upstream shape is
+// not strongly typed, so accept a flat object, a nested { cycle }, or a
+// { next_cycle } envelope and read the common map fields.
+function pendingMapFrom(data) {
+  if (!data || typeof data !== 'object') return null;
+  const node = (data.cycle && typeof data.cycle === 'object' && data.cycle)
+    || (data.next_cycle && typeof data.next_cycle === 'object' && data.next_cycle)
+    || data;
+  const code = node.map_code ?? node.code ?? null;
+  const name = node.map_name ?? node.name ?? null;
+  const difficulty = node.map_difficulty ?? node.difficulty ?? null;
+  const thumb = mapThumbnail(node);
+  if (code == null && name == null && !thumb) return null;
+  return { code, name, difficulty, thumb };
+}
+
+// Read a submission count from whatever field the live cycle exposes.
+function submissionCountFrom(cycle) {
+  if (!cycle || typeof cycle !== 'object') return null;
+  const n = cycle.submission_count ?? cycle.submissions_count ?? cycle.submissions ?? null;
+  return n == null ? null : n;
+}
+
+function mapThumbMarkup(thumb, alt) {
+  if (!thumb) {
+    return `<div class="flex h-16 w-24 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-300/80 text-[10px] text-zinc-400 dark:border-white/10">No image</div>`;
+  }
+  return `<img src="${tournamentEscape(thumb)}" alt="${tournamentEscape(alt || 'map thumbnail')}" loading="lazy" class="h-16 w-24 shrink-0 rounded-lg border border-zinc-200/80 object-cover dark:border-white/10" />`;
+}
+
+function difficultyBadges(difficulties) {
+  if (!Array.isArray(difficulties) || !difficulties.length) {
+    return '<span class="text-xs text-zinc-500 dark:text-zinc-400">No difficulties</span>';
+  }
+  return difficulties
+    .filter(Boolean)
+    .map((d) => `<span class="inline-flex items-center rounded-full border border-zinc-200/80 bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${tournamentEscape(d)}</span>`)
+    .join('');
+}
+
+// Render one card per category into [data-tournament-category-grid]. Live-cycle
+// data is reused from the already-loaded active `cycles`; the pending/next map is
+// fetched per card via GET {API}/categories/{id}/next-cycle (the only source for
+// it). Locks are derived from the loaded active cycles (a category with a live
+// cycle is in progress), mirroring refreshTournamentCategoryLocks.
+async function renderCategoryCards(root, { config, edition, cycles }) {
+  const grid = $('[data-tournament-category-grid]', root);
+  if (!grid) return;
+
+  let categories;
+  try {
+    const url = `${API}/categories`;
+    const res = await DEPS.http('GET', url);
+    DEPS.logActivity({ title: 'Tournament Categories (GET)', method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+    if (!res.ok) {
+      grid.innerHTML = `<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">Failed to load tournament categories.</div>`;
+      return;
+    }
+    categories = normalizeCategories(res.data);
+  } catch (err) {
+    DEPS.logActivity({ title: 'Tournament Categories error', method: 'ERROR', url: `${API}/categories`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    grid.innerHTML = `<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">Failed to load tournament categories.</div>`;
+    return;
+  }
+
+  if (!categories.length) {
+    grid.innerHTML = `<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No tournament categories configured.</div>`;
+    return;
+  }
+
+  // Pending/next map per card — the loaded active cycles only carry the LIVE
+  // cycle, so the next map must come from next-cycle. Fetch in parallel; a
+  // failed fetch degrades to "no pending map" rather than throwing.
+  const pendingMaps = await Promise.all(
+    categories.map(async (category) => {
+      try {
+        const url = `${API}/categories/${encodeURIComponent(category.id)}/next-cycle`;
+        const res = await DEPS.http('GET', url);
+        DEPS.logActivity({ title: `Tournament Next Cycle #${category.id} (GET)`, method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+        return res.ok ? pendingMapFrom(res.data) : null;
+      } catch (err) {
+        DEPS.logActivity({ title: `Tournament Next Cycle #${category.id} error`, method: 'ERROR', url: `${API}/categories/${category.id}/next-cycle`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+        return null;
+      }
+    })
+  );
+
+  grid.innerHTML = categories
+    .map((category, i) => {
+      const live = liveCycleFor(cycles, category.id);
+      const pending = pendingMaps[i];
+      const locked = !!live; // a category with a live active cycle is in progress
+
+      const lockBadge = locked
+        ? '<span class="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">Locked</span>'
+        : '';
+
+      const liveCode = live?.map_code || null;
+      const liveDifficulty = live?.map_difficulty || null;
+      const liveThumb = mapThumbnail(live);
+      const submissions = submissionCountFrom(live);
+
+      const liveSection = live
+        ? `
+          <div class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-3 dark:border-emerald-400/15">
+            <div class="mb-2 text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">Live cycle</div>
+            <div class="flex items-start gap-3">
+              ${mapThumbMarkup(liveThumb, live.map_name || liveCode || 'live map')}
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-black">${tournamentEscape(live.map_name || 'No active map')}</div>
+                <div class="mt-1 grid grid-cols-2 gap-2 text-xs">
+                  <div><span class="text-zinc-500 dark:text-zinc-400">Code</span> <span class="font-mono font-semibold">${tournamentEscape(liveCode || '-')}</span></div>
+                  <div><span class="text-zinc-500 dark:text-zinc-400">Difficulty</span> <span class="font-semibold">${tournamentEscape(liveDifficulty || '-')}</span></div>
+                  <div><span class="text-zinc-500 dark:text-zinc-400">Time left</span> <span class="font-semibold tabular-nums">${tournamentEscape(edition?.ends_at ? tournamentCountdownText(edition.ends_at) : '-')}</span></div>
+                  <div><span class="text-zinc-500 dark:text-zinc-400">Submissions</span> <span class="font-semibold tabular-nums">${tournamentEscape(submissions ?? '-')}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>`
+        : `<div class="mt-3 rounded-xl border border-dashed border-zinc-300/80 p-3 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">No live cycle for this category.</div>`;
+
+      const pendingSection = pending
+        ? `
+          <div class="mt-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-3 dark:border-amber-400/15">
+            <div class="mb-2 text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Pending / next map</div>
+            <div class="flex items-center gap-3">
+              ${mapThumbMarkup(pending.thumb, pending.name || pending.code || 'pending map')}
+              <div class="min-w-0">
+                <div class="truncate text-sm font-semibold">${tournamentEscape(pending.name || '-')}</div>
+                <div class="text-xs"><span class="text-zinc-500 dark:text-zinc-400">Code</span> <span class="font-mono font-semibold">${tournamentEscape(pending.code || '-')}</span></div>
+              </div>
+            </div>
+          </div>`
+        : `<div class="mt-2 rounded-xl border border-dashed border-zinc-300/80 p-3 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">No pending map queued.</div>`;
+
+      const btnBase = 'rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10';
+
+      return `
+        <article data-tournament-card data-category-id="${tournamentEscape(category.id)}" class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="truncate text-base font-black">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</div>
+              <div class="mt-1.5 flex flex-wrap items-center gap-1">${difficultyBadges(category.difficulties)}</div>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+              ${lockBadge}
+            </div>
+          </div>
+
+          ${liveSection}
+          ${pendingSection}
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" data-card-action="reroll-pending" class="${btnBase}">Reroll pending</button>
+            <button type="button" data-card-action="random-select" class="${btnBase}">Random select</button>
+            <button type="button" data-card-action="choose-map" class="${btnBase}">Choose explicit map</button>
+            <div data-choose-map-input class="hidden flex w-full items-center gap-2">
+              <input name="map_code" placeholder="MAP_CODE" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-sm uppercase focus:ring-2 focus:ring-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-900" />
+              <button type="button" data-card-action="choose-map-submit" class="${btnBase}">Set map</button>
+            </div>
+            <button type="button" data-card-action="view-standings" class="${btnBase}">View standings</button>
+            <button type="button" data-card-action="history" class="${btnBase}">History</button>
+            <button type="button" data-card-action="reroll-active" class="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/15 dark:text-red-400">Reroll active</button>
+          </div>
+        </article>`;
+    })
+    .join('');
+}
+
+// Delegated card actions. The card id is read from [data-tournament-card] so no
+// category id is ever typed. DEPS.http rejects on network failure, so the whole
+// dispatch is wrapped to surface a toast + log entry rather than leak an
+// unhandled rejection (same shape as wireEditionActions).
+function wireCategoryActions(root) {
+  root.addEventListener('click', (e) => {
+    const btn = e.target?.closest?.('[data-card-action]');
+    if (!btn || !root.contains(btn)) return;
+    const card = btn.closest('[data-tournament-card]');
+    const id = card?.dataset?.categoryId;
+    if (!id) return;
+    e.preventDefault();
+
+    const action = btn.dataset.cardAction;
+    const dispatch = () => {
+      if (action === 'reroll-pending') return cardReroll(root, id);
+      if (action === 'random-select') return cardSelect(root, id);
+      if (action === 'choose-map') return toggleChooseInput(card);
+      if (action === 'choose-map-submit') return cardChoose(root, card, id);
+      if (action === 'view-standings') return; // openStandings(root, id) — Task 4
+      if (action === 'history') return; // openHistory(root, id) — Task 4
+      if (action === 'reroll-active') return cardRerollActive(root, id);
+    };
+
+    Promise.resolve().then(dispatch).catch((err) => {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament card action error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
+}
+
+function toggleChooseInput(card) {
+  const wrap = card.querySelector('[data-choose-map-input]');
+  if (wrap) wrap.classList.toggle('hidden');
+}
+
+// POST {API_MODS}/categories/{id}/reroll — ports handleTournamentRerollMap.
+async function cardReroll(root, id) {
+  const url = `${API_MODS}/categories/${encodeURIComponent(id)}/reroll`;
+  const res = await DEPS.http('POST', url, { body: {} });
+  DEPS.logActivity({ title: `Tournament Reroll Pending #${id} (POST)`, method: 'POST', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  DEPS.toast(res.ok ? 'Pending map rerolled' : 'Failed to reroll pending map', res.ok ? 'ok' : 'err');
+  await loadStatus(root, { force: true });
+}
+
+// POST {API_MODS}/categories/{id}/select-map — ports handleTournamentSelectMap.
+async function cardSelect(root, id) {
+  const url = `${API_MODS}/categories/${encodeURIComponent(id)}/select-map`;
+  const res = await DEPS.http('POST', url, { body: {} });
+  DEPS.logActivity({ title: `Tournament Select Map #${id} (POST)`, method: 'POST', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  DEPS.toast(res.ok ? 'Random map selected' : 'Failed to select map', res.ok ? 'ok' : 'err');
+  await loadStatus(root, { force: true });
+}
+
+// PATCH {API_MODS}/categories/{id}/next-cycle with { map_code } —
+// ports handleTournamentChooseMap (uppercased/trimmed, sourced from the card).
+async function cardChoose(root, card, id) {
+  const input = card.querySelector('[data-choose-map-input] input[name="map_code"]');
+  const mapCode = String(input?.value || '').trim().toUpperCase();
+  if (!mapCode) return DEPS.toast('map_code is required', 'warn');
+  const url = `${API_MODS}/categories/${encodeURIComponent(id)}/next-cycle`;
+  const res = await DEPS.http('PATCH', url, { body: { map_code: mapCode } });
+  DEPS.logActivity({ title: `Tournament Choose Map #${id} (PATCH)`, method: 'PATCH', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  DEPS.toast(res.ok ? 'Pending map set' : 'Failed to set map', res.ok ? 'ok' : 'err');
+  await loadStatus(root, { force: true });
+}
+
+// POST {API_MODS}/categories/{id}/reroll-active — ports handleTournamentRerollActive.
+// Gated by the shared danger-confirm modal (wipes ALL submissions for the live cycle).
+async function cardRerollActive(root, id) {
+  const ok = await DEPS.showConfirmDanger({
+    title: 'Reroll active cycle',
+    message:
+      'This wipes ALL submissions for the live cycle in this category and selects a new map.\n\n' +
+      'The edition window stays the same, but every run players already submitted for the current map will be wiped. ' +
+      'This cannot be undone. Continue?',
+    confirm: 'Reroll active',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  const url = `${API_MODS}/categories/${encodeURIComponent(id)}/reroll-active`;
+  const res = await DEPS.http('POST', url, { body: {} });
+  DEPS.logActivity({ title: `Tournament Reroll Active #${id} (POST)`, method: 'POST', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  DEPS.toast(res.ok ? 'Active cycle rerolled' : 'Failed to reroll active cycle', res.ok ? 'ok' : 'err');
+  await loadStatus(root, { force: true });
 }
 
 // ----- action wiring (ported from bindTournamentLifecyclePanel) -----
