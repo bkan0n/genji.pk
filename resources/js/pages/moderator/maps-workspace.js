@@ -365,15 +365,16 @@ function escapeHtml(s) {
 function bindActions(root, map) {
   const code = String(map.code || '');
   const archived = !!(map.archived ?? map.is_archived);
-  const ws = $('[data-maps-workspace]');
 
   // handleArchiveMaps reads form.status.value, form.mode?.value, form.code.value.
   // 'single' mode never calls form.querySelectorAll, but we expose it defensively.
   // It issues no confirm of its own, so we add one here.
+  // The backend (ArchiveMapsController) validates status against Rule::in(['Archive', 'Unarchived'])
+  // — note the asymmetric casing/tense — so send those exact strings.
   const archiveBtn = $('[data-action-archive]', root);
   if (archiveBtn) archiveBtn.onclick = async () => {
     if (!code) return;
-    const toStatus = archived ? 'unarchive' : 'archive';
+    const toStatus = archived ? 'Unarchived' : 'Archive';
     const verb = archived ? 'Unarchive' : 'Archive';
     if (!confirm(`${verb} map ${code}?`)) return;
     await DEPS.handleArchiveMaps({
@@ -382,7 +383,7 @@ function bindActions(root, map) {
       code: { value: code },
       querySelectorAll: () => [],
     });
-    loadMap(ws, code);
+    loadMap(root, code);
   };
 
   // handleConvertLegacy reads form.code?.value, form.reason?.value, and
@@ -398,7 +399,7 @@ function bindActions(root, map) {
       reason: { value: reason },
       querySelector: () => null,
     });
-    loadMap(ws, code);
+    loadMap(root, code);
   };
 
   // handleReleaseMapCode reads form.querySelector('#u-metaCode').textContent +
@@ -412,7 +413,7 @@ function bindActions(root, map) {
       const form = document.getElementById('u-updateMapForm');
       if (!form) return;
       await DEPS.handleReleaseMapCode(form);
-      loadMap(ws, code);
+      loadMap(root, code);
     };
   }
 
