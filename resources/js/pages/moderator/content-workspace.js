@@ -250,6 +250,90 @@ async function confirmDelete(entity, id) {
   }
 }
 
-// Implemented in later tasks:
+function buildOverlay({ title, subtitle, formNode, onSave }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-[350] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
 
-function openEditor() {}
+  const panel = document.createElement('div');
+  panel.className = 'w-full max-w-2xl max-h-[85vh] overflow-auto rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-5';
+  panel.innerHTML = `
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h3 class="font-semibold">${escapeHtml(title)}</h3>
+        ${subtitle ? `<p class="text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(subtitle)}</p>` : ''}
+      </div>
+      <button type="button" data-close aria-label="Close" class="cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">&#x2715;</button>
+    </div>`;
+  panel.appendChild(formNode);
+
+  const actions = document.createElement('div');
+  actions.className = 'flex flex-wrap items-center gap-2';
+  actions.innerHTML = `
+    <button type="button" data-save class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save</button>
+    <button type="button" data-cancel class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 font-semibold hover:bg-zinc-100 dark:hover:bg-white/5">Cancel</button>`;
+  panel.appendChild(actions);
+  overlay.appendChild(panel);
+
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  function close() {
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  panel.querySelector('[data-close]').addEventListener('click', close);
+  actions.querySelector('[data-cancel]').addEventListener('click', close);
+
+  const saveBtn = actions.querySelector('[data-save]');
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const ok = await onSave(formNode);
+      if (ok) { close(); return; }
+    } catch (_) { /* keep modal open on unexpected error */ }
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  });
+
+  document.addEventListener('keydown', onKey);
+  DEPS.appendOverlay(overlay);
+  return { overlay, close };
+}
+
+function cloneTemplate(name) {
+  const tpl = $(`[data-content-tpl="${name}"]`, workspaceRoot);
+  return tpl.content.firstElementChild.cloneNode(true);
+}
+
+function openEditor(entity, mode, id) {
+  if (entity === 'techniques') openTechniqueEditor(mode, id);
+  else openNamedEditor(entity, mode, id);
+}
+
+function openNamedEditor(entity, mode, id) {
+  const meta = ENTITIES[entity];
+  const formNode = cloneTemplate('named');
+
+  if (mode === 'edit') {
+    const item = items(entity).find((it) => String(it?.id) === String(id));
+    formNode.id.value = String(id);
+    formNode.name.value = item?.name ?? '';
+  }
+
+  buildOverlay({
+    title: mode === 'edit' ? `Edit ${meta.singular.toLowerCase()}` : `Add ${meta.singular.toLowerCase()}`,
+    formNode,
+    onSave: async (form) => {
+      const res = mode === 'edit'
+        ? await DEPS.handleContentUpdateNamedEntity(form, entity, meta.singular, meta.outKey)
+        : await DEPS.handleContentCreateNamedEntity(form, entity, meta.singular, meta.outKey);
+      if (res?.ok) { renderRows(entity); return true; }
+      return false;
+    },
+  });
+
+  setTimeout(() => formNode.name?.focus(), 0);
+}
+
+// Implemented in later tasks:
+function openTechniqueEditor() { DEPS.toast('Technique editor coming next', 'warn'); }
