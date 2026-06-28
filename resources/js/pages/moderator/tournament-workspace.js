@@ -31,8 +31,6 @@ export function initTournamentWorkspace(deps) {
   wireEditionActions(root);
   wireCategoryActions(root);
   wireStreakLookup(root);
-  // Feature wiring added in later tasks:
-  // wireSetup(root);
 }
 
 function wireSubtabLoading(root) {
