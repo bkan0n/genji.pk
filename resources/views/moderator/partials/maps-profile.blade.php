@@ -452,7 +452,22 @@
     </div>
   </div>
   {{-- C. Guides (Task 4) --}}
-  <div data-maps-guides class="hidden"></div>
+  <div data-maps-guides class="space-y-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4">
+    <div class="flex items-center justify-between">
+      <h3 class="font-semibold">Guides</h3>
+      <span data-guides-count class="text-xs text-zinc-500 dark:text-zinc-400"></span>
+    </div>
+    <div data-guides-list class="space-y-2"></div>
+    <form data-guides-add class="flex flex-wrap items-end gap-2 border-t border-zinc-200/80 dark:border-white/10 pt-3">
+      <label class="flex-1 min-w-[12rem] text-xs text-zinc-500 dark:text-zinc-400">Creator
+        <input name="user_id" type="text" autocomplete="off" placeholder="Search creator…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" />
+      </label>
+      <label class="flex-[2] min-w-[14rem] text-xs text-zinc-500 dark:text-zinc-400">Guide URL
+        <input name="url" type="url" placeholder="https://…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" />
+      </label>
+      <button class="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">＋ Add guide</button>
+    </form>
+  </div>
   {{-- D. Collapsed actions (Task 5) --}}
   <div data-maps-actions class="hidden"></div>
 </div>

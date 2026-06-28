@@ -254,3 +254,95 @@ function buildLocalMap(c) {
   if (c.creators?.length) out.creators = c.creators;
   return out;
 }
+
+// ———————————————————————————————————————————————————————————————
+// Block C — inline guides list for the loaded map (Task 4).
+// Endpoints/verbs/params mirror moderator.js's handleGetGuides /
+// handleCreateGuide / handleEditGuide / handleDeleteGuide exactly:
+//   GET    /api/maps/{code}/guides            ?include_records=true
+//   POST   /api/mods/maps/{code}/guides       body { url, user_id }
+//   PATCH  /api/mods/maps/{code}/guides/{uid} ?url=...   (url is a query param)
+//   DELETE /api/mods/maps/{code}/guides/{uid} (guide identified by user_id)
+// GET returns a bare array; each row has user_id (string) + usernames[] (+ url, records).
+// There is no `name` field, so the display label is derived from usernames.
+// ———————————————————————————————————————————————————————————————
+
+function guideUserId(g) { return String(g.user_id ?? g.id ?? ''); }
+
+// usernames may be an array of strings or of objects ({ username, ... }).
+// Fall back to the user id when no readable name is present.
+function guideName(g) {
+  const uid = guideUserId(g);
+  const list = Array.isArray(g.usernames) ? g.usernames : [];
+  for (const u of list) {
+    const name = typeof u === 'string' ? u : (u?.username ?? u?.name ?? '');
+    if (name) return String(name);
+  }
+  return g.name ? String(g.name) : uid;
+}
+
+async function bindGuides(root, map) {
+  const code = String(map.code || '');
+  const listEl = $('[data-guides-list]', root);
+  const countEl = $('[data-guides-count]', root);
+  const addForm = $('[data-guides-add]', root);
+  if (!listEl || !countEl || !addForm) return;
+
+  const reload = async () => {
+    const { ok, status, url, data } = await DEPS.http('GET', `/api/maps/${encodeURIComponent(code)}/guides`, { query: { include_records: true } });
+    DEPS.logActivity({ title: 'Get guides', method: 'GET', url, ok, status, data });
+    const guides = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
+    countEl.textContent = ok ? `${guides.length} guide${guides.length === 1 ? '' : 's'}` : '';
+    listEl.innerHTML = '';
+    if (!ok) { listEl.innerHTML = `<p class="text-sm text-red-600">Failed to load guides (${status}).</p>`; return; }
+    if (!guides.length) { listEl.innerHTML = `<p class="text-sm text-zinc-500">No guides yet.</p>`; return; }
+    for (const g of guides) listEl.appendChild(renderGuideRow(code, g, reload));
+  };
+
+  const userInput = addForm.querySelector('input[name="user_id"]');
+  DEPS.attachUsersAutocomplete(userInput);
+  addForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const user_id = DEPS.getUserIdFrom(userInput);
+    const urlVal = (addForm.querySelector('input[name="url"]').value || '').trim();
+    if (!user_id || !urlVal) return DEPS.toast('Creator and URL are required', 'warn');
+    const r = await DEPS.http('POST', `/api/mods/maps/${encodeURIComponent(code)}/guides`, { body: { url: urlVal, user_id } });
+    DEPS.logActivity({ title: 'Create guide', method: 'POST', url: r.url, ok: r.ok, status: r.status, data: r.data });
+    DEPS.toast(r.ok ? 'Guide added' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
+    if (r.ok) { addForm.reset(); reload(); }
+  };
+
+  await reload();
+}
+
+function renderGuideRow(code, g, reload) {
+  const uid = guideUserId(g);
+  const row = document.createElement('div');
+  row.className = 'flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/40 px-3 py-2';
+  const name = guideName(g);
+  row.innerHTML = `
+    <span class="min-w-[8rem] text-sm font-medium">${escapeHtml(name)}</span>
+    <input data-guide-url value="${escapeHtml(g.url || '')}" class="flex-1 min-w-[12rem] rounded-md border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-2 py-1 text-sm" />
+    <button type="button" data-guide-save class="rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Save</button>
+    <button type="button" data-guide-del class="rounded-md border border-red-300/60 px-2 py-1 text-sm text-red-700 dark:text-red-300 hover:bg-red-500/10">Delete</button>`;
+  row.querySelector('[data-guide-save]').onclick = async () => {
+    const urlVal = (row.querySelector('[data-guide-url]').value || '').trim();
+    if (!urlVal) return DEPS.toast('URL is required', 'warn');
+    const r = await DEPS.http('PATCH', `/api/mods/maps/${encodeURIComponent(code)}/guides/${encodeURIComponent(uid)}`, { query: { url: urlVal } });
+    DEPS.logActivity({ title: 'Edit guide', method: 'PATCH', url: r.url, ok: r.ok, status: r.status, data: r.data });
+    DEPS.toast(r.ok ? 'Guide updated' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
+    if (r.ok) reload();
+  };
+  row.querySelector('[data-guide-del]').onclick = async () => {
+    if (!confirm(`Delete ${name}'s guide for map ${code}?`)) return;
+    const r = await DEPS.http('DELETE', `/api/mods/maps/${encodeURIComponent(code)}/guides/${encodeURIComponent(uid)}`);
+    DEPS.logActivity({ title: 'Delete guide', method: 'DELETE', url: r.url, ok: r.ok, status: r.status, data: r.data });
+    DEPS.toast(r.ok ? 'Guide deleted' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
+    if (r.ok) reload();
+  };
+  return row;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
