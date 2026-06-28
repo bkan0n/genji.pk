@@ -24,7 +24,7 @@
                     id="u-updateMapForm"
                     data-action="update-map"
                     autocomplete="off"
-                    class="mt-6 hidden space-y-6"
+                    class="mt-6 space-y-6"
                   >
                     <!-- META -->
                     <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">

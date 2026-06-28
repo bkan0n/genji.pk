@@ -1,5 +1,27 @@
 <div data-panel="maps" class="mod-panel hidden space-y-4">
   <div data-maps-workspace class="space-y-6">
+    {{-- Sub-tabs: edit an existing map vs. submit a brand-new one --}}
+    <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        data-maps-subtab="edit"
+        aria-selected="true"
+        class="active min-h-[2.35rem] rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:border-emerald-500/40 [&.active]:bg-emerald-500/10 [&.active]:text-emerald-700 dark:[&.active]:text-emerald-300"
+      >
+        Edit map
+      </button>
+      <button
+        type="button"
+        data-maps-subtab="submit"
+        aria-selected="false"
+        class="min-h-[2.35rem] rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:border-emerald-500/40 [&.active]:bg-emerald-500/10 [&.active]:text-emerald-700 dark:[&.active]:text-emerald-300"
+      >
+        ＋ Submit new map
+      </button>
+    </div>
+
+    {{-- PANE: edit an existing map (search → load → fields/guides/actions) --}}
+    <div data-maps-pane="edit" class="space-y-6">
     <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5 space-y-5">
       <div>
         <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400">Find a map</label>
@@ -21,11 +43,10 @@
         @include('moderator.partials.maps-profile')
       </div>
     </div>
+    </div>
 
-    {{-- Separate creation tool: submit a brand-new map (works with no loaded map). --}}
-    <details data-maps-submit-tool class="rounded-2xl border border-dashed border-zinc-300/70 dark:border-white/10 bg-white/30 dark:bg-zinc-950/30 p-4 sm:p-5">
-      <summary class="cursor-pointer select-none text-sm font-semibold">＋ Submit new map</summary>
-      <div data-maps-submit-mount class="mt-3">
+    {{-- PANE: submit a brand-new map (independent of any loaded map) --}}
+    <div data-maps-pane="submit" class="hidden space-y-6">
         <div data-subpanel="maps-submit">
           <form
             id="submitMapForm"
@@ -434,7 +455,6 @@
             </div>
           </form>
         </div>
-      </div>
-    </details>
+    </div>
   </div>
 </div>

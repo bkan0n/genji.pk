@@ -1,4 +1,4 @@
-import { $, setView, makeRecentStore, renderRecentChips, wireMapSearch } from './workspace-shell.js';
+import { $, $$, setView, makeRecentStore, renderRecentChips, wireMapSearch } from './workspace-shell.js';
 
 let DEPS = null;
 const recent = makeRecentStore('mod.maps.recent');
@@ -11,6 +11,8 @@ export function initMapWorkspace(deps) {
   if (!root) return;
   setView(root, 'empty');
 
+  wireSubtabs(root);
+
   const search = $('[data-maps-search]', root);
   wireMapSearch(search, { deps: DEPS, onLoad: (code) => loadMap(root, code) });
   search?.focus();
@@ -21,6 +23,26 @@ export function initMapWorkspace(deps) {
   // dispatcher, which bound it at load (the form is server-rendered in the
   // partial), so no extra submit wiring is needed here.
   DEPS.initSubmitPanel?.();
+}
+
+// Local sub-tab toggle (Edit map / Submit new map). Deliberately NOT using the
+// global .mod-subtab machinery: that hides every [data-subpanel] and resets
+// section state on switch, which would wipe the loaded map's edits. This only
+// shows/hides panes, so edit state is preserved across switches.
+function wireSubtabs(root) {
+  const btns = $$('[data-maps-subtab]', root);
+  const panes = $$('[data-maps-pane]', root);
+  for (const btn of btns) {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.mapsSubtab;
+      for (const pane of panes) pane.classList.toggle('hidden', pane.dataset.mapsPane !== name);
+      for (const b of btns) {
+        const active = b === btn;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-selected', String(active));
+      }
+    });
+  }
 }
 
 function renderRecent(root) {
@@ -57,7 +79,8 @@ async function loadMap(root, code) {
   if (!item) return showError(root, `No map found for "${code}".`);
 
   CURRENT = item;
-  recent.push({ id: String(item.code), name: item.map_name || String(item.code) });
+  // Recent chips show the map code (this is a code-keyed editing console).
+  recent.push({ id: String(item.code), name: String(item.code) });
   renderRecent(root);
   renderProfile(root, item); // no-op until a later task
   setView(root, 'loaded');
@@ -121,6 +144,9 @@ async function bindFields(root, map) {
   const form = document.getElementById('u-updateMapForm');
   const bar = $('[data-fields-bar]', root);
   if (!form || !bar) return;
+  // The form ships with a legacy `hidden` class (the old loader used to reveal it);
+  // in this workspace it is always shown once a map is loaded.
+  form.classList.remove('hidden');
 
   // Build dropdowns/banner/edit-buttons once (idempotent), then fill from the map.
   if (!fieldsReady) {
