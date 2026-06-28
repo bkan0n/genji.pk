@@ -26,22 +26,50 @@ export function initMapWorkspace(deps) {
 }
 
 // Local sub-tab toggle (Edit map / Submit new map). Deliberately NOT using the
-// global .mod-subtab machinery: that hides every [data-subpanel] and resets
-// section state on switch, which would wipe the loaded map's edits. This only
-// shows/hides panes, so edit state is preserved across switches.
+// global .mod-subtab machinery: that calls resetSection on switch, wiping the
+// loaded map's edits. This only shows/hides panes, so edit state is preserved.
+//
+// One catch: the global tab machinery (setupTabs in moderator.js) hides every
+// [data-subpanel] each time the Maps tab is (re)activated and only re-reveals one
+// if a `.mod-subtab` exists — which ours are not. Our two forms (#u-updateMapForm
+// and #submitMapForm) live inside [data-subpanel] wrappers (so initUpdatePanel /
+// initSubmitPanel can find them), so we must re-reveal the active pane's subpanel
+// here, and re-assert whenever the panel becomes visible again.
 function wireSubtabs(root) {
   const btns = $$('[data-maps-subtab]', root);
   const panes = $$('[data-maps-pane]', root);
+  let activeName = btns[0]?.dataset.mapsSubtab || 'edit';
+
+  const apply = () => {
+    for (const pane of panes) {
+      const on = pane.dataset.mapsPane === activeName;
+      pane.classList.toggle('hidden', !on);
+      // Re-reveal the form wrapper inside the active pane (the global tab
+      // activation hides all [data-subpanel]); keep inactive ones hidden.
+      for (const sp of $$('[data-subpanel]', pane)) sp.classList.toggle('hidden', !on);
+    }
+    for (const b of btns) {
+      const on = b.dataset.mapsSubtab === activeName;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+    }
+  };
+
   for (const btn of btns) {
     btn.addEventListener('click', () => {
-      const name = btn.dataset.mapsSubtab;
-      for (const pane of panes) pane.classList.toggle('hidden', pane.dataset.mapsPane !== name);
-      for (const b of btns) {
-        const active = b === btn;
-        b.classList.toggle('active', active);
-        b.setAttribute('aria-selected', String(active));
-      }
+      activeName = btn.dataset.mapsSubtab;
+      apply();
     });
+  }
+  apply();
+
+  // Re-assert visibility every time the Maps panel is shown again (the global
+  // machinery re-hides our subpanels on each tab activation).
+  const panel = root.closest('[data-panel="maps"]');
+  if (panel && 'MutationObserver' in window) {
+    new MutationObserver(() => {
+      if (!panel.classList.contains('hidden')) apply();
+    }).observe(panel, { attributes: true, attributeFilter: ['class'] });
   }
 }
 
@@ -144,9 +172,11 @@ async function bindFields(root, map) {
   const form = document.getElementById('u-updateMapForm');
   const bar = $('[data-fields-bar]', root);
   if (!form || !bar) return;
-  // The form ships with a legacy `hidden` class (the old loader used to reveal it);
-  // in this workspace it is always shown once a map is loaded.
+  // The form ships with a legacy `hidden` class (the old loader used to reveal it),
+  // and the global tab machinery hides its [data-subpanel="maps-update"] wrapper on
+  // panel activation. Reveal both so the fields show once a map is loaded.
   form.classList.remove('hidden');
+  form.closest('[data-subpanel]')?.classList.remove('hidden');
 
   // Build dropdowns/banner/edit-buttons once (idempotent), then fill from the map.
   if (!fieldsReady) {
