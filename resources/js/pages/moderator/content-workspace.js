@@ -335,5 +335,40 @@ function openNamedEditor(entity, mode, id) {
   setTimeout(() => formNode.name?.focus(), 0);
 }
 
-// Implemented in later tasks:
-function openTechniqueEditor() { DEPS.toast('Technique editor coming next', 'warn'); }
+function openTechniqueEditor(mode, id) {
+  const formNode = cloneTemplate('technique');
+  formNode.dataset.action = mode === 'edit' ? 'content-technique-update' : 'content-technique-create';
+
+  // Edit-only UI (current tips/videos + "start from empty" toggles) is hidden when creating.
+  if (mode !== 'edit') {
+    formNode.querySelectorAll('[data-mt-current], [data-mt-clear]')
+      .forEach((el) => el.classList.add('hidden'));
+  }
+
+  const { overlay } = buildOverlay({
+    title: mode === 'edit' ? 'Edit technique' : 'Add technique',
+    subtitle: 'Tips and videos keep their visual order as sort order.',
+    formNode,
+    onSave: async (form) => {
+      const res = mode === 'edit'
+        ? await DEPS.handleContentTechniqueUpdate(form)
+        : await DEPS.handleContentTechniqueCreate(form);
+      if (res?.ok) { await loadAndRender('techniques'); return true; }
+      return false;
+    },
+  });
+
+  // Wire the custom pickers + tips/videos repeaters now that the form is in the DOM.
+  DEPS.wireDdSelect(overlay);
+  DEPS.movementTechPopulateContentDropdowns('categories');
+  DEPS.movementTechPopulateContentDropdowns('difficulties');
+  DEPS.movementTechInitTechniqueEditor(formNode);
+
+  if (mode === 'edit') {
+    formNode.id.value = String(id);
+    // GET the full record and hydrate name/description/category/difficulty/current rows + snapshot.
+    DEPS.loadContentTechniqueIntoUpdateForm(formNode, ENTITIES.techniques.outKey);
+  }
+
+  setTimeout(() => formNode.name?.focus(), 0);
+}
