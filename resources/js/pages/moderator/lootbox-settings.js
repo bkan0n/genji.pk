@@ -56,12 +56,18 @@ export function initLootboxSettings(deps) {
 async function loadActiveKey(mount) {
   const cur = $('[data-st-active]', mount);
   try {
-    const { ok, status, url, data } = await DEPS.http('GET', '/api/lootbox/keys');
-    DEPS.logActivity({ title: 'Get active keys', method: 'GET', url, ok, status, data });
+    // The active key type is part of the store config (same source the public
+    // key shop reads), not the lootbox/keys endpoint.
+    const { ok, status, url, data } = await DEPS.http('GET', '/api/mods/store/config');
+    DEPS.logActivity({ title: 'Get store config (active key)', method: 'GET', url, ok, status, data });
     if (!ok) return (cur.textContent = `Unavailable (${status}).`);
-    const active = data?.active_key_type || data?.active || null;
-    cur.textContent = active ? `Current: ${active}` : 'Loaded (see activity log for detail).';
-    if (active && KEY_TYPES.includes(active)) $('[data-st-key]', mount).value = active;
+    const active = data?.active_key_type || data?.data?.active_key_type || null;
+    if (active) {
+      cur.innerHTML = `Current: <span class="font-semibold text-zinc-800 dark:text-zinc-100">${esc(active)}</span>`;
+      if (KEY_TYPES.includes(active)) $('[data-st-key]', mount).value = active;
+    } else {
+      cur.textContent = 'No active key type set.';
+    }
   } catch {
     cur.textContent = 'Unavailable (network).';
   }
