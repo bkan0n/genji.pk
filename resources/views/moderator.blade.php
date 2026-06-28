@@ -305,84 +305,8 @@
             {{-- ============ RECORDS ============ --}}
             @include('moderator.partials.records')
 
-            {{-- ============ VERIFICATIONS (nouvelle section) ============ --}}
-            <div data-panel="verifications" class="mod-panel hidden space-y-4">
-              <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="verif-pending"
-                >
-                  Verify completions
-                </button>
-                <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
-                  data-subtab="verif-playtest"
-                >
-                  Verify playtests
-                </button>
-                <button
-                  class="mod-subtab cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
-                  data-subtab="verif-edits"
-                >
-                  Verify edits
-                </button>
-
-              </div>
-              <div
-                class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300"
-              >
-                Choose a Verifications action.
-              </div>
-
-              <div data-subpanel="verif-pending" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
-                  <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-semibold">Get Pending Verifications</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/v3/verifications/pending</span>
-                  </div>
-                  <form data-action="get-pending-verifs" autocomplete="off" class="grid gap-3">
-                    <button
-                      class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
-                    >
-                      Fetch
-                    </button>
-                  </form>
-                </article>
-              </div>
-              <div data-subpanel="verif-edits" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
-                  <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <h3 class="font-semibold">Verify map edit requests</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/v3/maps/map-edits/pending</span>
-                  </div>
-
-                  <form data-action="get-pending-edit-requests" autocomplete="off" class="grid gap-4">
-                    <div class="grid gap-3 sm:grid-cols-2">
-                      <label class="block text-sm text-zinc-600 dark:text-zinc-300">
-                        Resolved by (user_id)
-                        <input
-                          id="editResolvedByInput"
-                          type="text"
-                          name="resolved_by_user_id"
-                          placeholder="Auto"
-                          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                        />
-                      </label>
-
-                      <div class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-3 text-xs text-zinc-500 dark:text-zinc-400">
-                        Accept / Reject will call <span class="font-mono">PUT /resolve</span> with your user_id.
-                      </div>
-                    </div>
-
-                    <button
-                      class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30"
-                    >
-                      Fetch pending edit requests
-                    </button>
-                  </form>
-                </article>
-              </div>
-            </div>
+            {{-- ============ VERIFICATIONS ============ --}}
+            @include('moderator.partials.verifications')
 
             {{-- ============ TOURNAMENT ============ --}}
             <div data-panel="tournament" class="mod-panel hidden space-y-4">
