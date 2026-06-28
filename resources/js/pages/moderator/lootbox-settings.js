@@ -1,7 +1,7 @@
 import { $ } from './workspace-shell.js';
 
 const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
-const RARITIES = ['Common', 'Rare', 'Epic', 'Legendary'];
+const RARITIES = ['common', 'rare', 'epic', 'legendary'];
 let DEPS = null;
 
 const esc = (s = '') =>

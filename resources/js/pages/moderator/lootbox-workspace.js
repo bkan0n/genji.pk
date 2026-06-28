@@ -5,7 +5,7 @@ import {
 const API_MODS = '/api/mods';
 const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
 const XP_TYPES = ['Map Submission', 'Playtest', 'Guide', 'Completion', 'Record', 'World Record', 'Other'];
-const RARITIES = ['Common', 'Rare', 'Epic', 'Legendary'];
+const RARITIES = ['common', 'rare', 'epic', 'legendary'];
 let CATALOG = null; // cached reward catalog (array)
 const recent = makeRecentStore('mod.lootbox.recent');
 let DEPS = null;

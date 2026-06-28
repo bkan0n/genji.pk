@@ -34,8 +34,10 @@ export function makeRecentStore(storageKey, max = 8) {
     }
   };
   const push = (entry) => {
-    const list = get().filter((r) => r.id !== entry.id);
-    list.unshift(entry);
+    if (!entry || !entry.id) return;
+    const clean = { id: String(entry.id), name: entry.name || String(entry.id) };
+    const list = get().filter((r) => r && r.id && r.id !== clean.id);
+    list.unshift(clean);
     localStorage.setItem(storageKey, JSON.stringify(list.slice(0, max)));
   };
   return { get, push };
@@ -46,11 +48,13 @@ export function renderRecentChips(wrap, store, onPick) {
   if (!wrap) return;
   wrap.innerHTML = '';
   for (const r of store.get()) {
+    if (!r || !r.id) continue;
+    const label = r.name && r.name !== 'undefined' ? r.name : String(r.id);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className =
       'rounded-full border border-zinc-200/80 dark:border-white/10 px-3 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-white/10';
-    btn.textContent = r.name;
+    btn.textContent = label;
     btn.onclick = () => onPick(r.id);
     wrap.appendChild(btn);
   }
