@@ -1252,10 +1252,6 @@ function scrollIntoViewWithOffset(el, offset) {
         active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
-        if (name === 'maps-submit') initSubmitPanel();
-        if (name === 'maps-archive') setupArchiveMapsUI();
-        if (name === 'maps-search') initSearchPanel();
-        if (name === 'maps-update') initUpdatePanel();
         if (name.startsWith('content-')) ensureContentMovementTechData(name);
         if (name === 'store-config') initStoreConfigPanel();
         if (name === 'skill-user') initSkillUserPanel();
@@ -1600,16 +1596,6 @@ $$('form[data-action]').forEach((form) => {
     try {
       const runAction = async () => {
       switch (action) {
-        // GUIDES (API_MODS)
-        case 'create-guide':
-          return handleCreateGuide(form);
-        case 'edit-guide':
-          return handleEditGuide(form);
-        case 'delete-guide':
-          return handleDeleteGuide(form);
-        case 'get-guides':
-          return handleGetGuides(form);
-
         // CONTENT (API_MODS)
         case 'content-category-list':
           return handleContentListEntity(form, 'categories', 'Categories', 'content-categories-res');
@@ -1651,14 +1637,8 @@ $$('form[data-action]').forEach((form) => {
           return handleUpdateMap(form);
         case 'submit-map':
           return handleSubmitMap(form);
-        case 'search-map':
-          return handleSearchMap(form);
         case 'convert-legacy':
           return handleConvertLegacy(form);
-        case 'load-map-update':
-          return handleLoadMapForUpdate(form);
-        case 'create-map-edit-request':
-          return handleCreateMapEditRequest(form);
 
         // MODERATION (API_MODS)
         case 'override-quality':
@@ -2672,89 +2652,6 @@ function renderUserEndpointResponse(form, kind, {
       </div>
       <div class="p-5">${body}</div>
     </section>`;
-}
-
-// GUIDES
-async function handleCreateGuide(form) {
-  const code = form.code.value.trim();
-  const urlInput = form.url.value.trim();
-  const user_id = getUserIdFrom(form.user_id);
-
-  if (!code || !urlInput || !user_id) {
-    toast('code, url and user_id are required', 'warn');
-    return;
-  }
-
-  const { ok, status, url, data } = await http(
-    'POST',
-    `${API_MODS}/maps/${encodeURIComponent(code)}/guides`,
-    { body: { url: urlInput, user_id } }
-  );
-  logActivity({ title: 'Create guide', method: 'POST', url, ok, status, data });
-  toast(ok ? 'Guide created' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleEditGuide(form) {
-  const code = form.code.value.trim();
-  const urlParam = form.url.value.trim();
-  const user_id = getUserIdFrom(form.user_id);
-
-  if (!code || !urlParam || !user_id) {
-    toast('code, user_id and url are required', 'warn');
-    return;
-  }
-
-  const { ok, status, url, data } = await http(
-    'PATCH',
-    `${API_MODS}/maps/${encodeURIComponent(code)}/guides/${encodeURIComponent(user_id)}`,
-    { query: { url: urlParam } }
-  );
-  logActivity({ title: 'Edit guide', method: 'PATCH', url, ok, status, data });
-  toast(ok ? 'Guide updated' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleDeleteGuide(form) {
-  const code = form.code.value.trim();
-  const user_id = getUserIdFrom(form.user_id);
-
-  if (!code || !user_id) {
-    toast('code and user_id are required', 'warn');
-    return;
-  }
-
-  const { ok, status, url, data } = await http(
-    'DELETE',
-    `${API_MODS}/maps/${encodeURIComponent(code)}/guides/${encodeURIComponent(user_id)}`
-  );
-  logActivity({ title: 'Delete guide', method: 'DELETE', url, ok, status, data });
-  toast(ok ? 'Guide deleted' : 'Failed', ok ? 'ok' : 'err');
-}
-
-async function handleGetGuides(form) {
-  const code = (form.code.value || '').trim();
-  if (!code) {
-    toast('Map code required', 'warn');
-    return;
-  }
-
-  const include_records = (form.include_records.value || 'false') === 'true';
-
-  const { ok, status, url, data } = await http(
-    'GET',
-    `/api/maps/${encodeURIComponent(code)}/guides`,
-    { query: { include_records } }
-  );
-
-  logActivity({
-    title: 'Get guides',
-    method: 'GET',
-    url,
-    ok,
-    status,
-    data,
-  });
-
-  toast(ok ? 'Guides loaded' : 'Failed', ok ? 'ok' : 'err');
 }
 
 // CONTENT
@@ -4346,57 +4243,6 @@ async function handleReleaseMapCode(form) {
   }
 }
 
-async function handleLoadMapForUpdate(form) {
-  const code = (form.code.value || '').trim();
-  if (!code) {
-    toast('Provide a map code', 'warn');
-    return;
-  }
-
-  const pickItem = (data) => {
-    if (Array.isArray(data)) return data[0] || null;
-    if (data && typeof data === 'object') return (data.items?.[0] ?? data.data?.items?.[0] ?? data) || null;
-    return null;
-  };
-
-  let res = await http('GET', `/api/maps`, { query: { code } });
-  logActivity({ title: 'Load map (update)', method: 'GET', url: res.url, ok: res.ok, status: res.status, data: res.data });
-  if (!res.ok) {
-    toast('Failed', 'err');
-    return;
-  }
-
-  let item = pickItem(res.data);
-
-  if (!item) {
-    const archivedRes = await http('GET', `/api/maps`, { query: { code, archived: true } });
-    logActivity({
-      title: 'Load archived map (update)',
-      method: 'GET',
-      url: archivedRes.url,
-      ok: archivedRes.ok,
-      status: archivedRes.status,
-      data: archivedRes.data,
-    });
-    if (!archivedRes.ok) {
-      toast('Failed', 'err');
-      return;
-    }
-    res = archivedRes;
-    item = pickItem(archivedRes.data);
-  }
-
-  toast(item ? 'Loaded' : 'No results', item ? 'ok' : 'warn');
-
-  if (!item) {
-    return;
-  }
-
-  await initUpdatePanel();
-  populateUpdatePanel(item);
-  scrollIntoViewWithOffset(document.getElementById('u-updateMapForm'), getHeaderOffset());
-}
-
 async function handleSubmitMap(form) {
   const mainCreatorId = document.getElementById('metaCreatorMain')?.getAttribute('data-raw-id');
   const secondCreatorId = document.getElementById('metaCreatorSecond')?.getAttribute('data-raw-id');
@@ -4531,39 +4377,6 @@ async function handleConvertLegacy(form) {
     toast(ok ? 'Converted' : 'Failed', ok ? 'ok' : 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.classList.remove(...String('opacity-60').trim().split(/\s+/).filter(Boolean), ...String('cursor-not-allowed').trim().split(/\s+/).filter(Boolean)); btn.innerHTML = prevLabel; }
-  }
-}
-
-async function handleSearchMap(form) {
-  const code = (form.code.value || '').trim();
-  const query = {};
-  if (code) query.code = code;
-
-  const { ok, status, url, data } = await http('GET', `/api/maps`, { query });
-
-  logActivity({ title: 'Search map', method: 'GET', url, ok, status, data });
-  toast(ok ? 'Search done' : 'Failed', ok ? 'ok' : 'err');
-  if (!ok) return;
-
-  let item = null;
-  if (Array.isArray(data)) item = data[0] || null;
-  else if (data && typeof data === 'object') item = (data.items?.[0] ?? data) || null;
-
-  if (!item) {
-    toast('No results', 'warn');
-    return;
-  }
-
-  await initSearchPanel();
-
-  populateSearchPanel(item);
-
-  const target = document.querySelector('[data-subpanel="maps-search"] #s-submitMapForm');
-  if (target) {
-    target.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
-    scrollIntoViewWithOffset(target, getHeaderOffset());
-  } else {
-    toast('Search panel HTML (#s-submitMapForm) manquant', 'warn');
   }
 }
 
@@ -4756,39 +4569,6 @@ function triStateToBool(v) {
   if (s === 'true') return true;
   if (s === 'false') return false;
   return null;
-}
-
-async function handleCreateMapEditRequest(form) {
-  const code = String(form?.code?.value || '').trim().toUpperCase();
-
-  if (!code) {
-    toast('Map code required', 'warn');
-    return;
-  }
-
-  let map = { code };
-  try {
-    const { ok, status, url, data } = await http('GET', '/api/maps', { query: { code } });
-
-    logActivity({ title: `Load map for edit request`, method: 'GET', url, ok, status, data });
-
-    if (ok) {
-      if (Array.isArray(data)) map = data[0] || map;
-      else if (data && typeof data === 'object') map = (data.items?.[0] ?? data) || map;
-    } else {
-      toast(`Could not load map (${status}) – opening empty form`, 'warn');
-    }
-  } catch (e) {
-    toast('Network error – opening empty form', 'warn');
-  }
-
-  openMapEditRequestModal(map, {
-    syncUrl: false,
-    fromUrl: true,
-    autoClose: false,
-    // Create endpoint
-    endpoint: '/api/maps/map-edits',
-  });
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -7496,23 +7276,6 @@ function showBannerPreviewScoped(root, url) {
   }
 }
 
-async function initSearchPanel() {
-  const panel = document.querySelector('[data-subpanel="maps-search"]');
-  if (!panel || panel.dataset.inited === '1') return;
-  panel.dataset.inited = '1';
-
-  buildRadioDropdown('s-difficultyDropdown', DIFFICULTY_FINE_OPTIONS, 'Select difficulty');
-  buildRadioDropdown('s-categoryDropdown', CATEGORY_OPTIONS, 'Select category');
-
-  const [mech, rest] = await Promise.all([
-    fetchStrings('/api/autocomplete/map-mechanics'),
-    fetchStrings('/api/autocomplete/map-restrictions'),
-  ]);
-  buildCheckboxDropdown('s-mechanicsDropdown', mech, 'Select mechanics');
-  buildCheckboxDropdown('s-restrictionsDropdown', rest, 'Select restrictions');
-  buildCheckboxDropdown('s-tagsDropdown', MAP_TAG_OPTIONS, 'Select tags');
-}
-
 function firstGuideUrl(item) {
   if (Array.isArray(item?.guides) && item.guides.length) {
     const g0 = item.guides[0];
@@ -7523,77 +7286,6 @@ function firstGuideUrl(item) {
   if (item?.guide_url) return String(item.guide_url);
   if (item?.guides_url) return String(item.guides_url);
   return null;
-}
-
-function populateSearchPanel(item) {
-  const panel = document.querySelector('[data-subpanel="maps-search"]');
-  const form = panel?.querySelector('#s-submitMapForm');
-  if (!panel || !form) return;
-
-  const creators = Array.isArray(item?.creators) ? item.creators : [];
-  const primary = creators.find((c) => c?.is_primary) || creators[0] || null;
-  const second = creators.find((c) => !c?.is_primary) || null;
-
-  if (primary) {
-    const el = form.querySelector('#s-metaCreatorMain');
-    if (el) {
-      el.dataset.rawId = primary.id || '';
-      el.textContent = primary.name || primary.id || 'N/A';
-    }
-  } else {
-    const el = form.querySelector('#s-metaCreatorMain');
-    if (el) {
-      el.dataset.rawId = '';
-      el.textContent = 'N/A';
-    }
-  }
-
-  const secEl = form.querySelector('#s-metaCreatorSecond');
-  if (secEl) {
-    if (second) {
-      secEl.dataset.rawId = second.id || '';
-      secEl.textContent = second.name || second.id || 'N/A';
-    } else {
-      secEl.dataset.rawId = '';
-      secEl.textContent = 'N/A';
-    }
-  }
-
-  setText(form, '#s-metaCode', item?.code);
-  setText(form, '#s-metaMap', item?.map_name);
-  setText(form, '#s-metaCheckpoints', item?.checkpoints);
-
-  // REQUIRED
-  const difficulty = item?.difficulty;
-  const category = item?.category;
-  ddSelectByValue(form.querySelector('#s-difficultyDropdown'), difficulty);
-  ddSelectByValue(form.querySelector('#s-categoryDropdown'), category);
-
-  ddCheckByValues(form.querySelector('#s-mechanicsDropdown'), item?.mechanics || []);
-  ddCheckByValues(form.querySelector('#s-restrictionsDropdown'), item?.restrictions || []);
-  ddCheckByValues(form.querySelector('#s-tagsDropdown'), item?.tags || item?.map_tags || []);
-
-  // OPTIONAL
-  setValue(form, '#s-optTitleInput', item?.title ?? '');
-  setText(form, '#s-optDescription', item?.description);
-
-  const gUrl = firstGuideUrl(item);
-  setText(form, '#s-optGuide', gUrl || 'N/A');
-
-  showBannerPreviewScoped(form, item?.map_banner || null);
-
-  const medals = item?.medals || null;
-  if (medals && typeof medals === 'object') {
-    setValue(form, '#s-medalGoldInput', medals.gold);
-    setValue(form, '#s-medalSilverInput', medals.silver);
-    setValue(form, '#s-medalBronzeInput', medals.bronze);
-  } else {
-    setValue(form, '#s-medalGoldInput', '');
-    setValue(form, '#s-medalSilverInput', '');
-    setValue(form, '#s-medalBronzeInput', '');
-  }
-
-  form.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
 }
 
 //———————————————————————————————————————————————————————————————
