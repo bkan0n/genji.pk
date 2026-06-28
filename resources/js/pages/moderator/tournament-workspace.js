@@ -12,6 +12,10 @@ const API_MODS = '/api/mods/tournaments';
 // Live countdown timer for the active-edition strip.
 let countdownTimer = null;
 
+// Last-loaded active cycles, cached so the inspection slide-over can resolve a
+// category's active cycle id without re-fetching. Refreshed on every loadStatus.
+let lastActiveCycles = [];
+
 export function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -26,8 +30,9 @@ export function initTournamentWorkspace(deps) {
   wireRefresh(root);
   wireEditionActions(root);
   wireCategoryActions(root);
+  wireStreakLookup(root);
   // Feature wiring added in later tasks:
-  // wireStreakLookup(root); wireSetup(root);
+  // wireSetup(root);
 }
 
 function wireSubtabLoading(root) {
@@ -61,6 +66,7 @@ async function loadStatus(root, { force }) {
     return;
   }
   const { config, edition, cycles } = data;
+  lastActiveCycles = Array.isArray(cycles) ? cycles : [];
   hideStatusError(root);
   renderPausedBanner(root, { config, edition });
   renderEditionStrip(root, { edition, config, cycles });
@@ -584,8 +590,8 @@ function wireCategoryActions(root) {
       if (action === 'random-select') return cardSelect(root, id);
       if (action === 'choose-map') return toggleChooseInput(card);
       if (action === 'choose-map-submit') return cardChoose(root, card, id);
-      if (action === 'view-standings') return; // openStandings(root, id) — Task 4
-      if (action === 'history') return; // openHistory(root, id) — Task 4
+      if (action === 'view-standings') return openStandings(root, id);
+      if (action === 'history') return openHistory(root, id);
       if (action === 'reroll-active') return cardRerollActive(root, id);
     };
 
@@ -766,6 +772,398 @@ async function tournamentSetDebugCycle(root, btn, { clear = false } = {}) {
 
   // Always re-sync: even on 403 the server state may have moved.
   await loadStatus(root, { force: true });
+}
+
+// ===== Inspection slide-over (standings / history / streak) =====
+//
+// One reusable read-only overlay rendered as a right-anchored slide-over. It is
+// appended to document.body via DEPS.appendOverlay (which just appends the
+// element — it does NOT provide a backdrop or close handling), so the overlay
+// owns its own backdrop, Close button, and Escape-to-close, matching showModal
+// in moderator.js. All three inspections (standings, history, streak) render
+// readable TABLES — never a <pre> JSON dump.
+
+// Build + mount the slide-over shell around an arbitrary content element.
+function openOverlay(root, title, contentEl) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-[100] flex justify-end bg-black/40';
+  overlay.innerHTML = `
+    <div class="h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl dark:bg-zinc-950">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <h3 class="min-w-0 truncate text-lg font-semibold">${escapeHtml(title)}</h3>
+        <button type="button" data-overlay-close class="shrink-0 rounded-lg px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Close</button>
+      </div>
+      <div data-overlay-body></div>
+    </div>`;
+
+  const close = () => {
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (ev) => { if (ev.key === 'Escape') close(); };
+
+  // Backdrop click (on the overlay itself, outside the panel) or the Close
+  // button dismiss the slide-over.
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.closest('[data-overlay-close]')) close();
+  });
+  document.addEventListener('keydown', onKey);
+
+  $('[data-overlay-body]', overlay).appendChild(contentEl);
+  DEPS.appendOverlay(overlay);
+  return overlay;
+}
+
+// Small DOM helpers for building content elements (no innerHTML JSON dumps).
+function overlayInfo(message) {
+  const el = document.createElement('div');
+  el.className = 'rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400';
+  el.textContent = message;
+  return el;
+}
+
+function overlayLoading() {
+  return overlayInfo('Loading…');
+}
+
+// Read the first present field from an object, by candidate key list.
+function pickField(obj, keys) {
+  if (!obj || typeof obj !== 'object') return null;
+  for (const k of keys) {
+    if (obj[k] != null && obj[k] !== '') return obj[k];
+  }
+  return null;
+}
+
+// ----- Standings -----
+
+// Resolve a category's active cycle id from the cached active cycles, then open
+// standings for it. If the category has no active cycle, tell the user instead
+// of fetching a bad URL.
+async function openStandings(root, categoryId) {
+  const live = liveCycleFor(lastActiveCycles, categoryId);
+  const cycleId = live ? (live.id ?? live.cycle_id ?? null) : null;
+  const categoryName = live?.category_name || `Category #${categoryId}`;
+  const title = `Standings — ${categoryName}`;
+
+  if (cycleId == null) {
+    openOverlay(root, title, overlayInfo('This category has no active cycle, so there are no live standings to show.'));
+    return;
+  }
+  await openStandingsForCycle(root, cycleId, title);
+}
+
+// Reusable standings view for an arbitrary cycle id (also used by History
+// drill-in). GET /api/tournaments/cycles/{cycleId}/leaderboard.
+async function openStandingsForCycle(root, cycleId, title) {
+  const body = document.createElement('div');
+  body.appendChild(overlayLoading());
+  const overlay = openOverlay(root, title, body);
+
+  const url = `${API}/cycles/${encodeURIComponent(cycleId)}/leaderboard`;
+  let res;
+  try {
+    res = await DEPS.http('GET', url);
+  } catch (err) {
+    DEPS.logActivity({ title: `Tournament Leaderboard #${cycleId} error`, method: 'ERROR', url, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    DEPS.toast('Failed to load standings', 'err');
+    body.replaceChildren(overlayInfo('Failed to load standings.'));
+    return overlay;
+  }
+  DEPS.logActivity({ title: `Tournament Leaderboard #${cycleId} (GET)`, method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) {
+    DEPS.toast('Failed to load standings', 'err');
+    body.replaceChildren(overlayInfo('Failed to load standings.'));
+    return overlay;
+  }
+
+  body.replaceChildren(buildStandingsTable(res.data));
+  return overlay;
+}
+
+// Normalize a leaderboard response into rows. The upstream shape is not strongly
+// typed (proxied service), so accept the common envelopes + field names.
+function standingsRows(data) {
+  const rows = Array.isArray(data?.entries)
+    ? data.entries
+    : Array.isArray(data?.leaderboard)
+      ? data.leaderboard
+      : Array.isArray(data?.standings)
+        ? data.standings
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
+  return rows;
+}
+
+function buildStandingsTable(data) {
+  const rows = standingsRows(data);
+  if (!rows.length) return overlayInfo('No standings yet for this cycle.');
+
+  const trs = rows.map((row, i) => {
+    const rank = pickField(row, ['rank', 'position', 'place']) ?? (i + 1);
+    const player = pickField(row, ['player', 'player_name', 'name', 'username', 'user_name', 'display_name']) ?? '-';
+    const score = pickField(row, ['time', 'time_formatted', 'score', 'value', 'result']) ?? '-';
+    return `
+      <tr class="border-t border-zinc-200/70 dark:border-white/10">
+        <td class="py-2 pr-3 text-sm font-semibold tabular-nums">${tournamentEscape(rank)}</td>
+        <td class="py-2 pr-3 text-sm">${tournamentEscape(player)}</td>
+        <td class="py-2 text-right text-sm font-mono tabular-nums">${tournamentEscape(score)}</td>
+      </tr>`;
+  }).join('');
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <table class="w-full border-collapse text-left">
+      <thead>
+        <tr class="text-xs uppercase text-zinc-500 dark:text-zinc-400">
+          <th class="py-2 pr-3 font-semibold">Rank</th>
+          <th class="py-2 pr-3 font-semibold">Player</th>
+          <th class="py-2 text-right font-semibold">Score / Time</th>
+        </tr>
+      </thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+  return wrap;
+}
+
+// ----- History (with filters) -----
+
+const HISTORY_STATUSES = ['any', 'pending', 'active', 'finalizing', 'completed'];
+
+// Build a content element with a status filter + limit input + results list,
+// then fetch GET /api/tournaments/cycles?category_id=&status=&limit=. The
+// category id comes from the card (never typed). Changing a filter re-fetches;
+// clicking a row drills into standings for THAT cycle id.
+function openHistory(root, categoryId) {
+  const live = liveCycleFor(lastActiveCycles, categoryId);
+  const categoryName = live?.category_name || `Category #${categoryId}`;
+
+  const content = document.createElement('div');
+  content.innerHTML = `
+    <div class="mb-3 flex flex-wrap items-end gap-2">
+      <label class="flex flex-col gap-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+        Status
+        <select data-history-status class="rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-sm dark:border-white/10 dark:bg-zinc-900">
+          ${HISTORY_STATUSES.map((s) => `<option value="${s}">${s}</option>`).join('')}
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+        Limit
+        <input data-history-limit type="number" min="1" max="100" step="1" value="25" class="w-24 rounded-lg border border-zinc-200/80 bg-white px-3 py-1.5 text-sm dark:border-white/10 dark:bg-zinc-900" />
+      </label>
+    </div>
+    <div data-history-results></div>`;
+
+  const statusSel = $('[data-history-status]', content);
+  const limitInput = $('[data-history-limit]', content);
+  const results = $('[data-history-results]', content);
+
+  const fetchRows = async () => {
+    results.replaceChildren(overlayLoading());
+    const query = { category_id: categoryId };
+    const status = String(statusSel.value || 'any');
+    if (status && status !== 'any') query.status = status;
+    const limitRaw = String(limitInput.value || '').trim();
+    if (limitRaw) {
+      const n = Number(limitRaw);
+      if (Number.isInteger(n) && n >= 1) query.limit = n;
+    }
+
+    const url = `${API}/cycles`;
+    let res;
+    try {
+      res = await DEPS.http('GET', url, { query });
+    } catch (err) {
+      DEPS.logActivity({ title: `Tournament Cycle History #${categoryId} error`, method: 'ERROR', url, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+      DEPS.toast('Failed to load history', 'err');
+      results.replaceChildren(overlayInfo('Failed to load history.'));
+      return;
+    }
+    DEPS.logActivity({ title: `Tournament Cycle History #${categoryId} (GET)`, method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+    if (!res.ok) {
+      DEPS.toast('Failed to load history', 'err');
+      results.replaceChildren(overlayInfo('Failed to load history.'));
+      return;
+    }
+    results.replaceChildren(buildHistoryTable(root, res.data));
+  };
+
+  // Filters re-fetch.
+  statusSel.addEventListener('change', () => { fetchRows().catch(() => {}); });
+  limitInput.addEventListener('change', () => { fetchRows().catch(() => {}); });
+
+  openOverlay(root, `History — ${categoryName}`, content);
+  fetchRows().catch(() => {});
+}
+
+// Normalize a cycles list response into rows (same envelopes as fetchStatusData).
+function historyRows(data) {
+  return Array.isArray(data?.cycles)
+    ? data.cycles
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
+}
+
+// Render cycle rows as a table; each row drills into standings for its cycle id.
+function buildHistoryTable(root, data) {
+  const rows = historyRows(data);
+  if (!rows.length) return overlayInfo('No cycles found for this filter.');
+
+  const trs = rows.map((cycle) => {
+    const cycleId = pickField(cycle, ['id', 'cycle_id']);
+    const mapName = pickField(cycle, ['map_name', 'name']) || 'No map';
+    const mapCode = pickField(cycle, ['map_code', 'code']) || '';
+    const status = pickField(cycle, ['status']) || '-';
+    const started = tournamentFormatDate(pickField(cycle, ['started_at', 'starts_at', 'created_at']));
+    const ended = tournamentFormatDate(pickField(cycle, ['ended_at', 'ends_at', 'finalized_at', 'completed_at']));
+    return `
+      <tr data-history-row data-cycle-id="${tournamentEscape(cycleId ?? '')}" class="cursor-pointer border-t border-zinc-200/70 hover:bg-zinc-100/70 dark:border-white/10 dark:hover:bg-white/5">
+        <td class="py-2 pr-3 text-sm font-mono tabular-nums">${tournamentEscape(cycleId ?? '-')}</td>
+        <td class="py-2 pr-3 text-sm">
+          <div class="truncate font-semibold">${tournamentEscape(mapName)}</div>
+          <div class="truncate text-xs text-zinc-500 dark:text-zinc-400 font-mono">${tournamentEscape(mapCode)}</div>
+        </td>
+        <td class="py-2 pr-3">${tournamentStatusPill(status)}</td>
+        <td class="py-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div>${tournamentEscape(started)}</div>
+          <div>→ ${tournamentEscape(ended)}</div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <table class="w-full border-collapse text-left">
+      <thead>
+        <tr class="text-xs uppercase text-zinc-500 dark:text-zinc-400">
+          <th class="py-2 pr-3 font-semibold">Cycle</th>
+          <th class="py-2 pr-3 font-semibold">Map</th>
+          <th class="py-2 pr-3 font-semibold">Status</th>
+          <th class="py-2 font-semibold">Window</th>
+        </tr>
+      </thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+
+  // Drill-in: clicking a row opens standings for that specific cycle id.
+  wrap.addEventListener('click', (e) => {
+    const tr = e.target?.closest?.('[data-history-row]');
+    if (!tr) return;
+    const cycleId = tr.dataset.cycleId;
+    if (!cycleId) return;
+    openStandingsForCycle(root, cycleId, `Standings — Cycle #${cycleId}`).catch((err) => {
+      DEPS.toast('Failed to load standings', 'err');
+      DEPS.logActivity({ title: 'Tournament standings drill-in error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
+
+  return wrap;
+}
+
+// ----- Streak lookup -----
+
+// Wire the Status toolbar input [data-tournament-streak-search]. Bound once from
+// init. The input is a numeric user id; on Enter (or autocomplete pick) we fetch
+// GET /api/tournaments/streaks/{userId} and render a readable streak table.
+function wireStreakLookup(root) {
+  const input = $('[data-tournament-streak-search]', root);
+  if (!input) return;
+
+  // Reuse the shared users autocomplete; picking sets input.dataset.uid + label,
+  // and we read the resolved id on submit. Pressing Enter on a typed id works too.
+  if (DEPS.wireAutocomplete) {
+    DEPS.wireAutocomplete(input, {
+      kind: 'users',
+      onPick: ({ id }) => { if (id != null) openStreak(root, id).catch(() => {}); },
+    });
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    // The autocomplete handler already handles Enter when its list is open; if a
+    // user was picked it stamps dataset.uid. Prefer that resolved id, else the
+    // raw typed value (must be a numeric user id).
+    const uid = input.dataset.uid || String(input.value || '').trim();
+    if (!/^\d{1,20}$/.test(String(uid))) {
+      DEPS.toast('Enter a numeric user ID', 'warn');
+      return;
+    }
+    e.preventDefault();
+    openStreak(root, uid).catch((err) => {
+      DEPS.toast('Failed to load streak', 'err');
+      DEPS.logActivity({ title: 'Tournament streak error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
+}
+
+async function openStreak(root, userId) {
+  if (!/^\d{1,20}$/.test(String(userId))) {
+    DEPS.toast('Enter a numeric user ID', 'warn');
+    return;
+  }
+
+  const body = document.createElement('div');
+  body.appendChild(overlayLoading());
+  const overlay = openOverlay(root, `Streak — User #${userId}`, body);
+
+  const url = `${API}/streaks/${encodeURIComponent(userId)}`;
+  let res;
+  try {
+    res = await DEPS.http('GET', url);
+  } catch (err) {
+    DEPS.logActivity({ title: `Tournament Streak ${userId} error`, method: 'ERROR', url, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    DEPS.toast('Failed to load streak', 'err');
+    body.replaceChildren(overlayInfo('Failed to load streak.'));
+    return overlay;
+  }
+  DEPS.logActivity({ title: `Tournament Streak ${userId} (GET)`, method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+  if (res.status === 404) {
+    body.replaceChildren(overlayInfo('No streak found for this user.'));
+    return overlay;
+  }
+  if (!res.ok) {
+    DEPS.toast('Failed to load streak', 'err');
+    body.replaceChildren(overlayInfo('Failed to load streak.'));
+    return overlay;
+  }
+
+  body.replaceChildren(buildStreakTable(res.data));
+  return overlay;
+}
+
+function buildStreakTable(data) {
+  const node = (data && typeof data === 'object' && data.streak && typeof data.streak === 'object')
+    ? data.streak
+    : (data && typeof data === 'object' ? data : {});
+
+  // Read the common streak fields, degrading to '-' where absent.
+  const fields = [
+    ['Current streak', pickField(node, ['current_streak', 'current', 'streak', 'count'])],
+    ['Longest streak', pickField(node, ['longest_streak', 'best_streak', 'max_streak', 'longest', 'best'])],
+    ['Last participated', tournamentFormatDate(pickField(node, ['last_participated_at', 'last_cycle_at', 'last_active_at', 'updated_at']))],
+  ];
+
+  const hasAny = fields.some(([, v]) => v != null && v !== '-' && v !== '');
+  if (!hasAny) return overlayInfo('No streak data for this user.');
+
+  const trs = fields.map(([label, value]) => `
+    <tr class="border-t border-zinc-200/70 dark:border-white/10">
+      <td class="py-2 pr-3 text-sm text-zinc-500 dark:text-zinc-400">${tournamentEscape(label)}</td>
+      <td class="py-2 text-right text-sm font-semibold tabular-nums">${tournamentEscape(value ?? '-')}</td>
+    </tr>`).join('');
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <table class="w-full border-collapse text-left">
+      <tbody>${trs}</tbody>
+    </table>`;
+  return wrap;
 }
 
 // Stub — implemented in a later task.
