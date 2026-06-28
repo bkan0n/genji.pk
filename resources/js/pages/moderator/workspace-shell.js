@@ -81,19 +81,35 @@ export function wireUserSearch(input, { deps, onLoad }) {
 
 // Wire a map search input: code-only. This is a single-map-code editing console,
 // so there is no map-NAME search and no name→code resolution. Code autocomplete
-// suggests matching codes; Enter loads the raw trimmed value (a map code). deps
-// must provide attachMapCodeAutocomplete + toast. onLoad(code) does the work.
+// suggests matching codes; selecting a suggestion (click or Enter on the open
+// list) auto-loads, and Enter on a raw typed code loads it too. deps must provide
+// wireAutocomplete + toast. onLoad(code) does the work.
 //
-// attachMapCodeAutocomplete → wireAutocomplete(kind: 'map-codes'), which fills
-// input.value with the picked code but exposes no pick callback through this
-// deps surface, so loading is driven by Enter (and works for both a typed code
-// and a picked suggestion, since both leave the code in input.value).
+// We call wireAutocomplete directly (rather than attachMapCodeAutocomplete) so we
+// can pass an onPick that loads on selection. The `justPicked` flag stops the
+// Enter keydown below from loading a second time when the autocomplete's own
+// Enter handler already picked + loaded (it doesn't stopPropagation).
 export function wireMapSearch(input, { deps, onLoad }) {
   if (!input) return;
-  deps.attachMapCodeAutocomplete(input);
+  let justPicked = false;
+  deps.wireAutocomplete(input, {
+    kind: 'map-codes',
+    onPick: ({ value }) => {
+      justPicked = true;
+      const code = (value || '').trim();
+      if (code) onLoad(code);
+    },
+  });
+  input.addEventListener('input', () => {
+    justPicked = false;
+  });
   input.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
+    if (justPicked) {
+      justPicked = false;
+      return;
+    }
     const code = (input.value || '').trim();
     if (code) onLoad(code);
     else deps.toast('Enter a map code or pick a suggestion', 'warn');

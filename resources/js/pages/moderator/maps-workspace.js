@@ -329,7 +329,7 @@ function buildLocalMap(c) {
 // Block C — inline guides list for the loaded map (Task 4).
 // Endpoints/verbs/params mirror moderator.js's handleGetGuides /
 // handleCreateGuide / handleEditGuide / handleDeleteGuide exactly:
-//   GET    /api/maps/{code}/guides            ?include_records=true
+//   GET    /api/maps/{code}/guides            (records intentionally NOT included)
 //   POST   /api/mods/maps/{code}/guides       body { url, user_id }
 //   PATCH  /api/mods/maps/{code}/guides/{uid} ?url=...   (url is a query param)
 //   DELETE /api/mods/maps/{code}/guides/{uid} (guide identified by user_id)
@@ -359,7 +359,7 @@ async function bindGuides(root, map) {
   if (!listEl || !countEl || !addForm) return;
 
   const reload = async () => {
-    const { ok, status, url, data } = await DEPS.http('GET', `/api/maps/${encodeURIComponent(code)}/guides`, { query: { include_records: true } });
+    const { ok, status, url, data } = await DEPS.http('GET', `/api/maps/${encodeURIComponent(code)}/guides`);
     DEPS.logActivity({ title: 'Get guides', method: 'GET', url, ok, status, data });
     const guides = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
     countEl.textContent = ok ? `${guides.length} guide${guides.length === 1 ? '' : 's'}` : '';
