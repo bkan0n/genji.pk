@@ -205,7 +205,6 @@ const MOD_SECTION_META = {
       { sub: 'mod-getsusp', title: 'Review flags', desc: 'List suspicious flags before changing a completion.' },
       { sub: 'mod-suspicious', title: 'Set suspicious flag', desc: 'Mark one completion as suspicious.' },
       { sub: 'mod-remove-suspicious', title: 'Remove suspicious flag', desc: 'Clear an existing completion flag.', danger: true },
-      { sub: 'mod-quality', title: 'Override quality', desc: 'Patch a map quality score after moderator review.' },
     ],
   },
   verifications: {
@@ -1265,7 +1264,6 @@ function scrollIntoViewWithOffset(el, offset) {
           initTournamentHelperPanel(name);
         }
         if (name === 'tournament-lifecycle') initTournamentLifecyclePanel();
-        if (name === 'mod-quality') initModQualityPanel();
         if (name === 'dev-overpy-commit') initOverpyCommitPanel();
         if (name === 'dev-framework-version') initFrameworkVersionPanel();
         if (name === 'verif-pending') {
@@ -1641,8 +1639,6 @@ $$('form[data-action]').forEach((form) => {
           return handleConvertLegacy(form);
 
         // MODERATION (API_MODS)
-        case 'override-quality':
-          return handleOverrideQuality(form);
         case 'set-suspicious':
           return handleSetSuspicious(form);
         case 'remove-suspicious':
@@ -4381,28 +4377,30 @@ async function handleConvertLegacy(form) {
 }
 
 // MODERATION
-async function handleOverrideQuality(form) {
-  const code = (form.code.value || '').trim();
-  const selected = getSelectedRadio('#q-qualityDropdown');
-  const value = Number(selected);
+// Override a map's quality score. Lives on the Maps workspace (targets the
+// loaded map's code); exposed to maps-workspace.js via the DEPS bundle.
+async function applyOverrideQuality(code, value) {
+  const c = String(code || '').trim();
+  const v = Number(value);
 
-  if (!code) {
+  if (!c) {
     toast('Map code required', 'warn');
-    return;
+    return false;
   }
-  if (!Number.isInteger(value) || value < 1 || value > 6) {
+  if (!Number.isInteger(v) || v < 1 || v > 6) {
     toast('Pick a quality value between 1 and 6', 'warn');
-    return;
+    return false;
   }
 
   const { ok, status, url, data } = await http(
     'POST',
-    `${API_MODS}/maps/${encodeURIComponent(code)}/quality`,
-    { body: { value } }
+    `${API_MODS}/maps/${encodeURIComponent(c)}/quality`,
+    { body: { value: v } }
   );
 
   logActivity({ title: 'Override quality', method: 'POST', url, ok, status, data });
   toast(ok ? 'Applied' : 'Failed', ok ? 'ok' : 'err');
+  return ok;
 }
 
 async function handleSetSuspicious(form) {
@@ -7691,22 +7689,6 @@ function validateUpdateMedals(allowEmpty = true) {
     return { ok: false, error: 'Order must be bronze > silver > gold.' };
   }
   return { ok: true, values: { gold, silver, bronze } };
-}
-
-// ———————————————————————————————————————————————————————————————
-// QUALITY OVERRIDE
-// ———————————————————————————————————————————————————————————————
-const QUALITY_OPTIONS = [1, 2, 3, 4, 5, 6].map((n) => ({
-  value: String(n),
-  text: n === 1 ? '1 – Lowest' : n === 6 ? '6 – Highest' : String(n),
-}));
-
-function initModQualityPanel() {
-  const panel = document.querySelector('[data-subpanel="mod-quality"]');
-  if (!panel || panel.dataset.inited === '1') return;
-  panel.dataset.inited = '1';
-
-  buildRadioDropdown('q-qualityDropdown', QUALITY_OPTIONS, 'Select quality (1–6)');
 }
 
 // ———————————————————————————————————————————————————————————————
@@ -12757,6 +12739,7 @@ function initializeApp() {
     initUpdatePanel, populateUpdatePanel,
     initSubmitPanel, handleSubmitMap,
     handleArchiveMaps, handleConvertLegacy, handleReleaseMapCode,
+    applyOverrideQuality,
     openMapEditRequestModal,
   });
 

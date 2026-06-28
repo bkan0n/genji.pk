@@ -474,11 +474,10 @@ function bindActions(root, map) {
 
   // handleReleaseMapCode reads form.querySelector('#u-metaCode').textContent +
   // form.dataset.loadedMapArchived, and runs its OWN showConfirmDanger — so we
-  // pass the real form and add no confirm here (single prompt). Only archived
-  // maps can release a code, so the button is shown only when archived.
+  // pass the real form and add no confirm here (single prompt). The button is
+  // always visible; the handler/backend reject non-archived maps with a toast.
   const releaseBtn = $('[data-action-release]', root);
   if (releaseBtn) {
-    releaseBtn.classList.toggle('hidden', !archived);
     releaseBtn.onclick = async () => {
       const form = document.getElementById('u-updateMapForm');
       if (!form) return;
@@ -486,6 +485,20 @@ function bindActions(root, map) {
       loadMap(root, code);
     };
   }
+
+  // applyOverrideQuality(code, value) POSTs /api/mods/maps/{code}/quality {value}.
+  // Targets the currently loaded map; no separate code input.
+  const qualityBtn = $('[data-action-quality]', root);
+  const qualitySel = $('[data-quality-select]', root);
+  if (qualityBtn && qualitySel) qualityBtn.onclick = async () => {
+    if (!code) return;
+    const value = Number(qualitySel.value);
+    if (!Number.isInteger(value) || value < 1 || value > 6) {
+      DEPS.toast('Pick a quality value between 1 and 6', 'warn');
+      return;
+    }
+    await DEPS.applyOverrideQuality(code, value);
+  };
 
   // openMapEditRequestModal(map, opts) takes the loaded map object and prefills
   // the modal from it; passing {} keeps default url-sync behavior.
