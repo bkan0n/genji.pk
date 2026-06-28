@@ -1189,8 +1189,698 @@ function buildStreakTable(data) {
   return wrap;
 }
 
-// Stub — implemented in a later task.
+// ===== Setup sub-tab: category list + create/edit/delete =====
+//
+// Renders into [data-tournament-setup-mount]: a Create form (with XP repeaters)
+// followed by a list of categories, each with inline Edit (expands an editable
+// form with repeaters) and Delete. Locked categories (a cycle in progress) have
+// Edit/Delete disabled and show a lock badge. Ports the category CRUD + XP
+// repeater UI + payload assembly + lock derivation from moderator.js.
+
+// The same difficulty options the original Blade form offered.
+const TOURNAMENT_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Hell'];
+
+// Category ids that currently have an active/finalizing cycle — PATCH/DELETE
+// return 409 for these. Refreshed on every loadSetup.
+let lockedSetupCategories = new Set();
+
+// One-time flag so we delegate setup-mount listeners from the stable mount node
+// exactly once, even though its innerHTML is replaced on each loadSetup.
+let setupWired = false;
+
+const isDigits = (s) => /^\d+$/.test(String(s || ''));
+
+function readJsonField(raw) {
+  try {
+    const v = JSON.parse(raw);
+    if (v == null) return null;
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+// ----- XP repeater (ported from moderator.js; data-tournament-xp-* hooks kept) -----
+
+function tournamentXpConfig(kind) {
+  return kind === 'streak'
+    ? { key: 'threshold', keyLabel: 'Threshold', valueLabel: 'XP', addLabel: 'Add threshold / XP' }
+    : { key: 'place', keyLabel: 'Place', valueLabel: 'XP', addLabel: 'Add place / XP' };
+}
+
+function tournamentDefaultXpRows(kind) {
+  return kind === 'streak'
+    ? [
+        { threshold: 3, xp: 150 },
+        { threshold: 5, xp: 300 },
+      ]
+    : [
+        { place: 1, xp: 200 },
+        { place: 2, xp: 100 },
+        { place: 3, xp: 50 },
+      ];
+}
+
+function normalizeTournamentXpRows(rows, kind) {
+  const config = tournamentXpConfig(kind);
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => {
+      const left = Number(row?.[config.key]);
+      const xp = Number(row?.xp);
+      if (!Number.isFinite(left) || !Number.isFinite(xp)) return null;
+      return { [config.key]: left, xp };
+    })
+    .filter(Boolean);
+}
+
+function parseTournamentXpTextarea(textarea, kind) {
+  const raw = String(textarea?.value || '').trim();
+  if (!raw) return [];
+  const parsed = readJsonField(raw);
+  return normalizeTournamentXpRows(parsed, kind);
+}
+
+function tournamentXpRowHtml(kind, row = {}) {
+  const config = tournamentXpConfig(kind);
+  return `
+    <div data-tournament-xp-row class="grid gap-2 rounded-xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-950/40 sm:grid-cols-[1fr_1fr_auto]">
+      <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        ${tournamentEscape(config.keyLabel)}
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value="${tournamentEscape(row?.[config.key] ?? '')}"
+          data-tournament-xp-field="${tournamentEscape(config.key)}"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
+      <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        ${tournamentEscape(config.valueLabel)}
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value="${tournamentEscape(row?.xp ?? '')}"
+          data-tournament-xp-field="xp"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
+      <button
+        type="button"
+        data-tournament-xp-remove
+        class="self-end rounded-lg border border-zinc-200/80 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-200 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10"
+      >
+        Remove
+      </button>
+    </div>`;
+}
+
+// Collect repeater rows back into the hidden textarea as the JSON array the
+// create/update payload expects: placement -> [{place,xp}], streak -> [{threshold,xp}].
+function syncTournamentXpGroup(group) {
+  if (!group) return;
+  const form = group.closest?.('form');
+  const textarea = form?.querySelector?.(`textarea[name="${CSS.escape(group.dataset.tournamentXpTarget || '')}"]`);
+  if (!textarea) return;
+
+  const config = tournamentXpConfig(group.dataset.tournamentXpKind || 'placement');
+  const rows = Array.from(group.querySelectorAll('[data-tournament-xp-row]'))
+    .map((row) => {
+      const left = row.querySelector(`[data-tournament-xp-field="${CSS.escape(config.key)}"]`)?.value;
+      const xp = row.querySelector('[data-tournament-xp-field="xp"]')?.value;
+      if (left === '' && xp === '') return null;
+      const leftNumber = Number(left);
+      const xpNumber = Number(xp);
+      if (!Number.isFinite(leftNumber) || !Number.isFinite(xpNumber)) return null;
+      return { [config.key]: leftNumber, xp: xpNumber };
+    })
+    .filter(Boolean);
+
+  textarea.value = rows.length ? JSON.stringify(rows, null, 2) : '';
+}
+
+function setTournamentXpGroupRows(group, targetName, rows) {
+  const kind = targetName === 'streak_xp_json' ? 'streak' : 'placement';
+  const normalized = normalizeTournamentXpRows(rows, kind);
+  const rowMount = group.querySelector('[data-tournament-xp-rows]');
+  if (rowMount) {
+    rowMount.innerHTML = normalized.map((row) => tournamentXpRowHtml(kind, row)).join('');
+  }
+  syncTournamentXpGroup(group);
+}
+
+// Enhance each hidden placement_xp_json / streak_xp_json textarea inside `root`
+// (a form) with a repeater UI. Click/input handling is delegated from the stable
+// setup mount in wireSetup, so this only builds DOM — no per-form listeners.
+function initTournamentXpRepeaters(root) {
+  root.querySelectorAll('textarea[name="placement_xp_json"], textarea[name="streak_xp_json"]').forEach((textarea) => {
+    if (textarea.dataset.tournamentXpEnhanced === '1') return;
+    textarea.dataset.tournamentXpEnhanced = '1';
+
+    const kind = textarea.name === 'streak_xp_json' ? 'streak' : 'placement';
+    const config = tournamentXpConfig(kind);
+    const group = document.createElement('div');
+    group.dataset.tournamentXpGroup = '1';
+    group.dataset.tournamentXpTarget = textarea.name;
+    group.dataset.tournamentXpKind = kind;
+    group.className = 'space-y-2';
+    group.innerHTML = `
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">${tournamentEscape(config.keyLabel)} / XP</div>
+          <div class="text-xs text-zinc-500 dark:text-zinc-400">Rows are converted to ${tournamentEscape(textarea.name)} automatically.</div>
+        </div>
+        <button
+          type="button"
+          data-tournament-xp-add
+          class="rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10"
+        >
+          ${tournamentEscape(config.addLabel)}
+        </button>
+      </div>
+      <div data-tournament-xp-rows class="space-y-2"></div>
+    `;
+
+    textarea.classList.add('hidden');
+    textarea.setAttribute('aria-hidden', 'true');
+    const label = textarea.closest('label');
+    const anchor = label || textarea;
+    anchor.parentNode.insertBefore(group, anchor);
+    if (label) label.classList.add('hidden');
+
+    const initialRows = parseTournamentXpTextarea(textarea, kind);
+    const defaults = root.dataset?.action === 'tournament-category-create'
+      ? tournamentDefaultXpRows(kind)
+      : [];
+    setTournamentXpGroupRows(group, textarea.name, initialRows.length ? initialRows : defaults);
+  });
+}
+
+function syncTournamentXpRepeaters(form) {
+  form?.querySelectorAll?.('[data-tournament-xp-group]').forEach(syncTournamentXpGroup);
+}
+
+// ----- payload assembly (ported from buildTournamentCategoryPayload) -----
+
+function tournamentOptionalNumber(fd, key, payload, { allowZero = true } = {}) {
+  const raw = fd.get(key);
+  if (raw === '' || raw == null) return true;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || (!allowZero && value <= 0) || (allowZero && value < 0)) {
+    DEPS.toast(`Invalid ${key}`, 'warn');
+    return false;
+  }
+  payload[key] = value;
+  return true;
+}
+
+function tournamentReadJsonArray(raw, label) {
+  const text = String(raw || '').trim();
+  if (!text) return undefined;
+  const parsed = readJsonField(text);
+  if (!Array.isArray(parsed)) {
+    DEPS.toast(`${label} must be a JSON array`, 'err');
+    return null;
+  }
+  return parsed;
+}
+
+// Build the create/update payload from a setup form. Mirrors the original
+// buildTournamentCategoryPayload exactly: name + difficulties required on create,
+// optional participation_xp / champion_role_id / is_active, and the XP JSON
+// arrays collected from the repeaters. Returns null on a validation failure (a
+// toast is already shown) so the caller aborts.
+function buildTournamentCategoryPayload(form, { creating = false } = {}) {
+  syncTournamentXpRepeaters(form);
+  const fd = new FormData(form);
+  const payload = {};
+
+  const name = String(fd.get('name') || '').trim();
+  if (name) payload.name = name;
+  else if (creating) {
+    DEPS.toast('name is required', 'warn');
+    return null;
+  }
+
+  const difficulties = fd.getAll('difficulties[]').map((value) => String(value || '').trim()).filter(Boolean);
+  if (difficulties.length) payload.difficulties = difficulties;
+  else if (creating) {
+    DEPS.toast('Pick at least one difficulty', 'warn');
+    return null;
+  }
+
+  if (!tournamentOptionalNumber(fd, 'participation_xp', payload)) return null;
+
+  const championRoleId = String(fd.get('champion_role_id') || '').trim();
+  if (championRoleId === 'null') payload.champion_role_id = null;
+  else if (championRoleId) {
+    if (!isDigits(championRoleId)) {
+      DEPS.toast('Invalid champion_role_id', 'warn');
+      return null;
+    }
+    payload.champion_role_id = championRoleId;
+  }
+
+  const isActive = String(fd.get('is_active') || '');
+  if (isActive === '1') payload.is_active = true;
+  if (isActive === '0') payload.is_active = false;
+
+  const placement = tournamentReadJsonArray(fd.get('placement_xp_json'), 'placement_xp');
+  if (placement === null) return null;
+  if (placement !== undefined) payload.placement_xp = placement;
+
+  const streak = tournamentReadJsonArray(fd.get('streak_xp_json'), 'streak_xp');
+  if (streak === null) return null;
+  if (streak !== undefined) payload.streak_xp = streak;
+
+  if (!Object.keys(payload).length) {
+    DEPS.toast('Nothing to submit', 'warn');
+    return null;
+  }
+
+  return payload;
+}
+
+// ----- lock derivation (ported from refreshTournamentCategoryLocks) -----
+
+// Locked = a category with an active OR finalizing cycle. PATCH/DELETE return
+// 409 for these, so we disable Edit/Delete up-front as well as handling the 409.
+async function fetchLockedSetupCategories() {
+  const activeUrl = `${API}/cycles`;
+  const [active, finalizing] = await Promise.all([
+    DEPS.http('GET', activeUrl, { query: { status: 'active', limit: 100 } }),
+    DEPS.http('GET', activeUrl, { query: { status: 'finalizing', limit: 100 } }),
+  ]);
+
+  DEPS.logActivity({ title: 'Tournament Locks (active cycles GET)', method: 'GET', url: active.url || activeUrl, ok: active.ok, status: active.status, data: active.data });
+  DEPS.logActivity({ title: 'Tournament Locks (finalizing cycles GET)', method: 'GET', url: finalizing.url || activeUrl, ok: finalizing.ok, status: finalizing.status, data: finalizing.data });
+
+  const locked = new Set();
+  [active, finalizing].forEach((res) => {
+    const cycles = Array.isArray(res.data?.cycles)
+      ? res.data.cycles
+      : Array.isArray(res.data)
+        ? res.data
+        : [];
+    cycles.forEach((cycle) => {
+      const categoryId = cycle?.category_id ?? cycle?.category?.id;
+      if (categoryId != null) locked.add(String(categoryId));
+    });
+  });
+  return locked;
+}
+
+// ----- form markup -----
+
+function difficultyCheckboxes(selected = []) {
+  const set = new Set((Array.isArray(selected) ? selected : []).map((d) => String(d)));
+  return TOURNAMENT_DIFFICULTIES.map((difficulty) => `
+    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-zinc-950/40 px-3 py-2 text-sm">
+      <input type="checkbox" name="difficulties[]" value="${tournamentEscape(difficulty)}" class="accent-emerald-500" ${set.has(difficulty) ? 'checked' : ''} />
+      <span>${tournamentEscape(difficulty)}</span>
+    </label>`).join('');
+}
+
+const SETUP_INPUT_CLASS = 'mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none';
+
+function setupCreateFormHtml() {
+  return `
+    <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <h3 class="font-semibold">Create category</h3>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/tournaments/categories</span>
+      </div>
+      <form data-action="tournament-category-create" autocomplete="off" class="grid gap-3">
+        <label class="text-sm">
+          name
+          <input name="name" required class="${SETUP_INPUT_CLASS}" />
+        </label>
+        <div class="grid gap-2 sm:grid-cols-3">${difficultyCheckboxes()}</div>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="text-sm">
+            participation_xp
+            <input name="participation_xp" type="number" min="0" step="1" placeholder="0" class="${SETUP_INPUT_CLASS}" />
+          </label>
+          <label class="text-sm">
+            champion_role_id
+            <input name="champion_role_id" inputmode="numeric" placeholder="optional" class="${SETUP_INPUT_CLASS}" />
+          </label>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="text-sm">
+            placement_xp JSON
+            <textarea name="placement_xp_json" rows="4" placeholder='[{"place":1,"xp":200}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
+          </label>
+          <label class="text-sm">
+            streak_xp JSON
+            <textarea name="streak_xp_json" rows="4" placeholder='[{"threshold":5,"xp":300}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
+          </label>
+        </div>
+        <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Create</button>
+      </form>
+    </article>`;
+}
+
+// Inline edit form for a single category, pre-filled. Hidden until Edit toggles
+// it. is_active is a select (true/false/unchanged) matching the original form.
+function setupEditFormHtml(category) {
+  const placementJson = Array.isArray(category.placement_xp) && category.placement_xp.length
+    ? JSON.stringify(category.placement_xp)
+    : '';
+  const streakJson = Array.isArray(category.streak_xp) && category.streak_xp.length
+    ? JSON.stringify(category.streak_xp)
+    : '';
+  const championRole = category.champion_role_id == null ? '' : String(category.champion_role_id);
+  const participation = category.participation_xp == null ? '' : String(category.participation_xp);
+  const activeVal = category.is_active === true ? '1' : category.is_active === false ? '0' : '';
+
+  return `
+    <form data-action="tournament-category-update" data-category-id="${tournamentEscape(category.id)}" autocomplete="off" class="mt-3 grid gap-3 rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-950/40">
+      <div class="grid gap-3 sm:grid-cols-3">
+        <label class="text-sm">
+          name
+          <input name="name" value="${tournamentEscape(category.name ?? '')}" class="${SETUP_INPUT_CLASS}" />
+        </label>
+        <label class="text-sm">
+          participation_xp
+          <input name="participation_xp" type="number" min="0" step="1" value="${tournamentEscape(participation)}" class="${SETUP_INPUT_CLASS}" />
+        </label>
+        <label class="text-sm">
+          is_active
+          <select name="is_active" class="${SETUP_INPUT_CLASS}">
+            <option value=""${activeVal === '' ? ' selected' : ''}>unchanged</option>
+            <option value="1"${activeVal === '1' ? ' selected' : ''}>true</option>
+            <option value="0"${activeVal === '0' ? ' selected' : ''}>false</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid gap-2 sm:grid-cols-3">${difficultyCheckboxes(category.difficulties)}</div>
+      <label class="text-sm">
+        champion_role_id
+        <input name="champion_role_id" inputmode="numeric" value="${tournamentEscape(championRole)}" placeholder="optional ('null' to clear)" class="${SETUP_INPUT_CLASS}" />
+      </label>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="text-sm">
+          placement_xp JSON
+          <textarea name="placement_xp_json" rows="4" class="${SETUP_INPUT_CLASS} font-mono text-xs">${tournamentEscape(placementJson)}</textarea>
+        </label>
+        <label class="text-sm">
+          streak_xp JSON
+          <textarea name="streak_xp_json" rows="4" class="${SETUP_INPUT_CLASS} font-mono text-xs">${tournamentEscape(streakJson)}</textarea>
+        </label>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="submit" class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save changes</button>
+        <button type="button" data-setup-action="cancel-edit" class="cursor-pointer rounded-xl border border-zinc-200/80 bg-white px-4 py-2 font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Cancel</button>
+      </div>
+    </form>`;
+}
+
+function setupCategoryRowHtml(category, locked) {
+  const placementSummary = tournamentXpSummaryRows(category.placement_xp, 'place');
+  const streakSummary = tournamentXpSummaryRows(category.streak_xp, 'threshold');
+  const participation = category.participation_xp == null ? '-' : tournamentEscape(category.participation_xp);
+
+  const lockBadge = locked
+    ? `<span class="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V8H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm2.5 7V5.5a2.5 2.5 0 0 0-5 0V8h5Z" clip-rule="evenodd"></path></svg>
+        Locked — cycle in progress
+      </span>`
+    : '';
+
+  const disabledAttr = locked ? 'disabled' : '';
+  const editBtnClass = locked
+    ? 'cursor-not-allowed rounded-lg border border-zinc-200/80 bg-white/40 px-2.5 py-1.5 text-xs font-semibold text-zinc-400 dark:border-white/10 dark:bg-white/5 dark:text-zinc-500'
+    : 'cursor-pointer rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10';
+  const deleteBtnClass = locked
+    ? 'cursor-not-allowed rounded-lg border border-red-500/20 bg-red-500/5 px-2.5 py-1.5 text-xs font-semibold text-red-400/60'
+    : 'cursor-pointer rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/15 dark:text-red-400';
+
+  return `
+    <article data-setup-category data-category-id="${tournamentEscape(category.id)}" class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="truncate text-base font-black">#${tournamentEscape(category.id)} - ${tournamentEscape(category.name || 'Unnamed')}</div>
+            ${tournamentStatusPill(category.is_active ? 'active' : 'inactive')}
+            ${lockBadge}
+          </div>
+          <div class="mt-1.5 flex flex-wrap items-center gap-1">${difficultyBadges(category.difficulties)}</div>
+          <dl class="mt-2 grid gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+            <div><dt class="inline text-zinc-500 dark:text-zinc-400">Participation XP:</dt> <dd class="inline font-semibold">${participation}</dd></div>
+            <div><dt class="inline text-zinc-500 dark:text-zinc-400">Placement XP:</dt> <dd class="inline font-semibold">${placementSummary}</dd></div>
+            <div><dt class="inline text-zinc-500 dark:text-zinc-400">Streak XP:</dt> <dd class="inline font-semibold">${streakSummary}</dd></div>
+          </dl>
+        </div>
+        <div class="flex shrink-0 gap-2">
+          <button type="button" data-setup-action="edit" class="${editBtnClass}" ${disabledAttr} ${locked ? 'aria-disabled="true" title="Category is locked while a cycle is in progress"' : ''}>Edit</button>
+          <button type="button" data-setup-action="delete" class="${deleteBtnClass}" ${disabledAttr} ${locked ? 'aria-disabled="true" title="Category is locked while a cycle is in progress"' : ''}>Delete</button>
+        </div>
+      </div>
+      <div data-setup-edit-mount class="hidden"></div>
+    </article>`;
+}
+
+// Render "place:xp / place:xp" style summary from a [{place|threshold, xp}] list.
+function tournamentXpSummaryRows(rows, keyA) {
+  if (!Array.isArray(rows) || !rows.length) return '-';
+  return tournamentEscape(rows.map((row) => `${row?.[keyA] ?? '?'}:${row?.xp ?? '?'}`).join(' / '));
+}
+
+// ----- render + handlers -----
+
 async function loadSetup(root, { force }) {
   if (loaded.setup && !force) return;
+  const mount = $('[data-tournament-setup-mount]', root);
+  if (!mount) return;
+
+  wireSetup(root, mount);
+
+  mount.innerHTML = '<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">Loading categories…</div>';
+
+  let categories;
+  let locked;
+  try {
+    const url = `${API}/categories`;
+    const [catRes, lockSet] = await Promise.all([
+      DEPS.http('GET', url),
+      fetchLockedSetupCategories(),
+    ]);
+    DEPS.logActivity({ title: 'Tournament Categories (GET)', method: 'GET', url: catRes.url || url, ok: catRes.ok, status: catRes.status, data: catRes.data });
+    if (!catRes.ok) {
+      loaded.setup = false;
+      mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament categories.</div>';
+      DEPS.toast('Failed to load tournament categories', 'err');
+      return;
+    }
+    categories = normalizeCategories(catRes.data);
+    locked = lockSet;
+  } catch (err) {
+    loaded.setup = false;
+    DEPS.logActivity({ title: 'Tournament Setup load error', method: 'ERROR', url: `${API}/categories`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament categories.</div>';
+    DEPS.toast('Failed to load tournament categories', 'err');
+    return;
+  }
+
+  lockedSetupCategories = locked;
+
+  const list = categories.length
+    ? categories.map((c) => setupCategoryRowHtml(c, locked.has(String(c.id)))).join('')
+    : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No tournament categories yet.</div>';
+
+  mount.innerHTML = `
+    ${setupCreateFormHtml()}
+    <section class="space-y-3">
+      <h3 class="font-semibold">Categories</h3>
+      <div class="grid gap-3">${list}</div>
+    </section>`;
+
+  // Stash full category objects for inline-edit pre-fill (avoids re-fetch).
+  mount._setupCategories = new Map(categories.map((c) => [String(c.id), c]));
+
+  // Enhance the create form's XP textareas with repeaters.
+  const createForm = mount.querySelector('form[data-action="tournament-category-create"]');
+  if (createForm) initTournamentXpRepeaters(createForm);
+
   loaded.setup = true;
+}
+
+// Delegate ALL setup-mount interactions (XP add/remove/input, row actions, form
+// submits) from the stable mount node, wired exactly once. The mount's innerHTML
+// is replaced on each loadSetup, but the listeners live on the mount itself, so
+// they never stack across re-renders.
+function wireSetup(root, mount) {
+  if (setupWired) return;
+  setupWired = true;
+
+  // XP repeater add/remove.
+  mount.addEventListener('click', (event) => {
+    const add = event.target?.closest?.('[data-tournament-xp-add]');
+    if (add) {
+      event.preventDefault();
+      const group = add.closest('[data-tournament-xp-group]');
+      const rows = group?.querySelector('[data-tournament-xp-rows]');
+      if (!group || !rows) return;
+      rows.insertAdjacentHTML('beforeend', tournamentXpRowHtml(group.dataset.tournamentXpKind || 'placement', {}));
+      syncTournamentXpGroup(group);
+      return;
+    }
+    const remove = event.target?.closest?.('[data-tournament-xp-remove]');
+    if (remove) {
+      event.preventDefault();
+      const group = remove.closest('[data-tournament-xp-group]');
+      remove.closest('[data-tournament-xp-row]')?.remove();
+      syncTournamentXpGroup(group);
+    }
+  });
+
+  // XP repeater field edits keep the hidden JSON textarea in sync.
+  mount.addEventListener('input', (event) => {
+    const field = event.target?.closest?.('[data-tournament-xp-field]');
+    if (!field) return;
+    syncTournamentXpGroup(field.closest('[data-tournament-xp-group]'));
+  });
+
+  // Row actions: edit (expand inline form), cancel-edit (collapse), delete.
+  mount.addEventListener('click', (event) => {
+    const btn = event.target?.closest?.('[data-setup-action]');
+    if (!btn || !mount.contains(btn)) return;
+    const action = btn.dataset.setupAction;
+    const card = btn.closest('[data-setup-category]');
+    const id = card?.dataset?.categoryId;
+
+    if (action === 'edit') {
+      event.preventDefault();
+      if (btn.disabled || lockedSetupCategories.has(String(id))) return;
+      toggleSetupEdit(mount, card, id);
+      return;
+    }
+    if (action === 'cancel-edit') {
+      event.preventDefault();
+      const editMount = card?.querySelector('[data-setup-edit-mount]');
+      if (editMount) { editMount.innerHTML = ''; editMount.classList.add('hidden'); }
+      return;
+    }
+    if (action === 'delete') {
+      event.preventDefault();
+      if (btn.disabled || lockedSetupCategories.has(String(id))) return;
+      Promise.resolve().then(() => handleSetupDelete(root, id)).catch((err) => {
+        DEPS.toast('Unexpected error', 'err');
+        DEPS.logActivity({ title: 'Tournament category delete error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+      });
+    }
+  });
+
+  // Form submits: create + update.
+  mount.addEventListener('submit', (event) => {
+    const form = event.target?.closest?.('form[data-action]');
+    if (!form || !mount.contains(form)) return;
+    event.preventDefault();
+    const action = form.dataset.action;
+    const run = action === 'tournament-category-create'
+      ? () => handleSetupCreate(root, form)
+      : action === 'tournament-category-update'
+        ? () => handleSetupUpdate(root, form)
+        : null;
+    if (!run) return;
+    Promise.resolve().then(run).catch((err) => {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament category submit error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
+}
+
+// Expand/collapse the inline edit form for a category row.
+function toggleSetupEdit(mount, card, id) {
+  const editMount = card?.querySelector('[data-setup-edit-mount]');
+  if (!editMount) return;
+  if (!editMount.classList.contains('hidden') && editMount.innerHTML.trim()) {
+    editMount.innerHTML = '';
+    editMount.classList.add('hidden');
+    return;
+  }
+  const category = mount._setupCategories?.get(String(id));
+  if (!category) return;
+  editMount.innerHTML = setupEditFormHtml(category);
+  editMount.classList.remove('hidden');
+  const form = editMount.querySelector('form[data-action="tournament-category-update"]');
+  if (form) initTournamentXpRepeaters(form);
+}
+
+// POST {API_MODS}/categories. On success refresh setup + invalidate the status
+// board so it reflects the new category.
+async function handleSetupCreate(root, form) {
+  const payload = buildTournamentCategoryPayload(form, { creating: true });
+  if (!payload) return;
+  const url = `${API_MODS}/categories`;
+  const res = await DEPS.http('POST', url, { body: payload });
+  DEPS.logActivity({ title: 'Create Tournament Category (POST)', method: 'POST', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+
+  if (res.ok) {
+    DEPS.toast('Category created', 'ok');
+    loaded.status = false;
+    await loadSetup(root, { force: true });
+  } else if (res.status === 422) {
+    DEPS.toast(tournamentBootstrapError(res.data) || 'Validation failed', 'err');
+  } else {
+    DEPS.toast('Failed to create category', 'err');
+  }
+}
+
+// PATCH {API_MODS}/categories/{id}. Reads the id from the form's data attribute
+// (the row it belongs to). 409 means the category locked since render — toast +
+// refresh to re-derive locks.
+async function handleSetupUpdate(root, form) {
+  const id = form.dataset.categoryId;
+  if (!id) return;
+  const payload = buildTournamentCategoryPayload(form);
+  if (!payload) return;
+  const url = `${API_MODS}/categories/${encodeURIComponent(id)}`;
+  const res = await DEPS.http('PATCH', url, { body: payload });
+  DEPS.logActivity({ title: `Update Tournament Category #${id} (PATCH)`, method: 'PATCH', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+
+  if (res.ok) {
+    DEPS.toast('Category updated', 'ok');
+    loaded.status = false;
+    await loadSetup(root, { force: true });
+  } else if (res.status === 409) {
+    DEPS.toast('Category is locked while a cycle is in progress', 'warn');
+    loaded.status = false;
+    await loadSetup(root, { force: true });
+  } else if (res.status === 422) {
+    DEPS.toast(tournamentBootstrapError(res.data) || 'Validation failed', 'err');
+  } else {
+    DEPS.toast('Failed to update category', 'err');
+  }
+}
+
+// DELETE {API_MODS}/categories/{id}, gated by the shared danger-confirm modal.
+// 409 means it locked since render — toast + refresh.
+async function handleSetupDelete(root, id) {
+  if (!id) return;
+  const ok = await DEPS.showConfirmDanger({
+    title: 'Delete category',
+    message: 'This permanently deletes the tournament category. This cannot be undone. Continue?',
+    confirm: 'Delete category',
+    cancel: 'Cancel',
+  });
+  if (!ok) return;
+
+  const url = `${API_MODS}/categories/${encodeURIComponent(id)}`;
+  const res = await DEPS.http('DELETE', url);
+  DEPS.logActivity({ title: `Delete Tournament Category #${id} (DELETE)`, method: 'DELETE', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+
+  if (res.ok) {
+    DEPS.toast('Category deleted', 'ok');
+    loaded.status = false;
+    await loadSetup(root, { force: true });
+  } else if (res.status === 409) {
+    DEPS.toast('Category is locked while a cycle is in progress', 'warn');
+    loaded.status = false;
+    await loadSetup(root, { force: true });
+  } else {
+    DEPS.toast('Failed to delete category', 'err');
+  }
 }
