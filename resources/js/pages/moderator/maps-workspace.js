@@ -61,5 +61,34 @@ function showError(root, message) {
   DEPS.toast('Lookup failed', 'err');
 }
 
-// Filled in a later task.
-function renderProfile(root, map) { /* identity header / fields / guides / actions */ }
+function setText(root, sel, value) {
+  const el = $(sel, root);
+  if (el) el.textContent = value;
+}
+
+function renderProfile(root, map) {
+  setText(root, '[data-field-view="map_name"]', map.map_name || '—');
+  setText(root, '[data-field-view="code"]', String(map.code || '—'));
+
+  const copyBtn = $('[data-copy-code]', root);
+  if (copyBtn) copyBtn.onclick = () => { navigator.clipboard?.writeText(String(map.code || '')); DEPS.toast('Code copied', 'ok'); };
+
+  const chip = (key, val) => {
+    const el = $(`[data-chip="${key}"]`, root);
+    if (!el) return;
+    if (val) { el.textContent = val; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
+  };
+  chip('difficulty', map.difficulty);
+  chip('category', map.category);
+
+  const archived = map.archived ?? map.is_archived ?? false;
+  const badge = (key, on) => $(`[data-badge="${key}"]`, root)?.classList.toggle('hidden', !on);
+  badge('archived', !!archived);
+  badge('official', !!map.official);
+  badge('hidden', !!map.hidden);
+
+  // bindFields / bindGuides / bindActions added in later tasks.
+  if (typeof bindFields === 'function') bindFields(root, map);
+  if (typeof bindGuides === 'function') bindGuides(root, map);
+  if (typeof bindActions === 'function') bindActions(root, map);
+}
