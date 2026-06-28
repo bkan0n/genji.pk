@@ -345,15 +345,15 @@ async function loadXpSummary(root, userId) {
     if (box) box.textContent = `XP summary unavailable (${status}).`;
     return;
   }
-  // Render defensively: show present primitive fields only.
+  // Render defensively: show present primitive fields only, as wrapping chips.
   const pairs = Object.entries(data).filter(([, v]) => v !== null && typeof v !== 'object');
   if (box)
     box.innerHTML = pairs.length
-      ? pairs
+      ? `<div class="flex flex-wrap gap-x-4 gap-y-1">${pairs
           .map(
             ([k, v]) =>
-              `<span class="mr-3 whitespace-nowrap"><span class="text-zinc-400">${esc(k.replace(/_/g, ' '))}:</span> <span class="font-semibold">${esc(String(v))}</span></span>`
+              `<span class="whitespace-nowrap"><span class="text-zinc-400">${esc(k.replace(/_/g, ' '))}:</span> <span class="font-semibold">${esc(String(v))}</span></span>`
           )
-          .join('')
+          .join('')}</div>`
       : 'No XP summary fields returned.';
 }
