@@ -22,9 +22,9 @@
     </div>
 
     @foreach ([
-      ['key' => 'categories', 'sub' => 'content-categories', 'singular' => 'category', 'out' => 'content-categories-res'],
-      ['key' => 'difficulties', 'sub' => 'content-difficulties', 'singular' => 'difficulty', 'out' => 'content-difficulties-res'],
-      ['key' => 'techniques', 'sub' => 'content-techniques', 'singular' => 'technique', 'out' => 'content-techniques-res'],
+      ['key' => 'categories', 'sub' => 'content-categories', 'singular' => 'category'],
+      ['key' => 'difficulties', 'sub' => 'content-difficulties', 'singular' => 'difficulty'],
+      ['key' => 'techniques', 'sub' => 'content-techniques', 'singular' => 'technique'],
     ] as $group)
       <div data-subpanel="{{ $group['sub'] }}" class="hidden space-y-4">
         <div class="flex flex-wrap items-center gap-2">
@@ -53,11 +53,6 @@
         </div>
 
         <div data-content-list="{{ $group['key'] }}" class="space-y-2"></div>
-
-        <details class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-2">
-          <summary class="cursor-pointer text-xs text-zinc-500 dark:text-zinc-400">Show raw response</summary>
-          <pre data-out="{{ $group['out'] }}" class="mt-2 max-h-72 overflow-auto font-mono text-xs text-zinc-800 dark:text-zinc-200"></pre>
-        </details>
       </div>
     @endforeach
 

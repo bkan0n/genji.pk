@@ -3477,7 +3477,8 @@ async function submitMovementTechRequest(
     ? await http(method, `${baseUrl}${path}`)
     : await http(method, `${baseUrl}${path}`, { body });
 
-  logActivity({ title, method, url: res.url, ok: res.ok, status: res.status, data: res.data });
+  // Content-workspace operations don't post raw responses to the activity log;
+  // the live row list + toasts are the feedback surface for this tab.
   setPanelOut(form, outKey, movementTechPanelValue(res));
 
   if (res.ok) {
