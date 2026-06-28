@@ -175,8 +175,40 @@ function wireHeaderButtons(entity) {
     ?.addEventListener('click', () => { renderLoading(entity); loadAndRender(entity); });
 }
 
+async function reorder(entity, id, direction) {
+  const c = listContainer(entity);
+  const row = c?.querySelector(`[data-content-row="${CSS.escape(String(id))}"]`);
+
+  // Optimistic swap so the move feels instant.
+  if (row) {
+    const sibling = direction === 'up' ? row.previousElementSibling : row.nextElementSibling;
+    if (sibling?.dataset.contentRow) {
+      if (direction === 'up') c.insertBefore(row, sibling);
+      else c.insertBefore(sibling, row);
+    }
+    row.querySelectorAll('[data-content-action]').forEach((b) => (b.disabled = true));
+  }
+
+  try {
+    return await DEPS.submitMovementTechRequest(null, {
+      method: 'POST',
+      path: `/${entity}/${id}/reorder`,
+      title: `Reorder movement tech ${ENTITIES[entity].singular.toLowerCase()} #${id}`,
+      outKey: ENTITIES[entity].outKey,
+      body: { direction },
+      successMessage: `${ENTITIES[entity].singular} reordered`,
+      failureMessage: `Failed to reorder ${ENTITIES[entity].singular.toLowerCase()}`,
+      silentSuccess: true,
+    });
+  } finally {
+    // Reconcile from server truth (also reverts the optimistic swap, even on a
+    // thrown network error, so a failed reorder never leaves the row stuck in
+    // its swapped position with permanently-disabled buttons).
+    await loadAndRender(entity);
+  }
+}
+
 // Implemented in later tasks:
-function reorder() {}
 function armDelete() {}
 function confirmDelete() {}
 function openEditor() {}
