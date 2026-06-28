@@ -166,6 +166,7 @@ const MOD_SECTION_META = {
   content: {
     kicker: 'Knowledge base',
     summary: 'Maintain movement-tech categories, difficulties, and techniques as one structured content workflow.',
+    hideStats: true,
     stats: ['Taxonomy', 'Technique editor', 'Ordering'],
     hints: [
       'Categories and difficulties are loaded automatically to feed technique dropdowns.',
@@ -180,6 +181,7 @@ const MOD_SECTION_META = {
   maps: {
     kicker: 'Map operations',
     summary: 'Search, submit, update, archive, convert, and request map edits from a single map pipeline.',
+    hideStats: true,
     stats: ['Map data', 'Edit requests', 'Legacy tools'],
     hints: [
       'Search or load a map before update/convert actions so the form is filled from current data.',
@@ -193,6 +195,11 @@ const MOD_SECTION_META = {
       { sub: 'maps-archive', title: 'Archive visibility', desc: 'Archive or unarchive one or many map codes.', danger: true },
       { sub: 'maps-convert', title: 'Legacy conversion', desc: 'Convert a modern map code into legacy format.' },
     ],
+  },
+  lootbox: {
+    kicker: 'Workflow',
+    summary: 'Tools for Lootbox.',
+    hideStats: true,
   },
   moderation: {
     kicker: 'Quality control',
