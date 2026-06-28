@@ -1646,6 +1646,211 @@ function tournamentXpSummaryRows(rows, keyA) {
   return tournamentEscape(rows.map((row) => `${row?.[keyA] ?? '?'}:${row?.xp ?? '?'}`).join(' / '));
 }
 
+// ===== Setup sub-tab: global config card + gated debug cycle length =====
+//
+// Ports the old inline tournament global-config form + debug-cycle-length control
+// from moderator.js into the Setup mount, appended after the categories section.
+// Reads via GET {API}/config, saves via PATCH {API_MODS}/config, and (in non-prod
+// only) overrides the cycle length via PATCH {API_MODS}/debug-cycle-length. All
+// wiring runs through the single setupWired delegation on the stable mount node.
+
+const SETUP_CONFIG_FIELDS = ['blacklist_weeks', 'cadence', 'anchor_weekday', 'anchor_time', 'anchor_tz'];
+
+// Builds the global-config card markup. The debug section renders only when the
+// app is NOT running in production (mirrors the original env gate; the API itself
+// returns 403 in prod). Server-controlled values are escaped at render time.
+function setupConfigCardHtml(root, config) {
+  const cfg = config && typeof config === 'object' ? config : {};
+  const current = cfg.debug_cycle_seconds;
+
+  let debug = '';
+  if (!tournamentIsProdEnv(root)) {
+    debug = `
+      <details class="group mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 dark:border-amber-400/15">
+        <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-amber-700 marker:hidden dark:text-amber-300 [&::-webkit-details-marker]:hidden">
+          <svg class="h-4 w-4 shrink-0 text-amber-500 transition-transform group-open:rotate-90 dark:text-amber-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Debug tools (non-production only)</span>
+        </summary>
+        <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Override the cycle length to speed up testing. Current override: <strong>${current != null ? `${tournamentEscape(current)}s` : 'none'}</strong>.</p>
+        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input data-tournament-setup-debug-seconds type="number" min="1" step="1" placeholder="seconds" value="${current != null ? tournamentEscape(current) : ''}" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
+          <button type="button" data-setup-debug-action="debug-set" class="cursor-pointer rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">Set</button>
+          <button type="button" data-setup-debug-action="debug-clear" class="cursor-pointer rounded-xl border border-zinc-200/80 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Clear override</button>
+        </div>
+      </details>`;
+  }
+
+  return `
+    <section class="space-y-3">
+      <h3 class="font-semibold">Global config</h3>
+      <article class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
+        <form data-action="tournament-config-update" autocomplete="off" class="grid gap-3 sm:grid-cols-2">
+          <label class="text-sm">
+            Cadence
+            <select name="cadence" class="${SETUP_INPUT_CLASS}">
+              <option value="">Leave unchanged</option>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Biweekly</option>
+            </select>
+            <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">How often a new edition starts.</span>
+          </label>
+          <label class="text-sm">
+            Rotation day
+            <select name="anchor_weekday" class="${SETUP_INPUT_CLASS}">
+              <option value="">Leave unchanged</option>
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+            <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Day of week each edition rolls over.</span>
+          </label>
+          <label class="text-sm">
+            Rotation time
+            <input name="anchor_time" type="time" step="1" class="${SETUP_INPUT_CLASS}" />
+            <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Wall-clock time in the timezone below (not UTC).</span>
+          </label>
+          <label class="text-sm">
+            Timezone
+            <input name="anchor_tz" type="text" list="tournamentSetupTimezoneOptions" autocomplete="off" spellcheck="false" placeholder="America/New_York" class="${SETUP_INPUT_CLASS}" />
+            <datalist id="tournamentSetupTimezoneOptions"></datalist>
+            <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Type to search IANA zones (e.g. America/Los_Angeles).</span>
+          </label>
+          <label class="text-sm sm:col-span-2">
+            Blacklist window (weeks)
+            <input name="blacklist_weeks" type="number" min="0" step="1" class="${SETUP_INPUT_CLASS}" />
+            <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Number of weeks a map stays excluded after being used.</span>
+          </label>
+          <div class="sm:col-span-2">
+            <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save config</button>
+          </div>
+        </form>
+        ${debug}
+      </article>
+    </section>`;
+}
+
+// Populate the config form fields from the fetched config (ports
+// fillTournamentConfigForm: only assigns when the server value is non-null).
+function fillSetupConfigForm(form, data) {
+  if (!form || !data || typeof data !== 'object') return;
+  SETUP_CONFIG_FIELDS.forEach((key) => {
+    const el = form.querySelector(`[name="${CSS.escape(key)}"]`);
+    if (el && data[key] != null) el.value = String(data[key]);
+  });
+}
+
+// Fill the IANA timezone datalist from Intl.supportedValuesOf('timeZone'), with
+// the same hardcoded fallback as the original populateTournamentTimezoneDatalist.
+function populateSetupTimezoneDatalist(mount) {
+  const datalist = mount.querySelector('#tournamentSetupTimezoneOptions');
+  if (!datalist || datalist.dataset.filled === '1') return;
+
+  let zones = [];
+  try {
+    zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
+  } catch {
+    zones = [];
+  }
+  if (!Array.isArray(zones) || !zones.length) {
+    zones = [
+      'UTC', 'America/Los_Angeles', 'America/Denver', 'America/Chicago', 'America/New_York',
+      'America/Sao_Paulo', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow',
+      'Asia/Dubai', 'Asia/Kolkata', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney',
+    ];
+  }
+
+  datalist.innerHTML = zones.map((zone) => `<option value="${tournamentEscape(zone)}"></option>`).join('');
+  datalist.dataset.filled = '1';
+}
+
+// Build the config PATCH payload from the form (ports buildTournamentConfigPayload):
+// optional numbers for blacklist_weeks/anchor_weekday, trimmed strings for the
+// rest, and normalize HH:MM time to HH:MM:SS. Returns null (with a toast) when
+// nothing is set to update.
+function buildSetupConfigPayload(form) {
+  const fd = new FormData(form);
+  const payload = {};
+
+  for (const key of ['blacklist_weeks', 'anchor_weekday']) {
+    const raw = String(fd.get(key) || '').trim();
+    if (!raw) continue;
+    const num = Number(raw);
+    if (!Number.isInteger(num)) {
+      DEPS.toast(`Invalid ${key}`, 'warn');
+      return null;
+    }
+    payload[key] = num;
+  }
+
+  for (const key of ['cadence', 'anchor_time', 'anchor_tz']) {
+    let value = String(fd.get(key) || '').trim();
+    if (!value) continue;
+    // Native <input type="time"> yields HH:MM (or HH:MM:SS with step). The API stores HH:MM:SS.
+    if (key === 'anchor_time' && /^\d{2}:\d{2}$/.test(value)) value = `${value}:00`;
+    payload[key] = value;
+  }
+
+  if (!Object.keys(payload).length) {
+    DEPS.toast('Nothing to update', 'warn');
+    return null;
+  }
+
+  return payload;
+}
+
+// PATCH {API_MODS}/config. On success refresh setup + invalidate the status board
+// (config drives the Status edition strip), mirroring the category write handlers.
+async function handleSetupConfigSave(root, form) {
+  const payload = buildSetupConfigPayload(form);
+  if (!payload) return;
+
+  const url = `${API_MODS}/config`;
+  const res = await DEPS.http('PATCH', url, { body: payload });
+  DEPS.logActivity({ title: 'Tournament Config (PATCH)', method: 'PATCH', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+
+  if (res.ok) {
+    DEPS.toast('Config saved', 'ok');
+    loaded.status = false;
+    await loadSetup(root, { force: true });
+  } else if (res.status === 422) {
+    DEPS.toast(tournamentBootstrapError(res.data) || 'Validation failed', 'err');
+  } else {
+    DEPS.toast('Failed to save config', 'err');
+  }
+}
+
+// PATCH {API_MODS}/debug-cycle-length (ports tournamentSetDebugCycle). Non-prod
+// only — the control is gated in the markup, and the API returns 403 in prod.
+async function tournamentSetupSetDebugCycle(root, btn, { clear = false } = {}) {
+  const card = btn.closest('article') || ROOT();
+  const input = card?.querySelector('[data-tournament-setup-debug-seconds]');
+  let seconds = null;
+  if (!clear) {
+    const raw = String(input?.value || '').trim();
+    if (!raw) return DEPS.toast('Enter a number of seconds (or use Clear override)', 'warn');
+    seconds = Number(raw);
+    if (!Number.isInteger(seconds) || seconds < 1) return DEPS.toast('Invalid seconds', 'warn');
+  }
+
+  const url = `${API_MODS}/debug-cycle-length`;
+  const res = await DEPS.http('PATCH', url, { body: { seconds } });
+  DEPS.logActivity({ title: 'Tournament Debug Cycle Length (PATCH)', method: 'PATCH', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
+
+  if (res.ok) DEPS.toast(clear ? 'Debug override cleared' : 'Debug cycle length set', 'ok');
+  else if (res.status === 403) DEPS.toast('Debug cycle length is disabled in production', 'warn');
+  else DEPS.toast('Failed to update debug cycle length', 'err');
+
+  // Always re-sync: even on 403 the server state may have moved.
+  loaded.status = false;
+  await loadSetup(root, { force: true });
+}
+
 // ----- render + handlers -----
 
 async function loadSetup(root, { force }) {
@@ -1659,13 +1864,17 @@ async function loadSetup(root, { force }) {
 
   let categories;
   let locked;
+  let config = null;
   try {
     const url = `${API}/categories`;
-    const [catRes, lockSet] = await Promise.all([
+    const configUrl = `${API}/config`;
+    const [catRes, lockSet, configRes] = await Promise.all([
       DEPS.http('GET', url),
       fetchLockedSetupCategories(),
+      DEPS.http('GET', configUrl),
     ]);
     DEPS.logActivity({ title: 'Tournament Categories (GET)', method: 'GET', url: catRes.url || url, ok: catRes.ok, status: catRes.status, data: catRes.data });
+    DEPS.logActivity({ title: 'Tournament Config (GET)', method: 'GET', url: configRes.url || configUrl, ok: configRes.ok, status: configRes.status, data: configRes.data });
     if (!catRes.ok) {
       loaded.setup = false;
       mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament categories.</div>';
@@ -1674,6 +1883,8 @@ async function loadSetup(root, { force }) {
     }
     categories = normalizeCategories(catRes.data);
     locked = lockSet;
+    config = configRes.ok && configRes.data && typeof configRes.data === 'object' ? configRes.data : null;
+    if (!configRes.ok) DEPS.toast('Failed to load tournament config', 'err');
   } catch (err) {
     loaded.setup = false;
     DEPS.logActivity({ title: 'Tournament Setup load error', method: 'ERROR', url: `${API}/categories`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
@@ -1693,7 +1904,8 @@ async function loadSetup(root, { force }) {
     <section class="space-y-3">
       <h3 class="font-semibold">Categories</h3>
       <div class="grid gap-3">${list}</div>
-    </section>`;
+    </section>
+    ${setupConfigCardHtml(root, config)}`;
 
   // Stash full category objects for inline-edit pre-fill (avoids re-fetch).
   mount._setupCategories = new Map(categories.map((c) => [String(c.id), c]));
@@ -1701,6 +1913,11 @@ async function loadSetup(root, { force }) {
   // Enhance the create form's XP textareas with repeaters.
   const createForm = mount.querySelector('form[data-action="tournament-category-create"]');
   if (createForm) initTournamentXpRepeaters(createForm);
+
+  // Populate the global-config form fields + IANA timezone datalist.
+  const configForm = mount.querySelector('form[data-action="tournament-config-update"]');
+  if (configForm) fillSetupConfigForm(configForm, config);
+  populateSetupTimezoneDatalist(mount);
 
   loaded.setup = true;
 }
@@ -1771,7 +1988,19 @@ function wireSetup(root, mount) {
     }
   });
 
-  // Form submits: create + update.
+  // Debug cycle-length set/clear (non-prod only — buttons render only off-prod).
+  mount.addEventListener('click', (event) => {
+    const btn = event.target?.closest?.('[data-setup-debug-action]');
+    if (!btn || !mount.contains(btn)) return;
+    event.preventDefault();
+    const clear = btn.dataset.setupDebugAction === 'debug-clear';
+    Promise.resolve().then(() => tournamentSetupSetDebugCycle(root, btn, { clear })).catch((err) => {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament debug cycle error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
+
+  // Form submits: create + update + global config.
   mount.addEventListener('submit', (event) => {
     const form = event.target?.closest?.('form[data-action]');
     if (!form || !mount.contains(form)) return;
@@ -1781,7 +2010,9 @@ function wireSetup(root, mount) {
       ? () => handleSetupCreate(root, form)
       : action === 'tournament-category-update'
         ? () => handleSetupUpdate(root, form)
-        : null;
+        : action === 'tournament-config-update'
+          ? () => handleSetupConfigSave(root, form)
+          : null;
     if (!run) return;
     Promise.resolve().then(run).catch((err) => {
       DEPS.toast('Unexpected error', 'err');
