@@ -236,7 +236,7 @@ function renderCompletionCard(item) {
         ${kvRow('time', item?.time)}
         ${kvRow('code', item?.code)}
         ${kvRow('map', item?.map_name)}
-        ${kvRow('also_known_as', item?.also_known_as)}
+        ${kvRow('AKA', item?.also_known_as)}
         ${kvRow('earns', earns, { rawHtml: true })}
         ${kvRow('video', linkOrDash(item?.video), { rawHtml: true })}
       </div>
