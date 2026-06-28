@@ -85,6 +85,7 @@ export function initVerificationsWorkspace(deps) {
   if (!root) return;
   wireSubtabLoading(root);
   wireRefreshButtons(root);
+  wireLightbox(root);
   wireCompletionActions(root);
   wireEditActions(root);
   // remaining wiring added in later tasks
@@ -657,14 +658,19 @@ async function openRoiEditor(imageUrl) {
   });
 }
 
-function wireCompletionActions(root) {
-  const listEl = $('[data-verif-completion-list]', root);
-  if (!listEl) return;
-
-  listEl.addEventListener('click', (e) => {
+// Single lightbox delegation on the workspace root so [data-enlarge] thumbnails
+// in BOTH the completion and map-edit queues open the lightbox (binding it on a
+// single list would only cover that one queue).
+function wireLightbox(root) {
+  root.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-enlarge]');
     if (btn) { e.preventDefault(); openImageLightbox(btn.dataset.enlarge); }
   });
+}
+
+function wireCompletionActions(root) {
+  const listEl = $('[data-verif-completion-list]', root);
+  if (!listEl) return;
 
   listEl.addEventListener('click', async (e) => {
     const card = e.target.closest('[data-record-id]');
