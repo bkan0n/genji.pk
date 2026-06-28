@@ -1,5 +1,4 @@
-import { $, $$, setView, makeRecentStore, renderRecentChips } from './workspace-shell.js';
-import { wireMapSearch } from './workspace-shell.js';
+import { $, setView, makeRecentStore, renderRecentChips, wireMapSearch } from './workspace-shell.js';
 
 let DEPS = null;
 const recent = makeRecentStore('mod.maps.recent');
