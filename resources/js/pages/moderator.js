@@ -5,6 +5,7 @@ import { initMapWorkspace } from './moderator/maps-workspace.js';
 import { initContentWorkspace } from './moderator/content-workspace.js';
 import { initRecordsWorkspace } from './moderator/records-workspace.js';
 import { initVerificationsWorkspace } from './moderator/verifications-workspace.js';
+import { initTournamentWorkspace } from './moderator/tournament-workspace.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -224,22 +225,6 @@ const MOD_SECTION_META = {
       { sub: 'verif-pending', title: 'Completion queue', desc: 'Load pending completion verifications.' },
       { sub: 'verif-edits', title: 'Map edit queue', desc: 'Review pending map edit requests.' },
       { sub: 'verif-playtest', title: 'Playtests', desc: 'Handle playtest accept, deny, reset, and vote cleanup.' },
-    ],
-  },
-  tournament: {
-    kicker: 'Tournament ops',
-    summary: 'Operate tournament categories, map selection, active cycles, leaderboards, and edition lifecycle together.',
-    stats: ['Categories', 'Active cycles', 'Lifecycle controls'],
-    hints: [
-      'Open Overview first; it loads config, categories, active edition, and active cycles.',
-      'Category choices are reused across map and cycle tools to avoid copying IDs manually.',
-    ],
-    cards: [
-      { sub: 'tournament-overview', title: 'Live overview', desc: 'Load the complete tournament state and prefill lifecycle forms.' },
-      { sub: 'tournament-categories', title: 'Categories', desc: 'Create or update XP, difficulties, active state, and champion role.' },
-      { sub: 'tournament-maps', title: 'Map rotation', desc: 'Preview, choose, reroll, or force a category map.' },
-      { sub: 'tournament-cycles', title: 'Cycles and rankings', desc: 'List cycles, open leaderboards, and inspect user streaks.' },
-      { sub: 'tournament-lifecycle', title: 'Edition lifecycle', desc: 'Config, bootstrap, pause/resume, debug length, and result publishing.', danger: true },
     ],
   },
   skill: {
@@ -1263,12 +1248,6 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'skill-tiers') initSkillTiersPanel();
         if (name === 'quest-config') initQuestConfigPanel();
         if (name === 'quest-update') initQuestUpdatePanel();
-        if (name === 'tournament-overview') initTournamentOverviewPanel();
-        if (name === 'tournament-categories') initTournamentCategoryPanel();
-        if (name === 'tournament-maps' || name === 'tournament-cycles') {
-          initTournamentHelperPanel(name);
-        }
-        if (name === 'tournament-lifecycle') initTournamentLifecyclePanel();
         if (name === 'dev-overpy-commit') initOverpyCommitPanel();
         if (name === 'dev-framework-version') initFrameworkVersionPanel();
         wireFormAutocompletes(active);
@@ -1613,50 +1592,6 @@ $$('form[data-action]').forEach((form) => {
         case 'skill-tiers-update':
           return handleSkillTiersUpdate(form);
 
-        // TOURNAMENTS
-        case 'tournament-load-overview':
-          return handleTournamentOverview(form);
-        case 'tournament-config-get':
-          return handleTournamentConfigGet(form);
-        case 'tournament-config-update':
-          return handleTournamentConfigUpdate(form);
-        case 'tournament-category-list':
-          return handleTournamentCategoryList(form);
-        case 'tournament-category-get':
-          return handleTournamentCategoryGet(form);
-        case 'tournament-category-create':
-          return handleTournamentCategoryCreate(form);
-        case 'tournament-category-update':
-          return handleTournamentCategoryUpdate(form);
-        case 'tournament-category-delete':
-          return handleTournamentCategoryDelete(form);
-        case 'tournament-next-cycle':
-          return handleTournamentNextCycle(form);
-        case 'tournament-select-map':
-          return handleTournamentSelectMap(form);
-        case 'tournament-choose-map':
-          return handleTournamentChooseMap(form);
-        case 'tournament-reroll-map':
-          return handleTournamentRerollMap(form);
-        case 'tournament-reroll-active':
-          return handleTournamentRerollActive(form);
-        case 'tournament-cycle-list':
-          return handleTournamentCycleList(form);
-        case 'tournament-leaderboard':
-          return handleTournamentLeaderboard(form);
-        case 'tournament-streak':
-          return handleTournamentStreak(form);
-        case 'tournament-active-edition':
-          return handleTournamentActiveEdition(form);
-        case 'tournament-bootstrap':
-          return handleTournamentBootstrap(form);
-        case 'tournament-publish-results':
-          return handleTournamentPublishResults(form);
-        case 'tournament-pause':
-          return handleTournamentPause(form);
-        case 'tournament-debug-cycle-length':
-          return handleTournamentDebugCycleLength(form);
-        
         // DEVS (API_MODS)
         case 'clear-frameworks-cache':
           if (!isDevAllowed()) return toast('Dev access only', 'err');
@@ -1892,9 +1827,7 @@ function setupArchiveMapsUI() {
 //———————————————————————————————————————————————————————————————
 // ENDPOINT RESPONSES
 function moderatorResponseActionTitle(action) {
-  const exact = {
-    'tournament-load-overview': 'Tournament overview',
-  };
+  const exact = {};
   if (exact[action]) return exact[action];
 
   return String(action || 'Endpoint response')
@@ -7567,15 +7500,6 @@ function resetEnhancedForm(form) {
     movementTechClearTechniqueUpdateForm(form);
   }
 
-  if (form.matches?.('form[data-action="tournament-category-create"]')) {
-    setTournamentXpGroupRows(form, 'placement_xp_json', tournamentDefaultXpRows('placement'));
-    setTournamentXpGroupRows(form, 'streak_xp_json', tournamentDefaultXpRows('streak'));
-  }
-
-  if (form.matches?.('form[data-action="tournament-category-update"]')) {
-    setTournamentXpGroupRows(form, 'placement_xp_json', []);
-    setTournamentXpGroupRows(form, 'streak_xp_json', []);
-  }
 }
 
 function placeResetButton(form, submitBtn, resetBtn) {
@@ -11340,6 +11264,14 @@ function initializeApp() {
   });
   initRecordsWorkspace({ http, toast, logActivity, wireAutocomplete });
   initVerificationsWorkspace({ http, toast, logActivity, runModeratorEndpointAction, appendOverlay });
+  initTournamentWorkspace({
+    http,
+    toast,
+    logActivity,
+    wireAutocomplete,
+    appendOverlay,
+    showConfirmDanger,
+  });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
