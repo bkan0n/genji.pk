@@ -1595,40 +1595,6 @@ $$('form[data-action]').forEach((form) => {
     try {
       const runAction = async () => {
       switch (action) {
-        // CONTENT (API_MODS)
-        case 'content-category-list':
-          return handleContentListEntity(form, 'categories', 'Categories', 'content-categories-res');
-        case 'content-category-create':
-          return handleContentCreateNamedEntity(form, 'categories', 'Category', 'content-categories-res');
-        case 'content-category-update':
-          return handleContentUpdateNamedEntity(form, 'categories', 'Category', 'content-categories-res');
-        case 'content-category-delete':
-          return handleContentDeleteNamedEntity(form, 'categories', 'Category', 'content-categories-res');
-        case 'content-category-reorder':
-          return handleContentReorderNamedEntity(form, 'categories', 'Category', 'content-categories-res');
-        case 'content-difficulty-list':
-          return handleContentListEntity(form, 'difficulties', 'Difficulties', 'content-difficulties-res');
-        case 'content-difficulty-create':
-          return handleContentCreateNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
-        case 'content-difficulty-update':
-          return handleContentUpdateNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
-        case 'content-difficulty-delete':
-          return handleContentDeleteNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
-        case 'content-difficulty-reorder':
-          return handleContentReorderNamedEntity(form, 'difficulties', 'Difficulty', 'content-difficulties-res');
-        case 'content-technique-list':
-          return handleContentListEntity(form, 'techniques', 'Techniques', 'content-techniques-res');
-        case 'content-technique-create':
-          return handleContentTechniqueCreate(form);
-        case 'content-technique-get':
-          return handleContentTechniqueGet(form);
-        case 'content-technique-update':
-          return handleContentTechniqueUpdate(form);
-        case 'content-technique-delete':
-          return handleContentTechniqueDelete(form);
-        case 'content-technique-reorder':
-          return handleContentTechniqueReorder(form);
-
         // MAPS (API_MODS)
         case 'archive-maps':
           return handleArchiveMaps(form);
@@ -3632,30 +3598,6 @@ function bindMovementTechAutoLoad(formSelector, loader, clearForm) {
   });
 }
 
-function initContentMovementTechForms() {
-  document
-    .querySelectorAll('form[data-action="content-technique-create"], form[data-action="content-technique-update"]')
-    .forEach((form) => movementTechInitTechniqueEditor(form));
-
-  bindMovementTechAutoLoad(
-    'form[data-action="content-category-update"]',
-    (form) => loadContentNamedEntityIntoUpdateForm(form, 'categories', 'Category', 'content-categories-res'),
-    movementTechClearNamedEntityUpdateForm
-  );
-
-  bindMovementTechAutoLoad(
-    'form[data-action="content-difficulty-update"]',
-    (form) => loadContentNamedEntityIntoUpdateForm(form, 'difficulties', 'Difficulty', 'content-difficulties-res'),
-    movementTechClearNamedEntityUpdateForm
-  );
-
-  bindMovementTechAutoLoad(
-    'form[data-action="content-technique-update"]',
-    (form) => loadContentTechniqueIntoUpdateForm(form, 'content-techniques-res'),
-    movementTechClearTechniqueUpdateForm
-  );
-}
-
 async function handleContentCreateNamedEntity(form, entity, label, outKey) {
   const name = (form.name?.value || '').trim();
   if (!name) {
@@ -4042,8 +3984,6 @@ async function handleContentTechniqueReorder(form) {
 
   return res;
 }
-
-initContentMovementTechForms();
 
 // MAPS
 async function handleArchiveMaps(form) {
