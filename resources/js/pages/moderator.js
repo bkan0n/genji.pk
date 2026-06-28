@@ -13,8 +13,6 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const API_MODS = '/api/mods';
 const API_CONTENT_PUBLIC = '/api/content/movement-tech';
 const API_CONTENT_MODS = `${API_MODS}/content/movement-tech`;
-const API_TOURNAMENTS = '/api/tournaments';
-const API_TOURNAMENTS_MODS = `${API_MODS}/tournaments`;
 const asId = (input) => String(input?.value ?? '').trim();
 const isDigits = (s) => /^\d+$/.test(String(s || ''));
 const getBool = (id) => !!document.getElementById(id)?.checked;
