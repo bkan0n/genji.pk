@@ -52,8 +52,5 @@
         </div>
       </div>
     </div>
-
-    {{-- inspection slide-over mount --}}
-    <div data-tournament-overlay-mount></div>
   </div>
 </div>

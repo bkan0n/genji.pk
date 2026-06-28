@@ -38,6 +38,9 @@ function wireSubtabLoading(root) {
     const tab = e.target.closest('.mod-subtab');
     if (!tab) return;
     const name = tab.dataset.subtab;
+    // Leaving Status hides the edition strip; stop its live countdown timer so it
+    // doesn't keep ticking against a hidden node.
+    if (name !== 'tournament-status') clearTournamentCountdown();
     if (name === 'tournament-status') loadStatus(root, { force: false });
     if (name === 'tournament-setup') loadSetup(root, { force: false });
     // 'tournament-utility' needs no data loading: the streak lookup is read-only
