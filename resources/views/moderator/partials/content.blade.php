@@ -21,10 +21,6 @@
       </button>
     </div>
 
-    <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
-      Choose a Content action group.
-    </div>
-
     @foreach ([
       ['key' => 'categories', 'sub' => 'content-categories', 'singular' => 'category', 'out' => 'content-categories-res'],
       ['key' => 'difficulties', 'sub' => 'content-difficulties', 'singular' => 'difficulty', 'out' => 'content-difficulties-res'],
@@ -60,7 +56,7 @@
 
         <details class="rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-2">
           <summary class="cursor-pointer text-xs text-zinc-500 dark:text-zinc-400">Show raw response</summary>
-          <pre data-out="{{ $group['out'] }}" class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-zinc-600 dark:text-zinc-300"></pre>
+          <pre data-out="{{ $group['out'] }}" class="mt-2 max-h-72 overflow-auto font-mono text-xs text-zinc-800 dark:text-zinc-200"></pre>
         </details>
       </div>
     @endforeach
