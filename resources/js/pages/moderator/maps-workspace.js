@@ -14,7 +14,11 @@ export function initMapWorkspace(deps) {
   const search = $('[data-maps-search]', root);
   wireMapSearch(search, { deps: DEPS, onLoad: (code) => loadMap(root, code) });
   renderRecent(root);
-  // Submit-new-map tool mounted in a later task.
+  // Build the separate submit-new-map tool's dropdowns/banner/medals once.
+  // The form's submit is handled by moderator.js's existing form[data-action]
+  // dispatcher, which bound it at load (the form is server-rendered in the
+  // partial), so no extra submit wiring is needed here.
+  DEPS.initSubmitPanel?.();
 }
 
 function renderRecent(root) {
@@ -23,6 +27,14 @@ function renderRecent(root) {
 }
 
 async function loadMap(root, code) {
+  // Unsaved-edits guard: if block-B fields are dirty (save bar visible),
+  // confirm before discarding and loading a different map. Abort the load
+  // entirely on cancel, leaving the current map + edits intact.
+  const form = document.getElementById('u-updateMapForm');
+  const bar = $('[data-fields-bar]', root);
+  if (form && bar && !bar.classList.contains('hidden')) {
+    if (!confirm('You have unsaved map changes. Discard them and load another map?')) return;
+  }
   setView(root, 'loading');
   let res;
   try {

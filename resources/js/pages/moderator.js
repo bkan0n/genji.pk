@@ -13063,6 +13063,7 @@ function initializeApp() {
     getUserIdFrom, getSelectedRadio, getCheckedValues,
     validateUpdateMedals, uploadImageGeneric, updateReleaseCodeButtonVisibility,
     initUpdatePanel, populateUpdatePanel,
+    initSubmitPanel, handleSubmitMap,
     handleArchiveMaps, handleConvertLegacy, handleReleaseMapCode,
     openMapEditRequestModal,
   });
