@@ -7,10 +7,10 @@
           data-maps-search
           type="text"
           autocomplete="off"
-          placeholder="Search by map code or name (e.g. 01AZC)"
+          placeholder="Search by map code (e.g. 01AZC)"
           class="mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
         />
-        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Pick a suggestion, or type a code and press Enter.</p>
+        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Type a map code and press Enter, or pick a suggestion.</p>
         <div data-maps-recent class="mt-3 flex flex-wrap gap-2"></div>
       </div>
 

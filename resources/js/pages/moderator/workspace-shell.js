@@ -79,45 +79,17 @@ export function wireUserSearch(input, { deps, onLoad }) {
   });
 }
 
-// Wire a map search input: code/name autocomplete pick auto-loads; Enter loads
-// the raw trimmed value (a map code). deps must provide http,
-// attachMapCodeAutocomplete, attachMapNameAutocomplete, toast. onLoad(code)
-// does the work.
+// Wire a map search input: code-only. This is a single-map-code editing console,
+// so there is no map-NAME search and no name→code resolution. Code autocomplete
+// suggests matching codes; Enter loads the raw trimmed value (a map code). deps
+// must provide attachMapCodeAutocomplete + toast. onLoad(code) does the work.
 //
-// VERIFIED in moderator.js: for non-user kinds wireAutocomplete's onPick payload
-// is { value } ONLY — it never carries a `code`. attachMapNameAutocomplete →
-// wireAutocomplete(kind: 'map-names'), whose items are { value: pickText(v) },
-// and pickText prefers name/map_name/title over code. So a NAME pick's `value`
-// is the human-readable map name, NOT a code — calling onLoad(value) directly
-// would query /api/maps?code=<name> and never resolve. We therefore resolve the
-// picked name to a real code via GET /api/maps?map_name=<value> before onLoad.
-// (The maps API coerces a string map_name into a one-element array server-side,
-//  matching MapSearchController's arrayish handling.) The code fast-path is kept
-// in case a future payload ever includes a code. attachMapCodeAutocomplete →
-// wireAutocomplete(kind: 'map-codes'), which fills input.value with the picked
-// code; the Enter handler then loads that raw value as a code.
+// attachMapCodeAutocomplete → wireAutocomplete(kind: 'map-codes'), which fills
+// input.value with the picked code but exposes no pick callback through this
+// deps surface, so loading is driven by Enter (and works for both a typed code
+// and a picked suggestion, since both leave the code in input.value).
 export function wireMapSearch(input, { deps, onLoad }) {
   if (!input) return;
-  deps.attachMapNameAutocomplete(input, async ({ value, code }) => {
-    // Fast-path: if a usable code is ever present, load it directly.
-    const direct = String(code || '').trim();
-    if (direct) return onLoad(direct);
-
-    const name = String(value || '').trim();
-    if (!name) return;
-
-    // Resolve the picked name to a code before loading.
-    let res;
-    try {
-      res = await deps.http('GET', '/api/maps', { query: { map_name: name } });
-    } catch {
-      return deps.toast(`Couldn't resolve "${name}" — try again.`, 'err');
-    }
-    const item = pickMapItem(res?.data);
-    const resolved = item && item.code != null ? String(item.code).trim() : '';
-    if (res?.ok && resolved) return onLoad(resolved);
-    deps.toast(`No map code found for "${name}".`, 'err');
-  });
   deps.attachMapCodeAutocomplete(input);
   input.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
@@ -126,12 +98,4 @@ export function wireMapSearch(input, { deps, onLoad }) {
     if (code) onLoad(code);
     else deps.toast('Enter a map code or pick a suggestion', 'warn');
   });
-}
-
-// Extract a single map record from a /api/maps response, matching the
-// pickItem-style extraction the maps-workspace loader uses.
-function pickMapItem(data) {
-  if (Array.isArray(data)) return data[0] || null;
-  if (data && typeof data === 'object') return (data.items?.[0] ?? data.data?.items?.[0] ?? data) || null;
-  return null;
 }
