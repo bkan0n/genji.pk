@@ -2,6 +2,7 @@ import { initUsersWorkspace } from './moderator/users-workspace.js';
 import { initLootboxWorkspace } from './moderator/lootbox-workspace.js';
 import { initLootboxSettings } from './moderator/lootbox-settings.js';
 import { initMapWorkspace } from './moderator/maps-workspace.js';
+import { initContentWorkspace } from './moderator/content-workspace.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -12741,6 +12742,23 @@ function initializeApp() {
     handleArchiveMaps, handleConvertLegacy, handleReleaseMapCode,
     applyOverrideQuality,
     openMapEditRequestModal,
+  });
+  initContentWorkspace({
+    toast, logActivity, http,
+    wireDdSelect, appendOverlay,
+    movementTechContentCache,
+    movementTechErrorMessage,
+    movementTechPopulateContentDropdowns,
+    movementTechInitTechniqueEditor,
+    loadContentEntityCollection,
+    submitMovementTechRequest,
+    handleContentCreateNamedEntity,
+    handleContentUpdateNamedEntity,
+    handleContentDeleteNamedEntity,
+    handleContentTechniqueCreate,
+    handleContentTechniqueUpdate,
+    handleContentTechniqueDelete,
+    loadContentTechniqueIntoUpdateForm,
   });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
