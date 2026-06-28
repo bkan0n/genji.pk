@@ -78,3 +78,30 @@ export function wireUserSearch(input, { deps, onLoad }) {
     else deps.toast('Enter a user ID or pick a suggestion', 'warn');
   });
 }
+
+// Wire a map search input: code/name autocomplete pick auto-loads; Enter loads
+// the raw trimmed value (a map code). deps must provide attachMapCodeAutocomplete,
+// attachMapNameAutocomplete, toast. onLoad(code) does the work.
+//
+// VERIFIED in moderator.js: attachMapNameAutocomplete → wireAutocomplete(kind:
+// 'map-names'), whose onPick payload is { value } only (NO code field). On pick
+// it also sets input.value to the picked name. attachMapCodeAutocomplete →
+// wireAutocomplete(kind: 'map-codes'), which fills input.value with the picked
+// code and has no onPick wired here. So name→code resolution falls back to the
+// picked `value` (the name autocomplete returns the map code in `value`).
+export function wireMapSearch(input, { deps, onLoad }) {
+  if (!input) return;
+  // Name autocomplete resolves to a code via onPick; code autocomplete fills value.
+  deps.attachMapNameAutocomplete(input, ({ value, code }) => {
+    const c = (code || value || '').trim();
+    if (c) onLoad(c);
+  });
+  deps.attachMapCodeAutocomplete(input);
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const code = (input.value || '').trim();
+    if (code) onLoad(code);
+    else deps.toast('Enter a map code or pick a suggestion', 'warn');
+  });
+}
