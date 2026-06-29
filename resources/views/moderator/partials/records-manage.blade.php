@@ -1,6 +1,6 @@
 <div data-subpanel="records-manage" class="hidden space-y-4">
   <div data-records-manage>
-    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5 space-y-5">
+    <div class="mod-card space-y-5">
 
       {{-- Filter bar --}}
       <div class="grid gap-4 sm:grid-cols-2">
@@ -11,7 +11,7 @@
             type="text"
             autocomplete="off"
             placeholder="Search by name, or paste a user ID"
-            class="mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+            class="mt-2 w-full mod-input"
           />
           <div data-rm-recent class="mt-2 flex flex-wrap gap-2"></div>
         </div>
@@ -22,7 +22,7 @@
             type="text"
             autocomplete="off"
             placeholder="e.g. A1B2C"
-            class="mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+            class="mt-2 w-full mod-input uppercase"
           />
         </div>
       </div>

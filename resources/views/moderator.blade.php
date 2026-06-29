@@ -19,14 +19,14 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
-            <button id="openCmdk" type="button" class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+            <button id="openCmdk" type="button" class="mod-btn">
               <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" /></svg>
               Command
               <span class="ml-1 hidden rounded-md border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:text-zinc-300 sm:inline">Ctrl K</span>
             </button>
 
             <div class="inline-flex items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
-              <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10" aria-hidden="true">
+              <span class="mod-icon-chip" aria-hidden="true">
                 <svg class="h-4 w-4 text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4a4 4 0 0 0 4 4m0 2c-4.42 0-8 2-8 4v2h16v-2c0-2-3.58-4-8-4Z"/></svg>
               </span>
               <div class="leading-tight">
@@ -82,10 +82,10 @@
               <button
                 data-tab="users"
                 data-tab-label="Users"
-                class="mod-tab active group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab active"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       fill="currentColor"
@@ -100,10 +100,10 @@
               <button
                 data-tab="lootbox"
                 data-tab-label="Lootbox"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       fill="currentColor"
@@ -118,10 +118,10 @@
               <button
                 data-tab="content"
                 data-tab-label="Content"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M4 5h7v6H4V5m9 0h7v4h-7V5M4 13h7v6H4v-6m9-2h7v8h-7v-8Z" />
                   </svg>
@@ -133,10 +133,10 @@
               <button
                 data-tab="maps"
                 data-tab-label="Maps"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="m15 19l-6-3l-6 3V5l6-3l6 3l6-3v14Z" />
                   </svg>
@@ -148,10 +148,10 @@
               <button
                 data-tab="records"
                 data-tab-label="Records"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M12 1l3 5h6l-4.5 4l1.5 6l-6-3.5L6 16l1.5-6L3 6h6Z" />
                   </svg>
@@ -163,10 +163,10 @@
               <button
                 data-tab="verifications"
                 data-tab-label="Verifications"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41Z" />
                   </svg>
@@ -178,10 +178,10 @@
               <button
                 data-tab="tournament"
                 data-tab-label="Tournament"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M7 3h10v4h3v5a8 8 0 0 1-7 7.94V22h-2v-2.06A8 8 0 0 1 4 12V7h3V3m2 2v2h6V5H9m-3 4v3a6 6 0 0 0 12 0V9H6m3 1h6v2H9v-2Z" />
                   </svg>
@@ -193,10 +193,10 @@
               <button
                 data-tab="skill"
                 data-tab-label="Skill"
-                class="mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="group mod-tab"
                 type="button"
               >
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M12 2 15 8l6 .9-4.4 4.3 1 6.1L12 16.5 6.4 19.3l1-6.1L3 8.9 9 8l3-6Zm0 4.5-1.6 3.2-3.5.5 2.5 2.5-.6 3.5 3.2-1.7 3.2 1.7-.6-3.5 2.5-2.5-3.5-.5L12 6.5Z"/>
                   </svg>
@@ -208,10 +208,10 @@
               <button
                 data-tab="devs"
                 data-tab-label="Web"
-                class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="hidden group mod-tab"
                 type="button"
                data-dev-only="1">
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M22.7 19.3L19 15.6c-.2-.2-.5-.3-.7-.3h-.5l-1.4-1.4c.9-1.4.7-3.4-.5-4.6c-1.2-1.2-3.2-1.4-4.6-.5L9.4 7.4V6.9c0-.3-.1-.5-.3-.7L5.7 2.5C5.3 2.1 4.7 2.1 4.3 2.5L2.5 4.3c-.4.4-.4 1 0 1.4L6 9.2c.2.2.4.3.7.3h.5l1.4 1.4c-.9 1.4-.7 3.4.5 4.6c1.2 1.2 3.2 1.4 4.6.5l1.4 1.4v.5c0 .3.1.5.3.7l3.7 3.7c.4.4 1 .4 1.4 0l1.8-1.8c.4-.4.4-1 0-1.4Z"/>
                   </svg>
@@ -223,10 +223,10 @@
               <button
                 data-tab="store"
                 data-tab-label="Store"
-                class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="hidden group mod-tab"
                 type="button"
                data-dev-only="1">
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d="M7 7V6a5 5 0 0 1 10 0v1h3v15H4V7Zm2 0h6V6a3 3 0 0 0-6 0Zm-3 2v11h12V9Z"/>
                   </svg>
@@ -238,10 +238,10 @@
               <button
                 data-tab="quests"
                 data-tab-label="Quests"
-                class="hidden mod-tab group flex min-w-0 w-full items-center gap-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(16,185,129,.08)]"
+                class="hidden group mod-tab"
                 type="button"
                data-dev-only="1">
-                <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10 transition group-hover:bg-white/10">
+                <span class="mod-icon-chip transition group-hover:bg-white/10">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       fill="currentColor"
@@ -276,11 +276,11 @@
                   <div id="modActiveStats" class="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"></div>
                 </div>
                 <div class="absolute right-0 top-0 flex flex-nowrap items-center justify-end gap-2">
-                  <button id="modFocusActions" type="button" class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+                  <button id="modFocusActions" type="button" class="mod-btn shrink-0 whitespace-nowrap">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 4h14v2H5V4m0 7h14v2H5v-2m0 7h14v2H5v-2Z"/></svg>
                     Actions
                   </button>
-                  <button id="modScrollTop" type="button" class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10">
+                  <button id="modScrollTop" type="button" class="mod-btn shrink-0 whitespace-nowrap">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 4l7 7h-4v9H9v-9H5l7-7Z"/></svg>
                     Top
                   </button>
@@ -336,7 +336,7 @@
                   <button
                     id="clearLog"
                     type="button"
-                    class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-white/10"
+                    class="mod-btn"
                   >
                     Clear
                   </button>
@@ -402,7 +402,7 @@
     <div class="fixed inset-0 z-[410] flex items-start justify-center p-4 sm:p-6">
       <div id="modCmdkPanel" class="w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10" role="dialog" aria-modal="true">
         <div class="flex items-center gap-3 border-b border-zinc-200/80 dark:border-white/10 px-4 py-3">
-          <span class="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 ring-1 ring-zinc-300/60 dark:ring-white/10">
+          <span class="mod-icon-chip">
             <svg class="h-4 w-4 text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18m11 3l-5.2-5.2" />
             </svg>

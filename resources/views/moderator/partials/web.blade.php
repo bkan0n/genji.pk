@@ -3,7 +3,7 @@
   <div data-web-workspace class="space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab"
                   data-subtab="dev-cache-frameworks"
                   type="button"
                 >
@@ -11,7 +11,7 @@
                 </button>
 
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab"
                   data-subtab="dev-cache-avatars"
                   type="button"
                 >
@@ -19,7 +19,7 @@
                 </button>
 
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab"
                   data-subtab="dev-cache-translations"
                   type="button"
                 >
@@ -27,7 +27,7 @@
                 </button>
 
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab"
                   data-subtab="dev-overpy-commit"
                   type="button"
                 >
@@ -35,7 +35,7 @@
                 </button>
 
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+                  class="mod-subtab"
                   data-subtab="dev-framework-version"
                   type="button"
                 >
@@ -44,7 +44,7 @@
               </div>
 
               <div data-subpanel="dev-cache-frameworks" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete frameworks cache</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/frameworks/clear</span>
@@ -53,12 +53,12 @@
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       This will clear converter/framework caches.
                     </p>
-                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 mod-meta-card">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">I understand this may cause a short downtime.</span>
                     </label>
                     <button
-                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto mod-btn-primary"
                     >
                       Delete frameworks cache
                     </button>
@@ -68,7 +68,7 @@
 
               {{-- Subpanel: Delete avatars cache --}}
               <div data-subpanel="dev-cache-avatars" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete avatars cache</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/avatars/clear</span>
@@ -77,12 +77,12 @@
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Purge cached avatar images / URLs (e.g. CDN or local cached copies).
                     </p>
-                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 mod-meta-card">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">Confirm deletion of avatars cache.</span>
                     </label>
                     <button
-                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto mod-btn-primary"
                     >
                       Delete avatars cache
                     </button>
@@ -92,7 +92,7 @@
 
               {{-- Subpanel: Delete translations cache --}}
               <div data-subpanel="dev-cache-translations" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete translations cache</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/translations/clear</span>
@@ -101,12 +101,12 @@
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
                       Clear cached translation files/arrays. Useful after updating language files.
                     </p>
-                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 mod-meta-card">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">Yes, clear the translations cache.</span>
                     </label>
                     <button
-                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto mod-btn-primary"
                     >
                       Delete translations cache
                     </button>
@@ -116,7 +116,7 @@
 
               {{-- Subpanel: Set overpy commit --}}
               <div data-subpanel="dev-overpy-commit" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set overpy commit</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/overpy-commit</span>
@@ -139,13 +139,13 @@
                         type="text"
                         name="commit"
                         placeholder="e.g. dd8fc2d25459243053f8214478e13d85fda759af"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full mod-field font-mono text-sm"
                         required
                         pattern="^[a-fA-F0-9]{7,40}$"
                       />
                     </label>
 
-                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 mod-meta-card">
                       <input type="checkbox" name="confirm" id="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">
                         I understand this will update <code>OVERPY_COMMIT</code> in <code>converter.js</code>.
@@ -153,7 +153,7 @@
                     </label>
 
                     <button
-                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto mod-btn-primary"
                     >
                       Update commit
                     </button>
@@ -163,7 +163,7 @@
 
               {{-- Subpanel: Set framework version --}}
               <div data-subpanel="dev-framework-version" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6">
+                <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set framework version</h3>
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/framework-version</span>
@@ -188,7 +188,7 @@
                         type="text"
                         name="version"
                         placeholder="1.10.4A"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full mod-field font-mono text-sm"
                         required
                         autocapitalize="characters"
                         spellcheck="false"
@@ -199,7 +199,7 @@
                       Use <strong>X.Y.Z</strong> with an optional <strong>UPPERCASE</strong> suffix (e.g. <code>1.10.4</code>, <code>1.10.4A</code>, <code>1.10.4RC1</code>).
                     </p>
 
-                    <label class="flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                    <label class="flex items-center gap-2 mod-meta-card">
                       <input type="checkbox" name="confirm" class="accent-emerald-500" />
                       <span class="text-sm text-zinc-800 dark:text-zinc-200">
                         I understand this will update the framework CDN URL in <code>converter.js</code>.
@@ -209,7 +209,7 @@
                     <button
                       id="btnSetFrameworkVersion"
                       type="button"
-                      class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100"
+                      class="w-full sm:w-auto mod-btn-primary"
                     >
                       Update version
                     </button>

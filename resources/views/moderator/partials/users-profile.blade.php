@@ -21,10 +21,10 @@
   </div>
   <div class="mt-3 grid gap-3 sm:grid-cols-2">
     <label class="block text-xs text-zinc-500">Global name
-      <input data-field="global_name" type="text" maxlength="100" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+      <input data-field="global_name" type="text" maxlength="100" class="mt-1 w-full mod-input" />
     </label>
     <label class="block text-xs text-zinc-500">Nickname
-      <input data-field="nickname" type="text" maxlength="100" class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+      <input data-field="nickname" type="text" maxlength="100" class="mt-1 w-full mod-input" />
     </label>
   </div>
   <div class="mt-3 flex gap-2">
@@ -45,7 +45,7 @@
     <div data-alias-row class="flex items-center gap-2">
       <button data-alias-primary type="button" aria-label="Mark primary" data-primary="false" class="text-lg text-zinc-300 hover:text-amber-400 data-[primary=true]:text-amber-400">★</button>
       <input data-alias-name type="text" maxlength="64" placeholder="Overwatch username"
-        class="w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+        class="w-full mod-input" />
     </div>
     @endfor
   </div>
@@ -67,7 +67,7 @@
     </label>
     <label class="block flex-1 text-xs text-zinc-500">Other account
       <input data-link-other type="text" autocomplete="off" placeholder="Search the other account"
-        class="mt-1 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+        class="mt-1 w-full mod-input" />
     </label>
     <button data-link-submit type="button" class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">Link…</button>
   </div>

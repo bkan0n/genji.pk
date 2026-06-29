@@ -3,21 +3,21 @@
   <div data-skill-workspace class="space-y-4">
               <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10"
+                  class="mod-subtab"
                   data-subtab="skill-user"
                   type="button"
                 >
                   Player
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10"
+                  class="mod-subtab"
                   data-subtab="skill-config"
                   type="button"
                 >
                   Weights
                 </button>
                 <button
-                  class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 w-full sm:w-auto [&.active]:bg-white/10"
+                  class="mod-subtab"
                   data-subtab="skill-tiers"
                   type="button"
                 >
@@ -26,7 +26,7 @@
               </div>
 
               <div data-subpanel="skill-user" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                <article class="fade-in mod-card-solid space-y-4">
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h3 class="font-semibold">Player skill</h3>
@@ -43,10 +43,10 @@
                         autocomplete="off"
                         required
                         placeholder="Search player or enter user ID…"
-                        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+                        class="mt-1 w-full mod-field"
                       />
                     </label>
-                    <button type="submit" class="rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get summary</button>
+                    <button type="submit" class="mod-btn-primary">Get summary</button>
                     <button type="submit" data-submit-action="skill-user-breakdown" class="rounded-xl border border-zinc-200/80 bg-zinc-100 px-4 py-2 font-semibold text-zinc-900 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10">Get breakdown</button>
                   </form>
                   <div data-skill-recent class="flex flex-wrap gap-2"></div>
@@ -57,7 +57,7 @@
               </div>
 
               <div data-subpanel="skill-config" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+                <article class="fade-in mod-card-solid space-y-4">
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h3 class="font-semibold">Skill weights</h3>
@@ -173,7 +173,7 @@
                       </div>
                     @endforeach
                     <div class="sm:col-span-2 lg:col-span-3">
-                      <button type="submit" class="rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save and recompute</button>
+                      <button type="submit" class="mod-btn-primary">Save and recompute</button>
                     </div>
                   </form>
                   <pre data-out="skill-config-res" class="hidden"></pre>
@@ -181,7 +181,7 @@
               </div>
 
               <div data-subpanel="skill-tiers" class="hidden space-y-6">
-                <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-5">
+                <article class="fade-in mod-card-solid space-y-5">
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h3 class="font-semibold">Tier percentiles</h3>
@@ -324,7 +324,7 @@
                     </div>
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div data-skill-computed-at class="text-xs text-zinc-500 dark:text-zinc-400">Snapshot date unavailable</div>
-                      <button type="submit" class="rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save percentiles</button>
+                      <button type="submit" class="mod-btn-primary">Save percentiles</button>
                     </div>
                   </form>
                   <pre data-out="skill-tiers-res" class="hidden"></pre>

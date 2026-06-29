@@ -22,7 +22,7 @@
 
     {{-- PANE: edit an existing map (search → load → fields/guides/actions) --}}
     <div data-maps-pane="edit" class="space-y-6">
-    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5 space-y-5">
+    <div class="mod-card space-y-5">
       <div>
         <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400">Find a map</label>
         <input
@@ -30,7 +30,7 @@
           type="text"
           autocomplete="off"
           placeholder="Search by map code (e.g. 01AZC)"
-          class="mt-2 w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+          class="mt-2 w-full mod-input"
         />
         <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Type a map code and press Enter, or pick a suggestion.</p>
         <div data-maps-recent class="mt-3 flex flex-wrap gap-2"></div>
@@ -55,7 +55,7 @@
             class="space-y-6"
           >
             <!-- META -->
-            <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+            <div class="mod-form-card">
               <div class="grid gap-4 sm:grid-cols-2">
                 <!-- Creators -->
                 <div class="sm:col-span-2">
@@ -74,7 +74,7 @@
                       </span>
                       <button
                         type="button"
-                        class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                        class="block-edit-btn"
                         data-edit-target="metaCreatorMain"
                       >
                         Edit
@@ -94,7 +94,7 @@
                       </span>
                       <button
                         type="button"
-                        class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                        class="block-edit-btn"
                         data-edit-target="metaCreatorSecond"
                       >
                         Edit
@@ -104,13 +104,13 @@
                 </div>
 
                 <!-- Map Code -->
-                <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                <div class="mod-meta-card">
                   <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Code</div>
                   <div class="flex items-center gap-2">
                     <div id="metaCode" class="text-sm text-zinc-800 dark:text-zinc-200" data-ac="off">N/A</div>
                     <button
                       type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                      class="block-edit-btn"
                       data-edit-target="metaCode"
                     >
                       Edit
@@ -119,13 +119,13 @@
                 </div>
 
                 <!-- Map Name -->
-                <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                <div class="mod-meta-card">
                   <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Map name</div>
                   <div class="flex items-center gap-2">
                     <div id="metaMap" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                     <button
                       type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                      class="block-edit-btn"
                       data-edit-target="metaMap"
                     >
                       Edit
@@ -134,13 +134,13 @@
                 </div>
 
                 <!-- Checkpoints -->
-                <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                <div class="mod-meta-card">
                   <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Checkpoints</div>
                   <div class="flex items-center gap-2">
                     <div id="metaCheckpoints" class="text-sm text-zinc-800 dark:text-zinc-200">N/A</div>
                     <button
                       type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                      class="block-edit-btn"
                       data-edit-target="metaCheckpoints"
                     >
                       Edit
@@ -151,7 +151,7 @@
             </div>
 
             <!-- REQUIRED -->
-            <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+            <div class="space-y-4 mod-form-card">
               <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Required</h3>
 
               <div class="grid gap-4 sm:grid-cols-2">
@@ -162,7 +162,7 @@
                     <button
                       type="button"
                       data-dd-btn
-                      class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                      class="mod-dd-btn"
                     >
                       <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select difficulty</span>
                       <svg
@@ -177,7 +177,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                      class="mod-dd-list"
                     ></div>
                   </div>
                 </div>
@@ -189,7 +189,7 @@
                     <button
                       type="button"
                       data-dd-btn
-                      class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                      class="mod-dd-btn"
                     >
                       <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select category</span>
                       <svg
@@ -204,7 +204,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                      class="mod-dd-list"
                     ></div>
                   </div>
                 </div>
@@ -216,7 +216,7 @@
                     <button
                       type="button"
                       data-dd-btn
-                      class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                      class="mod-dd-btn"
                     >
                       <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select mechanics</span>
                       <svg
@@ -231,7 +231,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                      class="mod-dd-list"
                     ></div>
                   </div>
                 </div>
@@ -245,7 +245,7 @@
                     <button
                       type="button"
                       data-dd-btn
-                      class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                      class="mod-dd-btn"
                     >
                       <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">
                         Select restrictions
@@ -262,7 +262,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                      class="mod-dd-list"
                     ></div>
                   </div>
                 </div>
@@ -270,7 +270,7 @@
             </div>
 
             <!-- FLAGS -->
-            <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+            <div class="space-y-4 mod-form-card">
               <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Flags</h3>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
@@ -279,7 +279,7 @@
                     <button
                       type="button"
                       data-dd-btn
-                      class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-left"
+                      class="mod-dd-btn"
                     >
                       <span class="dd-label text-sm text-zinc-600 dark:text-zinc-300">Select tags</span>
                       <svg
@@ -299,7 +299,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl"
+                      class="mod-dd-list"
                     ></div>
                   </div>
                 </div>
@@ -307,12 +307,12 @@
             </div>
 
             <!-- OPTIONAL -->
-            <div class="space-y-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 p-4">
+            <div class="space-y-4 mod-form-card">
               <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Optional</h3>
 
               <div class="grid gap-4 sm:grid-cols-2">
                 <!-- Title -->
-                <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                <div class="mod-meta-card">
                   <label class="mb-1 block text-[11px] text-zinc-500 dark:text-zinc-400" for="optTitleInput">
                     Title
                   </label>
@@ -346,7 +346,7 @@
                 </div>
 
                 <!-- Description -->
-                <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                <div class="mod-meta-card">
                   <div class="flex items-center justify-between">
                     <div>
                       <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Description</div>
@@ -354,7 +354,7 @@
                     </div>
                     <button
                       type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                      class="block-edit-btn"
                       data-edit-target="optDescription"
                     >
                       Edit
@@ -363,7 +363,7 @@
                 </div>
 
                 <!-- Guide URLs -->
-                <div class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2">
+                <div class="mod-meta-card">
                   <div class="flex items-center justify-between">
                     <div>
                       <div class="text-[11px] text-zinc-500 dark:text-zinc-400">Guide (URL)</div>
@@ -371,7 +371,7 @@
                     </div>
                     <button
                       type="button"
-                      class="block-edit-btn cursor-pointer rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10"
+                      class="block-edit-btn"
                       data-edit-target="optGuide"
                     >
                       Edit
@@ -384,7 +384,7 @@
 
                 <!-- Medals -->
                 <div
-                  class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-2 sm:col-span-2"
+                  class="mod-meta-card sm:col-span-2"
                 >
                   <div class="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Medals</div>
                   <div class="grid gap-3 sm:grid-cols-3">
@@ -442,7 +442,7 @@
             <div class="flex items-center gap-2">
               <button
                 type="submit"
-                class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
+                class="inline-flex cursor-pointer items-center justify-center mod-btn-primary text-sm"
               >
                 Submit map
               </button>
