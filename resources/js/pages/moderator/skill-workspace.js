@@ -18,14 +18,6 @@ const skillNameGuess = (input) => {
   return v && !/^\d+$/.test(v) ? v : '';
 };
 
-// Signed-in moderator id, used to pre-fill the player-score lookup.
-// (Same derivation as verifications-workspace.js.)
-const MOD_USER_ID = (
-  document.getElementById('modUserId')?.value ??
-  document.querySelector('meta[name="mod-user-id"]')?.content ??
-  (typeof window !== 'undefined' && window.user_id != null ? String(window.user_id) : '')
-).trim();
-
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -622,9 +614,6 @@ function initSkillUserPanel() {
   const panel = document.querySelector('[data-subpanel="skill-user"]');
   const input = panel?.querySelector('input[name="user_id"]');
   if (!input) return;
-  if (!input.value && typeof MOD_USER_ID !== 'undefined') {
-    input.value = MOD_USER_ID || '';
-  }
   if (input.dataset.acWired !== '1' && typeof DEPS?.attachUsersAutocomplete === 'function') {
     DEPS.attachUsersAutocomplete(input);
     input.dataset.acWired = '1';

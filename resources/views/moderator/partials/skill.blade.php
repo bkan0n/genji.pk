@@ -42,7 +42,6 @@
                         type="text"
                         autocomplete="off"
                         required
-                        value="{{ (string) (session('user_id') ?? session('discord_user_id') ?? session('discord_id') ?? '') }}"
                         placeholder="Search player or enter user ID…"
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
