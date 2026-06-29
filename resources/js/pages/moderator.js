@@ -913,18 +913,19 @@ function http(method, url, { body, query, headers } = {}) {
     .find((c) => c.startsWith('XSRF-TOKEN='))
     ?.split('=')[1];
 
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const opts = {
     method,
     credentials: 'same-origin',
     headers: {
       Accept: 'application/json',
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       'X-Requested-With': 'XMLHttpRequest',
       ...(CSRF ? { 'X-CSRF-TOKEN': CSRF } : {}),
       ...(xsrfFromCookie ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfFromCookie) } : {}),
       ...headers,
     },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   };
 
   return fetch(url + qs, opts)
