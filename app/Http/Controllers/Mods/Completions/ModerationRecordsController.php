@@ -16,7 +16,7 @@ class ModerationRecordsController extends Controller
             'code' => ['nullable', 'string', 'max:6'],
             'user_id' => ['nullable', 'string', 'regex:/^\d+$/'],
             'verification_status' => ['nullable', 'in:Verified,Unverified,All'],
-            'latest_only' => ['nullable', 'boolean'],
+            'latest_only' => ['nullable', 'in:true,false,1,0'],
             'page_size' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page_number' => ['nullable', 'integer', 'min:1'],
         ]);
