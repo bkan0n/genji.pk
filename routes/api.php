@@ -73,6 +73,7 @@ use App\Http\Controllers\Mods\Playtests\ForceAcceptPlaytestController;
 use App\Http\Controllers\Mods\Playtests\ForceDenyPlaytestController;
 use App\Http\Controllers\Mods\Playtests\ResetPlaytestController;
 use App\Http\Controllers\Mods\Quests\GenerateQuestRotationController;
+use App\Http\Controllers\Mods\Quests\ListQuestsController;
 use App\Http\Controllers\Mods\Quests\GetQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestController;
@@ -452,6 +453,7 @@ Route::prefix('mods')
 
         // QUESTS
         Route::prefix('quests')->group(function () {
+            Route::get('/', ListQuestsController::class);
             Route::post('rotation/generate', GenerateQuestRotationController::class);
             Route::get('config', GetQuestConfigController::class);
             Route::put('config', UpdateQuestConfigController::class);

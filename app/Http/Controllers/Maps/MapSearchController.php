@@ -57,6 +57,7 @@ class MapSearchController extends Controller
             'official' => ['nullable', 'boolean'],
             'force_filters' => ['nullable', 'boolean'],
             'playtest_thread_id' => ['nullable', 'integer'],
+            'map_id' => ['nullable', 'integer'],
             'code' => ['nullable', 'string'],
 
             'category' => ['nullable', 'array'],
@@ -106,7 +107,7 @@ class MapSearchController extends Controller
         }
 
         foreach (
-            ['playtest_thread_id', 'minimum_quality', 'user_id', 'page_size', 'page_number'] as $k
+            ['playtest_thread_id', 'map_id', 'minimum_quality', 'user_id', 'page_size', 'page_number'] as $k
         ) {
             if (isset($validated[$k])) {
                 $query[$k] = (int) $validated[$k];
