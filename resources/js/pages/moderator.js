@@ -268,7 +268,6 @@ const MOD_SECTION_META = {
   devs: {
     kicker: 'Web maintenance',
     summary: 'Danger-zone maintenance tools for caches and converter metadata.',
-    stats: ['Caches', 'Converter', 'Restricted'],
     hints: ['These actions are restricted because they can affect shared site behavior immediately.'],
     cards: [
       { sub: 'dev-cache-frameworks', title: 'Framework cache', desc: 'Clear framework cache.', danger: true },
