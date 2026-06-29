@@ -5,6 +5,7 @@ import { initMapWorkspace } from './moderator/maps-workspace.js';
 import { initContentWorkspace } from './moderator/content-workspace.js';
 import { initContentMapsWorkspace } from './moderator/content-maps-workspace.js';
 import { initRecordsWorkspace } from './moderator/records-workspace.js';
+import { initRecordsManageWorkspace } from './moderator/records-manage-workspace.js';
 import { initVerificationsWorkspace } from './moderator/verifications-workspace.js';
 import { initTournamentWorkspace } from './moderator/tournament-workspace.js';
 import { initSkillWorkspace } from './moderator/skill-workspace.js';
@@ -210,11 +211,11 @@ const MOD_SECTION_META = {
   },
   records: {
     kicker: 'Quality control',
-    summary: 'Review and manage suspicious-completion flags for a single player.',
+    summary: 'Moderate individual completion records and review suspicious-completion flags.',
     hideStats: true,
     hints: [
-      'Search a player to see their suspicious flags.',
-      'Provide exactly one record reference — a message ID or a verification ID.',
+      'Manage records: filter by player and/or map, then moderate time, verification, or suspicious flag.',
+      'Suspicious flags: search a player to review and clear their flags.',
     ],
   },
   verifications: {
@@ -7216,6 +7217,7 @@ function initializeApp() {
   });
   initContentMapsWorkspace({ http, toast, logActivity });
   initRecordsWorkspace({ http, toast, logActivity, wireAutocomplete });
+  initRecordsManageWorkspace({ http, toast, logActivity, wireAutocomplete });
   initVerificationsWorkspace({ http, toast, logActivity, runModeratorEndpointAction, appendOverlay });
   initTournamentWorkspace({
     http,
