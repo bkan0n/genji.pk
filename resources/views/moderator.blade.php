@@ -337,10 +337,6 @@
                 </button>
               </div>
 
-              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
-                Choose a Skill action.
-              </div>
-
               <div data-subpanel="skill-user" class="hidden space-y-6">
                 <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -667,10 +663,6 @@
                 </button>
               </div>
 
-              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
-                Choose a Store action.
-              </div>
-
 
               {{-- Subpanel: Config --}}
               <div data-subpanel="store-config" class="hidden space-y-6">
@@ -789,10 +781,6 @@
                 >
                   User progress
                 </button>
-              </div>
-
-              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
-                Choose a Quests action.
               </div>
 
 
@@ -1640,10 +1628,6 @@
                 >
                   Framework version
                 </button>
-              </div>
-
-              <div class="empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 text-zinc-600 dark:text-zinc-300">
-                Choose a Web action.
               </div>
 
               <div data-subpanel="dev-cache-frameworks" class="hidden space-y-6">

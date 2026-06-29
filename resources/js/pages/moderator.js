@@ -290,95 +290,6 @@ function modSectionMeta(tabId) {
   };
 }
 
-function modSubtabLabel(panel, subId) {
-  const btn = panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
-  return btn?.textContent?.trim() || subId;
-}
-
-function modAvailableCards(panel, meta) {
-  const explicit = Array.isArray(meta.cards) ? meta.cards : [];
-  const cards = explicit
-    .filter((card) => panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(card.sub)}"]`))
-    .map((card) => ({ ...card, title: card.title || modSubtabLabel(panel, card.sub) }));
-
-  if (cards.length) return cards;
-
-  return $$('.mod-subtab[data-subtab]', panel).map((btn) => ({
-    sub: btn.dataset.subtab,
-    title: btn.textContent.trim(),
-    desc: 'Open this tool.',
-  }));
-}
-
-function renderModeratorWorkflowHome(panelOrId) {
-  const panel = typeof panelOrId === 'string'
-    ? document.querySelector(`.mod-panel[data-panel="${CSS.escape(panelOrId)}"]`)
-    : panelOrId;
-  if (!panel) return;
-
-  const tabId = panel.dataset.panel || 'users';
-  const meta = modSectionMeta(tabId);
-  const empty = panel.querySelector(':scope > .empty-state') || panel.querySelector('.empty-state');
-  if (!empty) return;
-
-  const cards = modAvailableCards(panel, meta);
-  const actionCount = panel.querySelectorAll('form[data-action]').length;
-  const subtabCount = panel.querySelectorAll('.mod-subtab[data-subtab]').length;
-  const chips = [
-    `${subtabCount} workflows`,
-    `${actionCount} actions`,
-    ...(meta.stats || []),
-  ];
-
-  empty.dataset.workflowHome = '1';
-  empty.className = 'empty-state rounded-2xl border border-zinc-200/80 dark:border-white/10 p-5 text-zinc-700 dark:text-zinc-200';
-  empty.innerHTML = `
-    <div data-workflow-home>
-      <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div class="min-w-0">
-          <div class="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700 dark:text-emerald-300">${escapeHtml(meta.kicker || 'Workflow')}</div>
-          <h3 class="mt-2 text-xl font-black text-zinc-950 dark:text-white">${escapeHtml(document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId)}</h3>
-          <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-300">${escapeHtml(meta.summary || '')}</p>
-          <div class="mt-3 flex flex-wrap gap-2">
-            ${chips.map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 text-xs font-semibold text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${escapeHtml(chip)}</span>`).join('')}
-          </div>
-        </div>
-        <button type="button" data-workflow-first-action class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200">
-          Open first action
-        </button>
-      </div>
-      <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        ${cards.map((card, index) => `
-          <button
-            type="button"
-            data-workflow-card
-            data-workflow-open-subtab="${escapeHtml(card.sub)}"
-            class="group rounded-2xl border p-4 text-left focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${card.danger ? 'hover:border-amber-500/45' : ''}"
-          >
-            <span class="flex items-start justify-between gap-3">
-              <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${card.danger ? 'bg-amber-500/12 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'} ring-1 ring-inset ring-current/15">${String(index + 1).padStart(2, '0')}</span>
-              <span class="min-w-0 flex-1">
-                <span class="block text-sm font-black text-zinc-950 dark:text-white">${escapeHtml(card.title)}</span>
-                <span class="mt-1 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">${escapeHtml(card.desc || '')}</span>
-              </span>
-            </span>
-          </button>
-        `).join('')}
-      </div>
-      ${(meta.hints || []).length ? `
-        <div class="mt-5 grid gap-2 lg:grid-cols-2">
-          ${(meta.hints || []).map((hint) => `
-            <div class="rounded-xl border border-zinc-200/80 bg-white/50 p-3 text-xs leading-relaxed text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">${escapeHtml(hint)}</div>
-          `).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `;
-
-  const first = empty.querySelector('[data-workflow-card]');
-  empty.querySelector('[data-workflow-first-action]')?.addEventListener('click', () => first?.click());
-}
-
 function refreshModeratorActiveHeader(tabId = document.querySelector('#modTabs .mod-tab.active')?.dataset?.tab || 'users') {
   const meta = modSectionMeta(tabId);
   const label = document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId;
@@ -435,7 +346,6 @@ function enhanceModeratorChrome(root = document) {
   root.querySelectorAll('article.fade-in').forEach((article) => {
     article.classList.add('backdrop-blur', 'transition', 'duration-150');
   });
-  $$('.mod-panel').forEach((panel) => renderModeratorWorkflowHome(panel));
   refreshModeratorActiveHeader();
   updateModeratorActivityStats();
 }
@@ -1110,8 +1020,6 @@ function http(method, url, { body, query, headers } = {}) {
         }
       });
       refreshModeratorActiveHeader(id);
-      const nextPanel = panels.find?.((panel) => panel.dataset.panel === id);
-      if (nextPanel) renderModeratorWorkflowHome(nextPanel);
       setTimeout(() => btn.focus({ preventScroll: true }), 0);
     })
   );
