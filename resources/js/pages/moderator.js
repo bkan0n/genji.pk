@@ -7206,8 +7206,8 @@ function initializeApp() {
   ensureFormUx(document);
   initActivityControls();
   initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete });
-  initLootboxWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete });
-  initLootboxSettings({ http, toast, logActivity });
+  initLootboxWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete, showConfirmDanger });
+  initLootboxSettings({ http, toast, logActivity, showConfirmDanger });
   initMapWorkspace({
     http, toast, logActivity,
     wireAutocomplete, attachMapCodeAutocomplete, attachMapNameAutocomplete, attachUsersAutocomplete,

@@ -1,5 +1,6 @@
 import {
-  $, setView, makeRecentStore, renderRecentChips, wireUserSearch,
+  $, $$, setView, makeRecentStore, renderRecentChips, wireUserSearch,
+  skel, withBusy, httpErrorMessage,
 } from './workspace-shell.js';
 
 const API_MODS = '/api/mods';
@@ -20,11 +21,102 @@ function setText(root, sel, value) {
   if (el) el.textContent = value;
 }
 
+// A compact stat: value on top (bold, tabular), muted label beneath. Used for
+// the keys inventory and the XP summary so both read as scannable numbers, not
+// run-on prose. `dim` greys out zero/empty values so the eye lands on what the
+// user actually has; `size` tunes the value's prominence.
+function statCell(label, value, { dim = false, size = 'text-lg' } = {}) {
+  const tone = dim ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100';
+  return `<div>
+    <div class="${size} font-bold tabular-nums leading-none ${tone}">${esc(String(value))}</div>
+    <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">${esc(label)}</div>
+  </div>`;
+}
+
+// Coerce a value to a finite number, or null if it isn't one.
+function toNum(v) {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(+v)) return +v;
+  return null;
+}
+
+// One tier-progress row: label + target tier on the left, "N XP to go" on the
+// right, and a fill bar showing how far the user's xp has climbed toward `total`.
+function xpProgressRow(label, tierName, xp, total, required) {
+  const reached = xp ?? (total != null ? total - (required ?? 0) : 0);
+  const pct = total > 0 ? Math.min(100, Math.max(0, (reached / total) * 100)) : 0;
+  const right =
+    required != null
+      ? `<span><span class="font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">${esc(required.toLocaleString())}</span> XP to go</span>`
+      : '';
+  const name = tierName
+    ? ` · <span class="font-medium text-zinc-700 dark:text-zinc-200">${esc(tierName)}</span>`
+    : '';
+  return `<div>
+    <div class="flex items-baseline justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <span>${esc(label)}${name}</span>
+      ${right}
+    </div>
+    <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200/70 dark:bg-white/10">
+      <div class="h-full rounded-full bg-emerald-500" style="width:${pct.toFixed(1)}%"></div>
+    </div>
+  </div>`;
+}
+
+// A teaching empty state: what's empty + what to do about it. Dashed, not a card.
+function emptyState(title, hint) {
+  return `<div class="rounded-xl border border-dashed border-zinc-300/70 dark:border-white/10 px-4 py-6 text-center">
+    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">${esc(title)}</p>
+    ${hint ? `<p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">${esc(hint)}</p>` : ''}
+  </div>`;
+}
+
+// Per-section skeletons that mirror each section's loaded shape.
+const keysSkeleton = () =>
+  `<div class="flex flex-wrap gap-x-6 gap-y-3">${`<div class="space-y-1.5">${skel('h-6 w-8')}${skel('h-3 w-12')}</div>`.repeat(5)}</div>`;
+const rowsSkeleton = (n = 4) =>
+  `<ul class="space-y-1">${`<li>${skel('h-8 w-full rounded-lg')}</li>`.repeat(n)}</ul>`;
+const xpSkeleton = () =>
+  `<div class="space-y-3">
+    <div class="flex items-center gap-3">${skel('h-7 w-24 rounded-lg')}${skel('h-5 w-16')}</div>
+    <div class="space-y-2.5">${`<div class="space-y-1.5">${skel('h-3 w-40')}${skel('h-1.5 w-full rounded-full')}</div>`.repeat(2)}</div>
+  </div>`;
+
+// Roving-tabindex + arrow-key navigation for the User/Settings tablist, so the
+// role="tab" markup behaves like a real tablist (the shared handler already
+// switches panels and toggles aria-selected on click).
+function wireTablist(panel) {
+  if (!panel) return;
+  const tabs = $$('.mod-subtab', panel);
+  if (tabs.length < 2) return;
+  const sync = () => tabs.forEach((t) => (t.tabIndex = t.classList.contains('active') ? 0 : -1));
+  sync();
+  panel.addEventListener('click', (e) => {
+    if (e.target.closest('.mod-subtab')) sync();
+  });
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('keydown', (e) => {
+      const last = tabs.length - 1;
+      let j = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = i === last ? 0 : i + 1;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = i === 0 ? last : i - 1;
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = last;
+      if (j === null) return;
+      e.preventDefault();
+      tabs[j].click();
+      tabs[j].focus();
+    });
+  });
+}
+
 export function initLootboxWorkspace(deps) {
   DEPS = deps;
   const root = $('[data-lootbox-workspace]');
   if (!root) return;
   hideAllViews(root);
+
+  wireTablist(document.querySelector('.mod-panel[data-panel="lootbox"]'));
 
   const search = $('[data-lootbox-search]', root);
   wireUserSearch(search, { deps: DEPS, onLoad: (id) => loadUser(root, id) });
@@ -56,11 +148,16 @@ async function loadUser(root, userId) {
   try {
     res = await DEPS.http('GET', `${API_MODS}/users/${encodeURIComponent(userId)}`);
   } catch {
-    return showError(root, 'Network error — try again.');
+    return showError(root, httpErrorMessage(0));
   }
   const { ok, status, url, data } = res;
   DEPS.logActivity({ title: 'Get User (lootbox)', method: 'GET', url, ok, status, data });
-  if (!ok) return showError(root, data?.message || `Lookup failed (${status}).`);
+  if (!ok)
+    return showError(
+      root,
+      data?.message ||
+        httpErrorMessage(status, { noun: 'this user', notFound: 'No user found with that ID.' })
+    );
 
   recent.push({ id: String(data.id), name: data.coalesced_name || String(data.id) });
   renderRecent(root);
@@ -99,28 +196,30 @@ function renderRewardsSection(root, userId) {
       <h3 class="text-sm font-semibold">Rewards owned</h3>
     </div>
     <div class="mt-3 flex flex-wrap gap-2">
-      <select data-lb-rw-type class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">any type</option></select>
-      <select data-lb-rw-rarity class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
+      <select data-lb-rw-type aria-label="Filter rewards by type" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">any type</option></select>
+      <select data-lb-rw-rarity aria-label="Filter rewards by rarity" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
         <option value="">any rarity</option>${RARITIES.map((r) => `<option value="${r}">${r}</option>`).join('')}
       </select>
       <button data-lb-rw-apply type="button" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm">Filter</button>
     </div>
-    <div data-lb-rw-body class="mt-3 text-sm text-zinc-500">Loading rewards…</div>
+    <div data-lb-rw-body class="mt-3 text-sm text-zinc-500">${rowsSkeleton()}</div>
 
     <details class="mt-4 rounded-xl border border-amber-400/40 bg-amber-500/5 p-3">
       <summary class="cursor-pointer text-sm font-semibold text-amber-700 dark:text-amber-400">Debug grant reward (danger)</summary>
       <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Bypasses normal key ownership. Pick a reward from the catalog.</p>
       <div class="mt-3 flex flex-wrap gap-2">
-        ${keySelect('dbg_key_type')}
-        <select data-lb-dbg-reward class="min-w-[16rem] rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">Loading catalog…</option></select>
+        ${keySelect('dbg_key_type', 'Key type for debug grant')}
+        <select data-lb-dbg-reward aria-label="Reward to grant" class="min-w-[16rem] rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">Loading catalog…</option></select>
         <button data-lb-dbg-grant type="button" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Grant reward</button>
       </div>
     </details>
   </div>`;
 
-  $('[data-lb-rw-apply]', mount).onclick = () => refreshRewards(root, userId, mount);
+  $('[data-lb-rw-apply]', mount).onclick = (e) =>
+    withBusy(e.currentTarget, () => refreshRewards(root, userId, mount));
   populateRewardControls(mount);
-  $('[data-lb-dbg-grant]', mount).onclick = () => debugGrant(root, userId, mount);
+  $('[data-lb-dbg-grant]', mount).onclick = (e) =>
+    withBusy(e.currentTarget, () => debugGrant(root, userId, mount));
   refreshRewards(root, userId, mount);
 }
 
@@ -144,7 +243,7 @@ async function populateRewardControls(mount) {
 async function refreshRewards(root, userId, mount) {
   const body = $('[data-lb-rw-body]', mount);
   if (!body) return;
-  body.textContent = 'Loading rewards…';
+  body.innerHTML = rowsSkeleton();
   const query = {};
   const type = $('[data-lb-rw-type]', mount).value.trim();
   const rarity = $('[data-lb-rw-rarity]', mount).value.trim();
@@ -155,18 +254,22 @@ async function refreshRewards(root, userId, mount) {
   try {
     res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/rewards`, { query });
   } catch {
-    body.textContent = 'Rewards unavailable (network).';
+    body.textContent = httpErrorMessage(0);
     return;
   }
   const { ok, status, url, data } = res;
   DEPS.logActivity({ title: 'Get user rewards', method: 'GET', url, ok, status, data });
   if (!ok) {
-    body.textContent = `Rewards unavailable (${status}).`;
+    body.textContent = httpErrorMessage(status, { noun: 'rewards' });
     return;
   }
   const list = Array.isArray(data) ? data : Array.isArray(data?.rewards) ? data.rewards : [];
   if (!list.length) {
-    body.textContent = 'No rewards.';
+    const filtered = !!(type || rarity);
+    body.innerHTML = emptyState(
+      filtered ? 'No rewards match these filters.' : 'No rewards owned yet.',
+      filtered ? 'Clear the filters to see everything this user owns.' : 'Use Debug grant below to add one.'
+    );
     return;
   }
   body.innerHTML = `<ul class="space-y-1">${list
@@ -185,12 +288,13 @@ async function debugGrant(root, userId, mount) {
   if (!combo) return DEPS.toast('Pick a reward from the catalog', 'warn');
   const [reward_type, reward_name] = combo.split('::');
   if (!reward_type || !reward_name) return DEPS.toast('Invalid reward selection', 'warn');
-  if (
-    !confirm(
-      `Debug-grant "${reward_name}" (${reward_type}, ${keyType}) to user ${userId}? This bypasses key ownership.`
-    )
-  )
-    return;
+  const confirmed = await DEPS.showConfirmDanger({
+    title: 'Debug grant reward',
+    message: `Grant "${esc(reward_name)}" (${esc(reward_type)}, ${esc(keyType)}) to user ${esc(userId)}?\n\nThis bypasses normal key ownership.`,
+    confirm: 'Grant reward',
+    cancel: 'Cancel',
+  });
+  if (!confirmed) return;
 
   const path = `${API_MODS}/lootbox/users/debug/${encodeURIComponent(userId)}/${encodeURIComponent(keyType)}/${encodeURIComponent(reward_type)}/${encodeURIComponent(reward_name)}`;
   const { ok, status, url, data } = await DEPS.http('POST', path);
@@ -221,11 +325,12 @@ function renderXpSection(root, userId) {
       <input data-lb-xp-mult type="checkbox" class="h-4 w-4 accent-emerald-500" /> Apply XP multiplier
     </label>
     <div class="mt-3">
-      <button data-lb-grant-xp type="button" class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">Grant XP</button>
+      <button data-lb-grant-xp type="button" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50">Grant XP</button>
     </div>
   </div>`;
 
-  $('[data-lb-grant-xp]', mount).onclick = () => grantXp(root, userId, mount);
+  $('[data-lb-grant-xp]', mount).onclick = (e) =>
+    withBusy(e.currentTarget, () => grantXp(root, userId, mount));
 }
 
 async function grantXp(root, userId, mount) {
@@ -253,8 +358,8 @@ async function grantXp(root, userId, mount) {
   if (ok) loadXpSummary(root, userId);
 }
 
-function keySelect(name) {
-  return `<select name="${name}" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none">
+function keySelect(name, label = 'Key type') {
+  return `<select name="${name}" aria-label="${esc(label)}" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none">
     ${KEY_TYPES.map((k) => `<option value="${k}">${k}</option>`).join('')}
   </select>`;
 }
@@ -264,15 +369,15 @@ async function loadKeys(root, userId) {
   if (!mount) return;
   mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
     <h3 class="text-sm font-semibold">Keys inventory</h3>
-    <div data-lb-keys-body class="mt-3 text-sm text-zinc-500">Loading keys…</div>
+    <div data-lb-keys-body class="mt-3 text-sm text-zinc-500">${keysSkeleton()}</div>
     <div class="mt-3 flex flex-wrap items-end gap-2">
-      ${keySelect('key_type')}
-      <button data-lb-grant-key type="button" class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">Grant key</button>
+      ${keySelect('key_type', 'Key type to grant')}
+      <button data-lb-grant-key type="button" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50">Grant key</button>
     </div>
   </div>`;
 
-  $('[data-lb-grant-key]', mount).onclick = () =>
-    grantKey(root, userId, $('select[name="key_type"]', mount).value);
+  $('[data-lb-grant-key]', mount).onclick = (e) =>
+    withBusy(e.currentTarget, () => grantKey(root, userId, $('select[name="key_type"]', mount).value));
   await refreshKeys(root, userId);
 }
 
@@ -283,13 +388,13 @@ async function refreshKeys(root, userId) {
   try {
     res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/keys`);
   } catch {
-    body.textContent = 'Keys unavailable (network).';
+    body.textContent = httpErrorMessage(0);
     return;
   }
   const { ok, status, url, data } = res;
   DEPS.logActivity({ title: 'Get user keys', method: 'GET', url, ok, status, data });
   if (!ok) {
-    body.textContent = `Keys unavailable (${status}).`;
+    body.textContent = httpErrorMessage(status, { noun: 'the key inventory' });
     return;
   }
   // Accept either a {Classic: n, ...} map or an array of {key_type,count}-ish.
@@ -302,8 +407,11 @@ async function refreshKeys(root, userId) {
   } else if (data && typeof data === 'object') {
     for (const [k, v] of Object.entries(data)) if (typeof v !== 'object') counts[k] = Number(v) || 0;
   }
-  const shown = KEY_TYPES.map((k) => `${k} ${counts[k] ?? 0}`).join(' · ');
-  body.textContent = shown || 'No keys.';
+  // Always show all key types — a dimmed 0 is more useful to a moderator than a
+  // collapsed "No keys.", and keeps the inventory's shape constant between users.
+  body.innerHTML = `<div class="flex flex-wrap gap-x-6 gap-y-3">${KEY_TYPES.map(
+    (k) => statCell(k, counts[k] ?? 0, { dim: !(counts[k] > 0) })
+  ).join('')}</div>`;
 }
 
 async function grantKey(root, userId, keyType) {
@@ -331,29 +439,78 @@ function renderIdentity(root, user) {
 
 async function loadXpSummary(root, userId) {
   const box = $('[data-lb-xp-summary]', root);
-  if (box) box.textContent = 'Loading XP…';
+  if (box) box.innerHTML = xpSkeleton();
   let res;
   try {
     res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/xp-summary`);
   } catch {
-    if (box) box.textContent = 'XP summary unavailable (network).';
+    if (box) box.textContent = httpErrorMessage(0);
     return;
   }
   const { ok, status, url, data } = res;
   DEPS.logActivity({ title: 'XP summary', method: 'GET', url, ok, status, data });
   if (!ok || !data || typeof data !== 'object') {
-    if (box) box.textContent = `XP summary unavailable (${status}).`;
+    if (box) box.textContent = httpErrorMessage(status, { noun: 'the XP summary' });
     return;
   }
-  // Render defensively: show present primitive fields only, as wrapping chips.
-  const pairs = Object.entries(data).filter(([, v]) => v !== null && typeof v !== 'object');
-  if (box)
+  if (!box) return;
+
+  // The v3 xp-summary is a tier-progression object. Render the story a moderator
+  // actually needs — current standing + progress toward the next sub/main tier —
+  // and drop the redundant fields: raw_tier / normalized_tier are internals, and
+  // the split main/sub names are already encoded in the full tier name. Unknown
+  // shapes degrade to a generic field strip so a payload change never blanks out.
+  const xp = toNum(data.xp);
+  const prestige = toNum(data.prestige_level);
+  const fullTier =
+    data.current_full_tier_name ||
+    [data.current_main_tier_name, data.current_sub_tier_name].filter(Boolean).join(' ') ||
+    null;
+  const subName =
+    data.next_full_tier_name ||
+    [data.next_main_tier_name, data.next_sub_tier_name].filter(Boolean).join(' ') ||
+    null;
+  const mainName = data.next_main_tier_name || null;
+  const subTotal = toNum(data.next_sub_tier_xp_total);
+  const subReq = toNum(data.next_sub_tier_xp_required);
+  const mainTotal = toNum(data.next_main_tier_xp_total);
+  const mainReq = toNum(data.next_main_tier_xp_required);
+
+  if (!(fullTier != null || xp != null || subTotal != null || mainTotal != null)) {
+    const pairs = Object.entries(data).filter(([, v]) => v !== null && typeof v !== 'object');
     box.innerHTML = pairs.length
-      ? `<div class="flex flex-wrap gap-x-4 gap-y-1">${pairs
-          .map(
-            ([k, v]) =>
-              `<span class="whitespace-nowrap"><span class="text-zinc-400">${esc(k.replace(/_/g, ' '))}:</span> <span class="font-semibold">${esc(String(v))}</span></span>`
+      ? `<div class="flex flex-wrap gap-x-5 gap-y-2">${pairs
+          .map(([k, v]) =>
+            statCell(k.replace(/_/g, ' '), toNum(v) != null ? toNum(v).toLocaleString() : String(v), {
+              size: 'text-base',
+            })
           )
           .join('')}</div>`
       : 'No XP summary fields returned.';
+    return;
+  }
+
+  const standing = [];
+  if (fullTier)
+    standing.push(
+      `<span class="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">${esc(fullTier)}</span>`
+    );
+  if (xp != null)
+    standing.push(
+      `<span class="text-sm"><span class="font-bold tabular-nums text-zinc-900 dark:text-zinc-100">${esc(xp.toLocaleString())}</span> <span class="text-zinc-500 dark:text-zinc-400">XP</span></span>`
+    );
+  if (prestige != null)
+    standing.push(
+      `<span class="text-sm text-zinc-500 dark:text-zinc-400">Prestige <span class="font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">${esc(prestige.toLocaleString())}</span></span>`
+    );
+
+  const bars = [];
+  if (subName || subTotal != null) bars.push(xpProgressRow('Next sub tier', subName, xp, subTotal, subReq));
+  if (mainName || mainTotal != null)
+    bars.push(xpProgressRow('Next main tier', mainName, xp, mainTotal, mainReq));
+
+  box.innerHTML = `<div class="space-y-3">
+    ${standing.length ? `<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">${standing.join('')}</div>` : ''}
+    ${bars.length ? `<div class="space-y-2.5">${bars.join('')}</div>` : ''}
+  </div>`;
 }
