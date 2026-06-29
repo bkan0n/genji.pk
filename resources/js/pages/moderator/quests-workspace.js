@@ -156,6 +156,36 @@ async function onSaveConfig(e) {
 
 async function loadGlobalQuests() {}
 
+function renderRotationCard() {
+  const sp = subpanel('quest-rotation');
+  if (!sp) return;
+  sp.innerHTML = `
+    <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="font-semibold">Generate quest rotation</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Forces a new rotation, replacing the current weekly set for all users.</p>
+        </div>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /mods/quests/rotation/generate</span>
+      </div>
+      <button type="button" data-quest-generate class="cursor-pointer rounded-xl bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700">Generate new rotation</button>
+    </article>`;
+  sp.querySelector('[data-quest-generate]').onclick = onGenerateRotation;
+}
+
+async function onGenerateRotation() {
+  if (!DEPS.isDevAllowed()) return DEPS.toast('Dev access only', 'err');
+  const ok = await DEPS.showConfirmDanger({
+    title: 'Generate quest rotation',
+    message: 'Force a new quest rotation now? This replaces the current weekly set for everyone.',
+    confirm: 'Generate', cancel: 'Cancel',
+  });
+  if (!ok) return;
+  const res = await DEPS.http('POST', `${API_MODS}/quests/rotation/generate`, { body: {} });
+  DEPS.logActivity({ title: 'Generate quest rotation (POST)', method: 'POST', url: res.url || `${API_MODS}/quests/rotation/generate`, ok: res.ok, status: res.status, data: res.data });
+  DEPS.toast(res.ok ? 'Quest rotation generated' : 'Rotation failed', res.ok ? 'ok' : 'err');
+}
+
 // Build a <select> with options. `current` is preselected; `placeholder` adds a
 // leading blank option when truthy.
 function buildSelect(name, options, current, { placeholder = '' } = {}) {
@@ -314,4 +344,5 @@ export function initQuestsWorkspace(deps) {
   // Deep-link / already-visible panel: auto-load the first sub-tab's data.
   const panel = document.querySelector('.mod-panel[data-panel="quests"]');
   if (panel && !panel.classList.contains('hidden')) onSubtabEnter('quest-config');
+  renderRotationCard();
 }
