@@ -50,6 +50,7 @@
                     <button type="submit" class="rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Get summary</button>
                     <button type="submit" data-submit-action="skill-user-breakdown" class="rounded-xl border border-zinc-200/80 bg-zinc-100 px-4 py-2 font-semibold text-zinc-900 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10">Get breakdown</button>
                   </form>
+                  <div data-skill-recent class="flex flex-wrap gap-2"></div>
                   <div data-skill-user-result class="rounded-2xl border border-dashed border-zinc-300/80 p-5 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">
                     Load a player to inspect their Skill Score.
                   </div>

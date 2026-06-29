@@ -255,7 +255,6 @@ const MOD_SECTION_META = {
   quests: {
     kicker: 'Quests',
     summary: 'Manage quest config, the global quest pool, user quest progress, and rotation.',
-    stats: ['Config', 'Global quests', 'User quests', 'Rotation'],
     hints: [
       'Config and Global quests load automatically when you open them.',
       'User quests load after you pick a user; editing opens a side panel.',

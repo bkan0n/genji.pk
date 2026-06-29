@@ -1,9 +1,22 @@
-import { $, $$ } from './workspace-shell.js';
+import { $, $$, makeRecentStore, renderRecentChips } from './workspace-shell.js';
 
 let DEPS = null;
 const ROOT = () => $('[data-skill-workspace]');
 
 const API_MODS = '/api/mods';
+
+const recent = makeRecentStore('mod.skill.recent');
+// The display name already stored for a player (the "(aka)" label captured at
+// pick time), so re-loads via chip click don't downgrade it to a plain id.
+const recentName = (id) => {
+  const hit = recent.get().find((r) => r.id === String(id));
+  return hit && hit.name && hit.name !== String(id) ? hit.name : '';
+};
+// After a pick the input shows the label; a bare numeric id is not a name.
+const skillNameGuess = (input) => {
+  const v = (input?.value || '').trim();
+  return v && !/^\d+$/.test(v) ? v : '';
+};
 
 // Signed-in moderator id, used to pre-fill the player-score lookup.
 // (Same derivation as verifications-workspace.js.)
@@ -616,6 +629,29 @@ function initSkillUserPanel() {
     DEPS.attachUsersAutocomplete(input);
     input.dataset.acWired = '1';
   }
+  renderSkillRecent(panel);
+}
+
+// Render recent-player chips under the search; clicking one re-loads its summary.
+function renderSkillRecent(panel) {
+  const root = panel || document.querySelector('[data-subpanel="skill-user"]');
+  const wrap = root?.querySelector('[data-skill-recent]');
+  const form = root?.querySelector('form[data-action="skill-user-summary"]');
+  const input = form?.querySelector('input[name="user_id"]');
+  if (!wrap || !form || !input) return;
+  renderRecentChips(wrap, recent, (id) => {
+    input.value = recentName(id) || String(id);
+    input.dataset.uid = String(id);
+    handleSkillUserSummary(form);
+  });
+}
+
+// Record the just-loaded player so they show up as a recent chip. Prefers the
+// picked "(aka)" label, falling back to a previously stored label, then the id.
+function rememberSkillUser(form, userId) {
+  const input = form?.querySelector('input[name="user_id"]');
+  recent.push({ id: String(userId), name: skillNameGuess(input) || recentName(userId) || String(userId) });
+  renderSkillRecent(form?.closest?.('[data-subpanel="skill-user"]'));
 }
 
 function initSkillConfigPanel() {
@@ -759,6 +795,7 @@ async function handleSkillUserSummary(form) {
   }
 
   renderSkillUserSummary(form, res.data);
+  rememberSkillUser(form, userId);
   DEPS.toast('Skill Score loaded', 'ok');
 }
 
@@ -785,6 +822,7 @@ async function handleSkillUserBreakdown(form) {
   }
 
   renderSkillUserBreakdown(form, res.data);
+  rememberSkillUser(form, userId);
   DEPS.toast('Skill breakdown loaded', 'ok');
 }
 

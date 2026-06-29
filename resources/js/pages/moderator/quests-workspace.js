@@ -1,9 +1,17 @@
-import { $, $$ } from './workspace-shell.js';
+import { $, $$, makeRecentStore, renderRecentChips } from './workspace-shell.js';
 import { openModal, primaryButton, ghostButton, setButtonBusy } from './modal-shell.js';
 
 let DEPS = null;
 const ROOT = () => $('[data-quests-workspace]');
 const API_MODS = '/api/mods';
+
+const recent = makeRecentStore('mod.quests.recent');
+// The display name already stored for a user (the "(aka)" label captured at pick
+// time), so re-loads via chip click or save don't downgrade it to a plain name.
+const recentName = (id) => {
+  const hit = recent.get().find((r) => r.id === String(id));
+  return hit && hit.name && hit.name !== String(id) ? hit.name : '';
+};
 
 const REWARD_TIERS = ['easy', 'medium', 'hard'];
 const REQ_DIFFICULTIES = ['any', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Hell'];
@@ -545,18 +553,30 @@ function renderUserPanel() {
       <label class="text-sm relative block max-w-md">User
         <input data-user-search type="text" autocomplete="off" placeholder="Search username…"
           class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+      <div data-user-recent class="flex flex-wrap gap-2"></div>
       <div data-user-quests class="space-y-3"></div>
     </article>`;
+  renderRecent();
   const search = sp.querySelector('[data-user-search]');
   if (DEPS.wireAutocomplete && search) {
-    DEPS.wireAutocomplete(search, { kind: 'users', onPick: ({ id }) => { if (id) loadUserQuests(String(id)); } });
+    // Capture the picked label ("name (aka nickname)") for the recent chips.
+    DEPS.wireAutocomplete(search, { kind: 'users', onPick: ({ id, label }) => { if (id) loadUserQuests(String(id), label); } });
     search.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
       const id = String(search.dataset.uid || '').match(/\d{5,}/)?.[0];
-      if (id) loadUserQuests(id); else DEPS.toast('Pick a user', 'warn');
+      if (!id) { DEPS.toast('Pick a user', 'warn'); return; }
+      // After a pick the input shows the label; pass it so the chip matches.
+      const v = (search.value || '').trim();
+      loadUserQuests(id, /^\d+$/.test(v) ? '' : v);
     });
   }
+}
+
+function renderRecent() {
+  const sp = subpanel('quest-user');
+  if (!sp) return;
+  renderRecentChips(sp.querySelector('[data-user-recent]'), recent, (id) => loadUserQuests(String(id)));
 }
 
 function instProgressText(p = {}) {
@@ -608,7 +628,7 @@ function normalizeInstances(data) {
   }).filter(Boolean);
 }
 
-async function loadUserQuests(userId) {
+async function loadUserQuests(userId, displayName = '') {
   USER_ID = String(userId);
   const host = subpanel('quest-user').querySelector('[data-user-quests]');
   if (host) host.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">Loading quests…</p>`;
@@ -616,6 +636,10 @@ async function loadUserQuests(userId) {
   DEPS.logActivity({ title: 'User quests (GET)', method: 'GET', url: res.url || `/api/quests?user_id=${USER_ID}`, ok: res.ok, status: res.status, data: res.data });
   if (!res.ok) { if (host) host.innerHTML = `<p class="text-sm text-rose-500">Failed to load.</p>`; DEPS.toast('Load failed', 'err'); return; }
   USER_QUESTS = normalizeInstances(res.data);
+  // The quests endpoint returns no user name, so the picked label is the only
+  // display source; fall back to a previously stored label (chip click / save).
+  recent.push({ id: USER_ID, name: displayName || recentName(USER_ID) || USER_ID });
+  renderRecent();
   renderUserQuestCards();
 }
 

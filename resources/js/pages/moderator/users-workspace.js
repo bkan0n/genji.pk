@@ -8,6 +8,13 @@ let DEPS = null;
 const recent = makeRecentStore('mod.users.recent');
 let CURRENT = null; // loaded user object
 
+// The display name already stored for a user (the "(aka)" label captured at pick
+// time), so re-loads via chip click or save don't downgrade it to a plain name.
+const recentName = (id) => {
+  const hit = recent.get().find((r) => r.id === String(id));
+  return hit && hit.name && hit.name !== String(id) ? hit.name : '';
+};
+
 export function initUsersWorkspace(deps) {
   DEPS = deps;
   const root = $('[data-users-workspace]');
@@ -17,12 +24,12 @@ export function initUsersWorkspace(deps) {
   const search = $('[data-users-search]', root);
   // On pick, wireAutocomplete sets input.value to the name and stores the real
   // id in dataset.uid; auto-load on pick, and prefer dataset.uid on Enter.
-  wireUserSearch(search, { deps: DEPS, onLoad: (id) => loadUser(root, id) });
+  wireUserSearch(search, { deps: DEPS, onLoad: (id, name) => loadUser(root, id, name) });
   renderRecent(root);
   bindCreateFake();
 }
 
-async function loadUser(root, userId) {
+async function loadUser(root, userId, displayName = '') {
   setView(root, 'loading');
   let res;
   try {
@@ -36,7 +43,10 @@ async function loadUser(root, userId) {
     return showError(root, data?.message || `Lookup failed (${status}).`);
   }
   CURRENT = data;
-  recent.push({ id: String(data.id), name: data.coalesced_name || String(data.id) });
+  recent.push({
+    id: String(data.id),
+    name: displayName || recentName(String(data.id)) || data.coalesced_name || String(data.id),
+  });
   renderRecent(root);
   renderProfile(root, data);
   setView(root, 'loaded');

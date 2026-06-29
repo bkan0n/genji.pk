@@ -40,14 +40,17 @@ export function makeRecentStore(storageKey, max = 8) {
     list.unshift(clean);
     localStorage.setItem(storageKey, JSON.stringify(list.slice(0, max)));
   };
-  return { get, push };
+  const clear = () => localStorage.removeItem(storageKey);
+  return { get, push, clear };
 }
 
-// Render recent-lookup chips into `wrap`, calling onPick(id) on click.
+// Render recent-lookup chips into `wrap`, calling onPick(id) on click. When any
+// chips exist, a trailing "Clear" button empties the store and re-renders.
 export function renderRecentChips(wrap, store, onPick) {
   if (!wrap) return;
   wrap.innerHTML = '';
-  for (const r of store.get()) {
+  const entries = store.get();
+  for (const r of entries) {
     if (!r || !r.id) continue;
     const label = r.name && r.name !== 'undefined' ? r.name : String(r.id);
     const btn = document.createElement('button');
@@ -58,6 +61,18 @@ export function renderRecentChips(wrap, store, onPick) {
     btn.onclick = () => onPick(r.id);
     wrap.appendChild(btn);
   }
+  if (entries.some((r) => r && r.id)) {
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className =
+      'rounded-full px-3 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200';
+    clear.textContent = 'Clear';
+    clear.onclick = () => {
+      store.clear();
+      renderRecentChips(wrap, store, onPick);
+    };
+    wrap.appendChild(clear);
+  }
 }
 
 // Wire a search input: autocomplete pick auto-loads; Enter loads by id.
@@ -66,8 +81,10 @@ export function wireUserSearch(input, { deps, onLoad }) {
   if (!input) return;
   deps.wireAutocomplete(input, {
     kind: 'users',
-    onPick: ({ id }) => {
-      if (id) onLoad(String(id));
+    // Forward the picked label ("name (aka nickname)") so callers can store it
+    // for recent-chip display, matching what the dropdown shows.
+    onPick: ({ id, label }) => {
+      if (id) onLoad(String(id), label);
     },
   });
   input.addEventListener('keydown', (e) => {

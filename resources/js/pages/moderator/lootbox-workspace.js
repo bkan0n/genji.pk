@@ -12,6 +12,13 @@ const recent = makeRecentStore('mod.lootbox.recent');
 let DEPS = null;
 let CURRENT_ID = null;
 
+// The display name already stored for a user (the "(aka)" label captured at pick
+// time), so re-loads via chip click don't downgrade it to a plain name.
+const recentName = (id) => {
+  const hit = recent.get().find((r) => r.id === String(id));
+  return hit && hit.name && hit.name !== String(id) ? hit.name : '';
+};
+
 const esc = (s = '') =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -117,7 +124,7 @@ export function initLootboxWorkspace(deps) {
   wireTablist(document.querySelector('.mod-panel[data-panel="lootbox"]'));
 
   const search = $('[data-lootbox-search]', root);
-  wireUserSearch(search, { deps: DEPS, onLoad: (id) => loadUser(root, id) });
+  wireUserSearch(search, { deps: DEPS, onLoad: (id, name) => loadUser(root, id, name) });
   renderRecent(root);
 }
 
@@ -139,7 +146,7 @@ function showError(root, message) {
   DEPS.toast('Lookup failed', 'err');
 }
 
-async function loadUser(root, userId) {
+async function loadUser(root, userId, displayName = '') {
   setView(root, 'loading');
   CURRENT_ID = String(userId);
   let res;
@@ -157,7 +164,10 @@ async function loadUser(root, userId) {
         httpErrorMessage(status, { noun: 'this user', notFound: 'No user found with that ID.' })
     );
 
-  recent.push({ id: String(data.id), name: data.coalesced_name || String(data.id) });
+  recent.push({
+    id: String(data.id),
+    name: displayName || recentName(String(data.id)) || data.coalesced_name || String(data.id),
+  });
   renderRecent(root);
   renderIdentity(root, data);
   loadXpSummary(root, String(data.id));
