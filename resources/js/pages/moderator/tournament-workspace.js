@@ -314,28 +314,7 @@ function renderEditionStrip(root, { edition, config, cycles }) {
       </div>`;
   }
 
-  // Debug tools — hidden in production (the API itself returns 403 in prod).
-  let debug = '';
-  if (!tournamentIsProdEnv(root)) {
-    const current = config?.debug_cycle_seconds;
-    debug = `
-      <details class="group mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 dark:border-amber-400/15">
-        <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-amber-700 marker:hidden dark:text-amber-300 [&::-webkit-details-marker]:hidden">
-          <svg class="h-4 w-4 shrink-0 text-amber-500 transition-transform group-open:rotate-90 dark:text-amber-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Debug tools (non-production only)</span>
-        </summary>
-        <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Override the cycle length to speed up testing. Current override: <strong>${current != null ? `${tournamentEscape(current)}s` : 'none'}</strong>.</p>
-        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input data-tournament-debug-seconds type="number" min="1" step="1" placeholder="seconds" value="${current != null ? tournamentEscape(current) : ''}" class="min-w-0 flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500/60 focus:outline-none" />
-          <button type="button" data-tournament-lc-action="debug-set" class="cursor-pointer rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">Set</button>
-          <button type="button" data-tournament-lc-action="debug-clear" class="cursor-pointer rounded-xl border border-zinc-200/80 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Clear override</button>
-        </div>
-      </details>`;
-  }
-
-  panel.innerHTML = body + debug;
+  panel.innerHTML = body;
 
   // Live countdown for the active edition.
   const countdownEl = panel.querySelector('[data-tournament-countdown]');
@@ -650,8 +629,6 @@ function wireEditionActions(root) {
       publish: () => tournamentPublishResults(root),
       pause: () => tournamentSetPaused(root, true),
       resume: () => tournamentSetPaused(root, false),
-      'debug-set': () => tournamentSetDebugCycle(root, btn, { clear: false }),
-      'debug-clear': () => tournamentSetDebugCycle(root, btn, { clear: true }),
     };
     const handler = handlers[action];
     // DEPS.http rejects on network failure; surface a toast + log so a thrown
@@ -722,29 +699,6 @@ async function tournamentPublishResults(root) {
   else DEPS.toast('Failed to publish results', 'err');
 
   // Always re-sync: even on 409 the server state may have moved.
-  await loadStatus(root, { force: true });
-}
-
-async function tournamentSetDebugCycle(root, btn, { clear = false } = {}) {
-  const strip = btn.closest('[data-tournament-edition-strip]') || root;
-  const input = strip.querySelector('[data-tournament-debug-seconds]');
-  let seconds = null;
-  if (!clear) {
-    const raw = String(input?.value || '').trim();
-    if (!raw) return DEPS.toast('Enter a number of seconds (or use Clear override)', 'warn');
-    seconds = Number(raw);
-    if (!Number.isInteger(seconds) || seconds < 1) return DEPS.toast('Invalid seconds', 'warn');
-  }
-
-  const url = `${API_MODS}/debug-cycle-length`;
-  const res = await DEPS.http('PATCH', url, { body: { seconds } });
-  DEPS.logActivity({ title: 'Tournament Debug Cycle Length (PATCH)', method: 'PATCH', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
-
-  if (res.ok) DEPS.toast(clear ? 'Debug override cleared' : 'Debug cycle length set', 'ok');
-  else if (res.status === 403) DEPS.toast('Debug cycle length is disabled in production', 'warn');
-  else DEPS.toast('Failed to update debug cycle length', 'err');
-
-  // Always re-sync: even on 403 the server state may have moved.
   await loadStatus(root, { force: true });
 }
 
@@ -1883,8 +1837,8 @@ async function handleSetupConfigSave(root, form) {
   }
 }
 
-// PATCH {API_MODS}/debug-cycle-length (ports tournamentSetDebugCycle). Non-prod
-// only — the control is gated in the markup, and the API returns 403 in prod.
+// PATCH {API_MODS}/debug-cycle-length. Non-prod only — the control is gated in
+// the markup (Config sub-tab), and the API returns 403 in prod.
 async function tournamentSetupSetDebugCycle(root, btn, { clear = false } = {}) {
   const card = btn.closest('article') || ROOT();
   const input = card?.querySelector('[data-tournament-setup-debug-seconds]');
