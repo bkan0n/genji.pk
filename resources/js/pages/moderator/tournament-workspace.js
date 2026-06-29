@@ -4,7 +4,7 @@ let DEPS = null;
 const ROOT = () => $('[data-tournament-workspace]');
 
 // Loaded-once flags; Refresh forces reload.
-const loaded = { status: false, setup: false };
+const loaded = { status: false, setup: false, config: false };
 
 const API = '/api/tournaments';
 const API_MODS = '/api/mods/tournaments';
@@ -31,6 +31,7 @@ export function initTournamentWorkspace(deps) {
   wireEditionActions(root);
   wireCategoryActions(root);
   wireStreakLookup(root);
+  wireConfig(root);
 }
 
 function wireSubtabLoading(root) {
@@ -43,6 +44,7 @@ function wireSubtabLoading(root) {
     if (name !== 'tournament-status') clearTournamentCountdown();
     if (name === 'tournament-status') loadStatus(root, { force: false });
     if (name === 'tournament-setup') loadSetup(root, { force: false });
+    if (name === 'tournament-config') loadConfig(root, { force: false });
     // 'tournament-utility' needs no data loading: the streak lookup is read-only
     // and on-demand (bound once via wireStreakLookup). The generic sub-tab
     // switcher shows the panel; nothing to preload here.
@@ -1180,6 +1182,9 @@ let lockedSetupCategories = new Set();
 // exactly once, even though its innerHTML is replaced on each loadSetup.
 let setupWired = false;
 
+// Same one-time guard for the config-mount delegation (lives in its own mount).
+let configWired = false;
+
 const isDigits = (s) => /^\d+$/.test(String(s || ''));
 
 function readJsonField(raw) {
@@ -1623,10 +1628,10 @@ function tournamentXpSummaryRows(rows, keyA) {
 // ===== Setup sub-tab: global config card + gated debug cycle length =====
 //
 // Ports the old inline tournament global-config form + debug-cycle-length control
-// from moderator.js into the Setup mount, appended after the categories section.
-// Reads via GET {API}/config, saves via PATCH {API_MODS}/config, and (in non-prod
-// only) overrides the cycle length via PATCH {API_MODS}/debug-cycle-length. All
-// wiring runs through the single setupWired delegation on the stable mount node.
+// from moderator.js into the dedicated Config mount. Reads via GET {API}/config,
+// saves via PATCH {API_MODS}/config, and (in non-prod only) overrides the cycle
+// length via PATCH {API_MODS}/debug-cycle-length. All wiring runs through the
+// single configWired delegation on the stable config mount node.
 
 const SETUP_CONFIG_FIELDS = ['blacklist_weeks', 'cadence', 'anchor_weekday', 'anchor_time', 'anchor_tz'];
 
@@ -1786,7 +1791,7 @@ async function handleSetupConfigSave(root, form) {
   if (res.ok) {
     DEPS.toast('Config saved', 'ok');
     loaded.status = false;
-    await loadSetup(root, { force: true });
+    await loadConfig(root, { force: true });
   } else if (res.status === 422) {
     DEPS.toast(tournamentBootstrapError(res.data) || 'Validation failed', 'err');
   } else {
@@ -1817,7 +1822,7 @@ async function tournamentSetupSetDebugCycle(root, btn, { clear = false } = {}) {
 
   // Always re-sync: even on 403 the server state may have moved.
   loaded.status = false;
-  await loadSetup(root, { force: true });
+  await loadConfig(root, { force: true });
 }
 
 // ----- render + handlers -----
@@ -1833,17 +1838,13 @@ async function loadSetup(root, { force }) {
 
   let categories;
   let locked;
-  let config = null;
   try {
     const url = `${API}/categories`;
-    const configUrl = `${API}/config`;
-    const [catRes, lockSet, configRes] = await Promise.all([
+    const [catRes, lockSet] = await Promise.all([
       DEPS.http('GET', url),
       fetchLockedSetupCategories(),
-      DEPS.http('GET', configUrl),
     ]);
     DEPS.logActivity({ title: 'Tournament Categories (GET)', method: 'GET', url: catRes.url || url, ok: catRes.ok, status: catRes.status, data: catRes.data });
-    DEPS.logActivity({ title: 'Tournament Config (GET)', method: 'GET', url: configRes.url || configUrl, ok: configRes.ok, status: configRes.status, data: configRes.data });
     if (!catRes.ok) {
       loaded.setup = false;
       mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament categories.</div>';
@@ -1852,8 +1853,6 @@ async function loadSetup(root, { force }) {
     }
     categories = normalizeCategories(catRes.data);
     locked = lockSet;
-    config = configRes.ok && configRes.data && typeof configRes.data === 'object' ? configRes.data : null;
-    if (!configRes.ok) DEPS.toast('Failed to load tournament config', 'err');
   } catch (err) {
     loaded.setup = false;
     DEPS.logActivity({ title: 'Tournament Setup load error', method: 'ERROR', url: `${API}/categories`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
@@ -1873,8 +1872,7 @@ async function loadSetup(root, { force }) {
     <section class="space-y-3">
       <h3 class="font-semibold">Categories</h3>
       <div class="grid gap-3">${list}</div>
-    </section>
-    ${setupConfigCardHtml(root, config)}`;
+    </section>`;
 
   // Stash full category objects for inline-edit pre-fill (avoids re-fetch).
   mount._setupCategories = new Map(categories.map((c) => [String(c.id), c]));
@@ -1883,12 +1881,86 @@ async function loadSetup(root, { force }) {
   const createForm = mount.querySelector('form[data-action="tournament-category-create"]');
   if (createForm) initTournamentXpRepeaters(createForm);
 
+  loaded.setup = true;
+}
+
+// ===== Config sub-tab: global config card + (non-prod) debug cycle control =====
+//
+// Renders into [data-tournament-config-mount]. Mirrors loadSetup's lifecycle:
+// loaded-once guard (loaded.config), reset-to-false on error so a later visit
+// retries. Fetches GET {API}/config, renders the global-config card + env-gated
+// debug control, then populates the form + IANA timezone datalist.
+async function loadConfig(root, { force }) {
+  if (loaded.config && !force) return;
+  const mount = $('[data-tournament-config-mount]', root);
+  if (!mount) return;
+
+  wireConfig(root);
+
+  mount.innerHTML = '<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">Loading config…</div>';
+
+  let config = null;
+  try {
+    const configUrl = `${API}/config`;
+    const configRes = await DEPS.http('GET', configUrl);
+    DEPS.logActivity({ title: 'Tournament Config (GET)', method: 'GET', url: configRes.url || configUrl, ok: configRes.ok, status: configRes.status, data: configRes.data });
+    if (!configRes.ok) {
+      loaded.config = false;
+      mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament config.</div>';
+      DEPS.toast('Failed to load tournament config', 'err');
+      return;
+    }
+    config = configRes.data && typeof configRes.data === 'object' ? configRes.data : null;
+  } catch (err) {
+    loaded.config = false;
+    DEPS.logActivity({ title: 'Tournament Config load error', method: 'ERROR', url: `${API}/config`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament config.</div>';
+    DEPS.toast('Failed to load tournament config', 'err');
+    return;
+  }
+
+  mount.innerHTML = setupConfigCardHtml(root, config);
+
   // Populate the global-config form fields + IANA timezone datalist.
   const configForm = mount.querySelector('form[data-action="tournament-config-update"]');
   if (configForm) fillSetupConfigForm(configForm, config);
   populateSetupTimezoneDatalist(mount);
 
-  loaded.setup = true;
+  loaded.config = true;
+}
+
+// Delegate config-mount interactions (config form submit + debug set/clear) from
+// the stable config mount node, wired exactly once. Calls the same handlers the
+// Setup mount used to. The mount's innerHTML is replaced on each loadConfig, but
+// the listeners live on the mount, so they never stack across re-renders.
+function wireConfig(root) {
+  if (configWired) return;
+  const mount = $('[data-tournament-config-mount]', root);
+  if (!mount) return;
+  configWired = true;
+
+  // Debug cycle-length set/clear (non-prod only — buttons render only off-prod).
+  mount.addEventListener('click', (event) => {
+    const btn = event.target?.closest?.('[data-setup-debug-action]');
+    if (!btn || !mount.contains(btn)) return;
+    event.preventDefault();
+    const clear = btn.dataset.setupDebugAction === 'debug-clear';
+    Promise.resolve().then(() => tournamentSetupSetDebugCycle(root, btn, { clear })).catch((err) => {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament debug cycle error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
+
+  // Config form submit.
+  mount.addEventListener('submit', (event) => {
+    const form = event.target?.closest?.('form[data-action="tournament-config-update"]');
+    if (!form || !mount.contains(form)) return;
+    event.preventDefault();
+    Promise.resolve().then(() => handleSetupConfigSave(root, form)).catch((err) => {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament config submit error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  });
 }
 
 // Delegate ALL setup-mount interactions (XP add/remove/input, row actions, form
@@ -1957,19 +2029,8 @@ function wireSetup(root, mount) {
     }
   });
 
-  // Debug cycle-length set/clear (non-prod only — buttons render only off-prod).
-  mount.addEventListener('click', (event) => {
-    const btn = event.target?.closest?.('[data-setup-debug-action]');
-    if (!btn || !mount.contains(btn)) return;
-    event.preventDefault();
-    const clear = btn.dataset.setupDebugAction === 'debug-clear';
-    Promise.resolve().then(() => tournamentSetupSetDebugCycle(root, btn, { clear })).catch((err) => {
-      DEPS.toast('Unexpected error', 'err');
-      DEPS.logActivity({ title: 'Tournament debug cycle error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
-    });
-  });
-
-  // Form submits: create + update + global config.
+  // Form submits: create + update. (Global config submit is handled separately
+  // on the config mount via wireConfig.)
   mount.addEventListener('submit', (event) => {
     const form = event.target?.closest?.('form[data-action]');
     if (!form || !mount.contains(form)) return;
@@ -1979,9 +2040,7 @@ function wireSetup(root, mount) {
       ? () => handleSetupCreate(root, form)
       : action === 'tournament-category-update'
         ? () => handleSetupUpdate(root, form)
-        : action === 'tournament-config-update'
-          ? () => handleSetupConfigSave(root, form)
-          : null;
+        : null;
     if (!run) return;
     Promise.resolve().then(run).catch((err) => {
       DEPS.toast('Unexpected error', 'err');
