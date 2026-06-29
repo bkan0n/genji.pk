@@ -1130,7 +1130,8 @@ function scrollIntoViewWithOffset(el, offset) {
         active.classList.add(...String('fade-in').trim().split(/\s+/).filter(Boolean));
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
-        if (name.startsWith('content-')) ensureContentMovementTechData(name);
+        // Content sub-tab data is loaded lazily by content-workspace.js itself
+        // (on sub-tab entry), so there's no eager fetch to trigger here.
         wireFormAutocompletes(active);
         ensureFormUx(active);
         try {
@@ -2587,59 +2588,6 @@ async function loadContentEntityCollection(
   }
 
   return res;
-}
-
-function ensureContentMovementTechData(name) {
-  if (name === 'content-categories') {
-    if (!movementTechContentCache.categories.length) {
-      loadContentEntityCollection('categories', {
-        successMessage: 'Categories loaded',
-        failureMessage: 'Failed to load categories',
-        pendingMessage: 'Loading categories...',
-        silentSuccess: true,
-      });
-    }
-    return;
-  }
-
-  if (name === 'content-difficulties') {
-    if (!movementTechContentCache.difficulties.length) {
-      loadContentEntityCollection('difficulties', {
-        successMessage: 'Difficulties loaded',
-        failureMessage: 'Failed to load difficulties',
-        pendingMessage: 'Loading difficulties...',
-        silentSuccess: true,
-      });
-    }
-    return;
-  }
-
-  if (name === 'content-techniques') {
-    if (!movementTechContentCache.categories.length) {
-      loadContentEntityCollection('categories', {
-        successMessage: 'Categories loaded',
-        failureMessage: 'Failed to load categories',
-        pendingMessage: 'Loading categories...',
-        silentSuccess: true,
-      });
-    }
-    if (!movementTechContentCache.difficulties.length) {
-      loadContentEntityCollection('difficulties', {
-        successMessage: 'Difficulties loaded',
-        failureMessage: 'Failed to load difficulties',
-        pendingMessage: 'Loading difficulties...',
-        silentSuccess: true,
-      });
-    }
-    if (!movementTechContentCache.techniques.length) {
-      loadContentEntityCollection('techniques', {
-        successMessage: 'Techniques loaded',
-        failureMessage: 'Failed to load techniques',
-        pendingMessage: 'Loading techniques...',
-        silentSuccess: true,
-      });
-    }
-  }
 }
 
 function movementTechListResponseItems(entity, data) {

@@ -44,13 +44,30 @@ export function initLootboxSettings(deps) {
       <div data-st-cat-body class="mt-3 text-sm text-zinc-500">Loading catalog…</div>
     </div>`;
 
-  loadActiveKey(mount);
-  loadMultiplier(mount);
-  loadCatalog(mount);
-
   $('[data-st-key-save]', mount).onclick = () => setActiveKey(mount);
   $('[data-st-mult-save]', mount).onclick = () => setMultiplier(mount);
   $('[data-st-cat-apply]', mount).onclick = () => loadCatalog(mount);
+
+  // Lazy-load the three settings endpoints only when the Lootbox → Settings
+  // sub-tab is first entered. Loading them in init would hit the API on every
+  // page load even when the Lootbox tab is never opened.
+  let loaded = false;
+  const loadOnce = () => {
+    if (loaded) return;
+    loaded = true;
+    loadActiveKey(mount);
+    loadMultiplier(mount);
+    loadCatalog(mount);
+  };
+
+  const panel = document.querySelector('.mod-panel[data-panel="lootbox"]');
+  panel?.addEventListener('click', (e) => {
+    if (e.target.closest('.mod-subtab[data-subtab="lootbox-settings"]')) loadOnce();
+  });
+
+  // Deep-link case: the Settings sub-tab is already visible when init runs.
+  const sub = panel?.querySelector('[data-subpanel="lootbox-settings"]');
+  if (sub && !sub.classList.contains('hidden')) loadOnce();
 }
 
 async function loadActiveKey(mount) {

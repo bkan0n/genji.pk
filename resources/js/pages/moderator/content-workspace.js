@@ -9,6 +9,10 @@ const ENTITIES = {
   techniques: { singular: 'Technique', plural: 'Techniques', outKey: 'content-techniques-res' },
 };
 
+// Entity collections that have already been fetched, so re-entering a sub-tab
+// re-renders (cheap) instead of re-fetching.
+const loadedEntities = new Set();
+
 export function initContentWorkspace(deps) {
   DEPS = deps;
   workspaceRoot = $('[data-content-workspace]');
@@ -18,16 +22,37 @@ export function initContentWorkspace(deps) {
     wireListContainer(entity);
     wireHeaderButtons(entity);
     renderLoading(entity);
-    loadAndRender(entity);
   });
 
-  // Defensive re-render when a content sub-tab is (re)activated.
+  // Lazy-load each entity's collection the first time its sub-tab is entered,
+  // then re-render on subsequent entries (in case rows changed while away).
+  // Loading eagerly in init would fetch every collection on page load, even
+  // when the Content tab is never opened.
   $$('[data-subtab^="content-"]', workspaceRoot).forEach((btn) => {
     btn.addEventListener('click', () => {
       const entity = subtabEntity(btn.getAttribute('data-subtab'));
-      if (entity) setTimeout(() => renderRows(entity), 0);
+      if (entity) enterContentSubtab(entity);
     });
   });
+}
+
+async function ensureEntityLoaded(entity) {
+  if (loadedEntities.has(entity)) return false;
+  loadedEntities.add(entity);
+  renderLoading(entity);
+  await loadAndRender(entity);
+  return true;
+}
+
+async function enterContentSubtab(entity) {
+  // The technique editor's category + difficulty pickers read from those two
+  // caches, so load them alongside Techniques whenever that sub-tab is opened.
+  if (entity === 'techniques') {
+    ensureEntityLoaded('categories');
+    ensureEntityLoaded('difficulties');
+  }
+  const didLoad = await ensureEntityLoaded(entity);
+  if (!didLoad) renderRows(entity);
 }
 
 function subtabEntity(subtab) {
