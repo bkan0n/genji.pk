@@ -244,7 +244,6 @@ const MOD_SECTION_META = {
   store: {
     kicker: 'Commerce',
     summary: 'Load store configuration, update economics, and generate rotations in the same section.',
-    stats: ['Config', 'Rotation', 'Dev-only'],
     hints: ['Load config first, update values in place, then save from the same card.'],
     cards: [
       { sub: 'store-config', title: 'Store config', desc: 'Load and update live store configuration.' },
