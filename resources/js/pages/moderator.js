@@ -8,6 +8,7 @@ import { initVerificationsWorkspace } from './moderator/verifications-workspace.
 import { initTournamentWorkspace } from './moderator/tournament-workspace.js';
 import { initSkillWorkspace } from './moderator/skill-workspace.js';
 import { initWebWorkspace } from './moderator/web-workspace.js';
+import { initStoreWorkspace } from './moderator/store-workspace.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1130,7 +1131,6 @@ function scrollIntoViewWithOffset(el, offset) {
         scrollIntoViewWithOffset(active, getHeaderOffset());
 
         if (name.startsWith('content-')) ensureContentMovementTechData(name);
-        if (name === 'store-config') initStoreConfigPanel();
         if (name === 'quest-config') initQuestConfigPanel();
         if (name === 'quest-update') initQuestUpdatePanel();
         wireFormAutocompletes(active);
@@ -1432,6 +1432,7 @@ function setFormPending(form, pending = true, submitter = null) {
 $$('form[data-action]').forEach((form) => {
   if (form.closest('[data-skill-workspace]')) return; // owned by skill-workspace.js
   if (form.closest('[data-web-workspace]')) return; // owned by web-workspace.js
+  if (form.closest('[data-store-workspace]')) return; // owned by store-workspace.js
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (form.dataset.submitLocked === '1') {
@@ -1462,17 +1463,6 @@ $$('form[data-action]').forEach((form) => {
           return handleSubmitMap(form);
         case 'convert-legacy':
           return handleConvertLegacy(form);
-
-        // STORE (API_MODS)
-        case 'store-get-config':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleStoreGetConfig(form);
-        case 'store-update-config':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleStoreUpdateConfig(form);
-        case 'store-generate-rotation':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleStoreGenerateRotation(form);
 
         // QUESTS (API_MODS)
         case 'quest-get-config':
@@ -7283,16 +7273,6 @@ function normalizeConfigPayload(data) {
   return {};
 }
 
-function fillStoreConfigForm(form, data) {
-  const config = normalizeConfigPayload(data);
-  if (form?.rotation_period_days) {
-    form.rotation_period_days.value = config.rotation_period_days ?? '';
-  }
-  if (form?.active_key_type) {
-    form.active_key_type.value = config.active_key_type ?? '';
-  }
-}
-
 function fillQuestConfigForm(form, data) {
   const config = normalizeConfigPayload(data);
   ['rotation_day', 'rotation_hour', 'easy_quest_count', 'medium_quest_count', 'hard_quest_count'].forEach((key) => {
@@ -7300,17 +7280,6 @@ function fillQuestConfigForm(form, data) {
       form[key].value = config[key] ?? '';
     }
   });
-}
-
-function initStoreConfigPanel() {
-  const panel = document.querySelector('[data-subpanel="store-config"]');
-  if (!panel || panel.dataset.inited === '1') return;
-  panel.dataset.inited = '1';
-
-  const form = panel.querySelector('form[data-action="store-get-config"]');
-  if (form) {
-    handleStoreGetConfig(form);
-  }
 }
 
 function initQuestConfigPanel() {
@@ -7496,104 +7465,6 @@ function initQuestUpdatePanel() {
   questIdInput?.addEventListener('change', syncFromInput);
   questIdInput?.addEventListener('blur', syncFromInput);
 }
-
-async function handleStoreGetConfig(form) {
-  setPanelOut(form, "store-config", "Loading…");
-
-  const res = await http("GET", `${API_MODS}/store/config`);
-
-  logActivity({
-    title: "Store Config (GET)",
-    method: "GET",
-    url: res.url || `${API_MODS}/store/config`,
-    ok: res.ok,
-    status: res.status,
-    data: res.data,
-  });
-
-  if (!res.ok) {
-    setPanelOut(form, "store-config", res.data ?? "Request failed");
-    toast("Failed to load store config", "err");
-    return;
-  }
-
-  setPanelOut(form, "store-config", res.data);
-  fillStoreConfigForm(findRelatedActionForm(form, 'store-update-config'), res.data);
-  toast("Store config loaded", "ok");
-}
-
-async function handleStoreUpdateConfig(form) {
-  const fd = new FormData(form);
-  const rotation_period_days = fd.get("rotation_period_days");
-  const active_key_type = String(fd.get("active_key_type") || "").trim();
-
-  const payload = {};
-  if (rotation_period_days !== "" && rotation_period_days != null) payload.rotation_period_days = Number(rotation_period_days);
-  if (active_key_type) payload.active_key_type = active_key_type;
-
-  if (!Object.keys(payload).length) {
-    toast("Nothing to update", "warn");
-    return;
-  }
-
-  setPanelOut(form, "store-update-res", "Saving…");
-
-  const res = await http("PUT", `${API_MODS}/store/config`, { body: payload });
-
-  logActivity({
-    title: "Store Config (PUT)",
-    method: "PUT",
-    url: res.url || `${API_MODS}/store/config`,
-    ok: res.ok,
-    status: res.status,
-    data: res.data,
-  });
-
-  if (!res.ok) {
-    setPanelOut(form, "store-update-res", res.data ?? "Update failed");
-    toast("Update failed", "err");
-    return;
-  }
-
-  setPanelOut(form, "store-update-res", res.data);
-  toast("Store config updated", "ok");
-
-  // Optionnel : refresh auto
-  handleStoreGetConfig(form);
-}
-
-async function handleStoreGenerateRotation(form) {
-  const fd = new FormData(form);
-  const item_count = Number(fd.get("item_count") || 0);
-
-  if (!Number.isFinite(item_count) || item_count < 1) {
-    toast("Invalid item_count", "warn");
-    return;
-  }
-
-  setPanelOut(form, "store-rotation-res", "Generating…");
-
-  const res = await http("POST", `${API_MODS}/store/rotation/generate`, { body: { item_count } });
-
-  logActivity({
-    title: "Generate Store Rotation (POST)",
-    method: "POST",
-    url: res.url || `${API_MODS}/store/rotation/generate`,
-    ok: res.ok,
-    status: res.status,
-    data: res.data,
-  });
-
-  if (!res.ok) {
-    setPanelOut(form, "store-rotation-res", res.data ?? "Rotation failed");
-    toast("Rotation failed", "err");
-    return;
-  }
-
-  setPanelOut(form, "store-rotation-res", res.data);
-  toast("Rotation generated", "ok");
-}
-
 
 //———————————————————————————————————————————————————————————————
 // QUESTS
@@ -8386,6 +8257,7 @@ function initializeApp() {
 
   initSkillWorkspace({ http, toast, logActivity, setPanelOut });
   initWebWorkspace({ http, toast, logActivity, showConfirmDanger, isDevAllowed });
+  initStoreWorkspace({ http, toast, logActivity, showConfirmDanger, isDevAllowed });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
