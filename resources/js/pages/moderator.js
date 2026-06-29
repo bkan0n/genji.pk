@@ -3,6 +3,7 @@ import { initLootboxWorkspace } from './moderator/lootbox-workspace.js';
 import { initLootboxSettings } from './moderator/lootbox-settings.js';
 import { initMapWorkspace } from './moderator/maps-workspace.js';
 import { initContentWorkspace } from './moderator/content-workspace.js';
+import { initContentMapsWorkspace } from './moderator/content-maps-workspace.js';
 import { initRecordsWorkspace } from './moderator/records-workspace.js';
 import { initVerificationsWorkspace } from './moderator/verifications-workspace.js';
 import { initTournamentWorkspace } from './moderator/tournament-workspace.js';
@@ -7213,6 +7214,7 @@ function initializeApp() {
     handleContentTechniqueDelete,
     loadContentTechniqueIntoUpdateForm,
   });
+  initContentMapsWorkspace({ http, toast, logActivity });
   initRecordsWorkspace({ http, toast, logActivity, wireAutocomplete });
   initVerificationsWorkspace({ http, toast, logActivity, runModeratorEndpointAction, appendOverlay });
   initTournamentWorkspace({
