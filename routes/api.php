@@ -38,6 +38,8 @@ use App\Http\Controllers\Maps\TrendingMapsController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechniqueController;
+use App\Http\Controllers\Mods\Content\CreateOrReplaceMapController;
+use App\Http\Controllers\Mods\Content\GetMapNamesController;
 use App\Http\Controllers\Mods\Content\DeleteMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\DeleteMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\DeleteMovementTechniqueController;
@@ -424,6 +426,11 @@ Route::prefix('mods')
             Route::delete('techniques/{id}', DeleteMovementTechniqueController::class)->whereNumber('id');
             Route::post('techniques/{id}/reorder', ReorderMovementTechniqueController::class)->whereNumber('id');
         });
+
+        // CONTENT — Overwatch maps (add map / replace banner)
+        Route::get('content/maps/names', GetMapNamesController::class)->name('mods.content.maps.names');
+        Route::post('content/maps', CreateOrReplaceMapController::class)->name('mods.content.maps.create');
+
         // LOOTBOX
         Route::post('lootbox/users/{user_id}/keys/{key_type}', GrantKeyToUserController::class)
             ->whereNumber('user_id')

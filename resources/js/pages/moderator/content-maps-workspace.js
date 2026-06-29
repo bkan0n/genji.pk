@@ -1,8 +1,11 @@
 import { httpErrorMessage } from './workspace-shell.js';
 import { openModal, primaryButton, ghostButton, setButtonBusy } from './modal-shell.js';
 
-const MAP_NAMES_ENDPOINT = '/api/v3/utilities/map-names';
-const MAPS_ENDPOINT = '/api/v3/content/maps';
+// Local Laravel proxy routes (mods group) — these forward server-side to the
+// upstream genji API with the X-API-KEY the browser doesn't have. The browser must
+// never hit /api/v3/* directly (no key + no local route → 404).
+const MAP_NAMES_ENDPOINT = '/api/mods/content/maps/names';
+const MAPS_ENDPOINT = '/api/mods/content/maps';
 const BANNER_CDN_BASE = 'https://cdn.genji.pk/assets/map_banners';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const MAX_BYTES = 24 * 1024 * 1024; // just under the API's 25 MB body limit
