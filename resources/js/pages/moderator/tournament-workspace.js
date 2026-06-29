@@ -1358,6 +1358,41 @@ function syncTournamentXpRepeaters(form) {
   form?.querySelectorAll?.('[data-tournament-xp-group]').forEach(syncTournamentXpGroup);
 }
 
+// Shared XP repeater click handling (add/remove rows + resync the hidden JSON).
+// Used by the setup-mount delegation (for inline EDIT forms) AND by the create
+// modal, so the repeater logic lives in exactly one place. Returns true when the
+// event was an XP control (so callers can stop after handling it).
+function handleTournamentXpClick(event) {
+  const add = event.target?.closest?.('[data-tournament-xp-add]');
+  if (add) {
+    event.preventDefault();
+    const group = add.closest('[data-tournament-xp-group]');
+    const rows = group?.querySelector('[data-tournament-xp-rows]');
+    if (!group || !rows) return true;
+    rows.insertAdjacentHTML('beforeend', tournamentXpRowHtml(group.dataset.tournamentXpKind || 'placement', {}));
+    syncTournamentXpGroup(group);
+    return true;
+  }
+  const remove = event.target?.closest?.('[data-tournament-xp-remove]');
+  if (remove) {
+    event.preventDefault();
+    const group = remove.closest('[data-tournament-xp-group]');
+    remove.closest('[data-tournament-xp-row]')?.remove();
+    syncTournamentXpGroup(group);
+    return true;
+  }
+  return false;
+}
+
+// Shared XP repeater input handling: keep the hidden JSON textarea in sync as the
+// user types into a row field. Shared between the setup mount and the create modal.
+function handleTournamentXpInput(event) {
+  const field = event.target?.closest?.('[data-tournament-xp-field]');
+  if (!field) return false;
+  syncTournamentXpGroup(field.closest('[data-tournament-xp-group]'));
+  return true;
+}
+
 // ----- payload assembly (ported from buildTournamentCategoryPayload) -----
 
 function tournamentOptionalNumber(fd, key, payload, { allowZero = true } = {}) {
@@ -1481,42 +1516,88 @@ function difficultyCheckboxes(selected = []) {
 
 const SETUP_INPUT_CLASS = 'mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none';
 
-function setupCreateFormHtml() {
+// The "Create category" trigger at the top of the Setup tab. Opens the create
+// form in the module's slide-over (openCreateCategoryModal) instead of rendering
+// the form inline. Click is delegated from the setup mount in wireSetup.
+function setupCreateButtonHtml() {
   return `
-    <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <article class="flex flex-col gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-100 p-6 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
         <h3 class="font-semibold">Create category</h3>
         <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/tournaments/categories</span>
       </div>
-      <form data-action="tournament-category-create" autocomplete="off" class="grid gap-3">
-        <label class="text-sm">
-          name
-          <input name="name" required class="${SETUP_INPUT_CLASS}" />
-        </label>
-        <div class="grid gap-2 sm:grid-cols-3">${difficultyCheckboxes()}</div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="text-sm">
-            participation_xp
-            <input name="participation_xp" type="number" min="0" step="1" placeholder="0" class="${SETUP_INPUT_CLASS}" />
-          </label>
-          <label class="text-sm">
-            champion_role_id
-            <input name="champion_role_id" inputmode="numeric" placeholder="optional" class="${SETUP_INPUT_CLASS}" />
-          </label>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="text-sm">
-            placement_xp JSON
-            <textarea name="placement_xp_json" rows="4" placeholder='[{"place":1,"xp":200}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
-          </label>
-          <label class="text-sm">
-            streak_xp JSON
-            <textarea name="streak_xp_json" rows="4" placeholder='[{"threshold":5,"xp":300}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
-          </label>
-        </div>
-        <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Create</button>
-      </form>
+      <button type="button" data-tournament-create-open class="w-full shrink-0 cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100 sm:w-auto">Create category</button>
     </article>`;
+}
+
+// The create-category form markup, used inside the slide-over modal. Mirrors the
+// original inline create form exactly (same fields, same data-action so the XP
+// repeater + payload helpers behave identically); the modal wires its own submit.
+function setupCreateFormHtml() {
+  return `
+    <form data-action="tournament-category-create" autocomplete="off" class="grid gap-3">
+      <label class="text-sm">
+        name
+        <input name="name" required class="${SETUP_INPUT_CLASS}" />
+      </label>
+      <div class="grid gap-2 sm:grid-cols-3">${difficultyCheckboxes()}</div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="text-sm">
+          participation_xp
+          <input name="participation_xp" type="number" min="0" step="1" placeholder="0" class="${SETUP_INPUT_CLASS}" />
+        </label>
+        <label class="text-sm">
+          champion_role_id
+          <input name="champion_role_id" inputmode="numeric" placeholder="optional" class="${SETUP_INPUT_CLASS}" />
+        </label>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="text-sm">
+          placement_xp JSON
+          <textarea name="placement_xp_json" rows="4" placeholder='[{"place":1,"xp":200}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
+        </label>
+        <label class="text-sm">
+          streak_xp JSON
+          <textarea name="streak_xp_json" rows="4" placeholder='[{"threshold":5,"xp":300}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
+        </label>
+      </div>
+      <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Create</button>
+    </form>`;
+}
+
+// Open the create-category form in the module's right-side slide-over (the same
+// overlay used for standings/history/streak). The setup-mount delegation can't
+// reach a form appended to <body>, so this wires the XP repeater interactions and
+// the submit directly on the form element (reusing the SHARED handlers so the
+// repeater/create logic is never duplicated).
+function openCreateCategoryModal(root) {
+  const content = document.createElement('div');
+  content.innerHTML = setupCreateFormHtml();
+  const form = content.querySelector('form[data-action="tournament-category-create"]');
+
+  const overlay = openOverlay(root, 'Create category', content);
+
+  // Enhance the XP textareas now that the form is in the DOM.
+  if (form) {
+    initTournamentXpRepeaters(form);
+
+    // XP repeater add/remove + input, scoped to the modal form (the setup-mount
+    // delegation does not see body-appended overlay events).
+    form.addEventListener('click', (event) => { handleTournamentXpClick(event); });
+    form.addEventListener('input', (event) => { handleTournamentXpInput(event); });
+
+    // Submit creates the category via the shared create handler, then closes the
+    // modal on success. 422 keeps the modal open (handleSetupCreate toasts).
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      Promise.resolve()
+        .then(() => handleSetupCreate(root, form, { onSuccess: () => overlay.remove() }))
+        .catch((err) => {
+          DEPS.toast('Unexpected error', 'err');
+          DEPS.logActivity({ title: 'Tournament category submit error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+        });
+    });
+  }
 }
 
 // Inline edit form for a single category, pre-filled. Hidden until Edit toggles
@@ -1868,7 +1949,7 @@ async function loadSetup(root, { force }) {
     : '<div class="rounded-xl border border-dashed border-zinc-300/80 p-4 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400">No tournament categories yet.</div>';
 
   mount.innerHTML = `
-    ${setupCreateFormHtml()}
+    ${setupCreateButtonHtml()}
     <section class="space-y-3">
       <h3 class="font-semibold">Categories</h3>
       <div class="grid gap-3">${list}</div>
@@ -1877,9 +1958,8 @@ async function loadSetup(root, { force }) {
   // Stash full category objects for inline-edit pre-fill (avoids re-fetch).
   mount._setupCategories = new Map(categories.map((c) => [String(c.id), c]));
 
-  // Enhance the create form's XP textareas with repeaters.
-  const createForm = mount.querySelector('form[data-action="tournament-category-create"]');
-  if (createForm) initTournamentXpRepeaters(createForm);
+  // The create form's XP repeaters are enhanced when the modal opens
+  // (openCreateCategoryModal), not here — the create form is no longer inline.
 
   loaded.setup = true;
 }
@@ -1971,32 +2051,24 @@ function wireSetup(root, mount) {
   if (setupWired) return;
   setupWired = true;
 
-  // XP repeater add/remove.
-  mount.addEventListener('click', (event) => {
-    const add = event.target?.closest?.('[data-tournament-xp-add]');
-    if (add) {
-      event.preventDefault();
-      const group = add.closest('[data-tournament-xp-group]');
-      const rows = group?.querySelector('[data-tournament-xp-rows]');
-      if (!group || !rows) return;
-      rows.insertAdjacentHTML('beforeend', tournamentXpRowHtml(group.dataset.tournamentXpKind || 'placement', {}));
-      syncTournamentXpGroup(group);
-      return;
-    }
-    const remove = event.target?.closest?.('[data-tournament-xp-remove]');
-    if (remove) {
-      event.preventDefault();
-      const group = remove.closest('[data-tournament-xp-group]');
-      remove.closest('[data-tournament-xp-row]')?.remove();
-      syncTournamentXpGroup(group);
-    }
-  });
+  // XP repeater add/remove (shared with the create modal).
+  mount.addEventListener('click', (event) => { handleTournamentXpClick(event); });
 
   // XP repeater field edits keep the hidden JSON textarea in sync.
-  mount.addEventListener('input', (event) => {
-    const field = event.target?.closest?.('[data-tournament-xp-field]');
-    if (!field) return;
-    syncTournamentXpGroup(field.closest('[data-tournament-xp-group]'));
+  mount.addEventListener('input', (event) => { handleTournamentXpInput(event); });
+
+  // Open the create-category modal (the inline create form has moved into a
+  // slide-over for visual consistency with standings/history).
+  mount.addEventListener('click', (event) => {
+    const open = event.target?.closest?.('[data-tournament-create-open]');
+    if (!open || !mount.contains(open)) return;
+    event.preventDefault();
+    try {
+      openCreateCategoryModal(root);
+    } catch (err) {
+      DEPS.toast('Unexpected error', 'err');
+      DEPS.logActivity({ title: 'Tournament create-category modal error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    }
   });
 
   // Row actions: edit (expand inline form), cancel-edit (collapse), delete.
@@ -2029,18 +2101,16 @@ function wireSetup(root, mount) {
     }
   });
 
-  // Form submits: create + update. (Global config submit is handled separately
-  // on the config mount via wireConfig.)
+  // Form submits: update only. (Create now submits from the modal; the global
+  // config submit is handled separately on the config mount via wireConfig.)
   mount.addEventListener('submit', (event) => {
     const form = event.target?.closest?.('form[data-action]');
     if (!form || !mount.contains(form)) return;
     event.preventDefault();
     const action = form.dataset.action;
-    const run = action === 'tournament-category-create'
-      ? () => handleSetupCreate(root, form)
-      : action === 'tournament-category-update'
-        ? () => handleSetupUpdate(root, form)
-        : null;
+    const run = action === 'tournament-category-update'
+      ? () => handleSetupUpdate(root, form)
+      : null;
     if (!run) return;
     Promise.resolve().then(run).catch((err) => {
       DEPS.toast('Unexpected error', 'err');
@@ -2068,7 +2138,7 @@ function toggleSetupEdit(mount, card, id) {
 
 // POST {API_MODS}/categories. On success refresh setup + invalidate the status
 // board so it reflects the new category.
-async function handleSetupCreate(root, form) {
+async function handleSetupCreate(root, form, { onSuccess } = {}) {
   const payload = buildTournamentCategoryPayload(form, { creating: true });
   if (!payload) return;
   const url = `${API_MODS}/categories`;
@@ -2078,6 +2148,8 @@ async function handleSetupCreate(root, form) {
   if (res.ok) {
     DEPS.toast('Category created', 'ok');
     loaded.status = false;
+    // Close the modal first so the slide-over disappears before the list refresh.
+    if (typeof onSuccess === 'function') onSuccess();
     await loadSetup(root, { force: true });
   } else if (res.status === 422) {
     DEPS.toast(tournamentBootstrapError(res.data) || 'Validation failed', 'err');
