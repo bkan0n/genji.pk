@@ -253,17 +253,17 @@ const MOD_SECTION_META = {
   },
   quests: {
     kicker: 'Quests',
-    summary: 'Configure weekly quests, edit the current rotation, and patch user progress.',
-    stats: ['Config', 'Weekly rotation', 'User progress'],
+    summary: 'Manage quest config, the global quest pool, user quest progress, and rotation.',
+    stats: ['Config', 'Global quests', 'User quests', 'Rotation'],
     hints: [
-      'Load weekly quests before editing, then use the picker to fill the update form.',
-      'User progress editing is intentionally separate from quest configuration.',
+      'Config and Global quests load automatically when you open them.',
+      'User quests load after you pick a user; editing opens a side panel.',
     ],
     cards: [
-      { sub: 'quest-config', title: 'Quest config', desc: 'Load and update global quest settings.' },
-      { sub: 'quest-update', title: 'Weekly quests', desc: 'Pick and update a quest from the live weekly set.' },
-      { sub: 'quest-rotation', title: 'Generate rotation', desc: 'Force a new quest rotation.', danger: true },
-      { sub: 'quest-user-progress', title: 'User progress', desc: 'Load and patch a user quest-progress entry.' },
+      { sub: 'quest-config', title: 'Config', desc: 'Rotation timing and per-tier quest counts.' },
+      { sub: 'quest-global', title: 'Global quests', desc: 'Browse and edit the global quest pool.' },
+      { sub: 'quest-user', title: 'User quests', desc: 'Find a user and edit their quest progress.' },
+      { sub: 'quest-rotation', title: 'Rotation', desc: 'Force a new quest rotation.', danger: true },
     ],
   },
   devs: {
@@ -7248,15 +7248,6 @@ function setTextAreaJson(form, name, obj) {
     el.value = "";
   }
 }
-
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action-btn="quest-fill-from-picked"]');
-  if (!btn) return;
-  const subpanel = btn.closest('[data-subpanel="quest-user-progress"]');
-  if (!subpanel) return;
-  e.preventDefault();
-  fillQuestUserProgressFromPicked(subpanel);
-});
 
 //———————————————————————————————————————————————————————————————
 // MOD UI
