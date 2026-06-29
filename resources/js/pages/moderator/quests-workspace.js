@@ -247,8 +247,8 @@ async function collectRequirements(host) {
 
 let GLOBAL_QUESTS = [];
 
-function reqSummary(r = {}) {
-  if (!r.type) return '—';
+function reqSummary(r) {
+  if (!r || !r.type) return '—';
   if (r.type === 'complete_maps') return `complete ${r.count ?? '?'} maps${r.difficulty && r.difficulty !== 'any' ? ` (${r.difficulty})` : ''}${r.category ? ` [${r.category}]` : ''}`;
   if (r.type === 'complete_difficulty_range') return `${r.min_count ?? '?'}× ${r.difficulty ?? '?'}`;
   if (r.type === 'earn_medals') return `${r.count ?? '?'}× ${r.medal_type ?? 'any'} medals`;
