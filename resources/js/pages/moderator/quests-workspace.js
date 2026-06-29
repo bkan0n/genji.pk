@@ -76,8 +76,84 @@ function wireSubtabAutoLoad() {
   });
 }
 
-// Stubs filled in later tasks.
-async function loadConfig() {}
+const DOW = [
+  { value: 1, label: 'Monday' }, { value: 2, label: 'Tuesday' }, { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' }, { value: 5, label: 'Friday' }, { value: 6, label: 'Saturday' },
+  { value: 7, label: 'Sunday' },
+];
+
+function renderConfigCard(cfg) {
+  const sp = subpanel('quest-config');
+  if (!sp) return;
+  sp.innerHTML = `
+    <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="font-semibold">Quest config</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Rotation timing + per-tier quest counts. Edit in place, then save.</p>
+        </div>
+        <button type="button" data-config-refresh class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1.5 text-xs font-semibold hover:bg-zinc-200/70 dark:hover:bg-white/10">↻ Refresh</button>
+      </div>
+      <form data-quest-config-form class="grid gap-4 sm:grid-cols-2">
+        <label class="text-sm">Rotation day ${buildSelect('rotation_day', DOW, cfg.rotation_day)}</label>
+        <label class="text-sm">Rotation hour (UTC)
+          <input name="rotation_hour" type="number" min="0" max="23" step="1" value="${escapeHtml(cfg.rotation_hour ?? '')}"
+            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+        <label class="text-sm">Easy quests / rotation
+          <input name="easy_quest_count" type="number" min="0" step="1" value="${escapeHtml(cfg.easy_quest_count ?? '')}"
+            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+        <label class="text-sm">Medium quests / rotation
+          <input name="medium_quest_count" type="number" min="0" step="1" value="${escapeHtml(cfg.medium_quest_count ?? '')}"
+            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+        <label class="text-sm sm:col-span-2">Hard quests / rotation
+          <input name="hard_quest_count" type="number" min="0" step="1" value="${escapeHtml(cfg.hard_quest_count ?? '')}"
+            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+        <div class="sm:col-span-2"><button type="submit" class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save</button></div>
+      </form>
+    </article>`;
+  sp.querySelector('[data-config-refresh]').onclick = () => loadConfig({ announce: true });
+  sp.querySelector('[data-quest-config-form]').addEventListener('submit', onSaveConfig);
+}
+
+async function loadConfig({ announce = false } = {}) {
+  const sp = subpanel('quest-config');
+  if (!sp) return;
+  sp.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">Loading quest config…</p>`;
+  const res = await DEPS.http('GET', `${API_MODS}/quests/config`);
+  DEPS.logActivity({ title: 'Quest config (GET)', method: 'GET', url: res.url || `${API_MODS}/quests/config`, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) {
+    sp.innerHTML = `<p class="text-sm text-rose-500">Failed to load quest config.</p>`;
+    DEPS.toast('Failed to load quest config', 'err');
+    return;
+  }
+  const cfg = (res.data && (res.data.config || res.data.data)) || res.data || {};
+  renderConfigCard(cfg);
+  if (announce) DEPS.toast('Quest config refreshed', 'ok');
+}
+
+async function onSaveConfig(e) {
+  e.preventDefault();
+  if (!DEPS.isDevAllowed()) return DEPS.toast('Dev access only', 'err');
+  const form = e.currentTarget;
+  const fd = new FormData(form);
+  const payload = {};
+  for (const k of ['rotation_day', 'rotation_hour', 'easy_quest_count', 'medium_quest_count', 'hard_quest_count']) {
+    const v = fd.get(k);
+    if (v !== '' && v != null) payload[k] = Number(v);
+  }
+  if (!Object.keys(payload).length) return DEPS.toast('Nothing to update', 'warn');
+  setFormPending(form, true, e.submitter);
+  try {
+    const res = await DEPS.http('PUT', `${API_MODS}/quests/config`, { body: payload });
+    DEPS.logActivity({ title: 'Quest config (PUT)', method: 'PUT', url: res.url || `${API_MODS}/quests/config`, ok: res.ok, status: res.status, data: res.data });
+    if (!res.ok) return DEPS.toast('Update failed', 'err');
+    DEPS.toast('Quest config updated', 'ok');
+    await loadConfig();
+  } finally {
+    setFormPending(form, false, e.submitter);
+  }
+}
+
 async function loadGlobalQuests() {}
 
 // Build a <select> with options. `current` is preselected; `placeholder` adds a
