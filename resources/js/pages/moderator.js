@@ -229,7 +229,6 @@ const MOD_SECTION_META = {
   skill: {
     kicker: 'Skill Score',
     summary: 'Inspect player Skill Scores and tune the weights and population percentiles used by the scoring model.',
-    stats: ['Player scores', 'Scoring weights', 'Tier thresholds'],
     hints: [
       'Skill Score is separate from the existing Ninja, Skilled, Pro, and other skill_rank labels.',
       'Weight and percentile updates trigger upstream recomputation and remain restricted to superusers.',
