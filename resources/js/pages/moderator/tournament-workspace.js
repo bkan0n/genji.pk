@@ -1,4 +1,4 @@
-import { $, $$ } from './workspace-shell.js';
+import { $, $$, makeRecentStore, renderRecentChips } from './workspace-shell.js';
 import { openModal } from './modal-shell.js';
 
 let DEPS = null;
@@ -979,65 +979,91 @@ function buildHistoryTable(root, data) {
 
 // ----- Streak lookup -----
 
-// Wire the Status toolbar input [data-tournament-streak-search]. Bound once from
-// init. The input is a numeric user id; on Enter (or autocomplete pick) we fetch
-// GET /api/tournaments/streaks/{userId} and render a readable streak table.
+const streakRecent = makeRecentStore('mod.tournament.recent');
+// The stored "(aka)" label for a user, so chip-clicks/re-lookups keep the label
+// rather than downgrading it to a bare id.
+const streakRecentName = (id) => {
+  const hit = streakRecent.get().find((r) => r.id === String(id));
+  return hit && hit.name && hit.name !== String(id) ? hit.name : '';
+};
+// After a pick the input shows the label; a bare numeric id is not a name.
+const streakNameGuess = (input) => {
+  const v = (input?.value || '').trim();
+  return v && !/^\d+$/.test(v) ? v : '';
+};
+
+// Wire the [data-tournament-streak-search] input + "Look up" button. Bound once
+// from init. The streak is read-only, so results render INLINE into
+// [data-tournament-streak-result] (no modal). Picking a suggestion, pressing
+// Enter, or clicking the button all load; recent lookups show as chips.
 function wireStreakLookup(root) {
   const input = $('[data-tournament-streak-search]', root);
   if (!input) return;
+  const submit = $('[data-tournament-streak-submit]', root);
 
-  // Reuse the shared users autocomplete; picking sets input.dataset.uid + label,
-  // and we read the resolved id on submit. Pressing Enter on a typed id works too.
-  //
+  // Resolve the chosen id (prefer the autocomplete pick) and load inline.
+  const run = () => {
+    const uid = input.dataset.uid || String(input.value || '').trim();
+    if (!/^\d{1,20}$/.test(String(uid))) {
+      DEPS.toast('Enter a numeric user ID', 'warn');
+      return;
+    }
+    loadStreak(root, uid, streakNameGuess(input)).catch((err) => {
+      DEPS.toast('Failed to load streak', 'err');
+      DEPS.logActivity({ title: 'Tournament streak error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
+    });
+  };
+
   // Autocomplete registers its own keydown on `input` BEFORE ours, so on
-  // Enter-to-pick its handler runs first and calls onPick (which opens the
-  // overlay) synchronously. The flag below lets onPick claim that single open
-  // and tells our own keydown (which fires right after, same dispatch) to bail.
-  let pickJustOpened = false;
+  // Enter-to-pick its handler runs first and calls onPick (which loads)
+  // synchronously. The flag below lets onPick claim that single load and tells
+  // our own keydown (which fires right after, same dispatch) to bail.
+  let pickJustLoaded = false;
   if (DEPS.wireAutocomplete) {
     DEPS.wireAutocomplete(input, {
       kind: 'users',
-      onPick: ({ id }) => {
+      // Capture the picked label ("name (aka nickname)") for the recent chips.
+      onPick: ({ id, label }) => {
         if (id == null) return;
-        openStreak(root, id).catch(() => {});
-        // Suppress the duplicate open from our keydown, which runs synchronously
-        // right after this within the same event dispatch. Reset on the next
-        // tick so a later, unrelated manual Enter is NOT suppressed.
-        pickJustOpened = true;
-        setTimeout(() => { pickJustOpened = false; }, 0);
+        loadStreak(root, id, label).catch(() => {});
+        pickJustLoaded = true;
+        setTimeout(() => { pickJustLoaded = false; }, 0);
       },
     });
   }
 
   input.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
-    // onPick already opened the overlay for this Enter-to-pick selection; let it
-    // be the single opener and bail so we don't double-open.
-    if (pickJustOpened) return;
-    // Otherwise resolve from a prior pick (dataset.uid) or the raw typed value
-    // (must be a numeric user id).
-    const uid = input.dataset.uid || String(input.value || '').trim();
-    if (!/^\d{1,20}$/.test(String(uid))) {
-      DEPS.toast('Enter a numeric user ID', 'warn');
-      return;
-    }
+    if (pickJustLoaded) return;
     e.preventDefault();
-    openStreak(root, uid).catch((err) => {
-      DEPS.toast('Failed to load streak', 'err');
-      DEPS.logActivity({ title: 'Tournament streak error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
-    });
+    run();
+  });
+
+  if (submit) submit.addEventListener('click', run);
+
+  renderStreakRecent(root);
+}
+
+// Render recent-lookup chips; clicking one refills the input and re-runs.
+function renderStreakRecent(root) {
+  const wrap = $('[data-tournament-streak-recent]', root);
+  const input = $('[data-tournament-streak-search]', root);
+  if (!wrap || !input) return;
+  renderRecentChips(wrap, streakRecent, (id) => {
+    const name = streakRecentName(id);
+    input.value = name || String(id);
+    input.dataset.uid = String(id);
+    loadStreak(root, id, name).catch(() => {});
   });
 }
 
-async function openStreak(root, userId) {
+async function loadStreak(root, userId, displayName = '') {
   if (!/^\d{1,20}$/.test(String(userId))) {
     DEPS.toast('Enter a numeric user ID', 'warn');
     return;
   }
-
-  const body = document.createElement('div');
-  body.appendChild(overlayLoading());
-  const overlay = openOverlay(root, `Streak — User #${userId}`, body);
+  const host = $('[data-tournament-streak-result]', root);
+  if (host) host.replaceChildren(overlayLoading());
 
   const url = `${API}/streaks/${encodeURIComponent(userId)}`;
   let res;
@@ -1046,22 +1072,35 @@ async function openStreak(root, userId) {
   } catch (err) {
     DEPS.logActivity({ title: `Tournament Streak ${userId} error`, method: 'ERROR', url, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
     DEPS.toast('Failed to load streak', 'err');
-    body.replaceChildren(overlayInfo('Failed to load streak.'));
-    return overlay;
+    if (host) host.replaceChildren(streakResultCard(userId, overlayInfo('Failed to load streak.')));
+    return;
   }
   DEPS.logActivity({ title: `Tournament Streak ${userId} (GET)`, method: 'GET', url: res.url || url, ok: res.ok, status: res.status, data: res.data });
   if (res.status === 404) {
-    body.replaceChildren(overlayInfo('No streak found for this user.'));
-    return overlay;
+    if (host) host.replaceChildren(streakResultCard(userId, overlayInfo('No streak found for this user.')));
+    return;
   }
   if (!res.ok) {
     DEPS.toast('Failed to load streak', 'err');
-    body.replaceChildren(overlayInfo('Failed to load streak.'));
-    return overlay;
+    if (host) host.replaceChildren(streakResultCard(userId, overlayInfo('Failed to load streak.')));
+    return;
   }
 
-  body.replaceChildren(buildStreakTable(res.data));
-  return overlay;
+  if (host) host.replaceChildren(streakResultCard(userId, buildStreakTable(res.data)));
+  // Only remember successful lookups, mirroring the other user-search tabs.
+  streakRecent.push({ id: String(userId), name: displayName || streakRecentName(userId) || String(userId) });
+  renderStreakRecent(root);
+}
+
+// Inline result card: a small caption naming the user above the streak content.
+function streakResultCard(userId, contentEl) {
+  const card = document.createElement('div');
+  card.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/40 p-4';
+  const cap = document.createElement('div');
+  cap.className = 'mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400';
+  cap.textContent = `Streak — User #${userId}`;
+  card.append(cap, contentEl);
+  return card;
 }
 
 function buildStreakTable(data) {
