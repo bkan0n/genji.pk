@@ -46,9 +46,9 @@ export function initContentMapsWorkspace(deps) {
   wireList();
   renderLoading();
 
-  // Lazy-load names the first time the Maps sub-tab is entered (mirrors how
-  // content-workspace.js defers its fetches until a sub-tab is opened).
-  document.querySelectorAll('[data-subtab="content-maps"]').forEach((btn) => {
+  // Lazy-load names the first time the Banners sub-tab (inside the Maps
+  // workspace) is entered, deferring the fetch until the pane is opened.
+  document.querySelectorAll('[data-maps-subtab="banners"]').forEach((btn) => {
     btn.addEventListener('click', () => enterSubtab());
   });
 }
