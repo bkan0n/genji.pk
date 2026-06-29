@@ -1,4 +1,5 @@
 import { $, $$ } from './workspace-shell.js';
+import { openModal } from './modal-shell.js';
 
 let DEPS = null;
 const ROOT = () => $('[data-tournament-workspace]');
@@ -702,45 +703,17 @@ async function tournamentPublishResults(root) {
   await loadStatus(root, { force: true });
 }
 
-// ===== Inspection slide-over (standings / history / streak) =====
+// ===== Inspection modal (standings / history / streak) =====
 //
-// One reusable read-only overlay rendered as a right-anchored slide-over. It is
-// appended to document.body via DEPS.appendOverlay (which just appends the
-// element — it does NOT provide a backdrop or close handling), so the overlay
-// owns its own backdrop, Close button, and Escape-to-close, matching showModal
-// in moderator.js. All three inspections (standings, history, streak) render
-// readable TABLES — never a <pre> JSON dump.
-
-// Build + mount the slide-over shell around an arbitrary content element.
-function openOverlay(root, title, contentEl) {
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 z-[100] flex justify-end bg-black/40';
-  overlay.innerHTML = `
-    <div class="h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl dark:bg-zinc-950">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <h3 class="min-w-0 truncate text-lg font-semibold">${escapeHtml(title)}</h3>
-        <button type="button" data-overlay-close class="shrink-0 rounded-lg px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Close</button>
-      </div>
-      <div data-overlay-body></div>
-    </div>`;
-
-  const close = () => {
-    overlay.remove();
-    document.removeEventListener('keydown', onKey);
-  };
-  const onKey = (ev) => { if (ev.key === 'Escape') close(); };
-
-  // Backdrop click (on the overlay itself, outside the panel) or the Close
-  // button dismiss the slide-over.
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay || e.target.closest('[data-overlay-close]')) close();
-  });
-  document.addEventListener('keydown', onKey);
-
-  $('[data-overlay-body]', overlay).appendChild(contentEl);
-  DEPS.appendOverlay(overlay);
-  // Expose full teardown (removes the node AND the document keydown listener) so
-  // callers that dismiss programmatically don't orphan the Escape handler.
+// One reusable overlay built on the shared modal shell. The read-only inspections
+// (standings, history, streak) render readable TABLES — never a <pre> JSON dump —
+// and default to the wider `lg` panel so tables breathe; the create-category form
+// reuses the same helper at the standard `md` width. Callers append their content
+// into the element they pass and mutate it in place (loading → table) while
+// holding the returned node, on which `.close()` is exposed for programmatic
+// dismissal (e.g. closing the form after a successful create).
+function openOverlay(root, title, contentEl, { width = 'lg' } = {}) {
+  const { overlay, close } = openModal({ title, body: contentEl, width });
   overlay.close = close;
   return overlay;
 }
@@ -1518,7 +1491,7 @@ function setupCreateFormHtml() {
           <textarea name="streak_xp_json" rows="4" placeholder='[{"threshold":5,"xp":300}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
         </label>
       </div>
-      <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Create</button>
+      <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-emerald-500 dark:text-white">Create</button>
     </form>`;
 }
 
@@ -1532,7 +1505,7 @@ function openCreateCategoryModal(root) {
   content.innerHTML = setupCreateFormHtml();
   const form = content.querySelector('form[data-action="tournament-category-create"]');
 
-  const overlay = openOverlay(root, 'Create category', content);
+  const overlay = openOverlay(root, 'Create category', content, { width: 'md' });
 
   // Enhance the XP textareas now that the form is in the DOM.
   if (form) {

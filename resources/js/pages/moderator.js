@@ -10,6 +10,7 @@ import { initSkillWorkspace } from './moderator/skill-workspace.js';
 import { initWebWorkspace } from './moderator/web-workspace.js';
 import { initStoreWorkspace } from './moderator/store-workspace.js';
 import { initQuestsWorkspace } from './moderator/quests-workspace.js';
+import { openModal } from './moderator/modal-shell.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -602,48 +603,24 @@ function appendOverlay(overlay) {
 }
 
 // --- Modal ---
+// Read-only response viewer on the shared modal shell: a Copy control in the
+// header actions slot, the raw text in a wide, horizontally scrollable <pre>.
 function showModal({ title = 'Response', subtitle = '', bodyText = '' } = {}) {
-  const overlay = document.createElement('div');
-  overlay.className =
-    'fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
-  overlay.innerHTML = `
-        <div class="w-full max-w-4xl rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
-            <div>
-            <h3 class="font-semibold">${title}</h3>
-            ${subtitle ? `<div class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">${subtitle}</div>` : ''}
-            </span>
-            <div class="flex items-center gap-2">
-            <button class="copy cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5">Copy</button>
-            <button class="close cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5">Close</button>
-            </div>
-        </div>
-        <div class="p-4 max-h-[70vh] overflow-auto">
-            <pre class="text-xs whitespace-pre leading-tight"></pre>
-        </div>
-        </div>
-    `;
-  appendOverlay(overlay);
+  const copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.className = 'cursor-pointer rounded-lg border border-zinc-200/80 px-2 py-1 text-xs hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10';
+  copyBtn.textContent = 'Copy';
 
+  const pre = document.createElement('pre');
+  pre.className = 'text-xs leading-tight whitespace-pre';
+  pre.textContent = bodyText;
 
-  overlay.querySelector('pre').textContent = bodyText;
+  openModal({ title, subtitle, headerActions: copyBtn, body: pre, bodyClass: 'p-4', width: 'xl' });
 
-  const close = () => overlay.remove();
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
-  });
-  overlay.querySelector('.close')?.addEventListener('click', close);
-  overlay.querySelector('.copy')?.addEventListener('click', async () => {
+  copyBtn.addEventListener('click', async () => {
     const ok = await copyText(bodyText);
     toast(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'ok' : 'err');
   });
-  const onKey = (ev) => {
-    if (ev.key === 'Escape') {
-      close();
-      document.removeEventListener('keydown', onKey);
-    }
-  };
-  document.addEventListener('keydown', onKey);
 }
 
 // --- Activity log ---

@@ -1,4 +1,5 @@
 import { $, $$ } from './workspace-shell.js';
+import { openModal, primaryButton, ghostButton, setButtonBusy } from './modal-shell.js';
 
 let DEPS = null;
 const ROOT = () => $('[data-quests-workspace]');
@@ -539,14 +540,13 @@ function renderUserPanel() {
     <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
       <div>
         <h3 class="font-semibold">User quests</h3>
-        <p class="text-xs text-zinc-500 dark:text-zinc-400">Find a user; their quests load automatically. Edit opens a side panel.</p>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400">Find a user; their quests load automatically. Edit opens a modal.</p>
       </div>
       <label class="text-sm relative block max-w-md">User
         <input data-user-search type="text" autocomplete="off" placeholder="Search username…"
           class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
       <div data-user-quests class="space-y-3"></div>
-    </article>
-    <div data-quest-drawer></div>`;
+    </article>`;
   const search = sp.querySelector('[data-user-search]');
   if (DEPS.wireAutocomplete && search) {
     DEPS.wireAutocomplete(search, { kind: 'users', onPick: ({ id }) => { if (id) loadUserQuests(String(id)); } });
@@ -705,46 +705,42 @@ function openUserDrawer(progressId) {
   const type = q.quest_data?.requirements?.type || 'complete_maps';
   const bt = q.quest_data?.bounty_type;
   const kind = bt ? `Bounty · ${bt}` : 'Global';
-  const drawerHost = subpanel('quest-user').querySelector('[data-quest-drawer]');
-  drawerHost.innerHTML = `
-    <div class="fixed inset-0 z-[100]" data-drawer-overlay>
-      <div class="absolute inset-0 bg-black/40" data-drawer-close></div>
-      <div class="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto bg-white dark:bg-zinc-950 p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Edit quest #${progressId}</h3>
-          <button type="button" data-drawer-close class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm">Close</button>
-        </div>
-        <div class="text-xs text-zinc-500 dark:text-zinc-400">Kind: ${escapeHtml(kind)}</div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="text-sm">completed ${buildSelect('completed', [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], q.completed ? '1' : '0')}</label>
-          <label class="text-sm">claimed ${buildSelect('claimed', [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], q.claimed ? '1' : '0')}</label>
-        </div>
-        <p class="text-[11px] text-amber-600 dark:text-amber-400" data-complete-hint hidden>Marking complete auto-fills progress to satisfy the requirement; your explicit edits below still win.</p>
-        <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
-          <legend class="px-1 text-xs font-semibold">quest_data</legend>
-          <label class="text-sm block">name<input name="qd_name" value="${escapeHtml(q.quest_data?.name || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-          <label class="text-sm block">description<input name="qd_description" value="${escapeHtml(q.quest_data?.description || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-          <div class="grid gap-2 sm:grid-cols-2">
-            <label class="text-sm">coin_reward<input name="qd_coin_reward" type="number" value="${escapeHtml(q.quest_data?.coin_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-            <label class="text-sm">xp_reward<input name="qd_xp_reward" type="number" value="${escapeHtml(q.quest_data?.xp_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-          </div>
-          <div data-drawer-req class="space-y-2"></div>
-        </fieldset>
-        <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
-          <legend class="px-1 text-xs font-semibold">progress</legend>
-          <div data-drawer-progress></div>
-        </fieldset>
-        <div class="flex gap-2">
-          <button type="button" data-drawer-save class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">Save</button>
-          <button type="button" data-drawer-close class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm">Cancel</button>
-        </div>
+
+  const body = `
+    <div class="space-y-4">
+      <div class="text-xs text-zinc-500 dark:text-zinc-400">Kind: ${escapeHtml(kind)}</div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="text-sm">completed ${buildSelect('completed', [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], q.completed ? '1' : '0')}</label>
+        <label class="text-sm">claimed ${buildSelect('claimed', [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], q.claimed ? '1' : '0')}</label>
       </div>
+      <p class="text-[11px] text-amber-600 dark:text-amber-400" data-complete-hint hidden>Marking complete auto-fills progress to satisfy the requirement; your explicit edits below still win.</p>
+      <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
+        <legend class="px-1 text-xs font-semibold">quest_data</legend>
+        <label class="text-sm block">name<input name="qd_name" value="${escapeHtml(q.quest_data?.name || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+        <label class="text-sm block">description<input name="qd_description" value="${escapeHtml(q.quest_data?.description || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <label class="text-sm">coin_reward<input name="qd_coin_reward" type="number" value="${escapeHtml(q.quest_data?.coin_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+          <label class="text-sm">xp_reward<input name="qd_xp_reward" type="number" value="${escapeHtml(q.quest_data?.xp_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+        </div>
+        <div data-drawer-req class="space-y-2"></div>
+      </fieldset>
+      <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
+        <legend class="px-1 text-xs font-semibold">progress</legend>
+        <div data-drawer-progress></div>
+      </fieldset>
     </div>`;
-  const overlay = drawerHost.querySelector('[data-drawer-overlay]');
+
+  const saveBtn = primaryButton('Save');
+  const cancelBtn = ghostButton('Cancel');
+  const footer = document.createDocumentFragment();
+  footer.append(saveBtn, cancelBtn);
+
+  const { overlay, close } = openModal({ title: `Edit quest #${progressId}`, body, footer, width: 'md' });
+
   renderRequirements(overlay.querySelector('[data-drawer-req]'), type, q.quest_data?.requirements || {}, REQ_TYPES);
   renderProgress(overlay.querySelector('[data-drawer-progress]'), type, q.progress || {});
-  // Re-render progress when the requirement type changes in the drawer.
-  // Delegate on the persistent req host so it survives renderRequirements re-renders.
+  // Re-render progress when the requirement type changes. Delegate on the
+  // persistent req host so it survives renderRequirements re-renders.
   overlay.querySelector('[data-drawer-req]').addEventListener('change', (e) => {
     if (e.target?.name === 'req_type') {
       renderProgress(overlay.querySelector('[data-drawer-progress]'), e.target.value, {});
@@ -754,11 +750,19 @@ function openUserDrawer(progressId) {
   const hint = overlay.querySelector('[data-complete-hint]');
   completedSel.addEventListener('change', () => { hint.hidden = completedSel.value !== '1'; });
   hint.hidden = completedSel.value !== '1';
-  overlay.querySelectorAll('[data-drawer-close]').forEach((b) => b.onclick = () => drawerHost.innerHTML = '');
-  overlay.querySelector('[data-drawer-save]').onclick = () => saveUserQuest(progressId, overlay);
+
+  cancelBtn.addEventListener('click', close);
+  saveBtn.addEventListener('click', async () => {
+    setButtonBusy(saveBtn, true);
+    try {
+      await saveUserQuest(progressId, overlay, close);
+    } finally {
+      setButtonBusy(saveBtn, false);
+    }
+  });
 }
 
-async function saveUserQuest(progressId, overlay) {
+async function saveUserQuest(progressId, overlay, close) {
   if (!DEPS.isDevAllowed()) return DEPS.toast('Dev access only', 'err');
   const q = USER_QUESTS.find((x) => x.progress_id === progressId);
   const get = (n) => overlay.querySelector(`[name="${n}"]`)?.value ?? '';
@@ -787,13 +791,13 @@ async function saveUserQuest(progressId, overlay) {
   DEPS.logActivity({ title: 'Update user quest (PATCH)', method: 'PATCH', url: res.url || `${API_MODS}/quests/admin/users/${USER_ID}/progress/${progressId}`, ok: res.ok, status: res.status, data: res.data });
   if (!res.ok) return DEPS.toast('Update failed', 'err');
   DEPS.toast('User quest updated', 'ok');
-  subpanel('quest-user').querySelector('[data-quest-drawer]').innerHTML = '';
+  close?.();
   await loadUserQuests(USER_ID);
 }
 
 // Reads progress values back out of the drawer (only set fields).
 async function collectProgress(host) {
-  const type = host.__type || subpanel('quest-user').querySelector('select[name="req_type"]')?.value;
+  const type = host.__type || document.querySelector('[data-drawer-req] select[name="req_type"]')?.value;
   const out = {};
   const get = (n) => host.querySelector(`[name="pr_${n}"]`)?.value ?? '';
   const num = (n, float = false) => { const v = get(n); if (v === '') return undefined; const x = float ? Number(v) : parseInt(v, 10); return Number.isFinite(x) ? x : undefined; };
