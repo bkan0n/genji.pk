@@ -3,28 +3,28 @@
   <div role="tablist" aria-label="Lootbox sections" class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
     <button
       role="tab"
-      id="lootbox-tab-user"
-      aria-controls="lootbox-subpanel-user"
+      id="lootbox-tab-settings"
+      aria-controls="lootbox-subpanel-settings"
       class="mod-subtab active rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/[0.03] px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-emerald-500/10 [&.active]:text-emerald-700 dark:[&.active]:text-emerald-300 [&.active]:border-emerald-500/30 [&.active]:ring-1 [&.active]:ring-inset [&.active]:ring-emerald-500/40 [&.active]:font-semibold"
-      data-subtab="lootbox-user"
+      data-subtab="lootbox-settings"
       aria-selected="true"
     >
-      User
+      Config
     </button>
     <button
       role="tab"
-      id="lootbox-tab-settings"
-      aria-controls="lootbox-subpanel-settings"
+      id="lootbox-tab-user"
+      aria-controls="lootbox-subpanel-user"
       class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/[0.03] px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-emerald-500/10 [&.active]:text-emerald-700 dark:[&.active]:text-emerald-300 [&.active]:border-emerald-500/30 [&.active]:ring-1 [&.active]:ring-inset [&.active]:ring-emerald-500/40 [&.active]:font-semibold"
-      data-subtab="lootbox-settings"
+      data-subtab="lootbox-user"
       aria-selected="false"
     >
-      Settings
+      User
     </button>
   </div>
 
   {{-- USER: search + the chosen user's lootbox state, one continuous card --}}
-  <div data-subpanel="lootbox-user" data-preserve-form-state="1" id="lootbox-subpanel-user" role="tabpanel" aria-labelledby="lootbox-tab-user" tabindex="0" class="space-y-6 focus:outline-none">
+  <div data-subpanel="lootbox-user" data-preserve-form-state="1" id="lootbox-subpanel-user" role="tabpanel" aria-labelledby="lootbox-tab-user" tabindex="0" class="hidden space-y-6 focus:outline-none">
     <div data-lootbox-workspace>
       <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5 space-y-5">
         <div>
@@ -66,7 +66,7 @@
   </div>
 
   {{-- SETTINGS: global economy controls (filled by lootbox-settings.js) --}}
-  <div data-subpanel="lootbox-settings" id="lootbox-subpanel-settings" role="tabpanel" aria-labelledby="lootbox-tab-settings" tabindex="0" class="hidden space-y-6 focus:outline-none">
+  <div data-subpanel="lootbox-settings" id="lootbox-subpanel-settings" role="tabpanel" aria-labelledby="lootbox-tab-settings" tabindex="0" class="space-y-6 focus:outline-none">
     <div data-lootbox-settings></div>
   </div>
 </div>
