@@ -532,6 +532,290 @@ function wireUserField(input, { initialId = null } = {}) {
 }
 const readUserId = (input) => String(input?.dataset?.uid || '').trim() || null;
 
+let USER_QUESTS = [];   // normalized instances for the loaded user
+let USER_ID = null;
+
+function renderUserPanel() {
+  const sp = subpanel('quest-user');
+  if (!sp) return;
+  sp.innerHTML = `
+    <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+      <div>
+        <h3 class="font-semibold">User quests</h3>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400">Find a user; their quests load automatically. Edit opens a side panel.</p>
+      </div>
+      <label class="text-sm relative block max-w-md">User
+        <input data-user-search type="text" autocomplete="off" placeholder="Search username…"
+          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+      <div data-user-quests class="space-y-3"></div>
+    </article>
+    <div data-quest-drawer></div>`;
+  const search = sp.querySelector('[data-user-search]');
+  if (DEPS.wireAutocomplete && search) {
+    DEPS.wireAutocomplete(search, { kind: 'users', onPick: ({ id }) => { if (id) loadUserQuests(String(id)); } });
+    search.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const id = String(search.dataset.uid || '').match(/\d{5,}/)?.[0];
+      if (id) loadUserQuests(id); else DEPS.toast('Pick a user', 'warn');
+    });
+  }
+}
+
+function instProgressText(p = {}) {
+  if (p.percentage != null) return `${p.percentage}%`;
+  if (p.current != null || p.target != null) return `${p.current ?? 0} / ${p.target ?? '?'}`;
+  return '—';
+}
+
+function renderUserQuestCards() {
+  const host = subpanel('quest-user').querySelector('[data-user-quests]');
+  if (!host) return;
+  if (!USER_QUESTS.length) { host.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">No quests for this user.</p>`; return; }
+  host.innerHTML = USER_QUESTS.map((q) => {
+    const bt = q.quest_data?.bounty_type;
+    const kind = bt ? `Bounty · ${bt}` : 'Global';
+    return `<article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-950/30 p-4" data-uq-card="${q.progress_id}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold truncate">${escapeHtml(q.quest_data?.name || `Progress #${q.progress_id}`)}</span>
+            <span class="rounded-full bg-zinc-200/70 dark:bg-white/10 px-2 py-0.5 text-[11px]">${escapeHtml(kind)}</span>
+          </div>
+          <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">${escapeHtml(instProgressText(q.progress))}${q.completed ? ' · completed' : ''}${q.claimed ? ' · claimed' : ''}</div>
+        </div>
+        <button type="button" data-edit-uq="${q.progress_id}" class="shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Edit</button>
+      </div>
+    </article>`;
+  }).join('');
+  host.querySelectorAll('[data-edit-uq]').forEach((b) =>
+    b.addEventListener('click', () => openUserDrawer(Number(b.dataset.editUq))));
+}
+
+function normalizeInstances(data) {
+  const arr = Array.isArray(data) ? data : (data?.quests || data?.items || data?.data || []);
+  return (arr || []).map((raw) => {
+    const progress_id = raw.progress_id ?? raw.id ?? raw.progress?.id ?? null;
+    if (!progress_id) return null;
+    return {
+      progress_id: Number(progress_id),
+      quest_data: raw.quest_data || {
+        name: raw.name, description: raw.description, difficulty: raw.difficulty,
+        coin_reward: raw.coin_reward, xp_reward: raw.xp_reward, bounty_type: raw.bounty_type,
+        requirements: raw.requirements,
+      },
+      progress: raw.progress || {},
+      completed: raw.completed === true,
+      claimed: raw.claimed === true,
+    };
+  }).filter(Boolean);
+}
+
+async function loadUserQuests(userId) {
+  USER_ID = String(userId);
+  const host = subpanel('quest-user').querySelector('[data-user-quests]');
+  if (host) host.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">Loading quests…</p>`;
+  const res = await DEPS.http('GET', '/api/quests', { query: { user_id: USER_ID } });
+  DEPS.logActivity({ title: 'User quests (GET)', method: 'GET', url: res.url || `/api/quests?user_id=${USER_ID}`, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) { if (host) host.innerHTML = `<p class="text-sm text-rose-500">Failed to load.</p>`; DEPS.toast('Load failed', 'err'); return; }
+  USER_QUESTS = normalizeInstances(res.data);
+  renderUserQuestCards();
+}
+
+function renderProgress(host, type, p = {}) {
+  host.__type = type;
+  const rows = [];
+  const num = (n, val, { step = '1', mode = 'numeric' } = {}) =>
+    `<label class="text-sm">${n}<input name="pr_${n}" type="number" step="${step}" inputmode="${mode}" value="${escapeHtml(val ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>`;
+  const mapField = (val) => `<label class="text-sm relative block">map<input data-pr-map type="text" autocomplete="off" placeholder="Search map code…" data-init-map="${escapeHtml(val ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>`;
+  const bool = (n, val) => `<label class="text-sm">${n} ${buildSelect(`pr_${n}`, [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], val === true ? '1' : val === false ? '0' : '')}</label>`;
+
+  if (type === 'complete_maps' || type === 'complete_difficulty_range') {
+    rows.push(num('current', p.current)); rows.push(num('target', p.target));
+    rows.push(`<div class="text-sm sm:col-span-2">completed_map_ids<div class="mt-1 flex flex-wrap gap-1" data-pr-completed-chips></div><input data-pr-completed-add type="text" placeholder="add by code…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></div>`);
+    if (type === 'complete_maps') rows.push(`<div class="text-sm sm:col-span-2">details (difficulty → count)<div data-pr-details></div></div>`);
+  } else if (type === 'earn_medals') {
+    rows.push(num('current', p.current)); rows.push(num('target', p.target));
+    rows.push(`<div class="text-sm sm:col-span-2">counted_map_ids<div class="mt-1 flex flex-wrap gap-1" data-pr-counted-chips></div><input data-pr-counted-add type="text" placeholder="add by code…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></div>`);
+    rows.push(`<div class="text-sm sm:col-span-2">medals<div data-pr-medals></div></div>`);
+  } else if (type === 'beat_time' || type === 'beat_rival') {
+    rows.push(mapField(p.map_id));
+    rows.push(num('target_time', p.target_time, { step: '0.01', mode: 'decimal' }));
+    rows.push(`<label class="text-sm">target_type ${buildSelect('pr_target_type', TARGET_TYPES, p.target_type, { placeholder: '(none)' })}</label>`);
+    rows.push(`<label class="text-sm">medal_type ${buildSelect('pr_medal_type', MEDAL_TYPES, p.medal_type, { placeholder: '(none)' })}</label>`);
+    rows.push(num('best_attempt', p.best_attempt, { step: '0.01', mode: 'decimal' }));
+    rows.push(num('last_attempt', p.last_attempt, { step: '0.01', mode: 'decimal' }));
+    if (type === 'beat_rival') {
+      rows.push(`<label class="text-sm relative block">rival<input data-pr-user type="text" autocomplete="off" placeholder="Search user…" data-init-uid="${escapeHtml(p.rival_user_id ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>`);
+      rows.push(num('rival_time', p.rival_time, { step: '0.01', mode: 'decimal' }));
+    }
+  } else if (type === 'complete_map') {
+    rows.push(mapField(p.map_id));
+    rows.push(bool('completed', p.completed));
+    rows.push(`<label class="text-sm">medal_earned ${buildSelect('pr_medal_earned', MEDAL_TYPES, p.medal_earned, { placeholder: '(none)' })}</label>`);
+  }
+  host.innerHTML = `<div class="grid gap-3 sm:grid-cols-2">${rows.join('')}</div>`;
+
+  // Wire compound fields.
+  const m = host.querySelector('[data-pr-map]');
+  if (m) wireMapField(m, { initialMapId: m.dataset.initMap || null });
+  const u = host.querySelector('[data-pr-user]');
+  if (u) wireUserField(u, { initialId: u.dataset.initUid || null });
+  const cc = host.querySelector('[data-pr-completed-chips]');
+  if (cc) wireMapListField(cc, host.querySelector('[data-pr-completed-add]'), p.completed_map_ids || []);
+  const ct = host.querySelector('[data-pr-counted-chips]');
+  if (ct) wireMapListField(ct, host.querySelector('[data-pr-counted-add]'), p.counted_map_ids || []);
+  const det = host.querySelector('[data-pr-details]');
+  if (det) renderDetailsEditor(det, p.details || {});
+  const med = host.querySelector('[data-pr-medals]');
+  if (med) renderMedalsEditor(med, p.medals || []);
+}
+
+// details: { difficulty -> count } rows.
+function renderDetailsEditor(host, details) {
+  host.__rows = Object.entries(details).map(([k, v]) => ({ k, v }));
+  const draw = () => {
+    host.innerHTML = host.__rows.map((r, i) => `<div class="mt-1 flex gap-2" data-drow="${i}">
+      ${buildSelect(`__d_diff_${i}`, REQ_DIFFICULTIES.filter((d) => d !== 'any'), r.k)}
+      <input data-dcount value="${escapeHtml(r.v)}" type="number" class="mt-1 w-24 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-2 py-2 text-sm" />
+      <button type="button" data-drem="${i}" class="px-2 text-sm opacity-60 hover:opacity-100">✕</button></div>`).join('') +
+      `<button type="button" data-dadd class="mt-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs">+ add</button>`;
+    host.querySelector('[data-dadd]').onclick = () => { host.__rows.push({ k: 'Easy', v: 0 }); draw(); };
+    host.querySelectorAll('[data-drem]').forEach((b) => b.onclick = () => { host.__rows.splice(Number(b.dataset.drem), 1); draw(); });
+  };
+  draw();
+}
+
+// medals: [{ map_id, medal_type }] rows.
+function renderMedalsEditor(host, medals) {
+  host.__rows = medals.map((m) => ({ map_id: m.map_id, medal_type: m.medal_type }));
+  const draw = () => {
+    host.innerHTML = host.__rows.map((r, i) => `<div class="mt-1 flex gap-2 items-center" data-mrow="${i}">
+      <input data-mmap type="text" autocomplete="off" placeholder="map code…" data-init-map="${escapeHtml(r.map_id ?? '')}" class="relative flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-2 py-2 text-sm" />
+      ${buildSelect(`__m_medal_${i}`, MEDAL_TYPES, r.medal_type)}
+      <button type="button" data-mrem="${i}" class="px-2 text-sm opacity-60 hover:opacity-100">✕</button></div>`).join('') +
+      `<button type="button" data-madd class="mt-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs">+ add</button>`;
+    host.querySelectorAll('[data-mmap]').forEach((inp) => wireMapField(inp, { initialMapId: inp.dataset.initMap || null }));
+    host.querySelector('[data-madd]').onclick = () => { host.__rows.push({ map_id: null, medal_type: 'gold' }); draw(); };
+    host.querySelectorAll('[data-mrem]').forEach((b) => b.onclick = () => { host.__rows.splice(Number(b.dataset.mrem), 1); draw(); });
+  };
+  draw();
+}
+
+function openUserDrawer(progressId) {
+  const q = USER_QUESTS.find((x) => x.progress_id === progressId);
+  if (!q) return;
+  const type = q.quest_data?.requirements?.type || 'complete_maps';
+  const bt = q.quest_data?.bounty_type;
+  const kind = bt ? `Bounty · ${bt}` : 'Global';
+  const drawerHost = subpanel('quest-user').querySelector('[data-quest-drawer]');
+  drawerHost.innerHTML = `
+    <div class="fixed inset-0 z-[100]" data-drawer-overlay>
+      <div class="absolute inset-0 bg-black/40" data-drawer-close></div>
+      <div class="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto bg-white dark:bg-zinc-950 p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Edit quest #${progressId}</h3>
+          <button type="button" data-drawer-close class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm">Close</button>
+        </div>
+        <div class="text-xs text-zinc-500 dark:text-zinc-400">Kind: ${escapeHtml(kind)}</div>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="text-sm">completed ${buildSelect('completed', [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], q.completed ? '1' : '0')}</label>
+          <label class="text-sm">claimed ${buildSelect('claimed', [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], q.claimed ? '1' : '0')}</label>
+        </div>
+        <p class="text-[11px] text-amber-600 dark:text-amber-400" data-complete-hint hidden>Marking complete auto-fills progress to satisfy the requirement; your explicit edits below still win.</p>
+        <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
+          <legend class="px-1 text-xs font-semibold">quest_data</legend>
+          <label class="text-sm block">name<input name="qd_name" value="${escapeHtml(q.quest_data?.name || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+          <label class="text-sm block">description<input name="qd_description" value="${escapeHtml(q.quest_data?.description || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <label class="text-sm">coin_reward<input name="qd_coin_reward" type="number" value="${escapeHtml(q.quest_data?.coin_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+            <label class="text-sm">xp_reward<input name="qd_xp_reward" type="number" value="${escapeHtml(q.quest_data?.xp_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+          </div>
+          <div data-drawer-req class="space-y-2"></div>
+        </fieldset>
+        <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
+          <legend class="px-1 text-xs font-semibold">progress</legend>
+          <div data-drawer-progress></div>
+        </fieldset>
+        <div class="flex gap-2">
+          <button type="button" data-drawer-save class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">Save</button>
+          <button type="button" data-drawer-close class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  const overlay = drawerHost.querySelector('[data-drawer-overlay]');
+  renderRequirements(overlay.querySelector('[data-drawer-req]'), type, q.quest_data?.requirements || {}, REQ_TYPES);
+  renderProgress(overlay.querySelector('[data-drawer-progress]'), type, q.progress || {});
+  // Re-render progress when the requirement type changes in the drawer.
+  overlay.querySelector('select[name="req_type"]').addEventListener('change', (e) => {
+    renderProgress(overlay.querySelector('[data-drawer-progress]'), e.target.value, {});
+  });
+  const completedSel = overlay.querySelector('select[name="completed"]');
+  const hint = overlay.querySelector('[data-complete-hint]');
+  completedSel.addEventListener('change', () => { hint.hidden = completedSel.value !== '1'; });
+  hint.hidden = completedSel.value !== '1';
+  overlay.querySelectorAll('[data-drawer-close]').forEach((b) => b.onclick = () => drawerHost.innerHTML = '');
+  overlay.querySelector('[data-drawer-save]').onclick = () => saveUserQuest(progressId, overlay);
+}
+
+async function saveUserQuest(progressId, overlay) {
+  if (!DEPS.isDevAllowed()) return DEPS.toast('Dev access only', 'err');
+  const q = USER_QUESTS.find((x) => x.progress_id === progressId);
+  const get = (n) => overlay.querySelector(`[name="${n}"]`)?.value ?? '';
+  const payload = {};
+
+  // Top-level booleans.
+  const completed = get('completed'); if (completed === '1') payload.completed = true; else if (completed === '0') payload.completed = false;
+  const claimed = get('claimed'); if (claimed === '1') payload.claimed = true; else if (claimed === '0') payload.claimed = false;
+
+  // quest_data (identity + requirements).
+  const qd = {};
+  if (get('qd_name') !== (q.quest_data?.name || '')) qd.name = get('qd_name');
+  if (get('qd_description') !== (q.quest_data?.description || '')) qd.description = get('qd_description');
+  if (get('qd_coin_reward') !== '' && Number(get('qd_coin_reward')) !== q.quest_data?.coin_reward) qd.coin_reward = Number(get('qd_coin_reward'));
+  if (get('qd_xp_reward') !== '' && Number(get('qd_xp_reward')) !== q.quest_data?.xp_reward) qd.xp_reward = Number(get('qd_xp_reward'));
+  const req = await collectRequirements(overlay.querySelector('[data-drawer-req]'));
+  if (req && JSON.stringify(req) !== JSON.stringify(q.quest_data?.requirements || {})) qd.requirements = req;
+  if (Object.keys(qd).length) payload.quest_data = qd;
+
+  // progress.
+  const prog = await collectProgress(overlay.querySelector('[data-drawer-progress]'));
+  if (prog && Object.keys(prog).length) payload.progress = prog;
+
+  if (!Object.keys(payload).length) return DEPS.toast('Nothing to update', 'warn');
+  const res = await DEPS.http('PATCH', `${API_MODS}/quests/admin/users/${USER_ID}/progress/${progressId}`, { body: payload });
+  DEPS.logActivity({ title: 'Update user quest (PATCH)', method: 'PATCH', url: res.url || `${API_MODS}/quests/admin/users/${USER_ID}/progress/${progressId}`, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) return DEPS.toast('Update failed', 'err');
+  DEPS.toast('User quest updated', 'ok');
+  subpanel('quest-user').querySelector('[data-quest-drawer]').innerHTML = '';
+  await loadUserQuests(USER_ID);
+}
+
+// Reads progress values back out of the drawer (only set fields).
+async function collectProgress(host) {
+  const type = host.__type || subpanel('quest-user').querySelector('select[name="req_type"]')?.value;
+  const out = {};
+  const get = (n) => host.querySelector(`[name="pr_${n}"]`)?.value ?? '';
+  const num = (n, float = false) => { const v = get(n); if (v === '') return undefined; const x = float ? Number(v) : parseInt(v, 10); return Number.isFinite(x) ? x : undefined; };
+  const setIf = (k, v) => { if (v !== undefined && v !== '' && v !== null) out[k] = v; };
+
+  setIf('current', num('current')); setIf('target', num('target'));
+  setIf('target_time', num('target_time', true)); setIf('best_attempt', num('best_attempt', true));
+  setIf('last_attempt', num('last_attempt', true)); setIf('rival_time', num('rival_time', true));
+  setIf('target_type', get('target_type')); setIf('medal_type', get('medal_type')); setIf('medal_earned', get('medal_earned'));
+  const completed = get('completed'); if (completed === '1') out.completed = true; else if (completed === '0') out.completed = false;
+
+  const m = host.querySelector('[data-pr-map]'); const mid = m ? await readMapId(m) : null; if (mid != null) out.map_id = mid;
+  const u = host.querySelector('[data-pr-user]'); const uid = u ? readUserId(u) : null; if (uid) out.rival_user_id = Number(uid);
+  const cc = host.querySelector('[data-pr-completed-chips]'); if (cc) out.completed_map_ids = cc.__ids || [];
+  const ct = host.querySelector('[data-pr-counted-chips]'); if (ct) out.counted_map_ids = ct.__ids || [];
+  const det = host.querySelector('[data-pr-details]');
+  if (det && det.__rows) { const d = {}; det.__rows.forEach((r, i) => { const k = det.querySelector(`[name="__d_diff_${i}"]`)?.value; const v = det.querySelector(`[data-drow="${i}"] [data-dcount]`)?.value; if (k && v !== '') d[k] = Number(v); }); out.details = d; }
+  const med = host.querySelector('[data-pr-medals]');
+  if (med && med.__rows) { const list = []; for (let i = 0; i < med.__rows.length; i++) { const inp = med.querySelector(`[data-mrow="${i}"] [data-mmap]`); const mt = med.querySelector(`[name="__m_medal_${i}"]`)?.value; const id = inp ? await readMapId(inp) : null; if (id != null) list.push({ map_id: id, medal_type: mt }); } out.medals = list; }
+  return out;
+}
+
 export function initQuestsWorkspace(deps) {
   DEPS = deps;
   const root = ROOT();
@@ -542,4 +826,5 @@ export function initQuestsWorkspace(deps) {
   const panel = document.querySelector('.mod-panel[data-panel="quests"]');
   if (panel && !panel.classList.contains('hidden')) onSubtabEnter('quest-config');
   renderRotationCard();
+  renderUserPanel();
 }
