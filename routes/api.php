@@ -50,6 +50,7 @@ use App\Http\Controllers\Mods\Content\ReorderMovementTechniqueController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechniqueController;
+use App\Http\Controllers\Mods\Completions\ModerateCompletionController;
 use App\Http\Controllers\Mods\Completions\ModerationRecordsController;
 use App\Http\Controllers\Mods\Devs\CacheController;
 use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
@@ -507,6 +508,9 @@ Route::prefix('mods')
         Route::delete('completions/suspicious', [SuspiciousFlagsController::class, 'destroy']);
         Route::get('completions/moderation/records', [ModerationRecordsController::class, 'index'])
             ->name('mods.completions.moderation.records');
+        Route::put('completions/{record_id}/moderate', [ModerateCompletionController::class, 'update'])
+            ->whereNumber('record_id')
+            ->name('mods.completions.moderate');
 
         // VERIFICATIONS
         Route::get('verifications/pending', [PendingVerificationsController::class, 'index']);

@@ -25,4 +25,16 @@ class ModerateRecordsControllerTest extends TestCase
         $response = $this->getJson('/api/mods/completions/moderation/records?verification_status=Nope');
         expect($response->status())->toBe(422);
     }
+
+    public function test_moderate_completion_requires_moderated_by()
+    {
+        $response = $this->putJson('/api/mods/completions/1/moderate', []);
+        expect($response->status())->toBe(422);
+    }
+
+    public function test_moderate_completion_endpoint()
+    {
+        $response = $this->putJson('/api/mods/completions/1/moderate', ['moderated_by' => 123]);
+        expect($response->status())->toBeIn($this->ok);
+    }
 }
