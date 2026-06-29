@@ -335,7 +335,61 @@ function buildModalBody(item) {
   const wrap = document.createElement('div');
   wrap.className = 'space-y-5';
   const verified = !!item.verified;
-  wrap.innerHTML = `
+
+  const verifiedPill = pill(
+    verified ? 'Verified' : 'Unverified',
+    verified
+      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      : 'border-zinc-300/60 dark:border-white/10 text-zinc-500 dark:text-zinc-400'
+  );
+  const suspiciousPill = item.suspicious
+    ? pill('Suspicious', 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300')
+    : '';
+  const shot = item.screenshot ? safeHref(item.screenshot) : null;
+  const vid = item.video ? safeHref(item.video) : null;
+
+  const meta = [
+    `<span class="font-mono text-zinc-700 dark:text-zinc-200">${escapeHtml(fmtTime(item.time))}</span>`,
+    item.difficulty ? `<span>${escapeHtml(item.difficulty)}</span>` : '',
+    item.medal ? `<span>${escapeHtml(item.medal)}</span>` : '',
+    item.message_id != null
+      ? `<span class="font-mono">msg ${escapeHtml(String(item.message_id))}</span>`
+      : '',
+    vid
+      ? `<a href="${vid}" target="_blank" rel="noopener" class="underline hover:no-underline">video</a>`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('<span class="px-1 text-zinc-300 dark:text-zinc-600">·</span>');
+
+  const thumb = shot
+    ? `<a href="${shot}" target="_blank" rel="noopener" title="Open screenshot in new tab" class="group block overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900">
+        <img src="${shot}" alt="Completion screenshot" loading="lazy" referrerpolicy="no-referrer" class="max-h-64 w-full object-contain transition group-hover:opacity-90" />
+      </a>`
+    : `<div class="flex h-28 items-center justify-center rounded-lg border border-dashed border-zinc-300/70 dark:border-white/10 text-xs text-zinc-400 dark:text-zinc-500">No screenshot provided</div>`;
+
+  const summary = `
+    <section class="space-y-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.02] p-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(item.map_name || '—')}</span>
+        <span class="rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-0.5 text-xs font-mono text-zinc-600 dark:text-zinc-300">${escapeHtml(item.code || '—')}</span>
+        ${verifiedPill}
+        ${suspiciousPill}
+      </div>
+      <div class="text-sm text-zinc-700 dark:text-zinc-200">
+        ${escapeHtml(item.name || 'User ' + item.user_id)}
+        <span class="text-zinc-400 dark:text-zinc-500">· ${escapeHtml(String(item.user_id ?? '—'))}</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+        ${meta}
+      </div>
+      ${thumb}
+    </section>
+  `;
+
+  wrap.innerHTML =
+    summary +
+    `
     <section class="space-y-3">
       <label class="inline-flex items-center gap-2 text-sm font-medium">
         <input type="checkbox" data-rm-time-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
