@@ -24,8 +24,6 @@ const escapeHtml = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// Tracks which sub-tabs have already auto-loaded this session.
-const loaded = { config: false, global: false };
 
 // Verbatim copy of the store-workspace button-pending lifecycle.
 function setFormPending(form, pending = true, submitter = null) {
@@ -61,10 +59,10 @@ function setView(card, view) {
 
 const subpanel = (name) => $(`[data-subpanel="${name}"]`, ROOT());
 
-// Lazy-load a sub-tab's data on first entry (config/global) or reset (user).
+// Switching sub-tabs clears the panel inputs, so pull fresh data on every entry.
 function onSubtabEnter(name) {
-  if (name === 'quest-config' && !loaded.config) { loaded.config = true; loadConfig(); }
-  if (name === 'quest-global' && !loaded.global) { loaded.global = true; loadGlobalQuests(); }
+  if (name === 'quest-config') loadConfig();
+  if (name === 'quest-global') loadGlobalQuests();
 }
 
 function wireSubtabAutoLoad() {
@@ -279,15 +277,14 @@ function renderGlobalList() {
       <button type="button" data-global-refresh class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1.5 text-xs font-semibold hover:bg-zinc-200/70 dark:hover:bg-white/10">↻ Refresh</button>
     </div>
     <div class="space-y-3">${cards || '<p class="text-sm text-zinc-500 dark:text-zinc-400">No quests in the pool.</p>'}</div>`;
-  sp.querySelector('[data-global-refresh]').onclick = () => loadGlobalQuests({ force: true });
+  sp.querySelector('[data-global-refresh]').onclick = () => loadGlobalQuests();
   sp.querySelectorAll('[data-edit-quest]').forEach((b) =>
     b.addEventListener('click', () => openGlobalEditor(Number(b.dataset.editQuest))));
 }
 
-async function loadGlobalQuests({ force = false } = {}) {
+async function loadGlobalQuests() {
   const sp = subpanel('quest-global');
   if (!sp) return;
-  if (force) loaded.global = true;
   sp.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">Loading quest pool…</p>`;
   const res = await DEPS.http('GET', `${API_MODS}/quests`);
   DEPS.logActivity({ title: 'List quests (GET)', method: 'GET', url: res.url || `${API_MODS}/quests`, ok: res.ok, status: res.status, data: res.data });
@@ -350,7 +347,7 @@ async function saveGlobalQuest(id, box) {
   DEPS.logActivity({ title: `Update quest #${id} (PATCH)`, method: 'PATCH', url: res.url || `${API_MODS}/quests/${id}`, ok: res.ok, status: res.status, data: res.data });
   if (!res.ok) return DEPS.toast('Update failed', 'err');
   DEPS.toast('Quest updated', 'ok');
-  await loadGlobalQuests({ force: true });
+  await loadGlobalQuests();
 }
 
 function renderRotationCard() {
