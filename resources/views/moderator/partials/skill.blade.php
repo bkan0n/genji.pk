@@ -36,13 +36,14 @@
                   </div>
                   <form data-action="skill-user-summary" autocomplete="off" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <label class="min-w-0 flex-1 text-sm">
-                      User ID
+                      Player
                       <input
                         name="user_id"
-                        inputmode="numeric"
+                        type="text"
+                        autocomplete="off"
                         required
                         value="{{ (string) (session('user_id') ?? session('discord_user_id') ?? session('discord_id') ?? '') }}"
-                        placeholder="user_id"
+                        placeholder="Search player or enter user ID…"
                         class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
                       />
                     </label>

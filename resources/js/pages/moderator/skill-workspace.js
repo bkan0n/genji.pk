@@ -608,8 +608,13 @@ async function loadSkillTierSamples(form) {
 function initSkillUserPanel() {
   const panel = document.querySelector('[data-subpanel="skill-user"]');
   const input = panel?.querySelector('input[name="user_id"]');
-  if (input && !input.value && typeof MOD_USER_ID !== 'undefined') {
+  if (!input) return;
+  if (!input.value && typeof MOD_USER_ID !== 'undefined') {
     input.value = MOD_USER_ID || '';
+  }
+  if (input.dataset.acWired !== '1' && typeof DEPS?.attachUsersAutocomplete === 'function') {
+    DEPS.attachUsersAutocomplete(input);
+    input.dataset.acWired = '1';
   }
 }
 
@@ -722,10 +727,18 @@ function renderSkillUserBreakdown(form, payload) {
   `;
 }
 
+function readSkillUserId(form) {
+  const input = form?.querySelector?.('input[name="user_id"]');
+  if (input && typeof DEPS?.getUserIdFrom === 'function') {
+    return DEPS.getUserIdFrom(input);
+  }
+  return String(input?.dataset?.uid || input?.value || '').trim();
+}
+
 async function handleSkillUserSummary(form) {
-  const userId = String(new FormData(form).get('user_id') || '').trim();
+  const userId = readSkillUserId(form);
   if (!/^\d{1,20}$/.test(userId)) {
-    DEPS.toast('Enter a valid user_id', 'warn');
+    DEPS.toast('Select a player or enter a valid user_id', 'warn');
     return;
   }
 
@@ -750,9 +763,9 @@ async function handleSkillUserSummary(form) {
 }
 
 async function handleSkillUserBreakdown(form) {
-  const userId = String(new FormData(form).get('user_id') || '').trim();
+  const userId = readSkillUserId(form);
   if (!/^\d{1,20}$/.test(userId)) {
-    DEPS.toast('Enter a valid user_id', 'warn');
+    DEPS.toast('Select a player or enter a valid user_id', 'warn');
     return;
   }
 

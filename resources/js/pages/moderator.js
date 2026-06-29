@@ -7224,7 +7224,7 @@ function initializeApp() {
     showConfirmDanger,
   });
 
-  initSkillWorkspace({ http, toast, logActivity, setPanelOut });
+  initSkillWorkspace({ http, toast, logActivity, setPanelOut, attachUsersAutocomplete, getUserIdFrom });
   initWebWorkspace({ http, toast, logActivity, showConfirmDanger, isDevAllowed });
   initStoreWorkspace({ http, toast, logActivity, showConfirmDanger, isDevAllowed });
   initQuestsWorkspace({ http, toast, logActivity, wireAutocomplete, showConfirmDanger, isDevAllowed });
