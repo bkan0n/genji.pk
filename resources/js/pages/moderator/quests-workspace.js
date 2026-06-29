@@ -747,8 +747,11 @@ function openUserDrawer(progressId) {
   renderRequirements(overlay.querySelector('[data-drawer-req]'), type, q.quest_data?.requirements || {}, REQ_TYPES);
   renderProgress(overlay.querySelector('[data-drawer-progress]'), type, q.progress || {});
   // Re-render progress when the requirement type changes in the drawer.
-  overlay.querySelector('select[name="req_type"]').addEventListener('change', (e) => {
-    renderProgress(overlay.querySelector('[data-drawer-progress]'), e.target.value, {});
+  // Delegate on the persistent req host so it survives renderRequirements re-renders.
+  overlay.querySelector('[data-drawer-req]').addEventListener('change', (e) => {
+    if (e.target?.name === 'req_type') {
+      renderProgress(overlay.querySelector('[data-drawer-progress]'), e.target.value, {});
+    }
   });
   const completedSel = overlay.querySelector('select[name="completed"]');
   const hint = overlay.querySelector('[data-complete-hint]');
