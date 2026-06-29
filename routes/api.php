@@ -50,6 +50,7 @@ use App\Http\Controllers\Mods\Content\ReorderMovementTechniqueController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechniqueController;
+use App\Http\Controllers\Mods\Completions\ModerationRecordsController;
 use App\Http\Controllers\Mods\Devs\CacheController;
 use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
 use App\Http\Controllers\Mods\Devs\OverpyCommitController;
@@ -504,6 +505,8 @@ Route::prefix('mods')
         Route::get('completions/suspicious', [SuspiciousFlagsController::class, 'index']);
         Route::post('completions/suspicious', [SuspiciousFlagsController::class, 'store']);
         Route::delete('completions/suspicious', [SuspiciousFlagsController::class, 'destroy']);
+        Route::get('completions/moderation/records', [ModerationRecordsController::class, 'index'])
+            ->name('mods.completions.moderation.records');
 
         // VERIFICATIONS
         Route::get('verifications/pending', [PendingVerificationsController::class, 'index']);
