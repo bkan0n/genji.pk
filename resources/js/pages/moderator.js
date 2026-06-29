@@ -7,6 +7,7 @@ import { initRecordsWorkspace } from './moderator/records-workspace.js';
 import { initVerificationsWorkspace } from './moderator/verifications-workspace.js';
 import { initTournamentWorkspace } from './moderator/tournament-workspace.js';
 import { initSkillWorkspace } from './moderator/skill-workspace.js';
+import { initWebWorkspace } from './moderator/web-workspace.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1133,8 +1134,6 @@ function scrollIntoViewWithOffset(el, offset) {
         if (name === 'store-config') initStoreConfigPanel();
         if (name === 'quest-config') initQuestConfigPanel();
         if (name === 'quest-update') initQuestUpdatePanel();
-        if (name === 'dev-overpy-commit') initOverpyCommitPanel();
-        if (name === 'dev-framework-version') initFrameworkVersionPanel();
         wireFormAutocompletes(active);
         ensureFormUx(active);
         try {
@@ -1433,6 +1432,7 @@ function setFormPending(form, pending = true, submitter = null) {
 // --- Forms dispatcher ---
 $$('form[data-action]').forEach((form) => {
   if (form.closest('[data-skill-workspace]')) return; // owned by skill-workspace.js
+  if (form.closest('[data-web-workspace]')) return; // owned by web-workspace.js
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (form.dataset.submitLocked === '1') {
@@ -1463,23 +1463,6 @@ $$('form[data-action]').forEach((form) => {
           return handleSubmitMap(form);
         case 'convert-legacy':
           return handleConvertLegacy(form);
-
-        // DEVS (API_MODS)
-        case 'clear-frameworks-cache':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleClearFrameworksCache(form);
-        case 'clear-avatars-cache':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleClearAvatarsCache(form);
-        case 'clear-translations-cache':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleClearTranslationsCache(form);
-        case 'set-overpy-commit':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleSetOverpyCommit(form);
-        case 'set-framework-version':
-          if (!isDevAllowed()) return toast('Dev access only', 'err');
-          return handleSetFrameworkVersion(form);
 
         // STORE (API_MODS)
         case 'store-get-config':
@@ -7063,81 +7046,6 @@ function syncDdLabel(ddOrChild) {
   if (labelEl && txt) labelEl.textContent = txt;
 }
 
-//———————————————————————————————————————————————————————————————
-// DEVS ONLY
-//———————————————————————————————————————————————————————————————
-const TRANSLATION_FILES = [
-  'gamemodes.json',
-  'heroes.json',
-  'values.json',
-  'other.json',
-  'maps.json',
-  'localizedStrings.json',
-  'customGameSettings.json',
-  'constants.json',
-  'actions.json',
-];
-
-async function handleClearFrameworksCache(form) {
-  if (!form.confirm?.checked) {
-    toast('Please tick the confirmation box', 'warn');
-    return;
-  }
-
-  const okGo = await showConfirmDanger({
-    title: 'Clear framework cache',
-    message: 'This will delete the contents of public/framework-templates. Continue?',
-    confirm: 'Yes, delete',
-    cancel: 'Cancel',
-  });
-  if (!okGo) return;
-
-  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/cache/framework`);
-  logActivity({ title: 'Clear cache – framework', method: 'DELETE', url, ok, status, data });
-  toast(ok ? 'Framework cache cleared' : 'Deletion failed', ok ? 'ok' : 'err');
-}
-
-async function handleClearAvatarsCache(form) {
-  if (!form.confirm?.checked) {
-    toast('Please tick the confirmation box', 'warn');
-    return;
-  }
-
-  const okGo = await showConfirmDanger({
-    title: 'Clear avatar cache',
-    message: 'This will delete the contents of storage/app/private/cache. Continue?',
-    confirm: 'Yes, delete',
-    cancel: 'Cancel',
-  });
-  if (!okGo) return;
-
-  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/cache/avatars`);
-  logActivity({ title: 'Clear cache – avatars', method: 'DELETE', url, ok, status, data });
-  toast(ok ? 'Avatar cache cleared' : 'Deletion failed', ok ? 'ok' : 'err');
-}
-
-async function handleClearTranslationsCache(form) {
-  if (!form.confirm?.checked) {
-    toast('Please tick the confirmation box', 'warn');
-    return;
-  }
-
-  const okGo = await showConfirmDanger({
-    title: 'Clear translations cache',
-    message: `This will delete these files in public/translations:\n${TRANSLATION_FILES.join(', ')}\nContinue?`,
-    confirm: 'Yes, delete',
-    cancel: 'Cancel',
-  });
-  if (!okGo) return;
-
-  const { ok, status, url, data } = await http('DELETE', `${API_MODS}/cache/translations`, {
-    body: { files: TRANSLATION_FILES },
-  });
-  logActivity({ title: 'Clear cache – translations', method: 'DELETE', url, ok, status, data });
-  toast(ok ? 'Translations cache cleared' : 'Deletion failed', ok ? 'ok' : 'err');
-}
-
-
 function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confirm = 'Confirm', cancel = 'Cancel' } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -7168,166 +7076,6 @@ function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confi
       if (ev.key === 'Enter') { close(true); document.removeEventListener('keydown', onKey); }
     }, { once: true });
   });
-}
-
-async function handleSetOverpyCommit(form) {
-  const commit = (form.commit.value || '').trim();
-  const checked = !!form.confirm?.checked;
-
-  if (!/^[0-9a-f]{7,40}$/i.test(commit)) {
-    toast('Invalid commit: use a 7–40 hex SHA', 'warn');
-    return;
-  }
-  if (!checked) {
-    toast('Please confirm the change', 'warn');
-    return;
-  }
-
-  const currentEl = document.querySelector('#overpyCommitCurrent');
-  const current = currentEl?.textContent?.trim() || 'unknown';
-
-  const okGo = await showConfirmDanger({
-    title: 'Set Overpy commit',
-    message:
-      `Current: ${current}\nNew:     ${commit}\n\n` +
-      `This will update OVERPY_COMMIT in converter.js.\nContinue?`,
-    confirm: 'Yes, update',
-    cancel: 'Cancel',
-  });
-  if (!okGo) return;
-
-  const { ok, status, url, data } = await http('PATCH', `${API_MODS}/overpy-commit`, {
-    body: {
-      commit,
-      confirm: true,
-    },
-  });
-
-  logActivity({ title: 'Set Overpy commit', method: 'PATCH', url, ok, status, data });
-  if (ok) {
-    if (currentEl) currentEl.textContent = commit;
-    toast('Overpy commit updated', 'ok');
-  } else {
-    toast('Update failed', 'err');
-  }
-}
-
-async function fetchCurrentOverpyCommit() {
-  const { ok, status, url, data } = await http('GET', `${API_MODS}/overpy-commit`);
-  logActivity({ title: 'Get Overpy commit', method: 'GET', url, ok, status, data });
-  if (!ok || !data?.commit) {
-    toast('Failed to load current commit', 'err');
-    return null;
-  }
-  return String(data.commit);
-}
-
-async function initOverpyCommitPanel() {
-  const panel = document.querySelector('[data-subpanel="dev-overpy-commit"]');
-  if (!panel || panel.dataset.inited === '1') return;
-  panel.dataset.inited = '1';
-
-  const currentEl = panel.querySelector('#overpyCommitCurrent');
-  if (currentEl) {
-    const cur = await fetchCurrentOverpyCommit();
-    if (cur) currentEl.textContent = cur;
-  }
-}
-
-async function initFrameworkVersionPanel() {
-  const panel = document.querySelector('[data-subpanel="dev-framework-version"]');
-  if (!panel || panel.dataset.inited === '1') return;
-  panel.dataset.inited = '1';
-
-  const currentEl = panel.querySelector('#frameworkVersionCurrent');
-  if (currentEl) {
-    const cur = await fetchCurrentFrameworkVersion();
-    if (cur) currentEl.textContent = cur;
-  }
-
-  const form = panel.querySelector('#formSetFrameworkVersion');
-  const btn  = panel.querySelector('#btnSetFrameworkVersion');
-  if (!form || !btn) return;
-
-  form.setAttribute('novalidate', '');
-  form.addEventListener('invalid', (e) => e.preventDefault(), true);
-
-  const versionInput = form.querySelector('input[name="version"]');
-  if (versionInput) {
-    versionInput.removeAttribute('pattern');
-    versionInput.removeAttribute('required');
-
-    versionInput.addEventListener('input', () => versionInput.setCustomValidity(''));
-
-    versionInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
-    });
-  }
-
-  btn.addEventListener('click', () => handleSetFrameworkVersion(form));
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleSetFrameworkVersion(form);
-  });
-}
-
-async function fetchCurrentFrameworkVersion() {
-  const { ok, status, url, data } = await http('GET', `${API_MODS}/framework-version`);
-  logActivity({ title: 'Get framework version', method: 'GET', url, ok, status, data });
-  if (!ok || !data?.version) {
-    toast('Failed to load current framework version', 'err');
-    return null;
-  }
-  return String(data.version);
-}
-
-async function handleSetFrameworkVersion(form) {
-  const input = form.version;
-  const version = (input.value || '').trim().toUpperCase();
-  const checked = !!form.confirm?.checked;
-
-  const VERSION_RE = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:[A-Z][0-9A-Z]*)?$/;
-
-  input.setCustomValidity('');
-
-  if (!VERSION_RE.test(version)) {
-    const msg = 'Invalid version. Use X.Y.Z with an optional UPPERCASE suffix (e.g. 1.10.4, 1.10.4A, 1.10.4RC1).';
-    input.setCustomValidity(msg);
-    input.reportValidity();
-    toast(msg, 'warn');
-    return;
-  }
-  if (!checked) {
-    toast('Please tick the confirmation box.', 'warn');
-    return;
-  }
-
-  const currentEl = document.querySelector('#frameworkVersionCurrent');
-  const current = currentEl?.textContent?.trim() || 'unknown';
-
-  const okGo = await showConfirmDanger({
-    title: 'Set framework version',
-    message:
-      `Current: ${current}\nNew:     ${version}\n\n` +
-      `This will update the CDN URL used by converter.js.\nContinue?`,
-    confirm: 'Yes, update',
-    cancel: 'Cancel',
-  });
-  if (!okGo) return;
-
-  const { ok, status, url, data } = await http('PATCH', `${API_MODS}/framework-version`, {
-    body: { version, confirm: true },
-  });
-
-  logActivity({ title: 'Set framework version', method: 'PATCH', url, ok, status, data });
-  if (ok) {
-    if (currentEl) currentEl.textContent = version;
-    toast('Framework version updated', 'ok');
-    form.confirm.checked = false;
-  } else {
-    const msg = data?.message || 'Update failed';
-    toast(msg, 'err');
-  }
 }
 
 //———————————————————————————————————————————————————————————————
@@ -8638,6 +8386,7 @@ function initializeApp() {
   });
 
   initSkillWorkspace({ http, toast, logActivity, setPanelOut });
+  initWebWorkspace({ http, toast, logActivity, showConfirmDanger, isDevAllowed });
 
   if (window.__modUiApp && typeof window.__modUiApp.destroy === 'function') {
     window.__modUiApp.destroy();
