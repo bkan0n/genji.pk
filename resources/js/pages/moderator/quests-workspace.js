@@ -154,7 +154,204 @@ async function onSaveConfig(e) {
   }
 }
 
-async function loadGlobalQuests() {}
+// Renders requirement inputs for a given requirements.type into `host`.
+// `req` is the existing requirements object. `allowedTypes` limits the type select.
+// Wires map/user fields. Returns nothing; read values later via collectRequirements.
+function renderRequirements(host, type, req = {}, allowedTypes = REQ_TYPES) {
+  const rows = [];
+  const numField = (name, val, { step = '1', mode = 'numeric' } = {}) =>
+    `<label class="text-sm">${name}
+      <input name="${name}" type="number" step="${step}" inputmode="${mode}" value="${escapeHtml(val ?? '')}"
+        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>`;
+  const mapField = (label, val) =>
+    `<label class="text-sm relative block">${label}
+      <input data-req-map type="text" autocomplete="off" placeholder="Search map code…"
+        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" data-init-map="${escapeHtml(val ?? '')}" /></label>`;
+
+  if (type === 'complete_maps') {
+    rows.push(numField('count', req.count));
+    rows.push(`<label class="text-sm">difficulty ${buildSelect('req_difficulty', REQ_DIFFICULTIES, req.difficulty || 'any')}</label>`);
+    rows.push(`<label class="text-sm">category ${buildSelect('req_category', MAP_CATEGORIES, req.category, { placeholder: '(none)' })}</label>`);
+  } else if (type === 'complete_difficulty_range') {
+    rows.push(`<label class="text-sm">difficulty ${buildSelect('req_difficulty', REQ_DIFFICULTIES.filter((d) => d !== 'any'), req.difficulty)}</label>`);
+    rows.push(numField('min_count', req.min_count));
+  } else if (type === 'earn_medals') {
+    rows.push(numField('count', req.count));
+    rows.push(`<label class="text-sm">medal_type ${buildSelect('req_medal_type', [...MEDAL_TYPES, 'any'], req.medal_type || 'any')}</label>`);
+  } else if (type === 'beat_time') {
+    rows.push(mapField('map', req.map_id));
+    rows.push(numField('target_time (s)', req.target_time, { step: '0.01', mode: 'decimal' }));
+    rows.push(`<label class="text-sm">target_type ${buildSelect('req_target_type', TARGET_TYPES, req.target_type)}</label>`);
+    rows.push(numField('current_best (s)', req.current_best, { step: '0.01', mode: 'decimal' }));
+    rows.push(`<label class="text-sm">medal_type ${buildSelect('req_medal_type', MEDAL_TYPES, req.medal_type, { placeholder: '(none)' })}</label>`);
+  } else if (type === 'beat_rival') {
+    rows.push(mapField('map', req.map_id));
+    rows.push(`<label class="text-sm relative block">rival<input data-req-user type="text" autocomplete="off" placeholder="Search user…" data-init-uid="${escapeHtml(req.rival_user_id ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>`);
+    rows.push(numField('rival_time (s)', req.rival_time, { step: '0.01', mode: 'decimal' }));
+    rows.push(numField('target_time (s)', req.target_time, { step: '0.01', mode: 'decimal' }));
+  } else if (type === 'complete_map') {
+    rows.push(mapField('map', req.map_id));
+    rows.push(`<label class="text-sm">target<input name="req_target" type="text" readonly value="complete" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900/60 px-3 py-2 text-sm" /></label>`);
+  }
+
+  host.innerHTML = `
+    <label class="text-sm block">requirement type ${buildSelect('req_type', allowedTypes, type)}</label>
+    <div class="grid gap-3 sm:grid-cols-2" data-req-fields>${rows.join('')}</div>`;
+
+  // Re-render on type change.
+  host.querySelector('select[name="req_type"]').addEventListener('change', (e) => {
+    renderRequirements(host, e.target.value, {}, allowedTypes);
+  });
+  // Wire map/user fields.
+  const mapInput = host.querySelector('[data-req-map]');
+  if (mapInput) wireMapField(mapInput, { initialMapId: mapInput.dataset.initMap || null });
+  const userInput = host.querySelector('[data-req-user]');
+  if (userInput) wireUserField(userInput, { initialId: userInput.dataset.initUid || null });
+}
+
+// Reads requirement values back out of `host`. async (map resolution may be needed).
+async function collectRequirements(host) {
+  const type = host.querySelector('select[name="req_type"]')?.value;
+  if (!type) return null;
+  const req = { type };
+  const get = (n) => host.querySelector(`[name="${n}"]`)?.value ?? '';
+  const num = (n, float = false) => {
+    const v = get(n); if (v === '') return undefined;
+    const x = float ? Number(v) : parseInt(v, 10); return Number.isFinite(x) ? x : undefined;
+  };
+  const setIf = (k, v) => { if (v !== undefined && v !== '' && v !== null) req[k] = v; };
+  const mapInput = host.querySelector('[data-req-map]');
+  const userInput = host.querySelector('[data-req-user]');
+
+  if (type === 'complete_maps') {
+    setIf('count', num('count'));
+    setIf('difficulty', get('req_difficulty'));
+    setIf('category', get('req_category'));
+  } else if (type === 'complete_difficulty_range') {
+    setIf('difficulty', get('req_difficulty')); setIf('min_count', num('min_count'));
+  } else if (type === 'earn_medals') {
+    setIf('count', num('count')); setIf('medal_type', get('req_medal_type'));
+  } else if (type === 'beat_time') {
+    setIf('map_id', await readMapId(mapInput)); setIf('target_time', num('target_time (s)', true));
+    setIf('target_type', get('req_target_type')); setIf('current_best', num('current_best (s)', true));
+    setIf('medal_type', get('req_medal_type'));
+  } else if (type === 'beat_rival') {
+    setIf('map_id', await readMapId(mapInput)); const rid = readUserId(userInput);
+    if (rid) req.rival_user_id = Number(rid);
+    setIf('rival_time', num('rival_time (s)', true)); setIf('target_time', num('target_time (s)', true));
+  } else if (type === 'complete_map') {
+    setIf('map_id', await readMapId(mapInput)); req.target = 'complete';
+  }
+  return req;
+}
+
+let GLOBAL_QUESTS = [];
+
+function reqSummary(r = {}) {
+  if (!r.type) return '—';
+  if (r.type === 'complete_maps') return `complete ${r.count ?? '?'} maps${r.difficulty && r.difficulty !== 'any' ? ` (${r.difficulty})` : ''}${r.category ? ` [${r.category}]` : ''}`;
+  if (r.type === 'complete_difficulty_range') return `${r.min_count ?? '?'}× ${r.difficulty ?? '?'}`;
+  if (r.type === 'earn_medals') return `${r.count ?? '?'}× ${r.medal_type ?? 'any'} medals`;
+  return r.type;
+}
+
+function renderGlobalList() {
+  const sp = subpanel('quest-global');
+  if (!sp) return;
+  const cards = GLOBAL_QUESTS.map((q) => `
+    <article class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-950/30 p-4" data-quest-card="${q.id}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold truncate">${escapeHtml(q.name)}</span>
+            <span class="rounded-full bg-zinc-200/70 dark:bg-white/10 px-2 py-0.5 text-[11px] uppercase">${escapeHtml(q.difficulty)}</span>
+            <span class="rounded-full px-2 py-0.5 text-[11px] ${q.is_active ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-zinc-400/15 text-zinc-500'}">${q.is_active ? 'active' : 'inactive'}</span>
+          </div>
+          <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400 truncate">${escapeHtml(q.description || '')}</div>
+          <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">${escapeHtml(reqSummary(q.requirements))} · ${q.coin_reward}c / ${q.xp_reward}xp</div>
+        </div>
+        <button type="button" data-edit-quest="${q.id}" class="shrink-0 rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Edit</button>
+      </div>
+    </article>`).join('');
+  sp.innerHTML = `
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="font-semibold">Global quest pool</h3>
+      <button type="button" data-global-refresh class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-2 py-1.5 text-xs font-semibold hover:bg-zinc-200/70 dark:hover:bg-white/10">↻ Refresh</button>
+    </div>
+    <div class="space-y-3">${cards || '<p class="text-sm text-zinc-500 dark:text-zinc-400">No quests in the pool.</p>'}</div>`;
+  sp.querySelector('[data-global-refresh]').onclick = () => loadGlobalQuests({ force: true });
+  sp.querySelectorAll('[data-edit-quest]').forEach((b) =>
+    b.addEventListener('click', () => openGlobalEditor(Number(b.dataset.editQuest))));
+}
+
+async function loadGlobalQuests({ force = false } = {}) {
+  const sp = subpanel('quest-global');
+  if (!sp) return;
+  if (force) loaded.global = true;
+  sp.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">Loading quest pool…</p>`;
+  const res = await DEPS.http('GET', `${API_MODS}/quests`);
+  DEPS.logActivity({ title: 'List quests (GET)', method: 'GET', url: res.url || `${API_MODS}/quests`, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) {
+    sp.innerHTML = `<p class="text-sm text-rose-500">Failed to load quest pool.</p>`;
+    DEPS.toast('Failed to load quest pool', 'err');
+    return;
+  }
+  GLOBAL_QUESTS = Array.isArray(res.data) ? res.data : (res.data?.quests || res.data?.items || res.data?.data || []);
+  renderGlobalList();
+}
+
+function openGlobalEditor(id) {
+  const q = GLOBAL_QUESTS.find((x) => Number(x.id) === id);
+  const card = subpanel('quest-global').querySelector(`[data-quest-card="${id}"]`);
+  if (!q || !card) return;
+  if (card.querySelector('[data-global-editor]')) { card.querySelector('[data-global-editor]').remove(); return; }
+  const box = document.createElement('div');
+  box.dataset.globalEditor = '1';
+  box.className = 'mt-4 border-t border-zinc-200/80 dark:border-white/10 pt-4 space-y-4';
+  box.innerHTML = `
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm sm:col-span-2">name<input name="name" value="${escapeHtml(q.name)}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+      <label class="text-sm sm:col-span-2">description<input name="description" value="${escapeHtml(q.description || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+      <label class="text-sm">reward tier ${buildSelect('difficulty', REWARD_TIERS, q.difficulty)}</label>
+      <label class="text-sm">is_active ${buildSelect('is_active', [{ value: '1', label: 'active' }, { value: '0', label: 'inactive' }], q.is_active ? '1' : '0')}</label>
+      <label class="text-sm">coin_reward<input name="coin_reward" type="number" min="0" value="${escapeHtml(q.coin_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+      <label class="text-sm">xp_reward<input name="xp_reward" type="number" min="0" value="${escapeHtml(q.xp_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+    </div>
+    <div data-req-host class="space-y-3"></div>
+    <div class="flex gap-2">
+      <button type="button" data-save class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">Save (affects everyone)</button>
+      <button type="button" data-cancel class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm">Cancel</button>
+    </div>`;
+  card.appendChild(box);
+  renderRequirements(box.querySelector('[data-req-host]'), q.requirements?.type || 'complete_maps', q.requirements || {}, GLOBAL_REQ_TYPES);
+  box.querySelector('[data-cancel]').onclick = () => box.remove();
+  box.querySelector('[data-save]').onclick = () => saveGlobalQuest(id, box);
+}
+
+async function saveGlobalQuest(id, box) {
+  if (!DEPS.isDevAllowed()) return DEPS.toast('Dev access only', 'err');
+  const q = GLOBAL_QUESTS.find((x) => Number(x.id) === id);
+  const get = (n) => box.querySelector(`[name="${n}"]`)?.value ?? '';
+  const payload = {};
+  if (get('name') !== q.name) payload.name = get('name');
+  if (get('description') !== (q.description || '')) payload.description = get('description');
+  if (get('difficulty') !== q.difficulty) payload.difficulty = get('difficulty');
+  if ((get('is_active') === '1') !== !!q.is_active) payload.is_active = get('is_active') === '1';
+  if (get('coin_reward') !== '' && Number(get('coin_reward')) !== q.coin_reward) payload.coin_reward = Number(get('coin_reward'));
+  if (get('xp_reward') !== '' && Number(get('xp_reward')) !== q.xp_reward) payload.xp_reward = Number(get('xp_reward'));
+  const req = await collectRequirements(box.querySelector('[data-req-host]'));
+  if (req && JSON.stringify(req) !== JSON.stringify(q.requirements || {})) payload.requirements = req;
+  if (!Object.keys(payload).length) return DEPS.toast('Nothing to update', 'warn');
+  const ok = await DEPS.showConfirmDanger({
+    title: 'Update global quest', message: `Save changes to "${q.name}"? This changes the quest for everyone.`, confirm: 'Save', cancel: 'Cancel',
+  });
+  if (!ok) return;
+  const res = await DEPS.http('PATCH', `${API_MODS}/quests/${id}`, { body: payload });
+  DEPS.logActivity({ title: `Update quest #${id} (PATCH)`, method: 'PATCH', url: res.url || `${API_MODS}/quests/${id}`, ok: res.ok, status: res.status, data: res.data });
+  if (!res.ok) return DEPS.toast('Update failed', 'err');
+  DEPS.toast('Quest updated', 'ok');
+  await loadGlobalQuests({ force: true });
+}
 
 function renderRotationCard() {
   const sp = subpanel('quest-rotation');
