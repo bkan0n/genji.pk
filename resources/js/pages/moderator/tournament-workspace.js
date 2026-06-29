@@ -31,7 +31,7 @@ export function initTournamentWorkspace(deps) {
   wireEditionActions(root);
   wireCategoryActions(root);
   wireStreakLookup(root);
-  wireConfig(root);
+  // wireConfig is bound lazily from loadConfig (mirrors wireSetup), so no init-time call.
 }
 
 function wireSubtabLoading(root) {
