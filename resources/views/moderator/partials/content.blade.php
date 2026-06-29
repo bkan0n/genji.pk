@@ -19,6 +19,12 @@
       >
         Techniques
       </button>
+      <button
+        class="mod-subtab rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 min-w-0 max-w-full truncate w-full sm:w-auto [&.active]:bg-white/10 [&.active]:shadow-[0_0_0_1px_rgba(255,255,255,.10),0_0_0_6px_rgba(59,130,246,.06)]"
+        data-subtab="content-maps"
+      >
+        Maps
+      </button>
     </div>
 
     @foreach ([
@@ -55,6 +61,42 @@
         <div data-content-list="{{ $group['key'] }}" class="space-y-2"></div>
       </div>
     @endforeach
+
+    <div data-subpanel="content-maps" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          data-maps-add
+          class="cursor-pointer rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
+        >
+          + Add map
+        </button>
+        <button
+          type="button"
+          data-maps-refresh
+          title="Refresh"
+          aria-label="Refresh maps"
+          class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+        >
+          &#x21bb;
+        </button>
+        <span
+          data-maps-count
+          class="inline-flex items-center rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-300"
+        >
+          No maps synced
+        </span>
+        <input
+          type="search"
+          data-maps-filter
+          aria-label="Filter maps"
+          placeholder="Filter maps…"
+          class="ml-auto w-full sm:w-56 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none"
+        />
+      </div>
+
+      <div data-maps-list class="space-y-2"></div>
+    </div>
 
     {{-- ===== Modal form templates (cloned by content-workspace.js) ===== --}}
     <template data-content-tpl="named">
