@@ -2,11 +2,11 @@ import {
   $, $$, setView, makeRecentStore, renderRecentChips, wireUserSearch,
   skel, withBusy, httpErrorMessage,
 } from './workspace-shell.js';
+import { mountGallery } from './lootbox-gallery.js';
 
 const API_MODS = '/api/mods';
 const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
 const XP_TYPES = ['Map Submission', 'Playtest', 'Guide', 'Completion', 'Record', 'World Record', 'Other'];
-const RARITIES = ['common', 'rare', 'epic', 'legendary'];
 let CATALOG = null; // cached reward catalog (array)
 const recent = makeRecentStore('mod.lootbox.recent');
 let DEPS = null;
@@ -74,8 +74,6 @@ function emptyState(title, hint) {
 // Per-section skeletons that mirror each section's loaded shape.
 const keysSkeleton = () =>
   `<div class="flex flex-wrap gap-x-6 gap-y-3">${`<div class="space-y-1.5">${skel('h-6 w-8')}${skel('h-3 w-12')}</div>`.repeat(5)}</div>`;
-const rowsSkeleton = (n = 4) =>
-  `<ul class="space-y-1">${`<li>${skel('h-8 w-full rounded-lg')}</li>`.repeat(n)}</ul>`;
 const xpSkeleton = () =>
   `<div class="space-y-3">
     <div class="flex items-center gap-3">${skel('h-7 w-24 rounded-lg')}${skel('h-5 w-16')}</div>
@@ -180,29 +178,28 @@ async function fetchCatalog() {
   return CATALOG;
 }
 
-function rewardTypeOptions(list) {
-  const types = [...new Set(list.map((r) => r?.reward_type || r?.type).filter(Boolean))];
-  return [
-    '<option value="">any type</option>',
-    ...types.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`),
-  ].join('');
+// Skeleton that mirrors the gallery's loaded shape — a search bar over grouped
+// tile grids — so swapping in real content doesn't jump the layout.
+function gallerySkeleton() {
+  const tiles = (min, ratio, n) =>
+    `<div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(${min}px,1fr))">${
+      `<div class="overflow-hidden rounded-xl" style="aspect-ratio:${ratio}">${skel('h-full w-full rounded-xl')}</div>`.repeat(n)
+    }</div>`;
+  return `<div class="space-y-4">
+    ${skel('h-9 w-full rounded-xl')}
+    <div class="space-y-6">
+      <div class="space-y-2.5">${skel('h-3 w-16')}${tiles(104, '1 / 1', 6)}</div>
+      <div class="space-y-2.5">${skel('h-3 w-24')}${tiles(232, '16 / 9', 3)}</div>
+    </div>
+  </div>`;
 }
 
 function renderRewardsSection(root, userId) {
   const mount = $('[data-lb-rewards]', root);
   if (!mount) return;
   mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
-    <div class="flex items-center justify-between">
-      <h3 class="text-sm font-semibold">Rewards owned</h3>
-    </div>
-    <div class="mt-3 flex flex-wrap gap-2">
-      <select data-lb-rw-type aria-label="Filter rewards by type" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">any type</option></select>
-      <select data-lb-rw-rarity aria-label="Filter rewards by rarity" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
-        <option value="">any rarity</option>${RARITIES.map((r) => `<option value="${r}">${r}</option>`).join('')}
-      </select>
-      <button data-lb-rw-apply type="button" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm">Filter</button>
-    </div>
-    <div data-lb-rw-body class="mt-3 text-sm text-zinc-500">${rowsSkeleton()}</div>
+    <h3 class="text-sm font-semibold">Rewards owned</h3>
+    <div data-lb-rw-body class="mt-3">${gallerySkeleton()}</div>
 
     <details class="mt-4 rounded-xl border border-amber-400/40 bg-amber-500/5 p-3">
       <summary class="cursor-pointer text-sm font-semibold text-amber-700 dark:text-amber-400">Debug grant reward (danger)</summary>
@@ -215,8 +212,6 @@ function renderRewardsSection(root, userId) {
     </details>
   </div>`;
 
-  $('[data-lb-rw-apply]', mount).onclick = (e) =>
-    withBusy(e.currentTarget, () => refreshRewards(root, userId, mount));
   populateRewardControls(mount);
   $('[data-lb-dbg-grant]', mount).onclick = (e) =>
     withBusy(e.currentTarget, () => debugGrant(root, userId, mount));
@@ -225,8 +220,6 @@ function renderRewardsSection(root, userId) {
 
 async function populateRewardControls(mount) {
   const list = await fetchCatalog();
-  const typeSel = $('[data-lb-rw-type]', mount);
-  if (typeSel) typeSel.innerHTML = rewardTypeOptions(list);
   const dbg = $('[data-lb-dbg-reward]', mount);
   if (dbg)
     dbg.innerHTML = list.length
@@ -243,43 +236,25 @@ async function populateRewardControls(mount) {
 async function refreshRewards(root, userId, mount) {
   const body = $('[data-lb-rw-body]', mount);
   if (!body) return;
-  body.innerHTML = rowsSkeleton();
-  const query = {};
-  const type = $('[data-lb-rw-type]', mount).value.trim();
-  const rarity = $('[data-lb-rw-rarity]', mount).value.trim();
-  if (type) query.reward_type = type;
-  if (rarity) query.rarity = rarity;
-
+  body.innerHTML = gallerySkeleton();
+  // Fetch the full inventory once and filter client-side in the gallery — the
+  // moderator gets instant type/rarity/name filtering with no extra round-trips.
   let res;
   try {
-    res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/rewards`, { query });
+    res = await DEPS.http('GET', `/api/lootbox/users/${encodeURIComponent(userId)}/rewards`);
   } catch {
-    body.textContent = httpErrorMessage(0);
+    body.innerHTML = emptyState(httpErrorMessage(0));
     return;
   }
   const { ok, status, url, data } = res;
   DEPS.logActivity({ title: 'Get user rewards', method: 'GET', url, ok, status, data });
   if (!ok) {
-    body.textContent = httpErrorMessage(status, { noun: 'rewards' });
+    body.innerHTML = emptyState(httpErrorMessage(status, { noun: 'rewards' }));
     return;
   }
-  const list = Array.isArray(data) ? data : Array.isArray(data?.rewards) ? data.rewards : [];
-  if (!list.length) {
-    const filtered = !!(type || rarity);
-    body.innerHTML = emptyState(
-      filtered ? 'No rewards match these filters.' : 'No rewards owned yet.',
-      filtered ? 'Clear the filters to see everything this user owns.' : 'Use Debug grant below to add one.'
-    );
-    return;
-  }
-  body.innerHTML = `<ul class="space-y-1">${list
-    .map((r) => {
-      const name = r?.reward_name || r?.name || '(unnamed)';
-      const t = r?.reward_type || r?.type || '';
-      const rar = r?.rarity ? ` · ${esc(r.rarity)}` : '';
-      return `<li class="rounded-lg bg-zinc-900/5 dark:bg-white/5 px-3 py-1.5">${esc(name)} <span class="text-zinc-400">${esc(t)}${rar}</span></li>`;
-    })
-    .join('')}</ul>`;
+  mountGallery(body, data, {
+    emptyText: 'No rewards owned yet. Use Debug grant below to add one.',
+  });
 }
 
 async function debugGrant(root, userId, mount) {

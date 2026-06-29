@@ -1,12 +1,28 @@
 import { $, skel, withBusy, httpErrorMessage } from './workspace-shell.js';
+import { mountGallery } from './lootbox-gallery.js';
 
 const KEY_TYPES = ['Classic', 'Winter', 'Spring', 'Autumn', 'Summer'];
-const RARITIES = ['common', 'rare', 'epic', 'legendary'];
 let DEPS = null;
 
 const esc = (s = '') =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// Skeleton mirroring the gallery's loaded shape (search bar + grouped tile grids),
+// so the swap to real content doesn't shift the layout.
+function gallerySkeleton() {
+  const tiles = (min, ratio, n) =>
+    `<div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(${min}px,1fr))">${
+      `<div class="overflow-hidden rounded-xl" style="aspect-ratio:${ratio}">${skel('h-full w-full rounded-xl')}</div>`.repeat(n)
+    }</div>`;
+  return `<div class="space-y-4">
+    ${skel('h-9 w-full rounded-xl')}
+    <div class="space-y-6">
+      <div class="space-y-2.5">${skel('h-3 w-16')}${tiles(104, '1 / 1', 8)}</div>
+      <div class="space-y-2.5">${skel('h-3 w-24')}${tiles(232, '16 / 9', 3)}</div>
+    </div>
+  </div>`;
+}
 
 export function initLootboxSettings(deps) {
   DEPS = deps;
@@ -35,18 +51,11 @@ export function initLootboxSettings(deps) {
 
     <div class="mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
       <h3 class="text-sm font-semibold">Reward catalog</h3>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <select data-st-cat-rarity aria-label="Filter catalog by rarity" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
-          <option value="">any rarity</option>${RARITIES.map((r) => `<option value="${r}">${r}</option>`).join('')}
-        </select>
-        <button data-st-cat-apply type="button" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm">Filter</button>
-      </div>
-      <div data-st-cat-body class="mt-3 text-sm text-zinc-500"><ul class="grid gap-1 sm:grid-cols-2">${`<li>${skel('h-7 w-full rounded-lg')}</li>`.repeat(6)}</ul></div>
+      <div data-st-cat-body class="mt-3">${gallerySkeleton()}</div>
     </div>`;
 
   $('[data-st-key-save]', mount).onclick = (e) => withBusy(e.currentTarget, () => setActiveKey(mount));
   $('[data-st-mult-save]', mount).onclick = (e) => withBusy(e.currentTarget, () => setMultiplier(mount));
-  $('[data-st-cat-apply]', mount).onclick = (e) => withBusy(e.currentTarget, () => loadCatalog(mount));
 
   // Lazy-load the three settings endpoints only when the Lootbox → Settings
   // sub-tab is first entered. Loading them in init would hit the API on every
@@ -141,31 +150,20 @@ async function setMultiplier(mount) {
   if (ok) loadMultiplier(mount);
 }
 
+const catalogError = (msg) =>
+  `<div class="rounded-xl border border-dashed border-zinc-300/70 dark:border-white/10 px-4 py-6 text-center"><p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">${esc(msg)}</p></div>`;
+
 async function loadCatalog(mount) {
   const body = $('[data-st-cat-body]', mount);
-  body.innerHTML = `<ul class="grid gap-1 sm:grid-cols-2">${`<li>${skel('h-7 w-full rounded-lg')}</li>`.repeat(6)}</ul>`;
-  const query = {};
-  const rarity = $('[data-st-cat-rarity]', mount).value.trim();
-  if (rarity) query.rarity = rarity;
+  body.innerHTML = gallerySkeleton();
+  // Fetch the whole catalog once; the gallery filters by type/rarity/name
+  // client-side, so there's no per-filter round-trip.
   try {
-    const { ok, status, url, data } = await DEPS.http('GET', '/api/lootbox/rewards', { query });
+    const { ok, status, url, data } = await DEPS.http('GET', '/api/lootbox/rewards');
     DEPS.logActivity({ title: 'View all rewards', method: 'GET', url, ok, status, data });
-    if (!ok) return (body.textContent = httpErrorMessage(status, { noun: 'the reward catalog' }));
-    const list = Array.isArray(data) ? data : Array.isArray(data?.rewards) ? data.rewards : [];
-    if (!list.length)
-      return (body.innerHTML = `<div class="rounded-xl border border-dashed border-zinc-300/70 dark:border-white/10 px-4 py-6 text-center">
-        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">${rarity ? 'No rewards match this rarity.' : 'The reward catalog is empty.'}</p>
-        ${rarity ? '<p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Clear the rarity filter to see everything.</p>' : ''}
-      </div>`);
-    body.innerHTML = `<ul class="grid gap-1 sm:grid-cols-2">${list
-      .map((r) => {
-        const name = r?.reward_name || r?.name || '(unnamed)';
-        const t = r?.reward_type || r?.type || '';
-        const rar = r?.rarity ? ` · ${esc(r.rarity)}` : '';
-        return `<li class="rounded-lg bg-zinc-900/5 dark:bg-white/5 px-3 py-1.5 text-sm">${esc(name)} <span class="text-zinc-400">${esc(t)}${rar}</span></li>`;
-      })
-      .join('')}</ul>`;
+    if (!ok) return (body.innerHTML = catalogError(httpErrorMessage(status, { noun: 'the reward catalog' })));
+    mountGallery(body, data, { emptyText: 'The reward catalog is empty.' });
   } catch {
-    body.textContent = httpErrorMessage(0);
+    body.innerHTML = catalogError(httpErrorMessage(0));
   }
 }
