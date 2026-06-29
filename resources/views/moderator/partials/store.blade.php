@@ -107,7 +107,7 @@
             >
               Save changes
             </button>
-            <span data-store-dirty class="hidden inline-flex items-center gap-1.5 text-xs text-amber-500">
+            <span data-store-dirty class="hidden items-center gap-1.5 text-xs text-amber-500">
               <span aria-hidden="true">●</span> Unsaved changes
             </span>
           </div>

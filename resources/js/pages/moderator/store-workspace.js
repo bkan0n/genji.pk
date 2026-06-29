@@ -136,7 +136,13 @@ function updateDirtyUI(root) {
   const saveBtn = form.querySelector('[data-store-save]');
   const marker = form.querySelector('[data-store-dirty]');
   if (saveBtn) saveBtn.disabled = !dirty;
-  if (marker) marker.classList.toggle('hidden', !dirty);
+  if (marker) {
+    // Toggle both display utilities so exactly one is ever active. Pairing a
+    // static `inline-flex` with `hidden` lets inline-flex win the cascade, so
+    // the marker would never hide. The partial omits the static `inline-flex`.
+    marker.classList.toggle('hidden', !dirty);
+    marker.classList.toggle('inline-flex', dirty);
+  }
 }
 
 //———————————————————————————————————————————————————————————————
