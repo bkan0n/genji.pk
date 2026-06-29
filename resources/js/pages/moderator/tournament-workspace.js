@@ -785,6 +785,9 @@ function openOverlay(root, title, contentEl) {
 
   $('[data-overlay-body]', overlay).appendChild(contentEl);
   DEPS.appendOverlay(overlay);
+  // Expose full teardown (removes the node AND the document keydown listener) so
+  // callers that dismiss programmatically don't orphan the Escape handler.
+  overlay.close = close;
   return overlay;
 }
 
@@ -1591,7 +1594,7 @@ function openCreateCategoryModal(root) {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       Promise.resolve()
-        .then(() => handleSetupCreate(root, form, { onSuccess: () => overlay.remove() }))
+        .then(() => handleSetupCreate(root, form, { onSuccess: () => overlay.close() }))
         .catch((err) => {
           DEPS.toast('Unexpected error', 'err');
           DEPS.logActivity({ title: 'Tournament category submit error', method: 'ERROR', url: '-', ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
