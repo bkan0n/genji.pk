@@ -3,7 +3,7 @@
   <div data-store-workspace class="space-y-4">
 
     {{-- Card: Configuration (auto-loads on tab entry) --}}
-    <article data-store-config class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
+    <article data-store-config class="fade-in relative z-20 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 class="font-semibold">Configuration</h3>
@@ -116,7 +116,7 @@
     </article>
 
     {{-- Card: Generate rotation --}}
-    <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
+    <article class="fade-in relative z-10 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 class="font-semibold">Generate rotation</h3>
