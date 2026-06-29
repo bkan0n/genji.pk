@@ -1,5 +1,5 @@
 <div data-panel="maps" class="mod-panel hidden space-y-4">
-  <div data-maps-workspace class="space-y-6">
+  <div data-maps-workspace class="space-y-4">
     {{-- Sub-tabs: edit an existing map vs. submit a brand-new one --}}
     <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
       <button

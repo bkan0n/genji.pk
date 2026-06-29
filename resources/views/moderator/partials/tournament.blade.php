@@ -1,5 +1,5 @@
 <div data-panel="tournament" class="mod-panel hidden space-y-4">
-  <div data-tournament-workspace data-app-env="{{ app()->environment() }}">
+  <div data-tournament-workspace data-app-env="{{ app()->environment() }}" class="space-y-4">
     {{-- Sub-tabs --}}
     <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
       <button type="button" data-subtab="tournament-status"

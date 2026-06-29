@@ -1,5 +1,5 @@
 <div data-panel="verifications" class="mod-panel hidden space-y-4">
-  <div data-verifications-workspace>
+  <div data-verifications-workspace class="space-y-4">
     {{-- Subtabs --}}
     <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
       <button type="button" data-subtab="verif-pending"
