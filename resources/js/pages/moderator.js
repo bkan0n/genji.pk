@@ -382,9 +382,6 @@ function renderModeratorWorkflowHome(panelOrId) {
 function refreshModeratorActiveHeader(tabId = document.querySelector('#modTabs .mod-tab.active')?.dataset?.tab || 'users') {
   const meta = modSectionMeta(tabId);
   const label = document.querySelector(`#modTabs .mod-tab[data-tab="${CSS.escape(tabId)}"]`)?.dataset?.tabLabel || tabId;
-  const panel = document.querySelector(`.mod-panel[data-panel="${CSS.escape(tabId)}"]`);
-  const subtabCount = panel?.querySelectorAll?.('.mod-subtab[data-subtab]').length || 0;
-  const actionCount = panel?.querySelectorAll?.('form[data-action]').length || 0;
 
   const title = document.getElementById('modActiveTitle');
   const kicker = document.getElementById('modActiveKicker');
@@ -397,11 +394,7 @@ function refreshModeratorActiveHeader(tabId = document.querySelector('#modTabs .
   if (stats) {
     stats.innerHTML = meta.hideStats
       ? ''
-      : [
-          `${subtabCount} workflows`,
-          `${actionCount} actions`,
-          ...(meta.stats || []),
-        ].map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 font-semibold dark:border-white/10 dark:bg-white/5">${escapeHtml(chip)}</span>`).join('');
+      : (meta.stats || []).map((chip) => `<span class="rounded-full border border-zinc-200/80 bg-white/60 px-3 py-1 font-semibold dark:border-white/10 dark:bg-white/5">${escapeHtml(chip)}</span>`).join('');
   }
 
   const hintsRoot = document.getElementById('modContextHints');
