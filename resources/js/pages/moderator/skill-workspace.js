@@ -123,6 +123,13 @@ const SKILL_TIER_COLORS = [
 const skillTierConfigState = new WeakMap();
 let skillTierSampleLoadId = 0;
 
+// Drop the hydration gate (see [data-mod-hydrating] in custom.css) once a form's
+// real values are in the DOM, so the skeleton-shimmered controls reveal already
+// at their correct positions instead of jerking from a server-rendered default.
+function revealHydratedForm(form) {
+  form?.removeAttribute?.('data-mod-hydrating');
+}
+
 function forceRangeThumbRepaint(range) {
   if (!range || range.type !== 'range') return;
 
@@ -210,6 +217,7 @@ function fillSkillConfigForm(form, data) {
       setSkillWeightControlValue(control, config[field]);
     }
   });
+  revealHydratedForm(form);
 }
 
 function skillPercentileInputs(form) {
@@ -363,6 +371,7 @@ function fillSkillTierConfig(form, data) {
       ? `Snapshot computed ${date.toLocaleString()}`
       : 'Snapshot date unavailable';
   }
+  revealHydratedForm(form);
 }
 
 function bindSkillPercentileSliders(form) {
@@ -831,6 +840,7 @@ async function handleSkillConfigGet(form) {
 
   DEPS.setPanelOut(form, 'skill-config-res', res.data ?? 'Request failed');
   if (!res.ok) {
+    revealHydratedForm(findRelatedActionForm(form, 'skill-config-update'));
     DEPS.toast('Failed to load skill weights', 'err');
     return;
   }
@@ -886,6 +896,7 @@ async function handleSkillTiersGet(form) {
 
   DEPS.setPanelOut(form, 'skill-tiers-res', res.data ?? 'Request failed');
   if (!res.ok) {
+    revealHydratedForm(findRelatedActionForm(form, 'skill-tiers-update'));
     DEPS.toast('Failed to load skill tiers', 'err');
     return;
   }

@@ -42,7 +42,7 @@ export function initLootboxSettings(deps) {
       </div>
     </div>
 
-    <div data-st-boost-card class="xpb-card mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5" style="--xpb-t:0;--xpb-fill:0%">
+    <div data-st-boost-card data-mod-hydrating="1" class="xpb-card mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5" style="--xpb-t:0;--xpb-fill:0%">
       <div class="flex items-center justify-between gap-3">
         <h3 class="text-sm font-semibold">XP multiplier</h3>
         <span data-st-status class="xpb-status" hidden></span>
@@ -305,6 +305,10 @@ async function loadMultiplier(mount) {
         : 'XP multiplier loaded.';
   } catch {
     conseq.textContent = httpErrorMessage(0);
+  } finally {
+    // Reveal the slider/number once the real value is applied — the skeleton
+    // gate keeps it from flashing the range's default midpoint thumb first.
+    $('[data-st-boost-card]', mount)?.removeAttribute('data-mod-hydrating');
   }
 }
 

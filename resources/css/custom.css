@@ -7080,6 +7080,58 @@ select.modal-select2:focus {
 .mod-ui .skill-weight-range::-moz-range-thumb {
   background: rgb(16, 185, 129);
 }
+
+/* ============ VALUE-CONTROL HYDRATION GATE ============
+   Mod-dashboard tabs render a static shell, then fetch real values from the API
+   on entry. Value-bearing controls — sliders especially — would otherwise flash
+   a hardcoded default and visibly jerk to the loaded value when the fetch lands.
+   A container marked [data-mod-hydrating="1"] paints its range/number inputs as
+   pulsing skeleton bars with the thumb hidden, so no wrong value is ever shown;
+   JS drops the attribute once the real value is applied (success or error). */
+[data-mod-hydrating='1'] input[type='range'],
+[data-mod-hydrating='1'] input[type='number'] {
+  pointer-events: none;
+  background: rgba(113, 113, 122, 0.22) !important;
+  animation: modSkelPulse 1.5s ease-in-out infinite;
+}
+[data-mod-hydrating='1'] input[type='number'] {
+  color: transparent !important;
+  text-shadow: none !important;
+}
+[data-mod-hydrating='1'] input[type='range']::-webkit-slider-runnable-track {
+  background: transparent !important;
+}
+[data-mod-hydrating='1'] input[type='range']::-webkit-slider-thumb {
+  opacity: 0 !important;
+  box-shadow: none !important;
+}
+[data-mod-hydrating='1'] input[type='range']::-moz-range-track {
+  background: transparent !important;
+}
+[data-mod-hydrating='1'] input[type='range']::-moz-range-progress {
+  background: transparent !important;
+}
+[data-mod-hydrating='1'] input[type='range']::-moz-range-thumb {
+  opacity: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+@keyframes modSkelPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-mod-hydrating='1'] input[type='range'],
+  [data-mod-hydrating='1'] input[type='number'] {
+    animation: none;
+  }
+}
+
 .mod-ui .skill-breakdown-list {
   display: flex;
   max-height: 30rem;

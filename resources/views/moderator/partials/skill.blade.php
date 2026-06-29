@@ -117,7 +117,7 @@
                       ],
                     ];
                   @endphp
-                  <form data-action="skill-config-update" data-preserve-form-state="1" autocomplete="off" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <form data-action="skill-config-update" data-preserve-form-state="1" data-mod-hydrating="1" autocomplete="off" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($skillWeightControls as $field => $control)
                       <div class="skill-weight-card" data-skill-weight-control="{{ $field }}">
                         <div class="flex items-center justify-between gap-3">
@@ -192,7 +192,7 @@
                   <form data-action="skill-tiers-get" autocomplete="off">
                     <button type="submit" class="rounded-xl border border-zinc-200/80 bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10">Reload tier config</button>
                   </form>
-                  <form data-action="skill-tiers-update" data-preserve-form-state="1" autocomplete="off" class="space-y-5">
+                  <form data-action="skill-tiers-update" data-preserve-form-state="1" data-mod-hydrating="1" autocomplete="off" class="space-y-5">
                     @php
                       $skillTierVisuals = [
                         ['name' => 'Bronze'],
