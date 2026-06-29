@@ -350,17 +350,6 @@ function enhanceModeratorChrome(root = document) {
   updateModeratorActivityStats();
 }
 
-document.addEventListener('click', (event) => {
-  const card = event.target?.closest?.('[data-workflow-open-subtab]');
-  if (!card) return;
-  const panel = card.closest('.mod-panel');
-  const subId = card.dataset.workflowOpenSubtab;
-  const subtab = panel?.querySelector?.(`.mod-subtab[data-subtab="${CSS.escape(subId)}"]`);
-  if (!subtab) return;
-  event.preventDefault();
-  subtab.click();
-});
-
 async function copyText(text = '') {
   try {
     if (navigator.clipboard && window.isSecureContext) {

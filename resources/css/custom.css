@@ -2344,7 +2344,6 @@ html[data-theme="dark"] .score-rank-callout {color: rgb(167, 243, 208);}
 }
 .mod-ui article.fade-in,
 .mod-ui .empty-state,
-.mod-ui [data-workflow-home],
 .mod-ui [data-out-wrap="1"] {
   background: var(--mod-panel);
   border-color: var(--mod-border);
@@ -2352,7 +2351,6 @@ html[data-theme="dark"] .score-rank-callout {color: rgb(167, 243, 208);}
 }
 .dark .mod-ui article.fade-in,
 .dark .mod-ui .empty-state,
-.dark .mod-ui [data-workflow-home],
 .dark .mod-ui [data-out-wrap="1"] {
   box-shadow: 0 22px 70px rgba(0, 0, 0, .28);
 }
@@ -2369,15 +2367,6 @@ html[data-theme="dark"] .score-rank-callout {color: rgb(167, 243, 208);}
 .mod-ui .mod-tab.active {
   border-color: rgba(16, 185, 129, .42) !important;
   background: linear-gradient(135deg, rgba(16, 185, 129, .13), rgba(59, 130, 246, .06)) !important;
-}
-.mod-ui [data-workflow-card] {
-  background: var(--mod-panel-strong);
-  border-color: var(--mod-border);
-  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
-}
-.mod-ui [data-workflow-card]:hover {
-  transform: translateY(-1px);
-  border-color: rgba(16, 185, 129, .42);
 }
 .mod-ui .mod-endpoint-badge {
   display: inline-flex;
