@@ -38,6 +38,8 @@ use App\Http\Controllers\Maps\TrendingMapsController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\CreateMovementTechniqueController;
+use App\Http\Controllers\Mods\Content\CreateOrReplaceMapController;
+use App\Http\Controllers\Mods\Content\GetMapNamesController;
 use App\Http\Controllers\Mods\Content\DeleteMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\DeleteMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\DeleteMovementTechniqueController;
@@ -48,6 +50,8 @@ use App\Http\Controllers\Mods\Content\ReorderMovementTechniqueController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechCategoryController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechDifficultyController;
 use App\Http\Controllers\Mods\Content\UpdateMovementTechniqueController;
+use App\Http\Controllers\Mods\Completions\ModerateCompletionController;
+use App\Http\Controllers\Mods\Completions\ModerationRecordsController;
 use App\Http\Controllers\Mods\Devs\CacheController;
 use App\Http\Controllers\Mods\Devs\FrameworkVersionController;
 use App\Http\Controllers\Mods\Devs\OverpyCommitController;
@@ -74,6 +78,7 @@ use App\Http\Controllers\Mods\Playtests\ForceDenyPlaytestController;
 use App\Http\Controllers\Mods\Playtests\ResetPlaytestController;
 use App\Http\Controllers\Mods\Quests\GenerateQuestRotationController;
 use App\Http\Controllers\Mods\Quests\GetQuestConfigController;
+use App\Http\Controllers\Mods\Quests\ListQuestsController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestConfigController;
 use App\Http\Controllers\Mods\Quests\UpdateQuestController;
 use App\Http\Controllers\Mods\Quests\UpdateUserQuestProgressController;
@@ -423,6 +428,11 @@ Route::prefix('mods')
             Route::delete('techniques/{id}', DeleteMovementTechniqueController::class)->whereNumber('id');
             Route::post('techniques/{id}/reorder', ReorderMovementTechniqueController::class)->whereNumber('id');
         });
+
+        // CONTENT — Overwatch maps (add map / replace banner)
+        Route::get('content/maps/names', GetMapNamesController::class)->name('mods.content.maps.names');
+        Route::post('content/maps', CreateOrReplaceMapController::class)->name('mods.content.maps.create');
+
         // LOOTBOX
         Route::post('lootbox/users/{user_id}/keys/{key_type}', GrantKeyToUserController::class)
             ->whereNumber('user_id')
@@ -452,6 +462,7 @@ Route::prefix('mods')
 
         // QUESTS
         Route::prefix('quests')->group(function () {
+            Route::get('/', ListQuestsController::class);
             Route::post('rotation/generate', GenerateQuestRotationController::class);
             Route::get('config', GetQuestConfigController::class);
             Route::put('config', UpdateQuestConfigController::class);
@@ -495,6 +506,11 @@ Route::prefix('mods')
         Route::get('completions/suspicious', [SuspiciousFlagsController::class, 'index']);
         Route::post('completions/suspicious', [SuspiciousFlagsController::class, 'store']);
         Route::delete('completions/suspicious', [SuspiciousFlagsController::class, 'destroy']);
+        Route::get('completions/moderation/records', [ModerationRecordsController::class, 'index'])
+            ->name('mods.completions.moderation.records');
+        Route::put('completions/{record_id}/moderate', [ModerateCompletionController::class, 'update'])
+            ->whereNumber('record_id')
+            ->name('mods.completions.moderate');
 
         // VERIFICATIONS
         Route::get('verifications/pending', [PendingVerificationsController::class, 'index']);

@@ -42,6 +42,92 @@ html[data-theme="light"] #prism { background: #ffffff; }
     'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* ============================================================
+   Moderator dashboard (.mod-ui) — shared component vocabulary
+   Base presentation extracted from the utility strings that repeated
+   across resources/views/moderator/**. Stateful styling (.active, …)
+   stays in custom.css next to the existing .mod-ui rules.
+   These classes live HERE, not in custom.css, because the attribute-
+   based `dark:` variant (@custom-variant dark, above) is only
+   registered in this file's Tailwind context — custom.css compiles
+   `dark:` against prefers-color-scheme and would mis-theme.
+   ============================================================ */
+@layer components {
+  /* Surfaces ------------------------------------------------ */
+  /* Glass workspace panel — the translucent card most tools sit in */
+  .mod-card {
+    @apply rounded-2xl border border-zinc-200/80 bg-white/40 p-4 dark:border-white/10 dark:bg-zinc-950/40 sm:p-5;
+  }
+  /* Map editor form section — slightly warmer glass, tighter padding */
+  .mod-form-card {
+    @apply rounded-2xl border border-zinc-200/80 bg-white/40 p-4 dark:border-white/10 dark:bg-zinc-900/40;
+  }
+  /* Opaque card — converter/skill/store/web tool blocks (often .fade-in) */
+  .mod-card-solid {
+    @apply rounded-2xl border border-zinc-200/80 bg-zinc-100 p-6 dark:border-white/10 dark:bg-white/5;
+  }
+  /* Read-only meta chip — map code / name / checkpoints cells */
+  .mod-meta-card {
+    @apply rounded-lg border border-zinc-200/80 bg-zinc-100 px-3 py-2 dark:border-white/10 dark:bg-white/5;
+  }
+
+  /* Navigation -------------------------------------------- */
+  /* Left-nav section button (state in custom.css: .mod-ui .mod-tab.active).
+     Keep the `group` marker class on the element itself — it can't be
+     @apply'd, and the nested icon chip uses group-hover. */
+  .mod-tab {
+    @apply flex w-full min-w-0 items-center gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-100/50 px-3 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:hover:bg-white/10;
+  }
+  /* Domain sub-tab pill (state forced emerald in custom.css) */
+  .mod-subtab {
+    @apply w-full min-w-0 max-w-full truncate rounded-xl border border-zinc-200/80 bg-zinc-100/50 px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/10 sm:w-auto;
+  }
+
+  /* Controls ---------------------------------------------- */
+  /* Primary action button — the white "save / submit / create" affordance */
+  .mod-btn-primary {
+    @apply rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 disabled:opacity-40 disabled:hover:bg-white;
+  }
+  /* Emerald accent button — the "grant / apply / go" affordance. emerald-700
+     keeps white ink ≥4.5:1 in both themes; hover darkens so it stays AA. */
+  .mod-btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 disabled:opacity-40 disabled:hover:bg-emerald-700;
+  }
+  /* Destructive button — rose family per the status vocabulary, same AA math */
+  .mod-btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 disabled:opacity-40 disabled:hover:bg-rose-700;
+  }
+  /* Secondary / utility button (Command, Top, Actions, Clear) */
+  .mod-btn {
+    @apply inline-flex items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-200/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10;
+  }
+  /* 36px square icon chip with a hairline ring */
+  .mod-icon-chip {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 ring-1 ring-zinc-300/60 dark:bg-white/5 dark:ring-white/10;
+  }
+  /* Glass text field — search inputs that sit on a .mod-card.
+     Width is left to the caller (most are w-full; a few are auto). */
+  .mod-input {
+    @apply rounded-xl border border-zinc-200/80 bg-white/60 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900/60 dark:text-zinc-100;
+  }
+  /* Solid form field — inputs inside opaque cards / forms */
+  .mod-field {
+    @apply rounded-lg border border-zinc-200/80 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900;
+  }
+  /* Custom-dropdown trigger (data-dd-btn) */
+  .mod-dd-btn {
+    @apply flex w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:bg-zinc-900;
+  }
+  /* Custom-dropdown popover list (data-dd-list) */
+  .mod-dd-list {
+    @apply absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 bg-white shadow-xl dark:border-white/10 dark:bg-zinc-900;
+  }
+  /* Inline "Edit" affordance on meta chips (JS hook: .block-edit-btn) */
+  .block-edit-btn {
+    @apply cursor-pointer rounded-md border border-zinc-200/80 px-2 py-1 text-sm hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10;
+  }
+}
+
 @layer components {
   :where(
     [data-discord-avatar],
