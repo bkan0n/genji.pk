@@ -1,5 +1,5 @@
 import {
-  $, $$, pickedId, setView, makeRecentStore, renderRecentChips, wireUserSearch,
+  $, $$, pickedId, setView, makeRecentStore, renderRecentChips, wireUserSearch, withBusy,
 } from './workspace-shell.js';
 
 const API_MODS = '/api/mods';
@@ -69,8 +69,7 @@ function renderProfile(root, user) {
       navigator.clipboard?.writeText(String(user.id));
       DEPS.toast('ID copied', 'ok');
     };
-  // Names / aliases / link sections bound in later tasks via bindSections(root, user).
-  if (typeof bindSections === 'function') bindSections(root, user);
+  bindSections(root, user);
 }
 
 function setText(root, sel, value) {
@@ -80,9 +79,8 @@ function setText(root, sel, value) {
 
 function bindSections(root, user) {
   bindNames(root, user);
-  // bindAliases + bindLink added in later tasks.
-  if (typeof bindAliases === 'function') bindAliases(root, user);
-  if (typeof bindLink === 'function') bindLink(root, user);
+  bindAliases(root, user);
+  bindLink(root, user);
 }
 
 function bindNames(root, user) {
@@ -111,7 +109,7 @@ function bindNames(root, user) {
   gn.oninput = refresh;
   nn.oninput = refresh;
   gn.onkeydown = nn.onkeydown = (e) => {
-    if (e.key === 'Enter' && !saveBtn.disabled) saveNames();
+    if (e.key === 'Enter' && !saveBtn.disabled) withBusy(saveBtn, saveNames);
   };
   resetBtn.onclick = () => {
     fill();
@@ -125,11 +123,14 @@ function bindNames(root, user) {
     if (nn.value !== baseline.nickname) body.nickname = nn.value === '' ? null : nn.value;
     if (Object.keys(body).length === 0) return;
     // Nullable unset confirm
-    if (
-      (body.global_name === null || body.nickname === null) &&
-      !confirm('You are clearing a name field to empty. Continue?')
-    )
-      return;
+    if (body.global_name === null || body.nickname === null) {
+      const confirmed = await DEPS.showConfirmDanger({
+        title: 'Clear name field',
+        message: 'You are clearing a name field to empty. Continue?',
+        confirm: 'Clear it',
+      });
+      if (!confirmed) return;
+    }
 
     const { ok, status, url, data } = await DEPS.http(
       'PATCH',
@@ -150,7 +151,7 @@ function bindNames(root, user) {
     DEPS.toast('Names saved', 'ok');
   }
 
-  saveBtn.onclick = saveNames;
+  saveBtn.onclick = () => withBusy(saveBtn, saveNames);
 }
 
 function bindAliases(root, user) {
@@ -252,7 +253,7 @@ function bindAliases(root, user) {
     DEPS.toast('Aliases saved', 'ok');
   }
 
-  saveBtn.onclick = saveAliases;
+  saveBtn.onclick = () => withBusy(saveBtn, saveAliases);
 }
 
 function bindCreateFake() {
@@ -281,9 +282,9 @@ function bindCreateFake() {
     DEPS.toast('Fake member created', 'ok');
   };
 
-  submit.onclick = create;
+  submit.onclick = () => withBusy(submit, create);
   name.onkeydown = (e) => {
-    if (e.key === 'Enter') create();
+    if (e.key === 'Enter') withBusy(submit, create);
   };
 }
 
@@ -295,7 +296,7 @@ function bindLink(root, user) {
   // Autocomplete fills the input value with the picked user_id.
   DEPS.attachUsersAutocomplete(other);
 
-  submit.onclick = async () => {
+  submit.onclick = () => withBusy(submit, async () => {
     const otherId = pickedId(other);
     if (!otherId) {
       DEPS.toast('Pick the other account', 'warn');
@@ -309,7 +310,12 @@ function bindLink(root, user) {
       DEPS.toast('Cannot link an account to itself', 'warn');
       return;
     }
-    if (!confirm(`Link fake ${fakeId} → real ${realId}? This cannot be easily undone.`)) return;
+    const confirmed = await DEPS.showConfirmDanger({
+      title: 'Link accounts',
+      message: `Link fake ${fakeId} → real ${realId}? This cannot be easily undone.`,
+      confirm: 'Link accounts',
+    });
+    if (!confirmed) return;
 
     const { ok, status, url, data } = await DEPS.http(
       'PUT',
@@ -320,7 +326,7 @@ function bindLink(root, user) {
     if (ok) {
       other.value = '';
     }
-  };
+  });
 }
 
 // --- Recent lookups (localStorage, via shared shell) ---

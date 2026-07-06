@@ -92,10 +92,10 @@ function toast(msg, type = 'ok') {
   const node = document.createElement('div');
   node.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] rounded-xl px-4 py-2 text-sm shadow-lg text-center ${
     type === 'ok'
-      ? 'bg-emerald-500 text-zinc-900 dark:text-white'
+      ? 'bg-emerald-500 text-zinc-900'
       : type === 'warn'
         ? 'bg-amber-500 text-zinc-900'
-        : 'bg-red-600 text-zinc-900 dark:text-white'
+        : 'bg-rose-600 text-white'
   }`;
 
   node.style.opacity = '0';
@@ -258,11 +258,11 @@ const MOD_SECTION_META = {
     kicker: 'Quests',
     summary: 'Manage quest config, the global quest pool, user quest progress, and rotation.',
     hints: [
-      'Config and Global quests load automatically when you open them.',
+      'Settings and Global quests load automatically when you open them.',
       'User quests load after you pick a user; editing opens a side panel.',
     ],
     cards: [
-      { sub: 'quest-config', title: 'Config', desc: 'Rotation timing and per-tier quest counts.' },
+      { sub: 'quest-config', title: 'Settings', desc: 'Rotation timing and per-tier quest counts.' },
       { sub: 'quest-global', title: 'Global quests', desc: 'Browse and edit the global quest pool.' },
       { sub: 'quest-user', title: 'User quests', desc: 'Find a user and edit their quest progress.' },
       { sub: 'quest-rotation', title: 'Rotation', desc: 'Force a new quest rotation.', danger: true },
@@ -4517,7 +4517,7 @@ function __merSetupBannerDropzone(overlay) {
       if (hidden) hidden.value = url || '';
 
       const ok = document.createElement('div');
-      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-zinc-900 dark:text-white px-2 py-0.5 shadow';
+      ok.className = 'absolute top-2 right-2 rounded bg-emerald-500/90 text-xs text-zinc-900 px-2 py-0.5 shadow';
       ok.textContent = 'Uploaded';
       drop.appendChild(ok);
       setTimeout(() => ok.remove(), 1500);
@@ -5142,7 +5142,7 @@ function ensureMapEditRequestModal() {
       </div>
 
       <div class="flex flex-wrap items-center justify-end gap-3">
-        <button type="button" data-mer-close class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:bg-white/10">Cancel</button>
+        <button type="button" data-mer-close class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-900 dark:text-white/80 hover:bg-zinc-900/5 dark:hover:bg-white/10">Cancel</button>
         <button type="button" id="merSendBtn" class="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400">
           ${(typeof t === 'function' ? (t('map_edit_request.send') || 'Send request') : 'Send request')}
         </button>
@@ -6906,8 +6906,8 @@ function showConfirmDanger({ title = 'Confirm', message = 'Are you sure?', confi
         <div class="p-4 space-y-4">
           <p class="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">${message}</p>
           <div class="flex justify-end gap-2">
-            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400">${confirm}</button>
-            <button class="btn-cancel cursor-pointer rounded-lg bg-zinc-700 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-zinc-600">${cancel}</button>
+            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-700 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-800">${confirm}</button>
+            <button class="btn-cancel cursor-pointer rounded-lg bg-zinc-200 text-zinc-900 px-3 py-1.5 text-sm font-semibold hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600">${cancel}</button>
           </div>
         </div>
       </div>
@@ -7184,7 +7184,7 @@ function initializeApp() {
   wireDdSelect(document);
   ensureFormUx(document);
   initActivityControls();
-  initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete });
+  initUsersWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete, showConfirmDanger });
   initLootboxWorkspace({ http, toast, logActivity, attachUsersAutocomplete, wireAutocomplete, showConfirmDanger });
   initLootboxSettings({ http, toast, logActivity, showConfirmDanger });
   initMapWorkspace({
@@ -7197,6 +7197,7 @@ function initializeApp() {
     handleArchiveMaps, handleConvertLegacy, handleReleaseMapCode,
     applyOverrideQuality,
     openMapEditRequestModal,
+    showConfirmDanger,
   });
   initContentWorkspace({
     toast, logActivity, http,

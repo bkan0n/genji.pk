@@ -146,7 +146,7 @@ function buildRow(entity, item, index, total) {
   main.className = 'min-w-0 flex-1';
   main.innerHTML = `
     <div class="flex items-baseline gap-2">
-      <span class="text-xs text-zinc-400 dark:text-zinc-500">${escapeHtml(id)}</span>
+      <span class="text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(id)}</span>
       <span class="truncate font-medium text-zinc-900 dark:text-zinc-100">${escapeHtml(name)}</span>
     </div>
     ${tail ? `<div class="truncate text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(tail)}</div>` : ''}

@@ -16,7 +16,7 @@
         aria-selected="false"
         class="min-h-[2.35rem] rounded-full border border-zinc-200/80 dark:border-white/10 bg-zinc-100/50 dark:bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 transition hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 [&.active]:border-emerald-500/40 [&.active]:bg-emerald-500/10 [&.active]:text-emerald-700 dark:[&.active]:text-emerald-300"
       >
-        ＋ Submit new map
+        + Submit new map
       </button>
       <button
         type="button"
@@ -44,8 +44,8 @@
         <div data-maps-recent class="mt-3 flex flex-wrap gap-2"></div>
       </div>
 
-      <div data-view="loading" class="hidden border-t border-zinc-200/80 dark:border-white/10 pt-5 text-sm text-zinc-500">Loading…</div>
-      <div data-view="error" class="hidden border-t border-red-300/60 dark:border-red-500/30 pt-5 text-sm text-red-700 dark:text-red-300" data-maps-error></div>
+      <div data-view="loading" class="hidden border-t border-zinc-200/80 dark:border-white/10 pt-5 text-sm text-zinc-500 dark:text-zinc-400">Loading…</div>
+      <div data-view="error" class="hidden border-t border-rose-300/60 dark:border-rose-500/30 pt-5 text-sm text-rose-700 dark:text-rose-300" data-maps-error></div>
 
       <div data-view="loaded" class="hidden space-y-5">
         @include('moderator.partials.maps-profile')
@@ -89,7 +89,7 @@
                       </button>
                     </span>
 
-                    <!-- Secondary (même système que primary) -->
+                    <!-- Secondary (same system as primary) -->
                     <span
                       class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                     >
@@ -456,7 +456,7 @@
               </button>
               <button
                 type="button"
-                class="cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5"
+                class="cancel-btn inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 px-3 py-2 text-sm transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:hover:bg-white/10"
               >
                 Cancel
               </button>
@@ -481,7 +481,7 @@
             data-maps-refresh
             title="Refresh"
             aria-label="Refresh maps"
-            class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+            class="cursor-pointer rounded-xl border border-zinc-200/80 px-3 py-2 text-sm font-semibold transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:hover:bg-white/10"
           >
             &#x21bb;
           </button>

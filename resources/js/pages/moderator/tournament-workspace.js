@@ -250,14 +250,14 @@ function renderEditionStrip(root, { edition, config, cycles }) {
           <li>Starts the first edition now and opens the first cycle for every active category.</li>
           <li>Enables automatic weekly rotation by clearing the global pause flag.</li>
         </ul>
-        <button type="button" data-tournament-lc-action="start" class="mt-4 w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">
+        <button type="button" data-tournament-lc-action="start" class="mt-4 w-full sm:w-auto cursor-pointer mod-btn-primary">
           Start tournament &amp; enable rotation
         </button>
       </div>`;
   } else if (status === 'active') {
     const paused = config?.transitions_paused === true;
     const toggle = paused
-      ? `<button type="button" data-tournament-lc-action="resume" class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Resume auto-rotation</button>`
+      ? `<button type="button" data-tournament-lc-action="resume" class="w-full sm:w-auto cursor-pointer mod-btn-primary">Resume auto-rotation</button>`
       : `<button type="button" data-tournament-lc-action="pause" class="w-full sm:w-auto cursor-pointer rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-700 hover:bg-amber-500/15 dark:text-amber-300">Pause auto-rotation</button>`;
 
     body = `
@@ -291,7 +291,7 @@ function renderEditionStrip(root, { edition, config, cycles }) {
         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">The edition window closed and standings publish automatically once verifications finish. ${pendingText}</p>
         <div class="mt-4 rounded-xl border border-zinc-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/40">
           <p class="text-xs text-zinc-600 dark:text-zinc-300">Use <strong>Publish results now</strong> only as an escape hatch — it force-publishes from currently-verified runs and ignores any in-flight verifications.</p>
-          <button type="button" data-tournament-lc-action="publish" class="mt-3 w-full sm:w-auto cursor-pointer rounded-xl bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500">Publish results now</button>
+          <button type="button" data-tournament-lc-action="publish" class="mt-3 w-full sm:w-auto cursor-pointer mod-btn-danger">Publish results now</button>
         </div>
       </div>`;
   } else if (status === 'completed') {
@@ -302,7 +302,7 @@ function renderEditionStrip(root, { edition, config, cycles }) {
           ${header}
         </div>
         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Final standings have been published${edition.ends_at ? ` (ended ${tournamentEscape(tournamentFormatDate(edition.ends_at))})` : ''}. The next edition starts automatically at the next anchor unless auto-rotation is paused.</p>
-        <button type="button" data-tournament-lc-action="open-cycles" class="mt-4 w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">View completed cycles &amp; standings</button>
+        <button type="button" data-tournament-lc-action="open-cycles" class="mt-4 w-full sm:w-auto cursor-pointer mod-btn-primary">View completed cycles &amp; standings</button>
       </div>`;
   } else {
     body = `
@@ -518,7 +518,7 @@ async function renderCategoryCards(root, { config, edition, cycles }) {
             </div>
             <button type="button" data-card-action="view-standings" class="${btnBase}">View standings</button>
             <button type="button" data-card-action="history" class="${btnBase}">History</button>
-            <button type="button" data-card-action="reroll-active" class="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/15 dark:text-red-400">Reroll active</button>
+            <button type="button" data-card-action="reroll-active" class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-500/15 dark:text-rose-400">Reroll active</button>
           </div>
         </article>`;
     })
@@ -1483,7 +1483,7 @@ function difficultyCheckboxes(selected = []) {
     </label>`).join('');
 }
 
-const SETUP_INPUT_CLASS = 'mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none';
+const SETUP_INPUT_CLASS = 'mt-1 w-full mod-field';
 
 // The "Create category" trigger at the top of the Setup tab. Opens the create
 // form in the module's slide-over (openCreateCategoryModal) instead of rendering
@@ -1493,9 +1493,9 @@ function setupCreateButtonHtml() {
     <article class="flex flex-col gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-100 p-6 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h3 class="font-semibold">Create category</h3>
-        <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/tournaments/categories</span>
+        <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/tournaments/categories</span>
       </div>
-      <button type="button" data-tournament-create-open class="w-full shrink-0 cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100 sm:w-auto">Create category</button>
+      <button type="button" data-tournament-create-open class="w-full shrink-0 cursor-pointer mod-btn-primary sm:w-auto">Create category</button>
     </article>`;
 }
 
@@ -1530,7 +1530,7 @@ function setupCreateFormHtml() {
           <textarea name="streak_xp_json" rows="4" placeholder='[{"threshold":5,"xp":300}]' class="${SETUP_INPUT_CLASS} font-mono text-xs"></textarea>
         </label>
       </div>
-      <button type="submit" class="w-full sm:w-auto cursor-pointer rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-emerald-500 dark:text-white">Create</button>
+      <button type="submit" class="w-full sm:w-auto cursor-pointer mod-btn-accent">Create</button>
     </form>`;
 }
 
@@ -1618,7 +1618,7 @@ function setupEditFormHtml(category) {
         </label>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button type="submit" class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save changes</button>
+        <button type="submit" class="cursor-pointer mod-btn-primary">Save changes</button>
         <button type="button" data-setup-action="cancel-edit" class="cursor-pointer rounded-xl border border-zinc-200/80 bg-white px-4 py-2 font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10">Cancel</button>
       </div>
     </form>`;
@@ -1641,8 +1641,8 @@ function setupCategoryRowHtml(category, locked) {
     ? 'cursor-not-allowed rounded-lg border border-zinc-200/80 bg-white/40 px-2.5 py-1.5 text-xs font-semibold text-zinc-400 dark:border-white/10 dark:bg-white/5 dark:text-zinc-500'
     : 'cursor-pointer rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10';
   const deleteBtnClass = locked
-    ? 'cursor-not-allowed rounded-lg border border-red-500/20 bg-red-500/5 px-2.5 py-1.5 text-xs font-semibold text-red-400/60'
-    : 'cursor-pointer rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/15 dark:text-red-400';
+    ? 'cursor-not-allowed rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-1.5 text-xs font-semibold text-rose-400/60'
+    : 'cursor-pointer rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-500/15 dark:text-rose-400';
 
   return `
     <article data-setup-category data-category-id="${tournamentEscape(category.id)}" class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/55">
@@ -1756,7 +1756,7 @@ function setupConfigCardHtml(root, config) {
             <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Number of weeks a map stays excluded after being used.</span>
           </label>
           <div class="sm:col-span-2">
-            <button class="w-full sm:w-auto cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save config</button>
+            <button class="w-full sm:w-auto cursor-pointer mod-btn-primary">Save config</button>
           </div>
         </form>
         ${debug}
@@ -1897,7 +1897,7 @@ async function loadSetup(root, { force }) {
     DEPS.logActivity({ title: 'Tournament Categories (GET)', method: 'GET', url: catRes.url || url, ok: catRes.ok, status: catRes.status, data: catRes.data });
     if (!catRes.ok) {
       loaded.setup = false;
-      mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament categories.</div>';
+      mount.innerHTML = '<div class="rounded-xl border border-dashed border-rose-400/40 p-4 text-sm text-rose-600 dark:text-rose-400">Failed to load tournament categories.</div>';
       DEPS.toast('Failed to load tournament categories', 'err');
       return;
     }
@@ -1906,7 +1906,7 @@ async function loadSetup(root, { force }) {
   } catch (err) {
     loaded.setup = false;
     DEPS.logActivity({ title: 'Tournament Setup load error', method: 'ERROR', url: `${API}/categories`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
-    mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament categories.</div>';
+    mount.innerHTML = '<div class="rounded-xl border border-dashed border-rose-400/40 p-4 text-sm text-rose-600 dark:text-rose-400">Failed to load tournament categories.</div>';
     DEPS.toast('Failed to load tournament categories', 'err');
     return;
   }
@@ -1955,7 +1955,7 @@ async function loadConfig(root, { force }) {
     DEPS.logActivity({ title: 'Tournament Config (GET)', method: 'GET', url: configRes.url || configUrl, ok: configRes.ok, status: configRes.status, data: configRes.data });
     if (!configRes.ok) {
       loaded.config = false;
-      mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament config.</div>';
+      mount.innerHTML = '<div class="rounded-xl border border-dashed border-rose-400/40 p-4 text-sm text-rose-600 dark:text-rose-400">Failed to load tournament config.</div>';
       DEPS.toast('Failed to load tournament config', 'err');
       return;
     }
@@ -1963,7 +1963,7 @@ async function loadConfig(root, { force }) {
   } catch (err) {
     loaded.config = false;
     DEPS.logActivity({ title: 'Tournament Config load error', method: 'ERROR', url: `${API}/config`, ok: false, status: 'ERR', data: { message: String((err && err.message) || err) } });
-    mount.innerHTML = '<div class="rounded-xl border border-dashed border-red-400/40 p-4 text-sm text-red-600 dark:text-red-400">Failed to load tournament config.</div>';
+    mount.innerHTML = '<div class="rounded-xl border border-dashed border-rose-400/40 p-4 text-sm text-rose-600 dark:text-rose-400">Failed to load tournament config.</div>';
     DEPS.toast('Failed to load tournament config', 'err');
     return;
   }

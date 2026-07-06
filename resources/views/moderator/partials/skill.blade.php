@@ -32,7 +32,7 @@
                       <h3 class="font-semibold">Player skill</h3>
                       <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">The aggregate score and per-map breakdown are calculated from eligible runs.</p>
                     </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/skill/users/{user_id}</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">GET /api/skill/users/{user_id}</span>
                   </div>
                   <form data-action="skill-user-summary" autocomplete="off" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <label class="min-w-0 flex-1 text-sm">
@@ -63,7 +63,7 @@
                       <h3 class="font-semibold">Skill weights</h3>
                       <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Saving triggers a full score recompute. The upstream API restricts updates to superusers.</p>
                     </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET + PATCH /api/mods/skill/config</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">GET + PATCH /api/mods/skill/config</span>
                   </div>
                   <form data-action="skill-config-get" autocomplete="off">
                     <button type="submit" class="rounded-xl border border-zinc-200/80 bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10">Reload weights</button>
@@ -187,7 +187,7 @@
                       <h3 class="font-semibold">Tier percentiles</h3>
                       <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Seven strictly increasing population percentiles define the eight ranked tiers.</p>
                     </div>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">GET /api/skill/tiers + PATCH /api/mods/skill/tiers</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">GET /api/skill/tiers + PATCH /api/mods/skill/tiers</span>
                   </div>
                   <form data-action="skill-tiers-get" autocomplete="off">
                     <button type="submit" class="rounded-xl border border-zinc-200/80 bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-zinc-100 dark:hover:bg-white/10">Reload tier config</button>
@@ -236,7 +236,7 @@
                           <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Rank preview</div>
                           <div class="text-xs text-zinc-500 dark:text-zinc-400">Representative players are sampled from the saved Skill Score snapshot.</div>
                         </div>
-                        <div data-skill-sample-status class="text-[11px] text-zinc-500 dark:text-zinc-400">Loading player samples...</div>
+                        <div data-skill-sample-status class="text-[11px] text-zinc-500 dark:text-zinc-400">Loading player samples…</div>
                       </div>
                       <div class="skill-tier-preview-grid">
                         @foreach ($skillTierVisuals as $tierIndex => $tier)
@@ -252,7 +252,7 @@
                                   alt=""
                                   loading="lazy"
                                   decoding="async"
-                                  onerror="this.remove()"
+                                  data-remove-on-error
                                 />
                               </div>
                               <div class="min-w-0">

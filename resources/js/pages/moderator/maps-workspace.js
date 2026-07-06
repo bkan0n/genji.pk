@@ -1,4 +1,4 @@
-import { $, $$, setView, makeRecentStore, renderRecentChips, wireMapSearch } from './workspace-shell.js';
+import { $, $$, setView, makeRecentStore, renderRecentChips, wireMapSearch, withBusy } from './workspace-shell.js';
 
 let DEPS = null;
 const recent = makeRecentStore('mod.maps.recent');
@@ -85,7 +85,12 @@ async function loadMap(root, code) {
   const form = document.getElementById('u-updateMapForm');
   const bar = $('[data-fields-bar]', root);
   if (form && bar && !bar.classList.contains('hidden')) {
-    if (!confirm('You have unsaved map changes. Discard them and load another map?')) return;
+    const confirmed = await DEPS.showConfirmDanger({
+      title: 'Unsaved changes',
+      message: 'You have unsaved map changes. Discard them and load another map?',
+      confirm: 'Discard changes',
+    });
+    if (!confirmed) return;
   }
   setView(root, 'loading');
   let res;
@@ -110,7 +115,7 @@ async function loadMap(root, code) {
   // Recent chips show the map code (this is a code-keyed editing console).
   recent.push({ id: String(item.code), name: String(item.code) });
   renderRecent(root);
-  renderProfile(root, item); // no-op until a later task
+  renderProfile(root, item);
   setView(root, 'loaded');
 }
 
@@ -153,10 +158,9 @@ function renderProfile(root, map) {
   badge('official', !!map.official);
   badge('hidden', !!map.hidden);
 
-  // bindFields / bindGuides / bindActions added in later tasks.
-  if (typeof bindFields === 'function') bindFields(root, map);
-  if (typeof bindGuides === 'function') bindGuides(root, map);
-  if (typeof bindActions === 'function') bindActions(root, map);
+  bindFields(root, map);
+  bindGuides(root, map);
+  bindActions(root, map);
 }
 
 // ———————————————————————————————————————————————————————————————
@@ -326,7 +330,7 @@ function buildLocalMap(c) {
 }
 
 // ———————————————————————————————————————————————————————————————
-// Block C — inline guides list for the loaded map (Task 4).
+// Block C — inline guides list for the loaded map.
 // Endpoints/verbs/params mirror moderator.js's handleGetGuides /
 // handleCreateGuide / handleEditGuide / handleDeleteGuide exactly:
 //   GET    /api/maps/{code}/guides            ?include_records=false (required param)
@@ -359,27 +363,30 @@ async function bindGuides(root, map) {
   if (!listEl || !countEl || !addForm) return;
 
   const reload = async () => {
+    listEl.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">Loading guides…</p>`;
     const { ok, status, url, data } = await DEPS.http('GET', `/api/maps/${encodeURIComponent(code)}/guides`, { query: { include_records: false } });
     DEPS.logActivity({ title: 'Get guides', method: 'GET', url, ok, status, data });
     const guides = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
     countEl.textContent = ok ? `${guides.length} guide${guides.length === 1 ? '' : 's'}` : '';
     listEl.innerHTML = '';
-    if (!ok) { listEl.innerHTML = `<p class="text-sm text-red-600">Failed to load guides (${status}).</p>`; return; }
-    if (!guides.length) { listEl.innerHTML = `<p class="text-sm text-zinc-500">No guides yet.</p>`; return; }
+    if (!ok) { listEl.innerHTML = `<p class="text-sm text-rose-600 dark:text-rose-400">Failed to load guides (${status}).</p>`; return; }
+    if (!guides.length) { listEl.innerHTML = `<p class="text-sm text-zinc-500 dark:text-zinc-400">No guides yet.</p>`; return; }
     for (const g of guides) listEl.appendChild(renderGuideRow(code, g, reload));
   };
 
   const userInput = addForm.querySelector('input[name="user_id"]');
   DEPS.attachUsersAutocomplete(userInput);
-  addForm.onsubmit = async (e) => {
+  addForm.onsubmit = (e) => {
     e.preventDefault();
-    const user_id = DEPS.getUserIdFrom(userInput);
-    const urlVal = (addForm.querySelector('input[name="url"]').value || '').trim();
-    if (!user_id || !urlVal) return DEPS.toast('Creator and URL are required', 'warn');
-    const r = await DEPS.http('POST', `/api/mods/maps/${encodeURIComponent(code)}/guides`, { body: { url: urlVal, user_id } });
-    DEPS.logActivity({ title: 'Create guide', method: 'POST', url: r.url, ok: r.ok, status: r.status, data: r.data });
-    DEPS.toast(r.ok ? 'Guide added' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
-    if (r.ok) { addForm.reset(); reload(); }
+    withBusy(addForm.querySelector('button'), async () => {
+      const user_id = DEPS.getUserIdFrom(userInput);
+      const urlVal = (addForm.querySelector('input[name="url"]').value || '').trim();
+      if (!user_id || !urlVal) return DEPS.toast('Creator and URL are required', 'warn');
+      const r = await DEPS.http('POST', `/api/mods/maps/${encodeURIComponent(code)}/guides`, { body: { url: urlVal, user_id } });
+      DEPS.logActivity({ title: 'Create guide', method: 'POST', url: r.url, ok: r.ok, status: r.status, data: r.data });
+      DEPS.toast(r.ok ? 'Guide added' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
+      if (r.ok) { addForm.reset(); reload(); }
+    });
   };
 
   await reload();
@@ -392,24 +399,29 @@ function renderGuideRow(code, g, reload) {
   const name = guideName(g);
   row.innerHTML = `
     <span class="min-w-[8rem] text-sm font-medium">${escapeHtml(name)}</span>
-    <input data-guide-url value="${escapeHtml(g.url || '')}" class="flex-1 min-w-[12rem] rounded-md border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-2 py-1 text-sm" />
+    <input data-guide-url value="${escapeHtml(g.url || '')}" class="flex-1 min-w-[12rem] rounded-md border border-zinc-200/80 bg-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900" />
     <button type="button" data-guide-save class="rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Save</button>
-    <button type="button" data-guide-del class="rounded-md border border-red-300/60 px-2 py-1 text-sm text-red-700 dark:text-red-300 hover:bg-red-500/10">Delete</button>`;
-  row.querySelector('[data-guide-save]').onclick = async () => {
+    <button type="button" data-guide-del class="rounded-md border border-rose-300/60 px-2 py-1 text-sm text-rose-700 hover:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-300">Delete</button>`;
+  row.querySelector('[data-guide-save]').onclick = (e) => withBusy(e.currentTarget, async () => {
     const urlVal = (row.querySelector('[data-guide-url]').value || '').trim();
     if (!urlVal) return DEPS.toast('URL is required', 'warn');
     const r = await DEPS.http('PATCH', `/api/mods/maps/${encodeURIComponent(code)}/guides/${encodeURIComponent(uid)}`, { query: { url: urlVal } });
     DEPS.logActivity({ title: 'Edit guide', method: 'PATCH', url: r.url, ok: r.ok, status: r.status, data: r.data });
     DEPS.toast(r.ok ? 'Guide updated' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
     if (r.ok) reload();
-  };
-  row.querySelector('[data-guide-del]').onclick = async () => {
-    if (!confirm(`Delete ${name}'s guide for map ${code}?`)) return;
+  });
+  row.querySelector('[data-guide-del]').onclick = (e) => withBusy(e.currentTarget, async () => {
+    const confirmed = await DEPS.showConfirmDanger({
+      title: 'Delete guide',
+      message: `Delete ${name}'s guide for map ${code}?`,
+      confirm: 'Delete guide',
+    });
+    if (!confirmed) return;
     const r = await DEPS.http('DELETE', `/api/mods/maps/${encodeURIComponent(code)}/guides/${encodeURIComponent(uid)}`);
     DEPS.logActivity({ title: 'Delete guide', method: 'DELETE', url: r.url, ok: r.ok, status: r.status, data: r.data });
     DEPS.toast(r.ok ? 'Guide deleted' : (r.data?.message || 'Failed'), r.ok ? 'ok' : 'err');
     if (r.ok) reload();
-  };
+  });
   return row;
 }
 
@@ -418,7 +430,7 @@ function escapeHtml(s) {
 }
 
 // ———————————————————————————————————————————————————————————————
-// Block D — collapsed disclosure of heavier/destructive actions (Task 5).
+// Block D — collapsed disclosure of heavier/destructive actions.
 // Each action reuses the real moderator.js handler via DEPS, so the request
 // shape stays identical to the legacy panels:
 //   archive   → handleArchiveMaps(syntheticForm)   PATCH /api/mods/maps/archive?code=…  body { status, codes:[code] }
@@ -442,11 +454,16 @@ function bindActions(root, map) {
   // The backend (ArchiveMapsController) validates status against Rule::in(['Archive', 'Unarchived'])
   // — note the asymmetric casing/tense — so send those exact strings.
   const archiveBtn = $('[data-action-archive]', root);
-  if (archiveBtn) archiveBtn.onclick = async () => {
+  if (archiveBtn) archiveBtn.onclick = (e) => withBusy(e.currentTarget, async () => {
     if (!code) return;
     const toStatus = archived ? 'Unarchived' : 'Archive';
     const verb = archived ? 'Unarchive' : 'Archive';
-    if (!confirm(`${verb} map ${code}?`)) return;
+    const confirmed = await DEPS.showConfirmDanger({
+      title: `${verb} map`,
+      message: `${verb} map ${code}?`,
+      confirm: verb,
+    });
+    if (!confirmed) return;
     await DEPS.handleArchiveMaps({
       status: { value: toStatus },
       mode: { value: 'single' },
@@ -454,23 +471,28 @@ function bindActions(root, map) {
       querySelectorAll: () => [],
     });
     loadMap(root, code);
-  };
+  });
 
   // handleConvertLegacy reads form.code?.value, form.reason?.value, and
   // form.querySelector('button[type="submit"]') for its busy-state. It issues
   // no confirm of its own, so we add one here. querySelector must not throw.
   const convertBtn = $('[data-action-convert]', root);
-  if (convertBtn) convertBtn.onclick = async () => {
+  if (convertBtn) convertBtn.onclick = (e) => withBusy(e.currentTarget, async () => {
     if (!code) return;
     const reason = ($('[data-convert-reason]', root)?.value || '').trim();
-    if (!confirm(`Convert map ${code} to legacy?`)) return;
+    const confirmed = await DEPS.showConfirmDanger({
+      title: 'Convert to legacy',
+      message: `Convert map ${code} to legacy?`,
+      confirm: 'Convert',
+    });
+    if (!confirmed) return;
     await DEPS.handleConvertLegacy({
       code: { value: code },
       reason: { value: reason },
       querySelector: () => null,
     });
     loadMap(root, code);
-  };
+  });
 
   // handleReleaseMapCode reads form.querySelector('#u-metaCode').textContent +
   // form.dataset.loadedMapArchived, and runs its OWN showConfirmDanger — so we
@@ -478,19 +500,19 @@ function bindActions(root, map) {
   // always visible; the handler/backend reject non-archived maps with a toast.
   const releaseBtn = $('[data-action-release]', root);
   if (releaseBtn) {
-    releaseBtn.onclick = async () => {
+    releaseBtn.onclick = (e) => withBusy(e.currentTarget, async () => {
       const form = document.getElementById('u-updateMapForm');
       if (!form) return;
       await DEPS.handleReleaseMapCode(form);
       loadMap(root, code);
-    };
+    });
   }
 
   // applyOverrideQuality(code, value) POSTs /api/mods/maps/{code}/quality {value}.
   // Targets the currently loaded map; no separate code input.
   const qualityBtn = $('[data-action-quality]', root);
   const qualitySel = $('[data-quality-select]', root);
-  if (qualityBtn && qualitySel) qualityBtn.onclick = async () => {
+  if (qualityBtn && qualitySel) qualityBtn.onclick = (e) => withBusy(e.currentTarget, async () => {
     if (!code) return;
     const value = Number(qualitySel.value);
     if (!Number.isInteger(value) || value < 1 || value > 6) {
@@ -498,7 +520,7 @@ function bindActions(root, map) {
       return;
     }
     await DEPS.applyOverrideQuality(code, value);
-  };
+  });
 
   // openMapEditRequestModal(map, opts) takes the loaded map object and prefills
   // the modal from it; passing {} keeps default url-sync behavior.

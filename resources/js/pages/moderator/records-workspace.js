@@ -1,5 +1,5 @@
 import {
-  $, setView, makeRecentStore, renderRecentChips, wireUserSearch,
+  $, setView, makeRecentStore, renderRecentChips, wireUserSearch, withBusy,
 } from './workspace-shell.js';
 
 const API = '/api/mods/completions/suspicious';
@@ -15,7 +15,7 @@ const MOD_ID = (document.getElementById('modUserId')?.value || '').trim();
 let refKind = 'message_id';
 let flagType = 'Cheating';
 
-const ACTIVE = ['bg-zinc-900/10', 'dark:bg-white/10', 'font-semibold'];
+const ACTIVE = ['bg-emerald-500/15', 'text-emerald-800', 'dark:text-emerald-300', 'font-semibold'];
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
@@ -120,7 +120,7 @@ function buildCard(root, item) {
   const badge =
     item.flag_type === 'Scripting'
       ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
-      : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
+      : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300';
 
   const card = document.createElement('div');
   card.className = 'rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] p-3';
@@ -132,12 +132,12 @@ function buildCard(root, item) {
           ${ref ? `<span class="rounded-md border border-zinc-200/80 dark:border-white/10 px-2 py-0.5 text-xs font-mono text-zinc-600 dark:text-zinc-300">${ref.label} ${escapeHtml(ref.val)}</span>` : ''}
           <span class="text-xs text-zinc-500 dark:text-zinc-400">by ${isMe ? 'you' : escapeHtml(String(item.flagged_by ?? '—'))}</span>
         </div>
-        <div class="text-sm text-zinc-700 dark:text-zinc-200">${item.context ? escapeHtml(item.context) : '<span class="text-zinc-400">(no context)</span>'}</div>
+        <div class="text-sm text-zinc-700 dark:text-zinc-200">${item.context ? escapeHtml(item.context) : '<span class="text-zinc-500 dark:text-zinc-400">(no context)</span>'}</div>
       </div>
       <div class="shrink-0">
         <button type="button" data-clear class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-white/10"${ref ? '' : ' disabled'}>Clear</button>
         <span data-confirm class="hidden items-center gap-1">
-          <button type="button" data-confirm-yes class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-500">Confirm?</button>
+          <button type="button" data-confirm-yes class="rounded-lg bg-rose-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-800">Confirm?</button>
           <button type="button" data-confirm-no class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-white/10">Cancel</button>
         </span>
       </div>
@@ -159,7 +159,7 @@ function buildCard(root, item) {
       confirmWrap.classList.remove('inline-flex');
       clearBtn.classList.remove('hidden');
     };
-    yes.onclick = () => deleteFlag(root, ref);
+    yes.onclick = (e) => withBusy(e.currentTarget, () => deleteFlag(root, ref));
   }
   return card;
 }
@@ -200,7 +200,7 @@ function wireFlagForm(root) {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitFlag(root);
+    withBusy(form.querySelector('button[type="submit"]'), () => submitFlag(root));
   });
 }
 
@@ -221,9 +221,7 @@ function applySeg(root, segSel, attr, value) {
   if (!seg) return;
   seg.querySelectorAll(`[${attr}]`).forEach((btn) => {
     const on = btn.getAttribute(attr) === value;
-    btn.classList.toggle(ACTIVE[0], on);
-    btn.classList.toggle(ACTIVE[1], on);
-    btn.classList.toggle(ACTIVE[2], on);
+    for (const cls of ACTIVE) btn.classList.toggle(cls, on);
   });
 }
 

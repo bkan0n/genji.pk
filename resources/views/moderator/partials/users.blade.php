@@ -37,8 +37,8 @@
         </div>
 
         {{-- Inline status views (within the same card) --}}
-        <div data-view="loading" class="hidden border-t border-zinc-200/80 dark:border-white/10 pt-5 text-sm text-zinc-500">Loading…</div>
-        <div data-view="error" class="hidden border-t border-red-300/60 dark:border-red-500/30 pt-5 text-sm text-red-700 dark:text-red-300" data-users-error></div>
+        <div data-view="loading" class="hidden border-t border-zinc-200/80 dark:border-white/10 pt-5 text-sm text-zinc-500 dark:text-zinc-400">Loading…</div>
+        <div data-view="error" class="hidden border-t border-rose-300/60 dark:border-rose-500/30 pt-5 text-sm text-rose-700 dark:text-rose-300" data-users-error></div>
 
         {{-- Chosen user, flowing directly beneath the search in the same card --}}
         <div data-view="loaded" class="hidden space-y-5">
@@ -56,8 +56,7 @@
       <div class="mt-3 flex flex-wrap items-end gap-3">
         <input data-fake-name type="text" maxlength="64" placeholder="Fake Player"
           class="mod-input" />
-        <button data-fake-submit type="button"
-          class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">Create</button>
+        <button data-fake-submit type="button" class="mod-btn-primary">Create</button>
         <span data-fake-result class="text-sm font-mono text-emerald-600 dark:text-emerald-400"></span>
       </div>
     </div>

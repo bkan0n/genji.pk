@@ -144,7 +144,7 @@ export function mountGallery(container, rawItems, opts = {}) {
   const controls = el('div', 'space-y-3');
   const search = el('div');
   search.innerHTML = `<input type="search" data-gx-search autocomplete="off" placeholder="Search by name…"
-    class="w-full rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/60" aria-label="Search rewards by name" />`;
+    class="w-full mod-input" aria-label="Search rewards by name" />`;
   const typeRow = el('div', 'flex flex-wrap gap-1.5');
   const rarityRow = presentRarities.length > 1 ? el('div', 'flex flex-wrap gap-1.5') : null;
   controls.append(search);
@@ -203,7 +203,7 @@ export function mountGallery(container, rawItems, opts = {}) {
     // onerror reveals it (hidden → flex) only if the asset fails to load. With no
     // image at all it renders visible from the start. Never a broken <img> icon.
     const placeholder = `<div class="gx-fallback absolute inset-0 ${it.img ? 'hidden' : 'flex'} flex-col items-center justify-center gap-1 p-2 text-center">
-        <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">${esc(it.typeRaw || 'item')}</span>
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${esc(it.typeRaw || 'item')}</span>
         <span class="line-clamp-2 text-[11px] text-zinc-500 dark:text-zinc-400">${esc(it.name)}</span>
       </div>`;
     const media = it.img

@@ -72,7 +72,7 @@
               <div
                 data-dd-list
                 role="listbox"
-                class="hidden absolute z-20 mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 p-1 shadow-lg"
+                class="mod-dd-list p-1"
               >
                 <label class="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
                   <input type="radio" name="active_key_type" value="Classic" data-label="Classic" class="accent-emerald-500" />
@@ -107,7 +107,7 @@
             >
               Save changes
             </button>
-            <span data-store-dirty class="hidden items-center gap-1.5 text-xs text-amber-500">
+            <span data-store-dirty class="hidden items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300">
               <span aria-hidden="true">●</span> Unsaved changes
             </span>
           </div>

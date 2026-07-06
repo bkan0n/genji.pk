@@ -47,7 +47,7 @@
                 <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete frameworks cache</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/frameworks/clear</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/frameworks/clear</span>
                   </div>
                   <form data-action="clear-frameworks-cache" autocomplete="off" class="space-y-3">
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
@@ -71,7 +71,7 @@
                 <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete avatars cache</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/avatars/clear</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/avatars/clear</span>
                   </div>
                   <form data-action="clear-avatars-cache" autocomplete="off" class="space-y-3">
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
@@ -95,7 +95,7 @@
                 <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Delete translations cache</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/translations/clear</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">POST /api/mods/cache/translations/clear</span>
                   </div>
                   <form data-action="clear-translations-cache" autocomplete="off" class="space-y-3">
                     <p class="text-sm text-zinc-600 dark:text-zinc-300">
@@ -114,12 +114,12 @@
                 </article>
               </div>
 
-              {{-- Subpanel: Set overpy commit --}}
+              {{-- Subpanel: Set Overpy commit --}}
               <div data-subpanel="dev-overpy-commit" class="hidden space-y-6">
                 <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-semibold">Set overpy commit</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/overpy-commit</span>
+                    <h3 class="font-semibold">Set Overpy commit</h3>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/overpy-commit</span>
                   </div>
 
                   <!-- Current value -->
@@ -166,7 +166,7 @@
                 <article class="fade-in mod-card-solid">
                   <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-semibold">Set framework version</h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/framework-version</span>
+                    <span class="mod-endpoint-badge text-xs text-zinc-500 dark:text-zinc-400">PATCH /api/mods/framework-version</span>
                   </div>
 
                   <!-- Current value -->

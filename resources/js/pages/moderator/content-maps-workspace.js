@@ -201,7 +201,7 @@ function buildEditorForm({ mode, name }) {
     <label class="block text-sm">
       Map name
       <input name="name" ${isReplace ? 'readonly' : ''}
-        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 focus:ring-2 focus:ring-emerald-500/60 focus:outline-none ${isReplace ? 'opacity-70 cursor-not-allowed' : ''}"
+        class="mt-1 w-full mod-field ${isReplace ? 'opacity-70 cursor-not-allowed' : ''}"
         placeholder="King's Row" />
       <p data-maps-collision class="hidden mt-1 text-xs text-amber-600 dark:text-amber-400"></p>
       <p data-maps-error class="hidden mt-1 text-xs text-rose-600 dark:text-rose-300"></p>

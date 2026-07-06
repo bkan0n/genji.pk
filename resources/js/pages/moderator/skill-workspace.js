@@ -39,7 +39,7 @@ function setSkillFormPending(form, pending = true, submitter = null) {
       }
       btn.disabled = true;
       btn.classList.add('opacity-70');
-      if (!submitter || btn === submitter) btn.textContent = 'Working...';
+      if (!submitter || btn === submitter) btn.textContent = 'Working…';
     });
     return;
   }
@@ -542,7 +542,7 @@ async function loadSkillTierSamples(form) {
   const targets = Array.from({ length: 8 }, (_, index) => (edges[index] + edges[index + 1]) / 2);
 
   setSkillTierSamplesLoading(form);
-  if (status) status.textContent = 'Sampling ranked players...';
+  if (status) status.textContent = 'Sampling ranked players…';
 
   try {
     const firstResponse = await DEPS.http('GET', '/api/community/leaderboard', {
@@ -705,7 +705,7 @@ function renderSkillUserSummary(form, payload) {
           ['Tier number', data.skill_tier ?? data.tier ?? 0],
         ].map(([label, value]) => `
           <div class="rounded-xl border border-zinc-200/80 bg-white/55 px-3 py-2 dark:border-white/10 dark:bg-white/5">
-            <div class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">${escapeHtml(label)}</div>
+            <div class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${escapeHtml(label)}</div>
             <div class="mt-1 truncate font-black text-zinc-900 dark:text-zinc-100">${escapeHtml(value)}</div>
           </div>
         `).join('')}
@@ -753,7 +753,7 @@ function renderSkillUserBreakdown(form, payload) {
           <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase">
             ${item?.fully_verified ? '<span class="rounded-md bg-sky-500/10 px-2 py-1 text-sky-700 dark:text-sky-300">Verified</span>' : ''}
             ${item?.medal ? `<span class="rounded-md bg-amber-500/10 px-2 py-1 text-amber-700 dark:text-amber-300">${escapeHtml(item.medal)}</span>` : ''}
-            ${item?.wr ? '<span class="rounded-md bg-fuchsia-500/10 px-2 py-1 text-fuchsia-700 dark:text-fuchsia-300">World record</span>' : ''}
+            ${item?.wr ? '<span class="rounded-md bg-yellow-500/15 px-2 py-1 text-yellow-700 dark:text-yellow-300">World record</span>' : ''}
           </div>
         </div>
       `).join('')}
@@ -826,7 +826,7 @@ async function handleSkillUserBreakdown(form) {
 
 async function handleSkillConfigGet(form) {
   if (!form) return;
-  DEPS.setPanelOut(form, 'skill-config-res', 'Loading...');
+  DEPS.setPanelOut(form, 'skill-config-res', 'Loading…');
 
   const res = await DEPS.http('GET', `${API_MODS}/skill/config`);
   DEPS.logActivity({
@@ -991,4 +991,8 @@ export function initSkillWorkspace(deps) {
   if (!root) return;
   wireSubtabLoading(root);
   wireForms(root);
+  // CSP-safe replacement for inline onerror: drop rank icons that fail to load.
+  root.querySelectorAll('img[data-remove-on-error]').forEach((img) => {
+    img.addEventListener('error', () => img.remove(), { once: true });
+  });
 }

@@ -53,7 +53,7 @@ function decorateValue(label, v) {
   return stringChip(s);
 }
 function monoChip(text) {
-  return `<span class="inline-block rounded-md bg-black/30 px-1.5 py-0.5 font-mono text-[12px] tracking-tight ring-1 ring-zinc-300/60 dark:ring-white/10">${escapeHtml(String(text))}</span>`;
+  return `<span class="inline-block rounded-md bg-zinc-900/5 px-1.5 py-0.5 font-mono text-[12px] tracking-tight ring-1 ring-zinc-300/60 dark:bg-black/30 dark:ring-white/10">${escapeHtml(String(text))}</span>`;
 }
 function stringChip(text) {
   return `<span class="inline-block rounded-md bg-zinc-900/3 dark:bg-white/5 px-2 py-0.5 text-[13px] font-medium text-zinc-900 dark:text-zinc-100 ring-1 ring-zinc-300/60 dark:ring-white/10">${escapeHtml(String(text))}</span>`;
@@ -67,7 +67,7 @@ function boolChip(v) {
   const yes = !!v;
   return `
     <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-      yes ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-400/20' : 'bg-rose-500/10 text-rose-300 ring-rose-400/20'
+      yes ? 'bg-emerald-500/10 text-emerald-700 ring-emerald-400/20 dark:text-emerald-300' : 'bg-rose-500/10 text-rose-700 ring-rose-400/20 dark:text-rose-300'
     }">
       <span class="h-1.5 w-1.5 rounded-full ${yes ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
       ${yes ? 'true' : 'false'}
@@ -88,7 +88,6 @@ export function initVerificationsWorkspace(deps) {
   wireLightbox(root);
   wireCompletionActions(root);
   wireEditActions(root);
-  // remaining wiring added in later tasks
 }
 
 function wireSubtabLoading(root) {
@@ -201,7 +200,7 @@ function renderCompletionCard(item) {
                  .filter(Boolean).join(' · ') || '—';
 
   const wrap = document.createElement('article');
-  wrap.className = 'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-white/5';
+  wrap.className = 'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-zinc-900/5 dark:ring-white/5';
   wrap.dataset.recordId = rid;
   wrap.dataset.verificationId = verId;
   wrap.dataset.screenshot = shot;
@@ -217,7 +216,7 @@ function renderCompletionCard(item) {
     : `<div class="grid h-[280px] w-full place-items-center rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/40 text-xs text-zinc-500">No screenshot</div>`;
 
   const calibrateBtn = canCalibrate
-    ? `<button type="button" class="btn-calibrate-ocr rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5">Calibrate OCR</button>` : '';
+    ? `<button type="button" class="btn-calibrate-ocr rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 px-2.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5 dark:hover:bg-white/10">Calibrate OCR</button>` : '';
   const autoVerifyBtn = canAutoVerify
     ? `<button type="button" class="btn-auto-verify rounded-lg border border-emerald-600/40 bg-emerald-600/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/20">Auto verify</button>` : '';
 
@@ -254,8 +253,8 @@ function renderCompletionCard(item) {
     </details>
     <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
       <div class="mr-auto flex flex-wrap gap-2">${calibrateBtn}${autoVerifyBtn}</div>
-      <button type="button" class="btn-verify rounded-lg bg-emerald-500 px-3 py-1.5 font-semibold text-zinc-900 dark:text-white hover:bg-emerald-400">Verify</button>
-      <button type="button" class="btn-deny rounded-lg bg-rose-500 px-3 py-1.5 font-semibold text-zinc-900 dark:text-white hover:bg-rose-400">Deny</button>
+      <button type="button" class="btn-verify rounded-lg bg-emerald-500 px-3 py-1.5 font-semibold text-zinc-900 hover:bg-emerald-400">Verify</button>
+      <button type="button" class="btn-deny rounded-lg bg-rose-700 px-3 py-1.5 font-semibold text-white hover:bg-rose-800">Deny</button>
     </div>`;
   return wrap;
 }
@@ -271,7 +270,7 @@ function openImageLightbox(src) {
       <img src="${escapeHtml(src)}" alt="screenshot" class="max-w-full cursor-pointer max-h-[86vh] rounded-xl border border-zinc-200/80 dark:border-white/10 shadow-2xl object-contain">
       <div class="absolute -top-3 -right-3 flex gap-2">
         <a href="${escapeHtml(src)}" target="_blank" class="rounded-lg bg-white text-zinc-900 text-xs px-2 py-1 font-semibold hover:bg-zinc-100">Open</a>
-        <button class="lb-close cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-900 dark:text-white text-xs px-2 py-1 hover:bg-zinc-900/5 dark:bg-white/10">Close</button>
+        <button class="lb-close cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-900 dark:text-white text-xs px-2 py-1 hover:bg-zinc-900/5 dark:hover:bg-white/10">Close</button>
       </div>
     </div>
   `;
@@ -312,7 +311,7 @@ function removeCardFromVerifList(card) {
     () => {
       card.remove();
       if (container && !container.querySelector('[data-record-id]')) {
-        container.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
+        container.innerHTML = `<div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] p-6 text-sm text-zinc-500 dark:text-zinc-400">Queue's clear ✓ — no pending completions.</div>`;
       }
     },
     { once: true }
@@ -320,7 +319,7 @@ function removeCardFromVerifList(card) {
 }
 
 // ——— showDenyDialog (copied from moderator.js:7848-7901) ———
-function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (optional)' } = {}) {
+function showDenyDialog({ title = 'Deny submission' } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className =
@@ -330,14 +329,14 @@ function showDenyDialog({ title = 'Deny submission', placeholder = 'Reason (opti
       <div class="w-full max-w-md rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-zinc-300/60 dark:ring-white/10">
         <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-200/80 dark:border-white/10">
           <h3 class="font-semibold text-sm">${title}</h3>
-          <button class="btn-x cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5">Close</button>
+          <button class="btn-x cursor-pointer px-2 py-1 text-xs rounded-lg border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:hover:bg-white/10">Close</button>
         </div>
         <div class="p-4 space-y-3">
           <label class="text-sm text-zinc-700 dark:text-zinc-300">Reason <span class="text-zinc-600 dark:text-zinc-500 text-xs">(optional)</span></label>
-          <textarea rows="3" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-rose-500/60" placeholder="${placeholder}"></textarea>
+          <textarea rows="3" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:placeholder:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none focus:ring-2 focus:ring-rose-500/60"></textarea>
           <div class="pt-1 flex justify-end gap-2">
-            <button class="btn-cancel cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-900/5 dark:bg-white/10">Cancel</button>
-            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40">Deny</button>
+            <button class="btn-cancel cursor-pointer rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-900/3 dark:bg-white/5 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-900/5 dark:hover:bg-white/10">Cancel</button>
+            <button class="btn-confirm cursor-pointer rounded-lg bg-rose-700 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500/40">Deny</button>
           </div>
         </div>
       </div>
@@ -401,7 +400,7 @@ async function autoVerifyCard(card) {
   if (btn) {
     btn.disabled = true;
     btn.textContent = "Auto verifying…";
-    btn.classList.add(...String("opacity-70").trim().split(/\s+/).filter(Boolean), ...String("cursor-wait").trim().split(/\s+/).filter(Boolean));
+    btn.classList.add("opacity-70", "cursor-wait");
   }
 
   const w = getAutoVerifyWorker();
@@ -434,7 +433,7 @@ async function autoVerifyCard(card) {
   if (btn) {
     btn.disabled = false;
     btn.textContent = original || "Auto verify";
-    btn.classList.remove(...String("opacity-70").trim().split(/\s+/).filter(Boolean), ...String("cursor-wait").trim().split(/\s+/).filter(Boolean));
+    btn.classList.remove("opacity-70", "cursor-wait");
   }
 
   if (result.error) {
@@ -511,7 +510,7 @@ async function openRoiEditor(imageUrl) {
           <div class="space-x-2">
             <button id="roiReset"  class="px-2 py-1 rounded bg-zinc-900/5 dark:bg-white/10">Reset</button>
             <button id="roiCancel" class="px-2 py-1 rounded bg-zinc-900/5 dark:bg-white/10">Cancel</button>
-            <button id="roiSave"   class="px-3 py-1 rounded bg-emerald-600 text-zinc-900 dark:text-white">Save</button>
+            <button id="roiSave"   class="px-3 py-1 rounded bg-emerald-500 text-zinc-900">Save</button>
           </div>
         </div>
         <div class="relative w-[96vw] max-w-[96vw] h-[84vh] max-h-[84vh] overflow-hidden" data-roi-viewport>
@@ -849,15 +848,14 @@ function __editValueHtml(field, value) {
 
   // difficulty
   if (fLower.includes('difficulty')) {
-    const dotCls = (typeof difficultyDotClass === 'function')
-      ? difficultyDotClass(s)
-      : (String(s).toLowerCase().startsWith('easy') ? 'bg-emerald-400'
+    const dotCls =
+      String(s).toLowerCase().startsWith('easy') ? 'bg-emerald-400'
         : String(s).toLowerCase().startsWith('medium') ? 'bg-yellow-400'
         : String(s).toLowerCase().startsWith('very hard') ? 'bg-orange-500'
         : String(s).toLowerCase().startsWith('hard') ? 'bg-orange-400'
         : String(s).toLowerCase().startsWith('extreme') ? 'bg-red-500'
         : String(s).toLowerCase().startsWith('hell') ? 'bg-rose-500'
-        : 'bg-zinc-400');
+        : 'bg-zinc-400';
 
     return `
       <span class="inline-flex items-center gap-2">
@@ -897,7 +895,7 @@ function summarizeChanges(changes) {
     const f = String(field || 'change');
 
     return `
-      <div class="grid grid-cols-12 gap-3 px-3 py-2 border-t border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:bg-white/5 transition min-w-0">
+      <div class="grid grid-cols-12 gap-3 px-3 py-2 border-t border-zinc-200/80 dark:border-white/10 hover:bg-zinc-900/3 dark:hover:bg-white/5 transition min-w-0">
         <div class="col-span-12 sm:col-span-3 min-w-0">
           <div class="text-[12px] font-semibold text-zinc-800 dark:text-zinc-200 break-words [overflow-wrap:anywhere]">${escapeHtml(f)}</div>
         </div>
@@ -944,11 +942,11 @@ function renderEditRequestCard({ row, submission }) {
 
   const wrap = document.createElement('article');
   wrap.className =
-    'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-white/5 relative pb-16 min-w-0';
+    'rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/75 dark:bg-zinc-900/60 p-4 ring-1 ring-zinc-900/5 dark:ring-white/5 relative pb-16 min-w-0';
   wrap.dataset.editId = rid;
 
   const badge = `
-    <span class="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-200 ring-1 ring-amber-400/20">
+    <span class="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-400/20 dark:text-amber-200">
       <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Pending
     </span>`;
 
@@ -992,10 +990,10 @@ function renderEditRequestCard({ row, submission }) {
     </div>
 
     <div class="absolute bottom-4 right-4 flex flex-wrap items-center gap-2 z-10">
-      <button class="btn-edit-accept cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+      <button class="btn-edit-accept cursor-pointer rounded-lg bg-emerald-500 text-zinc-900 px-3 py-1.5 text-sm font-semibold hover:bg-emerald-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
         Accept
       </button>
-      <button class="btn-edit-reject cursor-pointer rounded-lg bg-rose-500 text-zinc-900 dark:text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30">
+      <button class="btn-edit-reject cursor-pointer rounded-lg bg-rose-700 text-white px-3 py-1.5 text-sm font-semibold hover:bg-rose-800 focus:outline-none focus-visible:ring-1 focus-visible:ring-rose-500/40">
         Reject
       </button>
     </div>
@@ -1028,7 +1026,7 @@ function removeCardFromEditList(card) {
     () => {
       card.remove();
       if (container && !container.querySelector('[data-edit-id]')) {
-        container.innerHTML = `<div class="text-sm text-zinc-600 dark:text-zinc-400">Queue is empty.</div>`;
+        container.innerHTML = `<div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] p-6 text-sm text-zinc-500 dark:text-zinc-400">Queue's clear ✓ — no pending edit requests.</div>`;
       }
     },
     { once: true }
@@ -1115,7 +1113,7 @@ function wireEditActions(root) {
       return;
     }
 
-    const dlg = await showDenyDialog({ title: `Reject edit request #${editId}`, placeholder: 'Rejection reason (optional)' });
+    const dlg = await showDenyDialog({ title: `Reject edit request #${editId}` });
     if (dlg.cancelled) return;
     const response = await DEPS.runModeratorEndpointAction(
       { action: 'resolve-map-edit-reject', article: card },

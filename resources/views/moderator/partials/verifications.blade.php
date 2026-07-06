@@ -25,7 +25,7 @@
             class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Refresh</button>
         </div>
         <div data-view="loading" class="hidden text-sm text-zinc-500 dark:text-zinc-400" data-verif-progress>Loading queue…</div>
-        <div data-view="error" class="hidden rounded-xl border border-red-300/60 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300" data-verif-error></div>
+        <div data-view="error" class="hidden rounded-xl border border-rose-300/60 dark:border-rose-500/30 p-4 text-sm text-rose-700 dark:text-rose-300" data-verif-error></div>
         <div data-view="empty" class="hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] p-6 text-sm text-zinc-500 dark:text-zinc-400">Queue's clear ✓ — no pending completions.</div>
         <div data-view="loaded" class="hidden space-y-4 max-h-[72vh] overflow-y-auto pr-1" data-verif-completion-list></div>
       </div>
@@ -45,12 +45,12 @@
     <div data-subpanel="verif-edits" class="hidden">
       <div data-verif-queue="edits" class="space-y-4">
         <div class="flex items-center justify-between gap-3">
-          <h3 class="font-semibold">Map-edit queue</h3>
+          <h3 class="font-semibold">Map edits queue</h3>
           <button type="button" data-verif-refresh="edits"
             class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Refresh</button>
         </div>
         <div data-view="loading" class="hidden text-sm text-zinc-500 dark:text-zinc-400" data-verif-progress>Loading queue…</div>
-        <div data-view="error" class="hidden rounded-xl border border-red-300/60 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300" data-verif-error></div>
+        <div data-view="error" class="hidden rounded-xl border border-rose-300/60 dark:border-rose-500/30 p-4 text-sm text-rose-700 dark:text-rose-300" data-verif-error></div>
         <div data-view="empty" class="hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] p-6 text-sm text-zinc-500 dark:text-zinc-400">Queue's clear ✓ — no pending edit requests.</div>
         <div data-view="loaded" class="hidden space-y-4 max-h-[72vh] overflow-y-auto pr-1" data-verif-edit-list></div>
       </div>

@@ -261,14 +261,14 @@ export function openModal({
   return { overlay, panel, header, body: bodyEl, footer: footerEl, close };
 }
 
-// A primary action button using the dashboard's canonical emerald style (zinc-900
-// ink on emerald-600 clears AA at 4.54:1). Returned detached so callers wire their
-// own click/busy handling; pair with `setButtonBusy` for the saving state.
+// A primary action button using the dashboard's canonical emerald accent
+// (.mod-btn-accent: white ink on emerald-700 clears AA in both themes).
+// Returned detached so callers wire their own click/busy handling; pair with
+// `setButtonBusy` for the saving state.
 export function primaryButton(label, { type = 'button' } = {}) {
   const btn = document.createElement('button');
   btn.type = type;
-  btn.className =
-    'cursor-pointer rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60 dark:text-white';
+  btn.className = 'cursor-pointer mod-btn-accent disabled:cursor-not-allowed';
   btn.textContent = label;
   return btn;
 }
@@ -278,7 +278,7 @@ export function ghostButton(label, { type = 'button' } = {}) {
   const btn = document.createElement('button');
   btn.type = type;
   btn.className =
-    'cursor-pointer rounded-xl border border-zinc-200/80 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:hover:bg-white/5';
+    'cursor-pointer rounded-xl border border-zinc-200/80 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:hover:bg-white/10';
   btn.textContent = label;
   return btn;
 }

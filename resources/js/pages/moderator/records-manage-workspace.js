@@ -14,7 +14,7 @@ import { openModal, primaryButton, ghostButton, setButtonBusy } from './modal-sh
 const LIST_API = '/api/mods/completions/moderation/records';
 const moderateApi = (id) => `/api/mods/completions/${encodeURIComponent(id)}/moderate`;
 const PAGE_SIZE = 20;
-const ACTIVE = ['bg-zinc-900/10', 'dark:bg-white/10', 'font-semibold'];
+const ACTIVE = ['bg-emerald-500/15', 'text-emerald-800', 'dark:text-emerald-300', 'font-semibold'];
 
 let DEPS = null;
 const MOD_ID = (document.getElementById('modUserId')?.value || '').trim();
@@ -84,9 +84,7 @@ function applySeg(root, segSel, attr, value) {
   seg.dataset.value = value == null ? '' : String(value);
   seg.querySelectorAll(`[${attr}]`).forEach((btn) => {
     const on = btn.getAttribute(attr) === value;
-    btn.classList.toggle(ACTIVE[0], on);
-    btn.classList.toggle(ACTIVE[1], on);
-    btn.classList.toggle(ACTIVE[2], on);
+    for (const cls of ACTIVE) btn.classList.toggle(cls, on);
   });
 }
 
@@ -283,7 +281,7 @@ function buildCard(item) {
       : 'border-zinc-300/60 dark:border-white/10 text-zinc-500 dark:text-zinc-400'
   );
   const suspiciousPill = item.suspicious
-    ? pill('Suspicious', 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300')
+    ? pill('Suspicious', 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300')
     : '';
   const shot = item.screenshot ? safeHref(item.screenshot) : null;
   const vid = item.video ? safeHref(item.video) : null;
@@ -343,7 +341,7 @@ function buildModalBody(item) {
       : 'border-zinc-300/60 dark:border-white/10 text-zinc-500 dark:text-zinc-400'
   );
   const suspiciousPill = item.suspicious
-    ? pill('Suspicious', 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300')
+    ? pill('Suspicious', 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300')
     : '';
   const shot = item.screenshot ? safeHref(item.screenshot) : null;
   const vid = item.video ? safeHref(item.video) : null;
@@ -392,45 +390,45 @@ function buildModalBody(item) {
     `
     <section class="space-y-3">
       <label class="inline-flex items-center gap-2 text-sm font-medium">
-        <input type="checkbox" data-rm-time-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
+        <input type="checkbox" data-rm-time-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60 dark:border-zinc-600" />
         Change time
       </label>
       <div data-rm-time-body class="hidden space-y-2 pl-6">
-        <input data-rm-time type="text" inputmode="decimal" value="${escapeHtml(String(item.time ?? ''))}" placeholder="seconds, e.g. 73.45" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
-        <input data-rm-time-reason type="text" placeholder="Reason for the time change (required)" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+        <input data-rm-time type="text" inputmode="decimal" value="${escapeHtml(String(item.time ?? ''))}" placeholder="seconds, e.g. 73.45" class="w-full mod-field text-sm" />
+        <input data-rm-time-reason type="text" placeholder="Reason for the time change (required)" class="w-full mod-field text-sm" />
       </div>
     </section>
 
     <section class="space-y-3">
       <label class="inline-flex items-center gap-2 text-sm font-medium">
-        <input type="checkbox" data-rm-ver-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
-        Change verification <span class="text-xs font-normal text-zinc-400">(currently ${verified ? 'Verified' : 'Unverified'})</span>
+        <input type="checkbox" data-rm-ver-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60 dark:border-zinc-600" />
+        Change verification <span class="text-xs font-normal text-zinc-400 dark:text-zinc-500">(currently ${verified ? 'Verified' : 'Unverified'})</span>
       </label>
       <div data-rm-ver-body class="hidden space-y-2 pl-6">
         <div data-rm-ver-seg class="inline-flex overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10">
-          <button type="button" data-ver="true" class="px-3 py-1.5 text-sm">Verified</button>
-          <button type="button" data-ver="false" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 dark:border-white/10">Unverified</button>
+          <button type="button" data-ver="true" class="px-3 py-1.5 text-sm transition hover:bg-zinc-100 dark:hover:bg-white/10">Verified</button>
+          <button type="button" data-ver="false" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10">Unverified</button>
         </div>
-        <input data-rm-ver-reason type="text" placeholder="Reason (optional)" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+        <input data-rm-ver-reason type="text" placeholder="Reason (optional)" class="w-full mod-field text-sm" />
       </div>
     </section>
 
     <section class="space-y-3">
       <label class="inline-flex items-center gap-2 text-sm font-medium">
-        <input type="checkbox" data-rm-sus-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60" />
-        Change suspicious flag <span class="text-xs font-normal text-zinc-400">(currently ${item.suspicious ? 'flagged' : 'not flagged'})</span>
+        <input type="checkbox" data-rm-sus-toggle class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/60 dark:border-zinc-600" />
+        Change suspicious flag <span class="text-xs font-normal text-zinc-400 dark:text-zinc-500">(currently ${item.suspicious ? 'flagged' : 'not flagged'})</span>
       </label>
       <div data-rm-sus-body class="hidden space-y-2 pl-6">
         <div data-rm-sus-mode-seg class="inline-flex overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10">
-          <button type="button" data-mode="mark" class="px-3 py-1.5 text-sm">Mark suspicious</button>
-          <button type="button" data-mode="unmark" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 dark:border-white/10">Unmark</button>
+          <button type="button" data-mode="mark" class="px-3 py-1.5 text-sm transition hover:bg-zinc-100 dark:hover:bg-white/10">Mark suspicious</button>
+          <button type="button" data-mode="unmark" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10">Unmark</button>
         </div>
         <div data-rm-sus-mark class="hidden space-y-2">
           <div data-rm-sus-type-seg class="inline-flex overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10">
-            <button type="button" data-type="Cheating" class="px-3 py-1.5 text-sm">Cheating</button>
-            <button type="button" data-type="Scripting" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 dark:border-white/10">Scripting</button>
+            <button type="button" data-type="Cheating" class="px-3 py-1.5 text-sm transition hover:bg-zinc-100 dark:hover:bg-white/10">Cheating</button>
+            <button type="button" data-type="Scripting" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10">Scripting</button>
           </div>
-          <input data-rm-sus-context type="text" placeholder="Context (required when marking)" class="w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60" />
+          <input data-rm-sus-context type="text" placeholder="Context (required when marking)" class="w-full mod-field text-sm" />
         </div>
       </div>
     </section>

@@ -24,17 +24,17 @@
       <div class="flex flex-wrap items-center gap-2">
         <button type="button" data-action-archive class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Archive / Unarchive</button>
         <button type="button" data-action-editrequest class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Create edit request</button>
-        <button type="button" data-action-release class="rounded-lg border border-red-300/60 px-3 py-1.5 text-sm text-red-700 dark:text-red-300 hover:bg-red-500/10">Release map code</button>
+        <button type="button" data-action-release class="rounded-lg border border-rose-300/60 px-3 py-1.5 text-sm text-rose-700 hover:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-300">Release map code</button>
       </div>
       <div class="flex flex-wrap items-end gap-2 border-t border-zinc-200/80 dark:border-white/10 pt-3">
         <label class="flex-1 min-w-[12rem] text-xs text-zinc-500 dark:text-zinc-400">Reason (for convert)
-          <input data-convert-reason type="text" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" />
+          <input data-convert-reason type="text" class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900" />
         </label>
         <button type="button" data-action-convert class="rounded-lg border border-amber-300/60 px-3 py-1.5 text-sm text-amber-700 dark:text-amber-300 hover:bg-amber-500/10">Convert to legacy</button>
       </div>
       <div class="flex flex-wrap items-end gap-2 border-t border-zinc-200/80 dark:border-white/10 pt-3">
         <label class="flex-1 min-w-[10rem] text-xs text-zinc-500 dark:text-zinc-400">Override quality
-          <select data-quality-select class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
+          <select data-quality-select class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900">
             <option value="">Select quality (1–6)…</option>
             <option value="1">1 – Lowest</option>
             <option value="2">2</option>
@@ -49,7 +49,7 @@
     </div>
   </details>
 
-  {{-- B. Map fields (Task 3) --}}
+  {{-- B. Map fields --}}
   <div data-maps-fields class="space-y-6">
     <div data-subpanel="maps-update">
                   <form
@@ -85,7 +85,7 @@
                               </button>
                             </span>
 
-                            <!-- Secondary (même affichage que le primary) -->
+                            <!-- Secondary (same display as primary) -->
                             <span
                               class="secondary-creator-row inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 px-3 py-1.5"
                             >
@@ -476,15 +476,15 @@
                   </form>
     </div>
 
-    {{-- Module-owned sticky Save/Reset bar (Task 3) --}}
+    {{-- Module-owned sticky Save/Reset bar --}}
     <div data-fields-bar class="sticky bottom-4 z-10 mt-4 hidden flex items-center justify-end gap-2 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 px-4 py-2 shadow-lg backdrop-blur">
       <span class="mr-auto text-xs text-zinc-500 dark:text-zinc-400">Unsaved changes</span>
       <button type="button" data-fields-reset class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">Reset</button>
-      <button type="button" data-fields-save class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">Save changes</button>
+      <button type="button" data-fields-save class="mod-btn-accent px-3 py-1.5">Save changes</button>
     </div>
   </div>
-  {{-- C. Guides (Task 4) --}}
-  <div data-maps-guides class="space-y-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4">
+  {{-- C. Guides --}}
+  <div data-maps-guides class="mod-card space-y-3">
     <div class="flex items-center justify-between">
       <h3 class="font-semibold">Guides</h3>
       <span data-guides-count class="text-xs text-zinc-500 dark:text-zinc-400"></span>
@@ -492,12 +492,12 @@
     <div data-guides-list class="space-y-2"></div>
     <form data-guides-add class="flex flex-wrap items-end gap-2 border-t border-zinc-200/80 dark:border-white/10 pt-3">
       <label class="flex-1 min-w-[12rem] text-xs text-zinc-500 dark:text-zinc-400">Creator
-        <input name="user_id" type="text" autocomplete="off" placeholder="Search creator…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" />
+        <input name="user_id" type="text" autocomplete="off" placeholder="Search creator…" class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900" />
       </label>
       <label class="flex-[2] min-w-[14rem] text-xs text-zinc-500 dark:text-zinc-400">Guide URL
-        <input name="url" type="url" placeholder="https://…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" />
+        <input name="url" type="url" placeholder="https://…" class="mt-1 w-full rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/60 dark:border-white/10 dark:bg-zinc-900" />
       </label>
-      <button class="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">＋ Add guide</button>
+      <button class="mod-btn-primary px-3 py-2">+ Add guide</button>
     </form>
   </div>
 </div>

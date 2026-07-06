@@ -40,7 +40,7 @@
             data-content-refresh="{{ $group['key'] }}"
             title="Refresh"
             aria-label="Refresh {{ $group['key'] }}"
-            class="cursor-pointer rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/5"
+            class="cursor-pointer rounded-xl border border-zinc-200/80 px-3 py-2 text-sm font-semibold transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:hover:bg-white/10"
           >
             &#x21bb;
           </button>
@@ -61,7 +61,7 @@
       <form autocomplete="off" class="space-y-4">
         <input type="hidden" name="id" />
         <label class="block text-sm">
-          name
+          Name
           <input
             name="name"
             class="mt-1 w-full mod-field"
@@ -75,7 +75,7 @@
       <form autocomplete="off" class="grid gap-4 sm:grid-cols-2">
         <input type="hidden" name="id" />
         <label class="text-sm sm:col-span-2">
-          name
+          Name
           <input
             name="name"
             class="mt-1 w-full mod-field"
@@ -83,7 +83,7 @@
           />
         </label>
         <label class="text-sm sm:col-span-2">
-          description
+          Description
           <textarea
             name="description"
             rows="3"
@@ -92,7 +92,7 @@
           ></textarea>
         </label>
         <label class="text-sm sm:col-span-2">
-          instructions
+          Instructions
           <textarea
             name="instructions"
             rows="4"
@@ -101,7 +101,7 @@
           ></textarea>
         </label>
         <label class="text-sm">
-          category
+          Category
           <div class="relative mt-1" data-dd-select data-content-options="categories" data-placeholder="No category" data-null-option="Clear category">
             <select name="category_id" class="hidden">
               <option value="">No category</option>
@@ -122,7 +122,7 @@
           </div>
         </label>
         <label class="text-sm">
-          difficulty
+          Difficulty
           <div class="relative mt-1" data-dd-select data-content-options="difficulties" data-placeholder="No difficulty" data-null-option="Clear difficulty">
             <select name="difficulty_id" class="hidden">
               <option value="">No difficulty</option>
@@ -144,7 +144,7 @@
         </label>
         <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="tips">
           <div>
-            <div>current tips</div>
+            <div>Current tips</div>
             <p class="text-xs text-zinc-500 dark:text-zinc-400">Remove rows here to delete them on save. Kept rows stay in the final list.</p>
           </div>
           <div data-mt-current-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
@@ -155,7 +155,7 @@
         <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="tips">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <div>tips</div>
+              <div>Tips</div>
               <p class="text-xs text-zinc-500 dark:text-zinc-400">Add one tip per row. Empty rows are ignored.</p>
             </div>
             <button type="button" data-mt-add="tips" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">
@@ -173,7 +173,7 @@
         </label>
         <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="videos">
           <div>
-            <div>current videos</div>
+            <div>Current videos</div>
             <p class="text-xs text-zinc-500 dark:text-zinc-400">Remove rows here to delete them on save. Kept rows stay in the final list.</p>
           </div>
           <div data-mt-current-empty class="rounded-xl border border-dashed border-zinc-200/80 dark:border-white/10 bg-zinc-100/60 dark:bg-white/5 px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
@@ -184,7 +184,7 @@
         <div class="text-sm sm:col-span-2 space-y-3" data-mt-repeater="videos">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <div>videos</div>
+              <div>Videos</div>
               <p class="text-xs text-zinc-500 dark:text-zinc-400">Caption is optional. Add rows in the order you want them returned.</p>
             </div>
             <button type="button" data-mt-add="videos" class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm font-semibold hover:bg-zinc-100 dark:hover:bg-white/10">

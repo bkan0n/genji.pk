@@ -36,7 +36,7 @@
       </div>
 
       {{-- category cards --}}
-      <div data-view="error" class="hidden rounded-xl border border-red-300/60 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300"></div>
+      <div data-view="error" class="hidden rounded-xl border border-rose-300/60 dark:border-rose-500/30 p-4 text-sm text-rose-700 dark:text-rose-300"></div>
       <div data-tournament-category-grid class="grid gap-4 lg:grid-cols-2"></div>
     </div>
 
@@ -59,7 +59,7 @@
           <input data-tournament-streak-search type="text" inputmode="numeric" placeholder="Look up player streak (user ID)"
             class="w-72 max-w-full mod-field text-sm" />
           <button type="button" data-tournament-streak-submit
-            class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer hover:bg-emerald-500">Look up</button>
+            class="cursor-pointer mod-btn-accent">Look up</button>
         </div>
         <div data-tournament-streak-recent class="mt-3 flex flex-wrap gap-2"></div>
         <div data-tournament-streak-result class="mt-4"></div>

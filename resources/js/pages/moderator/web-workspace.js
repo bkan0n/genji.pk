@@ -20,7 +20,7 @@ function setWebFormPending(form, pending = true, submitter = null) {
       }
       btn.disabled = true;
       btn.classList.add('opacity-70');
-      if (!submitter || btn === submitter) btn.textContent = 'Working...';
+      if (!submitter || btn === submitter) btn.textContent = 'Working…';
     });
     return;
   }

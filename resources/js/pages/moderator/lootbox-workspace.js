@@ -33,7 +33,7 @@ function setText(root, sel, value) {
 // run-on prose. `dim` greys out zero/empty values so the eye lands on what the
 // user actually has; `size` tunes the value's prominence.
 function statCell(label, value, { dim = false, size = 'text-lg' } = {}) {
-  const tone = dim ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100';
+  const tone = dim ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100';
   return `<div>
     <div class="${size} font-bold tabular-nums leading-none ${tone}">${esc(String(value))}</div>
     <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">${esc(label)}</div>
@@ -216,8 +216,8 @@ function renderRewardsSection(root, userId) {
       <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Bypasses normal key ownership. Pick a reward from the catalog.</p>
       <div class="mt-3 flex flex-wrap gap-2">
         ${keySelect('dbg_key_type', 'Key type for debug grant')}
-        <select data-lb-dbg-reward aria-label="Reward to grant" class="min-w-[16rem] rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"><option value="">Loading catalog…</option></select>
-        <button data-lb-dbg-grant type="button" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Grant reward</button>
+        <select data-lb-dbg-reward aria-label="Reward to grant" class="min-w-[16rem] mod-field text-sm"><option value="">Loading catalog…</option></select>
+        <button data-lb-dbg-grant type="button" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 disabled:opacity-40">Grant reward</button>
       </div>
     </details>
   </div>`;
@@ -294,23 +294,23 @@ function renderXpSection(root, userId) {
   mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
     <h3 class="text-sm font-semibold">Grant XP</h3>
     <div class="mt-3 grid gap-3 sm:grid-cols-3">
-      <label class="block text-xs text-zinc-500">Amount
-        <input data-lb-xp-amount type="number" step="1" placeholder="100" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none" />
+      <label class="block text-xs text-zinc-500 dark:text-zinc-400">Amount
+        <input data-lb-xp-amount type="number" step="1" placeholder="100" class="mt-1 w-full mod-field text-sm" />
       </label>
-      <label class="block text-xs text-zinc-500">Type
-        <select data-lb-xp-type class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none">
+      <label class="block text-xs text-zinc-500 dark:text-zinc-400">Type
+        <select data-lb-xp-type class="mt-1 w-full mod-field text-sm">
           ${XP_TYPES.map((t) => `<option value="${t}"${t === 'Other' ? ' selected' : ''}>${t}</option>`).join('')}
         </select>
       </label>
-      <label class="block text-xs text-zinc-500">Reason (optional)
-        <input data-lb-xp-reason type="text" placeholder="Manual grant from moderator panel" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none" />
+      <label class="block text-xs text-zinc-500 dark:text-zinc-400">Reason (optional)
+        <input data-lb-xp-reason type="text" placeholder="Manual grant from moderator panel" class="mt-1 w-full mod-field text-sm" />
       </label>
     </div>
     <label class="mt-3 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
       <input data-lb-xp-mult type="checkbox" class="h-4 w-4 accent-emerald-500" /> Apply XP multiplier
     </label>
     <div class="mt-3">
-      <button data-lb-grant-xp type="button" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50">Grant XP</button>
+      <button data-lb-grant-xp type="button" class="mod-btn-accent">Grant XP</button>
     </div>
   </div>`;
 
@@ -344,7 +344,7 @@ async function grantXp(root, userId, mount) {
 }
 
 function keySelect(name, label = 'Key type') {
-  return `<select name="${name}" aria-label="${esc(label)}" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500/60 focus:outline-none">
+  return `<select name="${name}" aria-label="${esc(label)}" class="mod-field text-sm">
     ${KEY_TYPES.map((k) => `<option value="${k}">${k}</option>`).join('')}
   </select>`;
 }
@@ -354,10 +354,10 @@ async function loadKeys(root, userId) {
   if (!mount) return;
   mount.innerHTML = `<div class="border-t border-zinc-200/80 dark:border-white/10 pt-5">
     <h3 class="text-sm font-semibold">Keys inventory</h3>
-    <div data-lb-keys-body class="mt-3 text-sm text-zinc-500">${keysSkeleton()}</div>
+    <div data-lb-keys-body class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">${keysSkeleton()}</div>
     <div class="mt-3 flex flex-wrap items-end gap-2">
       ${keySelect('key_type', 'Key type to grant')}
-      <button data-lb-grant-key type="button" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50">Grant key</button>
+      <button data-lb-grant-key type="button" class="mod-btn-accent">Grant key</button>
     </div>
   </div>`;
 
@@ -478,7 +478,7 @@ async function loadXpSummary(root, userId) {
   const standing = [];
   if (fullTier)
     standing.push(
-      `<span class="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">${esc(fullTier)}</span>`
+      `<span class="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">${esc(fullTier)}</span>`
     );
   if (xp != null)
     standing.push(

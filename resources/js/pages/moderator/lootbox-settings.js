@@ -31,18 +31,18 @@ export function initLootboxSettings(deps) {
   const mount = $('[data-lootbox-settings]');
   if (!mount) return;
   mount.innerHTML = `
-    <div class="rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
+    <div class="mod-card">
       <h3 class="text-sm font-semibold">Active key type</h3>
-      <div data-st-active class="mt-2 text-sm text-zinc-500">${skel('h-4 w-32')}</div>
+      <div data-st-active class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">${skel('h-4 w-32')}</div>
       <div class="mt-3 flex flex-wrap items-end gap-2">
-        <select data-st-key aria-label="Active key type" class="rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
+        <select data-st-key aria-label="Active key type" class="mod-field text-sm">
           ${KEY_TYPES.map((k) => `<option value="${k}">${k}</option>`).join('')}
         </select>
-        <button data-st-key-save type="button" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50">Set active</button>
+        <button data-st-key-save type="button" class="mod-btn-accent">Set active</button>
       </div>
     </div>
 
-    <div data-st-boost-card data-mod-hydrating="1" class="xpb-card mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5" style="--xpb-t:0;--xpb-fill:0%">
+    <div data-st-boost-card data-mod-hydrating="1" class="xpb-card mt-4 mod-card" style="--xpb-t:0;--xpb-fill:0%">
       <div class="flex items-center justify-between gap-3">
         <h3 class="text-sm font-semibold">XP multiplier</h3>
         <span data-st-status class="xpb-status" hidden></span>
@@ -52,13 +52,13 @@ export function initLootboxSettings(deps) {
         <p data-st-boost class="xpb-value" aria-hidden="true">—</p>
         <div class="min-w-0 text-right">
           <div data-st-consequence class="text-xs leading-snug text-zinc-600 dark:text-zinc-300">${skel('h-3 w-44')}</div>
-          <p data-st-delta class="mt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">&nbsp;</p>
+          <p data-st-delta class="mt-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">&nbsp;</p>
         </div>
       </div>
 
       <div class="mt-4">
         <input data-st-track type="range" min="1" max="10" step="0.1" disabled aria-label="XP multiplier (1 to 10)" class="xpb-range" />
-        <div class="mt-1 flex justify-between text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <div class="mt-1 flex justify-between text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           <span>1× · standard</span><span>10× · max</span>
         </div>
       </div>
@@ -69,16 +69,16 @@ export function initLootboxSettings(deps) {
         </div>
         <div class="ml-auto flex items-end gap-2">
           <label class="flex flex-col gap-1">
-            <span class="text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Exact</span>
-            <input data-st-mult type="number" min="1" max="10" step="0.1" disabled aria-label="XP multiplier exact value (1 to 10)" class="w-16 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm tabular-nums" />
+            <span class="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Exact</span>
+            <input data-st-mult type="number" min="1" max="10" step="0.1" disabled aria-label="XP multiplier exact value (1 to 10)" class="w-16 mod-field px-2.5 text-sm tabular-nums" />
           </label>
-          <button data-st-mult-save type="button" disabled class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white shadow-sm cursor-pointer transition hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-emerald-600">Apply</button>
+          <button data-st-mult-save type="button" disabled class="mod-btn-accent disabled:cursor-not-allowed">Apply</button>
         </div>
       </div>
       <div data-st-mult-cur class="sr-only" aria-live="polite"></div>
     </div>
 
-    <div class="mt-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 p-4 sm:p-5">
+    <div class="mt-4 mod-card">
       <h3 class="text-sm font-semibold">Reward catalog</h3>
       <div data-st-cat-body class="mt-3">${gallerySkeleton()}</div>
     </div>`;
@@ -91,7 +91,7 @@ export function initLootboxSettings(deps) {
     withBusy(e.currentTarget, () => setMultiplier(mount)).then(() => refreshApplyState(mount));
   wireBoost(mount);
 
-  // Lazy-load the three settings endpoints only when the Lootbox → Config
+  // Lazy-load the three settings endpoints only when the Lootbox → Settings
   // sub-tab is first entered. Loading them in init would hit the API on every
   // page load even when the Lootbox tab is never opened.
   let loaded = false;
@@ -248,7 +248,7 @@ function applyBoostValue(mount, value, { from = null, clamp = true } = {}) {
       delta.textContent = ' ';
     } else if (v === boost.saved) {
       delta.textContent = 'Currently live';
-      delta.className = 'mt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500';
+      delta.className = 'mt-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-400';
     } else {
       const diff = Math.round((v - boost.saved) * 10) / 10;
       const up = diff > 0;

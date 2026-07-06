@@ -5,7 +5,7 @@
     {{-- Sub-tab bar (reuses central setupSubtabs switcher) --}}
     <div class="sticky top-20 z-10 flex flex-wrap items-center gap-2">
       <button type="button" data-subtab="quest-config"
-        class="mod-subtab">Config</button>
+        class="mod-subtab">Settings</button>
       <button type="button" data-subtab="quest-global"
         class="mod-subtab">Global quests</button>
       <button type="button" data-subtab="quest-user"

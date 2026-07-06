@@ -37,8 +37,8 @@
       </div>
 
       {{-- Inline status views --}}
-      <div data-view="loading" class="hidden border-t border-zinc-200/80 dark:border-white/10 pt-5 text-sm text-zinc-500">Loading flags…</div>
-      <div data-view="error" class="hidden border-t border-red-300/60 dark:border-red-500/30 pt-5 text-sm text-red-700 dark:text-red-300" data-records-error></div>
+      <div data-view="loading" class="hidden border-t border-zinc-200/80 dark:border-white/10 pt-5 text-sm text-zinc-500 dark:text-zinc-400">Loading flags…</div>
+      <div data-view="error" class="hidden border-t border-rose-300/60 dark:border-rose-500/30 pt-5 text-sm text-rose-700 dark:text-rose-300" data-records-error></div>
 
       {{-- Loaded body --}}
       <div data-view="loaded" class="hidden space-y-5 border-t border-zinc-200/80 dark:border-white/10 pt-5">
@@ -68,15 +68,15 @@
             </label>
             <div class="mt-2 flex flex-wrap items-center gap-2">
               <div data-records-ref-seg class="inline-flex overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10">
-                <button type="button" data-ref-kind="message_id" class="px-3 py-1.5 text-sm">Message ID</button>
-                <button type="button" data-ref-kind="verification_id" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 dark:border-white/10">Verification ID</button>
+                <button type="button" data-ref-kind="message_id" class="px-3 py-1.5 text-sm transition hover:bg-zinc-100 dark:hover:bg-white/10">Message ID</button>
+                <button type="button" data-ref-kind="verification_id" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10">Verification ID</button>
               </div>
               <input
                 data-records-ref-input
                 type="text"
                 inputmode="numeric"
                 placeholder="123…"
-                class="min-w-[10rem] flex-1 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+                class="min-w-[10rem] flex-1 mod-field text-sm"
               />
             </div>
           </div>
@@ -85,8 +85,8 @@
           <div>
             <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400">Flag type</label>
             <div data-records-type-seg class="mt-2 inline-flex overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10">
-              <button type="button" data-flag-type="Cheating" class="px-3 py-1.5 text-sm">Cheating</button>
-              <button type="button" data-flag-type="Scripting" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 dark:border-white/10">Scripting</button>
+              <button type="button" data-flag-type="Cheating" class="px-3 py-1.5 text-sm transition hover:bg-zinc-100 dark:hover:bg-white/10">Cheating</button>
+              <button type="button" data-flag-type="Scripting" class="px-3 py-1.5 text-sm border-l border-zinc-200/80 transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10">Scripting</button>
             </div>
           </div>
 
@@ -97,7 +97,7 @@
               data-records-context
               type="text"
               placeholder="tool-assisted, impossible, …"
-              class="mt-2 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+              class="mt-2 w-full mod-field text-sm"
             />
           </div>
 
@@ -106,8 +106,8 @@
 
           {{-- Actions --}}
           <div class="flex flex-wrap gap-2">
-            <button type="submit" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Flag record</button>
-            <button type="button" data-records-flag-cancel class="rounded-xl border border-zinc-200/80 dark:border-white/10 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5">Cancel</button>
+            <button type="submit" class="mod-btn-accent">Flag record</button>
+            <button type="button" data-records-flag-cancel class="rounded-xl border border-zinc-200/80 px-4 py-2 text-sm transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10">Cancel</button>
           </div>
         </form>
 

@@ -9,7 +9,7 @@
       data-subtab="lootbox-settings"
       aria-selected="true"
     >
-      Config
+      Settings
     </button>
     <button
       role="tab"
@@ -56,7 +56,7 @@
             </div>
           </div>
         </div>
-        <div data-view="error" class="hidden border-t border-red-300/60 dark:border-red-500/30 pt-5 text-sm text-red-700 dark:text-red-300" role="alert" data-lootbox-error></div>
+        <div data-view="error" class="hidden border-t border-rose-300/60 dark:border-rose-500/30 pt-5 text-sm text-rose-700 dark:text-rose-300" role="alert" data-lootbox-error></div>
 
         <div data-view="loaded" class="hidden space-y-5">
           @include('moderator.partials.lootbox-profile')
