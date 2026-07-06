@@ -28,6 +28,27 @@ const BOUNTY_TYPE_BY_REQ = {
   beat_rival: 'rival_challenge',
   complete_map: 'gap_filling',
 };
+const REQ_BY_BOUNTY_TYPE = Object.fromEntries(
+  Object.entries(BOUNTY_TYPE_BY_REQ).map(([req, bt]) => [bt, req]));
+
+// The /api/quests response conveys a quest's requirement type through
+// `bounty_type` + the `progress` shape, NOT a `requirements.type` field (it sends
+// neither `quest_data` nor `requirements`). So derive the type from the signals
+// that are actually present, mirroring how the public dashboard keys off
+// bounty_type. Without this, every instance falls back to 'complete_maps' and
+// bounty quests (rival/time) lose their type-specific progress fields.
+function instanceReqType(q = {}) {
+  const bt = String(q.quest_data?.bounty_type || '').trim().toLowerCase();
+  if (bt && REQ_BY_BOUNTY_TYPE[bt]) return REQ_BY_BOUNTY_TYPE[bt];
+  const rt = q.quest_data?.requirements?.type;
+  if (rt && REQ_TYPES.includes(rt)) return rt;
+  const p = q.progress || {};
+  if (p.rival_user_id != null || p.rival_time != null) return 'beat_rival';
+  if (p.target_time != null || p.best_attempt != null || p.last_attempt != null) return 'beat_time';
+  if (Array.isArray(p.medals) && p.medals.length) return 'earn_medals';
+  if (p.map_id != null && (p.completed != null || p.medal_earned != null)) return 'complete_map';
+  return 'complete_maps';
+}
 
 const escapeHtml = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -46,7 +67,7 @@ function setFormPending(form, pending = true, submitter = null) {
       }
       btn.disabled = true;
       btn.classList.add('opacity-70');
-      if (!submitter || btn === submitter) btn.textContent = 'Working...';
+      if (!submitter || btn === submitter) btn.textContent = 'Working…';
     });
     return;
   }
@@ -93,7 +114,7 @@ function renderConfigCard(cfg) {
   const sp = subpanel('quest-config');
   if (!sp) return;
   sp.innerHTML = `
-    <article class="fade-in rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-white/5 p-6 space-y-6">
+    <article class="fade-in mod-card-solid space-y-6">
       <div class="flex items-start justify-between gap-3">
         <div>
           <h3 class="font-semibold">Quest config</h3>
@@ -105,17 +126,17 @@ function renderConfigCard(cfg) {
         <label class="text-sm">Rotation day ${buildSelect('rotation_day', DOW, cfg.rotation_day)}</label>
         <label class="text-sm">Rotation hour (UTC)
           <input name="rotation_hour" type="number" min="0" max="23" step="1" value="${escapeHtml(cfg.rotation_hour ?? '')}"
-            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+            class="mt-1 w-full mod-field text-sm" /></label>
         <label class="text-sm">Easy quests / rotation
           <input name="easy_quest_count" type="number" min="0" step="1" value="${escapeHtml(cfg.easy_quest_count ?? '')}"
-            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+            class="mt-1 w-full mod-field text-sm" /></label>
         <label class="text-sm">Medium quests / rotation
           <input name="medium_quest_count" type="number" min="0" step="1" value="${escapeHtml(cfg.medium_quest_count ?? '')}"
-            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+            class="mt-1 w-full mod-field text-sm" /></label>
         <label class="text-sm sm:col-span-2">Hard quests / rotation
           <input name="hard_quest_count" type="number" min="0" step="1" value="${escapeHtml(cfg.hard_quest_count ?? '')}"
-            class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
-        <div class="sm:col-span-2"><button type="submit" class="cursor-pointer rounded-xl bg-white px-4 py-2 font-semibold text-zinc-900 hover:bg-zinc-100">Save</button></div>
+            class="mt-1 w-full mod-field text-sm" /></label>
+        <div class="sm:col-span-2"><button type="submit" class="cursor-pointer mod-btn-primary">Save</button></div>
       </form>
     </article>`;
   sp.querySelector('[data-config-refresh]').onclick = () => loadConfig({ announce: true });
@@ -169,11 +190,11 @@ function renderRequirements(host, type, req = {}, allowedTypes = REQ_TYPES) {
   const numField = (name, val, { step = '1', mode = 'numeric' } = {}) =>
     `<label class="text-sm">${name}
       <input name="${name}" type="number" step="${step}" inputmode="${mode}" value="${escapeHtml(val ?? '')}"
-        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>`;
+        class="mt-1 w-full mod-field text-sm" /></label>`;
   const mapField = (label, val) =>
     `<label class="text-sm relative block">${label}
       <input data-req-map type="text" autocomplete="off" placeholder="Search map code…"
-        class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" data-init-map="${escapeHtml(val ?? '')}" /></label>`;
+        class="mt-1 w-full mod-field text-sm" data-init-map="${escapeHtml(val ?? '')}" /></label>`;
 
   if (type === 'complete_maps') {
     rows.push(numField('count', req.count));
@@ -193,7 +214,7 @@ function renderRequirements(host, type, req = {}, allowedTypes = REQ_TYPES) {
     rows.push(`<label class="text-sm">medal_type ${buildSelect('req_medal_type', MEDAL_TYPES, req.medal_type, { placeholder: '(none)' })}</label>`);
   } else if (type === 'beat_rival') {
     rows.push(mapField('map', req.map_id));
-    rows.push(`<label class="text-sm relative block">rival<input data-req-user type="text" autocomplete="off" placeholder="Search user…" data-init-uid="${escapeHtml(req.rival_user_id ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>`);
+    rows.push(`<label class="text-sm relative block">rival<input data-req-user type="text" autocomplete="off" placeholder="Search user…" data-init-uid="${escapeHtml(req.rival_user_id ?? '')}" class="mt-1 w-full mod-field text-sm" /></label>`);
     rows.push(numField('rival_time (s)', req.rival_time, { step: '0.01', mode: 'decimal' }));
     rows.push(numField('target_time (s)', req.target_time, { step: '0.01', mode: 'decimal' }));
   } else if (type === 'complete_map') {
@@ -244,7 +265,7 @@ async function collectRequirements(host) {
     setIf('medal_type', get('req_medal_type'));
   } else if (type === 'beat_rival') {
     setIf('map_id', await readMapId(mapInput)); const rid = readUserId(userInput);
-    if (rid) req.rival_user_id = Number(rid);
+    if (rid) req.rival_user_id = rid; // keep as string: 18-digit snowflake exceeds JS safe ints
     setIf('rival_time', num('rival_time (s)', true)); setIf('target_time', num('target_time (s)', true));
   } else if (type === 'complete_map') {
     setIf('map_id', await readMapId(mapInput)); req.target = 'complete';
@@ -272,7 +293,7 @@ function renderGlobalList() {
           <div class="flex items-center gap-2">
             <span class="font-semibold truncate">${escapeHtml(q.name)}</span>
             <span class="rounded-full bg-zinc-200/70 dark:bg-white/10 px-2 py-0.5 text-[11px] uppercase">${escapeHtml(q.difficulty)}</span>
-            <span class="rounded-full px-2 py-0.5 text-[11px] ${q.is_active ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-zinc-400/15 text-zinc-500'}">${q.is_active ? 'active' : 'inactive'}</span>
+            <span class="rounded-full px-2 py-0.5 text-[11px] ${q.is_active ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-zinc-400/15 text-zinc-600 dark:bg-white/10 dark:text-zinc-400'}">${q.is_active ? 'active' : 'inactive'}</span>
           </div>
           <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400 truncate">${escapeHtml(q.description || '')}</div>
           <div class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">${escapeHtml(reqSummary(q.requirements))} · ${q.coin_reward}c / ${q.xp_reward}xp</div>
@@ -316,22 +337,30 @@ function openGlobalEditor(id) {
   box.className = 'mt-4 border-t border-zinc-200/80 dark:border-white/10 pt-4 space-y-4';
   box.innerHTML = `
     <div class="grid gap-3 sm:grid-cols-2">
-      <label class="text-sm sm:col-span-2">name<input name="name" value="${escapeHtml(q.name)}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-      <label class="text-sm sm:col-span-2">description<input name="description" value="${escapeHtml(q.description || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+      <label class="text-sm sm:col-span-2">name<input name="name" value="${escapeHtml(q.name)}" class="mt-1 w-full mod-field text-sm" /></label>
+      <label class="text-sm sm:col-span-2">description<input name="description" value="${escapeHtml(q.description || '')}" class="mt-1 w-full mod-field text-sm" /></label>
       <label class="text-sm">reward tier ${buildSelect('difficulty', REWARD_TIERS, q.difficulty)}</label>
       <label class="text-sm">is_active ${buildSelect('is_active', [{ value: '1', label: 'active' }, { value: '0', label: 'inactive' }], q.is_active ? '1' : '0')}</label>
-      <label class="text-sm">coin_reward<input name="coin_reward" type="number" min="0" value="${escapeHtml(q.coin_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-      <label class="text-sm">xp_reward<input name="xp_reward" type="number" min="0" value="${escapeHtml(q.xp_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+      <label class="text-sm">coin_reward<input name="coin_reward" type="number" min="0" value="${escapeHtml(q.coin_reward ?? '')}" class="mt-1 w-full mod-field text-sm" /></label>
+      <label class="text-sm">xp_reward<input name="xp_reward" type="number" min="0" value="${escapeHtml(q.xp_reward ?? '')}" class="mt-1 w-full mod-field text-sm" /></label>
     </div>
     <div data-req-host class="space-y-3"></div>
     <div class="flex gap-2">
-      <button type="button" data-save class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">Save (affects everyone)</button>
+      <button type="button" data-save class="mod-btn-accent px-3 py-2">Save (affects everyone)</button>
       <button type="button" data-cancel class="rounded-lg border border-zinc-200/80 dark:border-white/10 px-3 py-2 text-sm">Cancel</button>
     </div>`;
   card.appendChild(box);
   renderRequirements(box.querySelector('[data-req-host]'), q.requirements?.type || 'complete_maps', q.requirements || {}, GLOBAL_REQ_TYPES);
   box.querySelector('[data-cancel]').onclick = () => box.remove();
-  box.querySelector('[data-save]').onclick = () => saveGlobalQuest(id, box);
+  box.querySelector('[data-save]').onclick = async (e) => {
+    const btn = e.currentTarget;
+    setButtonBusy(btn, true);
+    try {
+      await saveGlobalQuest(id, box);
+    } finally {
+      setButtonBusy(btn, false);
+    }
+  };
 }
 
 async function saveGlobalQuest(id, box) {
@@ -373,7 +402,15 @@ function renderRotationCard() {
       </div>
       <button type="button" data-quest-generate class="cursor-pointer rounded-xl bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700">Generate new rotation</button>
     </article>`;
-  sp.querySelector('[data-quest-generate]').onclick = onGenerateRotation;
+  sp.querySelector('[data-quest-generate]').onclick = async (e) => {
+    const btn = e.currentTarget;
+    setButtonBusy(btn, true, { busyLabel: 'Generating…' });
+    try {
+      await onGenerateRotation();
+    } finally {
+      setButtonBusy(btn, false);
+    }
+  };
 }
 
 async function onGenerateRotation() {
@@ -404,12 +441,57 @@ function buildSelect(name, options, current, { placeholder = '' } = {}) {
     opts.push(`<option value="${escapeHtml(value)}"${sel}>${escapeHtml(label)}</option>`);
   }
   return `<select name="${escapeHtml(name)}"
-    class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none">${opts.join('')}</select>`;
+    class="mt-1 w-full mod-field text-sm">${opts.join('')}</select>`;
 }
 
 // map_id -> code, shared across the panel. No batch endpoint, so resolve lazily.
 const MAP_CODE_CACHE = new Map();
 const MAP_ID_CACHE = new Map(); // code(lower) -> map_id
+const USER_NAME_CACHE = new Map(); // user_id(string) -> friendly label
+
+// Pull the {id,label} out of an autocomplete user row, which upstream returns
+// either as a [id, label] tuple or an object. Both proxies stringify the id so
+// the 18-digit Discord snowflake survives JSON without precision loss.
+function acUserItem(u) {
+  if (Array.isArray(u) && u.length >= 2) return { id: String(u[0]), label: String(u[1]) };
+  if (u && typeof u === 'object') {
+    const id = u.user_id ?? u.id ?? u.value ?? '';
+    const label = u.label ?? u.name ?? u.nickname ?? u.global_name ?? u.display ?? String(id);
+    return { id: String(id), label: String(label) };
+  }
+  return null;
+}
+
+// user_id -> friendly name. Prefer the autocomplete label ("name (aka nickname)")
+// so a resolved rival matches what the picker and recent chips show; fall back to
+// the by-id endpoint's coalesced_name when the search doesn't surface this id.
+async function resolveUserIdToName(userId) {
+  const id = String(userId ?? '').trim();
+  if (!id) return null;
+  if (USER_NAME_CACHE.has(id)) return USER_NAME_CACHE.get(id);
+
+  let label = null;
+  try {
+    const res = await DEPS.http('GET', '/api/autocomplete/users', { query: { value: id, page_size: 8 } });
+    const arr = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.results || res.data?.data || []);
+    for (const u of arr || []) {
+      const item = acUserItem(u);
+      if (item && item.id === id && item.label && item.label !== id) { label = item.label; break; }
+    }
+  } catch { /* fall through to by-id lookup */ }
+
+  if (!label) {
+    try {
+      const res = await DEPS.http('GET', `/api/users/${encodeURIComponent(id)}`);
+      const d = res?.data || {};
+      const name = d.coalesced_name || d.nickname || d.global_name || '';
+      if (name && String(name).trim()) label = String(name).trim();
+    } catch { /* leave unresolved */ }
+  }
+
+  if (label) USER_NAME_CACHE.set(id, label);
+  return label;
+}
 
 // code -> map_id via GET /api/maps?code=
 async function resolveCodeToId(code) {
@@ -531,9 +613,11 @@ function wireUserField(input, { initialId = null } = {}) {
     onPick: ({ id }) => { input.dataset.uid = String(id || ''); },
   });
   input.addEventListener('input', () => { delete input.dataset.uid; });
+  // Hydrate an existing rival id into a friendly name (mirrors wireMapField).
   if (initialId != null && initialId !== '') {
     input.dataset.uid = String(initialId);
     input.value = `#${initialId}`;
+    resolveUserIdToName(initialId).then((name) => { if (name) input.value = name; });
   }
 }
 const readUserId = (input) => String(input?.dataset?.uid || '').trim() || null;
@@ -552,7 +636,7 @@ function renderUserPanel() {
       </div>
       <label class="text-sm relative block max-w-md">User
         <input data-user-search type="text" autocomplete="off" placeholder="Search username…"
-          class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:outline-none" /></label>
+          class="mt-1 w-full mod-field text-sm" /></label>
       <div data-user-recent class="flex flex-wrap gap-2"></div>
       <div data-user-quests class="space-y-3"></div>
     </article>`;
@@ -647,41 +731,32 @@ function renderProgress(host, type, p = {}) {
   host.__type = type;
   const rows = [];
   const num = (n, val, { step = '1', mode = 'numeric' } = {}) =>
-    `<label class="text-sm">${n}<input name="pr_${n}" type="number" step="${step}" inputmode="${mode}" value="${escapeHtml(val ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>`;
-  const mapField = (val) => `<label class="text-sm relative block">map<input data-pr-map type="text" autocomplete="off" placeholder="Search map code…" data-init-map="${escapeHtml(val ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>`;
+    `<label class="text-sm">${n}<input name="pr_${n}" type="number" step="${step}" inputmode="${mode}" value="${escapeHtml(val ?? '')}" class="mt-1 w-full mod-field text-sm" /></label>`;
   const bool = (n, val) => `<label class="text-sm">${n} ${buildSelect(`pr_${n}`, [{ value: '', label: '(no change)' }, { value: '1', label: 'true' }, { value: '0', label: 'false' }], val === true ? '1' : val === false ? '0' : '')}</label>`;
 
   if (type === 'complete_maps' || type === 'complete_difficulty_range') {
     rows.push(num('current', p.current)); rows.push(num('target', p.target));
-    rows.push(`<div class="text-sm sm:col-span-2">completed_map_ids<div class="mt-1 flex flex-wrap gap-1" data-pr-completed-chips></div><input data-pr-completed-add type="text" placeholder="add by code…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></div>`);
+    rows.push(`<div class="text-sm sm:col-span-2">completed_map_ids<div class="mt-1 flex flex-wrap gap-1" data-pr-completed-chips></div><input data-pr-completed-add type="text" placeholder="add by code…" class="mt-1 w-full mod-field text-sm" /></div>`);
     if (type === 'complete_maps') rows.push(`<div class="text-sm sm:col-span-2">details (difficulty → count)<div data-pr-details></div></div>`);
   } else if (type === 'earn_medals') {
     rows.push(num('current', p.current)); rows.push(num('target', p.target));
-    rows.push(`<div class="text-sm sm:col-span-2">counted_map_ids<div class="mt-1 flex flex-wrap gap-1" data-pr-counted-chips></div><input data-pr-counted-add type="text" placeholder="add by code…" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></div>`);
+    rows.push(`<div class="text-sm sm:col-span-2">counted_map_ids<div class="mt-1 flex flex-wrap gap-1" data-pr-counted-chips></div><input data-pr-counted-add type="text" placeholder="add by code…" class="mt-1 w-full mod-field text-sm" /></div>`);
     rows.push(`<div class="text-sm sm:col-span-2">medals<div data-pr-medals></div></div>`);
   } else if (type === 'beat_time' || type === 'beat_rival') {
-    rows.push(mapField(p.map_id));
-    rows.push(num('target_time', p.target_time, { step: '0.01', mode: 'decimal' }));
-    rows.push(`<label class="text-sm">target_type ${buildSelect('pr_target_type', TARGET_TYPES, p.target_type, { placeholder: '(none)' })}</label>`);
-    rows.push(`<label class="text-sm">medal_type ${buildSelect('pr_medal_type', MEDAL_TYPES, p.medal_type, { placeholder: '(none)' })}</label>`);
+    // Criteria (map / target_time / rival / rival_time) are edited in the
+    // requirements section above — the engine reads them from there. Progress
+    // holds only the user's live attempts.
     rows.push(num('best_attempt', p.best_attempt, { step: '0.01', mode: 'decimal' }));
     rows.push(num('last_attempt', p.last_attempt, { step: '0.01', mode: 'decimal' }));
-    if (type === 'beat_rival') {
-      rows.push(`<label class="text-sm relative block">rival<input data-pr-user type="text" autocomplete="off" placeholder="Search user…" data-init-uid="${escapeHtml(p.rival_user_id ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>`);
-      rows.push(num('rival_time', p.rival_time, { step: '0.01', mode: 'decimal' }));
-    }
   } else if (type === 'complete_map') {
-    rows.push(mapField(p.map_id));
+    // map_id is a requirement; progress only tracks the live completion.
     rows.push(bool('completed', p.completed));
     rows.push(`<label class="text-sm">medal_earned ${buildSelect('pr_medal_earned', MEDAL_TYPES, p.medal_earned, { placeholder: '(none)' })}</label>`);
   }
   host.innerHTML = `<div class="grid gap-3 sm:grid-cols-2">${rows.join('')}</div>`;
 
-  // Wire compound fields.
-  const m = host.querySelector('[data-pr-map]');
-  if (m) wireMapField(m, { initialMapId: m.dataset.initMap || null });
-  const u = host.querySelector('[data-pr-user]');
-  if (u) wireUserField(u, { initialId: u.dataset.initUid || null });
+  // Wire compound fields. (Criteria fields — map/rival — now live in the
+  // requirements editor; progress only carries map-list/medal accumulators.)
   const cc = host.querySelector('[data-pr-completed-chips]');
   if (cc) wireMapListField(cc, host.querySelector('[data-pr-completed-add]'), p.completed_map_ids || []);
   const ct = host.querySelector('[data-pr-counted-chips]');
@@ -698,7 +773,7 @@ function renderDetailsEditor(host, details) {
   const draw = () => {
     host.innerHTML = host.__rows.map((r, i) => `<div class="mt-1 flex gap-2" data-drow="${i}">
       ${buildSelect(`__d_diff_${i}`, REQ_DIFFICULTIES.filter((d) => d !== 'any'), r.k)}
-      <input data-dcount value="${escapeHtml(r.v)}" type="number" class="mt-1 w-24 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-2 py-2 text-sm" />
+      <input data-dcount value="${escapeHtml(r.v)}" type="number" class="mt-1 w-24 mod-field px-2 text-sm" />
       <button type="button" data-drem="${i}" class="px-2 text-sm opacity-60 hover:opacity-100">✕</button></div>`).join('') +
       `<button type="button" data-dadd class="mt-2 rounded-lg border border-zinc-200/80 dark:border-white/10 px-2 py-1 text-xs">+ add</button>`;
     host.querySelector('[data-dadd]').onclick = () => { host.__rows.push({ k: 'Easy', v: 0 }); draw(); };
@@ -723,10 +798,24 @@ function renderMedalsEditor(host, medals) {
   draw();
 }
 
+// The completion engine reads a quest's criteria from quest_data.requirements,
+// but the weekly-quests GET returns no `requirements` object — it surfaces those
+// values THROUGH `progress` (seed-time denormalization + read-time backfill). So
+// seed the requirements editor from the progress-surfaced criteria, giving the
+// operator the authoritative field, prefilled, instead of a blank duplicate.
+function reqSeedFromInstance(q) {
+  const req = { ...(q.quest_data?.requirements || {}) };
+  const p = q.progress || {};
+  for (const k of ['map_id', 'target_time', 'target_type', 'medal_type', 'rival_user_id', 'rival_time']) {
+    if (req[k] == null && p[k] != null) req[k] = p[k];
+  }
+  return req;
+}
+
 function openUserDrawer(progressId) {
   const q = USER_QUESTS.find((x) => x.progress_id === progressId);
   if (!q) return;
-  const type = q.quest_data?.requirements?.type || 'complete_maps';
+  const type = instanceReqType(q);
   const bt = q.quest_data?.bounty_type;
   const kind = bt ? `Bounty · ${bt}` : 'Global';
 
@@ -740,11 +829,11 @@ function openUserDrawer(progressId) {
       <p class="text-[11px] text-amber-600 dark:text-amber-400" data-complete-hint hidden>Marking complete auto-fills progress to satisfy the requirement; your explicit edits below still win.</p>
       <fieldset class="rounded-xl border border-zinc-200/80 dark:border-white/10 p-3 space-y-2">
         <legend class="px-1 text-xs font-semibold">quest_data</legend>
-        <label class="text-sm block">name<input name="qd_name" value="${escapeHtml(q.quest_data?.name || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-        <label class="text-sm block">description<input name="qd_description" value="${escapeHtml(q.quest_data?.description || '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+        <label class="text-sm block">name<input name="qd_name" value="${escapeHtml(q.quest_data?.name || '')}" class="mt-1 w-full mod-field text-sm" /></label>
+        <label class="text-sm block">description<input name="qd_description" value="${escapeHtml(q.quest_data?.description || '')}" class="mt-1 w-full mod-field text-sm" /></label>
         <div class="grid gap-2 sm:grid-cols-2">
-          <label class="text-sm">coin_reward<input name="qd_coin_reward" type="number" value="${escapeHtml(q.quest_data?.coin_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
-          <label class="text-sm">xp_reward<input name="qd_xp_reward" type="number" value="${escapeHtml(q.quest_data?.xp_reward ?? '')}" class="mt-1 w-full rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm" /></label>
+          <label class="text-sm">coin_reward<input name="qd_coin_reward" type="number" value="${escapeHtml(q.quest_data?.coin_reward ?? '')}" class="mt-1 w-full mod-field text-sm" /></label>
+          <label class="text-sm">xp_reward<input name="qd_xp_reward" type="number" value="${escapeHtml(q.quest_data?.xp_reward ?? '')}" class="mt-1 w-full mod-field text-sm" /></label>
         </div>
         <div data-drawer-req class="space-y-2"></div>
       </fieldset>
@@ -761,7 +850,7 @@ function openUserDrawer(progressId) {
 
   const { overlay, close } = openModal({ title: `Edit quest #${progressId}`, body, footer, width: 'md' });
 
-  renderRequirements(overlay.querySelector('[data-drawer-req]'), type, q.quest_data?.requirements || {}, REQ_TYPES);
+  renderRequirements(overlay.querySelector('[data-drawer-req]'), type, reqSeedFromInstance(q), REQ_TYPES);
   renderProgress(overlay.querySelector('[data-drawer-progress]'), type, q.progress || {});
   // Re-render progress when the requirement type changes. Delegate on the
   // persistent req host so it survives renderRequirements re-renders.
@@ -803,12 +892,28 @@ async function saveUserQuest(progressId, overlay, close) {
   if (get('qd_coin_reward') !== '' && Number(get('qd_coin_reward')) !== q.quest_data?.coin_reward) qd.coin_reward = Number(get('qd_coin_reward'));
   if (get('qd_xp_reward') !== '' && Number(get('qd_xp_reward')) !== q.quest_data?.xp_reward) qd.xp_reward = Number(get('qd_xp_reward'));
   const req = await collectRequirements(overlay.querySelector('[data-drawer-req]'));
-  if (req && JSON.stringify(req) !== JSON.stringify(q.quest_data?.requirements || {})) qd.requirements = req;
+  // Compare against the same seed the editor was prefilled from (the GET omits
+  // `requirements`, so comparing against q.quest_data.requirements would always
+  // look "changed"). Key-sorted stringify makes the diff order-insensitive.
+  const norm = (o) => { const x = o || {}; return JSON.stringify(x, Object.keys(x).sort()); };
+  if (req && norm(req) !== norm(reqSeedFromInstance(q))) qd.requirements = req;
   if (Object.keys(qd).length) payload.quest_data = qd;
 
   // progress.
   const prog = await collectProgress(overlay.querySelector('[data-drawer-progress]'));
   if (prog && Object.keys(prog).length) payload.progress = prog;
+
+  // The engine reads challenge criteria from quest_data.requirements, but the
+  // weekly-quests GET surfaces them through progress. When requirements change,
+  // mirror the criteria into progress too, so the next open shows the new values
+  // instead of the stale seeded copy.
+  if (qd.requirements) {
+    const mirror = {};
+    for (const k of ['map_id', 'target_time', 'target_type', 'medal_type', 'rival_user_id', 'rival_time']) {
+      if (qd.requirements[k] != null) mirror[k] = qd.requirements[k];
+    }
+    if (Object.keys(mirror).length) payload.progress = { ...(payload.progress || {}), ...mirror };
+  }
 
   if (!Object.keys(payload).length) return DEPS.toast('Nothing to update', 'warn');
   const res = await DEPS.http('PATCH', `${API_MODS}/quests/admin/users/${USER_ID}/progress/${progressId}`, { body: payload });
@@ -834,7 +939,7 @@ async function collectProgress(host) {
   const completed = get('completed'); if (completed === '1') out.completed = true; else if (completed === '0') out.completed = false;
 
   const m = host.querySelector('[data-pr-map]'); const mid = m ? await readMapId(m) : null; if (mid != null) out.map_id = mid;
-  const u = host.querySelector('[data-pr-user]'); const uid = u ? readUserId(u) : null; if (uid) out.rival_user_id = Number(uid);
+  const u = host.querySelector('[data-pr-user]'); const uid = u ? readUserId(u) : null; if (uid) out.rival_user_id = uid; // string: snowflake precision
   const cc = host.querySelector('[data-pr-completed-chips]'); if (cc) out.completed_map_ids = cc.__ids || [];
   const ct = host.querySelector('[data-pr-counted-chips]'); if (ct) out.counted_map_ids = ct.__ids || [];
   const det = host.querySelector('[data-pr-details]');
