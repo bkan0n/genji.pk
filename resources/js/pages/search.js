@@ -457,7 +457,8 @@ function initializeIcons() {
     'completion_filter',
     'medal_filter',
     'archived',
-    'official', 
+    'record_archived',
+    'official',
     'apply_filters',
     'clear_filters',
   ].map((id) => ({
@@ -488,6 +489,7 @@ function getIconSVG(id) {
     completion_filter: `<path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     medal_filter: `<path d="M12 11L8 3H4L8.5058 12.4622M12 11L16 3H20L15.4942 12.4622M12 11C13.344 11 14.5848 11.5635 15.4942 12.4622M12 11C10.656 11 9.41518 11.5635 8.5058 12.4622M15.4942 12.4622C16.4182 13.3753 17 14.6344 17 16C17 18.7614 14.7614 21 12 21C9.23858 21 7 18.7614 7 16C7 14.6344 7.58179 13.3753 8.5058 12.4622" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`,
     archived: `<path d="M4 7h16M5 7l1 13h12l1-13M9 11h6M8 4h8l1 3H7l1-3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+    record_archived: `<path d="M3 7h18M3 7v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7M3 7l1.5-3h15L21 7M10 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     official: `<path d="M12 3L5 6V12C5 16.4183 8.13401 19.5 12 21C15.866 19.5 19 16.4183 19 12V6L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M9 12L11 14L15 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     apply_filters: `<path d="M4 12.6111L8.92308 17.5L20 6.5" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     clear_filters: `<path d="M6 6L18 18M18 6L6 18" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
@@ -1070,6 +1072,10 @@ async function selectSection(sectionId, opts = {}) {
     activeFilters = sanitizeFiltersForSection(sectionId, activeFilters);
   }
 
+  if (sectionId === 'completions') {
+    persistentFilters.record_archived = normalizeRecordArchivedFilter(persistentFilters.record_archived);
+  }
+
   initializeToolbarButtons();
 
   // “Apply filters” url update
@@ -1125,6 +1131,7 @@ const URL_FILTER_KEYS = new Set([
   'tags',
   'playtest_filter',
   'archived',
+  'record_archived',
   'official',
   'user_id',
   'medal_filter',
@@ -1180,6 +1187,13 @@ function normalizeUserCompletionsDifficultyFilter(value) {
   return difficultyOptions.includes(normalized) ? normalized : '';
 }
 
+const RECORD_ARCHIVED_VALUES = ['all', 'archived', 'not_archived'];
+
+function normalizeRecordArchivedFilter(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  return RECORD_ARCHIVED_VALUES.includes(normalized) ? normalized : 'all';
+}
+
 function sanitizeFiltersForSection(sectionId, source) {
   const filters = source && typeof source === 'object' ? source : {};
 
@@ -1193,6 +1207,7 @@ function sanitizeFiltersForSection(sectionId, source) {
 
   if (userIdValue) sanitized.user_id = userIdValue;
   if (difficultyValue) sanitized.difficulty_exact = difficultyValue;
+  sanitized.record_archived = normalizeRecordArchivedFilter(filters.record_archived);
 
   return sanitized;
 }
@@ -1241,6 +1256,11 @@ function __urlReadFilters() {
     if (k === 'archived') {
       const norm = __urlNormalizeBoolean(arr[0]);
       if (norm) out.archived = norm;
+      continue;
+    }
+
+    if (k === 'record_archived') {
+      out.record_archived = normalizeRecordArchivedFilter(arr[0]);
       continue;
     }
 
@@ -2341,11 +2361,11 @@ function initializeToolbarButtons() {
   const sectionIconsMap = {
     map_search: icons.filter((icon) => icon.id !== 'user'),
     completions: icons.filter((icon) =>
-      ['code', 'user', 'apply_filters', 'clear_filters'].includes(icon.id)
+      ['code', 'user', 'record_archived', 'apply_filters', 'clear_filters'].includes(icon.id)
     ),
     guide: icons.filter((icon) => ['code', 'apply_filters', 'clear_filters'].includes(icon.id)),
     personal_records: icons.filter((icon) =>
-      ['user', 'difficulty_exact', 'apply_filters', 'clear_filters'].includes(icon.id)
+      ['user', 'difficulty_exact', 'record_archived', 'apply_filters', 'clear_filters'].includes(icon.id)
     ),
   };
   const filteredIcons = sectionIconsMap[currentSection] || icons;
@@ -2490,6 +2510,18 @@ function initializeToolbarButtons() {
             false
           );
           break;
+        case 'record_archived':
+          optionsContainer = showOptionsContainer(
+            'record_archivedOptions',
+            [
+              { text: t('filters_toolbar.archived_all'), value: 'all', raw: 'all' },
+              { text: t('filters_toolbar.archived_only'), value: 'archived', raw: 'archived' },
+              { text: t('filters_toolbar.not_archived'), value: 'not_archived', raw: 'not_archived' },
+            ],
+            button,
+            false
+          );
+          break;
         case 'tags':
           optionsContainer = showOptionsContainer(
             'tagsOptions',
@@ -2559,6 +2591,7 @@ function updateActiveFilters() {
     tags: 'tags',
     completionFilter: 'completion_filter',
     archived: 'archived',
+    record_archived: 'record_archived',
     official: 'official',
   };
 
@@ -2752,6 +2785,16 @@ function updateToolbarButtonStates() {
       return map[v.toLowerCase()] || v;
     }
 
+    // Record archived filter
+    if (filterId === 'record_archived') {
+      const map = {
+        'all': t('filters_toolbar.archived_all') || 'All',
+        'archived': t('filters_toolbar.archived_only') || 'Archived',
+        'not_archived': t('filters_toolbar.not_archived') || 'Not archived',
+      };
+      return map[v.toLowerCase()] || v;
+    }
+
     // Playtest status (persistent)
     if (filterId === 'playtest_status') {
       const map = {
@@ -2875,6 +2918,7 @@ function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
     completionFilter: 'completion_filter',
     medalFilter: 'medal_filter',
     archived: 'archived',
+    record_archived: 'record_archived',
     official: 'official',
   };
   const mapped = map[filterKeyRaw] || filterKeyRaw;
@@ -2944,6 +2988,11 @@ function clearFilters(silent = false) {
     activeFilters.sort = 'difficulty:asc';
     persistentFilters.sort = 'difficulty:asc';
     try { __syncMapSearchSortUI('difficulty:asc'); } catch {}
+  }
+
+  if (currentSection === 'personal_records' || currentSection === 'completions') {
+    activeFilters.record_archived = 'all';
+    persistentFilters.record_archived = 'all';
   }
 
   document.getElementById('filtersContainer').innerHTML = '';
@@ -3115,6 +3164,7 @@ function buildSectionRequest(section, filters, pageNumber, pageSize) {
         ...(filters.difficulty_exact ? { difficulty: filters.difficulty_exact } : {}),
         ...(filters.medal_filter ? { medal_filter: filters.medal_filter } : {}),
         ...(filters.completion_filter ? { completion_filter: filters.completion_filter } : {}),
+        archived: normalizeRecordArchivedFilter(filters.record_archived),
       });
       return { method: 'GET', url: `${apiUrls.completions}?${query}` };
     }
@@ -3135,6 +3185,7 @@ function buildSectionRequest(section, filters, pageNumber, pageSize) {
     const query = toQuery({
       user_id: requestedUserId,
       difficulty: requestedDifficulty,
+      archived: normalizeRecordArchivedFilter(filters.record_archived),
       page_number: pageNumber,
       page_size: pageSize
     });

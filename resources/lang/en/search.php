@@ -99,6 +99,8 @@ return [
         'archived'              => 'Archived',
         'archived_only'         => 'Archived',
         'not_archived'          => 'Not archived',
+        'record_archived'       => 'Archived records',
+        'archived_all'          => 'All',
         'official'              => 'Official',
         'server'                => 'Server',
         'global_server'         => 'Global',

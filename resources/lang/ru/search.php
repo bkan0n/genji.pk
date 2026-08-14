@@ -99,6 +99,8 @@ return [
         'archived'                => 'Архив',
         'archived_only'           => 'В архиве',
         'not_archived'            => 'Не в архиве',
+        'record_archived'         => 'Архивные рекорды',
+        'archived_all'            => 'Все',
         'official'                => 'Официальная',
         'server'                  => 'Сервер',
         'global_server'           => 'Глобальный',
