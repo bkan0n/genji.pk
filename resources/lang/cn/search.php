@@ -98,6 +98,8 @@ return [
         'archived'              => '已归档',
         'archived_only'         => '仅已归档',
         'not_archived'          => '未归档',
+        'record_archived'       => '归档记录',
+        'archived_all'          => '全部',
         'official'              => '国际服',
         'server'                => '服务器',
         'global_server'         => '全球的',

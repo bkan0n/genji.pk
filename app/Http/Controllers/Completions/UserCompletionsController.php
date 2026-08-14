@@ -17,6 +17,7 @@ final class UserCompletionsController extends Controller
         $request->validate([
             'user_id' => ['required', 'string', 'regex:/^\d+$/', 'max:32'],
             'difficulty' => ['nullable', 'string', 'max:32'],
+            'archived' => ['nullable', 'string', 'in:all,archived,not_archived'],
             'page_number' => ['nullable', 'integer', 'min:1'],
             'page_size' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
@@ -48,6 +49,7 @@ final class UserCompletionsController extends Controller
                 ->get($endpoint, [
                     'user_id' => $userId,
                     'difficulty' => $request->query('difficulty'),
+                    'archived' => $request->query('archived'),
                     'page_number' => $pageNumber,
                     'page_size' => $pageSize,
                 ]);
