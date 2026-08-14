@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\RequireDiscordModerator;
 use App\Http\Middleware\RequireAuthenticated;
+use App\Http\Middleware\EnsureRouteUserMatchesAuthenticatedUser;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -44,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'email.verified' => \App\Http\Middleware\EmailVerified::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'discord.moderator' => RequireDiscordModerator::class,
+            'user.matches-route' => EnsureRouteUserMatchesAuthenticatedUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
