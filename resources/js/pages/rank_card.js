@@ -238,7 +238,13 @@ const RANK_CARD_VISIBLE_FILTER_OPTIONS = isChineseRankCardLang()
 const RANK_CARD_DEFAULT_FILTER = RANK_CARD_VISIBLE_FILTER_OPTIONS[0].value;
 let currentRankCardFilter = normalizeRankCardFilter(getQueryParam('filter') || RANK_CARD_DEFAULT_FILTER);
 let currentBackground = null;
+let currentAvatar = null;
+let currentBadges = null;
 let preloadedBackgrounds = [];
+let preloadedBadges = [];
+let backgroundStateRevision = 0;
+let badgesStateRevision = 0;
+let avatarStateRevision = 0;
 let rewardsReady = false;
 let __rewardsPromise = null;
 if (typeof availableAvatars === 'undefined') {
@@ -455,7 +461,6 @@ async function initRankCard() {
     preloadBackgroundsOptions();
     preloadBackgroundPreview();
     preloadAvatarOptions();
-    preloadAvatarPreviews();
     preloadBadgesOptions();
     preloadBadgesPreview();
     fetchUserMastery(me);
@@ -632,6 +637,18 @@ function applyProgressColors(scopeEl = document) {
 }
 
 function normalizeBadgeSlots(badges) {
+  if (Array.isArray(badges)) {
+    return Array.from({ length: 6 }, (_, i) => {
+      const badge = badges[i];
+      return badge && typeof badge === 'object'
+        ? {
+            name: badge.name ?? null,
+            type: badge.type ?? null,
+            url: badge.url ?? null,
+          }
+        : { name: null, type: null, url: null };
+    });
+  }
   if (!badges || typeof badges !== 'object') return [];
   return Array.from({ length: 6 }, (_, i) => {
     const idx = i + 1;
@@ -641,6 +658,56 @@ function normalizeBadgeSlots(badges) {
       url: badges[`badge_url${idx}`] ?? null,
     };
   });
+}
+
+function normalizeRankCardAssetSegment(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_');
+}
+
+function rankCardAvatarUrl(skin, pose) {
+  const skinSlug = normalizeRankCardAssetSegment(skin);
+  const poseSlug = normalizeRankCardAssetSegment(pose);
+  if (!skinSlug || !poseSlug) return '';
+  return cdnImage(`assets/rank_card/avatar/${skinSlug}/${poseSlug}.webp`);
+}
+
+function rankCardBackgroundUrl(name) {
+  const nameSlug = normalizeRankCardAssetSegment(name);
+  if (!nameSlug) return '';
+  return cdnImage(`assets/rank_card/background/${nameSlug}.webp`);
+}
+
+function applyRankCardAppearanceOverrides(data, userId) {
+  if (!data || typeof data !== 'object') return data;
+  if (String(userId || '') !== String(getCurrentUserId() || '')) return data;
+
+  if (badgesStateRevision > 0 && currentBadges !== null) data.badges = currentBadges;
+  if (backgroundStateRevision > 0 && currentBackground?.url) {
+    data.background_url = currentBackground.url;
+  }
+  if (avatarStateRevision > 0 && currentAvatar?.url) data.avatar_url = currentAvatar.url;
+
+  return data;
+}
+
+async function readOptionalJson(response) {
+  if (response.status === 204) return {};
+  const body = await response.text();
+  if (!body.trim()) return {};
+  try {
+    return JSON.parse(body);
+  } catch {
+    return {};
+  }
+}
+
+function isRankCardPreviewLoadedFor(userId) {
+  const rankCardContent = byId('rankCardContent');
+  return !!rankCardContent && rankCardContent.dataset.loadedFor === rankCardLoadKey(userId);
 }
 
 function restartBadgeAnimations(scope = document) {
@@ -800,7 +867,7 @@ async function loadRankCardContent() {
     }
 
     const response = await fetch(endpoints.rankcard.data(me, currentRankCardFilter), { credentials: 'same-origin' });
-    const data = await response.json();
+    const data = applyRankCardAppearanceOverrides(await response.json(), me);
     if (!data || data.error) {
       rankCardContent.innerHTML = '';
       hideRankCardContainer();
@@ -997,7 +1064,7 @@ async function fetchUserRankCard(userId, opts = {}) {
   try {
     const response = await fetch(endpoints.rankcard.data(userId, currentRankCardFilter), { credentials: 'same-origin' });
     if (!response.ok) throw new Error(t('errors.api_connection'));
-    const data = await response.json();
+    const data = applyRankCardAppearanceOverrides(await response.json(), userId);
     if (!data || data.error) {
       rankCardContent.innerHTML = '';
       if (!silent) hideRankCardContainer();
@@ -1627,11 +1694,14 @@ function initBadgesChanges() {
 
     if (Array.isArray(currentBadges) && currentBadges.length) {
       applyFromSlots(currentBadges);
-      return;
+      return Promise.resolve();
     }
 
-    const me = selectedUserId || getCurrentUserId();
-    fetch(endpoints.rankcard.badges.get(me), { credentials: 'same-origin' })
+    const me = getCurrentUserId();
+    return fetch(endpoints.rankcard.badges.get(me), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
       .then((r) => {
         if (!r.ok) throw new Error();
         return r.json();
@@ -1645,6 +1715,7 @@ function initBadgesChanges() {
           c.textContent = (idx + 1).toString();
           c.title = '';
         });
+        throw new Error('Failed to fetch equipped badges');
       });
   };
 
@@ -1690,79 +1761,77 @@ function initBadgesChanges() {
   }
 
   saveBadgeChangesButton.addEventListener('click', () => {
-    const me = selectedUserId || getCurrentUserId();
+    if (saveBadgeChangesButton.disabled) return;
+    const me = getCurrentUserId();
+    if (!me) return;
+    saveBadgeChangesButton.disabled = true;
 
-    fetch(endpoints.rankcard.badges.get(me), { credentials: 'same-origin' })
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then((existingBadges) => {
-        const payload = {};
-        for (let i = 0; i < 6; i++) {
-          const idx = i + 1;
-          const nameKey = `badge_name${idx}`;
-          const typeKey = `badge_type${idx}`;
-          const urlKey = `badge_url${idx}`;
+    const payload = {};
+    for (let i = 0; i < 6; i++) {
+      const idx = i + 1;
+      const nameKey = `badge_name${idx}`;
+      const typeKey = `badge_type${idx}`;
+      const urlKey = `badge_url${idx}`;
+      const img = circles[i].querySelector('img');
 
-          const circle = circles[i];
-          const img = circle.querySelector('img');
+      if (!img) {
+        payload[nameKey] = null;
+        payload[typeKey] = null;
+        payload[urlKey] = null;
+        continue;
+      }
 
-          if (!img) {
-            payload[nameKey] = null;
-            payload[typeKey] = null;
-            payload[urlKey] = null;
-            continue;
-          }
+      const name = (img.alt || '').trim() || null;
+      const type = name && badgeTypeMap[name] ? badgeTypeMap[name] : null;
+      const url = isHttpUrl(img.src) ? img.src : null;
 
-          const name = (img.alt || '').trim() || null;
-          const type = name && badgeTypeMap[name] ? badgeTypeMap[name] : null;
+      payload[nameKey] = name;
+      payload[typeKey] = type;
+      payload[urlKey] = url;
+    }
 
-          const src = img.src;
-          const url = isHttpUrl(src) ? src : null;
+    const submittedBadges = { ...payload };
 
-          payload[nameKey] = name;
-          payload[typeKey] = type;
-          payload[urlKey] = url;
-        }
-
-        const submittedBadges = { ...payload };
-
-        return fetch(endpoints.rankcard.badges.set(me), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(payload),
-        }).then(async (r) => {
-          if (!r.ok) {
-            const txt = await r.text();
-            throw new Error(`Erreur API ${r.status} – ${txt}`);
-          }
-          return submittedBadges;
-        });
-      })
+    fetch(endpoints.rankcard.badges.set(me), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload),
+    }).then(async (r) => {
+      if (!r.ok) {
+        const txt = await r.text();
+        throw new Error(`Erreur API ${r.status}: ${txt}`);
+      }
+      return submittedBadges;
+    })
       .then((submittedBadges) => {
-        updateBadgesContainer(submittedBadges);
+        badgesStateRevision += 1;
+        currentBadges = normalizeBadgeSlots(submittedBadges);
+        if (isRankCardPreviewLoadedFor(me)) {
+          updateBadgesContainer(currentBadges);
+        }
 
         closeModal(overlay);
         toastSuccess(t('badges_saved'));
-
-        fetch(endpoints.rankcard.badges.get(me), { credentials: 'same-origin' })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((fresh) => {
-            if (fresh) updateBadgesContainer(fresh);
-          })
-          .catch(() => {});
       })
       .catch((e) => {
         console.error(e);
         toastError(t('errors.badges_save_failed'));
+      })
+      .finally(() => {
+        saveBadgeChangesButton.disabled = false;
       });
   });
 
-  changeBadgesButton.addEventListener('click', () => {
-    fetchEquippedBadges();
+  changeBadgesButton.addEventListener('click', async () => {
     preloadRewards();
+    try {
+      await fetchEquippedBadges();
+    } catch (e) {
+      console.error(e);
+      toastError(t('errors.badges_fetch_failed'));
+      return;
+    }
     openModal(overlay);
   });
   overlay.addEventListener('click', (e) => {
@@ -1777,7 +1846,7 @@ function initBadgesChanges() {
 }
 
 function updateBadgesContainer(badges) {
-  const grid = document.querySelector('.rank-card-container .badges-container .badges-grid');
+  const grid = byId('rankCardContent')?.querySelector('.badges-container .badges-grid');
   if (!grid) {
     console.error('.badges-grid introuvable');
     return;
@@ -1801,19 +1870,21 @@ function updateBadgesContainer(badges) {
 /* =========================
    BADGES PRELOAD
    ========================= */
-let currentBadges = null;
-let preloadedBadges = [];
-
 function preloadBadgesPreview() {
   const me = getCurrentUserId();
   if (!me) return Promise.resolve();
+  const revision = badgesStateRevision;
 
-  return fetch(endpoints.rankcard.badges.get(me), { credentials: 'same-origin' })
+  return fetch(endpoints.rankcard.badges.get(me), {
+    credentials: 'same-origin',
+    cache: 'no-store',
+  })
     .then((r) => {
       if (!r.ok) throw new Error(`Failed to fetch current badges ${r.status}`);
       return r.json();
     })
     .then((data) => {
+      if (revision !== badgesStateRevision) return;
       currentBadges = normalizeBadgeSlots(data);
       currentBadges
         .filter((b) => b && b.url)
@@ -1824,7 +1895,7 @@ function preloadBadgesPreview() {
     })
     .catch((e) => {
       console.error('Erreur preload badges preview:', e);
-      currentBadges = null;
+      if (revision === badgesStateRevision) currentBadges = null;
     });
 }
 
@@ -1908,9 +1979,14 @@ function initBackgroundChanges() {
   document.body.appendChild(options);
 
   resetBtn.addEventListener('click', () => {
-    selectedBackground = null;
-    preview.style.backgroundImage = 'none';
-    preview.textContent = '+';
+    selectedBackground = {
+      name: 'placeholder',
+      url: rankCardBackgroundUrl('placeholder'),
+    };
+    preview.style.backgroundImage = `url(${selectedBackground.url})`;
+    preview.style.backgroundSize = 'cover';
+    preview.style.backgroundPosition = 'center';
+    preview.textContent = '';
   });
 
   const displayBackgroundOptions = () => {
@@ -1927,7 +2003,7 @@ function initBackgroundChanges() {
       row.textContent = `${bg.name} (${bg.rarity})`;
       row.addEventListener('click', (e) => {
         e.stopPropagation();
-        selectedBackground = { name: bg.name, url: cdnifyAssetUrl(bg.url) };
+        selectedBackground = { name: bg.name, url: bg.url };
         preview.style.backgroundImage = `url(${cdnifyAssetUrl(bg.url)})`;
         preview.style.backgroundSize = 'cover';
         preview.style.backgroundPosition = 'center';
@@ -1950,9 +2026,17 @@ function initBackgroundChanges() {
   });
 
   saveBtn.addEventListener('click', () => {
-    if (!selectedBackground) selectedBackground = { name: 'placeholder' };
-    const payload = { name: selectedBackground.name };
-    const me = selectedUserId || getCurrentUserId();
+    if (saveBtn.disabled) return;
+    if (!selectedBackground) {
+      closeModal(overlay);
+      return;
+    }
+
+    const pendingBackground = { ...selectedBackground };
+    const payload = { name: pendingBackground.name };
+    const me = getCurrentUserId();
+    if (!me) return;
+    saveBtn.disabled = true;
 
     fetch(endpoints.rankcard.background.set(me), {
       method: 'PUT',
@@ -1960,31 +2044,45 @@ function initBackgroundChanges() {
       credentials: 'same-origin',
       body: JSON.stringify(payload),
     })
-      .then((r) => {
+      .then(async (r) => {
         if (!r.ok) throw new Error(`Erreur API: ${r.status}`);
-        return r.json();
+        return readOptionalJson(r);
       })
       .then((data) => {
-        closeModal(overlay);
-        if (data.url) {
-          updateBackgroundContainer(data);
-          preview.style.backgroundImage = `url(${cdnifyAssetUrl(data.url)})`;
-          preview.textContent = '';
-          currentBackground = { url: data.url, name: data.name || 'placeholder' };
-          toastSuccess(t('background_saved'));
-        } else {
-          console.error('Aucune URL valide');
+        const savedBackground = {
+          name: data?.name || pendingBackground.name,
+          url:
+            data?.url ||
+            pendingBackground.url ||
+            rankCardBackgroundUrl(pendingBackground.name),
+        };
+
+        backgroundStateRevision += 1;
+        currentBackground = savedBackground;
+        selectedBackground = null;
+        if (isRankCardPreviewLoadedFor(me)) {
+          updateBackgroundContainer(savedBackground);
         }
+        preview.style.backgroundImage = `url(${cdnifyAssetUrl(savedBackground.url)})`;
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+        preview.textContent = '';
+        closeModal(overlay);
+        toastSuccess(t('background_saved'));
       })
       .catch((e) => {
         console.error('Erreur sauvegarde bg:', e);
         toastError(t('errors.background_save_failed'));
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
       });
   });
 
   changeBackgroundButton.addEventListener('click', () => {
+    selectedBackground = null;
     if (currentBackground) {
-      preview.style.backgroundImage = `url(${currentBackground.url})`;
+      preview.style.backgroundImage = `url(${cdnifyAssetUrl(currentBackground.url)})`;
       preview.style.backgroundSize = 'cover';
       preview.style.backgroundPosition = 'center';
       preview.textContent = '';
@@ -1997,6 +2095,7 @@ function initBackgroundChanges() {
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
+      selectedBackground = null;
       closeModal(overlay);
       options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
@@ -2004,7 +2103,7 @@ function initBackgroundChanges() {
 }
 
 function updateBackgroundContainer(res) {
-  const bg = document.querySelector('.background');
+  const bg = byId('rankCardContent')?.querySelector('.background');
   if (!bg) {
     console.error('El .background introuvable');
     return;
@@ -2027,13 +2126,18 @@ function updateBackgroundContainer(res) {
 function preloadBackgroundPreview() {
   const me = getCurrentUserId();
   if (!me) return Promise.resolve();
+  const revision = backgroundStateRevision;
 
-  return fetch(endpoints.rankcard.background.get(me), { credentials: 'same-origin' })
+  return fetch(endpoints.rankcard.background.get(me), {
+    credentials: 'same-origin',
+    cache: 'no-store',
+  })
     .then((r) => {
       if (!r.ok) throw new Error(`Failed to fetch current background ${r.status}`);
       return r.json();
     })
     .then((data) => {
+      if (revision !== backgroundStateRevision) return;
       if (data && data.url) {
         currentBackground = { url: data.url, name: data.name || 'Default Background' };
       } else {
@@ -2042,7 +2146,7 @@ function preloadBackgroundPreview() {
     })
     .catch((e) => {
       console.error('Erreur preload bg:', e);
-      currentBackground = null;
+      if (revision === backgroundStateRevision) currentBackground = null;
     });
 }
 
@@ -2145,6 +2249,22 @@ function initAvatarChanges() {
   let selectedPose = null;
   let currentSkin = 'Overwatch 1';
   let currentPose = 'heroic';
+  let avatarLoadPromise = Promise.resolve();
+  let avatarRequestId = 0;
+
+  const renderAvatarDraft = () => {
+    const hasDraft = selectedSkin !== null || selectedPose !== null;
+    const url = hasDraft
+      ? rankCardAvatarUrl(selectedSkin || currentSkin, selectedPose || currentPose)
+      : cdnifyAssetUrl(currentAvatar?.url) || rankCardAvatarUrl(currentSkin, currentPose);
+    [skinPreview, posePreview].forEach((preview) => {
+      preview.style.backgroundImage = url ? `url(${url})` : 'none';
+      preview.style.backgroundSize = 'contain';
+      preview.style.backgroundPosition = 'center';
+      preview.style.backgroundRepeat = 'no-repeat';
+      preview.textContent = url ? '' : '+';
+    });
+  };
 
   const toggleActiveClass = (btn) => {
     changeSkinButton.className = `${BTN_BASE} ${BTN_INACTIVE}`;
@@ -2165,41 +2285,48 @@ function initAvatarChanges() {
   };
 
   const fetchCurrentAvatar = () => {
-    const me = selectedUserId || getCurrentUserId();
-    Promise.all([
-      fetch(endpoints.rankcard.avatar.skin.get(me), { credentials: 'same-origin' }).then((r) =>
-        r.json()
-      ),
-      fetch(endpoints.rankcard.avatar.pose.get(me), { credentials: 'same-origin' }).then((r) =>
-        r.json()
-      ),
+    if (currentAvatar?.skin && currentAvatar?.pose) {
+      currentSkin = currentAvatar.skin;
+      currentPose = currentAvatar.pose;
+      renderAvatarDraft();
+      return Promise.resolve();
+    }
+
+    const me = getCurrentUserId();
+    if (!me) return Promise.resolve();
+    const requestId = ++avatarRequestId;
+
+    return Promise.all([
+      fetch(endpoints.rankcard.avatar.skin.get(me), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      }).then((r) => {
+        if (!r.ok) throw new Error(`Failed to fetch avatar skin ${r.status}`);
+        return r.json();
+      }),
+      fetch(endpoints.rankcard.avatar.pose.get(me), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      }).then((r) => {
+        if (!r.ok) throw new Error(`Failed to fetch avatar pose ${r.status}`);
+        return r.json();
+      }),
     ])
       .then(([skinData, poseData]) => {
-        if (skinData.url) {
-          currentSkin = skinData.skin || currentSkin;
-          skinPreview.style.backgroundImage = `url(${cdnifyAssetUrl(skinData.url)})`;
-          skinPreview.style.backgroundSize = 'contain';
-          skinPreview.style.backgroundPosition = 'center';
-          skinPreview.style.backgroundRepeat = 'no-repeat';
-          skinPreview.textContent = '';
-        } else {
-          skinPreview.style.backgroundImage = 'none';
-          skinPreview.textContent = '+';
-        }
-
-        if (poseData.url) {
-          currentPose = poseData.pose || currentPose;
-          posePreview.style.backgroundImage = `url(${cdnifyAssetUrl(poseData.url)})`;
-          posePreview.style.backgroundSize = 'contain';
-          posePreview.style.backgroundPosition = 'center';
-          posePreview.style.backgroundRepeat = 'no-repeat';
-          posePreview.textContent = '';
-        } else {
-          posePreview.style.backgroundImage = 'none';
-          posePreview.textContent = '+';
-        }
+        if (requestId !== avatarRequestId) return;
+        currentSkin = skinData.skin || skinData.name || currentSkin;
+        currentPose = poseData.pose || poseData.name || currentPose;
+        currentAvatar = {
+          skin: currentSkin,
+          pose: currentPose,
+          url: rankCardAvatarUrl(currentSkin, currentPose) || poseData.url || skinData.url,
+        };
+        renderAvatarDraft();
       })
-      .catch((e) => console.error('Erreur avatar actuel:', e));
+      .catch((e) => {
+        console.error('Erreur avatar actuel:', e);
+        throw e;
+      });
   };
 
   const displayAvatarOptions = (type) => {
@@ -2222,19 +2349,10 @@ function initAvatarChanges() {
         e.stopPropagation();
         if (type === 'skin') {
           selectedSkin = item.name;
-          skinPreview.style.backgroundImage = `url(${cdnifyAssetUrl(item.url)})`;
-          skinPreview.style.backgroundSize = 'contain';
-          skinPreview.style.backgroundPosition = 'center';
-          skinPreview.style.backgroundRepeat = 'no-repeat';
-          skinPreview.textContent = '';
         } else {
           selectedPose = item.name;
-          posePreview.style.backgroundImage = `url(${cdnifyAssetUrl(item.url)})`;
-          posePreview.style.backgroundSize = 'contain';
-          posePreview.style.backgroundPosition = 'center';
-          posePreview.style.backgroundRepeat = 'no-repeat';
-          posePreview.textContent = '';
         }
+        renderAvatarDraft();
         options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
       });
       options.appendChild(row);
@@ -2254,24 +2372,36 @@ function initAvatarChanges() {
   resetBtn.addEventListener('click', () => {
     selectedSkin = 'Overwatch 1';
     selectedPose = 'heroic';
-    const formattedSkin = selectedSkin.toLowerCase().replace(/ /g, '_');
-    const url = `${cdnImage('assets/rank_card/avatar/')}${formattedSkin}/${selectedPose}.webp`;
-    skinPreview.style.backgroundImage = `url(${url})`;
-    skinPreview.style.backgroundSize = 'contain';
-    skinPreview.style.backgroundPosition = 'center';
-    skinPreview.style.backgroundRepeat = 'no-repeat';
-    skinPreview.textContent = '';
-    posePreview.style.backgroundImage = `url(${url})`;
-    posePreview.style.backgroundSize = 'contain';
-    posePreview.style.backgroundPosition = 'center';
-    posePreview.style.backgroundRepeat = 'no-repeat';
-    posePreview.textContent = '';
-    updatePlayerAvatar({ name: selectedSkin, url });
+    renderAvatarDraft();
   });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
+    if (saveBtn.disabled) return;
+    saveBtn.disabled = true;
+
+    try {
+      await avatarLoadPromise;
+    } catch (e) {
+      toastError(t('errors.avatar_save_failed'));
+      saveBtn.disabled = false;
+      return;
+    }
+
     const tasks = [];
-    const me = selectedUserId || getCurrentUserId();
+    const me = getCurrentUserId();
+    if (!me) {
+      saveBtn.disabled = false;
+      return;
+    }
+
+    if (selectedSkin === null && selectedPose === null) {
+      closeModal(overlay);
+      saveBtn.disabled = false;
+      return;
+    }
+
+    const nextSkin = selectedSkin || currentSkin;
+    const nextPose = selectedPose || currentPose;
     if (selectedSkin && selectedSkin !== currentSkin) {
       tasks.push(
         fetch(endpoints.rankcard.avatar.skin.set(me), {
@@ -2297,15 +2427,22 @@ function initAvatarChanges() {
       .then((res) => {
         if (res.length && res.some((r) => !r.ok))
           throw new Error('Erreur lors de la sauvegarde des avatars.');
-        return Promise.all(res.map((r) => r.json()));
+        return Promise.all(res.map((r) => readOptionalJson(r)));
       })
       .then(() => {
-        const skin = (selectedSkin || currentSkin).toLowerCase().replace(/ /g, '_');
-        const pose = (selectedPose || currentPose).toLowerCase().replace(/ /g, '_');
-        updatePlayerAvatar({
-          name: selectedSkin || currentSkin,
-          url: `${cdnImage('assets/rank_card/avatar/')}${skin}/${pose}.webp`,
-        });
+        currentSkin = nextSkin;
+        currentPose = nextPose;
+        currentAvatar = {
+          skin: currentSkin,
+          pose: currentPose,
+          name: currentSkin,
+          url: rankCardAvatarUrl(currentSkin, currentPose),
+        };
+        avatarStateRevision += 1;
+        if (isRankCardPreviewLoadedFor(me)) {
+          updatePlayerAvatar(currentAvatar);
+        }
+        renderAvatarDraft();
         toastSuccess(t('avatar_saved'));
         closeModal(overlay);
         selectedSkin = null;
@@ -2314,17 +2451,25 @@ function initAvatarChanges() {
       .catch((e) => {
         console.error('Erreur sauvegarde avatar:', e);
         toastError(t('errors.avatar_save_failed'));
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
       });
   });
 
   changeAvatarButton.addEventListener('click', () => {
+    selectedSkin = null;
+    selectedPose = null;
     openModal(overlay);
-    fetchCurrentAvatar();
+    avatarLoadPromise = fetchCurrentAvatar();
+    void avatarLoadPromise.catch(() => {});
     toggleActiveClass(changeSkinButton);
   });
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
+      selectedSkin = null;
+      selectedPose = null;
       closeModal(overlay);
       options.classList.add(...String('hidden').trim().split(/\s+/).filter(Boolean));
     }
@@ -2332,7 +2477,7 @@ function initAvatarChanges() {
 }
 
 function updatePlayerAvatar(data) {
-  const img = document.querySelector('.player-avatar');
+  const img = byId('rankCardContent')?.querySelector('img.player-avatar');
   if (!img) {
     console.error('.player-avatar introuvable.');
     return;
@@ -2351,7 +2496,7 @@ function updatePlayerAvatar(data) {
 function preloadAvatarPreviews() {
   const skinPreview = byId('avatarSkinPreview');
   const posePreview = byId('avatarPosePreview');
-  const me = selectedUserId || getCurrentUserId();
+  const me = getCurrentUserId();
   if (!me) return Promise.resolve();
 
   if (skinPreview) {
@@ -2396,7 +2541,7 @@ function preloadAvatarPreviews() {
 }
 
 function preloadAvatarOptions() {
-  const me = selectedUserId || getCurrentUserId();
+  const me = getCurrentUserId();
   if (!me) return Promise.resolve();
 
   return fetch(endpoints.lootbox.userRewards(me), { credentials: 'same-origin' })
