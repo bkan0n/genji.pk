@@ -2387,6 +2387,16 @@ function initializeToolbarButtons() {
           input.addEventListener('input', (event) =>
             showSuggestions(event, 'map-codes', 'mapCodeSuggestionsContainer', 'code')
           );
+          // Gate the archived filter live while the code is typed, not just on apply.
+          if (!input.dataset.recordArchivedGate) {
+            input.dataset.recordArchivedGate = '1';
+            input.addEventListener('input', () => {
+              const raw = input.getAttribute('data-selected-raw-value') || input.value.trim();
+              if (raw) activeFilters.code = raw;
+              else delete activeFilters.code;
+              syncRecordArchivedVisibility();
+            });
+          }
           ['mousedown', 'click', 'focus'].forEach((type) =>
             input.addEventListener(type, (e) => e.stopPropagation())
           );
@@ -2568,6 +2578,8 @@ function initializeToolbarButtons() {
   if (currentSection === 'personal_records') {
     mountPersonalRecordsViewSwitch();
   }
+
+  syncRecordArchivedVisibility();
 
   refreshToolbarAnimation();
 }
@@ -2903,6 +2915,38 @@ function updateToolbarButtonStates() {
     badge.textContent = text;
     badge.classList.remove(...String('hidden').trim().split(/\s+/).filter(Boolean));
   });
+
+  syncRecordArchivedVisibility();
+}
+
+// The Completions section shares one toolbar across its modes, but only its
+// user-only mode requests the user-completions endpoint that supports `archived`.
+// Every other mode (map code given, or the no-filter default that falls back to
+// a default code) hits /api/completions/{code}, which has no `archived` support.
+// Mirrors the branching in buildSectionRequest so the filter is never shown inert.
+// Personal Records always hits the user-completions endpoint, so it always applies.
+function recordArchivedFilterApplies() {
+  if (currentSection === 'personal_records') return true;
+  if (currentSection !== 'completions') return false;
+
+  const hasCode = !!String(activeFilters?.code ?? '').trim();
+  const hasUser = !!String(activeFilters?.user_id ?? '').trim();
+
+  return hasUser && !hasCode;
+}
+
+function syncRecordArchivedVisibility() {
+  const button = document.getElementById('record_archivedFilterButton');
+  if (!button) return;
+
+  const applies = recordArchivedFilterApplies();
+  button.classList.toggle('u-d-none', !applies);
+
+  if (!applies) {
+    button.classList.remove(...String('selected').trim().split(/\s+/).filter(Boolean));
+    // showOptionsContainer appends the dropdown to document.body, not the button.
+    closeFloating(document.getElementById('record_archivedOptions'));
+  }
 }
 
 function syncOptionsWithFilters(optionsContainer, filterKeyRaw) {
