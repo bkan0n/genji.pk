@@ -232,7 +232,11 @@ Route::prefix('maps')->group(function () {
         Route::post('playtests/{thread_id}/vote/{user_id}', [
             PlaytestVoteController::class,
             'store',
-        ])->name('playtests.vote.store');
+        ])
+            ->whereNumber('thread_id')
+            ->where('user_id', '\d{1,20}')
+            ->middleware('user.matches-route:user_id')
+            ->name('playtests.vote.store');
         Route::post('{code}/quality', [QualityVoteController::class, 'store'])
             ->where('code', '[A-Za-z0-9\-]+')
             ->name('api.maps.quality.store');
@@ -301,7 +305,7 @@ Route::prefix('users')->group(function () {
         ->whereNumber('user_id')
         ->name('users.notifications.index');
 
-    Route::middleware('web')->group(function () {
+    Route::middleware(['web', 'user.matches-route:user_id'])->group(function () {
         Route::put('{user_id}/overwatch', ReplaceOverwatchUsernamesController::class)
             ->whereNumber('user_id')
             ->name('users.overwatch.replace');
@@ -325,7 +329,9 @@ Route::prefix('users')->group(function () {
 Route::prefix('lootbox')->group(function () {
     Route::get('keys', [KeysController::class, 'index']);
     Route::get('users/{user}/keys', [KeysController::class, 'userKeys'])->whereNumber('user');
-    Route::get('users/{user}/keys/{keyType}', [KeysController::class, 'drawForUser'])->whereNumber('user');
+    Route::get('users/{user}/keys/{keyType}', [KeysController::class, 'drawForUser'])
+        ->whereNumber('user')
+        ->middleware(['web', 'user.matches-route:user']);
     Route::get('rewards', [RewardsController::class, 'index']);
     Route::get('users/{user}/rewards', [RewardsController::class, 'userRewards'])->whereNumber('user');
 
@@ -338,9 +344,9 @@ Route::prefix('lootbox')->group(function () {
         Route::get('xp/multiplier', GetXpMultiplierController::class);
         Route::post('xp/multiplier', ChangeXpMultiplierController::class);
 
-        Route::post('users/{user}/keys', [KeysController::class, 'grantToUser'])->whereNumber('user');
         Route::post('users/{user}/{keyType}/{rewardType}/{rewardName}', [RewardsController::class, 'grantToUser'])
-            ->whereNumber('user');
+            ->whereNumber('user')
+            ->middleware('user.matches-route:user');
     });
 });
 
@@ -679,16 +685,24 @@ Route::prefix('users/{user_id}/rank-card')
     ->whereNumber('user_id')
     ->group(function () {
         Route::get('avatar/pose', GetAvatarPoseController::class)->name('avatar.pose.get');
-        Route::put('avatar/pose', SetAvatarPoseController::class)->name('avatar.pose.set');
+        Route::put('avatar/pose', SetAvatarPoseController::class)
+            ->middleware(['web', 'user.matches-route:user_id'])
+            ->name('avatar.pose.set');
 
         Route::get('avatar/skin', GetAvatarSkinController::class)->name('avatar.skin.get');
-        Route::put('avatar/skin', SetAvatarSkinController::class)->name('avatar.skin.set');
+        Route::put('avatar/skin', SetAvatarSkinController::class)
+            ->middleware(['web', 'user.matches-route:user_id'])
+            ->name('avatar.skin.set');
 
         Route::get('background', GetBackgroundController::class)->name('background.get');
-        Route::put('background', SetBackgroundController::class)->name('background.set');
+        Route::put('background', SetBackgroundController::class)
+            ->middleware(['web', 'user.matches-route:user_id'])
+            ->name('background.set');
 
         Route::get('badges', GetBadgeSettingsController::class)->name('badges.get');
-        Route::put('badges', SetBadgeSettingsController::class)->name('badges.set');
+        Route::put('badges', SetBadgeSettingsController::class)
+            ->middleware(['web', 'user.matches-route:user_id'])
+            ->name('badges.set');
 
         Route::get('/', GetRankCardController::class)->name('get');
     });
