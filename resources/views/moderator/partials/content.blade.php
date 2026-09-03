@@ -118,7 +118,7 @@
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
-            <div data-dd-list class="mod-dd-list"></div>
+            <div data-dd-list class="mod-dd-list hidden"></div>
           </div>
         </label>
         <label class="text-sm">
@@ -139,7 +139,7 @@
                 <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
-            <div data-dd-list class="mod-dd-list"></div>
+            <div data-dd-list class="mod-dd-list hidden"></div>
           </div>
         </label>
         <div class="text-sm sm:col-span-2 space-y-3" data-mt-current="tips">

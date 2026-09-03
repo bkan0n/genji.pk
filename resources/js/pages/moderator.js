@@ -409,7 +409,8 @@ function wireDdSelect(root = document) {
 
     list.addEventListener("click", (e) => e.stopPropagation());
 
-    list.addEventListener("change", () => {
+    list.addEventListener("change", (e) => {
+      if (!e.target?.matches?.('input[type="radio"]')) return;
       update();
       addHidden();
     });

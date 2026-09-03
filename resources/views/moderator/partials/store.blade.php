@@ -72,7 +72,7 @@
               <div
                 data-dd-list
                 role="listbox"
-                class="mod-dd-list p-1"
+                class="mod-dd-list hidden p-1"
               >
                 <label class="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/10">
                   <input type="radio" name="active_key_type" value="Classic" data-label="Classic" class="accent-emerald-500" />
