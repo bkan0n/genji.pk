@@ -162,7 +162,7 @@
                         <!-- Difficulty -->
                         <div>
                           <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select difficulty</label>
-                          <div id="u-difficultyDropdown" class="relative">
+                          <div id="u-difficultyDropdown" class="relative" data-dd-select>
                             <button
                               type="button"
                               data-dd-btn
@@ -181,7 +181,7 @@
                             </button>
                             <div
                               data-dd-list
-                              class="mod-dd-list"
+                              class="mod-dd-list hidden"
                             ></div>
                           </div>
                         </div>
@@ -189,7 +189,7 @@
                         <!-- Category -->
                         <div>
                           <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select category</label>
-                          <div id="u-categoryDropdown" class="relative">
+                          <div id="u-categoryDropdown" class="relative" data-dd-select>
                             <button
                               type="button"
                               data-dd-btn
@@ -208,7 +208,7 @@
                             </button>
                             <div
                               data-dd-list
-                              class="mod-dd-list"
+                              class="mod-dd-list hidden"
                             ></div>
                           </div>
                         </div>
@@ -216,7 +216,7 @@
                         <!-- Mechanics -->
                         <div>
                           <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select mechanics</label>
-                          <div id="u-mechanicsDropdown" class="relative">
+                          <div id="u-mechanicsDropdown" class="relative" data-dd-select>
                             <button
                               type="button"
                               data-dd-btn
@@ -235,7 +235,7 @@
                             </button>
                             <div
                               data-dd-list
-                              class="mod-dd-list"
+                              class="mod-dd-list hidden"
                             ></div>
                           </div>
                         </div>
@@ -245,7 +245,7 @@
                           <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                             Select restrictions
                           </label>
-                          <div id="u-restrictionsDropdown" class="relative">
+                          <div id="u-restrictionsDropdown" class="relative" data-dd-select>
                             <button
                               type="button"
                               data-dd-btn
@@ -266,7 +266,7 @@
                             </button>
                             <div
                               data-dd-list
-                              class="mod-dd-list"
+                              class="mod-dd-list hidden"
                             ></div>
                           </div>
                         </div>
@@ -304,7 +304,7 @@
                         <!-- Playtesting -->
                         <div>
                           <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Playtesting</label>
-                          <div id="u-playtestingDropdown" class="relative">
+                          <div id="u-playtestingDropdown" class="relative" data-dd-select>
                             <button
                               type="button"
                               data-dd-btn
@@ -323,14 +323,14 @@
                             </button>
                             <div
                               data-dd-list
-                              class="mod-dd-list"
+                              class="mod-dd-list hidden"
                             ></div>
                           </div>
                         </div>
 
                         <div class="sm:col-span-2">
                           <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select tags</label>
-                          <div id="u-tagsDropdown" class="relative">
+                          <div id="u-tagsDropdown" class="relative" data-dd-select>
                             <button
                               type="button"
                               data-dd-btn
@@ -354,7 +354,7 @@
                             </button>
                             <div
                               data-dd-list
-                              class="mod-dd-list"
+                              class="mod-dd-list hidden"
                             ></div>
                           </div>
                         </div>

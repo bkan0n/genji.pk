@@ -120,7 +120,7 @@ html[data-theme="light"] #prism { background: #ffffff; }
   }
   /* Custom-dropdown popover list (data-dd-list) */
   .mod-dd-list {
-    @apply absolute z-20 mt-1 hidden max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 bg-white shadow-xl dark:border-white/10 dark:bg-zinc-900;
+    @apply absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-zinc-200/80 bg-white shadow-xl dark:border-white/10 dark:bg-zinc-900;
   }
   /* Inline "Edit" affordance on meta chips (JS hook: .block-edit-btn) */
   .block-edit-btn {

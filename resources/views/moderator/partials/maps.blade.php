@@ -166,7 +166,7 @@
                 <!-- Difficulty (radio) -->
                 <div>
                   <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select difficulty</label>
-                  <div id="difficultyDropdown" class="relative">
+                  <div id="difficultyDropdown" class="relative" data-dd-select>
                     <button
                       type="button"
                       data-dd-btn
@@ -185,7 +185,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="mod-dd-list"
+                      class="mod-dd-list hidden"
                     ></div>
                   </div>
                 </div>
@@ -193,7 +193,7 @@
                 <!-- Category (radio) -->
                 <div>
                   <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select category</label>
-                  <div id="categoryDropdown" class="relative">
+                  <div id="categoryDropdown" class="relative" data-dd-select>
                     <button
                       type="button"
                       data-dd-btn
@@ -212,7 +212,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="mod-dd-list"
+                      class="mod-dd-list hidden"
                     ></div>
                   </div>
                 </div>
@@ -220,7 +220,7 @@
                 <!-- Mechanics (checkboxes) -->
                 <div>
                   <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select mechanics</label>
-                  <div id="mechanicsDropdown" class="relative">
+                  <div id="mechanicsDropdown" class="relative" data-dd-select>
                     <button
                       type="button"
                       data-dd-btn
@@ -239,7 +239,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="mod-dd-list"
+                      class="mod-dd-list hidden"
                     ></div>
                   </div>
                 </div>
@@ -249,7 +249,7 @@
                   <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
                     Select restrictions
                   </label>
-                  <div id="restrictionsDropdown" class="relative">
+                  <div id="restrictionsDropdown" class="relative" data-dd-select>
                     <button
                       type="button"
                       data-dd-btn
@@ -270,7 +270,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="mod-dd-list"
+                      class="mod-dd-list hidden"
                     ></div>
                   </div>
                 </div>
@@ -283,7 +283,7 @@
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                   <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Select tags</label>
-                  <div id="tagsDropdown" class="relative">
+                  <div id="tagsDropdown" class="relative" data-dd-select>
                     <button
                       type="button"
                       data-dd-btn
@@ -307,7 +307,7 @@
                     </button>
                     <div
                       data-dd-list
-                      class="mod-dd-list"
+                      class="mod-dd-list hidden"
                     ></div>
                   </div>
                 </div>
