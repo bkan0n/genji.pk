@@ -82,7 +82,7 @@
               </div>
             </a>
 
-            <div class="flex items-end justify-between gap-4 p-5">
+            <div class="flex items-start justify-between gap-4 p-5">
               <a
                 href="{{ $community['href'] }}"
                 class="min-w-0 flex-1"
@@ -103,7 +103,7 @@
                 </p>
               </a>
 
-              <div class="mb-1 flex shrink-0 flex-col items-center gap-2">
+              <div class="mt-6 flex shrink-0 flex-col items-center gap-2">
                 <a
                   href="{{ $community['discord'] }}"
                   class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50 text-zinc-700 transition hover:border-emerald-300 hover:text-emerald-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:border-emerald-400/40 dark:hover:text-emerald-300"
