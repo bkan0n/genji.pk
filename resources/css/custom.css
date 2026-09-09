@@ -337,7 +337,7 @@ i.flag::before {
   width: 16px;
   height: 12px;
   content: '';
-  background: url(https://mdbootstrap.com/img/svg/flags.png) no-repeat -108px -1976px;
+  background: url(https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.20.0/img/svg/flags.png) no-repeat -108px -1976px;
 }
 i.flag-ad:before,
 i.flag-andorra:before {
