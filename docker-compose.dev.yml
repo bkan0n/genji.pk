@@ -1,5 +1,6 @@
 services:
   genjishimada-web-dev:
+    restart: unless-stopped
     container_name: genjishimada-web-dev
     build:
       dockerfile: Dockerfile
