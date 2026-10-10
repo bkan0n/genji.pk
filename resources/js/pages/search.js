@@ -573,6 +573,10 @@ const MAP_SEARCH_SORT_OPTIONS = [
   'title:desc',
   'code:asc',
   'code:desc',
+  'created_at:asc',
+  'created_at:desc',
+  'updated_at:asc',
+  'updated_at:desc',
 ];
 
 function __formatMapSearchSortLabel(v) {
@@ -588,6 +592,8 @@ function __formatMapSearchSortLabel(v) {
     map_name: 'Map name',
     title: 'Title',
     code: 'Code',
+    created_at: 'Submission date',
+    updated_at: 'Last changed',
   };
 
   const niceField =
