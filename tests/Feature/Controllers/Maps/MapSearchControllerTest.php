@@ -4,6 +4,7 @@ namespace Tests\Feature\Controllers\Maps;
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class MapSearchControllerTest extends TestCase
@@ -49,6 +50,46 @@ class MapSearchControllerTest extends TestCase
 
             return $query['archived'] === 'true';
         });
+    }
+
+    #[DataProvider('dateSorts')]
+    public function test_map_search_forwards_date_sort(string $sort): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://genji-api.test/api/v3/maps*' => Http::response([]),
+        ]);
+
+        $this->getJson('/api/maps?'.http_build_query(['sort' => $sort]))->assertOk();
+
+        Http::assertSent(function (Request $request) use ($sort): bool {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return $request->method() === 'GET'
+                && $query['sort'] === $sort;
+        });
+    }
+
+    public static function dateSorts(): array
+    {
+        return [
+            'oldest submissions' => ['created_at:asc'],
+            'newest submissions' => ['created_at:desc'],
+            'least recently changed' => ['updated_at:asc'],
+            'recently changed' => ['updated_at:desc'],
+        ];
+    }
+
+    public function test_map_search_rejects_invalid_date_sort(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake();
+
+        $this->getJson('/api/maps?sort=created_at:newest')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('sort.0');
+
+        Http::assertNothingSent();
     }
 
     public function test_map_search_endpoint_returns_valid_response()
