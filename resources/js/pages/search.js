@@ -1,4 +1,5 @@
 import { cdnAsset, cdnImage } from "../utils/cdn";
+import { normalizeMapNames, serializeSearchFilters, toggleMapName } from '../utils/search-filters';
 
 /* =========================
    CONFIG & UTILS
@@ -643,7 +644,7 @@ function __ensureMapSearchSortDropdown(anchorBtn) {
     opts.id = 'mapSearchSortOptions';
 
     opts.className =
-      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-64 max-h-56 overflow-y-auto';
+      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-white dark:bg-zinc-900 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-64 max-h-56 overflow-y-auto';
     opts.dataset.filterKeyRaw = 'sort';
     opts.dataset.anchorId = anchorBtn.id;
 
@@ -1163,7 +1164,7 @@ const URL_FILTER_ALIASES = {
   completionFilter: 'completion_filter',
 };
 
-const URL_ARRAY_KEYS = new Set(['mechanics', 'restrictions', 'creator_ids', 'creator_names']);
+const URL_ARRAY_KEYS = new Set(['map_name', 'mechanics', 'restrictions', 'creator_ids', 'creator_names']);
 
 let __urlBootstrapped = false;
 
@@ -1270,7 +1271,8 @@ function __urlReadFilters() {
       continue;
     }
 
-    if (URL_ARRAY_KEYS.has(k)) out[k] = arr;
+    if (k === 'map_name') out[k] = normalizeMapNames(arr);
+    else if (URL_ARRAY_KEYS.has(k)) out[k] = arr;
     else out[k] = arr[0];
   }
 
@@ -1730,7 +1732,7 @@ function getOrCreateInput(id, placeholder, parentButton) {
     input.placeholder = t(placeholder) || placeholder;
     input.id = id;
     input.className =
-      'filter-input mt-0 w-56 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none u-d-none';
+      'filter-input mt-0 w-56 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-600 dark:text-zinc-500 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 focus:outline-none u-d-none';
     input.autocomplete = 'off';
     input.autocorrect = 'off';
     input.autocapitalize = 'off';
@@ -1794,7 +1796,7 @@ function showOptionsContainer(id, options, button, useWrapper = false) {
     optionsContainer = document.createElement('div');
     optionsContainer.id = id;
     optionsContainer.className =
-      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-60 max-h-56 overflow-y-auto';
+      'custom-options opacity-0 translate-y-1 transition p-2 mt-0 z-45 bg-white dark:bg-zinc-900 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-60 max-h-56 overflow-y-auto';
     optionsContainer.classList.add(...String(useWrapper ? 'with-wrapper' : 'without-wrapper').trim().split(/\s+/).filter(Boolean));
 
     optionsContainer.dataset.filterKeyRaw = id.replace('Options', '');
@@ -1933,7 +1935,7 @@ function openPlaytestStatusPanel(button) {
     opts = document.createElement('div');
     opts.id = 'playtestStatusOptions';
     opts.className =
-      'custom-options opacity-0 translate-y-1 transition p-3 mt-0 z-45 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-56';
+      'custom-options opacity-0 translate-y-1 transition p-3 mt-0 z-45 bg-white dark:bg-zinc-900 shadow-lg ring-1 ring-zinc-300/60 dark:ring-white/10 rounded-lg w-56';
     opts.dataset.filterKeyRaw = 'playtestStatus';
     opts.dataset.anchorId = button.id;
 
@@ -2420,12 +2422,27 @@ function initializeToolbarButtons() {
         }
         case 'map_name': {
           input = getOrCreateInput('mapNameInput', t('filters_toolbar.enter_map_name'), button);
-          input.addEventListener('input', (event) =>
-            showSuggestions(event, 'map-names', 'mapNameSuggestionsContainer', 'map_name')
-          );
-          ['mousedown', 'click', 'focus'].forEach((type) =>
-            input.addEventListener(type, (e) => e.stopPropagation())
-          );
+          input.setAttribute('aria-label', t('filters_toolbar.enter_map_name'));
+          input.setAttribute('aria-controls', 'mapNameSuggestionsContainer');
+          input.title = t('filters_toolbar.map_name_hint');
+          if (!input.dataset.multiMapBound) {
+            input.dataset.multiMapBound = '1';
+            input.addEventListener('input', (event) =>
+              showSuggestions(event, 'map-names', 'mapNameSuggestionsContainer', 'map_name')
+            );
+            input.addEventListener('keydown', (event) => {
+              if (event.isComposing || !['ArrowDown', 'Enter'].includes(event.key)) return;
+              const suggestions = document.getElementById('mapNameSuggestionsContainer');
+              const first = __isFloatingOpen(suggestions) && suggestions.querySelector('button:not(:disabled)');
+              if (!first) return;
+              if (event.key === 'Enter' && !input.value.trim()) return;
+              event.preventDefault();
+              if (event.key === 'ArrowDown') first.focus();
+              else first.click();
+            });
+          }
+          input.focus();
+          showSuggestions({ target: input }, 'map-names', 'mapNameSuggestionsContainer', 'map_name');
           break;
         }
         case 'user': {
@@ -2594,6 +2611,8 @@ function initializeToolbarButtons() {
    TOOLBAR FILTERS
    ========================= */
 function updateActiveFilters() {
+  // Map selections are edited independently of the autocomplete's draft text.
+  const mapNames = normalizeMapNames(activeFilters.map_name);
   const filterMappings = {
     mapCode: 'code',
     mapName: 'map_name',
@@ -2614,6 +2633,8 @@ function updateActiveFilters() {
   };
 
   activeFilters = { ...persistentFilters };
+  if (mapNames.length) activeFilters.map_name = mapNames;
+  else delete activeFilters.map_name;
 
   document.querySelectorAll('.custom-options').forEach((optionsContainer) => {
     const filterId = optionsContainer.id.replace('Options', '');
@@ -2654,19 +2675,6 @@ function updateActiveFilters() {
     const raw = codeInput.getAttribute('data-selected-raw-value') || codeInput.value.trim();
     if (raw) activeFilters.code = raw;
     else delete activeFilters.code;
-  }
-
-  const mapNameInput = document.getElementById('mapNameInput');
-  if (mapNameInput) {
-    const selectedRaw = mapNameInput.getAttribute('data-selected-raw-value');
-    let raw = selectedRaw || mapNameInput.value.trim();
-
-    if (!selectedRaw && typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && raw) {
-      raw = mapNameCnToEnSmart(raw);
-    }
-
-    if (raw) activeFilters.map_name = raw;
-    else delete activeFilters.map_name;
   }
 
   const userInput = document.getElementById('userNicknameInput');
@@ -3112,9 +3120,12 @@ async function applyFilters(filters, opts = {}) {
   renderSkeletonForSection(currentSection);
   showLoadingBar();
 
-  // CN
-  if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn' && activeFilters.map_name) {
-    activeFilters.map_name = await canonicalizeMapNameForApi(activeFilters.map_name);
+  if (activeFilters.map_name) {
+    let names = normalizeMapNames(activeFilters.map_name);
+    if (CURRENT_LANG === 'cn') {
+      names = await Promise.all(names.map(canonicalizeMapNameForApi));
+    }
+    activeFilters.map_name = normalizeMapNames(names);
   }
 
   try {
@@ -3155,21 +3166,7 @@ async function applyFilters(filters, opts = {}) {
    ========================= */
 function buildSectionRequest(section, filters, pageNumber, pageSize) {
   const enc = encodeURIComponent;
-
-  const toQuery = (obj = {}) => {
-    const p = new URLSearchParams();
-    for (const [k, v] of Object.entries(obj)) {
-      if (v == null || v === '') continue;
-      if (Array.isArray(v)) {
-        v.forEach((item) => {
-          if (item != null && item !== '') p.append(k, item);
-        });
-      } else {
-        p.set(k, v);
-      }
-    }
-    return p.toString();
-  };
+  const toQuery = serializeSearchFilters;
 
   if (section === 'map_search') {
     const uid = typeof window !== 'undefined' && window.user_id ? String(window.user_id) : '';
@@ -3304,7 +3301,7 @@ function getSuggestionsContainer(containerId, input) {
     suggestionsContainer.id = containerId;
     suggestionsContainer.className = [
       'suggestions-container z-[1110]',
-      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 text-sm text-zinc-900 dark:text-zinc-100',
+      'rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 text-sm text-zinc-900 dark:text-zinc-100',
       'shadow-xl ring-1 ring-zinc-300/60 dark:ring-white/10',
       'max-h-56 overflow-y-auto',
       'u-d-none',
@@ -3340,24 +3337,54 @@ function getSuggestionsContainer(containerId, input) {
 function showSuggestions(event, apiEndpoint, containerId, propertyName) {
   const input = event.target;
   const filterValue = input.value.trim();
+  const isMapName = propertyName === 'map_name';
+  const requestId = (input.__suggestionRequestId || 0) + 1;
+  input.__suggestionRequestId = requestId;
+  const isCurrentRequest = () => input.__suggestionRequestId === requestId && __isFloatingOpen(input);
   input.removeAttribute('data-selected-raw-value');
   const suggestionsContainer = getSuggestionsContainer(containerId, input);
 
   clearTimeout(debounceTimeout);
-  if (filterValue.length < 2) {
+  if (isMapName) closeFloating(suggestionsContainer);
+  if (filterValue.length < 2 && !isMapName) {
     closeFloating(suggestionsContainer);
     return;
   }
 
     debounceTimeout = setTimeout(async () => {
       const makeItem = (label, raw) => {
-        const d = document.createElement('div');
+        const d = document.createElement(isMapName ? 'button' : 'div');
         d.textContent = label;
         d.className =
           'suggestion-item cursor-pointer px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/10';
+        if (isMapName) {
+          d.type = 'button';
+          d.classList.add('flex', 'w-full', 'items-center', 'justify-between', 'gap-2', 'text-left', 'focus-visible:outline-2', 'focus-visible:-outline-offset-2', 'focus-visible:outline-emerald-500');
+          const selected = normalizeMapNames(activeFilters.map_name).some((name) => name.toLowerCase() === String(raw).toLowerCase());
+          d.setAttribute('aria-pressed', String(selected));
+          d.insertAdjacentHTML('beforeend', `<svg class="h-4 w-4 shrink-0 text-emerald-500 ${selected ? '' : 'invisible'}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 10 3 3 7-7"/></svg>`);
+          d.addEventListener('keydown', (event) => {
+            if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
+            event.preventDefault();
+            const items = Array.from(suggestionsContainer.querySelectorAll('button:not(:disabled)'));
+            const next = items.indexOf(d) + (event.key === 'ArrowDown' ? 1 : -1);
+            (items[next] || input).focus();
+          });
+        }
         d.setAttribute('data-raw-value', raw);
         d.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (isMapName) {
+            input.__suggestionRequestId++;
+            clearTimeout(debounceTimeout);
+            activeFilters.map_name = toggleMapName(activeFilters.map_name, raw);
+            input.value = '';
+            closeFloating(suggestionsContainer);
+            updateActiveFilters();
+            input.focus();
+            showSuggestions({ target: input }, apiEndpoint, containerId, propertyName);
+            return;
+          }
           input.setAttribute('data-selected-raw-value', raw);
           input.value = label;
 
@@ -3388,6 +3415,24 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
         return d;
       };
 
+      if (isMapName && filterValue.length < 2) {
+        if (!isCurrentRequest()) return;
+        suggestionsContainer.replaceChildren(...normalizeMapNames(activeFilters.map_name).map((name) =>
+          makeItem(mapNameToCnDisplay(name), name)
+        ));
+        if (suggestionsContainer.children.length) {
+          openFloating(suggestionsContainer, input, {
+            matchAnchorWidth: true,
+            offset: 4,
+            origin: 'top left',
+            dur: 140,
+          });
+        } else {
+          closeFloating(suggestionsContainer);
+        }
+        return;
+      }
+
       // CN
       if (
         typeof CURRENT_LANG !== 'undefined' &&
@@ -3398,6 +3443,8 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
         try {
           await ensureMapsIndex();
         } catch (_) {}
+
+        if (!isCurrentRequest()) return;
 
         suggestionsContainer.innerHTML = '';
         const list = Array.isArray(__mapsIndex?.list) ? __mapsIndex.list : [];
@@ -3448,6 +3495,7 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
         if (!r.ok) throw new Error(`API Error: ${r.status}`);
 
         const data = await r.json();
+        if (!isCurrentRequest()) return;
         suggestionsContainer.innerHTML = '';
         if (!Array.isArray(data) || data.length === 0) {
           closeFloating(suggestionsContainer);
@@ -3493,6 +3541,7 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
           closeFloating(suggestionsContainer);
         }
       } catch (error) {
+        if (!isCurrentRequest()) return;
         console.error('Erreur lors de la récupération des suggestions :', error);
         closeFloating(suggestionsContainer);
       }
@@ -3895,8 +3944,14 @@ function closeFloating(el, { dur = 120 } = {}) {
   el.addEventListener('transitionend', done, { once: true });
 }
 
-const openInputAnimated = (input, anchor) =>
-  openFloating(input, anchor, { matchAnchorWidth: true, offset: 6, origin: 'top left', dur: 180 });
+const openInputAnimated = (input, anchor) => {
+  openFloating(input, anchor, {
+    matchAnchorWidth: input?.id !== 'mapNameInput',
+    offset: 6,
+    origin: 'top left',
+    dur: 180,
+  });
+};
 const openDropdownAnimated = (el, anchor) =>
   openFloating(el, anchor, { matchAnchorWidth: false, offset: 6, origin: 'top center', dur: 150 });
 

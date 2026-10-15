@@ -62,6 +62,7 @@ return [
         'enter_creator'         => '输入作者',
         'map_name'              => '地图名称',
         'enter_map_name'        => '输入地图名称',
+        'map_name_hint'         => '选择要包含的地图，结果可匹配任意所选地图。',
         'user'                  => '用户名',
         'enter_nickname'        => '输入用户名',
         'code'                  => '地图代码',

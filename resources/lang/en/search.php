@@ -63,6 +63,7 @@ return [
         'enter_creator'         => 'Enter creator',
         'map_name'              => 'Map name',
         'enter_map_name'        => 'Enter map name',
+        'map_name_hint'         => 'Choose maps to include. Results can match any selected map.',
         'user'                  => 'User name',
         'enter_nickname'        => 'Enter user name',
         'code'                  => 'Map code',
