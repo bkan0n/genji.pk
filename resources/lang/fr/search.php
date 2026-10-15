@@ -63,6 +63,7 @@ return [
         'enter_creator'        => 'Entrez un créateur',
         'map_name'             => 'Nom de la map',
         'enter_map_name'       => 'Entrez le nom de la map',
+        'map_name_hint'        => 'Choisissez les maps à inclure. Les résultats peuvent correspondre à l’une des maps sélectionnées.',
         'user'                 => 'Nom du joueur',
         'enter_nickname'       => 'Entrez un nom de joueur',
         'code'                 => 'Code de la map',

@@ -80,6 +80,64 @@ class MapSearchControllerTest extends TestCase
         ];
     }
 
+    #[DataProvider('mapNameQueries')]
+    public function test_map_search_forwards_all_map_names(string $queryString, array $expected): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://genji-api.test/api/v3/maps*' => Http::response([]),
+        ]);
+
+        $this->getJson('/api/maps?'.$queryString.'&difficulty_exact=Hard&page_number=2')->assertOk();
+
+        Http::assertSent(function (Request $request) use ($expected): bool {
+            $queryString = (string) parse_url($request->url(), PHP_URL_QUERY);
+            $names = [];
+            // The upstream API expects repeated, unbracketed map_name keys.
+            // parse_str would retain only the final name and hide regressions.
+            foreach (explode('&', $queryString) as $part) {
+                [$key, $value] = array_pad(explode('=', $part, 2), 2, '');
+                if (rawurldecode($key) === 'map_name') {
+                    $names[] = rawurldecode($value);
+                }
+            }
+            parse_str($queryString, $query);
+
+            return $request->method() === 'GET'
+                && $names === $expected
+                && $query['difficulty_exact'] === 'Hard'
+                && $query['page_number'] === '2';
+        });
+    }
+
+    public static function mapNameQueries(): array
+    {
+        return [
+            'browser multi-select' => [
+                'map_name%5B%5D=Hanamura&map_name%5B%5D=Eichenwalde',
+                ['Hanamura', 'Eichenwalde'],
+            ],
+            'single-map compatibility' => ['map_name=Hanamura', ['Hanamura']],
+            'comma-separated compatibility' => ['map_name=Hanamura%2CEichenwalde', ['Hanamura', 'Eichenwalde']],
+            'trimming and deduplication' => [
+                http_build_query(['map_name' => [' Hanamura ', 'Hanamura', '', 'Watchpoint: Gibraltar']]),
+                ['Hanamura', 'Watchpoint: Gibraltar'],
+            ],
+        ];
+    }
+
+    public function test_map_search_rejects_nested_map_names(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake();
+
+        $this->getJson('/api/maps?'.http_build_query(['map_name' => [['Hanamura']]]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('map_name.0');
+
+        Http::assertNothingSent();
+    }
+
     public function test_map_search_rejects_invalid_date_sort(): void
     {
         Http::preventStrayRequests();

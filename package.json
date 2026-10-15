@@ -5,6 +5,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
+    "test:js": "node --test tests/JavaScript/*.test.js",
     "format": "prettier --write \"**/*.{js,ts,jsx,tsx,css,scss,vue,html,md,json,yml,yaml,php,blade.php}\"",
     "format:check": "prettier --check ."
   },
