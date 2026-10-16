@@ -244,6 +244,7 @@ Route::prefix('maps')->group(function () {
 });
 
 /* ================== UTILITIES ================== */
+Route::get('map-names', GetMapNamesController::class)->name('api.map-names');
 Route::prefix('autocomplete')->group(function () {
     Route::get('map-codes', MapCodesController::class)->name('api.autocomplete.map-codes');
     Route::get('map-mechanics', MapMechanicsController::class)->name(

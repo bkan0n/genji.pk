@@ -1,3 +1,5 @@
+import { createMapNamePopover, loadMapNames } from '../components/map-name-popover.js';
+import { createMapNameLocalizer } from '../utils/map-name-localization.js';
 import { cdnAsset, cdnImage } from "../utils/cdn";
 import { normalizeMapNames, serializeSearchFilters, toggleMapName } from '../utils/search-filters';
 
@@ -512,6 +514,23 @@ function t(path, params = {}) {
   for (const k in params) result = result.replace(`{${k}}`, params[k]);
   return result;
 }
+
+const mapNamePicker = createMapNamePopover({
+  t,
+  getSelection: () => activeFilters.map_name,
+  setSelection: (names) => {
+    if (names.length) activeFilters.map_name = names;
+    else delete activeFilters.map_name;
+    updateToolbarButtonStates('map_name');
+  },
+  loadMaps: async () => {
+    const [names, data] = await Promise.all([loadMapNames(), __loadMapsJson()]);
+    const displayName = createMapNameLocalizer(data, CURRENT_LANG, translations.map_name);
+    return names.map((name) => {
+      return { name, label: displayName(name) };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+  },
+});
 
 /* =========================
    Autocomplete dynamiques
@@ -1665,7 +1684,7 @@ function hideOnClickOutside() {
     (event) => {
       const t = event.target;
       const isInteractive = !!t.closest(
-        '.toolbar-button, .custom-options, .filter-input, .suggestions-container'
+        '.toolbar-button, .custom-options, .filter-input, .suggestions-container, #mapNamePopover'
       );
       if (!isInteractive) {
         hideAllFilters();
@@ -1709,6 +1728,7 @@ function showDropdown(el) {
 }
 
 function hideAllFilters(exceptEl = null) {
+  mapNamePicker.close();
   document.querySelectorAll('.filter-input.u-d-block, .custom-options.u-d-block').forEach((el) => {
     if (exceptEl && el === exceptEl) return;
     closeFloating(el);
@@ -2361,6 +2381,7 @@ function updateOfficialNotice() {
    TOOLBAR INIT
    ========================= */
 function initializeToolbarButtons() {
+  mapNamePicker.close(false);
   clearToolbarButtons();
   document.getElementById('mapViewSwitch')?.remove();
   document.getElementById('completionsViewSwitch')?.remove();
@@ -2382,7 +2403,17 @@ function initializeToolbarButtons() {
     const button = createButton(icon);
     toolbar.appendChild(button);
 
+    if (icon.id === 'map_name') {
+      button.setAttribute('aria-haspopup', 'dialog');
+      button.setAttribute('aria-expanded', 'false');
+    }
     button.addEventListener('click', () => {
+      if (icon.id === 'map_name') {
+        hideAllActiveSuggestions();
+        document.querySelectorAll('.filter-input.u-d-block, .custom-options.u-d-block').forEach((el) => closeFloating(el));
+        mapNamePicker.toggle(button);
+        return;
+      }
       hideAllFilters();
       hideAllActiveSuggestions();
 
@@ -2418,31 +2449,6 @@ function initializeToolbarButtons() {
           ['mousedown', 'click', 'focus'].forEach((type) =>
             input.addEventListener(type, (e) => e.stopPropagation())
           );
-          break;
-        }
-        case 'map_name': {
-          input = getOrCreateInput('mapNameInput', t('filters_toolbar.enter_map_name'), button);
-          input.setAttribute('aria-label', t('filters_toolbar.enter_map_name'));
-          input.setAttribute('aria-controls', 'mapNameSuggestionsContainer');
-          input.title = t('filters_toolbar.map_name_hint');
-          if (!input.dataset.multiMapBound) {
-            input.dataset.multiMapBound = '1';
-            input.addEventListener('input', (event) =>
-              showSuggestions(event, 'map-names', 'mapNameSuggestionsContainer', 'map_name')
-            );
-            input.addEventListener('keydown', (event) => {
-              if (event.isComposing || !['ArrowDown', 'Enter'].includes(event.key)) return;
-              const suggestions = document.getElementById('mapNameSuggestionsContainer');
-              const first = __isFloatingOpen(suggestions) && suggestions.querySelector('button:not(:disabled)');
-              if (!first) return;
-              if (event.key === 'Enter' && !input.value.trim()) return;
-              event.preventDefault();
-              if (event.key === 'ArrowDown') first.focus();
-              else first.click();
-            });
-          }
-          input.focus();
-          showSuggestions({ target: input }, 'map-names', 'mapNameSuggestionsContainer', 'map_name');
           break;
         }
         case 'user': {
@@ -2703,7 +2709,7 @@ function updateActiveFilters() {
   updateToolbarButtonStates();
 }
 
-function updateToolbarButtonStates() {
+function updateToolbarButtonStates(onlyFilterId = null) {
   const keyMap = {
     user: ['user_id'],
     creator: ['creator_ids', 'creator_names'],
@@ -2841,7 +2847,9 @@ function updateToolbarButtonStates() {
   const codeIsActive =
     !!activeFilters.code && String(activeFilters.code).trim() !== '';
 
-  const buttons = document.querySelectorAll('.toolbar-button');
+  const buttons = onlyFilterId
+    ? document.querySelectorAll(`#${onlyFilterId}FilterButton`)
+    : document.querySelectorAll('.toolbar-button');
   buttons.forEach((button) => {
     const iconId = button.id.replace('FilterButton', '');
     const filterId = iconId.toLowerCase();
