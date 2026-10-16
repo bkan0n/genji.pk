@@ -1,6 +1,20 @@
 <?php
 
 return [
+    // Popover UI labels. Map Search map names come from public/translations/maps.json;
+    // the legacy map_name dictionary below is only a fallback for existing entries.
+    // Keep new map labels in maps.json; unresolved names retain their canonical English.
+    'map_picker' => [
+        'available' => '{total} 张地图可选',
+        'search' => '搜索地图...',
+        'select_all' => '全选',
+        'clear' => '清除选择',
+        'selected' => '已选择 {count} 项',
+        'total' => '已选择 {count} / {total} 张地图',
+        'empty' => '没有找到匹配的地图',
+        'loading' => '正在加载地图...',
+        'failed' => '地图加载失败。请关闭后重新打开以重试。',
+    ],
     /*
     |--------------------------------------------------------------------------
     | Search (ZH)
@@ -62,7 +76,7 @@ return [
         'enter_creator'         => '输入作者',
         'map_name'              => '地图名称',
         'enter_map_name'        => '输入地图名称',
-        'map_name_hint'         => '选择要包含的地图，结果可匹配任意所选地图。',
+        'map_name_hint'         => '可按中文或英文搜索并选择多个地图，结果可匹配任意所选地图。',
         'user'                  => '用户名',
         'enter_nickname'        => '输入用户名',
         'code'                  => '地图代码',

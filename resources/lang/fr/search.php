@@ -1,6 +1,17 @@
 <?php
 
 return [
+    'map_picker' => [
+        'available' => '{total} cartes disponibles',
+        'search' => 'Rechercher des cartes...',
+        'select_all' => 'Tout sélectionner',
+        'clear' => 'Effacer la sélection',
+        'selected' => '{count} sélectionnées',
+        'total' => '{count} cartes sur {total} sélectionnées',
+        'empty' => 'Aucune carte correspondante',
+        'loading' => 'Chargement des cartes...',
+        'failed' => 'Impossible de charger les cartes. Fermez puis rouvrez pour réessayer.',
+    ],
     /*
     |--------------------------------------------------------------------------
     | Search (FR)

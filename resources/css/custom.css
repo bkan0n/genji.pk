@@ -85,6 +85,25 @@
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+.map-name-picker-list {
+  scrollbar-width: thin;
+  scrollbar-color: #a1a1aa transparent;
+  scrollbar-gutter: stable;
+}
+.dark .map-name-picker-list {
+  scrollbar-color: #52525b transparent;
+}
+.map-name-picker-list::-webkit-scrollbar {
+  width: 5px;
+}
+.map-name-picker-list::-webkit-scrollbar-thumb {
+  background: #a1a1aa;
+  border-radius: 8px;
+}
+.dark .map-name-picker-list::-webkit-scrollbar-thumb {
+  background: #52525b;
+}
 @layer components {
   .btn-dark {
     @apply mt-5 inline-block rounded bg-neutral-800 px-4 py-2 text-white hover:bg-neutral-700;

@@ -26,12 +26,14 @@ class LanguageController extends Controller
 
         $prev = url()->previous() ?: url('/');
         $parts = parse_url($prev);
-        $query = [];
-        if (! empty($parts['query'])) {
-            parse_str($parts['query'], $query);
-            unset($query['lang']);
-        }
-        $query['lang'] = $code;
+        // Search URLs repeat map_name for multi-select filters. parse_str()
+        // collapses those entries, so preserve the raw pairs when changing locale.
+        $query = array_values(array_filter(
+            explode('&', $parts['query'] ?? ''),
+            static fn (string $pair): bool => $pair !== ''
+                && urldecode(explode('=', $pair, 2)[0]) !== 'lang',
+        ));
+        $query[] = 'lang=' . rawurlencode($code);
 
         $rebuilt =
           ($parts['scheme'] ?? 'http') .
@@ -40,7 +42,7 @@ class LanguageController extends Controller
           (isset($parts['port']) ? ':' . $parts['port'] : '') .
           ($parts['path'] ?? '/') .
           '?' .
-          http_build_query($query);
+          implode('&', $query);
 
         return redirect($rebuilt);
     }

@@ -1,10 +1,38 @@
 {
+  "neonJunction": {
+    "en-US": "Neon Junction",
+    "zh-CN": "霓虹枢纽"
+  },
+  "powderKegMine": {
+    "en-US": "Powder Keg Mine",
+    "zh-CN": "火药桶矿井"
+  },
+  "tlalantis": {
+    "en-US": "Tlalantis"
+  },
+  "thamesDistrict": {
+    "en-US": "Thames District",
+    "zh-CN": "泰晤士区"
+  },
+  "watchpointGrimsvotn": {
+    "en-US": "Watchpoint: Grimsvötn",
+    "zh-CN": "监测站：格里姆火山"
+  },
+  "adlersbrunn": {
+    "en-US": "Adlersbrunn",
+    "zh-CN": "阿德勒斯布鲁恩"
+  },
+  "busanLny": {
+    "en-US": "Busan Lunar New Year",
+    "zh-CN": "春节釜山"
+  },
   "aatlis": {
     "gamemodes": ["skirmish", "flashpoint"],
     "variants": {
       "default": "972777519512068153"
     },
-    "en-US": "Aatlis"
+    "en-US": "Aatlis",
+    "zh-CN": "阿特利斯"
   },
   "ayutthaya": {
     "guid": "00000000676E",
@@ -62,7 +90,8 @@
       "sunset": "972777519512068292",
       "night": "972777519512068153"
     },
-    "en-US": "Arena Victoriae"
+    "en-US": "Arena Victoriae",
+    "zh-CN": "维多利亚竞技场"
   },
   "gogadoro": {
     "gamemodes": ["control"],
@@ -70,7 +99,8 @@
       "night": "972777519512068153",
       "morning": "972777519512068154"
     },
-    "en-US": "Gogadoro"
+    "en-US": "Gogadoro",
+    "zh-CN": "高架车站"
   },
   "redwoodDam": {
     "gamemodes": ["push"],
@@ -78,7 +108,8 @@
       "morning": "972777519512068154",
       "sunset": "972777519512068292"
     },
-    "en-US": "Redwood Dam"
+    "en-US": "Redwood Dam",
+    "zh-CN": "红杉水坝"
   },
   "placeLacroix": {
     "gamemodes": ["push"],
@@ -86,7 +117,8 @@
       "morning": "972777519512055904",
       "sunset": "972777519512068292"
     },
-    "en-US": "Place Lacroix"
+    "en-US": "Place Lacroix",
+    "zh-CN": "拉克瓦广场"
   },
   "blackForest": {
     "guid": "0000000059C3",

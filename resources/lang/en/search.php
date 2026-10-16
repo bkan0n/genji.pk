@@ -1,6 +1,17 @@
 <?php
 
 return [
+    'map_picker' => [
+        'available' => '{total} maps available',
+        'search' => 'Search maps...',
+        'select_all' => 'Select All',
+        'clear' => 'Clear Selection',
+        'selected' => '{count} selected',
+        'total' => '{count} of {total} maps selected',
+        'empty' => 'No matching maps',
+        'loading' => 'Loading maps...',
+        'failed' => 'Failed to load maps. Close and reopen to retry.',
+    ],
     /*
     |--------------------------------------------------------------------------
     | Search (EN)
