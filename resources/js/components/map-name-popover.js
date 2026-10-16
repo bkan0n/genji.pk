@@ -1,8 +1,14 @@
 import { normalizeMapNames, toggleMapName } from '../utils/search-filters.js';
+import { mapTranslationKey } from '../utils/map-name-localization.js';
 
 export function matchingMaps(maps, query) {
   const needle = query.trim().toLocaleLowerCase();
-  return maps.filter(({ name, label }) => `${name} ${label}`.toLocaleLowerCase().includes(needle));
+  const normalized = mapTranslationKey(query);
+  return maps.filter(
+    ({ name, label }) =>
+      `${name} ${label}`.toLocaleLowerCase().includes(needle) ||
+      (normalized && mapTranslationKey(`${name} ${label}`).includes(normalized))
+  );
 }
 
 export function selectMapScope(selected, maps, select) {

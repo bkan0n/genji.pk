@@ -5,8 +5,15 @@ import { runInNewContext } from 'node:vm';
 import { execFileSync } from 'node:child_process';
 import {
   createMapNameLocalizer,
+  isValidChineseMapLabel,
+  mapNameAutocompleteLabel,
   mapTranslationKey,
 } from '../../resources/js/utils/map-name-localization.js';
+import {
+  auditMapTranslations,
+  duplicateJsonKeys,
+  readRepositoryMapTranslations,
+} from '../../scripts/audit-map-translations.mjs';
 import {
   createMapNamePopover,
   matchingMaps,
@@ -231,6 +238,10 @@ const completedChineseMaps = {
   Gogadoro: '高架车站',
   'Redwood Dam': '红杉水坝',
   'Place Lacroix': '拉克瓦广场',
+  'Neon Junction': '霓虹枢纽',
+  'Powder Keg Mine': '火药桶矿井',
+  'Thames District': '泰晤士区',
+  'Watchpoint: Grimsvötn': '监测站：格里姆火山',
 };
 
 test('map JSON and Chinese PHP translations contain no duplicate keys', () => {
@@ -281,11 +292,15 @@ test('map JSON and Chinese PHP translations contain no duplicate keys', () => {
   assert.deepEqual(duplicates, []);
 });
 
-test('complete local map-name audit has no missing Chinese labels or duplicate canonical names', () => {
+test('complete local map-name audit reports only the documented unresolved name', () => {
   const entries = Object.values(mapTranslations);
   const canonicalKeys = entries.map((entry) => mapTranslationKey(entry['en-US']));
   assert.equal(new Set(canonicalKeys).size, entries.length);
   for (const entry of entries) {
+    if (entry['en-US'] === 'Tlalantis') {
+      assert.equal(entry['zh-CN'], undefined);
+      continue;
+    }
     assert.equal(typeof entry['zh-CN'], 'string', entry['en-US']);
     assert.equal(/[?\uFFFD]/u.test(entry['zh-CN']), false, entry['en-US']);
     assert.ok(entry['zh-CN'].trim(), entry['en-US']);
@@ -302,7 +317,7 @@ test('complete local map-name audit has no missing Chinese labels or duplicate c
   const label = createMapNameLocalizer(mapTranslations, 'cn', localeData.cn.map_name);
   assert.deepEqual(
     names.filter((name) => label(name) === name),
-    []
+    ['Tlalantis']
   );
   // New labels stay in the shared dataset, rather than a second PHP map dictionary.
   for (const name of Object.keys(completedChineseMaps)) {
@@ -421,6 +436,115 @@ test('Chinese map labels resolve official names, API aliases, accents and existi
   for (const entry of Object.values(mapTranslations)) {
     if (entry['zh-CN']) assert.equal(label(entry['en-US']), entry['zh-CN']);
   }
+});
+
+test('offline audit reports the full inventory and fails validation data for unexpected gaps or invalid labels', () => {
+  const report = readRepositoryMapTranslations();
+  assert.ok(report.auditedNames >= report.datasetEntries);
+  assert.equal(report.datasetEntries, Object.keys(mapTranslations).length);
+  assert.deepEqual(
+    report.missing.map(({ name, documented }) => ({ name, documented })),
+    [{ name: 'Tlalantis', documented: true }]
+  );
+  assert.deepEqual(report.invalid, []);
+  assert.deepEqual(report.duplicates, []);
+  const broken = auditMapTranslations(
+    {
+      one: { 'en-US': 'Map One', 'zh-CN': '???' },
+      two: { 'en-US': 'Map Two' },
+      three: { 'en-US': 'Map Three', 'zh-CN': '地图' },
+      four: { 'en-US': 'Map Four', 'zh-CN': '地图' },
+    },
+    [],
+    {}
+  );
+  assert.ok(broken.invalid.some((item) => item.includes('Map One')));
+  assert.ok(broken.missing.some((item) => item.name === 'Map Two' && !item.documented));
+  assert.equal(broken.duplicates.length, 1);
+  assert.deepEqual(duplicateJsonKeys('{"map": {"zh-CN": "地图", "zh-CN": "地图二"}}'), ['zh-CN']);
+  for (const label of ['', 'English only', '??', '地图?', ' 地图', null, 42])
+    assert.equal(isValidChineseMapLabel(label), false);
+});
+
+test('autocomplete uses shared Chinese names even when the API echoes English', () => {
+  const label = createMapNameLocalizer(mapTranslations, 'cn', localeData.cn.map_name);
+  for (const [name, chinese] of Object.entries(completedChineseMaps)) {
+    assert.equal(
+      mapNameAutocompleteLabel({ map_name: name, translated_map_name: name }, 'cn', label),
+      chinese
+    );
+  }
+  assert.equal(
+    mapNameAutocompleteLabel({ map_name: 'Tlalantis', translated_map_name: '???' }, 'cn', label),
+    'Tlalantis'
+  );
+  assert.equal(
+    mapNameAutocompleteLabel({ map_name: 'New Map', translated_map_name: '新地图' }, 'cn', label),
+    '新地图'
+  );
+  assert.equal(
+    mapNameAutocompleteLabel(
+      { map_name: 'Neon Junction', translated_map_name: 'Local label' },
+      'fr',
+      (name) => name
+    ),
+    'Local label'
+  );
+});
+
+test('results and restored canonical values share Chinese display lookup without accepting fuzzy API replacements', async () => {
+  const source = readFileSync(
+    new URL('../../resources/js/pages/search.js', import.meta.url),
+    'utf8'
+  );
+  const mapCode = source.slice(
+    source.indexOf('const MAPS_TRANSLATIONS_URL ='),
+    source.indexOf('const MAP_VIEW_LS_KEY =')
+  );
+  const resultCode = source.slice(
+    source.indexOf('function displayResults(data)'),
+    source.indexOf('\nfunction ', source.indexOf('function displayResults(data)') + 1)
+  );
+  let rendered;
+  const context = {
+    CURRENT_LANG: 'cn',
+    currentSection: 'map_search',
+    translations: localeData.cn,
+    document: { addEventListener() {} },
+    createMapNameLocalizer,
+    buildAutocompleteUrl: () => '/autocomplete',
+    fetch: async (url) => ({
+      ok: true,
+      json: async () =>
+        url === '/translations/maps.json' ? mapTranslations : [{ map_name: 'Different Map' }],
+    }),
+    normalizeToRows: (rows) => rows,
+    getTypesArray: () => [],
+    renderMapSearchResultsByMode: (rows) => {
+      rendered = rows;
+    },
+  };
+  runInNewContext(`${mapCode}\n${resultCode}`, context);
+  await context.ensureMapsIndex();
+  for (const [name, chinese] of Object.entries(completedChineseMaps)) {
+    assert.equal(context.mapNameToCnDisplay(name), chinese);
+    assert.equal(await context.canonicalizeMapNameForApi(name), name);
+    assert.equal(await context.canonicalizeMapNameForApi(chinese), name);
+  }
+  assert.equal(context.mapNameToCnDisplay('Watchpoint: Grimsvotn'), '监测站：格里姆火山');
+  assert.equal(
+    matchingMaps([{ name: 'Watchpoint: Grimsvötn', label: '监测站：格里姆火山' }], 'Grimsvotn')
+      .length,
+    1
+  );
+  assert.equal(context.mapNameToCnDisplay('Framework'), '框架');
+  context.displayResults(Object.keys(completedChineseMaps).map((name) => ({ map_name: name })));
+  for (const row of rendered)
+    assert.equal(row.map_name, completedChineseMaps[row.original_map_name]);
+  context.displayResults(rendered);
+  for (const row of rendered)
+    assert.equal(row.map_name, completedChineseMaps[row.original_map_name]);
+  assert.equal(await context.canonicalizeMapNameForApi('Tlalantis'), 'Tlalantis');
 });
 
 test('Chinese loading and error states use actual localized Unicode strings', async () => {

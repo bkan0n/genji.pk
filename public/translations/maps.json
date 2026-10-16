@@ -1,4 +1,23 @@
 {
+  "neonJunction": {
+    "en-US": "Neon Junction",
+    "zh-CN": "霓虹枢纽"
+  },
+  "powderKegMine": {
+    "en-US": "Powder Keg Mine",
+    "zh-CN": "火药桶矿井"
+  },
+  "tlalantis": {
+    "en-US": "Tlalantis"
+  },
+  "thamesDistrict": {
+    "en-US": "Thames District",
+    "zh-CN": "泰晤士区"
+  },
+  "watchpointGrimsvotn": {
+    "en-US": "Watchpoint: Grimsvötn",
+    "zh-CN": "监测站：格里姆火山"
+  },
   "adlersbrunn": {
     "en-US": "Adlersbrunn",
     "zh-CN": "阿德勒斯布鲁恩"

@@ -3,6 +3,7 @@
 return [
     // Popover UI labels. Map Search map names come from public/translations/maps.json;
     // the legacy map_name dictionary below is only a fallback for existing entries.
+    // Keep new map labels in maps.json; unresolved names retain their canonical English.
     'map_picker' => [
         'available' => '{total} 张地图可选',
         'search' => '搜索地图...',

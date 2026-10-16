@@ -1,5 +1,5 @@
 import { createMapNamePopover, loadMapNames } from '../components/map-name-popover.js';
-import { createMapNameLocalizer } from '../utils/map-name-localization.js';
+import { createMapNameLocalizer, mapNameAutocompleteLabel } from '../utils/map-name-localization.js';
 import { cdnAsset, cdnImage } from "../utils/cdn";
 import { normalizeMapNames, serializeSearchFilters, toggleMapName } from '../utils/search-filters';
 
@@ -66,6 +66,7 @@ async function ensureMapsIndex() {
   if (!__mapsIndexPromise) {
     __mapsIndexPromise = (async () => {
       const data = await __loadMapsJson();
+      const displayName = createMapNameLocalizer(data, 'cn', translations.map_name);
       const list = [];
       const enToZh = new Map();
       const enNormToZh = new Map();
@@ -79,7 +80,7 @@ async function ensureMapsIndex() {
           const zh = String(v['zh-CN'] || '').trim();
           if (!en) return;
 
-          const zhDisplay = zh || en;
+          const zhDisplay = displayName(en);
           list.push({ key, en, zh: zhDisplay });
 
           enToZh.set(en, zhDisplay);
@@ -94,7 +95,7 @@ async function ensureMapsIndex() {
         });
       }
 
-      __mapsIndex = { list, enToZh, enNormToZh, zhToEn, zhNormToEn };
+      __mapsIndex = { list, enToZh, enNormToZh, zhToEn, zhNormToEn, displayName };
       return __mapsIndex;
     })();
   }
@@ -107,7 +108,7 @@ function mapNameToCnDisplay(enName) {
   if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'cn') return raw;
   const idx = __mapsIndex;
   if (!idx) return raw;
-  return idx.enToZh.get(raw) || idx.enNormToZh.get(__normalizeMapNameKey(raw)) || raw;
+  return idx.displayName(raw);
 }
 
 function mapNameCnToEnSmart(value) {
@@ -132,8 +133,8 @@ async function resolveEnglishMapNameExact(name) {
     const exact = data.find((x) => x && x.map_name && String(x.map_name).toLowerCase() === lower);
     if (exact && exact.map_name) return String(exact.map_name);
 
-    const first = data.find((x) => x && x.map_name);
-    return first && first.map_name ? String(first.map_name) : null;
+    // A fuzzy autocomplete hit must never replace a restored canonical value.
+    return null;
   } catch {
     return null;
   }
@@ -524,7 +525,7 @@ const mapNamePicker = createMapNamePopover({
     updateToolbarButtonStates('map_name');
   },
   loadMaps: async () => {
-    const [names, data] = await Promise.all([loadMapNames(), __loadMapsJson()]);
+    const [names, data] = await Promise.all([loadMapNames(), __loadMapsJson(), ensureMapsIndex()]);
     const displayName = createMapNameLocalizer(data, CURRENT_LANG, translations.map_name);
     return names.map((name) => {
       return { name, label: displayName(name) };
@@ -3137,6 +3138,7 @@ async function applyFilters(filters, opts = {}) {
   }
 
   try {
+    if (CURRENT_LANG === 'cn') await ensureMapsIndex();
     const effPageSize = getEffectivePageSize(currentSection);
     const req = buildSectionRequest(currentSection, activeFilters, 1, effPageSize);
 
@@ -3257,10 +3259,10 @@ function buildSectionRequest(section, filters, pageNumber, pageSize) {
 function displayResults(data) {
   const post = (r) => {
     if (r.map_name) {
-      r.original_map_name = r.map_name;
+      r.original_map_name ||= r.map_name;
 
       if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn') {
-        r.map_name = mapNameToCnDisplay(r.map_name);
+        r.map_name = mapNameToCnDisplay(r.original_map_name);
       } else if (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG !== 'en') {
         const translatedName = t(
           `map_name.${r.map_name
@@ -3527,12 +3529,9 @@ function showSuggestions(event, apiEndpoint, containerId, propertyName) {
           }
           if (item && item[propertyName]) {
             const rawValue = item[propertyName];
-            const displayName =
-              item.translated_map_name ||
-              (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'cn'
-                ? mapNameToCnDisplay(rawValue)
-                : rawValue) ||
-              rawValue;
+            const displayName = propertyName === 'map_name'
+              ? mapNameAutocompleteLabel(item, CURRENT_LANG, mapNameToCnDisplay)
+              : item.translated_map_name || rawValue;
 
             suggestionsContainer.appendChild(makeItem(displayName, rawValue));
           }
@@ -8849,6 +8848,7 @@ async function changePage(pageNumber) {
 
   const data = await fetchPageData(currentPage);
   if (data) {
+    if (CURRENT_LANG === 'cn') await ensureMapsIndex();
     const effPageSize = getEffectivePageSize(currentSection);
     const maybeNewTotalPages = computeTotalPagesFromData(data, effPageSize);
     if (maybeNewTotalPages !== totalPages) totalPages = maybeNewTotalPages;

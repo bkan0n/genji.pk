@@ -6,6 +6,7 @@
     "build": "vite build",
     "dev": "vite",
     "test:js": "node --test tests/JavaScript/*.test.js",
+    "audit:map-translations": "node scripts/audit-map-translations.mjs",
     "format": "prettier --write \"**/*.{js,ts,jsx,tsx,css,scss,vue,html,md,json,yml,yaml,php,blade.php}\"",
     "format:check": "prettier --check ."
   },
