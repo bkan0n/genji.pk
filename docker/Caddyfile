@@ -1,0 +1,41 @@
+{
+	auto_https off
+	admin off
+	frankenphp
+	servers {
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+	}
+}
+
+# The VPS Caddy owns public HTTPS. This listener is only for the Docker network.
+:8080 {
+	root * /var/www/html/public
+	encode zstd gzip
+
+	@hidden {
+		path_regexp hidden (^|/)\.[^/]+
+		not path /.well-known/*
+	}
+	respond @hidden 404
+
+	@storagePHP path_regexp storagePHP (?i)^/storage/.*\.php(?:/|$)
+	respond @storagePHP 403
+
+	request_body {
+		max_size 20MiB
+	}
+
+	# Cache only existing files, never Laravel responses with asset-like URLs.
+	@static {
+		file {path}
+		path /build/* *.css *.js *.cjs *.mjs *.map *.png *.jpg *.jpeg *.gif *.ico *.svg *.webp *.woff *.woff2 *.avif *.json *.ogg *.glb
+	}
+	header @static Cache-Control "public, max-age=31536000, immutable"
+	header -Server
+	php_server
+
+	log {
+		output stdout
+	}
+}

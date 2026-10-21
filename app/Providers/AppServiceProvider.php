@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Support\Translations;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
@@ -21,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(Translations $translations): void
     {
+        // Configuration is loaded here, including when Laravel caches it.
+        TrustProxies::at(config('trustedproxy.proxies'));
+
         $nonce = csp_nonce();
         Vite::useCspNonce($nonce);
 
