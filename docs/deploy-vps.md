@@ -12,9 +12,11 @@ remove that check or delete the running container to work around it.
 
 ## Numbered deployment checklist
 
-1. **Merge the migration PR when ready.** The following steps run on your VPS and
-   do not use GitHub Actions, image registries of your own, or GitHub build minutes.
-   The existing GitHub deployment workflow is not required for these steps.
+1. **Pause the automatic production deployment workflow, then merge the PR.**
+   Temporarily disable `Prod Deployment` in GitHub Actions before the first rollout
+   so it cannot replace the container before its storage is imported. The following
+   steps run on your VPS without GitHub Actions or GitHub build minutes. You can
+   leave that workflow disabled while using manual deployments.
 
 2. **SSH into the VPS.** Use the account that can run Docker. Confirm Docker Compose
    supports `up --wait --wait-timeout` and that the Doppler CLI is installed:
