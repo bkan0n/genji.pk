@@ -234,3 +234,6 @@ php artisan optimize
   </ul>
 
 </div>
+## VPS deployment
+
+See [the manual deployment guide](docs/deploy-vps.md) for migrating from Unit to FrankenPHP and deploying with Doppler without GitHub Actions minutes.

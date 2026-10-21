@@ -1,13 +1,15 @@
-# 1) Node build
+# Build public frontend assets. Only VITE_* values belong in build arguments.
 FROM node:20-alpine AS node-build
 WORKDIR /src
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG VITE_APP_ENV=production
+ARG VITE_APP_RELEASE
+ARG VITE_SENTRY_DSN
 ENV NODE_ENV=production
 RUN npm run build
 
-# 2) Composer (no scripts)
 FROM composer:2 AS composer-deps
 WORKDIR /src
 COPY composer.json composer.lock ./
@@ -15,65 +17,45 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --no-ansi --no-interaction --no-progress \
     --prefer-dist --optimize-autoloader --no-scripts
 
-# 3) Runtime
-FROM serversideup/php:8.3-unit AS runtime
+# Classic mode: Caddy and PHP run together, without Octane or persistent workers.
+FROM serversideup/php:8.3-frankenphp AS runtime
 WORKDIR /var/www/html
 USER root
 
-# make sure we’re root before touching system paths
-RUN mkdir -p /usr/local/etc/php/conf.d && \
-    printf '%s\n' \
-    'opcache.enable=1' \
-    'opcache.enable_cli=0' \
-    'opcache.memory_consumption=256' \
-    'opcache.interned_strings_buffer=16' \
-    'opcache.max_accelerated_files=20000' \
-    'opcache.validate_timestamps=0' \
-    | tee /usr/local/etc/php/conf.d/zz-opcache.ini >/dev/null
-RUN printf "memory_limit=512M\n" > /usr/local/etc/php/conf.d/zz-memory.ini
-# if available in this image tag
-# RUN if command -v install-php-extensions >/dev/null 2>&1; then \
-#       install-php-extensions pdo_mysql bcmath intl zip gd ; \
-#     fi
+# Refuse an image that predates CVE-2026-109618 / CVE-2026-109619 fixes.
+# Check both the PHP CLI and the interpreter embedded in FrankenPHP.
+COPY docker/check-php-version.php /usr/local/lib/check-php-version.php
+RUN php /usr/local/lib/check-php-version.php \
+    && frankenphp php-cli /usr/local/lib/check-php-version.php
 
-# app code
-COPY . .
+ENV SSL_MODE=off \
+    CADDY_AUTO_HTTPS=off \
+    AUTORUN_ENABLED=false \
+    HEALTHCHECK_PATH=/up \
+    PHP_MEMORY_LIMIT=512M \
+    PHP_UPLOAD_MAX_FILE_SIZE=20M \
+    PHP_POST_MAX_SIZE=20M \
+    PHP_OPCACHE_ENABLE=1 \
+    PHP_OPCACHE_ENABLE_CLI=0 \
+    PHP_OPCACHE_MEMORY_CONSUMPTION=256 \
+    PHP_OPCACHE_INTERNED_STRINGS_BUFFER=16 \
+    PHP_OPCACHE_MAX_ACCELERATED_FILES=20000 \
+    PHP_OPCACHE_VALIDATE_TIMESTAMPS=0
 
-# ✅ copy from /src (not /app)
-COPY --from=composer-deps /src/vendor ./vendor
-COPY --from=node-build     /src/public/build ./public/build
+COPY --chown=www-data:www-data . .
+COPY --from=composer-deps --chown=www-data:www-data /src/vendor ./vendor
+COPY --from=node-build --chown=www-data:www-data /src/public/build ./public/build
+COPY docker/Caddyfile /etc/frankenphp/Caddyfile
+COPY --chmod=755 docker/entrypoint.d/ /etc/entrypoint.d/
 
-# Ensure all runtime-write dirs exist
-RUN mkdir -p /var/www/html/storage/framework/{cache,data,sessions,testing,views} \
-    /var/www/html/storage/logs \
-    /var/www/html/bootstrap/cache
+RUN mkdir -p storage/framework/cache/data storage/framework/sessions \
+        storage/framework/testing storage/framework/views storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R u+rwX,g+rwX storage bootstrap/cache
 
-# Belt-and-suspenders permissions for containers:
-# - a+rwX gives read/write to everyone and execute on directories (needed to create files)
-# - set gid bit keeps group on newly created files (helps with shared access)
-RUN chmod -R a+rwX /var/www/html/storage /var/www/html/bootstrap/cache \
-    && find /var/www/html/storage -type d -exec chmod g+s {} + \
-    && find /var/www/html/bootstrap/cache -type d -exec chmod g+s {} +
-
-
-
-# runtime user + perms
-# runtime perms using www-data user that ships with the image
-RUN chown -R www-data:www-data storage bootstrap/cache
-
-
-RUN mkdir -p /var/www/html/storage/framework/sessions \
-    && chmod -R a+rwX /var/www/html/storage/framework/sessions
-
-
-# Unit config + entrypoint
-COPY docker/unit.json /docker/unit.json
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
+USER www-data
 EXPOSE 8080
-HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
-    CMD sh -c "curl --insecure --silent --location --show-error --fail http://localhost:8080 || exit 1"
+HEALTHCHECK --start-period=60s --interval=10s --timeout=3s --retries=3 \
+    CMD curl --silent --show-error --fail http://127.0.0.1:8080/up || exit 1
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["unitd","--no-daemon"]
+# Inherit the image's entrypoint and FrankenPHP command.

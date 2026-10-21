@@ -9,7 +9,13 @@ storage/framework/views/*
 .DS_Store
 bootstrap/cache/*.php
 storage/app/private/cache
-.env
-.env.prod
-.env.dev
-.env.test
+.env*
+!.env.example
+auth.json
+doppler.yaml
+backups
+.aws
+.codex
+.agents
+storage/app/*
+**/__pycache__

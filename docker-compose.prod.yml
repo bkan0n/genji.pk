@@ -5,6 +5,11 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
+      pull: true
+      args:
+        VITE_APP_ENV: ${VITE_APP_ENV:-production}
+        VITE_APP_RELEASE: ${VITE_APP_RELEASE:-}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
     environment:
       - APP_ENV=${APP_ENV}
       - APP_DEBUG=${APP_DEBUG}
@@ -39,6 +44,10 @@ services:
       - SESSION_DOMAIN=${SESSION_DOMAIN}
       - BATTLENET_CLIENT_ID=${BATTLENET_CLIENT_ID}
       - BATTLENET_CLIENT_SECRET=${BATTLENET_CLIENT_SECRET}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7}
+
+    volumes:
+      - genji-storage:/var/www/html/storage
 
     networks:
       - genji-network
@@ -46,3 +55,6 @@ services:
 networks:
   genji-network:
     external: true
+
+volumes:
+  genji-storage:
